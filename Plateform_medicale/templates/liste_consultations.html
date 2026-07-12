@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Consultations{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Consultations</h1>
+        <p class="subtitle">Historique des consultations medicales.</p>
+    </div>
+    <a class="button primary" href="{% url 'ajouter_consultation' %}">Ajouter</a>
+</section>
+
+{% if consultations %}
+<section class="panel">
+    <table>
+        <thead>
+            <tr>
+                <th>Patient</th>
+                <th>Medecin</th>
+                <th>Service</th>
+                <th>Date</th>
+                <th>Diagnostic</th>
+                <th>Traitement</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for consultation in consultations %}
+            <tr>
+                <td>{{ consultation.patient }}</td>
+                <td>{{ consultation.medecin }}</td>
+                <td>{{ consultation.service|default:"-" }}</td>
+                <td>{{ consultation.date_consultation|date:"d/m/Y H:i" }}</td>
+                <td>{{ consultation.diagnostic }}</td>
+                <td>{{ consultation.traitement|default:"-" }}</td>
+                <td>
+                    <div class="actions">
+                        <a href="{% url 'modifier_consultation' consultation.pk %}" class="button btn btn-primary btn-sm">Modifier</a>
+                        <a href="{% url 'supprimer_consultation' consultation.pk %}" class="button btn btn-danger btn-sm">Supprimer</a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% else %}
+<p class="empty">Aucune consultation enregistree.</p>
+{% endif %}
+{% endblock %}

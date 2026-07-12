@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Prises en charge{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Prises en charge</h1>
+        <p class="subtitle">Suivi des demandes de prise en charge.</p>
+    </div>
+    <a class="button primary" href="{% url 'ajouter_prise_en_charge' %}">Ajouter</a>
+</section>
+
+{% if prises_en_charge %}
+<section class="panel">
+    <table>
+        <thead>
+            <tr>
+                <th>Patient</th>
+                <th>Date demande</th>
+                <th>Motif</th>
+                <th>Statut</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for prise in prises_en_charge %}
+            <tr>
+                <td>{{ prise.patient }}</td>
+                <td>{{ prise.date_demande|date:"d/m/Y H:i" }}</td>
+                <td>{{ prise.motif }}</td>
+                <td><span class="badge {{ prise.statut }}">{{ prise.get_statut_display }}</span></td>
+                <td>
+                    <div class="actions">
+                        <a href="{% url 'modifier_prise_en_charge' prise.pk %}" class="button btn btn-primary btn-sm">Modifier</a>
+                        <a href="{% url 'supprimer_prise_en_charge' prise.pk %}" class="button btn btn-danger btn-sm">Supprimer</a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% else %}
+<p class="empty">Aucune prise en charge enregistree.</p>
+{% endif %}
+{% endblock %}

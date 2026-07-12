@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Medecins{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Medecins</h1>
+        <p class="subtitle">Liste des medecins disponibles.</p>
+    </div>
+    <a class="button primary" href="{% url 'ajouter_medecin' %}">Ajouter</a>
+</section>
+
+{% if medecins %}
+<section class="panel">
+    <table>
+        <thead>
+            <tr>
+                <th>Nom complet</th>
+                <th>Specialite</th>
+                <th>Telephone</th>
+                <th>Email</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for medecin in medecins %}
+            <tr>
+                <td>Dr {{ medecin.prenom }} {{ medecin.nom }}</td>
+                <td>{{ medecin.specialite }}</td>
+                <td>{{ medecin.telephone }}</td>
+                <td>{{ medecin.email }}</td>
+                <td>
+                    <div class="actions">
+                        <a href="{% url 'modifier_medecin' medecin.pk %}" class="button btn btn-primary btn-sm">Modifier</a>
+                        <a href="{% url 'supprimer_medecin' medecin.pk %}" class="button btn btn-danger btn-sm">Supprimer</a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% else %}
+<p class="empty">Aucun medecin enregistre.</p>
+{% endif %}
+{% endblock %}

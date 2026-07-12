@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Modifier Ordonnance - Plateforme medicale{% endblock %}
+
+{% block content %}
+<div class="page-title">
+    <div>
+        <h1>Modifier Ordonnance</h1>
+        <p class="subtitle">Modifiez les informations de l'ordonnance</p>
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+
+    <div>
+        <label for="consultation">Consultation</label>
+        <select id="consultation" name="consultation" required>
+            {% for consultation in consultations %}
+            <option value="{{ consultation.id }}" {% if consultation.id == ordonnance.consultation.id %}selected{% endif %}>
+                {{ consultation.patient.prenom }} {{ consultation.patient.nom }} - 
+                Dr {{ consultation.medecin.prenom }} {{ consultation.medecin.nom }} 
+                ({{ consultation.date_consultation|date:"d/m/Y H:i" }})
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div>
+        <label for="medicaments">Médicaments</label>
+        <textarea 
+            id="medicaments" 
+            name="medicaments" 
+            required
+            style="min-height: 150px;"
+        >{{ ordonnance.medicaments }}</textarea>
+    </div>
+
+    <button type="submit" class="button primary">Enregistrer les modifications</button>
+    <a href="{% url 'liste_ordonnances' %}" class="button">Retour</a>
+</form>
+{% endblock %}

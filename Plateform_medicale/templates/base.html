@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Plateforme medicale{% endblock %}</title>
+    <style>
+        :root {
+            --bg: #f4f7fb;
+            --surface: #ffffff;
+            --primary: #126a71;
+            --primary-dark: #0d4f55;
+            --border: #d8e2ea;
+            --text: #1f2933;
+            --muted: #61717f;
+            --danger: #b42318;
+            --success: #167a46;
+            --warning: #9a6700;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            color: var(--text);
+            background: var(--bg);
+        }
+
+        header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .topbar,
+        main {
+            width: min(1120px, calc(100% - 32px));
+            margin: 0 auto;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            padding: 18px 0;
+        }
+
+        .brand {
+            color: var(--primary-dark);
+            font-size: 20px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        nav a,
+        .button {
+            display: inline-flex;
+            align-items: center;
+            min-height: 38px;
+            padding: 9px 12px;
+            border-radius: 6px;
+            color: var(--primary-dark);
+            text-decoration: none;
+            font-weight: 600;
+            border: 1px solid transparent;
+            background: transparent;
+        }
+
+        nav a:hover,
+        .button:hover {
+            background: #e9f5f6;
+            border-color: #c7e6e8;
+        }
+
+        main {
+            padding: 32px 0 48px;
+        }
+
+        .page-title {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 22px;
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            color: #16212b;
+            font-size: 30px;
+            line-height: 1.2;
+        }
+
+        .subtitle {
+            margin: 0;
+            color: var(--muted);
+        }
+
+        .panel,
+        .empty {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .panel {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 680px;
+        }
+
+        th,
+        td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+
+        th {
+            color: #40515f;
+            background: #f8fafc;
+            font-size: 13px;
+            text-transform: uppercase;
+        }
+
+        tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .empty {
+            padding: 28px;
+            color: var(--muted);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+        }
+
+        .stat {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 18px;
+        }
+
+        .stat strong {
+            display: block;
+            color: var(--primary-dark);
+            font-size: 30px;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .stat span {
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            min-height: 26px;
+            padding: 4px 9px;
+            border-radius: 999px;
+            background: #eef2f6;
+            color: #40515f;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .badge.en_attente {
+            background: #fff3cd;
+            color: var(--warning);
+        }
+
+        .badge.validee,
+        .badge.terminee {
+            background: #dcfce7;
+            color: var(--success);
+        }
+
+        .badge.refusee {
+            background: #fee4e2;
+            color: var(--danger);
+        }
+
+        form {
+            max-width: 720px;
+            padding: 22px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 7px;
+            font-weight: 700;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            min-height: 42px;
+            margin-bottom: 16px;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font: inherit;
+        }
+
+        textarea {
+            min-height: 110px;
+            resize: vertical;
+        }
+
+        .button.primary {
+            border-color: var(--primary);
+            background: var(--primary);
+            color: #ffffff;
+        }
+
+        .button.primary:hover {
+            background: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+
+        .button.btn {
+            min-height: 34px;
+            padding: 8px 12px;
+            font-size: 13px;
+            border-radius: 6px;
+        }
+
+        .button.btn-sm {
+            min-height: 30px;
+            padding: 6px 10px;
+            font-size: 12px;
+        }
+
+        .button.btn-primary {
+            border-color: var(--primary);
+            background: var(--primary);
+            color: #ffffff;
+        }
+
+        .button.btn-primary:hover {
+            background: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+
+        .button.btn-danger {
+            border-color: #dc3545;
+            background: #dc3545;
+            color: #ffffff;
+        }
+
+        .button.btn-danger:hover {
+            background: #bb2d3b;
+            border-color: #bb2d3b;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        @media (max-width: 760px) {
+            .topbar,
+            .page-title {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            nav a,
+            .button {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="topbar">
+            <a class="brand" href="{% url 'dashboard' %}">Plateforme medicale</a>
+            <nav aria-label="Navigation principale">
+                <a href="{% url 'liste_patients' %}">Patients</a>
+                <a href="{% url 'liste_medecins' %}">Medecins</a>
+                <a href="{% url 'liste_services' %}">Services</a>
+                <a href="{% url 'liste_prises_en_charge' %}">Prises en charge</a>
+                <a href="{% url 'liste_consultations' %}">Consultations</a>
+                <a href="{% url 'liste_ordonnances' %}">Ordonnances</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

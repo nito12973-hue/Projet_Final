@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Ordonnances{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Ordonnances</h1>
+        <p class="subtitle">Liste des ordonnances creees apres consultation.</p>
+    </div>
+    <a class="button primary" href="{% url 'ajouter_ordonnances' %}">Ajouter</a>
+</section>
+
+{% if ordonnances %}
+<section class="panel">
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Patient</th>
+                <th>Medecin</th>
+                <th>Medicaments</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ordonnance in ordonnances %}
+            <tr>
+                <td>{{ ordonnance.date_creation|date:"d/m/Y H:i" }}</td>
+                <td>{{ ordonnance.consultation.patient }}</td>
+                <td>{{ ordonnance.consultation.medecin }}</td>
+                <td>{{ ordonnance.medicaments|linebreaksbr }}</td>
+                <td>
+                    <div class="actions">
+                        <a href="{% url 'modifier_ordonnances' ordonnance.pk %}" class="button btn btn-primary btn-sm">Modifier</a>
+                        <a href="{% url 'supprimer_ordonnances' ordonnance.pk %}" class="button btn btn-danger btn-sm">Supprimer</a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% else %}
+<p class="empty">Aucune ordonnance enregistree.</p>
+{% endif %}
+{% endblock %}

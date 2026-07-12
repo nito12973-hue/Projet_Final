@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Services medicaux{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Services medicaux</h1>
+        <p class="subtitle">Catalogue des prestations disponibles.</p>
+    </div>
+    <a class="button primary" href="{% url 'ajouter_service' %}">Ajouter</a>
+</section>
+
+{% if services %}
+<section class="panel">
+    <table>
+        <thead>
+            <tr>
+                <th>Service</th>
+                <th>Description</th>
+                <th>Prix</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for service in services %}
+            <tr>
+                <td>{{ service.nom }}</td>
+                <td>{{ service.description|default:"-" }}</td>
+                <td>{{ service.prix }} FCFA</td>
+                <td>
+                    <div class="actions">
+                        <a href="{% url 'modifier_service' service.pk %}" class="button btn btn-primary btn-sm">Modifier</a>
+                        <a href="{% url 'supprimer_service' service.pk %}" class="button btn btn-danger btn-sm">Supprimer</a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% else %}
+<p class="empty">Aucun service medical enregistre.</p>
+{% endif %}
+{% endblock %}

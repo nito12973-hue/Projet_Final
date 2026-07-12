@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Ajouter un Service - Plateforme medicale{% endblock %}
+
+{% block content %}
+<div class="page-title">
+    <div>
+        <h1>Ajouter un Service</h1>
+        <p class="subtitle">Enregistrez un nouveau service médical</p>
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+
+    <div>
+        <label for="nom">Nom du Service</label>
+        <input 
+            type="text" 
+            id="nom" 
+            name="nom" 
+            required 
+            placeholder="Ex: Radiologie, Chirurgie, etc."
+        >
+    </div>
+
+    <div>
+        <label for="description">Description</label>
+        <textarea 
+            id="description" 
+            name="description" 
+            placeholder="Décrivez le service..."
+        ></textarea>
+    </div>
+
+    <div>
+        <label for="prix">Prix (€)</label>
+        <input 
+            type="number" 
+            id="prix" 
+            name="prix" 
+            step="0.01"
+            required 
+            placeholder="Ex: 50.00"
+        >
+    </div>
+
+    <button type="submit" class="button primary">Ajouter le Service</button>
+    <a href="{% url 'liste_services' %}" class="button">Retour</a>
+</form>
+{% endblock %}

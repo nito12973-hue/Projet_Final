@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Ajouter une Ordonnance - Plateforme medicale{% endblock %}
+
+{% block content %}
+<div class="page-title">
+    <div>
+        <h1>Ajouter une Ordonnance</h1>
+        <p class="subtitle">Créez une nouvelle ordonnance médicale</p>
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+
+    <div>
+        <label for="consultation">Consultation</label>
+        <select id="consultation" name="consultation" required>
+            <option value="">-- Sélectionnez une consultation --</option>
+            {% for consultation in consultations %}
+            <option value="{{ consultation.id }}">
+                {{ consultation.patient.prenom }} {{ consultation.patient.nom }} - 
+                Dr {{ consultation.medecin.prenom }} {{ consultation.medecin.nom }} 
+                ({{ consultation.date_consultation|date:"d/m/Y H:i" }})
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div>
+        <label for="medicaments">Médicaments</label>
+        <textarea 
+            id="medicaments" 
+            name="medicaments" 
+            required
+            placeholder="Listez les médicaments prescrits avec posologie..."
+            style="min-height: 150px;"
+        ></textarea>
+    </div>
+
+    <button type="submit" class="button primary">Créer l'Ordonnance</button>
+    <a href="{% url 'liste_ordonnances' %}" class="button">Retour</a>
+</form>
+{% endblock %}

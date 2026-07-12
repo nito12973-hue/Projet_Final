@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Modifier Consultation - Plateforme medicale{% endblock %}
+
+{% block content %}
+<div class="page-title">
+    <div>
+        <h1>Modifier Consultation</h1>
+        <p class="subtitle">Modifiez les informations de la consultation</p>
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+
+    <div>
+        <label for="patient">Patient</label>
+        <select id="patient" name="patient" required>
+            {% for patient in patients %}
+            <option value="{{ patient.id }}" {% if patient.id == consultation.patient.id %}selected{% endif %}>
+                {{ patient.prenom }} {{ patient.nom }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div>
+        <label for="medecin">Médecin</label>
+        <select id="medecin" name="medecin" required>
+            {% for medecin in medecins %}
+            <option value="{{ medecin.id }}" {% if medecin.id == consultation.medecin.id %}selected{% endif %}>
+                Dr {{ medecin.prenom }} {{ medecin.nom }} ({{ medecin.specialite }})
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div>
+        <label for="service">Service</label>
+        <select id="service" name="service">
+            <option value="">-- Aucun service --</option>
+            {% for service in services %}
+            <option value="{{ service.id }}" {% if consultation.service and service.id == consultation.service.id %}selected{% endif %}>
+                {{ service.nom }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div>
+        <label for="date_consultation">Date de Consultation</label>
+        <input 
+            type="datetime-local" 
+            id="date_consultation" 
+            name="date_consultation" 
+            required
+            value="{{ consultation.date_consultation|date:'Y-m-dTH:i' }}"
+        >
+    </div>
+
+    <div>
+        <label for="diagnostic">Diagnostic</label>
+        <textarea 
+            id="diagnostic" 
+            name="diagnostic" 
+            required
+        >{{ consultation.diagnostic }}</textarea>
+    </div>
+
+    <div>
+        <label for="traitement">Traitement</label>
+        <textarea 
+            id="traitement" 
+            name="traitement"
+        >{{ consultation.traitement }}</textarea>
+    </div>
+
+    <button type="submit" class="button primary">Enregistrer les modifications</button>
+    <a href="{% url 'liste_consultations' %}" class="button">Retour</a>
+</form>
+{% endblock %}

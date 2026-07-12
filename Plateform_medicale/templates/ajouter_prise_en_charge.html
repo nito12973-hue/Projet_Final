@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Ajouter une prise en charge{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Ajouter une prise en charge</h1>
+        <p class="subtitle">Formulaire de demande de prise en charge.</p>
+    </div>
+    <a class="button" href="{% url 'liste_prises_en_charge' %}">Retour</a>
+</section>
+
+<form method="post">
+    {% csrf_token %}
+    <label for="patient">Patient</label>
+    <select id="patient" name="patient" required>
+        <option value="">Choisir un patient</option>
+        {% for patient in patients %}
+        <option value="{{ patient.id }}">{{ patient }}</option>
+        {% endfor %}
+    </select>
+
+    <label for="motif">Motif</label>
+    <textarea id="motif" name="motif" required></textarea>
+
+    <button class="button primary" type="submit">Enregistrer</button>
+</form>
+{% endblock %}

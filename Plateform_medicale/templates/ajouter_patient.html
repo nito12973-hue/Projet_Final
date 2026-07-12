@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Ajouter un patient{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Ajouter un patient</h1>
+        <p class="subtitle">Formulaire de creation d'un nouveau patient.</p>
+    </div>
+    <a class="button" href="{% url 'liste_patients' %}">Retour</a>
+</section>
+
+<form method="post">
+    {% csrf_token %}
+    <label for="nom">Nom</label>
+    <input id="nom" name="nom" type="text" required>
+
+    <label for="prenom">Prenom</label>
+    <input id="prenom" name="prenom" type="text" required>
+
+    <label for="date_naissance">Date de naissance</label>
+    <input id="date_naissance" name="date_naissance" type="date" required>
+
+    <label for="telephone">Telephone</label>
+    <input id="telephone" name="telephone" type="text" required>
+
+    <label for="adresse">Adresse</label>
+    <textarea id="adresse" name="adresse"></textarea>
+
+    <button class="button primary" type="submit">Enregistrer</button>
+</form>
+{% endblock %}

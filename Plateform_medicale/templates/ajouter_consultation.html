@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Ajouter une Consultation - Plateforme medicale{% endblock %}
+
+{% block content %}
+<div class="page-title">
+    <div>
+        <h1>Ajouter une Consultation</h1>
+        <p class="subtitle">Enregistrez une nouvelle consultation médicale</p>
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+
+    <div>
+        <label for="patient">Patient</label>
+        <select id="patient" name="patient" required>
+            <option value="">-- Sélectionnez un patient --</option>
+            {% for patient in patients %}
+            <option value="{{ patient.id }}">{{ patient.prenom }} {{ patient.nom }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div>
+        <label for="medecin">Médecin</label>
+        <select id="medecin" name="medecin" required>
+            <option value="">-- Sélectionnez un médecin --</option>
+            {% for medecin in medecins %}
+            <option value="{{ medecin.id }}">Dr {{ medecin.prenom }} {{ medecin.nom }} ({{ medecin.specialite }})</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div>
+        <label for="service">Service</label>
+        <select id="service" name="service">
+            <option value="">-- Sélectionnez un service (optionnel) --</option>
+            {% for service in services %}
+            <option value="{{ service.id }}">{{ service.nom }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div>
+        <label for="date_consultation">Date de Consultation</label>
+        <input 
+            type="datetime-local" 
+            id="date_consultation" 
+            name="date_consultation" 
+            required
+        >
+    </div>
+
+    <div>
+        <label for="diagnostic">Diagnostic</label>
+        <textarea 
+            id="diagnostic" 
+            name="diagnostic" 
+            required
+            placeholder="Décrivez le diagnostic..."
+        ></textarea>
+    </div>
+
+    <div>
+        <label for="traitement">Traitement</label>
+        <textarea 
+            id="traitement" 
+            name="traitement" 
+            placeholder="Décrivez le traitement prescrit..."
+        ></textarea>
+    </div>
+
+    <div>
+        <label for="prise_en_charge">Prise en Charge (optionnel)</label>
+        <select id="prise_en_charge" name="prise_en_charge">
+            <option value="">-- Sélectionnez une prise en charge (optionnel) --</option>
+            {% for prise in prises_en_charge %}
+            <option value="{{ prise.id }}">{{ prise.patient }} - {{ prise.motif }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <button type="submit" class="button primary">Ajouter la Consultation</button>
+    <a href="{% url 'liste_consultations' %}" class="button">Retour</a>
+</form>
+{% endblock %}

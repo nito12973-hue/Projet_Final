@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Tableau de bord{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Tableau de bord</h1>
+        <p class="subtitle">Vue generale de la plateforme de prise en charge medicale.</p>
+    </div>
+</section>
+
+<section class="grid">
+    <div class="stat"><strong>{{ total_patients }}</strong><span>Patients</span></div>
+    <div class="stat"><strong>{{ total_medecins }}</strong><span>Medecins</span></div>
+    <div class="stat"><strong>{{ total_services }}</strong><span>Services</span></div>
+    <div class="stat"><strong>{{ total_prises_en_charge }}</strong><span>Prises en charge</span></div>
+    <div class="stat"><strong>{{ total_consultations }}</strong><span>Consultations</span></div>
+    <div class="stat"><strong>{{ total_ordonnances }}</strong><span>Ordonnances</span></div>
+</section>
+{% endblock %}

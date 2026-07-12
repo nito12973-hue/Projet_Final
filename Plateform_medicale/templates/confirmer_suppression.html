@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Confirmer la suppression{% endblock %}
+
+{% block content %}
+<div class="page-title">
+    <div>
+        <h1>Confirmer la suppression</h1>
+        <p class="subtitle">Êtes-vous sûr de vouloir supprimer cet élément ?</p>
+    </div>
+</div>
+
+<div style="background: #fee4e2; border: 1px solid #fecaca; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+    <p style="margin: 0; color: #b42318; font-weight: 600;">
+        ⚠️ Attention : Cette action est irréversible
+    </p>
+    <p style="margin: 10px 0 0; color: #1f2933;">
+        Vous êtes sur le point de supprimer : <strong>{{ objet }}</strong>
+    </p>
+</div>
+
+<form method="post" style="max-width: 720px;">
+    {% csrf_token %}
+    <button type="submit" class="button" style="background: #b42318; color: white; border-color: #b42318;">
+        Confirmer la suppression
+    </button>
+    <a href="javascript:history.back()" class="button">Annuler</a>
+</form>
+{% endblock %}
