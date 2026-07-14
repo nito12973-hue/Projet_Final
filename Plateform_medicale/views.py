@@ -12,6 +12,11 @@ from .models import (
 )
 
 
+def landing(request):
+    """Page d'accueil publique de SantéSN (vitrine)."""
+    return render(request, "landing.html")
+
+
 @admin_required
 def dashboard(request):
     contexte = {
