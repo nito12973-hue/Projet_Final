@@ -1,0 +1,17 @@
+{% extends "accounts/base_auth.html" %}
+
+{% block title %}{{ dashboard_title }} — SantéSN{% endblock %}
+
+{% block content %}
+<h1>{{ dashboard_title }}</h1>
+<p class="sous-titre">
+    Bonjour {{ request.user.get_full_name|default:request.user.email }} —
+    vous êtes connecté en tant que <strong>{{ current_role_label }}</strong>.
+</p>
+<p class="sous-titre">{{ dashboard_message }}</p>
+
+<form method="post" action="{% url 'accounts:logout' %}">
+    {% csrf_token %}
+    <button type="submit" class="btn-principal">Se déconnecter</button>
+</form>
+{% endblock %}
