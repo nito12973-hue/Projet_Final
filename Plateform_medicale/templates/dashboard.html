@@ -11,11 +11,11 @@
 </section>
 
 <section class="grid">
-    <div class="stat"><strong>{{ total_patients }}</strong><span>Patients</span></div>
-    <div class="stat"><strong>{{ total_medecins }}</strong><span>Medecins</span></div>
-    <div class="stat"><strong>{{ total_services }}</strong><span>Services</span></div>
-    <div class="stat"><strong>{{ total_prises_en_charge }}</strong><span>Prises en charge</span></div>
-    <div class="stat"><strong>{{ total_consultations }}</strong><span>Consultations</span></div>
-    <div class="stat"><strong>{{ total_ordonnances }}</strong><span>Ordonnances</span></div>
+    <a class="stat" href="{% url 'liste_patients' %}"><strong>{{ total_patients }}</strong><span>🧑‍🤝‍🧑 Patients</span></a>
+    <a class="stat" href="{% url 'liste_medecins' %}"><strong>{{ total_medecins }}</strong><span>🩺 Medecins</span></a>
+    <a class="stat" href="{% url 'liste_services' %}"><strong>{{ total_services }}</strong><span>🏥 Services</span></a>
+    <a class="stat" href="{% url 'liste_prises_en_charge' %}"><strong>{{ total_prises_en_charge }}</strong><span>📋 Prises en charge</span></a>
+    <a class="stat" href="{% url 'liste_consultations' %}"><strong>{{ total_consultations }}</strong><span>🗓️ Consultations</span></a>
+    <a class="stat" href="{% url 'liste_ordonnances' %}"><strong>{{ total_ordonnances }}</strong><span>💊 Ordonnances</span></a>
 </section>
 {% endblock %}
