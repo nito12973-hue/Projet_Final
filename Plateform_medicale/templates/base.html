@@ -283,6 +283,12 @@
             gap: 8px;
         }
 
+        .session {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
         @media (max-width: 760px) {
             .topbar,
             .page-title {
@@ -300,7 +306,7 @@
 <body>
     <header>
         <div class="topbar">
-            <a class="brand" href="{% url 'dashboard' %}">Plateforme medicale</a>
+            <a class="brand" href="{% url 'dashboard' %}">SantéSN</a>
             <nav aria-label="Navigation principale">
                 <a href="{% url 'liste_patients' %}">Patients</a>
                 <a href="{% url 'liste_medecins' %}">Medecins</a>
@@ -309,6 +315,15 @@
                 <a href="{% url 'liste_consultations' %}">Consultations</a>
                 <a href="{% url 'liste_ordonnances' %}">Ordonnances</a>
             </nav>
+            {% if user.is_authenticated %}
+            <div class="session">
+                <span class="badge">{{ current_role_label }}</span>
+                <form method="post" action="{% url 'accounts:logout' %}" style="max-width:none;padding:0;border:0;background:transparent;">
+                    {% csrf_token %}
+                    <button type="submit" class="button btn">Déconnexion</button>
+                </form>
+            </div>
+            {% endif %}
         </div>
     </header>
 

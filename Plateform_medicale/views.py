@@ -1,5 +1,7 @@
 from django.shortcuts import render, redirect
 
+from accounts.decorators import admin_required
+
 from .models import (
     Consultation,
     Medecin,
@@ -10,6 +12,7 @@ from .models import (
 )
 
 
+@admin_required
 def dashboard(request):
     contexte = {
         "total_patients": Patient.objects.count(),
@@ -22,11 +25,13 @@ def dashboard(request):
     return render(request, "dashboard.html", contexte)
 
 
+@admin_required
 def liste_patients(request):
     patients = Patient.objects.all()
     return render(request, "liste_patients.html", {"patients": patients})
 
 
+@admin_required
 def ajouter_patient(request):
     if request.method == "POST":
         nom = request.POST.get("nom")
@@ -47,11 +52,13 @@ def ajouter_patient(request):
     return render(request, "ajouter_patient.html")
 
 
+@admin_required
 def liste_medecins(request):
     medecins = Medecin.objects.all()
     return render(request, "liste_medecins.html", {"medecins": medecins})
 
 
+@admin_required
 def ajouter_medecin(request):
     if request.method == "POST":
         nom = request.POST.get("nom")
@@ -72,11 +79,13 @@ def ajouter_medecin(request):
     return render(request, "ajouter_medecin.html")
 
 
+@admin_required
 def liste_services(request):
     services = ServiceMedical.objects.all()
     return render(request, "liste_services.html", {"services": services})
 
 
+@admin_required
 def ajouter_service(request):
     if request.method == "POST":
         nom = request.POST.get("nom")
@@ -93,6 +102,7 @@ def ajouter_service(request):
     return render(request, "ajouter_service.html")
 
 
+@admin_required
 def liste_prises_en_charge(request):
     prises_en_charge = PriseEnCharge.objects.select_related("patient").all()
     return render(
@@ -102,6 +112,7 @@ def liste_prises_en_charge(request):
     )
 
 
+@admin_required
 def ajouter_prise_en_charge(request):
     if request.method == "POST":
         patient_id = request.POST.get("patient")
@@ -118,6 +129,7 @@ def ajouter_prise_en_charge(request):
     return render(request, "ajouter_prise_en_charge.html", {"patients": patients})
 
 
+@admin_required
 def modifier_prise_en_charge(request, pk):
     prise_en_charge = PriseEnCharge.objects.get(pk=pk)
     if request.method == "POST":
@@ -134,6 +146,7 @@ def modifier_prise_en_charge(request, pk):
     return render(request, "modifier_prise_en_charge.html", contexte)
 
 
+@admin_required
 def supprimer_prise_en_charge(request, pk):
     prise_en_charge = PriseEnCharge.objects.get(pk=pk)
     if request.method == "POST":
@@ -142,6 +155,7 @@ def supprimer_prise_en_charge(request, pk):
     return render(request, "confirmer_suppression.html", {"objet": prise_en_charge, "type": "Prise en charge"})
 
 
+@admin_required
 def liste_consultations(request):
     consultations = Consultation.objects.select_related(
         "patient",
@@ -152,6 +166,7 @@ def liste_consultations(request):
     return render(request, "liste_consultations.html", {"consultations": consultations})
 
 
+@admin_required
 def ajouter_consultation(request):
     if request.method == "POST":
         patient_id = request.POST.get("patient")
@@ -182,6 +197,7 @@ def ajouter_consultation(request):
     return render(request, "ajouter_consultation.html", contexte)
 
 
+@admin_required
 def liste_ordonnances(request):
     ordonnances = Ordonnance.objects.select_related(
         "consultation",
@@ -191,6 +207,7 @@ def liste_ordonnances(request):
     return render(request, "liste_ordonnances.html", {"ordonnances": ordonnances})
 
 
+@admin_required
 def ajouter_ordonnances(request):
     if request.method == "POST":
         consultation_id = request.POST.get("consultation")
@@ -209,6 +226,7 @@ def ajouter_ordonnances(request):
 
 
 # MODIFIER VUES
+@admin_required
 def modifier_patient(request, pk):
     patient = Patient.objects.get(pk=pk)
     if request.method == "POST":
@@ -222,6 +240,7 @@ def modifier_patient(request, pk):
     return render(request, "modifier_patient.html", {"patient": patient})
 
 
+@admin_required
 def modifier_medecin(request, pk):
     medecin = Medecin.objects.get(pk=pk)
     if request.method == "POST":
@@ -235,6 +254,7 @@ def modifier_medecin(request, pk):
     return render(request, "modifier_medecin.html", {"medecin": medecin})
 
 
+@admin_required
 def modifier_service(request, pk):
     service = ServiceMedical.objects.get(pk=pk)
     if request.method == "POST":
@@ -246,6 +266,7 @@ def modifier_service(request, pk):
     return render(request, "modifier_service.html", {"service": service})
 
 
+@admin_required
 def modifier_consultation(request, pk):
     consultation = Consultation.objects.get(pk=pk)
     if request.method == "POST":
@@ -269,6 +290,7 @@ def modifier_consultation(request, pk):
     return render(request, "modifier_consultation.html", contexte)
 
 
+@admin_required
 def modifier_ordonnances(request, pk):
     ordonnance = Ordonnance.objects.get(pk=pk)
     if request.method == "POST":
@@ -285,6 +307,7 @@ def modifier_ordonnances(request, pk):
 
 
 # SUPPRIMER VUES
+@admin_required
 def supprimer_patient(request, pk):
     patient = Patient.objects.get(pk=pk)
     if request.method == "POST":
@@ -293,6 +316,7 @@ def supprimer_patient(request, pk):
     return render(request, "confirmer_suppression.html", {"objet": patient, "type": "Patient"})
 
 
+@admin_required
 def supprimer_medecin(request, pk):
     medecin = Medecin.objects.get(pk=pk)
     if request.method == "POST":
@@ -301,6 +325,7 @@ def supprimer_medecin(request, pk):
     return render(request, "confirmer_suppression.html", {"objet": medecin, "type": "Medecin"})
 
 
+@admin_required
 def supprimer_service(request, pk):
     service = ServiceMedical.objects.get(pk=pk)
     if request.method == "POST":
@@ -309,6 +334,7 @@ def supprimer_service(request, pk):
     return render(request, "confirmer_suppression.html", {"objet": service, "type": "Service"})
 
 
+@admin_required
 def supprimer_consultation(request, pk):
     consultation = Consultation.objects.get(pk=pk)
     if request.method == "POST":
@@ -317,6 +343,7 @@ def supprimer_consultation(request, pk):
     return render(request, "confirmer_suppression.html", {"objet": consultation, "type": "Consultation"})
 
 
+@admin_required
 def supprimer_ordonnances(request, pk):
     ordonnance = Ordonnance.objects.get(pk=pk)
     if request.method == "POST":

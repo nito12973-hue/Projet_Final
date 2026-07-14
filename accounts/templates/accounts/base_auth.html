@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SantéSN{% endblock %}</title>
+    <style>
+        :root {
+            --vert-fonce: #0b5d3b;
+            --vert: #12885a;
+            --vert-clair: #e7f6ef;
+            --vert-accent: #16a34a;
+            --texte: #1f2933;
+            --muted: #5f6f7d;
+            --surface: #ffffff;
+            --border: #d7e5dd;
+            --danger: #b42318;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            color: var(--texte);
+            background: linear-gradient(150deg, var(--vert-clair) 0%, #f6fbf8 55%, #eef7f2 100%);
+            padding: 24px;
+        }
+
+        .auth-card {
+            width: 100%;
+            max-width: 430px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 36px 32px;
+            box-shadow: 0 18px 45px rgba(11, 93, 59, 0.10);
+        }
+
+        .brand {
+            text-align: center;
+            margin-bottom: 26px;
+        }
+
+        .brand .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--vert-fonce);
+            text-decoration: none;
+        }
+
+        .brand .logo .pictogramme {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--vert);
+            color: #ffffff;
+            font-size: 22px;
+        }
+
+        .brand .slogan {
+            margin: 8px 0 0;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        h1 {
+            margin: 0 0 6px;
+            font-size: 22px;
+            color: var(--vert-fonce);
+        }
+
+        .sous-titre {
+            margin: 0 0 22px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-control {
+            width: 100%;
+            min-height: 44px;
+            margin-bottom: 16px;
+            padding: 10px 13px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font: inherit;
+        }
+
+        .form-control:focus {
+            outline: 2px solid var(--vert-accent);
+            outline-offset: 1px;
+            border-color: var(--vert-accent);
+        }
+
+        .btn-principal {
+            width: 100%;
+            min-height: 46px;
+            border: none;
+            border-radius: 8px;
+            background: var(--vert);
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .btn-principal:hover { background: var(--vert-fonce); }
+
+        .erreurs {
+            margin: 0 0 16px;
+            padding: 12px 14px;
+            border-radius: 8px;
+            background: #fee4e2;
+            color: var(--danger);
+            font-size: 14px;
+        }
+
+        .erreurs p { margin: 0; }
+
+        .aide { color: var(--muted); font-size: 12px; margin: -10px 0 14px; }
+
+        .pied {
+            margin-top: 22px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-card">
+        <div class="brand">
+            <span class="logo"><span class="pictogramme">✚</span>SantéSN</span>
+            <p class="slogan">La santé connectée au service de tous.</p>
+        </div>
+        {% block content %}{% endblock %}
+        <p class="pied">© SantéSN — Plateforme de prise en charge médicale</p>
+    </div>
+</body>
+</html>
