@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SantéSN{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --vert-fonce: #0b5d3b;
+            --vert: #12885a;
+            --vert-clair: #e7f6ef;
+            --vert-accent: #16a34a;
+            --texte: #1f2933;
+            --muted: #5f6f7d;
+            --surface: #ffffff;
+            --border: #d7e5dd;
+            --danger: #b42318;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Plus Jakarta Sans', 'Segoe UI', Arial, sans-serif;
+            color: var(--texte);
+            background: linear-gradient(150deg, var(--vert-clair) 0%, #f6fbf8 55%, #eef7f2 100%);
+            padding: 24px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Blobs décoratifs animés en arrière-plan */
+        .blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(70px);
+            opacity: 0.45;
+            z-index: 0;
+            pointer-events: none;
+            animation: flotter 14s ease-in-out infinite alternate;
+        }
+        .blob-1 { width: 420px; height: 420px; top: -140px; left: -120px; background: #bfe8d4; }
+        .blob-2 { width: 360px; height: 360px; bottom: -120px; right: -100px; background: #a7dfc3; animation-delay: -7s; }
+
+        @keyframes flotter {
+            from { transform: translate(0, 0) scale(1); }
+            to   { transform: translate(40px, 30px) scale(1.12); }
+        }
+
+        /* Carte double panneau */
+        .auth-shell {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 920px;
+            display: grid;
+            grid-template-columns: 1fr 1.1fr;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 24px 70px rgba(11, 93, 59, 0.16);
+            animation: apparaitre 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+
+        @keyframes apparaitre {
+            from { opacity: 0; transform: translateY(26px) scale(0.985); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* Panneau marque (gauche) */
+        .panneau-marque {
+            position: relative;
+            padding: 46px 38px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 32px;
+            color: #f2fbf6;
+            background: linear-gradient(160deg, var(--vert-fonce) 0%, var(--vert) 70%, #17a266 100%);
+            overflow: hidden;
+        }
+
+        .panneau-marque::before,
+        .panneau-marque::after {
+            content: "✚";
+            position: absolute;
+            color: rgba(255, 255, 255, 0.07);
+            font-size: 180px;
+            line-height: 1;
+            animation: pulser 6s ease-in-out infinite;
+        }
+        .panneau-marque::before { top: -34px; right: -30px; }
+        .panneau-marque::after { bottom: -48px; left: -26px; font-size: 220px; animation-delay: -3s; }
+
+        @keyframes pulser {
+            0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.55; }
+            50%      { transform: scale(1.08) rotate(4deg); opacity: 1; }
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 27px;
+            font-weight: 800;
+            color: #ffffff;
+            text-decoration: none;
+        }
+
+        .logo .pictogramme {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 46px;
+            height: 46px;
+            border-radius: 13px;
+            background: rgba(255, 255, 255, 0.16);
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            color: #ffffff;
+            font-size: 24px;
+            backdrop-filter: blur(4px);
+        }
+
+        .slogan {
+            margin: 14px 0 0;
+            font-size: 17px;
+            font-weight: 600;
+            line-height: 1.5;
+            color: #e4f7ec;
+            max-width: 300px;
+        }
+
+        .points-forts {
+            position: relative;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            display: grid;
+            gap: 14px;
+            font-size: 14px;
+        }
+
+        .points-forts li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            opacity: 0;
+            animation: glisser 0.55s ease-out forwards;
+        }
+        .points-forts li:nth-child(1) { animation-delay: 0.25s; }
+        .points-forts li:nth-child(2) { animation-delay: 0.40s; }
+        .points-forts li:nth-child(3) { animation-delay: 0.55s; }
+
+        @keyframes glisser {
+            from { opacity: 0; transform: translateX(-14px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+
+        .points-forts .puce {
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            border-radius: 9px;
+            background: rgba(255, 255, 255, 0.14);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            font-size: 14px;
+        }
+
+        /* Panneau formulaire (droite) */
+        .panneau-form {
+            padding: 46px 42px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        h1 {
+            margin: 0 0 6px;
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--vert-fonce);
+        }
+
+        .sous-titre {
+            margin: 0 0 24px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-control {
+            width: 100%;
+            min-height: 46px;
+            margin-bottom: 16px;
+            padding: 11px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            font: inherit;
+            background: #fbfdfc;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        }
+
+        .form-control:hover { border-color: #b9d6c6; }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--vert-accent);
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.14);
+        }
+
+        .btn-principal {
+            position: relative;
+            width: 100%;
+            min-height: 48px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--vert) 0%, var(--vert-accent) 100%);
+            color: #ffffff;
+            font: inherit;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            overflow: hidden;
+            transition: transform 0.15s ease, box-shadow 0.2s ease;
+            box-shadow: 0 8px 20px rgba(18, 136, 90, 0.28);
+        }
+
+        .btn-principal:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 26px rgba(18, 136, 90, 0.36);
+        }
+
+        .btn-principal:active { transform: translateY(0) scale(0.99); }
+
+        /* Reflet animé sur le bouton */
+        .btn-principal::after {
+            content: "";
+            position: absolute;
+            top: 0; left: -80%;
+            width: 45%; height: 100%;
+            background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+            transform: skewX(-22deg);
+            animation: reflet 3.6s ease-in-out infinite;
+        }
+
+        @keyframes reflet {
+            0%, 60% { left: -80%; }
+            100%    { left: 130%; }
+        }
+
+        .erreurs {
+            margin: 0 0 16px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            background: #fee4e2;
+            border: 1px solid #fecdca;
+            color: var(--danger);
+            font-size: 14px;
+            animation: secouer 0.4s ease;
+        }
+
+        @keyframes secouer {
+            0%, 100% { transform: translateX(0); }
+            25%      { transform: translateX(-5px); }
+            75%      { transform: translateX(5px); }
+        }
+
+        .erreurs p { margin: 0; }
+
+        .aide { color: var(--muted); font-size: 12px; margin: -10px 0 14px; }
+
+        .pied {
+            margin-top: 24px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 860px) {
+            .auth-shell { grid-template-columns: 1fr; max-width: 480px; }
+
+            .panneau-marque {
+                padding: 30px 28px;
+                gap: 18px;
+                flex-direction: column;
+            }
+
+            .panneau-marque::after { display: none; }
+            .points-forts { display: none; }
+            .slogan { font-size: 14px; margin-top: 8px; }
+            .panneau-form { padding: 30px 26px 34px; }
+        }
+
+        @media (max-width: 400px) {
+            body { padding: 12px; }
+            .panneau-form { padding: 24px 18px 28px; }
+        }
+
+        /* Accessibilité : réduire les animations si demandé */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <div class="auth-shell">
+        <aside class="panneau-marque">
+            <div>
+                <span class="logo">
+                    <svg width="46" height="46" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <rect x="2" y="2" width="44" height="44" rx="13" fill="rgba(255,255,255,0.16)" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>
+                        <path d="M24 12c-5 5.2-10 8-10 13.4C14 30.6 18.4 35 24 35s10-4.4 10-9.6C34 20 29 17.2 24 12z" fill="#ffffff" opacity="0.18"/>
+                        <path d="M21.4 17h5.2v4.4H31v5.2h-4.4V31h-5.2v-4.4H17v-5.2h4.4V17z" fill="#ffffff"/>
+                    </svg>
+                    SantéSN
+                </span>
+                <p class="slogan">La santé connectée au service de tous.</p>
+            </div>
+            <ul class="points-forts">
+                <li><span class="puce">🛡️</span>Données médicales sécurisées</li>
+                <li><span class="puce">🤝</span>Assurés, médecins et pharmaciens réunis</li>
+                <li><span class="puce">⚡</span>Prise en charge simplifiée et rapide</li>
+            </ul>
+        </aside>
+
+        <section class="panneau-form">
+            {% block content %}{% endblock %}
+            <p class="pied">© SantéSN — Plateforme de prise en charge médicale</p>
+        </section>
+    </div>
+</body>
+</html>
