@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load icones %}
 
 {% block title %}Dashboard Administrateur - SanteSN{% endblock %}
 
@@ -10,24 +11,29 @@
     </div>
 </section>
 
-<section class="grid">
-    <a class="stat" href="{% url 'liste_patients' %}">
+<section class="dash-grid">
+    <a class="dash-stat" href="{% url 'liste_patients' %}">
+        <span class="dash-stat-icon">{% icone "id-card" %}</span>
         <strong>{{ total_patients }}</strong>
         <span>Assures geres</span>
     </a>
-    <a class="stat" href="{% url 'liste_medecins' %}">
+    <a class="dash-stat" href="{% url 'liste_medecins' %}">
+        <span class="dash-stat-icon">{% icone "stethoscope" %}</span>
         <strong>{{ total_medecins }}</strong>
         <span>Medecins actifs</span>
     </a>
-    <a class="stat" href="{% url 'liste_prestataires' %}">
+    <a class="dash-stat" href="{% url 'liste_prestataires' %}">
+        <span class="dash-stat-icon">{% icone "building" %}</span>
         <strong>{{ total_prestataires }}</strong>
         <span>Prestataires</span>
     </a>
-    <a class="stat" href="{% url 'liste_services' %}">
+    <a class="dash-stat" href="{% url 'liste_services' %}">
+        <span class="dash-stat-icon">{% icone "pill" %}</span>
         <strong>{{ total_services }}</strong>
         <span>Services medicaux</span>
     </a>
-    <a class="stat" href="{% url 'liste_prises_en_charge' %}">
+    <a class="dash-stat" href="{% url 'liste_prises_en_charge' %}">
+        <span class="dash-stat-icon">{% icone "shield-check" %}</span>
         <strong>{{ total_prises_en_charge }}</strong>
         <span>Prises en charge</span>
     </a>
@@ -105,7 +111,7 @@
                 {% for prise in dernieres_prises_en_charge %}
                 <tr>
                     <td>{{ prise.patient }}</td>
-                    <td><span class="badge {{ prise.statut }}">{{ prise.get_statut_display }}</span></td>
+                    <td><span class="dash-pill {% if prise.statut == 'validee' or prise.statut == 'terminee' %}ok{% elif prise.statut == 'refusee' %}danger{% else %}attente{% endif %}">{{ prise.get_statut_display }}</span></td>
                 </tr>
                 {% endfor %}
             </tbody>

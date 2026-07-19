@@ -9,18 +9,35 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #f2f8f4;
+            --bg: #eef6f5;
             --surface: #ffffff;
-            --primary: #12885a;
-            --primary-dark: #0b5d3b;
-            --primary-accent: #16a34a;
-            --primary-soft: #e7f6ef;
-            --border: #d7e5dd;
+            /* Turquoise vif : bordures, decoratif, fonds derriere du texte fonce.
+               Pas assez de contraste pour du texte/icone blancs en aplat. */
+            --primary: #14b8a6;
+            /* Teal fonce : seule variante sure pour texte/icone blancs en aplat
+               (boutons pleins) et pour texte/icone colores sur fond clair. */
+            --primary-strong: #0f766e;
+            /* Navy : titres, texte fonce — identique au menu lateral. */
+            --primary-dark: #0f172a;
+            /* Reserve aux degrades decoratifs (barres, non-texte). */
+            --primary-accent: #2dd4bf;
+            --primary-soft: #e3f7f4;
+            --border: #d9e2ea;
             --text: #1f2933;
             --muted: #5f6f7d;
             --danger: #b42318;
             --success: #167a46;
             --warning: #9a6700;
+
+            /* Menu lateral : memes teintes navy/turquoise que ci-dessus, tokens
+               dedies pour les nuances propres au fond tres sombre de l'aside. */
+            --sb-bg: #0F172A;
+            --sb-hover: rgba(255, 255, 255, 0.07);
+            --sb-border: rgba(255, 255, 255, 0.09);
+            --sb-text-muted: rgba(231, 236, 243, 0.66);
+            --sb-text-faint: rgba(231, 236, 243, 0.42);
+            --accent-turquoise: #14b8a6;
+            --accent-turquoise-wash: rgba(20, 184, 166, 0.16);
         }
 
         * {
@@ -39,16 +56,31 @@
         .shell {
             display: grid;
             grid-template-columns: 272px minmax(0, 1fr);
+            gap: 16px;
             min-height: 100vh;
+            transition: grid-template-columns 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body.sidebar-reduite .shell {
+            grid-template-columns: 84px minmax(0, 1fr);
         }
 
         aside {
             display: flex;
             flex-direction: column;
-            gap: 22px;
-            padding: 26px 18px;
-            color: #effff7;
-            background: linear-gradient(180deg, #06291f, #041c16);
+            gap: 18px;
+            padding: 24px 16px;
+            color: #e7ecf3;
+            background: linear-gradient(180deg, var(--sb-bg) 0%, #0b1224 100%);
+            border-radius: 0 22px 22px 0;
+            box-shadow: 8px 0 32px rgba(8, 15, 30, 0.28);
+            transition: padding 0.25s ease;
+        }
+
+        .sidebar-head {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .brand {
@@ -60,6 +92,33 @@
             font-weight: 800;
             text-decoration: none;
             white-space: nowrap;
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .btn-reduire {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            flex-shrink: 0;
+            border-radius: 9px;
+            border: 1px solid var(--sb-border);
+            background: transparent;
+            color: var(--sb-text-muted);
+            cursor: pointer;
+            transition: background 0.16s ease, color 0.16s ease;
+        }
+
+        .btn-reduire:hover { background: var(--sb-hover); color: #ffffff; }
+        .btn-reduire .icone-nav { width: 16px; height: 16px; }
+
+        body.sidebar-reduite .brand-texte { display: none; }
+
+        @media (max-width: 980px) {
+            .btn-reduire { display: none; }
         }
 
         .user-card {
@@ -69,8 +128,10 @@
             background: rgba(255, 255, 255, 0.07);
         }
 
-        .user-card strong { display: block; font-size: 14px; }
+        .user-card strong { display: block; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .user-card span { color: rgba(239, 255, 247, 0.72); font-weight: 700; font-size: 13px; }
+
+        body.sidebar-reduite .user-card { display: none; }
 
         aside nav {
             display: grid;
@@ -78,13 +139,14 @@
         }
 
         aside nav a {
+            position: relative;
             display: flex;
             align-items: center;
             gap: 10px;
             min-height: 42px;
-            padding: 10px 12px;
+            padding: 10px 12px 10px 15px;
             border-radius: 10px;
-            color: rgba(239, 255, 247, 0.78);
+            color: var(--sb-text-muted);
             text-decoration: none;
             font-weight: 700;
             font-size: 14px;
@@ -93,12 +155,37 @@
 
         aside nav a:hover {
             color: #ffffff;
-            background: rgba(255, 255, 255, 0.08);
+            background: var(--sb-hover);
         }
 
         aside nav a.active {
             color: #ffffff;
-            background: rgba(19, 164, 111, 0.95);
+            background: var(--accent-turquoise-wash);
+        }
+
+        aside nav a.active .icone-nav {
+            color: var(--accent-turquoise);
+        }
+
+        aside nav a.active::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 8px;
+            bottom: 8px;
+            width: 3px;
+            border-radius: 3px;
+            background: var(--accent-turquoise);
+        }
+
+        body.sidebar-reduite aside nav a {
+            justify-content: center;
+            padding: 10px;
+        }
+
+        body.sidebar-reduite .nav-texte,
+        body.sidebar-reduite .badge-non-lues {
+            display: none;
         }
 
         .icone-nav {
@@ -132,9 +219,12 @@
         }
 
         .logout-button {
+            display: flex;
+            align-items: center;
+            gap: 10px;
             width: 100%;
             min-height: 42px;
-            padding: 10px 12px;
+            padding: 10px 12px 10px 15px;
             border: 0;
             border-radius: 10px;
             color: #ffb4a4;
@@ -147,6 +237,11 @@
 
         .logout-button:hover {
             background: rgba(255, 255, 255, 0.06);
+        }
+
+        body.sidebar-reduite .logout-button {
+            justify-content: center;
+            padding: 10px;
         }
 
         .contenu main {
@@ -187,7 +282,7 @@
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: 14px;
-            box-shadow: 0 6px 24px rgba(11, 93, 59, 0.06);
+            box-shadow: 0 6px 24px rgba(15, 23, 42, 0.07);
         }
 
         .panel {
@@ -221,7 +316,7 @@
         }
 
         tbody tr:hover {
-            background: #f4fbf7;
+            background: #f3fbfa;
         }
 
         tr:last-child td {
@@ -231,6 +326,35 @@
         .empty {
             padding: 28px;
             color: var(--muted);
+        }
+
+        /* Tableau de donnees replie par defaut (ex. sous un graphique) : evite
+           de dupliquer visuellement chart + tableau, tout en gardant les
+           valeurs exactes accessibles (natif, sans JS, lisible au clavier/
+           lecteur d'ecran). */
+        .details-tableau summary {
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--primary-strong);
+            list-style: none;
+        }
+
+        .details-tableau summary::-webkit-details-marker { display: none; }
+
+        .details-tableau summary::before {
+            content: "▸";
+            display: inline-block;
+            margin-right: 6px;
+            transition: transform 0.15s ease;
+        }
+
+        .details-tableau[open] summary::before {
+            transform: rotate(90deg);
+        }
+
+        .details-tableau table {
+            margin-top: 12px;
         }
 
         .grid {
@@ -286,7 +410,7 @@
             border-radius: 14px;
             padding: 20px 18px 18px;
             overflow: hidden;
-            box-shadow: 0 6px 24px rgba(11, 93, 59, 0.06);
+            box-shadow: 0 6px 24px rgba(15, 23, 42, 0.07);
             transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
             animation: entree-carte 0.5s ease-out both;
         }
@@ -315,8 +439,8 @@
 
         .stat:hover {
             transform: translateY(-4px);
-            border-color: #bfe0cf;
-            box-shadow: 0 14px 34px rgba(11, 93, 59, 0.13);
+            border-color: #99e6da;
+            box-shadow: 0 14px 34px rgba(13, 148, 136, 0.16);
         }
 
         .stat strong {
@@ -374,7 +498,7 @@
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: 14px;
-            box-shadow: 0 6px 24px rgba(11, 93, 59, 0.06);
+            box-shadow: 0 6px 24px rgba(15, 23, 42, 0.07);
         }
 
         label {
@@ -401,16 +525,16 @@
         input:hover,
         select:hover,
         textarea:hover {
-            border-color: #b9d6c6;
+            border-color: #a8d8d0;
         }
 
         input:focus,
         select:focus,
         textarea:focus {
             outline: none;
-            border-color: var(--primary-accent);
+            border-color: var(--primary);
             background: #ffffff;
-            box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.13);
+            box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.16);
         }
 
         textarea {
@@ -436,22 +560,22 @@
 
         .button:hover {
             background: var(--primary-soft);
-            border-color: #c3e3d2;
+            border-color: #99e6da;
             transform: translateY(-1px);
         }
 
         .button.primary {
             border-color: transparent;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-accent) 100%);
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-strong) 100%);
             color: #ffffff;
-            box-shadow: 0 6px 16px rgba(18, 136, 90, 0.28);
+            box-shadow: 0 6px 16px rgba(13, 148, 136, 0.30);
         }
 
         .button.primary:hover {
-            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+            background: linear-gradient(135deg, var(--primary-strong) 0%, var(--primary-dark) 100%);
             border-color: transparent;
             transform: translateY(-2px);
-            box-shadow: 0 10px 22px rgba(18, 136, 90, 0.36);
+            box-shadow: 0 10px 22px rgba(13, 148, 136, 0.40);
         }
 
         .button.btn {
@@ -470,13 +594,13 @@
 
         .button.btn-primary {
             border-color: transparent;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-accent) 100%);
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-strong) 100%);
             color: #ffffff;
-            box-shadow: 0 4px 12px rgba(18, 136, 90, 0.25);
+            box-shadow: 0 4px 12px rgba(13, 148, 136, 0.28);
         }
 
         .button.btn-primary:hover {
-            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+            background: linear-gradient(135deg, var(--primary-strong) 0%, var(--primary-dark) 100%);
             border-color: transparent;
         }
 
@@ -497,6 +621,41 @@
             gap: 8px;
         }
 
+        /* Erreurs de formulaire : classe manquante jusqu'ici (chaque template
+           dupliquait le style en inline). Deux variantes : par champ (sous le
+           label) et globale (form.non_field_errors, avant les champs). */
+        .erreurs {
+            color: var(--danger);
+            margin: -10px 0 16px;
+            font-size: 13px;
+        }
+
+        .erreurs-formulaire {
+            color: var(--danger);
+            margin-bottom: 16px;
+        }
+
+        /* Barre de filtres (formulaire GET en ligne, au-dessus d'une liste) et
+           formulaire POST "invisible" habillant un seul bouton d'action dans
+           une ligne de tableau — classes manquantes, dupliquees en inline. */
+        form.filtres {
+            max-width: none;
+            padding: 20px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        form.action-ligne {
+            display: inline;
+            max-width: none;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            box-shadow: none;
+        }
+
         /* Tuiles "actions principales" des dashboards par role (distinct de .actions, boutons de ligne de tableau) */
         .action-tiles {
             display: grid;
@@ -510,9 +669,97 @@
             border: 1px solid var(--border);
             border-radius: 14px;
             background: var(--primary-soft);
-            color: var(--primary-dark);
+            color: var(--primary-strong);
             font-weight: 700;
         }
+
+        /* ===== Cartes de stats "accueil" (turquoise), utilisees uniquement sur
+           les 4 pages d'accueil par role (dashboard*.html) — n'affecte pas
+           .stat/.grid utilises ailleurs dans l'application. ===== */
+        .dash-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 14px;
+        }
+
+        .dash-stat {
+            display: block;
+            text-decoration: none;
+            color: inherit;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 18px;
+            box-shadow: 0 6px 20px rgba(15, 23, 42, 0.07);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+            animation: entree-carte 0.5s ease-out both;
+        }
+
+        .dash-grid .dash-stat:nth-child(1) { animation-delay: 0.04s; }
+        .dash-grid .dash-stat:nth-child(2) { animation-delay: 0.08s; }
+        .dash-grid .dash-stat:nth-child(3) { animation-delay: 0.12s; }
+        .dash-grid .dash-stat:nth-child(4) { animation-delay: 0.16s; }
+        .dash-grid .dash-stat:nth-child(5) { animation-delay: 0.20s; }
+
+        a.dash-stat:hover {
+            transform: translateY(-4px);
+            border-color: #99e6da;
+            box-shadow: 0 14px 32px rgba(20, 184, 166, 0.18);
+        }
+
+        .dash-stat-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            margin-bottom: 14px;
+            border-radius: 10px;
+            background: var(--accent-turquoise-wash);
+            color: #0d9488;
+        }
+
+        .dash-stat-icon .icone-nav { width: 17px; height: 17px; }
+
+        .dash-stat strong {
+            display: block;
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--text);
+            letter-spacing: -0.02em;
+            margin-bottom: 4px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .dash-stat span {
+            color: var(--muted);
+            font-weight: 600;
+            font-size: 13.5px;
+        }
+
+        /* Statuts en pastille a point colore, utilises uniquement sur les 4
+           pages d'accueil — n'affecte pas .badge utilise ailleurs. */
+        .dash-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .dash-pill::before {
+            content: "";
+            width: 6px;
+            height: 6px;
+            border-radius: 999px;
+            background: currentColor;
+        }
+
+        .dash-pill.ok { background: #dcfce7; color: #15803d; }
+        .dash-pill.attente { background: #fff3cd; color: #9a6700; }
+        .dash-pill.danger { background: #fee4e2; color: #b42318; }
 
         /* ===== Barre de chargement (navigation/formulaires) ===== */
         #barre-chargement {
@@ -521,7 +768,7 @@
             left: 0;
             height: 3px;
             width: 0;
-            background: var(--primary-accent);
+            background: var(--primary);
             z-index: 2000;
             opacity: 0;
             transition: width 0.4s ease, opacity 0.3s ease;
@@ -621,19 +868,26 @@
                     style="position:absolute;top:14px;right:14px;">
                 {% icone "x" %}
             </button>
-            <a class="brand" href="{% url 'post_login_redirect' %}">
-                <svg width="36" height="36" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <path d="M24 4 L40 10 V22 C40 33 33 40.5 24 44 C15 40.5 8 33 8 22 V10 Z" fill="url(#degrade-logo-app)"/>
-                    <path d="M10 20h4l2.4-5 3 10 2.4-7 1.6 2h6.6" fill="none" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
-                    <defs>
-                        <linearGradient id="degrade-logo-app" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
-                            <stop stop-color="#12885a"/>
-                            <stop offset="1" stop-color="#16a34a"/>
-                        </linearGradient>
-                    </defs>
-                </svg>
-                Santé<span style="color: #4ade80;">SN</span>
-            </a>
+            <div class="sidebar-head">
+                <a class="brand" href="{% url 'post_login_redirect' %}">
+                    <svg width="36" height="36" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="flex-shrink:0;">
+                        <path d="M24 4 L40 10 V22 C40 33 33 40.5 24 44 C15 40.5 8 33 8 22 V10 Z" fill="url(#degrade-logo-app)"/>
+                        <path d="M10 20h4l2.4-5 3 10 2.4-7 1.6 2h6.6" fill="none" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+                        <defs>
+                            <linearGradient id="degrade-logo-app" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#14b8a6"/>
+                                <stop offset="1" stop-color="#0d9488"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <span class="brand-texte">Santé<span style="color: #5eead4;">SN</span></span>
+                </a>
+                {% if user.is_authenticated %}
+                <button type="button" id="btn-reduire-menu" class="btn-reduire" aria-pressed="false" aria-label="Réduire le menu" aria-controls="barre-laterale">
+                    {% icone "chevron-left" %}
+                </button>
+                {% endif %}
+            </div>
 
             {% if user.is_authenticated %}
             <div class="user-card">
@@ -643,48 +897,50 @@
 
             <nav aria-label="Navigation principale">
                 {% if current_role == "ADMIN" %}
-                <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">{% icone "grid" %} Tableau de bord</a>
-                <a href="{% url 'liste_utilisateurs' %}" class="{% if request.resolver_match.url_name == 'liste_utilisateurs' %}active{% endif %}">{% icone "users" %} Utilisateurs</a>
-                <a href="{% url 'liste_patients' %}" class="{% if request.resolver_match.url_name == 'liste_patients' %}active{% endif %}">{% icone "id-card" %} Assurés</a>
-                <a href="{% url 'liste_medecins' %}" class="{% if request.resolver_match.url_name == 'liste_medecins' %}active{% endif %}">{% icone "stethoscope" %} Médecins</a>
-                <a href="{% url 'liste_pharmaciens' %}" class="{% if request.resolver_match.url_name == 'liste_pharmaciens' %}active{% endif %}">{% icone "pill" %} Pharmaciens</a>
-                <a href="{% url 'liste_prestataires' %}" class="{% if request.resolver_match.url_name == 'liste_prestataires' %}active{% endif %}">{% icone "building" %} Prestataires</a>
-                <a href="{% url 'liste_prises_en_charge' %}" class="{% if request.resolver_match.url_name == 'liste_prises_en_charge' %}active{% endif %}">{% icone "shield-check" %} Prises en charge</a>
-                <a href="{% url 'liste_paiements' %}" class="{% if request.resolver_match.url_name == 'liste_paiements' %}active{% endif %}">{% icone "receipt" %} Paiements</a>
-                <a href="{% url 'rapports' %}" class="{% if request.resolver_match.url_name == 'rapports' %}active{% endif %}">{% icone "bar-chart" %} Rapports</a>
-                <a href="{% url 'envoyer_notification' %}" class="{% if request.resolver_match.url_name == 'envoyer_notification' or request.resolver_match.url_name == 'liste_notifications_envoyees' %}active{% endif %}">{% icone "bell" %} Notifications</a>
-                <a href="{% url 'changer_mot_de_passe' %}" class="{% if request.resolver_match.url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "lock" %} Mot de passe</a>
+                <a href="{% url 'dashboard' %}" title="Tableau de bord" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord</span></a>
+                <a href="{% url 'liste_utilisateurs' %}" title="Utilisateurs" class="{% if request.resolver_match.url_name == 'liste_utilisateurs' %}active{% endif %}">{% icone "users" %} <span class="nav-texte">Utilisateurs</span></a>
+                <a href="{% url 'liste_patients' %}" title="Assurés" class="{% if request.resolver_match.url_name == 'liste_patients' %}active{% endif %}">{% icone "id-card" %} <span class="nav-texte">Assurés</span></a>
+                <a href="{% url 'liste_medecins' %}" title="Médecins" class="{% if request.resolver_match.url_name == 'liste_medecins' %}active{% endif %}">{% icone "stethoscope" %} <span class="nav-texte">Médecins</span></a>
+                <a href="{% url 'liste_pharmaciens' %}" title="Pharmaciens" class="{% if request.resolver_match.url_name == 'liste_pharmaciens' %}active{% endif %}">{% icone "pill" %} <span class="nav-texte">Pharmaciens</span></a>
+                <a href="{% url 'liste_prestataires' %}" title="Prestataires" class="{% if request.resolver_match.url_name == 'liste_prestataires' %}active{% endif %}">{% icone "building" %} <span class="nav-texte">Prestataires</span></a>
+                <a href="{% url 'liste_prises_en_charge' %}" title="Prises en charge" class="{% if request.resolver_match.url_name == 'liste_prises_en_charge' %}active{% endif %}">{% icone "shield-check" %} <span class="nav-texte">Prises en charge</span></a>
+                <a href="{% url 'liste_paiements' %}" title="Paiements" class="{% if request.resolver_match.url_name == 'liste_paiements' %}active{% endif %}">{% icone "receipt" %} <span class="nav-texte">Paiements</span></a>
+                <a href="{% url 'rapports' %}" title="Rapports" class="{% if request.resolver_match.url_name == 'rapports' %}active{% endif %}">{% icone "bar-chart" %} <span class="nav-texte">Rapports</span></a>
+                <a href="{% url 'envoyer_notification' %}" title="Notifications" class="{% if request.resolver_match.url_name == 'envoyer_notification' or request.resolver_match.url_name == 'liste_notifications_envoyees' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span></a>
+                <a href="{% url 'changer_mot_de_passe' %}" title="Mot de passe" class="{% if request.resolver_match.url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "lock" %} <span class="nav-texte">Mot de passe</span></a>
                 {% elif current_role == "MEDECIN" %}
-                <a href="{% url 'dashboard_medecin' %}" class="{% if request.resolver_match.url_name == 'dashboard_medecin' %}active{% endif %}">{% icone "grid" %} Tableau de bord</a>
-                <a href="{% url 'agenda_medecin' %}" class="{% if request.resolver_match.url_name == 'agenda_medecin' %}active{% endif %}">{% icone "calendar" %} Agenda</a>
-                <a href="{% url 'mes_patients' %}" class="{% if request.resolver_match.url_name == 'mes_patients' %}active{% endif %}">{% icone "users" %} Patients</a>
-                <a href="{% url 'historique_consultations' %}" class="{% if request.resolver_match.url_name == 'historique_consultations' %}active{% endif %}">{% icone "clipboard-list" %} Consultations</a>
-                <a href="{% url 'mes_notifications' %}" class="{% if request.resolver_match.url_name == 'mes_notifications' %}active{% endif %}">{% icone "bell" %} Notifications{% if notifications_non_lues %} <span class="badge-non-lues">{{ notifications_non_lues }}</span>{% endif %}</a>
-                <a href="{% url 'modifier_profil_medecin' %}" class="{% if request.resolver_match.url_name == 'modifier_profil_medecin' %}active{% endif %}">{% icone "user-circle" %} Mon profil</a>
-                <a href="{% url 'changer_mot_de_passe' %}" class="{% if request.resolver_match.url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "lock" %} Mot de passe</a>
+                <a href="{% url 'dashboard_medecin' %}" title="Tableau de bord" class="{% if request.resolver_match.url_name == 'dashboard_medecin' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord</span></a>
+                <a href="{% url 'agenda_medecin' %}" title="Agenda" class="{% if request.resolver_match.url_name == 'agenda_medecin' %}active{% endif %}">{% icone "calendar" %} <span class="nav-texte">Agenda</span></a>
+                <a href="{% url 'mes_patients' %}" title="Patients" class="{% if request.resolver_match.url_name == 'mes_patients' %}active{% endif %}">{% icone "users" %} <span class="nav-texte">Patients</span></a>
+                <a href="{% url 'historique_consultations' %}" title="Consultations" class="{% if request.resolver_match.url_name == 'historique_consultations' %}active{% endif %}">{% icone "clipboard-list" %} <span class="nav-texte">Consultations</span></a>
+                <a href="{% url 'mes_notifications' %}" title="Notifications" class="{% if request.resolver_match.url_name == 'mes_notifications' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span>{% if notifications_non_lues %} <span class="badge-non-lues">{{ notifications_non_lues }}</span>{% endif %}</a>
+                <a href="{% url 'modifier_profil_medecin' %}" title="Mon profil" class="{% if request.resolver_match.url_name == 'modifier_profil_medecin' %}active{% endif %}">{% icone "user-circle" %} <span class="nav-texte">Mon profil</span></a>
+                <a href="{% url 'changer_mot_de_passe' %}" title="Mot de passe" class="{% if request.resolver_match.url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "lock" %} <span class="nav-texte">Mot de passe</span></a>
                 {% elif current_role == "PHARMACIEN" %}
-                <a href="{% url 'dashboard_pharmacien' %}" class="{% if request.resolver_match.url_name == 'dashboard_pharmacien' %}active{% endif %}">{% icone "grid" %} Tableau de bord</a>
-                <a href="{% url 'scanner_ordonnance' %}" class="{% if request.resolver_match.url_name == 'scanner_ordonnance' %}active{% endif %}">{% icone "qr-scan" %} Scanner un QR Code</a>
-                <a href="{% url 'historique_delivrances' %}" class="{% if request.resolver_match.url_name == 'historique_delivrances' %}active{% endif %}">{% icone "clock-history" %} Historique</a>
-                <a href="{% url 'mes_notifications' %}" class="{% if request.resolver_match.url_name == 'mes_notifications' %}active{% endif %}">{% icone "bell" %} Notifications{% if notifications_non_lues %} <span class="badge-non-lues">{{ notifications_non_lues }}</span>{% endif %}</a>
-                <a href="{% url 'changer_mot_de_passe' %}" class="{% if request.resolver_match.url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "lock" %} Mot de passe</a>
+                <a href="{% url 'dashboard_pharmacien' %}" title="Tableau de bord" class="{% if request.resolver_match.url_name == 'dashboard_pharmacien' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord</span></a>
+                <a href="{% url 'scanner_ordonnance' %}" title="Scanner un QR Code" class="{% if request.resolver_match.url_name == 'scanner_ordonnance' %}active{% endif %}">{% icone "qr-scan" %} <span class="nav-texte">Scanner un QR Code</span></a>
+                <a href="{% url 'historique_delivrances' %}" title="Historique" class="{% if request.resolver_match.url_name == 'historique_delivrances' %}active{% endif %}">{% icone "clock-history" %} <span class="nav-texte">Historique</span></a>
+                <a href="{% url 'mes_notifications' %}" title="Notifications" class="{% if request.resolver_match.url_name == 'mes_notifications' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span>{% if notifications_non_lues %} <span class="badge-non-lues">{{ notifications_non_lues }}</span>{% endif %}</a>
+                <a href="{% url 'changer_mot_de_passe' %}" title="Mot de passe" class="{% if request.resolver_match.url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "lock" %} <span class="nav-texte">Mot de passe</span></a>
                 {% elif current_role == "ASSURE" %}
                 {% with url_name=request.resolver_match.url_name %}
-                <a href="{% url 'dashboard_assure' %}" class="{% if url_name == 'dashboard_assure' %}active{% endif %}">{% icone "grid" %} Tableau de bord</a>
-                <a href="{% url 'mon_profil_assure' %}" class="{% if url_name == 'mon_profil_assure' %}active{% endif %}">{% icone "user-circle" %} Mon profil</a>
-                <a href="{% url 'liste_ayants_droit' %}" class="{% if url_name == 'liste_ayants_droit' or url_name == 'ajouter_ayant_droit' or url_name == 'modifier_ayant_droit' %}active{% endif %}">{% icone "users" %} Mes ayants droit</a>
-                <a href="{% url 'mes_rendez_vous_assure' %}" class="{% if url_name == 'mes_rendez_vous_assure' or url_name == 'ajouter_rendez_vous_assure' %}active{% endif %}">{% icone "calendar" %} Mes rendez-vous</a>
-                <a href="{% url 'mes_ordonnances_assure' %}" class="{% if url_name == 'mes_ordonnances_assure' or url_name == 'voir_ordonnance_assure' %}active{% endif %}">{% icone "pill" %} Mes ordonnances</a>
-                <a href="{% url 'mon_historique_assure' %}" class="{% if url_name == 'mon_historique_assure' %}active{% endif %}">{% icone "clock-history" %} Mon historique</a>
-                <a href="{% url 'mes_notifications' %}" class="{% if url_name == 'mes_notifications' %}active{% endif %}">{% icone "bell" %} Notifications{% if notifications_non_lues %} <span class="badge-non-lues">{{ notifications_non_lues }}</span>{% endif %}</a>
-                <a href="{% url 'changer_mot_de_passe' %}" class="{% if url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "lock" %} Mot de passe</a>
+                <a href="{% url 'dashboard_assure' %}" title="Tableau de bord" class="{% if url_name == 'dashboard_assure' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord</span></a>
+                <a href="{% url 'mon_profil_assure' %}" title="Mon profil" class="{% if url_name == 'mon_profil_assure' %}active{% endif %}">{% icone "user-circle" %} <span class="nav-texte">Mon profil</span></a>
+                <a href="{% url 'liste_ayants_droit' %}" title="Mes ayants droit" class="{% if url_name == 'liste_ayants_droit' or url_name == 'ajouter_ayant_droit' or url_name == 'modifier_ayant_droit' %}active{% endif %}">{% icone "users" %} <span class="nav-texte">Mes ayants droit</span></a>
+                <a href="{% url 'mes_rendez_vous_assure' %}" title="Mes rendez-vous" class="{% if url_name == 'mes_rendez_vous_assure' or url_name == 'ajouter_rendez_vous_assure' %}active{% endif %}">{% icone "calendar" %} <span class="nav-texte">Mes rendez-vous</span></a>
+                <a href="{% url 'mes_ordonnances_assure' %}" title="Mes ordonnances" class="{% if url_name == 'mes_ordonnances_assure' or url_name == 'voir_ordonnance_assure' %}active{% endif %}">{% icone "pill" %} <span class="nav-texte">Mes ordonnances</span></a>
+                <a href="{% url 'mon_historique_assure' %}" title="Mon historique" class="{% if url_name == 'mon_historique_assure' %}active{% endif %}">{% icone "clock-history" %} <span class="nav-texte">Mon historique</span></a>
+                <a href="{% url 'mes_notifications' %}" title="Notifications" class="{% if url_name == 'mes_notifications' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span>{% if notifications_non_lues %} <span class="badge-non-lues">{{ notifications_non_lues }}</span>{% endif %}</a>
+                <a href="{% url 'changer_mot_de_passe' %}" title="Mot de passe" class="{% if url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "lock" %} <span class="nav-texte">Mot de passe</span></a>
                 {% endwith %}
                 {% endif %}
             </nav>
 
             <form class="logout-form" method="post" action="{% url 'logout' %}">
                 {% csrf_token %}
-                <button class="logout-button" type="submit">Déconnexion</button>
+                <button class="logout-button" type="submit" title="Déconnexion">
+                    {% icone "log-out" %} <span class="nav-texte">Déconnexion</span>
+                </button>
             </form>
             {% endif %}
         </aside>
@@ -703,7 +959,7 @@
                     <li style="padding:14px 18px;border-radius:10px;margin-bottom:10px;font-weight:600;
                         {% if message.tags == 'error' %}background:#fee4e2;color:#b42318;border:1px solid #fecdca;
                         {% elif message.tags == 'success' %}background:#dcfce7;color:#167a46;border:1px solid #bbf7d0;
-                        {% else %}background:#eef2f6;color:#40515f;border:1px solid #d7e5dd;{% endif %}">
+                        {% else %}background:#eef2f6;color:#40515f;border:1px solid #d9e2ea;{% endif %}">
                         {{ message }}
                     </li>
                     {% endfor %}
@@ -737,6 +993,43 @@
             if (fond) { fond.addEventListener('click', fermerMenu); }
             document.addEventListener('keydown', function (evenement) {
                 if (evenement.key === 'Escape') { fermerMenu(); }
+            });
+        })();
+
+        (function () {
+            // Mode reduit du menu (icones seules) : bascule desktop, retenue
+            // entre les visites. Ignoree sous 981px (le tiroir mobile prend
+            // le relais et affiche toujours le texte).
+            var CLE_STOCKAGE = 'santesn-menu-reduit';
+            var corps = document.body;
+            var bouton = document.getElementById('btn-reduire-menu');
+            if (!bouton) { return; }
+
+            function estBureau() {
+                return window.matchMedia('(min-width: 981px)').matches;
+            }
+
+            function appliquer(reduit) {
+                var actif = reduit && estBureau();
+                corps.classList.toggle('sidebar-reduite', actif);
+                bouton.setAttribute('aria-pressed', actif ? 'true' : 'false');
+                bouton.setAttribute('aria-label', actif ? 'Déployer le menu' : 'Réduire le menu');
+                bouton.innerHTML = actif
+                    ? '{% icone "chevron-right" %}'
+                    : '{% icone "chevron-left" %}';
+            }
+
+            var etatEnregistre = window.localStorage.getItem(CLE_STOCKAGE) === '1';
+            appliquer(etatEnregistre);
+
+            bouton.addEventListener('click', function () {
+                var prochain = !corps.classList.contains('sidebar-reduite');
+                window.localStorage.setItem(CLE_STOCKAGE, prochain ? '1' : '0');
+                appliquer(prochain);
+            });
+
+            window.addEventListener('resize', function () {
+                appliquer(window.localStorage.getItem(CLE_STOCKAGE) === '1');
             });
         })();
 

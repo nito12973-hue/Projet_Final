@@ -16,7 +16,7 @@
     </div>
 </section>
 
-<form method="get" style="max-width:none;padding:20px;display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+<form method="get" class="filtres">
     <div style="min-width:180px;">
         <label for="role">Role</label>
         <select id="role" name="role" style="margin-bottom:0;">
@@ -74,7 +74,7 @@
                         <a href="{% url 'modifier_utilisateur' utilisateur.pk %}" class="button btn btn-primary btn-sm">Modifier</a>
                         <a href="{% url 'reinitialiser_mot_de_passe' utilisateur.pk %}" class="button btn btn-sm">Reinitialiser mdp</a>
                         {% if utilisateur.pk != request.user.pk %}
-                        <form method="post" action="{% url 'activer_desactiver_utilisateur' utilisateur.pk %}" style="display:inline;max-width:none;padding:0;border:0;background:transparent;box-shadow:none;">
+                        <form method="post" action="{% url 'activer_desactiver_utilisateur' utilisateur.pk %}" class="action-ligne">
                             {% csrf_token %}
                             {% if utilisateur.is_active %}
                             <button type="submit" class="button btn btn-sm">Desactiver</button>

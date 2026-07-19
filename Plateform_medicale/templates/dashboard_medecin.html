@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load icones %}
 
 {% block title %}Tableau de bord - Dr {{ medecin.nom }}{% endblock %}
 
@@ -11,20 +12,24 @@
     <a class="button primary" href="{% url 'ajouter_rendez_vous' %}">Nouveau rendez-vous</a>
 </section>
 
-<section class="grid">
-    <a class="stat" href="{% url 'agenda_medecin' %}">
+<section class="dash-grid">
+    <a class="dash-stat" href="{% url 'agenda_medecin' %}">
+        <span class="dash-stat-icon">{% icone "calendar" %}</span>
         <strong>{{ total_rendez_vous_a_venir }}</strong>
         <span>Rendez-vous a venir</span>
     </a>
-    <a class="stat" href="{% url 'mes_patients' %}">
+    <a class="dash-stat" href="{% url 'mes_patients' %}">
+        <span class="dash-stat-icon">{% icone "users" %}</span>
         <strong>{{ total_patients }}</strong>
         <span>Patients suivis</span>
     </a>
-    <a class="stat" href="{% url 'historique_consultations' %}">
+    <a class="dash-stat" href="{% url 'historique_consultations' %}">
+        <span class="dash-stat-icon">{% icone "clipboard-list" %}</span>
         <strong>{{ total_consultations }}</strong>
         <span>Consultations</span>
     </a>
-    <div class="stat">
+    <div class="dash-stat">
+        <span class="dash-stat-icon">{% icone "pill" %}</span>
         <strong>{{ total_ordonnances }}</strong>
         <span>Ordonnances emises</span>
     </div>
@@ -52,7 +57,7 @@
                 <td>{{ rdv.patient }}</td>
                 <td>{{ rdv.motif|default:"-" }}</td>
                 <td>
-                    <span class="badge {% if rdv.statut == 'DEMANDE' %}en_attente{% elif rdv.statut == 'CONFIRME' %}confirme{% elif rdv.statut == 'ANNULE' %}refusee{% elif rdv.statut == 'TERMINE' %}terminee{% endif %}">{{ rdv.get_statut_display }}</span>
+                    <span class="dash-pill {% if rdv.statut == 'CONFIRME' or rdv.statut == 'TERMINE' %}ok{% elif rdv.statut == 'ANNULE' %}danger{% else %}attente{% endif %}">{{ rdv.get_statut_display }}</span>
                 </td>
             </tr>
             {% endfor %}

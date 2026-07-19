@@ -10,11 +10,19 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #12885a;
-            --primary-dark: #0b5d3b;
-            --primary-accent: #16a34a;
-            --primary-soft: #e7f6ef;
-            --border: #d7e5dd;
+            /* Turquoise vif : bordures, icones sur fond clair (avec texte fonce),
+               dégradés decoratifs. Pas assez contraste pour du texte blanc dessus. */
+            --primary: #14b8a6;
+            /* Teal fonce : seule variante sure pour texte/icones blancs en aplat
+               (boutons, pastilles) et pour texte colore sur fond clair. */
+            --primary-strong: #0f766e;
+            /* Navy : texte fonce, logo, pied de page — identique au menu lateral. */
+            --primary-dark: #0f172a;
+            /* Reserve aux degrades decoratifs de grande taille (ex. mot en accent
+               du H1) : jamais utilise pour du texte/icone en aplat. */
+            --primary-accent: #2dd4bf;
+            --primary-soft: #e3f7f4;
+            --border: #d9e2ea;
             --text: #1f2933;
             --muted: #5f6f7d;
             --surface: #ffffff;
@@ -103,12 +111,12 @@
         }
 
         .btn-plein {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-accent) 100%);
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-strong) 100%);
             color: #ffffff;
-            box-shadow: 0 6px 16px rgba(18, 136, 90, 0.28);
+            box-shadow: 0 6px 16px rgba(13, 148, 136, 0.30);
         }
 
-        .btn-plein:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(18, 136, 90, 0.38); }
+        .btn-plein:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(13, 148, 136, 0.40); }
 
         .btn-contour {
             border-color: var(--primary);
@@ -146,15 +154,15 @@
             position: relative;
             overflow: hidden;
             background:
-                radial-gradient(900px 460px at 88% -10%, rgba(22, 163, 74, 0.10), transparent 60%),
-                radial-gradient(700px 420px at -8% 108%, rgba(18, 136, 90, 0.08), transparent 60%),
-                linear-gradient(180deg, #f2f8f4 0%, #ffffff 100%);
+                radial-gradient(900px 460px at 88% -10%, rgba(13, 148, 136, 0.10), transparent 60%),
+                radial-gradient(700px 420px at -8% 108%, rgba(15, 23, 42, 0.06), transparent 60%),
+                linear-gradient(180deg, #eff6f5 0%, #ffffff 100%);
             padding: 84px 0 90px;
         }
 
         .hero .croix {
             position: absolute;
-            background-color: rgba(18, 136, 90, 0.14);
+            background-color: rgba(20, 184, 166, 0.16);
             -webkit-mask-image: var(--masque-croix);
             mask-image: var(--masque-croix);
             -webkit-mask-repeat: no-repeat;
@@ -185,13 +193,13 @@
             font-size: clamp(32px, 4.6vw, 52px);
             font-weight: 800;
             line-height: 1.14;
-            color: #10241a;
+            color: #0b1220;
             margin-bottom: 18px;
             animation: entree 0.7s ease-out both;
         }
 
         .hero h1 .accent {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-accent) 100%);
+            background: linear-gradient(135deg, var(--primary-strong) 0%, var(--primary-accent) 100%);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
@@ -242,7 +250,7 @@
             border: 1px solid var(--border);
             border-radius: 18px;
             padding: 26px;
-            box-shadow: 0 24px 60px rgba(11, 93, 59, 0.14);
+            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16);
             animation: flotter 5s ease-in-out infinite;
         }
 
@@ -265,10 +273,10 @@
             width: 44px;
             height: 44px;
             border-radius: 12px;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-accent) 100%);
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-strong) 100%);
             color: #fff;
             font-size: 20px;
-            box-shadow: 0 6px 14px rgba(18, 136, 90, 0.30);
+            box-shadow: 0 6px 14px rgba(13, 148, 136, 0.32);
         }
 
         .pastille .icone-nav { width: 22px; height: 22px; }
@@ -304,12 +312,61 @@
             padding: 4px 10px;
             border-radius: 999px;
             background: var(--primary-soft);
+            color: var(--primary-strong);
+        }
+
+        /* Bandeau de mini-stats dans la carte de demo hero — reprend le style
+           des cartes de stats du vrai tableau de bord (icone + chiffre + libelle). */
+        .mini-stats {
+            display: flex;
+            gap: 10px;
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid var(--border);
+        }
+
+        .mini-stat {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: var(--primary-soft);
+        }
+
+        .mini-stat-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            border-radius: 9px;
+            background: #ffffff;
+            color: var(--primary-strong);
+            flex-shrink: 0;
+        }
+
+        .mini-stat-icon .icone-nav { width: 16px; height: 16px; }
+
+        .mini-stat strong {
+            display: block;
+            font-size: 16px;
+            font-weight: 800;
             color: var(--primary-dark);
+            line-height: 1.15;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .mini-stat span {
+            font-size: 11px;
+            color: var(--muted);
+            font-weight: 600;
         }
 
         /* ===== Sections ===== */
         section.bloc { padding: 78px 0; }
-        section.bloc.alterne { background: #f6faf7; }
+        section.bloc.alterne { background: #eef7f6; }
 
         .titre-section { text-align: center; max-width: 640px; margin: 0 auto 48px; }
 
@@ -319,14 +376,14 @@
             font-weight: 800;
             letter-spacing: 0.08em;
             text-transform: uppercase;
-            color: var(--primary);
+            color: var(--primary-strong);
             background: var(--primary-soft);
             padding: 6px 14px;
             border-radius: 999px;
             margin-bottom: 14px;
         }
 
-        .titre-section h2 { font-size: clamp(26px, 3.4vw, 36px); font-weight: 800; color: #10241a; margin-bottom: 12px; }
+        .titre-section h2 { font-size: clamp(26px, 3.4vw, 36px); font-weight: 800; color: #0b1220; margin-bottom: 12px; }
         .titre-section p { color: var(--muted); font-size: 16px; }
 
         .grille-services {
@@ -345,8 +402,8 @@
 
         .carte-service:hover {
             transform: translateY(-6px);
-            border-color: #bfe0cf;
-            box-shadow: 0 18px 40px rgba(11, 93, 59, 0.13);
+            border-color: #99e6da;
+            box-shadow: 0 18px 40px rgba(13, 148, 136, 0.16);
         }
 
         .carte-service .pastille { margin-bottom: 16px; }
@@ -378,7 +435,7 @@
             width: 34px;
             height: 34px;
             border-radius: 10px;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-accent) 100%);
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-strong) 100%);
             color: #fff;
             font-weight: 800;
             font-size: 15px;
@@ -396,7 +453,7 @@
             align-items: center;
         }
 
-        .a-propos-grille h2 { font-size: clamp(24px, 3vw, 32px); font-weight: 800; color: #10241a; margin-bottom: 16px; }
+        .a-propos-grille h2 { font-size: clamp(24px, 3vw, 32px); font-weight: 800; color: #0b1220; margin-bottom: 16px; }
         .a-propos-grille p { color: var(--muted); margin-bottom: 14px; }
 
         .liste-atouts { list-style: none; margin-top: 8px; }
@@ -417,7 +474,7 @@
             height: 24px;
             border-radius: 8px;
             background: var(--primary-soft);
-            color: var(--primary-dark);
+            color: var(--primary-strong);
             font-size: 13px;
             font-weight: 800;
         }
@@ -425,7 +482,7 @@
 
         /* Bandeau démonstration */
         .bandeau-demo {
-            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 55%, var(--primary-accent) 100%);
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-strong) 65%, #134e4a 100%);
             border-radius: 22px;
             padding: 52px 40px;
             text-align: center;
@@ -482,8 +539,8 @@
 
         /* Footer */
         footer {
-            background: #0c1f16;
-            color: #cfe3d8;
+            background: #0f172a;
+            color: #cbd5e1;
             padding: 44px 0 28px;
         }
 
@@ -497,14 +554,14 @@
 
         footer .logo { color: #ffffff; }
         footer nav { display: flex; flex-wrap: wrap; gap: 18px; }
-        footer nav a { color: #cfe3d8; text-decoration: none; font-size: 14px; font-weight: 600; }
+        footer nav a { color: #cbd5e1; text-decoration: none; font-size: 14px; font-weight: 600; }
         footer nav a:hover { color: #ffffff; }
 
         .copyright {
             border-top: 1px solid rgba(255, 255, 255, 0.12);
             padding-top: 20px;
             font-size: 13px;
-            color: #9db8ab;
+            color: #94a3b8;
             text-align: center;
         }
 
@@ -572,12 +629,12 @@
                     <path d="M10 20h4l2.4-5 3 10 2.4-7 1.6 2h6.6" fill="none" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
                     <defs>
                         <linearGradient id="degrade-logo" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
-                            <stop stop-color="#12885a"/>
-                            <stop offset="1" stop-color="#16a34a"/>
+                            <stop stop-color="#14b8a6"/>
+                            <stop offset="1" stop-color="#0d9488"/>
                         </linearGradient>
                     </defs>
                 </svg>
-                Santé<span style="color: var(--primary-accent);">SN</span>
+                Santé<span style="color: var(--primary-strong);">SN</span>
             </a>
 
             <input type="checkbox" id="menu-mobile" class="menu-toggle-input" aria-hidden="true">
@@ -655,6 +712,16 @@
                             <div class="detail">Ayant droit · Enfant</div>
                         </div>
                         <span class="etiquette">En attente</span>
+                    </div>
+                    <div class="mini-stats">
+                        <div class="mini-stat">
+                            <span class="mini-stat-icon">{% icone "calendar" %}</span>
+                            <div><strong>37</strong><span>RDV aujourd'hui</span></div>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="mini-stat-icon">{% icone "pill" %}</span>
+                            <div><strong>12</strong><span>Ordonnances</span></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -741,7 +808,7 @@
     <section class="bloc" id="a-propos">
         <div class="conteneur a-propos-grille">
             <div class="revele">
-                <span class="sur-titre" style="display:inline-block;font-size:13px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);background:var(--primary-soft);padding:6px 14px;border-radius:999px;margin-bottom:14px;">À propos</span>
+                <span class="sur-titre" style="display:inline-block;font-size:13px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary-strong);background:var(--primary-soft);padding:6px 14px;border-radius:999px;margin-bottom:14px;">À propos</span>
                 <h2>Une plateforme pensée pour le système de santé sénégalais</h2>
                 <p>
                     SantéSN connecte les entreprises, les assurances (IPM), les assurés et leurs familles,
@@ -825,8 +892,8 @@
                         <path d="M10 20h4l2.4-5 3 10 2.4-7 1.6 2h6.6" fill="none" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
                         <defs>
                             <linearGradient id="degrade-logo-pied" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
-                                <stop stop-color="#12885a"/>
-                                <stop offset="1" stop-color="#16a34a"/>
+                                <stop stop-color="#14b8a6"/>
+                                <stop offset="1" stop-color="#0d9488"/>
                             </linearGradient>
                         </defs>
                     </svg>

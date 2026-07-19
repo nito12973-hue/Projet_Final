@@ -38,7 +38,7 @@
                 </td>
                 <td>
                     {% if rdv.statut == 'DEMANDE' or rdv.statut == 'CONFIRME' %}
-                    <form method="post" action="{% url 'annuler_rendez_vous_assure' rdv.pk %}" style="display:inline;max-width:none;padding:0;border:0;background:transparent;box-shadow:none;">
+                    <form method="post" action="{% url 'annuler_rendez_vous_assure' rdv.pk %}" class="action-ligne">
                         {% csrf_token %}
                         <button type="submit" class="button btn btn-danger btn-sm">Annuler</button>
                     </form>

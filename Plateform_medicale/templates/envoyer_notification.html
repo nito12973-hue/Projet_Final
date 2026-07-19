@@ -12,7 +12,7 @@
 </section>
 
 {% if form.non_field_errors %}
-<div class="erreurs" style="color:#b42318;margin-bottom:16px;">{{ form.non_field_errors }}</div>
+<div class="erreurs-formulaire">{{ form.non_field_errors }}</div>
 {% endif %}
 
 <form method="post">
@@ -21,7 +21,7 @@
     <label for="{{ field.id_for_label }}">{{ field.label }}</label>
     {{ field }}
     {% if field.help_text %}<p class="subtitle" style="margin:-10px 0 16px;font-size:13px;">{{ field.help_text }}</p>{% endif %}
-    {% if field.errors %}<div class="erreurs" style="color:#b42318;margin:-10px 0 16px;font-size:13px;">{{ field.errors }}</div>{% endif %}
+    {% if field.errors %}<div class="erreurs">{{ field.errors }}</div>{% endif %}
     {% endfor %}
     <button class="button primary" type="submit">Envoyer</button>
 </form>
