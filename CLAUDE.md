@@ -178,15 +178,27 @@ qui ne couvre que la liste des utilisateurs (Dashboard Admin → Utilisateurs).
 ## Design system
 
 Un seul shell de dashboard (sidebar) dans `base.html`, réutilisé par les 4
-rôles (nav conditionnelle selon `current_role`). Palette verte SantéSN
-(`--primary: #12885a`, `--primary-dark: #0b5d3b`, `--primary-accent: #16a34a`),
-police Plus Jakarta Sans. `landing.html` et `base_auth.html` (pages publiques /
-connexion) ont leur propre CSS autonome, ne dépendent pas de `base.html`.
+rôles (nav conditionnelle selon `current_role`). Palette navy/turquoise
+SantéSN (`--primary: #14b8a6` turquoise vif — bordures/décoratif seulement,
+`--primary-strong: #0f766e` teal foncé — seule variante sûre pour texte/icône
+blancs en aplat, `--primary-dark: #0f172a` navy — titres/texte foncé,
+`--primary-accent: #2dd4bf` réservé aux dégradés décoratifs non-texte),
+police Plus Jakarta Sans. Menu latéral desktop réductible (icônes seules,
+état persistant via `localStorage`), tiroir mobile, barre de chargement de
+navigation. `landing.html` et `base_auth.html` (pages publiques / connexion)
+ont leur propre CSS autonome avec les mêmes tokens de palette, ne dépendent
+pas de `base.html`.
 Classes CSS existantes à réutiliser (ne pas dupliquer) : `.page-title`,
-`.panel`, `.grid`/`.stat`, `.badge` (+ `.validee`/`.refusee`/`.en_attente`),
-`.button` (+ `.primary`/`.btn`/`.btn-sm`/`.btn-danger`), `.actions` (boutons de
-ligne de tableau — ne pas confondre avec `.action-tiles`/`.action-tile`, les
-tuiles d'actions principales des dashboards par rôle).
+`.panel`, `.grid`/`.stat` (obsolètes sur les 4 pages d'accueil par rôle,
+remplacées par `.dash-grid`/`.dash-stat`/`.dash-pill`), `.badge` (+
+`.validee`/`.refusee`/`.en_attente`), `.button` (+
+`.primary`/`.btn`/`.btn-sm`/`.btn-danger`), `.actions` (boutons de ligne de
+tableau — ne pas confondre avec `.action-tiles`/`.action-tile`, les tuiles
+d'actions principales des dashboards par rôle), `.erreurs`/`.erreurs-formulaire`
+(erreurs de formulaire, par champ / globales), `.filtres` (barre de filtres
+GET), `.action-ligne` (formulaire POST invisible dans une ligne de tableau),
+`.details-tableau` (tableau de données replié sous un graphique, voir
+`rapports.html`).
 
 Aucun émoji nulle part dans l'application (sidebar, landing, écrans de
 connexion) : toutes les icônes viennent de `templatetags/icones.py`
