@@ -801,6 +801,36 @@ class DistanceKmTests(TestCase):
         self.assertAlmostEqual(resultat, 111.19, delta=0.5)
 
 
+class PrestataireCoordonneesTests(TestCase):
+    def setUp(self):
+        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
+        self.client.login(username='admin@santesn.sn', password=PASSWORD)
+
+    def test_creation_prestataire_avec_coordonnees(self):
+        response = self.client.post(reverse('ajouter_prestataire'), {
+            'nom': 'Hopital Principal', 'type_prestataire': 'HOPITAL',
+            'adresse': 'Dakar', 'ville': 'Dakar', 'telephone': '338000001',
+            'partenaire': 'on', 'date_conventionnement': '',
+            'latitude': '14.6928', 'longitude': '-17.4467',
+        })
+        self.assertRedirects(response, reverse('liste_prestataires'))
+        prestataire = Prestataire.objects.get(nom='Hopital Principal')
+        self.assertAlmostEqual(float(prestataire.latitude), 14.6928, places=4)
+        self.assertAlmostEqual(float(prestataire.longitude), -17.4467, places=4)
+
+    def test_creation_prestataire_sans_coordonnees_reste_valide(self):
+        response = self.client.post(reverse('ajouter_prestataire'), {
+            'nom': 'Cabinet Sans Pin', 'type_prestataire': 'CABINET',
+            'adresse': '', 'ville': '', 'telephone': '',
+            'partenaire': 'on', 'date_conventionnement': '',
+            'latitude': '', 'longitude': '',
+        })
+        self.assertRedirects(response, reverse('liste_prestataires'))
+        prestataire = Prestataire.objects.get(nom='Cabinet Sans Pin')
+        self.assertIsNone(prestataire.latitude)
+        self.assertIsNone(prestataire.longitude)
+
+
 class AdminPharmaciensTests(TestCase):
     def setUp(self):
         self.admin = creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
