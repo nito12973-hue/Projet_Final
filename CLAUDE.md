@@ -23,7 +23,7 @@ Plateform_medicale/     # Toute la logique métier (une seule app Django)
 ├── migrations/
 ├── templates/           # Templates à plat, pas de sous-dossier par app
 ├── static/
-├── management/commands/ # seed_demo_users
+├── management/commands/ # vide pour l'instant, reserve aux futures commandes
 ├── admin.py
 ├── apps.py
 ├── forms.py
@@ -217,18 +217,16 @@ une nouvelle.
 
 ## Comptes de démonstration
 
-Les comptes de démonstration en masse (`seed_demo_users`) ont été supprimés de
-la base : un seul admin réel (`admin@santesn.local`) est conservé, et des
-comptes réels Assuré/Médecin/Pharmacien ont été créés directement via
-Gestion des utilisateurs pour permettre de tester chaque tableau de bord.
-`DEMO_USERS.md` n'existe pas (voir phase 15, "Documentation / finalisation") —
-si une documentation utilisateur finale est un jour rédigée, ne pas la nommer
-ainsi sans vérifier qu'elle est à jour. La commande `seed_demo_users --count N`
-reste disponible si un nouveau jeu de données de démo est nécessaire (refuse
-de s'exécuter si `DEBUG=False` ; ne touche jamais au mot de passe d'un admin
-`admin@santesn.local` déjà existant — seul un admin nouvellement créé par la
-commande reçoit le mot de passe de démo, pour ne jamais écraser silencieusement
-l'accès au compte admin réel).
+Les comptes de démonstration en masse ont été supprimés de la base : un seul
+admin réel (`admin@santesn.local`) est conservé, et des comptes réels
+Assuré/Médecin/Pharmacien ont été créés directement via Gestion des
+utilisateurs pour permettre de tester chaque tableau de bord. La commande
+`seed_demo_users` (peuplement en masse de comptes de démo) a été retirée du
+projet : redondante avec la création de comptes via Gestion des utilisateurs
+et sans utilité une fois les comptes réels en place — ne pas la recréer sans
+raison concrète. `DEMO_USERS.md` n'existe pas (voir phase 15, "Documentation
+/ finalisation") — si une documentation utilisateur finale est un jour
+rédigée, ne pas la nommer ainsi sans vérifier qu'elle est à jour.
 
 ## Tests
 
