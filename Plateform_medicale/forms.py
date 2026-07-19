@@ -10,6 +10,7 @@ from .models import (
     Consultation,
     Medecin,
     Ordonnance,
+    Paiement,
     Patient,
     Pharmacien,
     PlanCouverture,
@@ -440,3 +441,17 @@ class PlanCouvertureForm(forms.ModelForm):
     class Meta:
         model = PlanCouverture
         fields = ['nom', 'taux_couverture', 'plafond_annuel']
+
+
+class PaiementReglementForm(forms.ModelForm):
+    """Marque un paiement comme regle (par l'administrateur)."""
+
+    class Meta:
+        model = Paiement
+        fields = ['mode_reglement']
+
+    def clean_mode_reglement(self):
+        mode_reglement = self.cleaned_data['mode_reglement']
+        if not mode_reglement:
+            raise forms.ValidationError("Le mode de reglement est obligatoire.")
+        return mode_reglement

@@ -47,6 +47,9 @@ urlpatterns = [
     path('prises-en-charge/<int:pk>/modifier/', views.modifier_prise_en_charge, name='modifier_prise_en_charge'),
     path('prises-en-charge/<int:pk>/supprimer/', views.supprimer_prise_en_charge, name='supprimer_prise_en_charge'),
 
+    path('paiements/', views.liste_paiements, name='liste_paiements'),
+    path('paiements/<int:pk>/regler/', views.marquer_paiement_regle, name='marquer_paiement_regle'),
+
     path('prestataires/', views.liste_prestataires, name='liste_prestataires'),
     path('prestataires/ajouter/', views.ajouter_prestataire, name='ajouter_prestataire'),
     path('prestataires/<int:pk>/modifier/', views.modifier_prestataire, name='modifier_prestataire'),

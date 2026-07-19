@@ -14,6 +14,7 @@ from .models import (
     Medecin,
     Notification,
     Ordonnance,
+    Paiement,
     Patient,
     Pharmacien,
     PlanCouverture,
@@ -960,6 +961,108 @@ class AdminPriseEnChargeFormTests(TestCase):
         prise.refresh_from_db()
         self.assertEqual(prise.statut, 'validee')
         self.assertEqual(prise.motif, 'Test modifie')
+
+
+class PaiementTests(TestCase):
+    def setUp(self):
+        self.medecin = creer_medecin('medecin@santesn.sn')
+        self.patient = creer_patient()
+        self.client.login(username='medecin@santesn.sn', password=PASSWORD)
+        self.service = ServiceMedical.objects.create(nom='Consultation generale', prix=Decimal('10000'))
+
+    def test_consultation_avec_prise_en_charge_validee_calcule_les_parts(self):
+        plan = PlanCouverture.objects.create(nom='Standard', taux_couverture=Decimal('80.00'))
+        self.patient.plan_couverture = plan
+        self.patient.save()
+        prise = PriseEnCharge.objects.create(patient=self.patient, motif='Test', statut='validee')
+
+        self.client.post(reverse('ajouter_consultation_medecin'), {
+            'patient': self.patient.pk,
+            'service': self.service.pk,
+            'prise_en_charge': prise.pk,
+            'date_consultation': '2026-08-01T10:00',
+            'diagnostic': 'Controle',
+            'traitement': '',
+        })
+        paiement = Consultation.objects.get(patient=self.patient).paiement
+        self.assertEqual(paiement.montant_total, Decimal('10000'))
+        self.assertEqual(paiement.taux_applique, Decimal('80.00'))
+        self.assertEqual(paiement.montant_part_assurance, Decimal('8000.00'))
+        self.assertEqual(paiement.montant_part_patient, Decimal('2000.00'))
+        self.assertEqual(paiement.statut, Paiement.Statut.NON_REGLE)
+
+    def test_consultation_sans_prise_en_charge_validee_patient_paie_tout(self):
+        prise_en_attente = PriseEnCharge.objects.create(patient=self.patient, motif='Test')
+        self.client.post(reverse('ajouter_consultation_medecin'), {
+            'patient': self.patient.pk,
+            'service': self.service.pk,
+            'prise_en_charge': prise_en_attente.pk,
+            'date_consultation': '2026-08-01T10:00',
+            'diagnostic': 'Controle',
+            'traitement': '',
+        })
+        paiement = Consultation.objects.get(patient=self.patient).paiement
+        self.assertEqual(paiement.montant_part_assurance, Decimal('0'))
+        self.assertEqual(paiement.montant_part_patient, Decimal('10000'))
+
+    def test_liste_paiements_interdite_aux_non_admins(self):
+        response = self.client.get(reverse('liste_paiements'))
+        self.assertEqual(response.status_code, 403)
+
+    def test_liste_paiements_affiche_le_paiement_a_l_admin(self):
+        self.client.logout()
+        creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
+        self.client.login(username='admin@santesn.sn', password=PASSWORD)
+
+        consultation = Consultation.objects.create(
+            patient=self.patient, medecin=self.medecin, service=self.service,
+            date_consultation=timezone.now(), diagnostic='Test',
+        )
+        Paiement.calculer_pour(consultation).save()
+
+        response = self.client.get(reverse('liste_paiements'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Marquer regle')
+
+    def test_marquer_paiement_regle(self):
+        self.client.logout()
+        creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
+        self.client.login(username='admin@santesn.sn', password=PASSWORD)
+
+        consultation = Consultation.objects.create(
+            patient=self.patient, medecin=self.medecin, service=self.service,
+            date_consultation=timezone.now(), diagnostic='Test',
+        )
+        paiement = Paiement.calculer_pour(consultation)
+        paiement.save()
+
+        response = self.client.post(reverse('marquer_paiement_regle', args=[paiement.pk]), {
+            'mode_reglement': 'ESPECES',
+        })
+        self.assertRedirects(response, reverse('liste_paiements'))
+        paiement.refresh_from_db()
+        self.assertEqual(paiement.statut, Paiement.Statut.REGLE)
+        self.assertEqual(paiement.mode_reglement, 'ESPECES')
+        self.assertIsNotNone(paiement.date_reglement)
+
+    def test_marquer_paiement_regle_exige_mode_reglement(self):
+        self.client.logout()
+        creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
+        self.client.login(username='admin@santesn.sn', password=PASSWORD)
+
+        consultation = Consultation.objects.create(
+            patient=self.patient, medecin=self.medecin, service=self.service,
+            date_consultation=timezone.now(), diagnostic='Test',
+        )
+        paiement = Paiement.calculer_pour(consultation)
+        paiement.save()
+
+        response = self.client.post(reverse('marquer_paiement_regle', args=[paiement.pk]), {
+            'mode_reglement': '',
+        })
+        self.assertEqual(response.status_code, 200)
+        paiement.refresh_from_db()
+        self.assertEqual(paiement.statut, Paiement.Statut.NON_REGLE)
 
 
 class PlanCouvertureAdminTests(TestCase):

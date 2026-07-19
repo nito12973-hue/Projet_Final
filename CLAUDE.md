@@ -90,9 +90,9 @@ Statut : ✅ fait · ⏳ partiel/à compléter · 🔄 continu.
     médicaments liés à une prise en charge).
 11. ✅ Ordonnances / QR — livré dans les phases 7-8 (QR code SVG généré par
     ordonnance, scan et validation en pharmacie).
-12. ⏳ Prise en charge et paiements — le modèle `PriseEnCharge` et le calcul
-    part assurance / part patient existent déjà ; pas encore de module dédié
-    "paiements" (suivi de règlement, historique de paiement).
+12. ✅ Prise en charge et paiements — modèle `Paiement` (1-1 avec
+    `Consultation`) : montant total, part assurance / part patient calculées,
+    statut de règlement, historique. Voir "Paiements" ci-dessous.
 13. ⏳ Rapports / statistiques — vue `rapports` basique existante ; pas encore
     de graphiques ni d'export PDF/Excel dédiés aux rapports (l'export Excel
     actuel ne couvre que la liste des utilisateurs).
@@ -130,6 +130,22 @@ des utilisateurs (`exporter_utilisateurs_excel`, openpyxl). Chaque rôle peut
 changer son propre mot de passe après connexion (`changer_mot_de_passe`,
 `PasswordChangeForm` + `update_session_auth_hash` pour ne pas déconnecter
 l'utilisateur), indépendamment de la réinitialisation par l'admin.
+
+## Paiements (livré)
+
+Modèle `Paiement`, en relation 1-1 avec `Consultation`. Créé automatiquement
+par `Paiement.calculer_pour()` quand le médecin enregistre une consultation
+(`ajouter_consultation_medecin`) : `montant_total` vient de `service.prix`
+(0 si aucun service lié), le taux appliqué vient de `patient.taux_couverture`
+**uniquement si la `prise_en_charge` liée à la consultation a le statut
+`validee`** (sinon le patient règle 100% du montant — règle métier
+volontaire, une prise en charge en attente ou refusée ne couvre rien).
+Dashboard Admin → Paiements (`liste_paiements`, filtrable par statut,
+action "Marquer réglé" avec mode de règlement obligatoire). Le dashboard
+Assuré (`mon_historique.html`) affiche la part à charge et le statut de
+règlement pour chaque consultation. Les consultations créées directement en
+base (fixtures/tests via l'ORM, hors vue) n'ont pas de `Paiement` associé :
+les templates gèrent ce cas (`{% if consultation.paiement %}`).
 
 ## Design system
 
