@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Tableau de bord - Dr {{ medecin.nom }}{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Bonjour Dr {{ medecin.prenom }} {{ medecin.nom }}</h1>
+        <p class="subtitle">Votre activite en un coup d'oeil.</p>
+    </div>
+    <a class="button primary" href="{% url 'ajouter_rendez_vous' %}">Nouveau rendez-vous</a>
+</section>
+
+<section class="grid">
+    <a class="stat" href="{% url 'agenda_medecin' %}">
+        <strong>{{ total_rendez_vous_a_venir }}</strong>
+        <span>Rendez-vous a venir</span>
+    </a>
+    <a class="stat" href="{% url 'mes_patients' %}">
+        <strong>{{ total_patients }}</strong>
+        <span>Patients suivis</span>
+    </a>
+    <a class="stat" href="{% url 'historique_consultations' %}">
+        <strong>{{ total_consultations }}</strong>
+        <span>Consultations</span>
+    </a>
+    <div class="stat">
+        <strong>{{ total_ordonnances }}</strong>
+        <span>Ordonnances emises</span>
+    </div>
+</section>
+
+<section class="panel" style="margin-top: 22px;">
+    <div class="panel-header">
+        <h2>Prochains rendez-vous</h2>
+        <a class="button" href="{% url 'agenda_medecin' %}">Voir l'agenda</a>
+    </div>
+    {% if prochains_rendez_vous %}
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Patient</th>
+                <th>Motif</th>
+                <th>Statut</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rdv in prochains_rendez_vous %}
+            <tr>
+                <td>{{ rdv.date_heure|date:"d/m/Y H:i" }}</td>
+                <td>{{ rdv.patient }}</td>
+                <td>{{ rdv.motif|default:"-" }}</td>
+                <td>
+                    <span class="badge {% if rdv.statut == 'DEMANDE' %}en_attente{% elif rdv.statut == 'CONFIRME' %}confirme{% elif rdv.statut == 'ANNULE' %}refusee{% elif rdv.statut == 'TERMINE' %}terminee{% endif %}">{{ rdv.get_statut_display }}</span>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="empty">Aucun rendez-vous a venir.</p>
+    {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Prestataires{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Prestataires</h1>
+        <p class="subtitle">Reseau d'hopitaux, cliniques, pharmacies et cabinets partenaires.</p>
+    </div>
+    <a class="button primary" href="{% url 'ajouter_prestataire' %}">Ajouter un prestataire</a>
+</section>
+
+{% if prestataires %}
+<section class="panel">
+    <table>
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Type</th>
+                <th>Ville</th>
+                <th>Telephone</th>
+                <th>Partenaire</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for prestataire in prestataires %}
+            <tr>
+                <td>{{ prestataire.nom }}</td>
+                <td>{{ prestataire.get_type_prestataire_display }}</td>
+                <td>{{ prestataire.ville|default:"-" }}</td>
+                <td>{{ prestataire.telephone|default:"-" }}</td>
+                <td>
+                    {% if prestataire.partenaire %}
+                    <span class="badge validee">Actif</span>
+                    {% else %}
+                    <span class="badge refusee">Inactif</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="actions">
+                        <a href="{% url 'modifier_prestataire' prestataire.pk %}" class="button btn btn-primary btn-sm">Modifier</a>
+                        <a href="{% url 'supprimer_prestataire' prestataire.pk %}" class="button btn btn-danger btn-sm">Supprimer</a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% else %}
+<p class="empty">Aucun prestataire enregistre.</p>
+{% endif %}
+
+<p class="subtitle" style="margin-top:18px;">
+    Le catalogue des services et tarifs de chaque prestataire se gere
+    <a href="{% url 'liste_services' %}">ici</a>.
+</p>
+{% endblock %}

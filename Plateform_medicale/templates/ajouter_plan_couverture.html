@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Ajouter un plan de couverture{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Ajouter un plan de couverture</h1>
+    </div>
+    <a class="button" href="{% url 'liste_plans_couverture' %}">Retour</a>
+</section>
+
+{% if form.non_field_errors %}
+<div class="erreurs" style="color:#b42318;margin-bottom:16px;">{{ form.non_field_errors }}</div>
+{% endif %}
+
+<form method="post">
+    {% csrf_token %}
+    {% for field in form %}
+    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+    {{ field }}
+    {% if field.errors %}<div class="erreurs" style="color:#b42318;margin:-10px 0 16px;font-size:13px;">{{ field.errors }}</div>{% endif %}
+    {% endfor %}
+    <button type="submit" class="button primary">Enregistrer</button>
+</form>
+{% endblock %}

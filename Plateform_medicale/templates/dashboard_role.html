@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - SanteSN{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>{{ title }}</h1>
+        <p class="subtitle">{{ subtitle }}</p>
+    </div>
+</section>
+
+<section class="grid">
+    {% for label, value, help_text in cards %}
+    <div class="stat">
+        <strong>{{ value }}</strong>
+        <span>{{ label }}</span>
+        <p class="aide">{{ help_text }}</p>
+    </div>
+    {% endfor %}
+</section>
+
+<section class="panel governance-card" style="margin-top: 22px;">
+    <h2>Actions principales</h2>
+    <p class="subtitle">Ces actions respectent le role connecte et serviront de base aux prochains modules metier.</p>
+    <div class="action-tiles">
+        {% for action in actions %}
+        <div class="action-tile">{{ action }}</div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

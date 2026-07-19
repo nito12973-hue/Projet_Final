@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Scanner un QR Code{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Scanner un QR Code</h1>
+        <p class="subtitle">Saisissez ou scannez le code affiche sur l'ordonnance du patient.</p>
+    </div>
+</section>
+
+<form method="post" style="max-width: 480px;">
+    {% csrf_token %}
+    <label for="code_qr">Code de l'ordonnance</label>
+    <input id="code_qr" name="code_qr" type="text" placeholder="RX-XXXXXXXXXX" autofocus required>
+    <button class="button primary" type="submit">Verifier</button>
+</form>
+
+{% if ordonnance %}
+<section class="admin-layout" style="margin-top: 22px;">
+    <article class="panel" style="padding: 24px;">
+        <h2 style="margin-top:0;color:var(--primary-dark);">Ordonnance {{ ordonnance.code_qr }}</h2>
+        <p><strong>Patient :</strong> {{ ordonnance.consultation.patient }}</p>
+        <p><strong>Medecin :</strong> {{ ordonnance.consultation.medecin }}</p>
+        <p><strong>Date :</strong> {{ ordonnance.date_creation|date:"d/m/Y H:i" }}</p>
+        <p><strong>Medicaments :</strong></p>
+        <p style="white-space: pre-line;">{{ ordonnance.medicaments }}</p>
+    </article>
+
+    <aside class="panel governance-card">
+        {% if ordonnance.delivrance %}
+        <h2>Deja delivree</h2>
+        <p class="subtitle">Le {{ ordonnance.delivrance.date_delivrance|date:"d/m/Y H:i" }} par {{ ordonnance.delivrance.pharmacien }}.</p>
+        <span class="badge terminee">Delivree</span>
+        {% else %}
+        <h2>Valider la delivrance</h2>
+        <p class="subtitle">Confirmez que les medicaments ont ete remis au patient.</p>
+        <form method="post" action="{% url 'valider_delivrance' ordonnance.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="button primary">Valider la delivrance</button>
+        </form>
+        {% endif %}
+    </aside>
+</section>
+{% endif %}
+{% endblock %}

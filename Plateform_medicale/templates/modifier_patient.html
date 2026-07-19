@@ -1,71 +1,27 @@
 {% extends "base.html" %}
 
-{% block title %}Modifier Patient - Plateforme medicale{% endblock %}
+{% block title %}Modifier {{ patient }}{% endblock %}
 
 {% block content %}
-<div class="page-title">
+<section class="page-title">
     <div>
-        <h1>Modifier Patient</h1>
-        <p class="subtitle">Modifiez les informations du patient</p>
+        <h1>Modifier {{ patient }}</h1>
+        <p class="subtitle">Carte : {{ patient.numero_carte }}</p>
     </div>
-</div>
+    <a class="button" href="{% url 'liste_patients' %}">Retour</a>
+</section>
+
+{% if form.non_field_errors %}
+<div class="erreurs" style="color:#b42318;margin-bottom:16px;">{{ form.non_field_errors }}</div>
+{% endif %}
 
 <form method="post">
     {% csrf_token %}
-
-    <div>
-        <label for="nom">Nom</label>
-        <input 
-            type="text" 
-            id="nom" 
-            name="nom" 
-            required 
-            value="{{ patient.nom }}"
-        >
-    </div>
-
-    <div>
-        <label for="prenom">Prénom</label>
-        <input 
-            type="text" 
-            id="prenom" 
-            name="prenom" 
-            required 
-            value="{{ patient.prenom }}"
-        >
-    </div>
-
-    <div>
-        <label for="date_naissance">Date de naissance</label>
-        <input 
-            type="date" 
-            id="date_naissance" 
-            name="date_naissance" 
-            required
-            value="{{ patient.date_naissance|date:'Y-m-d' }}"
-        >
-    </div>
-
-    <div>
-        <label for="telephone">Téléphone</label>
-        <input 
-            type="tel" 
-            id="telephone" 
-            name="telephone" 
-            required 
-            value="{{ patient.telephone }}"
-        >
-    </div>
-
-    <div>
-        <label for="adresse">Adresse</label>
-        <textarea 
-            id="adresse" 
-            name="adresse"
-        >{{ patient.adresse }}</textarea>
-    </div>
-
-    <button type="submit" class="button primary">Enregistrer les modifications</button>
-    <a href="{% url 'liste_patients' %}" class="button">Retour</a>
+    {% for field in form %}
+    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+    {{ field }}
+    {% if field.errors %}<div class="erreurs" style="color:#b42318;margin:-10px 0 16px;font-size:13px;">{{ field.errors }}</div>{% endif %}
+    {% endfor %}
+    <button class="button primary" type="submit">Enregistrer</button>
 </form>
 {% endblock %}

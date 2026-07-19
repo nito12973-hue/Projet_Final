@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% load icones %}
+
+{% block title %}Utilisateurs{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Utilisateurs</h1>
+        <p class="subtitle">Comptes de la plateforme : creation, roles, activation et mots de passe.</p>
+    </div>
+    <div class="actions">
+        <a class="button" href="{% url 'exporter_utilisateurs_excel' %}?{{ request.GET.urlencode }}">{% icone "download" %} Exporter en Excel</a>
+        <a class="button primary" href="{% url 'ajouter_utilisateur' %}">Ajouter un utilisateur</a>
+    </div>
+</section>
+
+<form method="get" style="max-width:none;padding:20px;display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+    <div style="min-width:180px;">
+        <label for="role">Role</label>
+        <select id="role" name="role" style="margin-bottom:0;">
+            <option value="">Tous</option>
+            {% for value, label in roles %}
+            <option value="{{ value }}" {% if value == role_selectionne %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div style="min-width:180px;">
+        <label for="statut">Statut</label>
+        <select id="statut" name="statut" style="margin-bottom:0;">
+            <option value="">Tous</option>
+            <option value="actif" {% if statut_selectionne == "actif" %}selected{% endif %}>Actif</option>
+            <option value="inactif" {% if statut_selectionne == "inactif" %}selected{% endif %}>Inactif</option>
+        </select>
+    </div>
+    <div style="min-width:220px;flex:1;">
+        <label for="q">Recherche</label>
+        <input id="q" type="text" name="q" placeholder="Nom ou email" value="{{ recherche }}" style="margin-bottom:0;">
+    </div>
+    <button type="submit" class="button primary btn">Filtrer</button>
+    {% if role_selectionne or statut_selectionne or recherche %}
+    <a href="{% url 'liste_utilisateurs' %}" class="button btn">Reinitialiser</a>
+    {% endif %}
+</form>
+
+{% if utilisateurs %}
+<section class="panel">
+    <table>
+        <thead>
+            <tr>
+                <th>Nom complet</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Statut</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for utilisateur in utilisateurs %}
+            <tr>
+                <td>{{ utilisateur.get_full_name|default:"-" }}</td>
+                <td>{{ utilisateur.email }}</td>
+                <td>{{ utilisateur.get_role_display }}</td>
+                <td>
+                    {% if utilisateur.is_active %}
+                    <span class="badge validee">Actif</span>
+                    {% else %}
+                    <span class="badge refusee">Inactif</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="actions">
+                        <a href="{% url 'modifier_utilisateur' utilisateur.pk %}" class="button btn btn-primary btn-sm">Modifier</a>
+                        <a href="{% url 'reinitialiser_mot_de_passe' utilisateur.pk %}" class="button btn btn-sm">Reinitialiser mdp</a>
+                        {% if utilisateur.pk != request.user.pk %}
+                        <form method="post" action="{% url 'activer_desactiver_utilisateur' utilisateur.pk %}" style="display:inline;max-width:none;padding:0;border:0;background:transparent;box-shadow:none;">
+                            {% csrf_token %}
+                            {% if utilisateur.is_active %}
+                            <button type="submit" class="button btn btn-sm">Desactiver</button>
+                            {% else %}
+                            <button type="submit" class="button btn btn-sm">Activer</button>
+                            {% endif %}
+                        </form>
+                        <a href="{% url 'supprimer_utilisateur' utilisateur.pk %}" class="button btn btn-danger btn-sm">Supprimer</a>
+                        {% else %}
+                        <span class="badge">Vous</span>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% else %}
+<p class="empty">Aucun utilisateur ne correspond a ces criteres.</p>
+{% endif %}
+{% endblock %}

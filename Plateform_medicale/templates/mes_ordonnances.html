@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Mes ordonnances{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Mes ordonnances</h1>
+        <p class="subtitle">Ordonnances emises pour vous et vos ayants droit.</p>
+    </div>
+</section>
+
+{% if ordonnances %}
+<section class="panel">
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Beneficiaire</th>
+                <th>Medecin</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ordonnance in ordonnances %}
+            <tr>
+                <td>{{ ordonnance.date_creation|date:"d/m/Y H:i" }}</td>
+                <td>{{ ordonnance.consultation.patient }}</td>
+                <td>{{ ordonnance.consultation.medecin }}</td>
+                <td>
+                    <a class="button btn btn-primary btn-sm" href="{% url 'voir_ordonnance_assure' ordonnance.pk %}">Voir le QR</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% else %}
+<p class="empty">Aucune ordonnance disponible.</p>
+{% endif %}
+{% endblock %}

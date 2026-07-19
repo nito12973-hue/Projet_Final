@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Mes notifications{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Mes notifications</h1>
+        <p class="subtitle">Messages recus de l'administration.</p>
+    </div>
+</section>
+
+{% if notifications %}
+<section class="panel">
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Message</th>
+                <th>Statut</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for notification in notifications %}
+            <tr>
+                <td>{{ notification.date_creation|date:"d/m/Y H:i" }}</td>
+                <td>{{ notification.message }}</td>
+                <td>
+                    {% if notification.lue %}
+                    <span class="badge validee">Lue</span>
+                    {% else %}
+                    <span class="badge en_attente">Non lue</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if not notification.lue %}
+                    <form method="post" action="{% url 'marquer_notification_lue' notification.pk %}" style="display:inline;max-width:none;padding:0;border:0;background:transparent;box-shadow:none;">
+                        {% csrf_token %}
+                        <button type="submit" class="button btn btn-primary btn-sm">Marquer comme lue</button>
+                    </form>
+                    {% else %}
+                    -
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% else %}
+<p class="empty">Aucune notification.</p>
+{% endif %}
+{% endblock %}

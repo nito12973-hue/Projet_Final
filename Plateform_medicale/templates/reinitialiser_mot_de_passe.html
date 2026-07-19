@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Reinitialiser le mot de passe{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Reinitialiser le mot de passe</h1>
+        <p class="subtitle">Un nouveau mot de passe temporaire sera genere pour {{ utilisateur }}.</p>
+    </div>
+</section>
+
+<div style="background: #fff3cd; border: 1px solid #ffe69c; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+    <p style="margin: 0; color: #9a6700; font-weight: 600;">
+        Le mot de passe actuel de {{ utilisateur }} sera immediatement remplace et ne pourra plus etre utilise.
+    </p>
+</div>
+
+<form method="post" style="max-width: 720px;">
+    {% csrf_token %}
+    <button type="submit" class="button primary">Generer un nouveau mot de passe</button>
+    <a href="{% url 'liste_utilisateurs' %}" class="button">Annuler</a>
+</form>
+{% endblock %}

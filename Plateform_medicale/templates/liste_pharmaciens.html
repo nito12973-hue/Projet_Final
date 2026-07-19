@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Pharmaciens{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Pharmaciens</h1>
+        <p class="subtitle">Les comptes sont crees depuis « Utilisateurs » (role Pharmacien) ; affectez-les ici a une pharmacie.</p>
+    </div>
+    <a class="button" href="{% url 'ajouter_utilisateur' %}">Creer un compte pharmacien</a>
+</section>
+
+{% if pharmaciens %}
+<section class="panel">
+    <table>
+        <thead>
+            <tr>
+                <th>Nom complet</th>
+                <th>Email</th>
+                <th>Pharmacie affectee</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pharmacien in pharmaciens %}
+            <tr>
+                <td>{{ pharmacien.user.get_full_name|default:"-" }}</td>
+                <td>{{ pharmacien.user.email }}</td>
+                <td>{{ pharmacien.prestataire|default:"Non affecte" }}</td>
+                <td>
+                    <a href="{% url 'modifier_pharmacien' pharmacien.pk %}" class="button btn btn-primary btn-sm">Affecter une pharmacie</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% else %}
+<p class="empty">Aucun pharmacien enregistre.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Mon profil{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Mon profil</h1>
+        <p class="subtitle">Dr {{ medecin.prenom }} {{ medecin.nom }} - {{ medecin.email }}</p>
+    </div>
+</section>
+
+<form method="post">
+    {% csrf_token %}
+    {% for field in form %}
+    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+    {{ field }}
+    {% if field.errors %}<div class="erreurs" style="color:#b42318;margin:-10px 0 16px;font-size:13px;">{{ field.errors }}</div>{% endif %}
+    {% endfor %}
+    <button class="button primary" type="submit">Enregistrer</button>
+</form>
+{% endblock %}

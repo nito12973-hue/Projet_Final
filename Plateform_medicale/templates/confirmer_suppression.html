@@ -17,6 +17,11 @@
     <p style="margin: 10px 0 0; color: #1f2933;">
         Vous êtes sur le point de supprimer : <strong>{{ objet }}</strong>
     </p>
+    {% if avertissement %}
+    <p style="margin: 10px 0 0; color: #b42318; font-weight: 600;">
+        {{ avertissement }}
+    </p>
+    {% endif %}
 </div>
 
 <form method="post" style="max-width: 720px;">

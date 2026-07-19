@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Mon historique{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Mon historique</h1>
+        <p class="subtitle">Consultations passees, pour vous et vos ayants droit.</p>
+    </div>
+</section>
+
+{% if consultations %}
+<section class="panel">
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Beneficiaire</th>
+                <th>Medecin</th>
+                <th>Diagnostic</th>
+                <th>Traitement</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for consultation in consultations %}
+            <tr>
+                <td>{{ consultation.date_consultation|date:"d/m/Y H:i" }}</td>
+                <td>{{ consultation.patient }}</td>
+                <td>{{ consultation.medecin }}</td>
+                <td>{{ consultation.diagnostic }}</td>
+                <td>{{ consultation.traitement|default:"-" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% else %}
+<p class="empty">Aucune consultation enregistree.</p>
+{% endif %}
+{% endblock %}

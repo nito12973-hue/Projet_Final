@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Mon agenda{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Mon agenda</h1>
+        <p class="subtitle">Tous vos rendez-vous, passes et a venir.</p>
+    </div>
+    <a class="button primary" href="{% url 'ajouter_rendez_vous' %}">Nouveau rendez-vous</a>
+</section>
+
+{% if rendez_vous %}
+<section class="panel">
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Patient</th>
+                <th>Prestataire</th>
+                <th>Motif</th>
+                <th>Statut</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rdv in rendez_vous %}
+            <tr>
+                <td>{{ rdv.date_heure|date:"d/m/Y H:i" }}</td>
+                <td>{{ rdv.patient }}</td>
+                <td>{{ rdv.prestataire|default:"-" }}</td>
+                <td>{{ rdv.motif|default:"-" }}</td>
+                <td>
+                    <span class="badge {% if rdv.statut == 'DEMANDE' %}en_attente{% elif rdv.statut == 'CONFIRME' %}confirme{% elif rdv.statut == 'ANNULE' %}refusee{% elif rdv.statut == 'TERMINE' %}terminee{% endif %}">{{ rdv.get_statut_display }}</span>
+                </td>
+                <td>
+                    <div class="actions">
+                        {% if rdv.statut == 'DEMANDE' %}
+                        <form method="post" action="{% url 'changer_statut_rendez_vous' rdv.pk %}" style="display:inline;max-width:none;padding:0;border:0;background:transparent;box-shadow:none;">
+                            {% csrf_token %}
+                            <input type="hidden" name="statut" value="CONFIRME">
+                            <button type="submit" class="button btn btn-primary btn-sm">Confirmer</button>
+                        </form>
+                        {% endif %}
+                        {% if rdv.statut == 'CONFIRME' %}
+                        <form method="post" action="{% url 'changer_statut_rendez_vous' rdv.pk %}" style="display:inline;max-width:none;padding:0;border:0;background:transparent;box-shadow:none;">
+                            {% csrf_token %}
+                            <input type="hidden" name="statut" value="TERMINE">
+                            <button type="submit" class="button btn btn-primary btn-sm">Marquer termine</button>
+                        </form>
+                        {% endif %}
+                        {% if rdv.statut == 'DEMANDE' or rdv.statut == 'CONFIRME' %}
+                        <form method="post" action="{% url 'changer_statut_rendez_vous' rdv.pk %}" style="display:inline;max-width:none;padding:0;border:0;background:transparent;box-shadow:none;">
+                            {% csrf_token %}
+                            <input type="hidden" name="statut" value="ANNULE">
+                            <button type="submit" class="button btn btn-danger btn-sm">Annuler</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% else %}
+<p class="empty">Aucun rendez-vous enregistre.</p>
+{% endif %}
+{% endblock %}
