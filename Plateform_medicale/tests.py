@@ -24,6 +24,7 @@ from .models import (
     RendezVous,
     ServiceMedical,
     User,
+    distance_km,
 )
 
 PASSWORD = 'MotDePasseSolide2026!'
@@ -785,6 +786,19 @@ class AdminPrestatairesTests(TestCase):
         response = self.client.post(reverse('supprimer_prestataire', args=[prestataire.pk]))
         self.assertRedirects(response, reverse('liste_prestataires'))
         self.assertFalse(Prestataire.objects.filter(pk=prestataire.pk).exists())
+
+
+class DistanceKmTests(TestCase):
+    def test_meme_point_distance_nulle(self):
+        self.assertEqual(distance_km(14.6928, -17.4467, 14.6928, -17.4467), 0)
+
+    def test_un_degre_de_latitude(self):
+        resultat = distance_km(0, 0, 1, 0)
+        self.assertAlmostEqual(resultat, 111.19, delta=0.5)
+
+    def test_un_degre_de_longitude_a_l_equateur(self):
+        resultat = distance_km(0, 0, 0, 1)
+        self.assertAlmostEqual(resultat, 111.19, delta=0.5)
 
 
 class AdminPharmaciensTests(TestCase):
