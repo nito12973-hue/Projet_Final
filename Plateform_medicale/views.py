@@ -23,6 +23,7 @@ from .forms import (
     MedecinProfilForm,
     OrdonnanceForm,
     PaiementReglementForm,
+    PatientCreationForm,
     PatientForm,
     PharmacienAffectationForm,
     PlanCouvertureForm,
@@ -275,13 +276,31 @@ def liste_patients(request):
 @admin_required
 def ajouter_patient(request):
     if request.method == "POST":
-        form = PatientForm(request.POST)
+        form = PatientCreationForm(request.POST)
         if form.is_valid():
-            form.save()
+            patient = form.save(commit=False)
+            if patient.type_beneficiaire == Patient.TypeBeneficiaire.PRINCIPAL:
+                mot_de_passe = generer_mot_de_passe()
+                utilisateur = User.objects.create_user(
+                    email=form.cleaned_data['email'],
+                    password=mot_de_passe,
+                    role=User.Role.ASSURE,
+                    first_name=patient.prenom,
+                    last_name=patient.nom,
+                    phone_number=patient.telephone,
+                )
+                patient.user = utilisateur
+                patient.save()
+                return render(
+                    request,
+                    "mot_de_passe_genere.html",
+                    {"utilisateur": utilisateur, "mot_de_passe": mot_de_passe, "action": "creation"},
+                )
+            patient.save()
             messages.success(request, "Assure ajoute.")
             return redirect("liste_patients")
     else:
-        form = PatientForm()
+        form = PatientCreationForm()
     return render(request, "ajouter_patient.html", {"form": form})
 
 
@@ -296,9 +315,23 @@ def ajouter_medecin(request):
     if request.method == "POST":
         form = MedecinForm(request.POST)
         if form.is_valid():
-            form.save()
-            messages.success(request, "Medecin ajoute.")
-            return redirect("liste_medecins")
+            medecin = form.save(commit=False)
+            mot_de_passe = generer_mot_de_passe()
+            utilisateur = User.objects.create_user(
+                email=medecin.email,
+                password=mot_de_passe,
+                role=User.Role.MEDECIN,
+                first_name=medecin.prenom,
+                last_name=medecin.nom,
+                phone_number=medecin.telephone,
+            )
+            medecin.user = utilisateur
+            medecin.save()
+            return render(
+                request,
+                "mot_de_passe_genere.html",
+                {"utilisateur": utilisateur, "mot_de_passe": mot_de_passe, "action": "creation"},
+            )
     else:
         form = MedecinForm()
     return render(request, "ajouter_medecin.html", {"form": form})

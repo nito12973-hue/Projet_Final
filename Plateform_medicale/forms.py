@@ -378,6 +378,36 @@ class PatientForm(forms.ModelForm):
         return cleaned_data
 
 
+class PatientCreationForm(PatientForm):
+    """
+    Creation d'un patient par l'administrateur (ajouter_patient).
+
+    Ajoute un champ email transitoire (non stocke sur Patient, qui n'a pas
+    d'email) : pour un assure principal, il sert a creer son compte de
+    connexion (comme pour Medecin/Pharmacien) ; pour un ayant droit, il est
+    ignore (les ayants droit n'ont pas de compte propre, geres par leur
+    assure principal).
+    """
+
+    email = forms.EmailField(
+        required=False,
+        label='Email',
+        help_text="Requis uniquement pour un assure principal : sert a creer son compte de connexion.",
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        type_beneficiaire = cleaned_data.get('type_beneficiaire')
+        email = cleaned_data.get('email')
+
+        if type_beneficiaire == Patient.TypeBeneficiaire.PRINCIPAL:
+            if not email:
+                self.add_error('email', "L'email est requis pour un assure principal (creation du compte).")
+            elif User.objects.filter(email=email).exists():
+                self.add_error('email', "Cet email est deja utilise par un compte existant.")
+        return cleaned_data
+
+
 class EnvoyerNotificationForm(forms.Form):
     """Envoi d'une notification a un utilisateur precis ou a tout un role."""
 
@@ -406,11 +436,27 @@ class EnvoyerNotificationForm(forms.Form):
 
 
 class MedecinForm(forms.ModelForm):
-    """Creation/modification d'un medecin par l'administrateur."""
+    """
+    Creation/modification d'un medecin par l'administrateur.
+
+    A la creation, un compte de connexion (role MEDECIN) est cree
+    automatiquement avec cet email (voir la vue ajouter_medecin) : c'est
+    pourquoi l'email doit aussi etre libre cote User, pas seulement cote
+    Medecin.
+    """
 
     class Meta:
         model = Medecin
         fields = ['nom', 'prenom', 'specialite', 'telephone', 'email', 'prestataire']
+
+    def clean_email(self):
+        email = self.cleaned_data['email']
+        comptes = User.objects.filter(email=email)
+        if self.instance.pk and self.instance.user_id:
+            comptes = comptes.exclude(pk=self.instance.user_id)
+        if comptes.exists():
+            raise forms.ValidationError("Cet email est deja utilise par un compte existant.")
+        return email
 
 
 class ServiceMedicalForm(forms.ModelForm):

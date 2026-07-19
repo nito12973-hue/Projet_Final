@@ -782,6 +782,40 @@ class AdminPatientFormTests(TestCase):
         self.assertEqual(len(patients), 1)
         self.assertEqual(patients[0].prenom, 'Petit')
 
+    def test_creation_assure_principal_cree_son_compte(self):
+        response = self.client.post(reverse('ajouter_patient'), {
+            'nom': 'Ndiaye', 'prenom': 'Fatou', 'date_naissance': '1985-05-05',
+            'telephone': '', 'adresse': '', 'type_beneficiaire': 'PRINCIPAL',
+            'assure_principal': '', 'lien_parente': '', 'plan_couverture': '',
+            'email': 'fatou.ndiaye@santesn.sn',
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'fatou.ndiaye@santesn.sn')
+        patient = Patient.objects.get(nom='Ndiaye')
+        self.assertIsNotNone(patient.user)
+        self.assertEqual(patient.user.role, User.Role.ASSURE)
+
+    def test_creation_assure_principal_sans_email_refuse(self):
+        response = self.client.post(reverse('ajouter_patient'), {
+            'nom': 'Ndiaye', 'prenom': 'Fatou', 'date_naissance': '1985-05-05',
+            'telephone': '', 'adresse': '', 'type_beneficiaire': 'PRINCIPAL',
+            'assure_principal': '', 'lien_parente': '', 'plan_couverture': '', 'email': '',
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Patient.objects.filter(nom='Ndiaye').exists())
+
+    def test_creation_ayant_droit_ne_cree_pas_de_compte(self):
+        principal = creer_patient(nom='Diop', prenom='Moussa')
+        response = self.client.post(reverse('ajouter_patient'), {
+            'nom': 'Diop', 'prenom': 'Petit', 'date_naissance': '2015-01-01',
+            'telephone': '', 'adresse': '', 'type_beneficiaire': 'AYANT_DROIT',
+            'assure_principal': principal.pk, 'lien_parente': 'ENFANT', 'plan_couverture': '',
+            'email': '',
+        })
+        self.assertRedirects(response, reverse('liste_patients'))
+        ayant_droit = Patient.objects.get(nom='Diop', prenom='Petit')
+        self.assertIsNone(ayant_droit.user)
+
 
 class NotificationsTests(TestCase):
     def setUp(self):
@@ -868,13 +902,18 @@ class AdminMedecinsFormTests(TestCase):
         self.admin = creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
         self.client.login(username='admin@santesn.sn', password=PASSWORD)
 
-    def test_creation_medecin_via_formulaire(self):
+    def test_creation_medecin_via_formulaire_cree_aussi_son_compte(self):
         response = self.client.post(reverse('ajouter_medecin'), {
             'nom': 'Sarr', 'prenom': 'Ibrahima', 'specialite': 'Pediatrie',
             'telephone': '770001122', 'email': 'ibrahima.sarr@santesn.sn', 'prestataire': '',
         })
-        self.assertRedirects(response, reverse('liste_medecins'))
-        self.assertTrue(Medecin.objects.filter(email='ibrahima.sarr@santesn.sn').exists())
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'ibrahima.sarr@santesn.sn')
+        medecin = Medecin.objects.get(email='ibrahima.sarr@santesn.sn')
+        self.assertIsNotNone(medecin.user)
+        self.assertEqual(medecin.user.email, 'ibrahima.sarr@santesn.sn')
+        self.assertEqual(medecin.user.role, User.Role.MEDECIN)
+        self.assertTrue(User.objects.filter(email='ibrahima.sarr@santesn.sn').exists())
 
     def test_email_duplique_refuse_proprement(self):
         Medecin.objects.create(
@@ -884,6 +923,15 @@ class AdminMedecinsFormTests(TestCase):
         response = self.client.post(reverse('ajouter_medecin'), {
             'nom': 'Diop', 'prenom': 'Awa', 'specialite': 'Dermatologie',
             'telephone': '770003344', 'email': 'dup@santesn.sn', 'prestataire': '',
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Medecin.objects.filter(nom='Diop').exists())
+
+    def test_email_deja_utilise_par_un_compte_refuse(self):
+        creer_utilisateur(User.Role.ASSURE, 'compte.existant@santesn.sn')
+        response = self.client.post(reverse('ajouter_medecin'), {
+            'nom': 'Diop', 'prenom': 'Awa', 'specialite': 'Dermatologie',
+            'telephone': '770003344', 'email': 'compte.existant@santesn.sn', 'prestataire': '',
         })
         self.assertEqual(response.status_code, 200)
         self.assertFalse(Medecin.objects.filter(nom='Diop').exists())

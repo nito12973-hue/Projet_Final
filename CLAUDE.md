@@ -131,6 +131,18 @@ changer son propre mot de passe après connexion (`changer_mot_de_passe`,
 `PasswordChangeForm` + `update_session_auth_hash` pour ne pas déconnecter
 l'utilisateur), indépendamment de la réinitialisation par l'admin.
 
+**Toute fiche métier avec connexion crée son compte automatiquement.**
+`ajouter_medecin` et `ajouter_patient` (uniquement pour un assuré
+**principal** — jamais pour un ayant droit) créent désormais aussi un
+`User` (même email, mot de passe généré, écran `mot_de_passe_genere.html`
+réutilisé), en plus de la fiche `Medecin`/`Patient`, pour que la personne
+apparaisse dans "Gestion des utilisateurs". Les ayants droit n'ont
+volontairement jamais de compte (gérés par leur assuré principal). Un
+Pharmacien n'a pas d'écran de création dédié : il n'existe que via
+"Gestion des utilisateurs" (rôle Pharmacien), donc toujours avec un compte.
+`MedecinForm`/`PatientCreationForm` valident que l'email n'est pas déjà
+pris par un `User` existant (pas seulement par un autre `Medecin`).
+
 ## Paiements (livré)
 
 Modèle `Paiement`, en relation 1-1 avec `Consultation`. Créé automatiquement
