@@ -11,6 +11,7 @@
     </div>
     <div class="actions">
         <a class="button" href="{% url 'exporter_utilisateurs_excel' %}?{{ request.GET.urlencode }}">{% icone "download" %} Exporter en Excel</a>
+        <a class="button" href="{% url 'importer_utilisateurs_excel' %}">{% icone "upload" %} Importer depuis Excel</a>
         <a class="button primary" href="{% url 'ajouter_utilisateur' %}">Ajouter un utilisateur</a>
     </div>
 </section>

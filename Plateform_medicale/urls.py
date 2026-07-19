@@ -20,6 +20,8 @@ urlpatterns = [
 
     path('utilisateurs/', views.liste_utilisateurs, name='liste_utilisateurs'),
     path('utilisateurs/exporter/', views.exporter_utilisateurs_excel, name='exporter_utilisateurs_excel'),
+    path('utilisateurs/importer/', views.importer_utilisateurs_excel, name='importer_utilisateurs_excel'),
+    path('utilisateurs/importer/modele/', views.telecharger_modele_import_utilisateurs, name='telecharger_modele_import_utilisateurs'),
     path('utilisateurs/ajouter/', views.ajouter_utilisateur, name='ajouter_utilisateur'),
     path('utilisateurs/<int:pk>/modifier/', views.modifier_utilisateur, name='modifier_utilisateur'),
     path('utilisateurs/<int:pk>/activer-desactiver/', views.activer_desactiver_utilisateur, name='activer_desactiver_utilisateur'),
