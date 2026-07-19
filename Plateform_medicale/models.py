@@ -1,5 +1,6 @@
 import io
 import uuid
+from math import atan2, cos, radians, sin, sqrt
 
 import qrcode
 import qrcode.image.svg
@@ -14,6 +15,16 @@ valider_telephone = RegexValidator(
     regex=r'^\+?[0-9 \-]{7,20}$',
     message="Numero de telephone invalide (chiffres, espaces, tirets et + uniquement).",
 )
+
+
+def distance_km(lat1, lon1, lat2, lon2):
+    """Distance a vol d'oiseau entre deux points, en kilometres (formule de haversine)."""
+    rayon_terre_km = 6371.0
+    phi1, phi2 = radians(lat1), radians(lat2)
+    delta_phi = radians(lat2 - lat1)
+    delta_lambda = radians(lon2 - lon1)
+    a = sin(delta_phi / 2) ** 2 + cos(phi1) * cos(phi2) * sin(delta_lambda / 2) ** 2
+    return rayon_terre_km * 2 * atan2(sqrt(a), sqrt(1 - a))
 
 
 class UserManager(BaseUserManager):
@@ -163,6 +174,11 @@ class Prestataire(models.Model):
         "partenaire actif", default=True, help_text="Fait partie du reseau conventionne."
     )
     date_conventionnement = models.DateField(null=True, blank=True)
+    latitude = models.DecimalField(
+        max_digits=9, decimal_places=6, null=True, blank=True,
+        help_text="Renseignee en placant un point sur la carte (formulaire prestataire).",
+    )
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
 
     class Meta:
         verbose_name = "prestataire"
