@@ -1,0 +1,287 @@
+SANTESN — FONCTIONNEMENT TECHNIQUE
+====================================
+Document de reference sur la structure du code (modeles, vues, routes,
+templates). Complementaire a CLAUDE.md, qui suit l'avancement par phases :
+ce fichier decrit CE QUI EXISTE et COMMENT C'EST ORGANISE, sans suivre de
+calendrier. A mettre a jour quand la structure change reellement (nouveau
+modele, nouvelle route, nouveau role) — pas a chaque modification de detail.
+
+
+1. STACK ET ORGANISATION GENERALE
+----------------------------------
+- Django (voir requirements.txt pour la version exacte), base SQLite en
+  developpement (db.sqlite3, ignore par git).
+- Une seule app Django : Plateform_medicale/. config/ ne contient que la
+  configuration (settings.py, urls.py racine, wsgi.py, asgi.py).
+- Authentification par email + mot de passe uniquement (pas de nom
+  d'utilisateur, pas d'inscription publique). AUTH_USER_MODEL pointe sur
+  Plateform_medicale.User.
+- Le role de chaque utilisateur (ADMIN, ASSURE, MEDECIN, PHARMACIEN) est
+  stocke en base et determine son tableau de bord apres connexion ; il n'est
+  jamais choisi ni change par l'utilisateur lui-meme.
+
+Arborescence :
+  Plateform_medicale/
+    models.py              toutes les entites metier (section 2)
+    views.py               toutes les vues (~1700 lignes, section 4)
+    forms.py                formulaires Django + helpers (mots de passe,
+                            creation de fiches medecin/pharmacien)
+    urls.py                 routes de l'app (section 4)
+    admin.py                 enregistrement Django admin (usage interne)
+    tests.py                 suite de tests (section 6)
+    templatetags/icones.py  systeme d'icones SVG maison (section 5)
+    management/commands/    commandes ponctuelles (ex. seed_demo_users)
+    migrations/
+    templates/               tous les templates, a plat (pas de sous-dossier
+                            par app)
+    static/
+  config/
+    settings.py, urls.py, wsgi.py, asgi.py
+
+
+2. MODELE DE DONNEES (models.py)
+----------------------------------
+User (AbstractBaseUser + PermissionsMixin)
+  email (identifiant de connexion, unique), first_name, last_name,
+  phone_number, role (ADMIN/ASSURE/MEDECIN/PHARMACIEN), is_staff,
+  is_active, date_joined.
+  UserManager : create_user / create_superuser (email au lieu de username).
+
+PlanCouverture
+  Regle de remboursement : nom, taux_couverture (%), plafond_annuel.
+  Rattache a un Patient PRINCIPAL ; ses ayants droit heritent du meme plan
+  via la propriete Patient.titulaire.
+
+Prestataire
+  Etablissement partenaire : nom, type_prestataire (HOPITAL / CLINIQUE /
+  PHARMACIE / CABINET), adresse, ville, telephone, partenaire (bool),
+  date_conventionnement.
+  Rattache a Medecin, Pharmacien, ServiceMedical, RendezVous (tous en
+  ForeignKey optionnelle, SET_NULL a la suppression).
+
+Patient
+  Assure principal OU ayant droit (type_beneficiaire).
+  - user : OneToOne vers User, uniquement pour un assure PRINCIPAL (un
+    ayant droit n'a jamais de compte de connexion, gere par son assure
+    principal).
+  - assure_principal : self-FK, renseignee uniquement pour un ayant droit.
+  - lien_parente (CONJOINT / ENFANT / AUTRE), renseignee uniquement pour un
+    ayant droit.
+  - numero_carte : genere automatiquement a la creation (SN-xxxxxxxxxx),
+    unique, non modifiable.
+  - plan_couverture : renseigne pour le principal ; un ayant droit lit le
+    plan de son titulaire via la propriete taux_couverture.
+
+Medecin / Pharmacien
+  Fiche metier liee a un User (OneToOne, SET_NULL) + a un Prestataire
+  (ForeignKey, SET_NULL). Un Medecin/Pharmacien peut exister sans compte
+  (user=None) si le compte de connexion a ete supprime : la fiche n'est
+  PAS supprimee en cascade (attention lors d'un nettoyage manuel de la
+  base — verifier les fiches orphelines avant de les retirer).
+
+ServiceMedical
+  Acte facturable : nom, description, prix, prestataire.
+
+PriseEnCharge
+  Demande de couverture d'un Patient : motif, statut (en_attente / validee
+  / refusee / terminee — valeurs en minuscules, utilisees telles quelles
+  comme classes CSS de badge).
+
+Consultation
+  patient, medecin, service (optionnel), prise_en_charge (optionnelle),
+  date_consultation, diagnostic, traitement.
+  Cree automatiquement un Paiement via Paiement.calculer_pour(consultation)
+  au moment de l'enregistrement par le medecin (ajouter_consultation_medecin
+  dans views.py) — les Consultations creees directement en base (fixtures,
+  tests via l'ORM) n'ont pas de Paiement associe.
+
+Paiement (OneToOne avec Consultation)
+  montant_total (= service.prix, 0 si aucun service), taux_applique (taux
+  du plan SEULEMENT si la prise_en_charge liee a le statut "validee",
+  sinon 0 → le patient regle 100%), montant_part_assurance,
+  montant_part_patient, statut (non_regle / regle), mode_reglement,
+  date_reglement.
+  Paiement.calculer_pour(consultation) construit l'instance (sans la
+  sauvegarder) ; l'appelant fait .save().
+
+Ordonnance
+  Liee a une Consultation : medicaments (texte libre), code_qr (genere
+  automatiquement, RX-xxxxxxxxxx, unique), date_creation.
+  Propriete qr_svg : genere le QR code (SVG) a la volee a partir de
+  code_qr — rien n'est stocke en image, uniquement le code texte.
+
+RendezVous
+  patient, medecin, prestataire (optionnel), date_heure, motif, statut
+  (DEMANDE / CONFIRME / ANNULE / TERMINE — ici en MAJUSCULES, a la
+  difference de PriseEnCharge).
+
+Delivrance (OneToOne avec Ordonnance)
+  Tracee quand un pharmacien scanne et valide une ordonnance : ordonnance,
+  pharmacien, date_delivrance.
+
+Notification
+  destinataire (User), message, date_creation, lue (bool). Pour notifier
+  plusieurs personnes, l'administrateur declenche un fan-out a la creation
+  (une Notification par destinataire) plutot qu'un modele de groupe.
+
+Relations cle a retenir :
+  User 1—1 Patient (assure principal uniquement)
+  User 1—1 Medecin / Pharmacien
+  Patient 1—N Patient (ayants droit, self-FK assure_principal)
+  Patient 1—N Consultation, RendezVous, PriseEnCharge
+  Consultation 1—1 Paiement, 1—N Ordonnance
+  Ordonnance 1—1 Delivrance
+  Prestataire 1—N Medecin, Pharmacien, ServiceMedical, RendezVous
+
+
+3. AUTHENTIFICATION ET PERMISSIONS (views.py, haut du fichier)
+----------------------------------------------------------------
+- role_required(*roles) : decorateur, exige un des roles donnes (403 sinon).
+- admin_required : raccourci = role_required(User.Role.ADMIN).
+- user_role(request) / _admin_exists() : helpers internes.
+- post_login_redirect : redirige chaque role vers son tableau de bord
+  (dashboard / dashboard_assure / dashboard_medecin / dashboard_pharmacien).
+- setup_wizard : creation du tout premier admin, accessible seulement si
+  aucun admin n'existe encore en base (_admin_exists()).
+- changer_mot_de_passe : libre-service, disponible pour les 4 roles,
+  update_session_auth_hash() pour ne pas deconnecter l'utilisateur.
+
+
+4. VUES ET ROUTES (views.py / urls.py), par domaine
+------------------------------------------------------
+Public / transverse
+  landing ("/")                     page publique
+  login_view / logout_view          connexion
+  post_login_redirect               routeur post-connexion
+  setup_wizard                       premier admin uniquement
+  changer_mot_de_passe               tous roles connectes
+  mes_notifications /
+    marquer_notification_lue         tous roles connectes
+
+Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
+/medecins/, /pharmaciens/, /services/, /prises-en-charge/, /paiements/,
+/prestataires/, /plans-de-couverture/, /rapports/, /tableau-de-bord/,
+/notifications/envoyer|envoyees/)
+  dashboard                          page d'accueil admin (stats + actions)
+  rapports / exporter_rapports_excel / exporter_rapports_pdf
+                                      _donnees_rapports() est la SEULE
+                                      source de donnees, partagee par la
+                                      vue et les deux exports (pas de
+                                      requetes dupliquees)
+  liste_utilisateurs / ajouter_utilisateur / modifier_utilisateur /
+    activer_desactiver_utilisateur / reinitialiser_mot_de_passe /
+    supprimer_utilisateur / exporter_utilisateurs_excel /
+    importer_utilisateurs_excel / telecharger_modele_import_utilisateurs
+                                      CRUD utilisateurs + import/export Excel
+                                      import : regle "tout ou rien", voir
+                                      _analyser_ligne_import_utilisateurs
+  liste_patients / ajouter_patient / modifier_patient / supprimer_patient
+                                      assures PRINCIPAUX uniquement (les
+                                      ayants droit se gerent depuis l'espace
+                                      Assure, pas ici)
+  liste_medecins / ajouter_medecin / modifier_medecin / supprimer_medecin
+  liste_pharmaciens / modifier_pharmacien
+                                      pas de vue "ajouter" dediee : un
+                                      Pharmacien n'existe qu'via Gestion
+                                      des utilisateurs (role Pharmacien)
+  liste_services / ajouter_service / modifier_service / supprimer_service
+  liste_prises_en_charge / ajouter_prise_en_charge /
+    modifier_prise_en_charge / supprimer_prise_en_charge
+  liste_paiements / marquer_paiement_regle
+  liste_prestataires / ajouter_prestataire / modifier_prestataire /
+    supprimer_prestataire
+  liste_plans_couverture / ajouter_plan_couverture /
+    modifier_plan_couverture / supprimer_plan_couverture
+  envoyer_notification / liste_notifications_envoyees
+  _filtrer_utilisateurs / _avertissement_cascade / _normaliser_texte_import /
+    _creer_comptes_import_utilisateurs                     helpers prives
+
+Medecin (role_required(MEDECIN), prefixe /medecin/ + /espace/medecin/)
+  dashboard_medecin                  stats + prochains rendez-vous
+  agenda_medecin / ajouter_rendez_vous / changer_statut_rendez_vous
+  mes_patients                        patients ayant deja consulte ce medecin
+  historique_consultations / ajouter_consultation_medecin
+                                      cree la Consultation + le Paiement
+                                      (Paiement.calculer_pour(...).save())
+  ajouter_ordonnance_medecin / voir_ordonnance_medecin
+                                      generation du QR (voir Ordonnance.qr_svg)
+  modifier_profil_medecin
+  _medecin_courant / _patients_du_medecin              helpers prives
+
+Pharmacien (role_required(PHARMACIEN), prefixe /pharmacien/ + /espace/)
+  dashboard_pharmacien
+  scanner_ordonnance / valider_delivrance
+                                      verifie le code_qr, cree la Delivrance
+  historique_delivrances
+  _pharmacien_courant                helper prive
+
+Assure (role_required(ASSURE), prefixe /assure/ + /espace/assure/)
+  dashboard_assure                    redirige vers mon_profil_assure si
+                                      aucune fiche Patient n'est encore liee
+  mon_profil_assure
+  liste_ayants_droit / ajouter_ayant_droit / modifier_ayant_droit /
+    supprimer_ayant_droit             gestion de la famille par l'assure
+                                      principal (jamais de compte cree)
+  mes_rendez_vous_assure / ajouter_rendez_vous_assure /
+    annuler_rendez_vous_assure
+  mes_ordonnances_assure / voir_ordonnance_assure
+  mon_historique_assure               consultations + statut de paiement
+  _patient_principal / _beneficiaires          helpers prives
+
+
+5. TEMPLATES ET DESIGN SYSTEM
+--------------------------------
+- base.html : shell unique (sidebar + zone de contenu), partage par les 4
+  roles connectes ; navigation conditionnelle selon current_role. Palette
+  navy (#0F172A) / turquoise (#14B8A6) — --primary-strong (#0F766E) reserve
+  aux elements avec texte/icone blancs en aplat (contraste insuffisant avec
+  le turquoise vif seul). Mode reduit du menu (icones seules, persistant via
+  localStorage), tiroir mobile, barre de chargement de navigation.
+- base_auth.html : shell independant pour connexion/installation (setup
+  wizard), meme palette, CSS totalement autonome (pas de dependance a
+  base.html).
+- landing.html : page publique, CSS autonome, meme palette navy/turquoise.
+- templatetags/icones.py : dictionnaire _ICONES, tag {% icone "nom" %} —
+  SVG trait fin 24x24 inline, aucune dependance externe (pas de police
+  d'icones, pas de CDN). Toujours reutiliser une icone existante avant d'en
+  ajouter une nouvelle.
+- Classes partagees a reutiliser (definies dans base.html) : .page-title,
+  .panel/.panel-header, .grid/.stat (obsoletes, remplacees par .dash-grid/
+  .dash-stat sur les 4 pages d'accueil), .badge (+ .validee/.refusee/
+  .en_attente), .button (+ .primary/.btn/.btn-sm/.btn-danger), .actions,
+  .action-tiles/.action-tile, .erreurs/.erreurs-formulaire (erreurs de
+  formulaire), .filtres (barre de filtres GET), .action-ligne (formulaire
+  POST invisible dans une ligne de tableau), .details-tableau (tableau de
+  donnees replie sous un graphique).
+- dashboard.html / dashboard_medecin.html / dashboard_pharmacien.html /
+  dashboard_assure.html : pages d'accueil par role, cartes .dash-stat +
+  tableau .dash-pill pour les statuts (couleurs alignees avec les badges).
+- rapports.html : graphiques Chart.js (CDN, integrite SRI) + tableaux de
+  donnees repliés (<details>) pour eviter de dupliquer visuellement chart
+  et tableau ; palette categorielle validee anti-daltonisme pour role/type,
+  couleurs semantiques (vert/ambre/rouge) pour les statuts.
+- dashboard_role.html : NON REFERENCE dans views.py/urls.py — a verifier
+  avant suppression eventuelle (code mort probable).
+
+
+6. TESTS (tests.py)
+----------------------
+python manage.py test Plateform_medicale — 124 tests au moment de la
+redaction de ce document. Couvre : redirections/permissions par role,
+garde-fous anti-lockout (un admin ne peut pas se desactiver/supprimer/
+changer son propre role lui-meme), creation automatique de compte a la
+creation d'une fiche Medecin/Patient principal, import/export Excel,
+calcul des paiements selon le statut de prise en charge, generation et
+validation des QR codes d'ordonnance.
+Chaque nouvelle fonctionnalite doit etre testee avant d'etre consideree
+terminee (regle imposee par CLAUDE.md).
+
+
+7. COMMANDES DE GESTION (management/commands/)
+--------------------------------------------------
+seed_demo_users --count N [--password ...]
+  Cree des comptes Assure/Medecin/Pharmacien de demonstration (refuse de
+  s'executer si DEBUG=False). Ne cree PAS de Patient pour les comptes
+  Assure ni de donnees operationnelles (rendez-vous, consultations,
+  prises en charge, paiements) — uniquement des comptes User + fiches
+  Medecin/Pharmacien vides.

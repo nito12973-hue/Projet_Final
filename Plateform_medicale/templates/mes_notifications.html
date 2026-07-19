@@ -35,7 +35,7 @@
                 </td>
                 <td>
                     {% if not notification.lue %}
-                    <form method="post" action="{% url 'marquer_notification_lue' notification.pk %}" style="display:inline;max-width:none;padding:0;border:0;background:transparent;box-shadow:none;">
+                    <form method="post" action="{% url 'marquer_notification_lue' notification.pk %}" class="action-ligne">
                         {% csrf_token %}
                         <button type="submit" class="button btn btn-primary btn-sm">Marquer comme lue</button>
                     </form>

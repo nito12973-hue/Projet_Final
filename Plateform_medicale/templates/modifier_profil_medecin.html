@@ -15,7 +15,7 @@
     {% for field in form %}
     <label for="{{ field.id_for_label }}">{{ field.label }}</label>
     {{ field }}
-    {% if field.errors %}<div class="erreurs" style="color:#b42318;margin:-10px 0 16px;font-size:13px;">{{ field.errors }}</div>{% endif %}
+    {% if field.errors %}<div class="erreurs">{{ field.errors }}</div>{% endif %}
     {% endfor %}
     <button class="button primary" type="submit">Enregistrer</button>
 </form>

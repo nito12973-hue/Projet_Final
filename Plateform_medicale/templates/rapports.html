@@ -15,27 +15,30 @@
     </div>
 </section>
 
-<section class="panel" style="margin-bottom:18px;">
-    <div class="panel-header">
+<section class="panel" style="margin-bottom:18px;padding:22px 24px;">
+    <div class="panel-header" style="padding:0 0 16px;">
         <h2>Consultations par mois</h2>
     </div>
     <canvas id="graphe-consultations-mois" style="max-height:260px;"></canvas>
 </section>
 
 <section class="admin-layout">
-    <article class="panel">
-        <div class="panel-header">
+    <article class="panel" style="padding:22px 24px;">
+        <div class="panel-header" style="padding:0 0 16px;">
             <h2>Utilisateurs par role</h2>
         </div>
         <canvas id="graphe-utilisateurs-role" style="max-height:220px;"></canvas>
-        <table>
-            <thead><tr><th>Role</th><th>Total</th></tr></thead>
-            <tbody>
-                {% for ligne in utilisateurs_par_role %}
-                <tr><td>{{ ligne.label }}</td><td>{{ ligne.total }}</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <details class="details-tableau">
+            <summary>Voir le tableau</summary>
+            <table>
+                <thead><tr><th>Role</th><th>Total</th></tr></thead>
+                <tbody>
+                    {% for ligne in utilisateurs_par_role %}
+                    <tr><td>{{ ligne.label }}</td><td>{{ ligne.total }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </details>
     </article>
 
     <aside class="panel governance-card">
@@ -48,44 +51,53 @@
 </section>
 
 <section class="admin-layout" style="margin-top:18px;">
-    <article class="panel">
-        <div class="panel-header"><h2>Assures par type</h2></div>
+    <article class="panel" style="padding:22px 24px;">
+        <div class="panel-header" style="padding:0 0 16px;"><h2>Assures par type</h2></div>
         <canvas id="graphe-patients-type" style="max-height:220px;"></canvas>
-        <table>
-            <thead><tr><th>Type</th><th>Total</th></tr></thead>
-            <tbody>
-                {% for ligne in patients_par_type %}
-                <tr><td>{{ ligne.label }}</td><td>{{ ligne.total }}</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <details class="details-tableau">
+            <summary>Voir le tableau</summary>
+            <table>
+                <thead><tr><th>Type</th><th>Total</th></tr></thead>
+                <tbody>
+                    {% for ligne in patients_par_type %}
+                    <tr><td>{{ ligne.label }}</td><td>{{ ligne.total }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </details>
     </article>
 
-    <article class="panel">
-        <div class="panel-header"><h2>Rendez-vous par statut</h2></div>
+    <article class="panel" style="padding:22px 24px;">
+        <div class="panel-header" style="padding:0 0 16px;"><h2>Rendez-vous par statut</h2></div>
         <canvas id="graphe-rendez-vous-statut" style="max-height:220px;"></canvas>
-        <table>
-            <thead><tr><th>Statut</th><th>Total</th></tr></thead>
-            <tbody>
-                {% for ligne in rendez_vous_par_statut %}
-                <tr><td>{{ ligne.label }}</td><td>{{ ligne.total }}</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <details class="details-tableau">
+            <summary>Voir le tableau</summary>
+            <table>
+                <thead><tr><th>Statut</th><th>Total</th></tr></thead>
+                <tbody>
+                    {% for ligne in rendez_vous_par_statut %}
+                    <tr><td>{{ ligne.label }}</td><td>{{ ligne.total }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </details>
     </article>
 </section>
 
-<section class="panel" style="margin-top:18px;">
-    <div class="panel-header"><h2>Prises en charge par statut</h2></div>
+<section class="panel" style="margin-top:18px;padding:22px 24px;">
+    <div class="panel-header" style="padding:0 0 16px;"><h2>Prises en charge par statut</h2></div>
     <canvas id="graphe-prises-en-charge-statut" style="max-height:220px;"></canvas>
-    <table>
-        <thead><tr><th>Statut</th><th>Total</th></tr></thead>
-        <tbody>
-            {% for ligne in prises_en_charge_par_statut %}
-            <tr><td>{{ ligne.label }}</td><td>{{ ligne.total }}</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <details class="details-tableau">
+        <summary>Voir le tableau</summary>
+        <table>
+            <thead><tr><th>Statut</th><th>Total</th></tr></thead>
+            <tbody>
+                {% for ligne in prises_en_charge_par_statut %}
+                <tr><td>{{ ligne.label }}</td><td>{{ ligne.total }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </details>
 </section>
 
 {{ consultations_par_mois|json_script:"donnees-consultations-mois" }}
@@ -99,22 +111,47 @@
         crossorigin="anonymous"></script>
 <script>
     (function () {
-        var PALETTE = ['#12885a', '#16a34a', '#9a6700', '#b42318', '#5f6f7d', '#0b5d3b'];
+        // Palette categorielle (validee CVD/contraste — voir dataviz skill) pour
+        // les repartitions "identite" (role, type de beneficiaire).
+        var PALETTE_CATEGORIELLE = ['#0d9488', '#2a78d6', '#e87ba4', '#eda100'];
+
+        // Statuts : couleurs semantiques reprises telles quelles des badges du
+        // reste de l'appli (.badge/.dash-pill), pour que "En attente"/"Validee"
+        // se lisent pareil ici et sur les tableaux de bord.
+        var COULEURS_STATUT = {
+            'Confirme': '#167a46',
+            'Termine': '#167a46',
+            'Validee': '#167a46',
+            'Terminee': '#167a46',
+            'Demande': '#9a6700',
+            'En attente': '#9a6700',
+            'Annule': '#b42318',
+            'Refusee': '#b42318',
+        };
 
         function lireDonnees(id) {
             var element = document.getElementById(id);
             return element ? JSON.parse(element.textContent) : [];
         }
 
+        function couleursStatuts(labels) {
+            return labels.map(function (label) { return COULEURS_STATUT[label] || '#5f6f7d'; });
+        }
+
         function traceBarres(idCanevas, idDonnees) {
             var lignes = lireDonnees(idDonnees);
             var canevas = document.getElementById(idCanevas);
             if (!canevas || !lignes.length) { return; }
+            var labels = lignes.map(function (l) { return l.label; });
             new Chart(canevas, {
                 type: 'bar',
                 data: {
-                    labels: lignes.map(function (l) { return l.label; }),
-                    datasets: [{ data: lignes.map(function (l) { return l.total; }), backgroundColor: PALETTE }],
+                    labels: labels,
+                    datasets: [{
+                        data: lignes.map(function (l) { return l.total; }),
+                        backgroundColor: couleursStatuts(labels),
+                        borderRadius: 4,
+                    }],
                 },
                 options: {
                     plugins: { legend: { display: false } },
@@ -127,13 +164,35 @@
             var lignes = lireDonnees(idDonnees);
             var canevas = document.getElementById(idCanevas);
             if (!canevas || !lignes.length) { return; }
+            var couleurs = PALETTE_CATEGORIELLE.slice(0, lignes.length);
             new Chart(canevas, {
                 type: 'doughnut',
                 data: {
                     labels: lignes.map(function (l) { return l.label; }),
-                    datasets: [{ data: lignes.map(function (l) { return l.total; }), backgroundColor: PALETTE }],
+                    datasets: [{ data: lignes.map(function (l) { return l.total; }), backgroundColor: couleurs }],
                 },
-                options: { plugins: { legend: { position: 'bottom' } } },
+                options: {
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                // Affiche "Label : total" directement dans la legende,
+                                // pour lire les chiffres sans ouvrir le tableau.
+                                generateLabels: function (chart) {
+                                    var data = chart.data;
+                                    return data.labels.map(function (label, i) {
+                                        return {
+                                            text: label + ' : ' + data.datasets[0].data[i],
+                                            fillStyle: data.datasets[0].backgroundColor[i],
+                                            strokeStyle: data.datasets[0].backgroundColor[i],
+                                            index: i,
+                                        };
+                                    });
+                                },
+                            },
+                        },
+                    },
+                },
             });
         }
 
@@ -147,8 +206,8 @@
                     datasets: [{
                         label: 'Consultations',
                         data: moisData.totaux,
-                        borderColor: '#12885a',
-                        backgroundColor: 'rgba(18, 136, 90, 0.15)',
+                        borderColor: '#0d9488',
+                        backgroundColor: 'rgba(13, 148, 136, 0.15)',
                         tension: 0.3,
                         fill: true,
                     }],

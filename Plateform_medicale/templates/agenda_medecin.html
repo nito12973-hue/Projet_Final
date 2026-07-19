@@ -37,21 +37,21 @@
                 <td>
                     <div class="actions">
                         {% if rdv.statut == 'DEMANDE' %}
-                        <form method="post" action="{% url 'changer_statut_rendez_vous' rdv.pk %}" style="display:inline;max-width:none;padding:0;border:0;background:transparent;box-shadow:none;">
+                        <form method="post" action="{% url 'changer_statut_rendez_vous' rdv.pk %}" class="action-ligne">
                             {% csrf_token %}
                             <input type="hidden" name="statut" value="CONFIRME">
                             <button type="submit" class="button btn btn-primary btn-sm">Confirmer</button>
                         </form>
                         {% endif %}
                         {% if rdv.statut == 'CONFIRME' %}
-                        <form method="post" action="{% url 'changer_statut_rendez_vous' rdv.pk %}" style="display:inline;max-width:none;padding:0;border:0;background:transparent;box-shadow:none;">
+                        <form method="post" action="{% url 'changer_statut_rendez_vous' rdv.pk %}" class="action-ligne">
                             {% csrf_token %}
                             <input type="hidden" name="statut" value="TERMINE">
                             <button type="submit" class="button btn btn-primary btn-sm">Marquer termine</button>
                         </form>
                         {% endif %}
                         {% if rdv.statut == 'DEMANDE' or rdv.statut == 'CONFIRME' %}
-                        <form method="post" action="{% url 'changer_statut_rendez_vous' rdv.pk %}" style="display:inline;max-width:none;padding:0;border:0;background:transparent;box-shadow:none;">
+                        <form method="post" action="{% url 'changer_statut_rendez_vous' rdv.pk %}" class="action-ligne">
                             {% csrf_token %}
                             <input type="hidden" name="statut" value="ANNULE">
                             <button type="submit" class="button btn btn-danger btn-sm">Annuler</button>
