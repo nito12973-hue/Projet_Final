@@ -514,10 +514,77 @@
             font-weight: 700;
         }
 
+        /* ===== Barre de chargement (navigation/formulaires) ===== */
+        #barre-chargement {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            width: 0;
+            background: var(--primary-accent);
+            z-index: 2000;
+            opacity: 0;
+            transition: width 0.4s ease, opacity 0.3s ease;
+        }
+
+        #barre-chargement.active {
+            opacity: 1;
+        }
+
+        /* ===== Menu mobile (bouton + tiroir + fond) ===== */
+        .sidebar-toggle {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--primary-dark);
+            cursor: pointer;
+            margin-bottom: 14px;
+        }
+
+        .sidebar-overlay {
+            display: none;
+        }
+
         /* ===== Responsive ===== */
         @media (max-width: 980px) {
             .shell { display: block; }
-            aside { min-height: auto; }
+
+            aside {
+                position: fixed;
+                inset: 0 auto 0 0;
+                width: 272px;
+                max-width: 82vw;
+                min-height: 100vh;
+                overflow-y: auto;
+                transform: translateX(-100%);
+                transition: transform 0.25s ease;
+                z-index: 1000;
+            }
+
+            body.sidebar-ouverte aside {
+                transform: translateX(0);
+            }
+
+            .sidebar-toggle {
+                display: inline-flex;
+            }
+
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(4, 20, 15, 0.55);
+                z-index: 999;
+            }
+
+            body.sidebar-ouverte .sidebar-overlay {
+                display: block;
+            }
         }
 
         @media (max-width: 560px) {
@@ -546,8 +613,14 @@
     </style>
 </head>
 <body>
+    <div id="barre-chargement"></div>
+    <div id="fond-sidebar" class="sidebar-overlay"></div>
     <div class="shell">
-        <aside>
+        <aside id="barre-laterale">
+            <button type="button" id="bouton-fermer-menu-mobile" class="sidebar-toggle" aria-label="Fermer le menu"
+                    style="position:absolute;top:14px;right:14px;">
+                {% icone "x" %}
+            </button>
             <a class="brand" href="{% url 'post_login_redirect' %}">
                 <svg width="36" height="36" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                     <path d="M24 4 L40 10 V22 C40 33 33 40.5 24 44 C15 40.5 8 33 8 22 V10 Z" fill="url(#degrade-logo-app)"/>
@@ -618,6 +691,12 @@
 
         <section class="contenu">
             <main>
+                {% if user.is_authenticated %}
+                <button type="button" id="bouton-menu-mobile" class="sidebar-toggle"
+                        aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="barre-laterale">
+                    {% icone "menu" %}
+                </button>
+                {% endif %}
                 {% if messages %}
                 <ul style="list-style:none;padding:0;margin:0 0 20px;">
                     {% for message in messages %}
@@ -634,5 +713,61 @@
             </main>
         </section>
     </div>
+
+    <script>
+        (function () {
+            // Menu mobile : ouverture/fermeture du tiroir de navigation.
+            var corps = document.body;
+            var bouton = document.getElementById('bouton-menu-mobile');
+            var boutonFermer = document.getElementById('bouton-fermer-menu-mobile');
+            var fond = document.getElementById('fond-sidebar');
+
+            function fermerMenu() {
+                corps.classList.remove('sidebar-ouverte');
+                if (bouton) { bouton.setAttribute('aria-expanded', 'false'); }
+            }
+
+            function basculerMenu() {
+                var ouvert = corps.classList.toggle('sidebar-ouverte');
+                bouton.setAttribute('aria-expanded', ouvert ? 'true' : 'false');
+            }
+
+            if (bouton) { bouton.addEventListener('click', basculerMenu); }
+            if (boutonFermer) { boutonFermer.addEventListener('click', fermerMenu); }
+            if (fond) { fond.addEventListener('click', fermerMenu); }
+            document.addEventListener('keydown', function (evenement) {
+                if (evenement.key === 'Escape') { fermerMenu(); }
+            });
+        })();
+
+        (function () {
+            // Barre de chargement : feedback visuel a chaque navigation/soumission.
+            var barre = document.getElementById('barre-chargement');
+            if (!barre) { return; }
+
+            function demarrerBarre() {
+                barre.style.transition = 'none';
+                barre.style.width = '0';
+                barre.classList.add('active');
+                requestAnimationFrame(function () {
+                    barre.style.transition = '';
+                    barre.style.width = '80%';
+                });
+            }
+
+            document.addEventListener('click', function (evenement) {
+                var lien = evenement.target.closest('a[href]');
+                if (!lien || lien.target || lien.hasAttribute('download')) { return; }
+                if (lien.origin !== window.location.origin) { return; }
+                if (evenement.metaKey || evenement.ctrlKey || evenement.shiftKey || evenement.altKey) { return; }
+                if (lien.getAttribute('href').charAt(0) === '#') { return; }
+                demarrerBarre();
+            });
+
+            document.addEventListener('submit', function () {
+                demarrerBarre();
+            });
+        })();
+    </script>
 </body>
 </html>
