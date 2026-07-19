@@ -93,9 +93,10 @@ Statut : ✅ fait · ⏳ partiel/à compléter · 🔄 continu.
 12. ✅ Prise en charge et paiements — modèle `Paiement` (1-1 avec
     `Consultation`) : montant total, part assurance / part patient calculées,
     statut de règlement, historique. Voir "Paiements" ci-dessous.
-13. ⏳ Rapports / statistiques — vue `rapports` basique existante ; pas encore
-    de graphiques ni d'export PDF/Excel dédiés aux rapports (l'export Excel
-    actuel ne couvre que la liste des utilisateurs).
+13. ✅ Rapports / statistiques — vue `rapports` avec graphiques Chart.js
+    (consultations par mois, répartitions par role/type/statut) et exports
+    dédiés (`exporter_rapports_excel` : un onglet par tableau, `exporter_rapports_pdf`
+    via reportlab). Voir "Rapports" ci-dessous.
 14. 🔄 Tests — suite de tests exécutée et étendue à chaque module livré
     (`python manage.py test Plateform_medicale`) ; pas de session dédiée
     "audit de couverture" menée à part.
@@ -158,6 +159,21 @@ Assuré (`mon_historique.html`) affiche la part à charge et le statut de
 règlement pour chaque consultation. Les consultations créées directement en
 base (fixtures/tests via l'ORM, hors vue) n'ont pas de `Paiement` associé :
 les templates gèrent ce cas (`{% if consultation.paiement %}`).
+
+## Rapports (livré)
+
+Vue `rapports` (Dashboard Admin) : comptages (utilisateurs par rôle, assurés
+par type, rendez-vous par statut, prises en charge par statut, consultations/
+ordonnances/délivrances/prestataires partenaires) et agrégat
+`_consultations_par_mois` (6 derniers mois, mois courant inclus). Graphiques
+Chart.js (CDN jsdelivr avec intégrité SRI) rendus côté client à partir de
+`json_script`, en plus des tableaux existants (pas de remplacement). Deux
+exports dédiés, tous deux `@admin_required` et construits à partir de la même
+fonction `_donnees_rapports()` que la vue (pas de duplication de requêtes) :
+`exporter_rapports_excel` (openpyxl, un onglet par tableau) et
+`exporter_rapports_pdf` (reportlab, nouvelle dépendance — tableaux mis en
+forme, un par section). Ne pas confondre avec `exporter_utilisateurs_excel`
+qui ne couvre que la liste des utilisateurs (Dashboard Admin → Utilisateurs).
 
 ## Design system
 
