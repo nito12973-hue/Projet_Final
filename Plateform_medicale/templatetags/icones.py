@@ -92,6 +92,11 @@ _ICONES = {
         '<path d="M7 10l5 5 5-5"/>'
         '<path d="M4 19h16"/>'
     ),
+    "upload": (
+        '<path d="M12 15V3"/>'
+        '<path d="M7 8l5-5 5 5"/>'
+        '<path d="M4 19h16"/>'
+    ),
     "family": (
         '<circle cx="8.5" cy="7" r="2.6"/>'
         '<circle cx="17" cy="8" r="2.1"/>'

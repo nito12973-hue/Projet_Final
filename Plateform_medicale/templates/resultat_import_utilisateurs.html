@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Import termine{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Import termine</h1>
+        <p class="subtitle">
+            {{ resultats|length }} compte{{ resultats|length|pluralize }} cree{{ resultats|length|pluralize }}.
+            Communiquez ces mots de passe aux interesses : ce tableau ne sera plus jamais affiche.
+        </p>
+    </div>
+    <a class="button primary" href="{% url 'liste_utilisateurs' %}">Retour a la liste des utilisateurs</a>
+</section>
+
+<section class="panel" style="padding:0;">
+    <table>
+        <thead>
+            <tr><th>Email</th><th>Nom complet</th><th>Role</th><th>Mot de passe</th></tr>
+        </thead>
+        <tbody>
+            {% for resultat in resultats %}
+            <tr>
+                <td>{{ resultat.email }}</td>
+                <td>{{ resultat.nom_complet }}</td>
+                <td>{{ resultat.role }}</td>
+                <td style="font-family:monospace;font-weight:700;color:#0b5d3b;">{{ resultat.mot_de_passe }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}

@@ -1,3 +1,5 @@
+import datetime
+import unicodedata
 from functools import wraps
 
 import openpyxl
@@ -11,7 +13,8 @@ from django.contrib import messages
 from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
+from django.db import transaction
 from django.db.models import Count, Q
 from django.db.models.functions import TruncMonth
 from django.http import HttpResponse
@@ -60,6 +63,7 @@ from .models import (
     RendezVous,
     ServiceMedical,
     User,
+    valider_telephone,
 )
 
 
@@ -870,6 +874,252 @@ def exporter_utilisateurs_excel(request):
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
     reponse["Content-Disposition"] = 'attachment; filename="utilisateurs_santesn.xlsx"'
+    classeur.save(reponse)
+    return reponse
+
+
+COLONNES_IMPORT_UTILISATEURS = [
+    "Email", "Prenom", "Nom", "Telephone", "Role",
+    "Date de naissance", "Specialite", "Prestataire", "Plan de couverture",
+]
+
+
+def _normaliser_texte_import(valeur):
+    """Normalise une valeur de cellule pour une comparaison insensible aux accents/majuscules."""
+    texte = "" if valeur is None else str(valeur).strip()
+    texte = unicodedata.normalize("NFKD", texte).encode("ascii", "ignore").decode("ascii")
+    return texte.upper()
+
+
+_ROLES_PAR_LIBELLE_IMPORT = {}
+for _valeur_role, _label_role in User.Role.choices:
+    _ROLES_PAR_LIBELLE_IMPORT[_normaliser_texte_import(_valeur_role)] = _valeur_role
+    _ROLES_PAR_LIBELLE_IMPORT[_normaliser_texte_import(_label_role)] = _valeur_role
+
+
+def _analyser_ligne_import_utilisateurs(numero_ligne, valeurs):
+    """
+    Valide une ligne du fichier d'import (voir COLONNES_IMPORT_UTILISATEURS).
+
+    Retourne (donnees, None) si la ligne est valide, ou (None, message_erreur)
+    sinon. Ne touche jamais la base : l'import est valide en integralite
+    avant toute creation (regle "tout ou rien").
+    """
+    valeurs = (tuple(valeurs) + (None,) * len(COLONNES_IMPORT_UTILISATEURS))[:len(COLONNES_IMPORT_UTILISATEURS)]
+    email, prenom, nom, telephone, role_brut, date_naissance_brute, specialite, prestataire_brut, plan_brut = valeurs
+
+    email = (email or "").strip()
+    prenom = (prenom or "").strip()
+    nom = (nom or "").strip()
+    telephone = (telephone or "").strip() if telephone else ""
+
+    if not email or not prenom or not nom:
+        return None, f"Ligne {numero_ligne} : email, prenom et nom sont obligatoires."
+
+    role = _ROLES_PAR_LIBELLE_IMPORT.get(_normaliser_texte_import(role_brut))
+    if not role:
+        return None, (
+            f"Ligne {numero_ligne} : role '{role_brut}' inconnu "
+            "(attendu : Administrateur, Assure, Medecin ou Pharmacien)."
+        )
+
+    if telephone:
+        try:
+            valider_telephone(telephone)
+        except ValidationError:
+            return None, f"Ligne {numero_ligne} : numero de telephone invalide."
+
+    prestataire = None
+    prestataire_nom = (prestataire_brut or "").strip() if prestataire_brut else ""
+    if prestataire_nom:
+        prestataire = Prestataire.objects.filter(nom__iexact=prestataire_nom).first()
+        if not prestataire:
+            return None, f"Ligne {numero_ligne} : prestataire '{prestataire_nom}' introuvable."
+
+    plan_couverture = None
+    plan_nom = (plan_brut or "").strip() if plan_brut else ""
+    if plan_nom:
+        plan_couverture = PlanCouverture.objects.filter(nom__iexact=plan_nom).first()
+        if not plan_couverture:
+            return None, f"Ligne {numero_ligne} : plan de couverture '{plan_nom}' introuvable."
+
+    donnees = {
+        "email": email,
+        "prenom": prenom,
+        "nom": nom,
+        "telephone": telephone,
+        "role": role,
+        "prestataire": prestataire,
+        "plan_couverture": plan_couverture,
+    }
+
+    if role == User.Role.MEDECIN:
+        if not telephone:
+            return None, f"Ligne {numero_ligne} : le telephone est obligatoire pour un medecin."
+        specialite = (specialite or "").strip()
+        if not specialite:
+            return None, f"Ligne {numero_ligne} : la specialite est obligatoire pour un medecin."
+        donnees["specialite"] = specialite
+    elif role == User.Role.ASSURE:
+        if not date_naissance_brute:
+            return None, f"Ligne {numero_ligne} : la date de naissance est obligatoire pour un assure."
+        if isinstance(date_naissance_brute, datetime.datetime):
+            donnees["date_naissance"] = date_naissance_brute.date()
+        elif isinstance(date_naissance_brute, datetime.date):
+            donnees["date_naissance"] = date_naissance_brute
+        else:
+            try:
+                donnees["date_naissance"] = datetime.datetime.strptime(
+                    str(date_naissance_brute).strip(), "%d/%m/%Y"
+                ).date()
+            except ValueError:
+                return None, (
+                    f"Ligne {numero_ligne} : date de naissance invalide (format attendu JJ/MM/AAAA)."
+                )
+
+    return donnees, None
+
+
+def _creer_comptes_import_utilisateurs(lignes_validees):
+    """Cree en une transaction tous les comptes (et fiches metier) valides par l'import."""
+    resultats = []
+    with transaction.atomic():
+        for donnees in lignes_validees:
+            mot_de_passe = generer_mot_de_passe()
+            utilisateur = User.objects.create_user(
+                email=donnees["email"],
+                password=mot_de_passe,
+                role=donnees["role"],
+                first_name=donnees["prenom"],
+                last_name=donnees["nom"],
+                phone_number=donnees["telephone"],
+            )
+            if donnees["role"] == User.Role.MEDECIN:
+                Medecin.objects.create(
+                    user=utilisateur,
+                    nom=donnees["nom"],
+                    prenom=donnees["prenom"],
+                    specialite=donnees["specialite"],
+                    telephone=donnees["telephone"],
+                    email=donnees["email"],
+                    prestataire=donnees["prestataire"],
+                )
+            elif donnees["role"] == User.Role.PHARMACIEN:
+                Pharmacien.objects.create(user=utilisateur, prestataire=donnees["prestataire"])
+            elif donnees["role"] == User.Role.ASSURE:
+                Patient.objects.create(
+                    user=utilisateur,
+                    nom=donnees["nom"],
+                    prenom=donnees["prenom"],
+                    date_naissance=donnees["date_naissance"],
+                    telephone=donnees["telephone"],
+                    type_beneficiaire=Patient.TypeBeneficiaire.PRINCIPAL,
+                    plan_couverture=donnees["plan_couverture"],
+                )
+            resultats.append({
+                "email": utilisateur.email,
+                "nom_complet": f"{utilisateur.first_name} {utilisateur.last_name}",
+                "role": utilisateur.get_role_display(),
+                "mot_de_passe": mot_de_passe,
+            })
+    return resultats
+
+
+@admin_required
+def importer_utilisateurs_excel(request):
+    """
+    Creation en masse de comptes (Assure principal / Medecin / Pharmacien /
+    Administrateur) depuis un fichier Excel : voir COLONNES_IMPORT_UTILISATEURS.
+
+    Regle "tout ou rien" : la moindre ligne invalide bloque tout l'import
+    (aucun compte cree), pour eviter un import partiel difficile a auditer.
+    """
+    erreurs = []
+    if request.method == "POST":
+        fichier = request.FILES.get("fichier")
+        if not fichier:
+            erreurs.append("Choisissez un fichier Excel (.xlsx) a importer.")
+        else:
+            try:
+                classeur = openpyxl.load_workbook(fichier, data_only=True)
+            except Exception:
+                erreurs.append(
+                    "Fichier illisible : verifiez qu'il s'agit bien d'un fichier Excel (.xlsx) valide."
+                )
+            else:
+                feuille = classeur.active
+                entetes = next(feuille.iter_rows(min_row=1, max_row=1, values_only=True), ())
+                entetes_normalisees = [_normaliser_texte_import(entete) for entete in entetes]
+                entetes_attendues = [_normaliser_texte_import(colonne) for colonne in COLONNES_IMPORT_UTILISATEURS]
+
+                if entetes_normalisees[:len(entetes_attendues)] != entetes_attendues:
+                    erreurs.append(
+                        "En-tetes de colonnes invalides : utilisez le modele telechargeable ci-dessous."
+                    )
+                else:
+                    lignes_brutes = [
+                        (numero, valeurs)
+                        for numero, valeurs in enumerate(
+                            feuille.iter_rows(min_row=2, values_only=True), start=2
+                        )
+                        if valeurs and not all(valeur in (None, "") for valeur in valeurs)
+                    ]
+                    if not lignes_brutes:
+                        erreurs.append("Le fichier ne contient aucune ligne a importer.")
+                    else:
+                        donnees_valides = []
+                        emails_vus = set()
+                        for numero_ligne, valeurs in lignes_brutes:
+                            donnees, erreur = _analyser_ligne_import_utilisateurs(numero_ligne, valeurs)
+                            if erreur:
+                                erreurs.append(erreur)
+                                continue
+                            email_normalise = donnees["email"].lower()
+                            if email_normalise in emails_vus:
+                                erreurs.append(
+                                    f"Ligne {numero_ligne} : email '{donnees['email']}' en double dans le fichier."
+                                )
+                                continue
+                            if User.objects.filter(email__iexact=donnees["email"]).exists():
+                                erreurs.append(
+                                    f"Ligne {numero_ligne} : email '{donnees['email']}' "
+                                    "deja utilise par un compte existant."
+                                )
+                                continue
+                            emails_vus.add(email_normalise)
+                            donnees_valides.append(donnees)
+
+                        if not erreurs:
+                            resultats = _creer_comptes_import_utilisateurs(donnees_valides)
+                            return render(
+                                request, "resultat_import_utilisateurs.html", {"resultats": resultats}
+                            )
+
+    return render(request, "importer_utilisateurs.html", {"erreurs": erreurs})
+
+
+@admin_required
+def telecharger_modele_import_utilisateurs(request):
+    classeur = openpyxl.Workbook()
+    feuille = classeur.active
+    feuille.title = "Import utilisateurs"
+    feuille.append(COLONNES_IMPORT_UTILISATEURS)
+    feuille.append([
+        "awa.diop@exemple.sn", "Awa", "Diop", "770000000", "Assure",
+        "15/03/1990", "", "", "",
+    ])
+    feuille.append([
+        "moussa.fall@exemple.sn", "Moussa", "Fall", "770000001", "Medecin",
+        "", "Medecine generale", "", "",
+    ])
+
+    for index, nom_colonne in enumerate(COLONNES_IMPORT_UTILISATEURS, start=1):
+        feuille.column_dimensions[get_column_letter(index)].width = max(len(nom_colonne), 20)
+
+    reponse = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    reponse["Content-Disposition"] = 'attachment; filename="modele_import_utilisateurs.xlsx"'
     classeur.save(reponse)
     return reponse
 

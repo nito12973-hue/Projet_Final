@@ -4,6 +4,7 @@ from decimal import Decimal
 
 import openpyxl
 from django.core.cache import cache
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -56,6 +57,28 @@ def creer_patient(nom='Diop', prenom='Moussa'):
 def creer_pharmacien(email):
     utilisateur = creer_utilisateur(User.Role.PHARMACIEN, email)
     return Pharmacien.objects.create(user=utilisateur)
+
+
+ENTETES_IMPORT_UTILISATEURS = [
+    'Email', 'Prenom', 'Nom', 'Telephone', 'Role',
+    'Date de naissance', 'Specialite', 'Prestataire', 'Plan de couverture',
+]
+
+
+def creer_fichier_import_utilisateurs(lignes, entetes=None):
+    classeur = openpyxl.Workbook()
+    feuille = classeur.active
+    feuille.append(entetes or ENTETES_IMPORT_UTILISATEURS)
+    for ligne in lignes:
+        feuille.append(ligne)
+    tampon = io.BytesIO()
+    classeur.save(tampon)
+    tampon.seek(0)
+    return SimpleUploadedFile(
+        'import.xlsx',
+        tampon.read(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
 
 
 def creer_ordonnance(patient, medecin, medicaments='Paracetamol 500mg - 3x/jour'):
@@ -1401,3 +1424,106 @@ class ExportUtilisateursExcelTests(TestCase):
         emails = [ligne[0].value for ligne in feuille.iter_rows(min_row=2)]
         self.assertIn('medecin1@santesn.sn', emails)
         self.assertNotIn('pharmacien1@santesn.sn', emails)
+
+
+class ImportUtilisateursExcelTests(TestCase):
+    def setUp(self):
+        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
+        self.client.login(username='admin@santesn.sn', password=PASSWORD)
+
+    def test_page_interdite_aux_non_admins(self):
+        self.client.logout()
+        creer_utilisateur(User.Role.MEDECIN, 'medecin@santesn.sn')
+        self.client.login(username='medecin@santesn.sn', password=PASSWORD)
+        response = self.client.get(reverse('importer_utilisateurs_excel'))
+        self.assertEqual(response.status_code, 403)
+
+    def test_page_accessible_a_l_admin(self):
+        response = self.client.get(reverse('importer_utilisateurs_excel'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_modele_interdit_aux_non_admins(self):
+        self.client.logout()
+        creer_utilisateur(User.Role.MEDECIN, 'medecin@santesn.sn')
+        self.client.login(username='medecin@santesn.sn', password=PASSWORD)
+        response = self.client.get(reverse('telecharger_modele_import_utilisateurs'))
+        self.assertEqual(response.status_code, 403)
+
+    def test_modele_contient_les_bonnes_entetes(self):
+        response = self.client.get(reverse('telecharger_modele_import_utilisateurs'))
+        self.assertEqual(response.status_code, 200)
+        classeur = openpyxl.load_workbook(io.BytesIO(response.content))
+        entetes = [cellule.value for cellule in next(classeur.active.iter_rows(min_row=1, max_row=1))]
+        self.assertEqual(entetes, ENTETES_IMPORT_UTILISATEURS)
+
+    def test_import_multi_role_cree_les_comptes_et_fiches(self):
+        prestataire = Prestataire.objects.create(nom='Hopital Test', type_prestataire='HOPITAL')
+        plan = PlanCouverture.objects.create(nom='Standard', taux_couverture=Decimal('80.00'))
+        fichier = creer_fichier_import_utilisateurs([
+            ['fatou@ex.sn', 'Fatou', 'Ndiaye', '770000001', 'Assure', '15/03/1990', '', '', 'Standard'],
+            ['jean@ex.sn', 'Jean', 'Diallo', '770000002', 'Medecin', '', 'Cardiologie', 'Hopital Test', ''],
+            ['awa@ex.sn', 'Awa', 'Sow', '770000003', 'Pharmacien', '', '', '', ''],
+        ])
+        response = self.client.post(reverse('importer_utilisateurs_excel'), {'fichier': fichier})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'fatou@ex.sn')
+
+        patient = Patient.objects.get(user__email='fatou@ex.sn')
+        self.assertEqual(patient.type_beneficiaire, Patient.TypeBeneficiaire.PRINCIPAL)
+        self.assertEqual(patient.plan_couverture, plan)
+
+        medecin = Medecin.objects.get(email='jean@ex.sn')
+        self.assertEqual(medecin.specialite, 'Cardiologie')
+        self.assertEqual(medecin.prestataire, prestataire)
+
+        pharmacien = Pharmacien.objects.get(user__email='awa@ex.sn')
+        self.assertIsNotNone(pharmacien.user)
+
+    def test_import_bloque_tout_si_une_ligne_est_invalide(self):
+        fichier = creer_fichier_import_utilisateurs([
+            ['valide@ex.sn', 'Valide', 'Test', '770000001', 'Pharmacien', '', '', '', ''],
+            ['invalide@ex.sn', 'Invalide', 'Test', '770000002', 'RoleInconnu', '', '', '', ''],
+        ])
+        response = self.client.post(reverse('importer_utilisateurs_excel'), {'fichier': fichier})
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(User.objects.filter(email='valide@ex.sn').exists())
+        self.assertFalse(User.objects.filter(email='invalide@ex.sn').exists())
+
+    def test_import_email_deja_existant_bloque_tout(self):
+        creer_utilisateur(User.Role.MEDECIN, 'existant@ex.sn')
+        fichier = creer_fichier_import_utilisateurs([
+            ['nouveau@ex.sn', 'Nouveau', 'Test', '770000001', 'Pharmacien', '', '', '', ''],
+            ['existant@ex.sn', 'Existant', 'Test', '770000002', 'Pharmacien', '', '', '', ''],
+        ])
+        response = self.client.post(reverse('importer_utilisateurs_excel'), {'fichier': fichier})
+        self.assertFalse(User.objects.filter(email='nouveau@ex.sn').exists())
+
+    def test_import_email_duplique_dans_le_fichier_bloque_tout(self):
+        fichier = creer_fichier_import_utilisateurs([
+            ['double@ex.sn', 'Un', 'Test', '770000001', 'Pharmacien', '', '', '', ''],
+            ['double@ex.sn', 'Deux', 'Test', '770000002', 'Pharmacien', '', '', '', ''],
+        ])
+        response = self.client.post(reverse('importer_utilisateurs_excel'), {'fichier': fichier})
+        self.assertEqual(User.objects.filter(email='double@ex.sn').count(), 0)
+
+    def test_import_assure_sans_date_naissance_bloque_tout(self):
+        fichier = creer_fichier_import_utilisateurs([
+            ['sans.date@ex.sn', 'Sans', 'Date', '770000001', 'Assure', '', '', '', ''],
+        ])
+        response = self.client.post(reverse('importer_utilisateurs_excel'), {'fichier': fichier})
+        self.assertFalse(User.objects.filter(email='sans.date@ex.sn').exists())
+
+    def test_import_medecin_sans_telephone_bloque_tout(self):
+        fichier = creer_fichier_import_utilisateurs([
+            ['sans.tel@ex.sn', 'Sans', 'Tel', '', 'Medecin', '', 'Cardiologie', '', ''],
+        ])
+        response = self.client.post(reverse('importer_utilisateurs_excel'), {'fichier': fichier})
+        self.assertFalse(User.objects.filter(email='sans.tel@ex.sn').exists())
+
+    def test_import_entetes_invalides_est_refuse(self):
+        fichier = creer_fichier_import_utilisateurs(
+            [['x@ex.sn', 'X', 'Y', '770000001', 'Pharmacien', '', '', '', '']],
+            entetes=['Colonne1', 'Colonne2'],
+        )
+        response = self.client.post(reverse('importer_utilisateurs_excel'), {'fichier': fichier})
+        self.assertFalse(User.objects.filter(email='x@ex.sn').exists())
