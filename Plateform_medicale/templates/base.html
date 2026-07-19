@@ -635,6 +635,47 @@
             margin-bottom: 16px;
         }
 
+        /* Bandeau d'avis (danger/succes/attente) : encart informatif ou
+           d'alerte, reutilise sur les ecrans de confirmation/mot de passe
+           genere/import - remplace les blocs de style inline duplique. */
+        .avis {
+            border: 1px solid;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .avis p {
+            margin: 0;
+            color: var(--text);
+        }
+
+        .avis p + p {
+            margin-top: 10px;
+        }
+
+        .avis-titre {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+        }
+
+        .avis-titre .icone-nav {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+
+        .avis-danger { background: #fee4e2; border-color: #fecaca; }
+        .avis-danger .avis-titre { color: var(--danger); }
+
+        .avis-succes { background: #dcfce7; border-color: #bbf7d0; }
+        .avis-succes .avis-titre { color: var(--success); }
+
+        .avis-attente { background: #fff3cd; border-color: #ffe69c; }
+        .avis-attente .avis-titre { color: var(--warning); }
+
         /* Barre de filtres (formulaire GET en ligne, au-dessus d'une liste) et
            formulaire POST "invisible" habillant un seul bouton d'action dans
            une ligne de tableau — classes manquantes, dupliquees en inline. */

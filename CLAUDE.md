@@ -100,8 +100,8 @@ Statut : ✅ fait · ⏳ partiel/à compléter · 🔄 continu.
 14. 🔄 Tests — suite de tests exécutée et étendue à chaque module livré
     (`python manage.py test Plateform_medicale`) ; pas de session dédiée
     "audit de couverture" menée à part.
-15. ⏳ Documentation / finalisation — `DEMO_USERS.md` obsolète (décrit des
-    comptes de démonstration supprimés depuis, voir section "Comptes de
+15. ⏳ Documentation / finalisation — `DEMO_USERS.md` n'existe pas (ni sur
+    disque ni dans l'historique git, voir section "Comptes de
     démonstration") ; pas de documentation utilisateur finale rédigée.
 
 ## Authentification & rôles
@@ -143,6 +143,14 @@ Pharmacien n'a pas d'écran de création dédié : il n'existe que via
 "Gestion des utilisateurs" (rôle Pharmacien), donc toujours avec un compte.
 `MedecinForm`/`PatientCreationForm` valident que l'email n'est pas déjà
 pris par un `User` existant (pas seulement par un autre `Medecin`).
+
+**Symétrie à la suppression.** `supprimer_medecin` et `supprimer_patient`
+(assuré **principal** uniquement — un ayant droit n'a jamais de `User`)
+désactivent (`is_active = False`) le `User` lié en plus de supprimer la
+fiche métier : sans ça, le compte de connexion restait actif après
+suppression (un assuré supprimé pouvait même se reconnecter et se
+recréer une fiche `Patient` tout seul via `mon_profil_assure`). Le compte
+reste réactivable depuis "Gestion des utilisateurs" si besoin.
 
 ## Paiements (livré)
 
@@ -213,11 +221,14 @@ Les comptes de démonstration en masse (`seed_demo_users`) ont été supprimés 
 la base : un seul admin réel (`admin@santesn.local`) est conservé, et des
 comptes réels Assuré/Médecin/Pharmacien ont été créés directement via
 Gestion des utilisateurs pour permettre de tester chaque tableau de bord.
-`DEMO_USERS.md` décrit encore l'ancien peuplement en masse et est obsolète
-(voir phase 15, "Documentation / finalisation") — le mettre à jour ou le
-supprimer avant la finalisation. La commande `seed_demo_users --count N`
+`DEMO_USERS.md` n'existe pas (voir phase 15, "Documentation / finalisation") —
+si une documentation utilisateur finale est un jour rédigée, ne pas la nommer
+ainsi sans vérifier qu'elle est à jour. La commande `seed_demo_users --count N`
 reste disponible si un nouveau jeu de données de démo est nécessaire (refuse
-de s'exécuter si `DEBUG=False`).
+de s'exécuter si `DEBUG=False` ; ne touche jamais au mot de passe d'un admin
+`admin@santesn.local` déjà existant — seul un admin nouvellement créé par la
+commande reçoit le mot de passe de démo, pour ne jamais écraser silencieusement
+l'accès au compte admin réel).
 
 ## Tests
 
