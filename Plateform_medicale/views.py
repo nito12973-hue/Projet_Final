@@ -8,7 +8,8 @@ from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.core.exceptions import PermissionDenied
-from django.db.models import Q
+from django.db.models import Count, Q
+from django.db.models.functions import TruncMonth
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -224,14 +225,36 @@ def dashboard(request):
     return render(request, "dashboard.html", contexte)
 
 
+MOIS_ABREGES = ["Jan", "Fev", "Mar", "Avr", "Mai", "Jun", "Jul", "Aou", "Sep", "Oct", "Nov", "Dec"]
+
+
+def _consultations_par_mois(nombre_mois=6):
+    """Nombre de consultations par mois, sur les `nombre_mois` derniers mois (mois courant inclus)."""
+    annee, mois = timezone.now().year, timezone.now().month
+    mois_reference = []
+    for _ in range(nombre_mois):
+        mois_reference.append((annee, mois))
+        mois -= 1
+        if mois == 0:
+            mois, annee = 12, annee - 1
+    mois_reference.reverse()
+
+    comptages = (
+        Consultation.objects.annotate(mois=TruncMonth("date_consultation"))
+        .values("mois")
+        .annotate(total=Count("id"))
+    )
+    totaux_par_cle = {(c["mois"].year, c["mois"].month): c["total"] for c in comptages if c["mois"]}
+
+    return {
+        "labels": [f"{MOIS_ABREGES[m - 1]} {a}" for a, m in mois_reference],
+        "totaux": [totaux_par_cle.get(cle, 0) for cle in mois_reference],
+    }
+
+
 @admin_required
 def rapports(request):
-    """
-    Synthese de l'activite de la plateforme (comptages simples).
-
-    Graphiques et exports PDF/Excel : voir Phase 13 (Rapports et statistiques),
-    volontairement hors perimetre ici.
-    """
+    """Synthese de l'activite de la plateforme : comptages et graphiques (Phase 13)."""
     contexte = {
         "utilisateurs_par_role": [
             {"label": label, "total": User.objects.filter(role=value).count()}
@@ -253,6 +276,7 @@ def rapports(request):
         "total_ordonnances": Ordonnance.objects.count(),
         "total_delivrances": Delivrance.objects.count(),
         "total_prestataires_partenaires": Prestataire.objects.filter(partenaire=True).count(),
+        "consultations_par_mois": _consultations_par_mois(),
     }
     return render(request, "rapports.html", contexte)
 

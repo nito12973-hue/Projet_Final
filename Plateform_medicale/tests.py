@@ -896,6 +896,21 @@ class RapportsTests(TestCase):
         roles = {ligne['label']: ligne['total'] for ligne in response.context['utilisateurs_par_role']}
         self.assertEqual(roles['Médecin'], 1)
 
+    def test_rapports_inclut_consultations_par_mois(self):
+        patient = creer_patient()
+        medecin = creer_medecin('medecin@santesn.sn')
+        Consultation.objects.create(
+            patient=patient,
+            medecin=medecin,
+            date_consultation=timezone.now(),
+            diagnostic='Controle',
+        )
+        response = self.client.get(reverse('rapports'))
+        donnees = response.context['consultations_par_mois']
+        self.assertEqual(len(donnees['labels']), 6)
+        self.assertEqual(len(donnees['totaux']), 6)
+        self.assertEqual(donnees['totaux'][-1], 1)
+
 
 class AdminMedecinsFormTests(TestCase):
     def setUp(self):

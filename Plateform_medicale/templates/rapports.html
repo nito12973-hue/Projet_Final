@@ -10,11 +10,19 @@
     </div>
 </section>
 
+<section class="panel" style="margin-bottom:18px;">
+    <div class="panel-header">
+        <h2>Consultations par mois</h2>
+    </div>
+    <canvas id="graphe-consultations-mois" style="max-height:260px;"></canvas>
+</section>
+
 <section class="admin-layout">
-    <article class="panel" style="padding:0;">
+    <article class="panel">
         <div class="panel-header">
             <h2>Utilisateurs par role</h2>
         </div>
+        <canvas id="graphe-utilisateurs-role" style="max-height:220px;"></canvas>
         <table>
             <thead><tr><th>Role</th><th>Total</th></tr></thead>
             <tbody>
@@ -35,8 +43,9 @@
 </section>
 
 <section class="admin-layout" style="margin-top:18px;">
-    <article class="panel" style="padding:0;">
+    <article class="panel">
         <div class="panel-header"><h2>Assures par type</h2></div>
+        <canvas id="graphe-patients-type" style="max-height:220px;"></canvas>
         <table>
             <thead><tr><th>Type</th><th>Total</th></tr></thead>
             <tbody>
@@ -47,8 +56,9 @@
         </table>
     </article>
 
-    <article class="panel" style="padding:0;">
+    <article class="panel">
         <div class="panel-header"><h2>Rendez-vous par statut</h2></div>
+        <canvas id="graphe-rendez-vous-statut" style="max-height:220px;"></canvas>
         <table>
             <thead><tr><th>Statut</th><th>Total</th></tr></thead>
             <tbody>
@@ -60,8 +70,9 @@
     </article>
 </section>
 
-<section class="panel" style="margin-top:18px;padding:0;">
+<section class="panel" style="margin-top:18px;">
     <div class="panel-header"><h2>Prises en charge par statut</h2></div>
+    <canvas id="graphe-prises-en-charge-statut" style="max-height:220px;"></canvas>
     <table>
         <thead><tr><th>Statut</th><th>Total</th></tr></thead>
         <tbody>
@@ -71,4 +82,83 @@
         </tbody>
     </table>
 </section>
+
+{{ consultations_par_mois|json_script:"donnees-consultations-mois" }}
+{{ utilisateurs_par_role|json_script:"donnees-utilisateurs-role" }}
+{{ patients_par_type|json_script:"donnees-patients-type" }}
+{{ rendez_vous_par_statut|json_script:"donnees-rendez-vous-statut" }}
+{{ prises_en_charge_par_statut|json_script:"donnees-prises-en-charge-statut" }}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"
+        integrity="sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC"
+        crossorigin="anonymous"></script>
+<script>
+    (function () {
+        var PALETTE = ['#12885a', '#16a34a', '#9a6700', '#b42318', '#5f6f7d', '#0b5d3b'];
+
+        function lireDonnees(id) {
+            var element = document.getElementById(id);
+            return element ? JSON.parse(element.textContent) : [];
+        }
+
+        function traceBarres(idCanevas, idDonnees) {
+            var lignes = lireDonnees(idDonnees);
+            var canevas = document.getElementById(idCanevas);
+            if (!canevas || !lignes.length) { return; }
+            new Chart(canevas, {
+                type: 'bar',
+                data: {
+                    labels: lignes.map(function (l) { return l.label; }),
+                    datasets: [{ data: lignes.map(function (l) { return l.total; }), backgroundColor: PALETTE }],
+                },
+                options: {
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+                },
+            });
+        }
+
+        function traceDonut(idCanevas, idDonnees) {
+            var lignes = lireDonnees(idDonnees);
+            var canevas = document.getElementById(idCanevas);
+            if (!canevas || !lignes.length) { return; }
+            new Chart(canevas, {
+                type: 'doughnut',
+                data: {
+                    labels: lignes.map(function (l) { return l.label; }),
+                    datasets: [{ data: lignes.map(function (l) { return l.total; }), backgroundColor: PALETTE }],
+                },
+                options: { plugins: { legend: { position: 'bottom' } } },
+            });
+        }
+
+        var moisData = lireDonnees('donnees-consultations-mois');
+        var canevasMois = document.getElementById('graphe-consultations-mois');
+        if (canevasMois && moisData.labels) {
+            new Chart(canevasMois, {
+                type: 'line',
+                data: {
+                    labels: moisData.labels,
+                    datasets: [{
+                        label: 'Consultations',
+                        data: moisData.totaux,
+                        borderColor: '#12885a',
+                        backgroundColor: 'rgba(18, 136, 90, 0.15)',
+                        tension: 0.3,
+                        fill: true,
+                    }],
+                },
+                options: {
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+                },
+            });
+        }
+
+        traceDonut('graphe-utilisateurs-role', 'donnees-utilisateurs-role');
+        traceDonut('graphe-patients-type', 'donnees-patients-type');
+        traceBarres('graphe-rendez-vous-statut', 'donnees-rendez-vous-statut');
+        traceBarres('graphe-prises-en-charge-statut', 'donnees-prises-en-charge-statut');
+    })();
+</script>
 {% endblock %}
