@@ -320,10 +320,15 @@ class PrestataireForm(forms.ModelForm):
 
     class Meta:
         model = Prestataire
-        fields = ['nom', 'type_prestataire', 'adresse', 'ville', 'telephone', 'partenaire', 'date_conventionnement']
+        fields = [
+            'nom', 'type_prestataire', 'adresse', 'ville', 'telephone',
+            'partenaire', 'date_conventionnement', 'latitude', 'longitude',
+        ]
         widgets = {
             'adresse': forms.Textarea(attrs={'rows': 3}),
             'date_conventionnement': forms.DateInput(attrs={'type': 'date'}),
+            'latitude': forms.HiddenInput(),
+            'longitude': forms.HiddenInput(),
         }
 
 
