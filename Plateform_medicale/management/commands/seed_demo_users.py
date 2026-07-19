@@ -37,9 +37,10 @@ class Command(BaseCommand):
             "--password",
             default=None,
             help=(
-                "Mot de passe commun des comptes de demo. Par defaut, la variable "
-                "d'environnement SANTESN_DEMO_PASSWORD, sinon le mot de passe de "
-                "demo documente dans DEMO_USERS.md."
+                "Mot de passe commun des comptes de demo (Assure/Medecin/Pharmacien). "
+                "Par defaut, la variable d'environnement SANTESN_DEMO_PASSWORD, sinon "
+                f"'{self.DEFAULT_PASSWORD}'. Ne s'applique jamais a un compte admin "
+                "deja existant."
             ),
         )
 
@@ -60,7 +61,12 @@ class Command(BaseCommand):
         created = 0
         updated = 0
 
-        admin, was_created = User.objects.get_or_create(
+        # get_or_create seul (sans set_password/save inconditionnels) : si
+        # admin@santesn.local existe deja (c'est l'email du compte admin reel
+        # documente dans CLAUDE.md), on ne touche ni a son mot de passe ni a
+        # son role - relancer cette commande de demo ne doit jamais pouvoir
+        # ecraser silencieusement l'acces au compte admin reel.
+        admin, admin_cree = User.objects.get_or_create(
             email="admin@santesn.local",
             defaults={
                 "first_name": "Admin",
@@ -71,13 +77,14 @@ class Command(BaseCommand):
                 "is_superuser": True,
             },
         )
-        admin.role = User.Role.ADMIN
-        admin.is_staff = True
-        admin.is_superuser = True
-        admin.set_password(password)
-        admin.save()
-        created += int(was_created)
-        updated += int(not was_created)
+        if admin_cree:
+            admin.set_password(password)
+            admin.save()
+            created += 1
+        else:
+            self.stdout.write(self.style.WARNING(
+                "Admin admin@santesn.local existe deja : mot de passe et role laisses inchanges."
+            ))
 
         for role, (prefix, first_name, last_name) in self.ROLE_CONFIG.items():
             for index in range(1, count + 1):
@@ -110,5 +117,8 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS("Comptes de demonstration prets."))
         self.stdout.write(f"Crees: {created} | Mis a jour: {updated}")
-        self.stdout.write(f"Mot de passe commun: {password}")
-        self.stdout.write("Admin: admin@santesn.local")
+        self.stdout.write(f"Mot de passe des comptes Assure/Medecin/Pharmacien: {password}")
+        if admin_cree:
+            self.stdout.write(f"Admin: admin@santesn.local (nouveau, mot de passe: {password})")
+        else:
+            self.stdout.write("Admin: admin@santesn.local (compte existant, inchange)")

@@ -5,7 +5,8 @@ from decimal import Decimal
 import openpyxl
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
+from django.core.management import call_command
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -651,6 +652,33 @@ class EspaceAssureTests(TestCase):
         response = self.client.get(reverse('modifier_ayant_droit', args=[autre_ayant_droit.pk]))
         self.assertEqual(response.status_code, 404)
 
+    def test_suppression_ayant_droit(self):
+        self._completer_profil()
+        self.client.post(reverse('ajouter_ayant_droit'), {
+            'nom': 'Diop', 'prenom': 'Fatou', 'date_naissance': '2015-06-01',
+            'telephone': '', 'lien_parente': 'ENFANT',
+        })
+        ayant_droit = Patient.objects.get(nom='Diop', prenom='Fatou')
+        response = self.client.post(reverse('supprimer_ayant_droit', args=[ayant_droit.pk]))
+        self.assertRedirects(response, reverse('liste_ayants_droit'))
+        self.assertFalse(Patient.objects.filter(pk=ayant_droit.pk).exists())
+
+    def test_assure_ne_peut_pas_supprimer_ayant_droit_dun_autre_compte(self):
+        self._completer_profil()
+        autre_assure = creer_utilisateur(User.Role.ASSURE, 'assure2@santesn.sn')
+        autre_patient = Patient.objects.create(
+            user=autre_assure, nom='Sow', prenom='Awa',
+            date_naissance=datetime.date(1980, 1, 1), telephone='770000002',
+        )
+        autre_ayant_droit = Patient.objects.create(
+            nom='Sow', prenom='Ibra', date_naissance=datetime.date(2010, 1, 1),
+            telephone='', type_beneficiaire=Patient.TypeBeneficiaire.AYANT_DROIT,
+            assure_principal=autre_patient,
+        )
+        response = self.client.post(reverse('supprimer_ayant_droit', args=[autre_ayant_droit.pk]))
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(Patient.objects.filter(pk=autre_ayant_droit.pk).exists())
+
     def test_creation_rendez_vous_pour_beneficiaire(self):
         patient = self._completer_profil()
         medecin = creer_medecin('medecin-rdv@santesn.sn')
@@ -838,6 +866,28 @@ class AdminPatientFormTests(TestCase):
         self.assertRedirects(response, reverse('liste_patients'))
         ayant_droit = Patient.objects.get(nom='Diop', prenom='Petit')
         self.assertIsNone(ayant_droit.user)
+
+    def test_suppression_assure_principal_desactive_le_compte_lie(self):
+        utilisateur = creer_utilisateur(User.Role.ASSURE, 'assure.a.supprimer@santesn.sn')
+        patient = Patient.objects.create(
+            user=utilisateur, nom='Sarr', prenom='Khady',
+            date_naissance=datetime.date(1990, 1, 1), telephone='770000009',
+        )
+        self.assertTrue(utilisateur.is_active)
+        response = self.client.post(reverse('supprimer_patient', args=[patient.pk]))
+        self.assertRedirects(response, reverse('liste_patients'))
+        utilisateur.refresh_from_db()
+        self.assertFalse(utilisateur.is_active)
+
+    def test_suppression_ayant_droit_par_admin_ne_touche_aucun_compte(self):
+        principal = creer_patient(nom='Diop', prenom='Moussa')
+        ayant_droit = Patient.objects.create(
+            nom='Diop', prenom='Petit', date_naissance=datetime.date(2015, 1, 1),
+            type_beneficiaire=Patient.TypeBeneficiaire.AYANT_DROIT, assure_principal=principal,
+        )
+        response = self.client.post(reverse('supprimer_patient', args=[ayant_droit.pk]))
+        self.assertRedirects(response, reverse('liste_patients'))
+        self.assertFalse(Patient.objects.filter(pk=ayant_droit.pk).exists())
 
 
 class NotificationsTests(TestCase):
@@ -1042,6 +1092,15 @@ class AdminMedecinsFormTests(TestCase):
         response = self.client.get(reverse('modifier_medecin', args=[9999]))
         self.assertEqual(response.status_code, 404)
 
+    def test_suppression_medecin_desactive_le_compte_lie(self):
+        medecin = creer_medecin('medecin.a.supprimer@santesn.sn')
+        utilisateur = medecin.user
+        self.assertTrue(utilisateur.is_active)
+        response = self.client.post(reverse('supprimer_medecin', args=[medecin.pk]))
+        self.assertRedirects(response, reverse('liste_medecins'))
+        utilisateur.refresh_from_db()
+        self.assertFalse(utilisateur.is_active)
+
 
 class AdminServicesFormTests(TestCase):
     def setUp(self):
@@ -1094,6 +1153,16 @@ class AdminPriseEnChargeFormTests(TestCase):
         prise.refresh_from_db()
         self.assertEqual(prise.statut, 'validee')
         self.assertEqual(prise.motif, 'Test modifie')
+
+    def test_suppression_prise_en_charge(self):
+        prise = PriseEnCharge.objects.create(patient=self.patient, motif='Test', statut='en_attente')
+        response = self.client.post(reverse('supprimer_prise_en_charge', args=[prise.pk]))
+        self.assertRedirects(response, reverse('liste_prises_en_charge'))
+        self.assertFalse(PriseEnCharge.objects.filter(pk=prise.pk).exists())
+
+    def test_suppression_prise_en_charge_inexistante_donne_404(self):
+        response = self.client.post(reverse('supprimer_prise_en_charge', args=[9999]))
+        self.assertEqual(response.status_code, 404)
 
 
 class PaiementTests(TestCase):
@@ -1261,6 +1330,30 @@ class PharmacienSuppressionCompteTests(TestCase):
 
         pharmacien.refresh_from_db()
         self.assertIsNone(pharmacien.user)
+
+
+class SeedDemoUsersCommandTests(TestCase):
+    @override_settings(DEBUG=True)
+    def test_ne_reinitialise_pas_le_mot_de_passe_dun_admin_existant(self):
+        admin = User.objects.create_user(
+            email='admin@santesn.local', password='MotDePasseReelAdmin!',
+            role=User.Role.ADMIN, is_staff=True, is_superuser=True,
+        )
+        call_command('seed_demo_users', '--count', '1')
+        admin.refresh_from_db()
+        self.assertTrue(admin.check_password('MotDePasseReelAdmin!'))
+        self.assertTrue(admin.is_active)
+
+    @override_settings(DEBUG=True)
+    def test_cree_un_admin_avec_le_mot_de_passe_fourni_si_aucun_nexiste(self):
+        call_command('seed_demo_users', '--count', '1', '--password', 'MotDePasseDemo!')
+        admin = User.objects.get(email='admin@santesn.local')
+        self.assertTrue(admin.check_password('MotDePasseDemo!'))
+
+    @override_settings(DEBUG=False)
+    def test_refuse_de_sexecuter_si_debug_est_faux(self):
+        with self.assertRaises(Exception):
+            call_command('seed_demo_users', '--count', '1')
 
 
 class ValidationFormulairesTests(TestCase):

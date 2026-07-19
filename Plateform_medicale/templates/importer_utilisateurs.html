@@ -26,12 +26,12 @@
 </section>
 
 {% if erreurs %}
-<div class="panel" style="padding:20px;margin-bottom:18px;border:1px solid #b42318;background:#fef2f2;">
-    <h2 style="margin-top:0;color:#b42318;">
-        Import annule : {{ erreurs|length }} erreur{{ erreurs|length|pluralize }} trouvee{{ erreurs|length|pluralize }}
+<div class="avis avis-danger">
+    <h2 class="avis-titre" style="margin:0;">
+        {% icone "alert-triangle" %} Import annule : {{ erreurs|length }} erreur{{ erreurs|length|pluralize }} trouvee{{ erreurs|length|pluralize }}
     </h2>
     <p class="subtitle">Aucun compte n'a ete cree. Corrigez le fichier puis reimportez-le.</p>
-    <ul style="margin:0;padding-left:20px;color:#b42318;">
+    <ul style="margin:0;padding-left:20px;color:var(--danger);">
         {% for erreur in erreurs %}
         <li>{{ erreur }}</li>
         {% endfor %}

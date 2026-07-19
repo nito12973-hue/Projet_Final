@@ -176,10 +176,19 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
                                       import : regle "tout ou rien", voir
                                       _analyser_ligne_import_utilisateurs
   liste_patients / ajouter_patient / modifier_patient / supprimer_patient
-                                      assures PRINCIPAUX uniquement (les
-                                      ayants droit se gerent depuis l'espace
-                                      Assure, pas ici)
+                                      affiche et gere les assures PRINCIPAUX
+                                      ET leurs ayants droit (filtrable par
+                                      type) ; ajouter_patient ne cree
+                                      toutefois un ayant droit que si un
+                                      assure principal existe deja (les
+                                      ayants droit se gerent aussi, au
+                                      quotidien, depuis l'espace Assure).
+                                      supprimer_patient desactive le User
+                                      lie s'il s'agit d'un principal (jamais
+                                      d'ayant droit, qui n'en a pas).
   liste_medecins / ajouter_medecin / modifier_medecin / supprimer_medecin
+                                      supprimer_medecin desactive aussi le
+                                      User lie (voir plus haut)
   liste_pharmaciens / modifier_pharmacien
                                       pas de vue "ajouter" dediee : un
                                       Pharmacien n'existe qu'via Gestion
@@ -252,7 +261,10 @@ Assure (role_required(ASSURE), prefixe /assure/ + /espace/assure/)
   .action-tiles/.action-tile, .erreurs/.erreurs-formulaire (erreurs de
   formulaire), .filtres (barre de filtres GET), .action-ligne (formulaire
   POST invisible dans une ligne de tableau), .details-tableau (tableau de
-  donnees replie sous un graphique).
+  donnees replie sous un graphique), .avis/.avis-danger/.avis-succes/
+  .avis-attente (bandeau d'alerte ou d'info, voir confirmer_suppression.html/
+  mot_de_passe_genere.html/reinitialiser_mot_de_passe.html/
+  importer_utilisateurs.html).
 - dashboard.html / dashboard_medecin.html / dashboard_pharmacien.html /
   dashboard_assure.html : pages d'accueil par role, cartes .dash-stat +
   tableau .dash-pill pour les statuts (couleurs alignees avec les badges).
@@ -260,13 +272,11 @@ Assure (role_required(ASSURE), prefixe /assure/ + /espace/assure/)
   donnees repliés (<details>) pour eviter de dupliquer visuellement chart
   et tableau ; palette categorielle validee anti-daltonisme pour role/type,
   couleurs semantiques (vert/ambre/rouge) pour les statuts.
-- dashboard_role.html : NON REFERENCE dans views.py/urls.py — a verifier
-  avant suppression eventuelle (code mort probable).
 
 
 6. TESTS (tests.py)
 ----------------------
-python manage.py test Plateform_medicale — 124 tests au moment de la
+python manage.py test Plateform_medicale — 134 tests au moment de la
 redaction de ce document. Couvre : redirections/permissions par role,
 garde-fous anti-lockout (un admin ne peut pas se desactiver/supprimer/
 changer son propre role lui-meme), creation automatique de compte a la
@@ -284,4 +294,8 @@ seed_demo_users --count N [--password ...]
   s'executer si DEBUG=False). Ne cree PAS de Patient pour les comptes
   Assure ni de donnees operationnelles (rendez-vous, consultations,
   prises en charge, paiements) — uniquement des comptes User + fiches
-  Medecin/Pharmacien vides.
+  Medecin/Pharmacien vides. Cree aussi un admin admin@santesn.local s'il
+  n'existe pas encore ; si ce compte existe deja (cas de l'admin reel en
+  environnement de dev), la commande ne touche NI a son mot de passe NI
+  a son role — seul un admin nouvellement cree recoit le mot de passe de
+  demo, pour ne jamais ecraser silencieusement l'acces au compte reel.

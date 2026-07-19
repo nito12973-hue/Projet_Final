@@ -741,6 +741,13 @@ def _avertissement_cascade(compteurs):
 def supprimer_patient(request, pk):
     patient = get_object_or_404(Patient, pk=pk)
     if request.method == "POST":
+        # Le User (assure principal uniquement, jamais un ayant droit) doit
+        # etre desactive : sinon la fiche disparait mais le compte de
+        # connexion reste actif, et mon_profil_assure se recree tout seul
+        # une fiche Patient a la prochaine connexion.
+        if patient.user:
+            patient.user.is_active = False
+            patient.user.save(update_fields=["is_active"])
         patient.delete()
         messages.success(request, "Assure supprime.")
         return redirect("liste_patients")
@@ -761,12 +768,20 @@ def supprimer_patient(request, pk):
 def supprimer_medecin(request, pk):
     medecin = get_object_or_404(Medecin, pk=pk)
     if request.method == "POST":
+        # Desactive le User lie : sinon la fiche Medecin disparait mais le
+        # compte de connexion reste actif (voir supprimer_patient, meme
+        # raisonnement).
+        if medecin.user:
+            medecin.user.is_active = False
+            medecin.user.save(update_fields=["is_active"])
         medecin.delete()
         messages.success(request, "Medecin supprime.")
         return redirect("liste_medecins")
     avertissement = _avertissement_cascade({
         "consultation(s)": medecin.consultation_set.count(),
         "rendez-vous": medecin.rendez_vous.count(),
+        "paiement(s)": Paiement.objects.filter(consultation__medecin=medecin).count(),
+        "ordonnance(s)": Ordonnance.objects.filter(consultation__medecin=medecin).count(),
     })
     return render(
         request,
