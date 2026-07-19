@@ -5,8 +5,7 @@ from decimal import Decimal
 import openpyxl
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.core.management import call_command
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
@@ -1330,30 +1329,6 @@ class PharmacienSuppressionCompteTests(TestCase):
 
         pharmacien.refresh_from_db()
         self.assertIsNone(pharmacien.user)
-
-
-class SeedDemoUsersCommandTests(TestCase):
-    @override_settings(DEBUG=True)
-    def test_ne_reinitialise_pas_le_mot_de_passe_dun_admin_existant(self):
-        admin = User.objects.create_user(
-            email='admin@santesn.local', password='MotDePasseReelAdmin!',
-            role=User.Role.ADMIN, is_staff=True, is_superuser=True,
-        )
-        call_command('seed_demo_users', '--count', '1')
-        admin.refresh_from_db()
-        self.assertTrue(admin.check_password('MotDePasseReelAdmin!'))
-        self.assertTrue(admin.is_active)
-
-    @override_settings(DEBUG=True)
-    def test_cree_un_admin_avec_le_mot_de_passe_fourni_si_aucun_nexiste(self):
-        call_command('seed_demo_users', '--count', '1', '--password', 'MotDePasseDemo!')
-        admin = User.objects.get(email='admin@santesn.local')
-        self.assertTrue(admin.check_password('MotDePasseDemo!'))
-
-    @override_settings(DEBUG=False)
-    def test_refuse_de_sexecuter_si_debug_est_faux(self):
-        with self.assertRaises(Exception):
-            call_command('seed_demo_users', '--count', '1')
 
 
 class ValidationFormulairesTests(TestCase):

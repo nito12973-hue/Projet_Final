@@ -30,7 +30,7 @@ Arborescence :
     admin.py                 enregistrement Django admin (usage interne)
     tests.py                 suite de tests (section 6)
     templatetags/icones.py  systeme d'icones SVG maison (section 5)
-    management/commands/    commandes ponctuelles (ex. seed_demo_users)
+    management/commands/    vide pour l'instant (voir section 7)
     migrations/
     templates/               tous les templates, a plat (pas de sous-dossier
                             par app)
@@ -276,7 +276,7 @@ Assure (role_required(ASSURE), prefixe /assure/ + /espace/assure/)
 
 6. TESTS (tests.py)
 ----------------------
-python manage.py test Plateform_medicale — 134 tests au moment de la
+python manage.py test Plateform_medicale — 131 tests au moment de la
 redaction de ce document. Couvre : redirections/permissions par role,
 garde-fous anti-lockout (un admin ne peut pas se desactiver/supprimer/
 changer son propre role lui-meme), creation automatique de compte a la
@@ -289,13 +289,9 @@ terminee (regle imposee par CLAUDE.md).
 
 7. COMMANDES DE GESTION (management/commands/)
 --------------------------------------------------
-seed_demo_users --count N [--password ...]
-  Cree des comptes Assure/Medecin/Pharmacien de demonstration (refuse de
-  s'executer si DEBUG=False). Ne cree PAS de Patient pour les comptes
-  Assure ni de donnees operationnelles (rendez-vous, consultations,
-  prises en charge, paiements) — uniquement des comptes User + fiches
-  Medecin/Pharmacien vides. Cree aussi un admin admin@santesn.local s'il
-  n'existe pas encore ; si ce compte existe deja (cas de l'admin reel en
-  environnement de dev), la commande ne touche NI a son mot de passe NI
-  a son role — seul un admin nouvellement cree recoit le mot de passe de
-  demo, pour ne jamais ecraser silencieusement l'acces au compte reel.
+Aucune commande de gestion personnalisee pour l'instant. seed_demo_users
+(peuplement en masse de comptes de demo) a ete retiree : redondante avec
+la creation de comptes via Gestion des utilisateurs, et son email
+admin@santesn.local codee en dur presentait un risque de collision avec
+l'admin reel. Les comptes se creent desormais uniquement via l'interface
+(Gestion des utilisateurs, ajouter_medecin, ajouter_patient).
