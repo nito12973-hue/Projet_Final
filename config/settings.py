@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import sys
 from pathlib import Path
 
 from decouple import Csv, config
@@ -18,23 +19,17 @@ from decouple import Csv, config
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-def config_bool(name, default=False):
-    value = str(config(name, default=str(default))).strip().lower()
-    return value in {'1', 'true', 'yes', 'on', 'debug', 'development'}
-
-
 # Les valeurs sensibles proviennent des variables d'environnement (.env).
-# Voir .env.example pour le modèle de configuration.
+# Voir .env.example pour le modèle de configuration. Pas de valeur par defaut
+# pour SECRET_KEY : demarrer sans .env correctement rempli doit echouer, pas
+# retomber silencieusement sur une cle connue.
 
-SECRET_KEY = config(
-    'SECRET_KEY',
-    default='django-insecure-santesn-local-development-key-change-before-production',
-)
+SECRET_KEY = config('SECRET_KEY')
 
-DEBUG = config_bool('DEBUG', default=True)
+DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
-if 'testserver' not in ALLOWED_HOSTS:
+if 'test' in sys.argv and 'testserver' not in ALLOWED_HOSTS:
     ALLOWED_HOSTS = [*ALLOWED_HOSTS, 'testserver']
 
 
