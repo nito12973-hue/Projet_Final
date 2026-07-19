@@ -17,10 +17,51 @@
 <form method="post">
     {% csrf_token %}
     {% for field in form %}
-    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+    {% if not field.is_hidden %}<label for="{{ field.id_for_label }}">{{ field.label }}</label>{% endif %}
     {{ field }}
     {% if field.errors %}<div class="erreurs">{{ field.errors }}</div>{% endif %}
     {% endfor %}
+
+    <label>Emplacement sur la carte (facultatif)</label>
+    <div id="carte-prestataire" style="height: 320px; border-radius: 12px; margin-bottom: 8px;"></div>
+    <p class="subtitle" style="margin-top:0;margin-bottom:16px;">Cliquez sur la carte pour placer ou deplacer le prestataire.</p>
+
     <button class="button primary" type="submit">Enregistrer</button>
 </form>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+    (function () {
+        var DAKAR = [14.6928, -17.4467];
+        var latInit = "{{ form.latitude.value|default_if_none:'' }}";
+        var lngInit = "{{ form.longitude.value|default_if_none:'' }}";
+        var lat = latInit ? parseFloat(latInit) : null;
+        var lng = lngInit ? parseFloat(lngInit) : null;
+
+        var champLatitude = document.getElementById('id_latitude');
+        var champLongitude = document.getElementById('id_longitude');
+
+        var carte = L.map('carte-prestataire').setView((lat && lng) ? [lat, lng] : DAKAR, 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        }).addTo(carte);
+
+        var marqueur = (lat && lng) ? L.marker([lat, lng]).addTo(carte) : null;
+
+        carte.on('click', function (evenement) {
+            var position = evenement.latlng;
+            if (marqueur) {
+                marqueur.setLatLng(position);
+            } else {
+                marqueur = L.marker(position).addTo(carte);
+            }
+            champLatitude.value = position.lat.toFixed(6);
+            champLongitude.value = position.lng.toFixed(6);
+        });
+    })();
+</script>
 {% endblock %}
