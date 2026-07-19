@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Mes ayants droit{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Mes ayants droit</h1>
+        <p class="subtitle">Conjoint, enfants et autres membres couverts par votre assurance.</p>
+    </div>
+    <a class="button primary" href="{% url 'ajouter_ayant_droit' %}">Ajouter un ayant droit</a>
+</section>
+
+{% if ayants_droit %}
+<section class="panel">
+    <table>
+        <thead>
+            <tr>
+                <th>Nom complet</th>
+                <th>Lien de parente</th>
+                <th>Date de naissance</th>
+                <th>Numero de carte</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ayant_droit in ayants_droit %}
+            <tr>
+                <td>{{ ayant_droit.prenom }} {{ ayant_droit.nom }}</td>
+                <td>{{ ayant_droit.get_lien_parente_display|default:"-" }}</td>
+                <td>{{ ayant_droit.date_naissance|date:"d/m/Y" }}</td>
+                <td>{{ ayant_droit.numero_carte }}</td>
+                <td>
+                    <div class="actions">
+                        <a href="{% url 'modifier_ayant_droit' ayant_droit.pk %}" class="button btn btn-primary btn-sm">Modifier</a>
+                        <a href="{% url 'supprimer_ayant_droit' ayant_droit.pk %}" class="button btn btn-danger btn-sm">Supprimer</a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% else %}
+<p class="empty">Aucun ayant droit enregistre.</p>
+{% endif %}
+{% endblock %}

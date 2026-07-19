@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Plans de couverture{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Plans de couverture</h1>
+        <p class="subtitle">Regles de remboursement applicables aux assures et leurs ayants droit.</p>
+    </div>
+    <a class="button primary" href="{% url 'ajouter_plan_couverture' %}">Ajouter un plan</a>
+</section>
+
+{% if plans %}
+<section class="panel">
+    <table>
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Taux de couverture</th>
+                <th>Plafond annuel</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for plan in plans %}
+            <tr>
+                <td>{{ plan.nom }}</td>
+                <td>{{ plan.taux_couverture }}%</td>
+                <td>{{ plan.plafond_annuel|default:"Illimite" }}</td>
+                <td>
+                    <div class="actions">
+                        <a href="{% url 'modifier_plan_couverture' plan.pk %}" class="button btn btn-primary btn-sm">Modifier</a>
+                        <a href="{% url 'supprimer_plan_couverture' plan.pk %}" class="button btn btn-danger btn-sm">Supprimer</a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% else %}
+<p class="empty">Aucun plan de couverture enregistre.</p>
+{% endif %}
+{% endblock %}

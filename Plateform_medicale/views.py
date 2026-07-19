@@ -1,60 +1,286 @@
-from django.shortcuts import render, redirect
+from functools import wraps
 
-from accounts.decorators import admin_required
+import openpyxl
+from openpyxl.utils import get_column_letter
 
+from django.contrib import messages
+from django.contrib.auth import login, logout, update_session_auth_hash
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import PasswordChangeForm
+from django.core.exceptions import PermissionDenied
+from django.db.models import Q
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
+from django.views.decorators.http import require_POST
+
+from .forms import (
+    AyantDroitForm,
+    ConsultationForm,
+    EnvoyerNotificationForm,
+    LoginForm,
+    MedecinForm,
+    MedecinProfilForm,
+    OrdonnanceForm,
+    PatientForm,
+    PharmacienAffectationForm,
+    PlanCouvertureForm,
+    PrestataireForm,
+    PriseEnChargeForm,
+    ProfilAssureForm,
+    RendezVousAssureForm,
+    RendezVousForm,
+    ServiceMedicalForm,
+    SetupWizardForm,
+    UtilisateurCreationForm,
+    UtilisateurModificationForm,
+    generer_mot_de_passe,
+    lier_fiche_medecin,
+    lier_fiche_pharmacien,
+)
 from .models import (
     Consultation,
+    Delivrance,
     Medecin,
+    Notification,
     Ordonnance,
     Patient,
+    Pharmacien,
+    PlanCouverture,
+    Prestataire,
     PriseEnCharge,
+    RendezVous,
     ServiceMedical,
+    User,
 )
 
+
+# ---------------------------------------------------------------------------
+# Permissions par rôle
+# ---------------------------------------------------------------------------
+
+def role_required(*roles):
+    """
+    Restreint une vue aux rôles indiqués.
+
+    Exemple :
+        @role_required(User.Role.ADMIN, User.Role.MEDECIN)
+        def ma_vue(request): ...
+    """
+
+    def decorator(view_func):
+        @wraps(view_func)
+        @login_required
+        def _wrapped(request, *args, **kwargs):
+            if request.user.role not in roles:
+                raise PermissionDenied
+            return view_func(request, *args, **kwargs)
+
+        return _wrapped
+
+    return decorator
+
+
+def admin_required(view_func):
+    """Restreint une vue au rôle ADMIN uniquement."""
+    return role_required(User.Role.ADMIN)(view_func)
+
+
+def user_role(request):
+    """Context processor : expose le rôle et les notifications non lues de l'utilisateur connecté."""
+    user = getattr(request, 'user', None)
+    if user is not None and user.is_authenticated:
+        return {
+            'current_role': user.role,
+            'current_role_label': user.get_role_display(),
+            'notifications_non_lues': user.notifications.filter(lue=False).count(),
+        }
+    return {'current_role': None, 'current_role_label': None, 'notifications_non_lues': 0}
+
+
+# ---------------------------------------------------------------------------
+# Authentification et tableaux de bord par rôle
+# ---------------------------------------------------------------------------
+
+def _admin_exists():
+    return User.objects.filter(role=User.Role.ADMIN).exists()
+
+
+def login_view(request):
+    """Connexion par email et mot de passe. Le role est detecte en base."""
+    if not _admin_exists():
+        return redirect('setup_wizard')
+
+    if request.user.is_authenticated:
+        return redirect('post_login_redirect')
+
+    form = LoginForm(request=request, data=request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        login(request, form.user)
+        return redirect('post_login_redirect')
+
+    return render(request, 'login.html', {'form': form})
+
+
+@require_POST
+def logout_view(request):
+    logout(request)
+    messages.success(request, 'Vous avez ete deconnecte.')
+    return redirect('login')
+
+
+@login_required
+def post_login_redirect(request):
+    """Redirection automatique vers le dashboard correspondant au role."""
+    role = request.user.role
+    if role == User.Role.ADMIN:
+        return redirect('dashboard')
+    if role == User.Role.ASSURE:
+        return redirect('dashboard_assure')
+    if role == User.Role.MEDECIN:
+        return redirect('dashboard_medecin')
+    if role == User.Role.PHARMACIEN:
+        return redirect('dashboard_pharmacien')
+
+    logout(request)
+    messages.error(request, "Role inconnu. Contactez l'administration.")
+    return redirect('login')
+
+
+def setup_wizard(request):
+    """
+    Assistant de premiere installation.
+
+    Accessible uniquement si aucun administrateur n'existe. Une fois le premier
+    administrateur cree, l'assistant redirige toujours vers la connexion.
+    """
+    if _admin_exists():
+        return redirect('login')
+
+    form = SetupWizardForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        user = form.save()
+        login(request, user)
+        messages.success(
+            request,
+            'Bienvenue ! Votre compte Super Administrateur a ete cree.',
+        )
+        return redirect('post_login_redirect')
+
+    return render(request, 'setup_wizard.html', {'form': form})
+
+
+@login_required
+def changer_mot_de_passe(request):
+    """
+    Changement du mot de passe par l'utilisateur connecte (tous roles).
+
+    Distinct de la reinitialisation par l'admin (Gestion des utilisateurs) :
+    ici, l'utilisateur doit connaitre son mot de passe actuel.
+    """
+    if request.method == 'POST':
+        form = PasswordChangeForm(user=request.user, data=request.POST)
+        if form.is_valid():
+            form.save()
+            update_session_auth_hash(request, form.user)
+            messages.success(request, 'Mot de passe modifie avec succes.')
+            return redirect('post_login_redirect')
+    else:
+        form = PasswordChangeForm(user=request.user)
+    return render(request, 'changer_mot_de_passe.html', {'form': form})
+
+
+# ---------------------------------------------------------------------------
+# Vitrine publique
+# ---------------------------------------------------------------------------
 
 def landing(request):
     """Page d'accueil publique de SantéSN (vitrine)."""
     return render(request, "landing.html")
 
 
+# ---------------------------------------------------------------------------
+# Dashboard administrateur
+# ---------------------------------------------------------------------------
+
 @admin_required
 def dashboard(request):
+    dernieres_prises_en_charge = PriseEnCharge.objects.select_related("patient").order_by("-date_demande")[:5]
+    derniers_patients = Patient.objects.order_by("-id")[:5]
     contexte = {
         "total_patients": Patient.objects.count(),
         "total_medecins": Medecin.objects.count(),
+        "total_prestataires": Prestataire.objects.count(),
         "total_services": ServiceMedical.objects.count(),
         "total_prises_en_charge": PriseEnCharge.objects.count(),
         "total_consultations": Consultation.objects.count(),
         "total_ordonnances": Ordonnance.objects.count(),
+        "dernieres_prises_en_charge": dernieres_prises_en_charge,
+        "derniers_patients": derniers_patients,
     }
     return render(request, "dashboard.html", contexte)
 
 
 @admin_required
+def rapports(request):
+    """
+    Synthese de l'activite de la plateforme (comptages simples).
+
+    Graphiques et exports PDF/Excel : voir Phase 13 (Rapports et statistiques),
+    volontairement hors perimetre ici.
+    """
+    contexte = {
+        "utilisateurs_par_role": [
+            {"label": label, "total": User.objects.filter(role=value).count()}
+            for value, label in User.Role.choices
+        ],
+        "patients_par_type": [
+            {"label": label, "total": Patient.objects.filter(type_beneficiaire=value).count()}
+            for value, label in Patient.TypeBeneficiaire.choices
+        ],
+        "rendez_vous_par_statut": [
+            {"label": label, "total": RendezVous.objects.filter(statut=value).count()}
+            for value, label in RendezVous.Statut.choices
+        ],
+        "prises_en_charge_par_statut": [
+            {"label": label, "total": PriseEnCharge.objects.filter(statut=value).count()}
+            for value, label in PriseEnCharge.STATUT_CHOICES
+        ],
+        "total_consultations": Consultation.objects.count(),
+        "total_ordonnances": Ordonnance.objects.count(),
+        "total_delivrances": Delivrance.objects.count(),
+        "total_prestataires_partenaires": Prestataire.objects.filter(partenaire=True).count(),
+    }
+    return render(request, "rapports.html", contexte)
+
+
+@admin_required
 def liste_patients(request):
-    patients = Patient.objects.all()
-    return render(request, "liste_patients.html", {"patients": patients})
+    patients = Patient.objects.select_related("assure_principal", "plan_couverture").all()
+
+    type_beneficiaire = request.GET.get("type", "")
+    if type_beneficiaire:
+        patients = patients.filter(type_beneficiaire=type_beneficiaire)
+
+    contexte = {
+        "patients": patients,
+        "types_beneficiaire": Patient.TypeBeneficiaire.choices,
+        "type_selectionne": type_beneficiaire,
+    }
+    return render(request, "liste_patients.html", contexte)
 
 
 @admin_required
 def ajouter_patient(request):
     if request.method == "POST":
-        nom = request.POST.get("nom")
-        prenom = request.POST.get("prenom")
-        date_naissance = request.POST.get("date_naissance")
-        telephone = request.POST.get("telephone")
-        adresse = request.POST.get("adresse")
-
-        patient = Patient.objects.create(
-            nom=nom,
-            prenom=prenom,
-            date_naissance=date_naissance,
-            telephone=telephone,
-            adresse=adresse,
-        )
-        return redirect("liste_patients")
-
-    return render(request, "ajouter_patient.html")
+        form = PatientForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Assure ajoute.")
+            return redirect("liste_patients")
+    else:
+        form = PatientForm()
+    return render(request, "ajouter_patient.html", {"form": form})
 
 
 @admin_required
@@ -66,22 +292,14 @@ def liste_medecins(request):
 @admin_required
 def ajouter_medecin(request):
     if request.method == "POST":
-        nom = request.POST.get("nom")
-        prenom = request.POST.get("prenom")
-        specialite = request.POST.get("specialite")
-        telephone = request.POST.get("telephone")
-        email = request.POST.get("email")
-
-        medecin = Medecin.objects.create(
-            nom=nom,
-            prenom=prenom,
-            specialite=specialite,
-            telephone=telephone,
-            email=email,
-        )
-        return redirect("liste_medecins")
-
-    return render(request, "ajouter_medecin.html")
+        form = MedecinForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Medecin ajoute.")
+            return redirect("liste_medecins")
+    else:
+        form = MedecinForm()
+    return render(request, "ajouter_medecin.html", {"form": form})
 
 
 @admin_required
@@ -93,18 +311,14 @@ def liste_services(request):
 @admin_required
 def ajouter_service(request):
     if request.method == "POST":
-        nom = request.POST.get("nom")
-        description = request.POST.get("description")
-        prix = request.POST.get("prix")
-
-        service = ServiceMedical.objects.create(
-            nom=nom,
-            description=description,
-            prix=prix,
-        )
-        return redirect("liste_services")
-
-    return render(request, "ajouter_service.html")
+        form = ServiceMedicalForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Service ajoute.")
+            return redirect("liste_services")
+    else:
+        form = ServiceMedicalForm()
+    return render(request, "ajouter_service.html", {"form": form})
 
 
 @admin_required
@@ -119,239 +333,921 @@ def liste_prises_en_charge(request):
 
 @admin_required
 def ajouter_prise_en_charge(request):
+    """A la creation, le statut est toujours 'en_attente' : le champ n'est pas propose."""
     if request.method == "POST":
-        patient_id = request.POST.get("patient")
-        motif = request.POST.get("motif")
-
-        prise_en_charge = PriseEnCharge.objects.create(
-            patient_id=patient_id,
-            motif=motif,
-            statut="en_attente",
-        )
-        return redirect("liste_prises_en_charge")
-
-    patients = Patient.objects.all()
-    return render(request, "ajouter_prise_en_charge.html", {"patients": patients})
+        form = PriseEnChargeForm(request.POST)
+        form.fields.pop("statut")
+        if form.is_valid():
+            prise_en_charge = form.save(commit=False)
+            prise_en_charge.statut = "en_attente"
+            prise_en_charge.save()
+            messages.success(request, "Prise en charge ajoutee.")
+            return redirect("liste_prises_en_charge")
+    else:
+        form = PriseEnChargeForm()
+        form.fields.pop("statut")
+    return render(request, "ajouter_prise_en_charge.html", {"form": form})
 
 
 @admin_required
 def modifier_prise_en_charge(request, pk):
-    prise_en_charge = PriseEnCharge.objects.get(pk=pk)
+    prise_en_charge = get_object_or_404(PriseEnCharge, pk=pk)
     if request.method == "POST":
-        prise_en_charge.patient_id = request.POST.get("patient")
-        prise_en_charge.motif = request.POST.get("motif")
-        prise_en_charge.statut = request.POST.get("statut")
-        prise_en_charge.save()
-        return redirect("liste_prises_en_charge")
-    
-    contexte = {
-        "prise_en_charge": prise_en_charge,
-        "patients": Patient.objects.all(),
-    }
-    return render(request, "modifier_prise_en_charge.html", contexte)
+        form = PriseEnChargeForm(request.POST, instance=prise_en_charge)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Prise en charge modifiee.")
+            return redirect("liste_prises_en_charge")
+    else:
+        form = PriseEnChargeForm(instance=prise_en_charge)
+    return render(
+        request,
+        "modifier_prise_en_charge.html",
+        {"form": form, "prise_en_charge": prise_en_charge},
+    )
 
 
 @admin_required
 def supprimer_prise_en_charge(request, pk):
-    prise_en_charge = PriseEnCharge.objects.get(pk=pk)
+    prise_en_charge = get_object_or_404(PriseEnCharge, pk=pk)
     if request.method == "POST":
         prise_en_charge.delete()
+        messages.success(request, "Prise en charge supprimee.")
         return redirect("liste_prises_en_charge")
     return render(request, "confirmer_suppression.html", {"objet": prise_en_charge, "type": "Prise en charge"})
 
 
 @admin_required
-def liste_consultations(request):
-    consultations = Consultation.objects.select_related(
-        "patient",
-        "medecin",
-        "service",
-        "prise_en_charge",
-    ).all()
-    return render(request, "liste_consultations.html", {"consultations": consultations})
+def liste_prestataires(request):
+    prestataires = Prestataire.objects.all()
+    return render(request, "liste_prestataires.html", {"prestataires": prestataires})
 
 
 @admin_required
-def ajouter_consultation(request):
+def ajouter_prestataire(request):
     if request.method == "POST":
-        patient_id = request.POST.get("patient")
-        medecin_id = request.POST.get("medecin")
-        service_id = request.POST.get("service")
-        date_consultation = request.POST.get("date_consultation")
-        diagnostic = request.POST.get("diagnostic")
-        traitement = request.POST.get("traitement")
-        prise_en_charge_id = request.POST.get("prise_en_charge")
-
-        consultation = Consultation.objects.create(
-            patient_id=patient_id,
-            medecin_id=medecin_id,
-            service_id=service_id if service_id else None,
-            date_consultation=date_consultation,
-            diagnostic=diagnostic,
-            traitement=traitement,
-            prise_en_charge_id=prise_en_charge_id if prise_en_charge_id else None,
-        )
-        return redirect("liste_consultations")
-
-    contexte = {
-        "patients": Patient.objects.all(),
-        "medecins": Medecin.objects.all(),
-        "services": ServiceMedical.objects.all(),
-        "prises_en_charge": PriseEnCharge.objects.all(),
-    }
-    return render(request, "ajouter_consultation.html", contexte)
+        form = PrestataireForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Prestataire ajoute.")
+            return redirect("liste_prestataires")
+    else:
+        form = PrestataireForm()
+    return render(request, "ajouter_prestataire.html", {"form": form})
 
 
 @admin_required
-def liste_ordonnances(request):
-    ordonnances = Ordonnance.objects.select_related(
-        "consultation",
-        "consultation__patient",
-        "consultation__medecin",
-    ).all()
-    return render(request, "liste_ordonnances.html", {"ordonnances": ordonnances})
-
-
-@admin_required
-def ajouter_ordonnances(request):
+def modifier_prestataire(request, pk):
+    prestataire = get_object_or_404(Prestataire, pk=pk)
     if request.method == "POST":
-        consultation_id = request.POST.get("consultation")
-        medicaments = request.POST.get("medicaments")
+        form = PrestataireForm(request.POST, instance=prestataire)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Prestataire modifie.")
+            return redirect("liste_prestataires")
+    else:
+        form = PrestataireForm(instance=prestataire)
+    return render(request, "modifier_prestataire.html", {"form": form, "prestataire": prestataire})
 
-        ordonnance = Ordonnance.objects.create(
-            consultation_id=consultation_id,
-            medicaments=medicaments,
-        )
-        return redirect("liste_ordonnances")
 
-    contexte = {
-        "consultations": Consultation.objects.select_related("patient", "medecin").all(),
-    }
-    return render(request, "ajouter_ordonnances.html", contexte)
+@admin_required
+def supprimer_prestataire(request, pk):
+    prestataire = get_object_or_404(Prestataire, pk=pk)
+    if request.method == "POST":
+        prestataire.delete()
+        messages.success(request, "Prestataire supprime.")
+        return redirect("liste_prestataires")
+    return render(request, "confirmer_suppression.html", {"objet": prestataire, "type": "Prestataire"})
+
+
+@admin_required
+def liste_plans_couverture(request):
+    plans = PlanCouverture.objects.all()
+    return render(request, "liste_plans_couverture.html", {"plans": plans})
+
+
+@admin_required
+def ajouter_plan_couverture(request):
+    if request.method == "POST":
+        form = PlanCouvertureForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Plan de couverture ajoute.")
+            return redirect("liste_plans_couverture")
+    else:
+        form = PlanCouvertureForm()
+    return render(request, "ajouter_plan_couverture.html", {"form": form})
+
+
+@admin_required
+def modifier_plan_couverture(request, pk):
+    plan = get_object_or_404(PlanCouverture, pk=pk)
+    if request.method == "POST":
+        form = PlanCouvertureForm(request.POST, instance=plan)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Plan de couverture modifie.")
+            return redirect("liste_plans_couverture")
+    else:
+        form = PlanCouvertureForm(instance=plan)
+    return render(request, "modifier_plan_couverture.html", {"form": form, "plan": plan})
+
+
+@admin_required
+def supprimer_plan_couverture(request, pk):
+    plan = get_object_or_404(PlanCouverture, pk=pk)
+    if request.method == "POST":
+        plan.delete()
+        messages.success(request, "Plan de couverture supprime.")
+        return redirect("liste_plans_couverture")
+    avertissement = _avertissement_cascade({"assure(s)/ayant(s) droit rattaches (plan retire, pas supprimes)": plan.beneficiaires.count()})
+    return render(
+        request,
+        "confirmer_suppression.html",
+        {"objet": plan, "type": "Plan de couverture", "avertissement": avertissement},
+    )
 
 
 # MODIFIER VUES
 @admin_required
 def modifier_patient(request, pk):
-    patient = Patient.objects.get(pk=pk)
+    patient = get_object_or_404(Patient, pk=pk)
     if request.method == "POST":
-        patient.nom = request.POST.get("nom")
-        patient.prenom = request.POST.get("prenom")
-        patient.date_naissance = request.POST.get("date_naissance")
-        patient.telephone = request.POST.get("telephone")
-        patient.adresse = request.POST.get("adresse")
-        patient.save()
-        return redirect("liste_patients")
-    return render(request, "modifier_patient.html", {"patient": patient})
+        form = PatientForm(request.POST, instance=patient)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Assure modifie.")
+            return redirect("liste_patients")
+    else:
+        form = PatientForm(instance=patient)
+    return render(request, "modifier_patient.html", {"form": form, "patient": patient})
 
 
 @admin_required
 def modifier_medecin(request, pk):
-    medecin = Medecin.objects.get(pk=pk)
+    medecin = get_object_or_404(Medecin, pk=pk)
     if request.method == "POST":
-        medecin.nom = request.POST.get("nom")
-        medecin.prenom = request.POST.get("prenom")
-        medecin.specialite = request.POST.get("specialite")
-        medecin.telephone = request.POST.get("telephone")
-        medecin.email = request.POST.get("email")
-        medecin.save()
-        return redirect("liste_medecins")
-    return render(request, "modifier_medecin.html", {"medecin": medecin})
+        form = MedecinForm(request.POST, instance=medecin)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Medecin modifie.")
+            return redirect("liste_medecins")
+    else:
+        form = MedecinForm(instance=medecin)
+    return render(request, "modifier_medecin.html", {"form": form, "medecin": medecin})
 
 
 @admin_required
 def modifier_service(request, pk):
-    service = ServiceMedical.objects.get(pk=pk)
+    service = get_object_or_404(ServiceMedical, pk=pk)
     if request.method == "POST":
-        service.nom = request.POST.get("nom")
-        service.description = request.POST.get("description")
-        service.prix = request.POST.get("prix")
-        service.save()
-        return redirect("liste_services")
-    return render(request, "modifier_service.html", {"service": service})
+        form = ServiceMedicalForm(request.POST, instance=service)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Service modifie.")
+            return redirect("liste_services")
+    else:
+        form = ServiceMedicalForm(instance=service)
+    return render(request, "modifier_service.html", {"form": form, "service": service})
 
 
-@admin_required
-def modifier_consultation(request, pk):
-    consultation = Consultation.objects.get(pk=pk)
-    if request.method == "POST":
-        consultation.patient_id = request.POST.get("patient")
-        consultation.medecin_id = request.POST.get("medecin")
-        consultation.service_id = request.POST.get("service") or None
-        consultation.date_consultation = request.POST.get("date_consultation")
-        consultation.diagnostic = request.POST.get("diagnostic")
-        consultation.traitement = request.POST.get("traitement")
-        consultation.prise_en_charge_id = request.POST.get("prise_en_charge") or None
-        consultation.save()
-        return redirect("liste_consultations")
-    
-    contexte = {
-        "consultation": consultation,
-        "patients": Patient.objects.all(),
-        "medecins": Medecin.objects.all(),
-        "services": ServiceMedical.objects.all(),
-        "prises_en_charge": PriseEnCharge.objects.all(),
-    }
-    return render(request, "modifier_consultation.html", contexte)
-
-
-@admin_required
-def modifier_ordonnances(request, pk):
-    ordonnance = Ordonnance.objects.get(pk=pk)
-    if request.method == "POST":
-        ordonnance.consultation_id = request.POST.get("consultation")
-        ordonnance.medicaments = request.POST.get("medicaments")
-        ordonnance.save()
-        return redirect("liste_ordonnances")
-    
-    contexte = {
-        "ordonnance": ordonnance,
-        "consultations": Consultation.objects.select_related("patient", "medecin").all(),
-    }
-    return render(request, "modifier_ordonnances.html", contexte)
+def _avertissement_cascade(compteurs):
+    """Construit un message d'avertissement a partir d'un dict {libelle: total}."""
+    parties = [f"{total} {libelle}" for libelle, total in compteurs.items() if total]
+    if not parties:
+        return None
+    return "Seront aussi supprimes : " + ", ".join(parties) + "."
 
 
 # SUPPRIMER VUES
 @admin_required
 def supprimer_patient(request, pk):
-    patient = Patient.objects.get(pk=pk)
+    patient = get_object_or_404(Patient, pk=pk)
     if request.method == "POST":
         patient.delete()
+        messages.success(request, "Assure supprime.")
         return redirect("liste_patients")
-    return render(request, "confirmer_suppression.html", {"objet": patient, "type": "Patient"})
+    avertissement = _avertissement_cascade({
+        "ayant(s) droit": patient.ayants_droit.count(),
+        "consultation(s)": patient.consultation_set.count(),
+        "prise(s) en charge": patient.priseencharge_set.count(),
+        "rendez-vous": patient.rendez_vous.count(),
+    })
+    return render(
+        request,
+        "confirmer_suppression.html",
+        {"objet": patient, "type": "Patient", "avertissement": avertissement},
+    )
 
 
 @admin_required
 def supprimer_medecin(request, pk):
-    medecin = Medecin.objects.get(pk=pk)
+    medecin = get_object_or_404(Medecin, pk=pk)
     if request.method == "POST":
         medecin.delete()
+        messages.success(request, "Medecin supprime.")
         return redirect("liste_medecins")
-    return render(request, "confirmer_suppression.html", {"objet": medecin, "type": "Medecin"})
+    avertissement = _avertissement_cascade({
+        "consultation(s)": medecin.consultation_set.count(),
+        "rendez-vous": medecin.rendez_vous.count(),
+    })
+    return render(
+        request,
+        "confirmer_suppression.html",
+        {"objet": medecin, "type": "Medecin", "avertissement": avertissement},
+    )
+
+
+@admin_required
+def liste_pharmaciens(request):
+    pharmaciens = Pharmacien.objects.select_related("user", "prestataire").all()
+    return render(request, "liste_pharmaciens.html", {"pharmaciens": pharmaciens})
+
+
+@admin_required
+def modifier_pharmacien(request, pk):
+    pharmacien = get_object_or_404(Pharmacien, pk=pk)
+    if request.method == "POST":
+        form = PharmacienAffectationForm(request.POST, instance=pharmacien)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Pharmacien modifie.")
+            return redirect("liste_pharmaciens")
+    else:
+        form = PharmacienAffectationForm(instance=pharmacien)
+    return render(request, "modifier_pharmacien.html", {"form": form, "pharmacien": pharmacien})
 
 
 @admin_required
 def supprimer_service(request, pk):
-    service = ServiceMedical.objects.get(pk=pk)
+    service = get_object_or_404(ServiceMedical, pk=pk)
     if request.method == "POST":
         service.delete()
+        messages.success(request, "Service supprime.")
         return redirect("liste_services")
     return render(request, "confirmer_suppression.html", {"objet": service, "type": "Service"})
 
 
-@admin_required
-def supprimer_consultation(request, pk):
-    consultation = Consultation.objects.get(pk=pk)
-    if request.method == "POST":
-        consultation.delete()
-        return redirect("liste_consultations")
-    return render(request, "confirmer_suppression.html", {"objet": consultation, "type": "Consultation"})
+# ---------------------------------------------------------------------------
+# Gestion des utilisateurs (Administrateur)
+# ---------------------------------------------------------------------------
+
+def _filtrer_utilisateurs(request):
+    """Filtres partages entre la liste et l'export Excel des utilisateurs."""
+    utilisateurs = User.objects.all()
+
+    role = request.GET.get("role", "")
+    statut = request.GET.get("statut", "")
+    recherche = request.GET.get("q", "").strip()
+
+    if role:
+        utilisateurs = utilisateurs.filter(role=role)
+    if statut == "actif":
+        utilisateurs = utilisateurs.filter(is_active=True)
+    elif statut == "inactif":
+        utilisateurs = utilisateurs.filter(is_active=False)
+    if recherche:
+        utilisateurs = utilisateurs.filter(
+            Q(email__icontains=recherche)
+            | Q(first_name__icontains=recherche)
+            | Q(last_name__icontains=recherche)
+        )
+
+    return utilisateurs, {"role": role, "statut": statut, "recherche": recherche}
 
 
 @admin_required
-def supprimer_ordonnances(request, pk):
-    ordonnance = Ordonnance.objects.get(pk=pk)
+def liste_utilisateurs(request):
+    utilisateurs, filtres = _filtrer_utilisateurs(request)
+    contexte = {
+        "utilisateurs": utilisateurs,
+        "roles": User.Role.choices,
+        "role_selectionne": filtres["role"],
+        "statut_selectionne": filtres["statut"],
+        "recherche": filtres["recherche"],
+    }
+    return render(request, "liste_utilisateurs.html", contexte)
+
+
+@admin_required
+def exporter_utilisateurs_excel(request):
+    utilisateurs, _ = _filtrer_utilisateurs(request)
+
+    classeur = openpyxl.Workbook()
+    feuille = classeur.active
+    feuille.title = "Utilisateurs"
+    entetes = ["Email", "Prenom", "Nom", "Telephone", "Role", "Statut", "Date de creation"]
+    feuille.append(entetes)
+
+    for utilisateur in utilisateurs:
+        feuille.append([
+            utilisateur.email,
+            utilisateur.first_name,
+            utilisateur.last_name,
+            utilisateur.phone_number,
+            utilisateur.get_role_display(),
+            "Actif" if utilisateur.is_active else "Inactif",
+            utilisateur.date_joined.strftime("%d/%m/%Y %H:%M"),
+        ])
+
+    for index, nom_colonne in enumerate(entetes, start=1):
+        feuille.column_dimensions[get_column_letter(index)].width = max(len(nom_colonne), 18)
+
+    reponse = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    reponse["Content-Disposition"] = 'attachment; filename="utilisateurs_santesn.xlsx"'
+    classeur.save(reponse)
+    return reponse
+
+
+@admin_required
+def ajouter_utilisateur(request):
     if request.method == "POST":
-        ordonnance.delete()
-        return redirect("liste_ordonnances")
-    return render(request, "confirmer_suppression.html", {"objet": ordonnance, "type": "Ordonnance"})
+        form = UtilisateurCreationForm(request.POST)
+        if form.is_valid():
+            utilisateur = form.save()
+            return render(
+                request,
+                "mot_de_passe_genere.html",
+                {
+                    "utilisateur": utilisateur,
+                    "mot_de_passe": form.mot_de_passe_genere,
+                    "action": "creation",
+                },
+            )
+    else:
+        form = UtilisateurCreationForm()
+    return render(request, "ajouter_utilisateur.html", {"form": form})
+
+
+@admin_required
+def modifier_utilisateur(request, pk):
+    utilisateur = get_object_or_404(User, pk=pk)
+    if request.method == "POST":
+        form = UtilisateurModificationForm(request.POST, instance=utilisateur)
+        if form.is_valid():
+            nouveau_role = form.cleaned_data["role"]
+            if utilisateur.pk == request.user.pk and nouveau_role != request.user.role:
+                form.add_error("role", "Vous ne pouvez pas modifier votre propre role.")
+            else:
+                utilisateur_modifie = form.save()
+                lier_fiche_medecin(utilisateur_modifie)
+                lier_fiche_pharmacien(utilisateur_modifie)
+                messages.success(request, "Utilisateur modifie avec succes.")
+                return redirect("liste_utilisateurs")
+    else:
+        form = UtilisateurModificationForm(instance=utilisateur)
+    return render(
+        request,
+        "modifier_utilisateur.html",
+        {"form": form, "utilisateur": utilisateur},
+    )
+
+
+@admin_required
+@require_POST
+def activer_desactiver_utilisateur(request, pk):
+    utilisateur = get_object_or_404(User, pk=pk)
+    if utilisateur.pk == request.user.pk:
+        messages.error(request, "Vous ne pouvez pas desactiver votre propre compte.")
+        return redirect("liste_utilisateurs")
+
+    utilisateur.is_active = not utilisateur.is_active
+    utilisateur.save(update_fields=["is_active"])
+    if utilisateur.is_active:
+        messages.success(request, f"Compte de {utilisateur} active.")
+    else:
+        messages.success(request, f"Compte de {utilisateur} desactive.")
+    return redirect("liste_utilisateurs")
+
+
+@admin_required
+def reinitialiser_mot_de_passe(request, pk):
+    utilisateur = get_object_or_404(User, pk=pk)
+    if request.method == "POST":
+        nouveau_mot_de_passe = generer_mot_de_passe()
+        utilisateur.set_password(nouveau_mot_de_passe)
+        utilisateur.save(update_fields=["password"])
+        return render(
+            request,
+            "mot_de_passe_genere.html",
+            {
+                "utilisateur": utilisateur,
+                "mot_de_passe": nouveau_mot_de_passe,
+                "action": "reinitialisation",
+            },
+        )
+    return render(request, "reinitialiser_mot_de_passe.html", {"utilisateur": utilisateur})
+
+
+@admin_required
+def supprimer_utilisateur(request, pk):
+    utilisateur = get_object_or_404(User, pk=pk)
+    if utilisateur.pk == request.user.pk:
+        messages.error(request, "Vous ne pouvez pas supprimer votre propre compte.")
+        return redirect("liste_utilisateurs")
+
+    if request.method == "POST":
+        utilisateur.delete()
+        messages.success(request, "Utilisateur supprime.")
+        return redirect("liste_utilisateurs")
+    return render(
+        request,
+        "confirmer_suppression.html",
+        {"objet": utilisateur, "type": "Utilisateur"},
+    )
+
+
+# ---------------------------------------------------------------------------
+# Espace Medecin
+# ---------------------------------------------------------------------------
+
+def _medecin_courant(request):
+    return getattr(request.user, "medecin", None)
+
+
+def _patients_du_medecin(medecin):
+    return Patient.objects.filter(
+        Q(rendez_vous__medecin=medecin) | Q(consultation__medecin=medecin)
+    ).distinct().order_by("nom", "prenom")
+
+
+@role_required(User.Role.MEDECIN)
+def dashboard_medecin(request):
+    medecin = _medecin_courant(request)
+    if medecin is None:
+        return render(request, "medecin_fiche_manquante.html")
+
+    maintenant = timezone.now()
+    rendez_vous_a_venir = RendezVous.objects.filter(
+        medecin=medecin, date_heure__gte=maintenant
+    ).exclude(statut=RendezVous.Statut.ANNULE)
+
+    contexte = {
+        "total_patients": _patients_du_medecin(medecin).count(),
+        "total_rendez_vous_a_venir": rendez_vous_a_venir.count(),
+        "total_consultations": Consultation.objects.filter(medecin=medecin).count(),
+        "total_ordonnances": Ordonnance.objects.filter(consultation__medecin=medecin).count(),
+        "prochains_rendez_vous": rendez_vous_a_venir.select_related("patient").order_by("date_heure")[:5],
+        "medecin": medecin,
+    }
+    return render(request, "dashboard_medecin.html", contexte)
+
+
+@role_required(User.Role.MEDECIN)
+def agenda_medecin(request):
+    medecin = _medecin_courant(request)
+    if medecin is None:
+        return render(request, "medecin_fiche_manquante.html")
+
+    rendez_vous = RendezVous.objects.filter(medecin=medecin).select_related("patient", "prestataire")
+    return render(request, "agenda_medecin.html", {"rendez_vous": rendez_vous})
+
+
+@role_required(User.Role.MEDECIN)
+def ajouter_rendez_vous(request):
+    medecin = _medecin_courant(request)
+    if medecin is None:
+        return render(request, "medecin_fiche_manquante.html")
+
+    if request.method == "POST":
+        form = RendezVousForm(request.POST)
+        if form.is_valid():
+            rendez_vous = form.save(commit=False)
+            rendez_vous.medecin = medecin
+            rendez_vous.save()
+            messages.success(request, "Rendez-vous cree.")
+            return redirect("agenda_medecin")
+    else:
+        form = RendezVousForm()
+    return render(request, "ajouter_rendez_vous.html", {"form": form})
+
+
+@role_required(User.Role.MEDECIN)
+@require_POST
+def changer_statut_rendez_vous(request, pk):
+    medecin = _medecin_courant(request)
+    rendez_vous = get_object_or_404(RendezVous, pk=pk, medecin=medecin)
+    nouveau_statut = request.POST.get("statut")
+    if nouveau_statut in RendezVous.Statut.values:
+        rendez_vous.statut = nouveau_statut
+        rendez_vous.save(update_fields=["statut"])
+        messages.success(request, "Statut du rendez-vous mis a jour.")
+    return redirect("agenda_medecin")
+
+
+@role_required(User.Role.MEDECIN)
+def mes_patients(request):
+    medecin = _medecin_courant(request)
+    if medecin is None:
+        return render(request, "medecin_fiche_manquante.html")
+    return render(request, "mes_patients.html", {"patients": _patients_du_medecin(medecin)})
+
+
+@role_required(User.Role.MEDECIN)
+def historique_consultations(request):
+    medecin = _medecin_courant(request)
+    if medecin is None:
+        return render(request, "medecin_fiche_manquante.html")
+
+    consultations = Consultation.objects.filter(medecin=medecin).select_related(
+        "patient", "service", "prise_en_charge"
+    ).prefetch_related("ordonnance_set").order_by("-date_consultation")
+    return render(request, "historique_consultations.html", {"consultations": consultations})
+
+
+@role_required(User.Role.MEDECIN)
+def ajouter_consultation_medecin(request):
+    medecin = _medecin_courant(request)
+    if medecin is None:
+        return render(request, "medecin_fiche_manquante.html")
+
+    if request.method == "POST":
+        form = ConsultationForm(request.POST)
+        if form.is_valid():
+            consultation = form.save(commit=False)
+            consultation.medecin = medecin
+            consultation.save()
+            messages.success(request, "Consultation enregistree.")
+            return redirect("ajouter_ordonnance_medecin", consultation_pk=consultation.pk)
+    else:
+        form = ConsultationForm()
+    return render(request, "ajouter_consultation_medecin.html", {"form": form})
+
+
+@role_required(User.Role.MEDECIN)
+def ajouter_ordonnance_medecin(request, consultation_pk):
+    medecin = _medecin_courant(request)
+    consultation = get_object_or_404(Consultation, pk=consultation_pk, medecin=medecin)
+
+    if request.method == "POST":
+        form = OrdonnanceForm(request.POST)
+        if form.is_valid():
+            ordonnance = form.save(commit=False)
+            ordonnance.consultation = consultation
+            ordonnance.save()
+            return redirect("voir_ordonnance_medecin", pk=ordonnance.pk)
+    else:
+        form = OrdonnanceForm()
+    return render(
+        request,
+        "ajouter_ordonnance_medecin.html",
+        {"form": form, "consultation": consultation},
+    )
+
+
+@role_required(User.Role.MEDECIN)
+def voir_ordonnance_medecin(request, pk):
+    medecin = _medecin_courant(request)
+    ordonnance = get_object_or_404(Ordonnance, pk=pk, consultation__medecin=medecin)
+    return render(
+        request,
+        "voir_ordonnance.html",
+        {"ordonnance": ordonnance, "retour_url": "historique_consultations"},
+    )
+
+
+@role_required(User.Role.MEDECIN)
+def modifier_profil_medecin(request):
+    medecin = _medecin_courant(request)
+    if medecin is None:
+        return render(request, "medecin_fiche_manquante.html")
+
+    if request.method == "POST":
+        form = MedecinProfilForm(request.POST, instance=medecin)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Profil mis a jour.")
+            return redirect("modifier_profil_medecin")
+    else:
+        form = MedecinProfilForm(instance=medecin)
+    return render(request, "modifier_profil_medecin.html", {"form": form, "medecin": medecin})
+
+
+# ---------------------------------------------------------------------------
+# Espace Pharmacien
+# ---------------------------------------------------------------------------
+
+def _pharmacien_courant(request):
+    return getattr(request.user, "pharmacien", None)
+
+
+@role_required(User.Role.PHARMACIEN)
+def dashboard_pharmacien(request):
+    pharmacien = _pharmacien_courant(request)
+    if pharmacien is None:
+        return render(request, "pharmacien_fiche_manquante.html")
+
+    delivrances = Delivrance.objects.filter(pharmacien=pharmacien)
+    contexte = {
+        "total_delivrances": delivrances.count(),
+        "dernieres_delivrances": delivrances.select_related(
+            "ordonnance__consultation__patient"
+        ).order_by("-date_delivrance")[:5],
+        "pharmacien": pharmacien,
+    }
+    return render(request, "dashboard_pharmacien.html", contexte)
+
+
+@role_required(User.Role.PHARMACIEN)
+def scanner_ordonnance(request):
+    pharmacien = _pharmacien_courant(request)
+    if pharmacien is None:
+        return render(request, "pharmacien_fiche_manquante.html")
+
+    ordonnance = None
+    if request.method == "POST":
+        code = request.POST.get("code_qr", "").strip().upper()
+        try:
+            ordonnance = Ordonnance.objects.select_related(
+                "consultation__patient", "consultation__medecin"
+            ).get(code_qr=code)
+        except Ordonnance.DoesNotExist:
+            messages.error(request, "Aucune ordonnance ne correspond a ce code.")
+
+    return render(request, "scanner_ordonnance.html", {"ordonnance": ordonnance})
+
+
+@role_required(User.Role.PHARMACIEN)
+@require_POST
+def valider_delivrance(request, pk):
+    pharmacien = _pharmacien_courant(request)
+    ordonnance = get_object_or_404(Ordonnance, pk=pk)
+    if hasattr(ordonnance, "delivrance"):
+        messages.error(request, "Cette ordonnance a deja ete delivree.")
+    else:
+        Delivrance.objects.create(ordonnance=ordonnance, pharmacien=pharmacien)
+        messages.success(request, "Delivrance validee.")
+    return redirect("historique_delivrances")
+
+
+@role_required(User.Role.PHARMACIEN)
+def historique_delivrances(request):
+    pharmacien = _pharmacien_courant(request)
+    if pharmacien is None:
+        return render(request, "pharmacien_fiche_manquante.html")
+
+    delivrances = Delivrance.objects.filter(pharmacien=pharmacien).select_related(
+        "ordonnance__consultation__patient", "ordonnance__consultation__medecin"
+    ).order_by("-date_delivrance")
+    return render(request, "historique_delivrances.html", {"delivrances": delivrances})
+
+
+# ---------------------------------------------------------------------------
+# Espace Assure
+# ---------------------------------------------------------------------------
+
+def _patient_principal(request):
+    return getattr(request.user, "patient", None)
+
+
+def _beneficiaires(patient):
+    return Patient.objects.filter(
+        Q(pk=patient.pk) | Q(assure_principal=patient)
+    ).order_by("nom", "prenom")
+
+
+@role_required(User.Role.ASSURE)
+def dashboard_assure(request):
+    patient = _patient_principal(request)
+    if patient is None:
+        return redirect("mon_profil_assure")
+
+    beneficiaires = _beneficiaires(patient)
+    maintenant = timezone.now()
+    rendez_vous_a_venir = RendezVous.objects.filter(
+        patient__in=beneficiaires, date_heure__gte=maintenant
+    ).exclude(statut=RendezVous.Statut.ANNULE)
+
+    contexte = {
+        "patient": patient,
+        "total_ayants_droit": beneficiaires.exclude(pk=patient.pk).count(),
+        "total_rendez_vous_a_venir": rendez_vous_a_venir.count(),
+        "total_ordonnances": Ordonnance.objects.filter(consultation__patient__in=beneficiaires).count(),
+        "prochains_rendez_vous": rendez_vous_a_venir.select_related(
+            "medecin", "prestataire", "patient"
+        ).order_by("date_heure")[:5],
+    }
+    return render(request, "dashboard_assure.html", contexte)
+
+
+@role_required(User.Role.ASSURE)
+def mon_profil_assure(request):
+    patient = _patient_principal(request)
+
+    if request.method == "POST":
+        form = ProfilAssureForm(request.POST, instance=patient)
+        if form.is_valid():
+            profil = form.save(commit=False)
+            profil.user = request.user
+            profil.type_beneficiaire = Patient.TypeBeneficiaire.PRINCIPAL
+            profil.save()
+            messages.success(request, "Profil enregistre.")
+            return redirect("dashboard_assure")
+    else:
+        initial = {}
+        if patient is None:
+            initial = {"nom": request.user.last_name, "prenom": request.user.first_name}
+        form = ProfilAssureForm(instance=patient, initial=initial)
+
+    return render(request, "mon_profil_assure.html", {"form": form, "patient": patient})
+
+
+@role_required(User.Role.ASSURE)
+def liste_ayants_droit(request):
+    patient = _patient_principal(request)
+    if patient is None:
+        return redirect("mon_profil_assure")
+    return render(
+        request,
+        "liste_ayants_droit.html",
+        {"ayants_droit": patient.ayants_droit.all().order_by("nom", "prenom")},
+    )
+
+
+@role_required(User.Role.ASSURE)
+def ajouter_ayant_droit(request):
+    patient = _patient_principal(request)
+    if patient is None:
+        return redirect("mon_profil_assure")
+
+    if request.method == "POST":
+        form = AyantDroitForm(request.POST)
+        if form.is_valid():
+            ayant_droit = form.save(commit=False)
+            ayant_droit.type_beneficiaire = Patient.TypeBeneficiaire.AYANT_DROIT
+            ayant_droit.assure_principal = patient
+            ayant_droit.save()
+            messages.success(request, "Ayant droit ajoute.")
+            return redirect("liste_ayants_droit")
+    else:
+        form = AyantDroitForm()
+    return render(request, "ajouter_ayant_droit.html", {"form": form})
+
+
+@role_required(User.Role.ASSURE)
+def modifier_ayant_droit(request, pk):
+    patient = _patient_principal(request)
+    if patient is None:
+        return redirect("mon_profil_assure")
+    ayant_droit = get_object_or_404(Patient, pk=pk, assure_principal=patient)
+
+    if request.method == "POST":
+        form = AyantDroitForm(request.POST, instance=ayant_droit)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Ayant droit modifie.")
+            return redirect("liste_ayants_droit")
+    else:
+        form = AyantDroitForm(instance=ayant_droit)
+    return render(request, "modifier_ayant_droit.html", {"form": form, "ayant_droit": ayant_droit})
+
+
+@role_required(User.Role.ASSURE)
+def supprimer_ayant_droit(request, pk):
+    patient = _patient_principal(request)
+    if patient is None:
+        return redirect("mon_profil_assure")
+    ayant_droit = get_object_or_404(Patient, pk=pk, assure_principal=patient)
+
+    if request.method == "POST":
+        ayant_droit.delete()
+        messages.success(request, "Ayant droit supprime.")
+        return redirect("liste_ayants_droit")
+    return render(
+        request,
+        "confirmer_suppression.html",
+        {"objet": ayant_droit, "type": "Ayant droit"},
+    )
+
+
+@role_required(User.Role.ASSURE)
+def mes_rendez_vous_assure(request):
+    patient = _patient_principal(request)
+    if patient is None:
+        return redirect("mon_profil_assure")
+    beneficiaires = _beneficiaires(patient)
+    rendez_vous = RendezVous.objects.filter(patient__in=beneficiaires).select_related(
+        "patient", "medecin", "prestataire"
+    )
+    return render(request, "mes_rendez_vous.html", {"rendez_vous": rendez_vous})
+
+
+@role_required(User.Role.ASSURE)
+def ajouter_rendez_vous_assure(request):
+    patient = _patient_principal(request)
+    if patient is None:
+        return redirect("mon_profil_assure")
+    beneficiaires = _beneficiaires(patient)
+
+    if request.method == "POST":
+        form = RendezVousAssureForm(request.POST, beneficiaires=beneficiaires)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Demande de rendez-vous envoyee.")
+            return redirect("mes_rendez_vous_assure")
+    else:
+        form = RendezVousAssureForm(beneficiaires=beneficiaires)
+    return render(request, "ajouter_rendez_vous_assure.html", {"form": form})
+
+
+@role_required(User.Role.ASSURE)
+@require_POST
+def annuler_rendez_vous_assure(request, pk):
+    patient = _patient_principal(request)
+    beneficiaires = _beneficiaires(patient) if patient else Patient.objects.none()
+    rendez_vous = get_object_or_404(RendezVous, pk=pk, patient__in=beneficiaires)
+
+    if rendez_vous.statut in (RendezVous.Statut.DEMANDE, RendezVous.Statut.CONFIRME):
+        rendez_vous.statut = RendezVous.Statut.ANNULE
+        rendez_vous.save(update_fields=["statut"])
+        messages.success(request, "Rendez-vous annule.")
+    else:
+        messages.error(request, "Ce rendez-vous ne peut plus etre annule.")
+    return redirect("mes_rendez_vous_assure")
+
+
+@role_required(User.Role.ASSURE)
+def mes_ordonnances_assure(request):
+    patient = _patient_principal(request)
+    if patient is None:
+        return redirect("mon_profil_assure")
+    beneficiaires = _beneficiaires(patient)
+    ordonnances = Ordonnance.objects.filter(
+        consultation__patient__in=beneficiaires
+    ).select_related("consultation__patient", "consultation__medecin").order_by("-date_creation")
+    return render(request, "mes_ordonnances.html", {"ordonnances": ordonnances})
+
+
+@role_required(User.Role.ASSURE)
+def voir_ordonnance_assure(request, pk):
+    patient = _patient_principal(request)
+    beneficiaires = _beneficiaires(patient) if patient else Patient.objects.none()
+    ordonnance = get_object_or_404(Ordonnance, pk=pk, consultation__patient__in=beneficiaires)
+    return render(
+        request,
+        "voir_ordonnance.html",
+        {"ordonnance": ordonnance, "retour_url": "mes_ordonnances_assure"},
+    )
+
+
+@role_required(User.Role.ASSURE)
+def mon_historique_assure(request):
+    patient = _patient_principal(request)
+    if patient is None:
+        return redirect("mon_profil_assure")
+    beneficiaires = _beneficiaires(patient)
+    consultations = Consultation.objects.filter(patient__in=beneficiaires).select_related(
+        "patient", "medecin", "service"
+    ).order_by("-date_consultation")
+    return render(request, "mon_historique.html", {"consultations": consultations})
+
+
+# ---------------------------------------------------------------------------
+# Notifications
+# ---------------------------------------------------------------------------
+
+@admin_required
+def envoyer_notification(request):
+    if request.method == "POST":
+        form = EnvoyerNotificationForm(request.POST)
+        if form.is_valid():
+            message = form.cleaned_data["message"]
+            destinataire = form.cleaned_data["destinataire"]
+            role = form.cleaned_data["role"]
+
+            if destinataire:
+                destinataires = [destinataire]
+            else:
+                destinataires = list(User.objects.filter(role=role, is_active=True))
+
+            Notification.objects.bulk_create(
+                [Notification(destinataire=u, message=message) for u in destinataires]
+            )
+            messages.success(request, f"Notification envoyee a {len(destinataires)} utilisateur(s).")
+            return redirect("liste_notifications_envoyees")
+    else:
+        form = EnvoyerNotificationForm()
+    return render(request, "envoyer_notification.html", {"form": form})
+
+
+@admin_required
+def liste_notifications_envoyees(request):
+    notifications = Notification.objects.select_related("destinataire").all()[:200]
+    return render(request, "liste_notifications_envoyees.html", {"notifications": notifications})
+
+
+@login_required
+def mes_notifications(request):
+    notifications = request.user.notifications.all()
+    return render(request, "mes_notifications.html", {"notifications": notifications})
+
+
+@login_required
+@require_POST
+def marquer_notification_lue(request, pk):
+    notification = get_object_or_404(Notification, pk=pk, destinataire=request.user)
+    notification.lue = True
+    notification.save(update_fields=["lue"])
+    return redirect("mes_notifications")

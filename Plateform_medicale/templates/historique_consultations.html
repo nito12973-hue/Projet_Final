@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Mes consultations{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Historique des consultations</h1>
+        <p class="subtitle">Vos consultations passees.</p>
+    </div>
+    <a class="button primary" href="{% url 'ajouter_consultation_medecin' %}">Nouvelle consultation</a>
+</section>
+
+{% if consultations %}
+<section class="panel">
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Patient</th>
+                <th>Diagnostic</th>
+                <th>Traitement</th>
+                <th>Ordonnance</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for consultation in consultations %}
+            <tr>
+                <td>{{ consultation.date_consultation|date:"d/m/Y H:i" }}</td>
+                <td>{{ consultation.patient }}</td>
+                <td>{{ consultation.diagnostic }}</td>
+                <td>{{ consultation.traitement|default:"-" }}</td>
+                <td>
+                    {% with ordonnance=consultation.ordonnance_set.first %}
+                    {% if ordonnance %}
+                    <a class="button btn btn-primary btn-sm" href="{% url 'voir_ordonnance_medecin' ordonnance.pk %}">Voir</a>
+                    {% else %}
+                    <a class="button btn btn-sm" href="{% url 'ajouter_ordonnance_medecin' consultation.pk %}">Creer</a>
+                    {% endif %}
+                    {% endwith %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% else %}
+<p class="empty">Aucune consultation enregistree.</p>
+{% endif %}
+{% endblock %}

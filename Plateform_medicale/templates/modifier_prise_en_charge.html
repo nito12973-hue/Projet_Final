@@ -1,50 +1,27 @@
 {% extends "base.html" %}
 
-{% block title %}Modifier Prise en Charge - Plateforme medicale{% endblock %}
+{% block title %}Modifier la prise en charge{% endblock %}
 
 {% block content %}
-<div class="page-title">
+<section class="page-title">
     <div>
-        <h1>Modifier Prise en Charge</h1>
-        <p class="subtitle">Modifiez les informations de la prise en charge</p>
+        <h1>Modifier la prise en charge</h1>
+        <p class="subtitle">{{ prise_en_charge.patient }}</p>
     </div>
-</div>
+    <a class="button" href="{% url 'liste_prises_en_charge' %}">Retour</a>
+</section>
+
+{% if form.non_field_errors %}
+<div class="erreurs" style="color:#b42318;margin-bottom:16px;">{{ form.non_field_errors }}</div>
+{% endif %}
 
 <form method="post">
     {% csrf_token %}
-
-    <div>
-        <label for="patient">Patient</label>
-        <select id="patient" name="patient" required>
-            {% for patient in patients %}
-            <option value="{{ patient.id }}" {% if patient.id == prise_en_charge.patient.id %}selected{% endif %}>
-                {{ patient.prenom }} {{ patient.nom }}
-            </option>
-            {% endfor %}
-        </select>
-    </div>
-
-    <div>
-        <label for="motif">Motif</label>
-        <textarea 
-            id="motif" 
-            name="motif" 
-            required
-            placeholder="Décrivez le motif de la prise en charge..."
-        >{{ prise_en_charge.motif }}</textarea>
-    </div>
-
-    <div>
-        <label for="statut">Statut</label>
-        <select id="statut" name="statut" required>
-            <option value="en_attente" {% if prise_en_charge.statut == 'en_attente' %}selected{% endif %}>En attente</option>
-            <option value="validee" {% if prise_en_charge.statut == 'validee' %}selected{% endif %}>Validée</option>
-            <option value="refusee" {% if prise_en_charge.statut == 'refusee' %}selected{% endif %}>Refusée</option>
-            <option value="terminee" {% if prise_en_charge.statut == 'terminee' %}selected{% endif %}>Terminée</option>
-        </select>
-    </div>
-
-    <button type="submit" class="button primary">Enregistrer les modifications</button>
-    <a href="{% url 'liste_prises_en_charge' %}" class="button">Retour</a>
+    {% for field in form %}
+    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+    {{ field }}
+    {% if field.errors %}<div class="erreurs" style="color:#b42318;margin:-10px 0 16px;font-size:13px;">{{ field.errors }}</div>{% endif %}
+    {% endfor %}
+    <button type="submit" class="button primary">Enregistrer</button>
 </form>
 {% endblock %}

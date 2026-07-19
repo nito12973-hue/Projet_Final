@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Mes rendez-vous{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Mes rendez-vous</h1>
+        <p class="subtitle">Vos rendez-vous et ceux de vos ayants droit.</p>
+    </div>
+    <a class="button primary" href="{% url 'ajouter_rendez_vous_assure' %}">Nouveau rendez-vous</a>
+</section>
+
+{% if rendez_vous %}
+<section class="panel">
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Beneficiaire</th>
+                <th>Medecin</th>
+                <th>Prestataire</th>
+                <th>Motif</th>
+                <th>Statut</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rdv in rendez_vous %}
+            <tr>
+                <td>{{ rdv.date_heure|date:"d/m/Y H:i" }}</td>
+                <td>{{ rdv.patient }}</td>
+                <td>{{ rdv.medecin }}</td>
+                <td>{{ rdv.prestataire|default:"-" }}</td>
+                <td>{{ rdv.motif|default:"-" }}</td>
+                <td>
+                    <span class="badge {% if rdv.statut == 'DEMANDE' %}en_attente{% elif rdv.statut == 'CONFIRME' %}confirme{% elif rdv.statut == 'ANNULE' %}refusee{% elif rdv.statut == 'TERMINE' %}terminee{% endif %}">{{ rdv.get_statut_display }}</span>
+                </td>
+                <td>
+                    {% if rdv.statut == 'DEMANDE' or rdv.statut == 'CONFIRME' %}
+                    <form method="post" action="{% url 'annuler_rendez_vous_assure' rdv.pk %}" style="display:inline;max-width:none;padding:0;border:0;background:transparent;box-shadow:none;">
+                        {% csrf_token %}
+                        <button type="submit" class="button btn btn-danger btn-sm">Annuler</button>
+                    </form>
+                    {% else %}
+                    -
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% else %}
+<p class="empty">Aucun rendez-vous enregistre.</p>
+{% endif %}
+{% endblock %}

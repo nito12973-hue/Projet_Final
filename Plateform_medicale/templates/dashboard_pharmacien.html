@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Tableau de bord - Pharmacien{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Espace Pharmacien</h1>
+        <p class="subtitle">Verification des ordonnances et suivi des delivrances.</p>
+    </div>
+    <a class="button primary" href="{% url 'scanner_ordonnance' %}">Scanner un QR Code</a>
+</section>
+
+<section class="grid">
+    <a class="stat" href="{% url 'historique_delivrances' %}">
+        <strong>{{ total_delivrances }}</strong>
+        <span>Delivrances validees</span>
+    </a>
+</section>
+
+<section class="panel" style="margin-top: 22px;">
+    <div class="panel-header">
+        <h2>Dernieres delivrances</h2>
+        <a class="button" href="{% url 'historique_delivrances' %}">Voir l'historique</a>
+    </div>
+    {% if dernieres_delivrances %}
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Patient</th>
+                <th>Code ordonnance</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for delivrance in dernieres_delivrances %}
+            <tr>
+                <td>{{ delivrance.date_delivrance|date:"d/m/Y H:i" }}</td>
+                <td>{{ delivrance.ordonnance.consultation.patient }}</td>
+                <td>{{ delivrance.ordonnance.code_qr }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="empty">Aucune delivrance validee pour le moment.</p>
+    {% endif %}
+</section>
+{% endblock %}

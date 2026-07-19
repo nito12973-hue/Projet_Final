@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Changer mon mot de passe{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Changer mon mot de passe</h1>
+        <p class="subtitle">Vous resterez connecte apres la modification.</p>
+    </div>
+</section>
+
+{% if form.non_field_errors %}
+<div class="erreurs" style="color:#b42318;margin-bottom:16px;">{{ form.non_field_errors }}</div>
+{% endif %}
+
+<form method="post">
+    {% csrf_token %}
+    {% for field in form %}
+    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+    {{ field }}
+    {% if field.help_text %}<p class="subtitle" style="margin:-10px 0 16px;font-size:12px;">{{ field.help_text|safe }}</p>{% endif %}
+    {% if field.errors %}<div class="erreurs" style="color:#b42318;margin:-10px 0 16px;font-size:13px;">{{ field.errors }}</div>{% endif %}
+    {% endfor %}
+    <button type="submit" class="button primary">Enregistrer</button>
+</form>
+{% endblock %}

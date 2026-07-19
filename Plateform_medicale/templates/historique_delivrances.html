@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Historique des delivrances{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Historique des delivrances</h1>
+        <p class="subtitle">Ordonnances que vous avez validees.</p>
+    </div>
+    <a class="button primary" href="{% url 'scanner_ordonnance' %}">Scanner un QR Code</a>
+</section>
+
+{% if delivrances %}
+<section class="panel">
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Patient</th>
+                <th>Medecin prescripteur</th>
+                <th>Code ordonnance</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for delivrance in delivrances %}
+            <tr>
+                <td>{{ delivrance.date_delivrance|date:"d/m/Y H:i" }}</td>
+                <td>{{ delivrance.ordonnance.consultation.patient }}</td>
+                <td>{{ delivrance.ordonnance.consultation.medecin }}</td>
+                <td>{{ delivrance.ordonnance.code_qr }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% else %}
+<p class="empty">Aucune delivrance validee pour le moment.</p>
+{% endif %}
+{% endblock %}

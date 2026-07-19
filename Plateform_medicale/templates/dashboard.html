@@ -1,21 +1,118 @@
 {% extends "base.html" %}
 
-{% block title %}Tableau de bord{% endblock %}
+{% block title %}Dashboard Administrateur - SanteSN{% endblock %}
 
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>Tableau de bord</h1>
-        <p class="subtitle">Vue generale de la plateforme de prise en charge medicale.</p>
+        <h1>Dashboard Administrateur</h1>
+        <p class="subtitle">Piloter la plateforme sans intervenir dans les actes medicaux.</p>
     </div>
 </section>
 
 <section class="grid">
-    <a class="stat" href="{% url 'liste_patients' %}"><strong>{{ total_patients }}</strong><span>🧑‍🤝‍🧑 Patients</span></a>
-    <a class="stat" href="{% url 'liste_medecins' %}"><strong>{{ total_medecins }}</strong><span>🩺 Medecins</span></a>
-    <a class="stat" href="{% url 'liste_services' %}"><strong>{{ total_services }}</strong><span>🏥 Services</span></a>
-    <a class="stat" href="{% url 'liste_prises_en_charge' %}"><strong>{{ total_prises_en_charge }}</strong><span>📋 Prises en charge</span></a>
-    <a class="stat" href="{% url 'liste_consultations' %}"><strong>{{ total_consultations }}</strong><span>🗓️ Consultations</span></a>
-    <a class="stat" href="{% url 'liste_ordonnances' %}"><strong>{{ total_ordonnances }}</strong><span>💊 Ordonnances</span></a>
+    <a class="stat" href="{% url 'liste_patients' %}">
+        <strong>{{ total_patients }}</strong>
+        <span>Assures geres</span>
+    </a>
+    <a class="stat" href="{% url 'liste_medecins' %}">
+        <strong>{{ total_medecins }}</strong>
+        <span>Medecins actifs</span>
+    </a>
+    <a class="stat" href="{% url 'liste_prestataires' %}">
+        <strong>{{ total_prestataires }}</strong>
+        <span>Prestataires</span>
+    </a>
+    <a class="stat" href="{% url 'liste_services' %}">
+        <strong>{{ total_services }}</strong>
+        <span>Services medicaux</span>
+    </a>
+    <a class="stat" href="{% url 'liste_prises_en_charge' %}">
+        <strong>{{ total_prises_en_charge }}</strong>
+        <span>Prises en charge</span>
+    </a>
+</section>
+
+<section class="admin-layout">
+    <article class="panel admin-card-large">
+        <div class="panel-header">
+            <div>
+                <h2>Actions rapides</h2>
+                <p class="subtitle">Actions autorisees pour administrer la plateforme.</p>
+            </div>
+        </div>
+        <div class="quick-actions">
+            <a class="button primary" href="{% url 'ajouter_patient' %}">Ajouter un assure</a>
+            <a class="button primary" href="{% url 'ajouter_medecin' %}">Ajouter un medecin</a>
+            <a class="button primary" href="{% url 'ajouter_prestataire' %}">Ajouter un prestataire</a>
+            <a class="button" href="{% url 'liste_prises_en_charge' %}">Suivre les prises en charge</a>
+        </div>
+    </article>
+
+    <aside class="panel governance-card">
+        <h2>Principe de moindre privilege</h2>
+        <p class="subtitle">
+            L'administrateur gere les comptes, les prestataires et le suivi.
+            Il ne saisit pas de diagnostic, ne cree pas d'ordonnance et ne valide pas de delivrance.
+        </p>
+    </aside>
+</section>
+
+<section class="admin-layout">
+    <article class="panel">
+        <div class="panel-header">
+            <h2>Derniers assures</h2>
+            <a class="button" href="{% url 'liste_patients' %}">Voir tout</a>
+        </div>
+        {% if derniers_patients %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Assure</th>
+                    <th>Telephone</th>
+                    <th>Adresse</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for patient in derniers_patients %}
+                <tr>
+                    <td>{{ patient.prenom }} {{ patient.nom }}</td>
+                    <td>{{ patient.telephone }}</td>
+                    <td>{{ patient.adresse|default:"-" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="empty">Aucun assure enregistre.</p>
+        {% endif %}
+    </article>
+
+    <article class="panel">
+        <div class="panel-header">
+            <h2>Suivi des prises en charge</h2>
+            <a class="button" href="{% url 'liste_prises_en_charge' %}">Voir tout</a>
+        </div>
+        {% if dernieres_prises_en_charge %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Assure</th>
+                    <th>Statut</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for prise in dernieres_prises_en_charge %}
+                <tr>
+                    <td>{{ prise.patient }}</td>
+                    <td><span class="badge {{ prise.statut }}">{{ prise.get_statut_display }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="empty">Aucune prise en charge enregistree.</p>
+        {% endif %}
+    </article>
 </section>
 {% endblock %}

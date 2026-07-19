@@ -6,24 +6,22 @@
 <section class="page-title">
     <div>
         <h1>Ajouter une prise en charge</h1>
-        <p class="subtitle">Formulaire de demande de prise en charge.</p>
+        <p class="subtitle">Le statut de depart est toujours "En attente".</p>
     </div>
     <a class="button" href="{% url 'liste_prises_en_charge' %}">Retour</a>
 </section>
 
+{% if form.non_field_errors %}
+<div class="erreurs" style="color:#b42318;margin-bottom:16px;">{{ form.non_field_errors }}</div>
+{% endif %}
+
 <form method="post">
     {% csrf_token %}
-    <label for="patient">Patient</label>
-    <select id="patient" name="patient" required>
-        <option value="">Choisir un patient</option>
-        {% for patient in patients %}
-        <option value="{{ patient.id }}">{{ patient }}</option>
-        {% endfor %}
-    </select>
-
-    <label for="motif">Motif</label>
-    <textarea id="motif" name="motif" required></textarea>
-
+    {% for field in form %}
+    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+    {{ field }}
+    {% if field.errors %}<div class="erreurs" style="color:#b42318;margin:-10px 0 16px;font-size:13px;">{{ field.errors }}</div>{% endif %}
+    {% endfor %}
     <button class="button primary" type="submit">Enregistrer</button>
 </form>
 {% endblock %}

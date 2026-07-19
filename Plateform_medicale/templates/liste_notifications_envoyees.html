@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications envoyees{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Notifications envoyees</h1>
+        <p class="subtitle">200 dernieres notifications, tous destinataires confondus.</p>
+    </div>
+    <a class="button primary" href="{% url 'envoyer_notification' %}">Envoyer une notification</a>
+</section>
+
+{% if notifications %}
+<section class="panel">
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Destinataire</th>
+                <th>Message</th>
+                <th>Lue</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for notification in notifications %}
+            <tr>
+                <td>{{ notification.date_creation|date:"d/m/Y H:i" }}</td>
+                <td>{{ notification.destinataire }}</td>
+                <td>{{ notification.message }}</td>
+                <td>
+                    {% if notification.lue %}
+                    <span class="badge validee">Oui</span>
+                    {% else %}
+                    <span class="badge en_attente">Non</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% else %}
+<p class="empty">Aucune notification envoyee.</p>
+{% endif %}
+{% endblock %}

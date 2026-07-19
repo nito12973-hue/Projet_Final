@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Tableau de bord - {{ patient }}{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Bonjour {{ patient.prenom }}</h1>
+        <p class="subtitle">Votre carte : {{ patient.numero_carte }}</p>
+    </div>
+    <a class="button primary" href="{% url 'ajouter_rendez_vous_assure' %}">Nouveau rendez-vous</a>
+</section>
+
+<section class="grid">
+    <a class="stat" href="{% url 'liste_ayants_droit' %}">
+        <strong>{{ total_ayants_droit }}</strong>
+        <span>Ayants droit</span>
+    </a>
+    <a class="stat" href="{% url 'mes_rendez_vous_assure' %}">
+        <strong>{{ total_rendez_vous_a_venir }}</strong>
+        <span>Rendez-vous a venir</span>
+    </a>
+    <a class="stat" href="{% url 'mes_ordonnances_assure' %}">
+        <strong>{{ total_ordonnances }}</strong>
+        <span>Ordonnances disponibles</span>
+    </a>
+</section>
+
+<section class="panel" style="margin-top: 22px;">
+    <div class="panel-header">
+        <h2>Prochains rendez-vous</h2>
+        <a class="button" href="{% url 'mes_rendez_vous_assure' %}">Voir tout</a>
+    </div>
+    {% if prochains_rendez_vous %}
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Beneficiaire</th>
+                <th>Medecin</th>
+                <th>Statut</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rdv in prochains_rendez_vous %}
+            <tr>
+                <td>{{ rdv.date_heure|date:"d/m/Y H:i" }}</td>
+                <td>{{ rdv.patient }}</td>
+                <td>{{ rdv.medecin }}</td>
+                <td>
+                    <span class="badge {% if rdv.statut == 'DEMANDE' %}en_attente{% elif rdv.statut == 'CONFIRME' %}confirme{% elif rdv.statut == 'ANNULE' %}refusee{% elif rdv.statut == 'TERMINE' %}terminee{% endif %}">{{ rdv.get_statut_display }}</span>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="empty">Aucun rendez-vous a venir.</p>
+    {% endif %}
+</section>
+{% endblock %}

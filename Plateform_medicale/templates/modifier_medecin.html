@@ -1,74 +1,26 @@
 {% extends "base.html" %}
 
-{% block title %}Modifier Médecin - Plateforme medicale{% endblock %}
+{% block title %}Modifier {{ medecin }}{% endblock %}
 
 {% block content %}
-<div class="page-title">
+<section class="page-title">
     <div>
-        <h1>Modifier Médecin</h1>
-        <p class="subtitle">Modifiez les informations du médecin</p>
+        <h1>Modifier {{ medecin }}</h1>
     </div>
-</div>
+    <a class="button" href="{% url 'liste_medecins' %}">Retour</a>
+</section>
+
+{% if form.non_field_errors %}
+<div class="erreurs" style="color:#b42318;margin-bottom:16px;">{{ form.non_field_errors }}</div>
+{% endif %}
 
 <form method="post">
     {% csrf_token %}
-
-    <div>
-        <label for="nom">Nom</label>
-        <input 
-            type="text" 
-            id="nom" 
-            name="nom" 
-            required 
-            value="{{ medecin.nom }}"
-        >
-    </div>
-
-    <div>
-        <label for="prenom">Prénom</label>
-        <input 
-            type="text" 
-            id="prenom" 
-            name="prenom" 
-            required 
-            value="{{ medecin.prenom }}"
-        >
-    </div>
-
-    <div>
-        <label for="specialite">Spécialité</label>
-        <input 
-            type="text" 
-            id="specialite" 
-            name="specialite" 
-            required 
-            value="{{ medecin.specialite }}"
-        >
-    </div>
-
-    <div>
-        <label for="telephone">Téléphone</label>
-        <input 
-            type="tel" 
-            id="telephone" 
-            name="telephone" 
-            required 
-            value="{{ medecin.telephone }}"
-        >
-    </div>
-
-    <div>
-        <label for="email">Email</label>
-        <input 
-            type="email" 
-            id="email" 
-            name="email" 
-            required 
-            value="{{ medecin.email }}"
-        >
-    </div>
-
-    <button type="submit" class="button primary">Enregistrer les modifications</button>
-    <a href="{% url 'liste_medecins' %}" class="button">Retour</a>
+    {% for field in form %}
+    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+    {{ field }}
+    {% if field.errors %}<div class="erreurs" style="color:#b42318;margin:-10px 0 16px;font-size:13px;">{{ field.errors }}</div>{% endif %}
+    {% endfor %}
+    <button type="submit" class="button primary">Enregistrer</button>
 </form>
 {% endblock %}

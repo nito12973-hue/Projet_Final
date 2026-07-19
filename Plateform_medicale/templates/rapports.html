@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Rapports{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Rapports</h1>
+        <p class="subtitle">Synthese de l'activite de la plateforme.</p>
+    </div>
+</section>
+
+<section class="admin-layout">
+    <article class="panel" style="padding:0;">
+        <div class="panel-header">
+            <h2>Utilisateurs par role</h2>
+        </div>
+        <table>
+            <thead><tr><th>Role</th><th>Total</th></tr></thead>
+            <tbody>
+                {% for ligne in utilisateurs_par_role %}
+                <tr><td>{{ ligne.label }}</td><td>{{ ligne.total }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </article>
+
+    <aside class="panel governance-card">
+        <h2>Chiffres cles</h2>
+        <p class="subtitle">Consultations : <strong>{{ total_consultations }}</strong></p>
+        <p class="subtitle">Ordonnances : <strong>{{ total_ordonnances }}</strong></p>
+        <p class="subtitle">Delivrances : <strong>{{ total_delivrances }}</strong></p>
+        <p class="subtitle">Prestataires partenaires : <strong>{{ total_prestataires_partenaires }}</strong></p>
+    </aside>
+</section>
+
+<section class="admin-layout" style="margin-top:18px;">
+    <article class="panel" style="padding:0;">
+        <div class="panel-header"><h2>Assures par type</h2></div>
+        <table>
+            <thead><tr><th>Type</th><th>Total</th></tr></thead>
+            <tbody>
+                {% for ligne in patients_par_type %}
+                <tr><td>{{ ligne.label }}</td><td>{{ ligne.total }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </article>
+
+    <article class="panel" style="padding:0;">
+        <div class="panel-header"><h2>Rendez-vous par statut</h2></div>
+        <table>
+            <thead><tr><th>Statut</th><th>Total</th></tr></thead>
+            <tbody>
+                {% for ligne in rendez_vous_par_statut %}
+                <tr><td>{{ ligne.label }}</td><td>{{ ligne.total }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </article>
+</section>
+
+<section class="panel" style="margin-top:18px;padding:0;">
+    <div class="panel-header"><h2>Prises en charge par statut</h2></div>
+    <table>
+        <thead><tr><th>Statut</th><th>Total</th></tr></thead>
+        <tbody>
+            {% for ligne in prises_en_charge_par_statut %}
+            <tr><td>{{ ligne.label }}</td><td>{{ ligne.total }}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}

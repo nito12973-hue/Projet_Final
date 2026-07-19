@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Ordonnance{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Ordonnance</h1>
+        <p class="subtitle">{{ ordonnance.consultation.patient }} - {{ ordonnance.date_creation|date:"d/m/Y H:i" }}</p>
+    </div>
+    <a class="button" href="{% url retour_url %}">Retour</a>
+</section>
+
+<section class="admin-layout">
+    <article class="panel" style="padding: 24px;">
+        <h2 style="margin-top:0;color:var(--primary-dark);">Medicaments prescrits</h2>
+        <p style="white-space: pre-line;">{{ ordonnance.medicaments }}</p>
+    </article>
+
+    <aside class="panel governance-card">
+        <h2>QR Code de verification</h2>
+        <div style="background:#fff;padding:12px;border-radius:10px;display:inline-block;">
+            {{ ordonnance.qr_svg|safe }}
+        </div>
+        <p class="subtitle" style="margin-top:12px;">Code : <strong>{{ ordonnance.code_qr }}</strong></p>
+        <p class="subtitle">A scanner en pharmacie pour valider la delivrance.</p>
+    </aside>
+</section>
+{% endblock %}
