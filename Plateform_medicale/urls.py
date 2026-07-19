@@ -5,6 +5,8 @@ urlpatterns = [
     path('', views.landing, name='landing'),
     path('tableau-de-bord/', views.dashboard, name='dashboard'),
     path('rapports/', views.rapports, name='rapports'),
+    path('rapports/exporter/excel/', views.exporter_rapports_excel, name='exporter_rapports_excel'),
+    path('rapports/exporter/pdf/', views.exporter_rapports_pdf, name='exporter_rapports_pdf'),
 
     path('connexion/', views.login_view, name='login'),
     path('deconnexion/', views.logout_view, name='logout'),

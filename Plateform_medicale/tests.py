@@ -911,6 +911,53 @@ class RapportsTests(TestCase):
         self.assertEqual(len(donnees['totaux']), 6)
         self.assertEqual(donnees['totaux'][-1], 1)
 
+    def test_export_rapports_excel_interdit_aux_non_admins(self):
+        self.client.logout()
+        creer_utilisateur(User.Role.MEDECIN, 'medecin@santesn.sn')
+        self.client.login(username='medecin@santesn.sn', password=PASSWORD)
+        response = self.client.get(reverse('exporter_rapports_excel'))
+        self.assertEqual(response.status_code, 403)
+
+    def test_export_rapports_excel_contient_un_onglet_par_tableau(self):
+        creer_utilisateur(User.Role.MEDECIN, 'medecin@santesn.sn')
+        response = self.client.get(reverse('exporter_rapports_excel'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response['Content-Type'],
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        self.assertIn('attachment', response['Content-Disposition'])
+
+        classeur = openpyxl.load_workbook(io.BytesIO(response.content))
+        self.assertEqual(
+            classeur.sheetnames,
+            [
+                'Chiffres cles',
+                'Utilisateurs par role',
+                'Assures par type',
+                'Rendez-vous par statut',
+                'Prises en charge par statut',
+                'Consultations par mois',
+            ],
+        )
+        feuille_roles = classeur['Utilisateurs par role']
+        lignes = {ligne[0].value: ligne[1].value for ligne in feuille_roles.iter_rows(min_row=2)}
+        self.assertEqual(lignes['Médecin'], 1)
+
+    def test_export_rapports_pdf_interdit_aux_non_admins(self):
+        self.client.logout()
+        creer_utilisateur(User.Role.MEDECIN, 'medecin@santesn.sn')
+        self.client.login(username='medecin@santesn.sn', password=PASSWORD)
+        response = self.client.get(reverse('exporter_rapports_pdf'))
+        self.assertEqual(response.status_code, 403)
+
+    def test_export_rapports_pdf_genere_un_fichier_pdf(self):
+        response = self.client.get(reverse('exporter_rapports_pdf'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertIn('attachment', response['Content-Disposition'])
+        self.assertTrue(response.content.startswith(b'%PDF'))
+
 
 class AdminMedecinsFormTests(TestCase):
     def setUp(self):
