@@ -577,6 +577,7 @@
                 <a href="{% url 'liste_pharmaciens' %}" class="{% if request.resolver_match.url_name == 'liste_pharmaciens' %}active{% endif %}">{% icone "pill" %} Pharmaciens</a>
                 <a href="{% url 'liste_prestataires' %}" class="{% if request.resolver_match.url_name == 'liste_prestataires' %}active{% endif %}">{% icone "building" %} Prestataires</a>
                 <a href="{% url 'liste_prises_en_charge' %}" class="{% if request.resolver_match.url_name == 'liste_prises_en_charge' %}active{% endif %}">{% icone "shield-check" %} Prises en charge</a>
+                <a href="{% url 'liste_paiements' %}" class="{% if request.resolver_match.url_name == 'liste_paiements' %}active{% endif %}">{% icone "receipt" %} Paiements</a>
                 <a href="{% url 'rapports' %}" class="{% if request.resolver_match.url_name == 'rapports' %}active{% endif %}">{% icone "bar-chart" %} Rapports</a>
                 <a href="{% url 'envoyer_notification' %}" class="{% if request.resolver_match.url_name == 'envoyer_notification' or request.resolver_match.url_name == 'liste_notifications_envoyees' %}active{% endif %}">{% icone "bell" %} Notifications</a>
                 <a href="{% url 'changer_mot_de_passe' %}" class="{% if request.resolver_match.url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "lock" %} Mot de passe</a>

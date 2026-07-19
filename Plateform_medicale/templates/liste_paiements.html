@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Paiements{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Paiements</h1>
+        <p class="subtitle">Suivi du reglement des consultations.</p>
+    </div>
+</section>
+
+<form method="get" style="max-width:none;padding:20px;display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+    <div style="min-width:220px;">
+        <label for="statut">Statut</label>
+        <select id="statut" name="statut" style="margin-bottom:0;">
+            <option value="">Tous</option>
+            {% for value, label in statuts %}
+            <option value="{{ value }}" {% if value == statut_choisi %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit" class="button primary btn">Filtrer</button>
+    {% if statut_choisi %}
+    <a href="{% url 'liste_paiements' %}" class="button btn">Reinitialiser</a>
+    {% endif %}
+</form>
+
+{% if paiements %}
+<section class="panel">
+    <table>
+        <thead>
+            <tr>
+                <th>Patient</th>
+                <th>Consultation</th>
+                <th>Montant total</th>
+                <th>Part assurance</th>
+                <th>Part patient</th>
+                <th>Statut</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for paiement in paiements %}
+            <tr>
+                <td>{{ paiement.consultation.patient }}</td>
+                <td>{{ paiement.consultation.date_consultation|date:"d/m/Y H:i" }}</td>
+                <td>{{ paiement.montant_total }}</td>
+                <td>{{ paiement.montant_part_assurance }}</td>
+                <td>{{ paiement.montant_part_patient }}</td>
+                <td><span class="badge {% if paiement.statut == 'regle' %}validee{% else %}en_attente{% endif %}">{{ paiement.get_statut_display }}</span></td>
+                <td>
+                    <div class="actions">
+                        {% if paiement.statut == 'non_regle' %}
+                        <a href="{% url 'marquer_paiement_regle' paiement.pk %}" class="button btn btn-primary btn-sm">Marquer regle</a>
+                        {% else %}
+                        <span>{{ paiement.get_mode_reglement_display }} - {{ paiement.date_reglement|date:"d/m/Y" }}</span>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% else %}
+<p class="empty">Aucun paiement enregistre.</p>
+{% endif %}
+{% endblock %}

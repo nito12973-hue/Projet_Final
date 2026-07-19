@@ -7,6 +7,7 @@ from .models import (
     Medecin,
     Notification,
     Ordonnance,
+    Paiement,
     Patient,
     Pharmacien,
     PlanCouverture,
@@ -97,3 +98,9 @@ admin.site.register(ServiceMedical)
 admin.site.register(PriseEnCharge)
 admin.site.register(Consultation)
 admin.site.register(Ordonnance)
+
+
+@admin.register(Paiement)
+class PaiementAdmin(admin.ModelAdmin):
+    list_display = ["consultation", "montant_total", "montant_part_patient", "statut", "date_reglement"]
+    list_filter = ["statut", "mode_reglement"]

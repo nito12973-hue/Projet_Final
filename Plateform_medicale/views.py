@@ -22,6 +22,7 @@ from .forms import (
     MedecinForm,
     MedecinProfilForm,
     OrdonnanceForm,
+    PaiementReglementForm,
     PatientForm,
     PharmacienAffectationForm,
     PlanCouvertureForm,
@@ -44,6 +45,7 @@ from .models import (
     Medecin,
     Notification,
     Ordonnance,
+    Paiement,
     Patient,
     Pharmacien,
     PlanCouverture,
@@ -375,6 +377,45 @@ def supprimer_prise_en_charge(request, pk):
         messages.success(request, "Prise en charge supprimee.")
         return redirect("liste_prises_en_charge")
     return render(request, "confirmer_suppression.html", {"objet": prise_en_charge, "type": "Prise en charge"})
+
+
+@admin_required
+def liste_paiements(request):
+    paiements = Paiement.objects.select_related(
+        "consultation", "consultation__patient", "consultation__service"
+    ).order_by("-consultation__date_consultation")
+
+    statut = request.GET.get("statut", "")
+    if statut:
+        paiements = paiements.filter(statut=statut)
+
+    contexte = {
+        "paiements": paiements,
+        "statut_choisi": statut,
+        "statuts": Paiement.Statut.choices,
+    }
+    return render(request, "liste_paiements.html", contexte)
+
+
+@admin_required
+def marquer_paiement_regle(request, pk):
+    paiement = get_object_or_404(Paiement, pk=pk)
+    if paiement.statut == Paiement.Statut.REGLE:
+        messages.info(request, "Ce paiement est deja regle.")
+        return redirect("liste_paiements")
+
+    if request.method == "POST":
+        form = PaiementReglementForm(request.POST, instance=paiement)
+        if form.is_valid():
+            paiement = form.save(commit=False)
+            paiement.statut = Paiement.Statut.REGLE
+            paiement.date_reglement = timezone.now()
+            paiement.save()
+            messages.success(request, "Paiement marque comme regle.")
+            return redirect("liste_paiements")
+    else:
+        form = PaiementReglementForm(instance=paiement)
+    return render(request, "marquer_paiement_regle.html", {"form": form, "paiement": paiement})
 
 
 @admin_required
@@ -869,6 +910,7 @@ def ajouter_consultation_medecin(request):
             consultation = form.save(commit=False)
             consultation.medecin = medecin
             consultation.save()
+            Paiement.calculer_pour(consultation).save()
             messages.success(request, "Consultation enregistree.")
             return redirect("ajouter_ordonnance_medecin", consultation_pk=consultation.pk)
     else:
@@ -1199,7 +1241,7 @@ def mon_historique_assure(request):
         return redirect("mon_profil_assure")
     beneficiaires = _beneficiaires(patient)
     consultations = Consultation.objects.filter(patient__in=beneficiaires).select_related(
-        "patient", "medecin", "service"
+        "patient", "medecin", "service", "paiement"
     ).order_by("-date_consultation")
     return render(request, "mon_historique.html", {"consultations": consultations})
 

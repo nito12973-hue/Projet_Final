@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Marquer un paiement regle{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Marquer le paiement comme regle</h1>
+        <p class="subtitle">{{ paiement.consultation.patient }} - {{ paiement.montant_part_patient }} a la charge du patient.</p>
+    </div>
+    <a class="button" href="{% url 'liste_paiements' %}">Retour</a>
+</section>
+
+{% if form.non_field_errors %}
+<div class="erreurs" style="color:#b42318;margin-bottom:16px;">{{ form.non_field_errors }}</div>
+{% endif %}
+
+<form method="post">
+    {% csrf_token %}
+    {% for field in form %}
+    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+    {{ field }}
+    {% if field.errors %}<div class="erreurs" style="color:#b42318;margin:-10px 0 16px;font-size:13px;">{{ field.errors }}</div>{% endif %}
+    {% endfor %}
+    <button class="button primary" type="submit">Confirmer le reglement</button>
+</form>
+{% endblock %}

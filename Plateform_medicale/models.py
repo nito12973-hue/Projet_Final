@@ -367,6 +367,57 @@ class Consultation(models.Model):
         return f"Consultation de {self.patient} avec {self.medecin}"
 
 
+class Paiement(models.Model):
+    """
+    Suivi du reglement d'une consultation : montant total, repartition
+    assurance/patient (calculee a partir du taux de couverture du plan si la
+    prise en charge liee a la consultation est validee, sinon le patient
+    regle 100% du montant), et statut de reglement.
+    """
+
+    class Statut(models.TextChoices):
+        NON_REGLE = "non_regle", "Non regle"
+        REGLE = "regle", "Regle"
+
+    class ModeReglement(models.TextChoices):
+        ESPECES = "ESPECES", "Especes"
+        MOBILE_MONEY = "MOBILE_MONEY", "Mobile money"
+        CARTE = "CARTE", "Carte bancaire"
+        VIREMENT = "VIREMENT", "Virement"
+
+    consultation = models.OneToOneField(Consultation, on_delete=models.CASCADE, related_name="paiement")
+    montant_total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    taux_applique = models.DecimalField(
+        "taux de couverture applique (%)", max_digits=5, decimal_places=2, default=0
+    )
+    montant_part_assurance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    montant_part_patient = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    statut = models.CharField(max_length=20, choices=Statut.choices, default=Statut.NON_REGLE, db_index=True)
+    mode_reglement = models.CharField(max_length=20, choices=ModeReglement.choices, blank=True)
+    date_reglement = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Paiement {self.get_statut_display()} - {self.consultation}"
+
+    @classmethod
+    def calculer_pour(cls, consultation):
+        """Construit (sans sauvegarder) le Paiement correspondant a une consultation."""
+        montant_total = consultation.service.prix if consultation.service_id else 0
+        taux = 0
+        prise_en_charge = consultation.prise_en_charge
+        if prise_en_charge is not None and prise_en_charge.statut == "validee":
+            taux = consultation.patient.taux_couverture or 0
+        montant_part_assurance = montant_total * taux / 100
+        montant_part_patient = montant_total - montant_part_assurance
+        return cls(
+            consultation=consultation,
+            montant_total=montant_total,
+            taux_applique=taux,
+            montant_part_assurance=montant_part_assurance,
+            montant_part_patient=montant_part_patient,
+        )
+
+
 class Ordonnance(models.Model):
     consultation = models.ForeignKey(Consultation, on_delete=models.CASCADE)
     medicaments = models.TextField()

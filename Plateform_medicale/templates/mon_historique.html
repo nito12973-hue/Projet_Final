@@ -20,6 +20,8 @@
                 <th>Medecin</th>
                 <th>Diagnostic</th>
                 <th>Traitement</th>
+                <th>Part a ma charge</th>
+                <th>Statut</th>
             </tr>
         </thead>
         <tbody>
@@ -30,6 +32,14 @@
                 <td>{{ consultation.medecin }}</td>
                 <td>{{ consultation.diagnostic }}</td>
                 <td>{{ consultation.traitement|default:"-" }}</td>
+                <td>{{ consultation.paiement.montant_part_patient|default:"-" }}</td>
+                <td>
+                    {% if consultation.paiement %}
+                    <span class="badge {% if consultation.paiement.statut == 'regle' %}validee{% else %}en_attente{% endif %}">{{ consultation.paiement.get_statut_display }}</span>
+                    {% else %}
+                    -
+                    {% endif %}
+                </td>
             </tr>
             {% endfor %}
         </tbody>
