@@ -32,7 +32,6 @@ Arborescence :
     admin.py                 enregistrement Django admin (usage interne)
     tests.py                 suite de tests (section 6)
     templatetags/icones.py  systeme d'icones SVG maison (section 5)
-    management/commands/    vide pour l'instant (voir section 7)
     migrations/
     templates/               tous les templates, a plat (pas de sous-dossier
                             par app)
@@ -289,11 +288,13 @@ Chaque nouvelle fonctionnalite doit etre testee avant d'etre consideree
 terminee (regle imposee par CLAUDE.md).
 
 
-7. COMMANDES DE GESTION (management/commands/)
+7. COMMANDES DE GESTION
 --------------------------------------------------
-Aucune commande de gestion personnalisee pour l'instant. seed_demo_users
-(peuplement en masse de comptes de demo) a ete retiree : redondante avec
-la creation de comptes via Gestion des utilisateurs, et son email
-admin@santesn.local codee en dur presentait un risque de collision avec
-l'admin reel. Les comptes se creent desormais uniquement via l'interface
-(Gestion des utilisateurs, ajouter_medecin, ajouter_patient).
+Aucune commande de gestion personnalisee : le dossier management/ a ete
+retire avec seed_demo_users (peuplement en masse de comptes de demo),
+redondant avec la creation de comptes via Gestion des utilisateurs et dont
+l'email admin@santesn.local code en dur presentait un risque de collision
+avec l'admin reel. Les comptes se creent desormais uniquement via
+l'interface (Gestion des utilisateurs, ajouter_medecin, ajouter_patient).
+Si une commande de gestion redevient necessaire, recreer le dossier
+management/commands/ (avec ses __init__.py) au meme niveau que models.py.

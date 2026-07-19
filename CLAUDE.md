@@ -23,7 +23,6 @@ Plateform_medicale/     # Toute la logique métier (une seule app Django)
 ├── migrations/
 ├── templates/           # Templates à plat, pas de sous-dossier par app
 ├── static/
-├── management/commands/ # vide pour l'instant, reserve aux futures commandes
 ├── admin.py
 ├── apps.py
 ├── forms.py
