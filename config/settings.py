@@ -18,14 +18,24 @@ from decouple import Csv, config
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+def config_bool(name, default=False):
+    value = str(config(name, default=str(default))).strip().lower()
+    return value in {'1', 'true', 'yes', 'on', 'debug', 'development'}
+
+
 # Les valeurs sensibles proviennent des variables d'environnement (.env).
 # Voir .env.example pour le modèle de configuration.
 
-SECRET_KEY = config('SECRET_KEY')
+SECRET_KEY = config(
+    'SECRET_KEY',
+    default='django-insecure-santesn-local-development-key-change-before-production',
+)
 
-DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = config_bool('DEBUG', default=True)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
+if 'testserver' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS = [*ALLOWED_HOSTS, 'testserver']
 
 
 # Application definition
@@ -37,7 +47,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'accounts.apps.AccountsConfig',
     'Plateform_medicale.apps.PlateformMedicaleConfig',
 ]
 
@@ -63,7 +72,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'accounts.context_processors.user_role',
+                'Plateform_medicale.views.user_role',
             ],
         },
     },
@@ -134,8 +143,30 @@ STATIC_URL = 'static/'
 
 # Authentification SantéSN
 
-AUTH_USER_MODEL = 'accounts.User'
+AUTH_USER_MODEL = 'Plateform_medicale.User'
 
-LOGIN_URL = 'accounts:login'
-LOGIN_REDIRECT_URL = 'accounts:post_login_redirect'
-LOGOUT_REDIRECT_URL = 'accounts:login'
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'post_login_redirect'
+LOGOUT_REDIRECT_URL = 'login'
+
+
+# Sessions
+# https://docs.djangoproject.com/en/6.0/ref/settings/#sessions
+
+SESSION_COOKIE_HTTPONLY = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_COOKIE_AGE = 60 * 60 * 8  # 8 heures
+
+
+# Sécurité production
+# Ces réglages ne s'activent qu'une fois DEBUG=False (ne changent rien en local).
+# https://docs.djangoproject.com/en/6.0/topics/security/
+
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
