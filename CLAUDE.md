@@ -100,9 +100,10 @@ Statut : ✅ fait · ⏳ partiel/à compléter · 🔄 continu.
 14. 🔄 Tests — suite de tests exécutée et étendue à chaque module livré
     (`python manage.py test Plateform_medicale`) ; pas de session dédiée
     "audit de couverture" menée à part.
-15. ⏳ Documentation / finalisation — `DEMO_USERS.md` n'existe pas (ni sur
-    disque ni dans l'historique git, voir section "Comptes de
-    démonstration") ; pas de documentation utilisateur finale rédigée.
+15. ✅ Documentation / finalisation — `GUIDE_UTILISATEUR.md` : guide par rôle
+    (Admin/Assuré/Médecin/Pharmacien) livré. `DEMO_USERS.md` n'existe pas (ni
+    sur disque ni dans l'historique git, voir section "Comptes de
+    démonstration").
 
 ## Authentification & rôles
 

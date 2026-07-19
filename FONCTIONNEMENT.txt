@@ -1,10 +1,12 @@
 SANTESN — FONCTIONNEMENT TECHNIQUE
 ====================================
 Document de reference sur la structure du code (modeles, vues, routes,
-templates). Complementaire a CLAUDE.md, qui suit l'avancement par phases :
-ce fichier decrit CE QUI EXISTE et COMMENT C'EST ORGANISE, sans suivre de
-calendrier. A mettre a jour quand la structure change reellement (nouveau
-modele, nouvelle route, nouveau role) — pas a chaque modification de detail.
+templates). Complementaire a CLAUDE.md, qui suit l'avancement par phases,
+et a GUIDE_UTILISATEUR.md, qui explique l'usage de l'application ecran par
+ecran pour chaque role : ce fichier-ci decrit CE QUI EXISTE et COMMENT C'EST
+ORGANISE, sans suivre de calendrier. A mettre a jour quand la structure
+change reellement (nouveau modele, nouvelle route, nouveau role) — pas a
+chaque modification de detail.
 
 
 1. STACK ET ORGANISATION GENERALE
