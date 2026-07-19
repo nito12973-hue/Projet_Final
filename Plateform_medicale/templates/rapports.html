@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load icones %}
 
 {% block title %}Rapports{% endblock %}
 
@@ -7,6 +8,10 @@
     <div>
         <h1>Rapports</h1>
         <p class="subtitle">Synthese de l'activite de la plateforme.</p>
+    </div>
+    <div class="actions">
+        <a class="button" href="{% url 'exporter_rapports_excel' %}">{% icone "download" %} Exporter en Excel</a>
+        <a class="button" href="{% url 'exporter_rapports_pdf' %}">{% icone "download" %} Exporter en PDF</a>
     </div>
 </section>
 

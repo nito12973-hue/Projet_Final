@@ -2,6 +2,10 @@ from functools import wraps
 
 import openpyxl
 from openpyxl.utils import get_column_letter
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from django.contrib import messages
 from django.contrib.auth import login, logout, update_session_auth_hash
@@ -252,10 +256,9 @@ def _consultations_par_mois(nombre_mois=6):
     }
 
 
-@admin_required
-def rapports(request):
-    """Synthese de l'activite de la plateforme : comptages et graphiques (Phase 13)."""
-    contexte = {
+def _donnees_rapports():
+    """Comptages et agregats de synthese de l'activite de la plateforme (Phase 13)."""
+    return {
         "utilisateurs_par_role": [
             {"label": label, "total": User.objects.filter(role=value).count()}
             for value, label in User.Role.choices
@@ -278,7 +281,119 @@ def rapports(request):
         "total_prestataires_partenaires": Prestataire.objects.filter(partenaire=True).count(),
         "consultations_par_mois": _consultations_par_mois(),
     }
-    return render(request, "rapports.html", contexte)
+
+
+@admin_required
+def rapports(request):
+    """Synthese de l'activite de la plateforme : comptages et graphiques (Phase 13)."""
+    return render(request, "rapports.html", _donnees_rapports())
+
+
+@admin_required
+def exporter_rapports_excel(request):
+    donnees = _donnees_rapports()
+    classeur = openpyxl.Workbook()
+    classeur.remove(classeur.active)
+
+    def ajouter_feuille(nom, entetes, lignes):
+        feuille = classeur.create_sheet(nom)
+        feuille.append(entetes)
+        for ligne in lignes:
+            feuille.append(ligne)
+        for index, nom_colonne in enumerate(entetes, start=1):
+            feuille.column_dimensions[get_column_letter(index)].width = max(len(str(nom_colonne)), 18)
+
+    ajouter_feuille("Chiffres cles", ["Indicateur", "Total"], [
+        ["Consultations", donnees["total_consultations"]],
+        ["Ordonnances", donnees["total_ordonnances"]],
+        ["Delivrances", donnees["total_delivrances"]],
+        ["Prestataires partenaires", donnees["total_prestataires_partenaires"]],
+    ])
+    ajouter_feuille(
+        "Utilisateurs par role", ["Role", "Total"],
+        [[ligne["label"], ligne["total"]] for ligne in donnees["utilisateurs_par_role"]],
+    )
+    ajouter_feuille(
+        "Assures par type", ["Type", "Total"],
+        [[ligne["label"], ligne["total"]] for ligne in donnees["patients_par_type"]],
+    )
+    ajouter_feuille(
+        "Rendez-vous par statut", ["Statut", "Total"],
+        [[ligne["label"], ligne["total"]] for ligne in donnees["rendez_vous_par_statut"]],
+    )
+    ajouter_feuille(
+        "Prises en charge par statut", ["Statut", "Total"],
+        [[ligne["label"], ligne["total"]] for ligne in donnees["prises_en_charge_par_statut"]],
+    )
+    ajouter_feuille(
+        "Consultations par mois", ["Mois", "Total"],
+        list(zip(donnees["consultations_par_mois"]["labels"], donnees["consultations_par_mois"]["totaux"])),
+    )
+
+    reponse = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    reponse["Content-Disposition"] = 'attachment; filename="rapports_santesn.xlsx"'
+    classeur.save(reponse)
+    return reponse
+
+
+@admin_required
+def exporter_rapports_pdf(request):
+    donnees = _donnees_rapports()
+    reponse = HttpResponse(content_type="application/pdf")
+    reponse["Content-Disposition"] = 'attachment; filename="rapports_santesn.pdf"'
+
+    document = SimpleDocTemplate(reponse, pagesize=A4, title="Rapports SanteSN")
+    styles = getSampleStyleSheet()
+    elements = [Paragraph("Rapports SanteSN", styles["Title"]), Spacer(1, 12)]
+
+    def ajouter_tableau(titre, entetes, lignes):
+        elements.append(Paragraph(titre, styles["Heading2"]))
+        tableau = Table([entetes] + lignes, hAlign="LEFT")
+        tableau.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#12885a")),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cccccc")),
+            ("FONTSIZE", (0, 0), (-1, -1), 9),
+        ]))
+        elements.append(tableau)
+        elements.append(Spacer(1, 16))
+
+    ajouter_tableau("Chiffres cles", ["Indicateur", "Total"], [
+        ["Consultations", str(donnees["total_consultations"])],
+        ["Ordonnances", str(donnees["total_ordonnances"])],
+        ["Delivrances", str(donnees["total_delivrances"])],
+        ["Prestataires partenaires", str(donnees["total_prestataires_partenaires"])],
+    ])
+    ajouter_tableau(
+        "Utilisateurs par role", ["Role", "Total"],
+        [[ligne["label"], str(ligne["total"])] for ligne in donnees["utilisateurs_par_role"]],
+    )
+    ajouter_tableau(
+        "Assures par type", ["Type", "Total"],
+        [[ligne["label"], str(ligne["total"])] for ligne in donnees["patients_par_type"]],
+    )
+    ajouter_tableau(
+        "Rendez-vous par statut", ["Statut", "Total"],
+        [[ligne["label"], str(ligne["total"])] for ligne in donnees["rendez_vous_par_statut"]],
+    )
+    ajouter_tableau(
+        "Prises en charge par statut", ["Statut", "Total"],
+        [[ligne["label"], str(ligne["total"])] for ligne in donnees["prises_en_charge_par_statut"]],
+    )
+    ajouter_tableau(
+        "Consultations par mois", ["Mois", "Total"],
+        [
+            [label, str(total)]
+            for label, total in zip(
+                donnees["consultations_par_mois"]["labels"], donnees["consultations_par_mois"]["totaux"]
+            )
+        ],
+    )
+
+    document.build(elements)
+    return reponse
 
 
 @admin_required
