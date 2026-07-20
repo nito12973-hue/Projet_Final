@@ -86,7 +86,10 @@ Le tableau de bord Admin est le centre de pilotage de la plateforme.
   *Gestion des utilisateurs* avec le rôle Pharmacien, la fiche métier est
   créée automatiquement.
 - **Prestataires** : hôpitaux, cliniques, pharmacies et cabinets partenaires
-  (nom, type, adresse, ville, téléphone, statut partenaire).
+  (nom, type, adresse, ville, téléphone, statut partenaire). Cliquez sur la
+  carte du formulaire pour positionner le prestataire (facultatif) : cette
+  position est ensuite utilisée pour le trier par proximité dans l'écran
+  *Prestataires proches* de l'Assuré.
 - **Services médicaux** : actes facturables avec leur prix, rattachés
   éventuellement à un prestataire.
 - **Plans de couverture** : taux de remboursement et plafond annuel,
@@ -126,11 +129,21 @@ couverture : chacun reçoit son propre numéro de carte et hérite
 automatiquement de votre plan de couverture. **Un ayant droit n'a jamais de
 compte de connexion propre** — vous gérez tout pour lui depuis votre espace.
 
+### Prestataires proches
+
+Autorisez la géolocalisation de votre navigateur pour voir, sur une carte,
+les prestataires partenaires les plus proches de vous, triés du plus proche
+au plus loin. Sans localisation, la liste complète du réseau reste
+disponible, triée par ville. Chaque prestataire propose un lien *Prendre
+rendez-vous* qui ouvre le formulaire de rendez-vous avec ce prestataire déjà
+sélectionné.
+
 ### Mes rendez-vous
 
 Prenez rendez-vous pour vous-même ou pour un de vos ayants droit : choisissez
-le médecin, éventuellement un prestataire, la date/heure et le motif. Vous
-pouvez annuler un rendez-vous à venir depuis la même page.
+le médecin, éventuellement un prestataire (pré-rempli si vous arrivez depuis
+*Prestataires proches*), la date/heure et le motif. Vous pouvez annuler un
+rendez-vous à venir depuis la même page.
 
 ### Mes ordonnances
 

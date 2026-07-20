@@ -56,9 +56,15 @@ PlanCouverture
 Prestataire
   Etablissement partenaire : nom, type_prestataire (HOPITAL / CLINIQUE /
   PHARMACIE / CABINET), adresse, ville, telephone, partenaire (bool),
-  date_conventionnement.
+  date_conventionnement, latitude / longitude (DecimalField, null=True,
+  blank=True — renseignees en cliquant sur une carte Leaflet dans les
+  formulaires admin ajouter_prestataire / modifier_prestataire).
   Rattache a Medecin, Pharmacien, ServiceMedical, RendezVous (tous en
   ForeignKey optionnelle, SET_NULL a la suppression).
+
+distance_km(lat1, lon1, lat2, lon2)
+  Fonction pure (haversine, pas d'acces base) dans models.py : distance a
+  vol d'oiseau entre deux points, en kilometres.
 
 Patient
   Assure principal OU ayant droit (type_beneficiaire).
@@ -232,8 +238,18 @@ Assure (role_required(ASSURE), prefixe /assure/ + /espace/assure/)
   liste_ayants_droit / ajouter_ayant_droit / modifier_ayant_droit /
     supprimer_ayant_droit             gestion de la famille par l'assure
                                       principal (jamais de compte cree)
+  prestataires_proches                 liste des prestataires partenaires
+                                      (partenaire=True) triee par distance
+                                      si le navigateur transmet lat/lng en
+                                      query params, sinon triee par ville ;
+                                      carte Leaflet + lien "Prendre
+                                      rendez-vous" pre-rempli vers
+                                      ajouter_rendez_vous_assure
   mes_rendez_vous_assure / ajouter_rendez_vous_assure /
-    annuler_rendez_vous_assure
+    annuler_rendez_vous_assure         ajouter_rendez_vous_assure accepte un
+                                      parametre ?prestataire=<id> (valide et
+                                      partenaire=True) pour presélectionner
+                                      le prestataire dans le formulaire
   mes_ordonnances_assure / voir_ordonnance_assure
   mon_historique_assure               consultations + statut de paiement
   _patient_principal / _beneficiaires          helpers prives
@@ -273,17 +289,26 @@ Assure (role_required(ASSURE), prefixe /assure/ + /espace/assure/)
   donnees repliés (<details>) pour eviter de dupliquer visuellement chart
   et tableau ; palette categorielle validee anti-daltonisme pour role/type,
   couleurs semantiques (vert/ambre/rouge) pour les statuts.
+- Leaflet 1.9.4 + tuiles OpenStreetMap (CDN, integrite SRI, sans cle API) :
+  utilise sur ajouter_prestataire.html / modifier_prestataire.html (admin
+  place un pin) et prestataires_proches.html (carte + tri par distance cote
+  Assure). Le bloc CSS/JS est duplique intentionnellement sur ces trois
+  templates (pas de template partiel dans ce projet, voir CLAUDE.md) ; tout
+  contenu construit dans un popup Leaflet a partir de donnees stockees doit
+  passer par une construction DOM (textContent) et jamais par une
+  concatenation de chaines HTML, pour eviter un XSS stocke.
 
 
 6. TESTS (tests.py)
 ----------------------
-python manage.py test Plateform_medicale — 131 tests au moment de la
+python manage.py test Plateform_medicale — 144 tests au moment de la
 redaction de ce document. Couvre : redirections/permissions par role,
 garde-fous anti-lockout (un admin ne peut pas se desactiver/supprimer/
 changer son propre role lui-meme), creation automatique de compte a la
 creation d'une fiche Medecin/Patient principal, import/export Excel,
 calcul des paiements selon le statut de prise en charge, generation et
-validation des QR codes d'ordonnance.
+validation des QR codes d'ordonnance, calcul de distance (distance_km) et
+tri des prestataires proches.
 Chaque nouvelle fonctionnalite doit etre testee avant d'etre consideree
 terminee (regle imposee par CLAUDE.md).
 
