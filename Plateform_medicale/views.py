@@ -1685,7 +1685,12 @@ def ajouter_rendez_vous_assure(request):
             messages.success(request, "Demande de rendez-vous envoyee.")
             return redirect("mes_rendez_vous_assure")
     else:
-        form = RendezVousAssureForm(beneficiaires=beneficiaires)
+        initial = {}
+        prestataire_id = request.GET.get("prestataire")
+        if prestataire_id and prestataire_id.isdigit():
+            if Prestataire.objects.filter(pk=prestataire_id, partenaire=True).exists():
+                initial["prestataire"] = prestataire_id
+        form = RendezVousAssureForm(beneficiaires=beneficiaires, initial=initial)
     return render(request, "ajouter_rendez_vous_assure.html", {"form": form})
 
 
