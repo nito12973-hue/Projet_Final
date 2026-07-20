@@ -694,6 +694,21 @@ class EspaceAssureTests(TestCase):
         self.assertEqual(rendez_vous.medecin, medecin)
         self.assertEqual(rendez_vous.statut, RendezVous.Statut.DEMANDE)
 
+    def test_prestataire_preselectionne_depuis_le_lien(self):
+        patient = self._completer_profil()
+        prestataire = Prestataire.objects.create(
+            nom='Clinique Test', type_prestataire='CLINIQUE', partenaire=True,
+        )
+        response = self.client.get(reverse('ajouter_rendez_vous_assure'), {'prestataire': prestataire.pk})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['form'].initial.get('prestataire'), str(prestataire.pk))
+
+    def test_prestataire_invalide_dans_lurl_est_ignore(self):
+        self._completer_profil()
+        response = self.client.get(reverse('ajouter_rendez_vous_assure'), {'prestataire': 'abc'})
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('prestataire', response.context['form'].initial)
+
     def test_ne_peut_pas_prendre_rendez_vous_pour_un_patient_hors_famille(self):
         self._completer_profil()
         medecin = creer_medecin('medecin-rdv2@santesn.sn')
