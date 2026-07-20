@@ -1528,6 +1528,7 @@ def prestataires_proches(request):
 
     prestataires_geojson = [
         {
+            "pk": prestataire.pk,
             "nom": prestataire.nom,
             "type": prestataire.get_type_prestataire_display(),
             "ville": prestataire.ville,
