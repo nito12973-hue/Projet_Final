@@ -25,7 +25,7 @@
 
 <div id="carte-prestataires-proches" style="height: 360px; border-radius: 14px; margin-bottom: 20px;"></div>
 
-<section class="admin-layout">
+<section class="grid">
     {% for prestataire, distance in prestataires_tries %}
     <article class="panel" style="padding: 18px;">
         <h2 style="margin-top:0;">{{ prestataire.nom }}</h2>
@@ -71,9 +71,16 @@
         }).addTo(carte);
 
         donnees.forEach(function (prestataire) {
+            var contenu = document.createElement('div');
+            var titre = document.createElement('strong');
+            titre.textContent = prestataire.nom;
+            contenu.appendChild(titre);
+            contenu.appendChild(document.createElement('br'));
+            contenu.appendChild(document.createTextNode(prestataire.type + ' - ' + prestataire.ville));
+
             L.marker([prestataire.latitude, prestataire.longitude])
                 .addTo(carte)
-                .bindPopup('<strong>' + prestataire.nom + '</strong><br>' + prestataire.type + ' - ' + prestataire.ville);
+                .bindPopup(contenu);
         });
 
         var parametres = new URLSearchParams(window.location.search);
