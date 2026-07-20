@@ -84,9 +84,9 @@
         });
 
         var parametres = new URLSearchParams(window.location.search);
-        if (parametres.has('lat') && parametres.has('lng')) {
-            var latUtilisateur = parseFloat(parametres.get('lat'));
-            var lngUtilisateur = parseFloat(parametres.get('lng'));
+        var latUtilisateur = parseFloat(parametres.get('lat'));
+        var lngUtilisateur = parseFloat(parametres.get('lng'));
+        if (isFinite(latUtilisateur) && isFinite(lngUtilisateur)) {
             L.circleMarker([latUtilisateur, lngUtilisateur], {
                 radius: 8, color: '#0f766e', fillColor: '#14b8a6', fillOpacity: 1,
             }).addTo(carte).bindPopup('Vous');
