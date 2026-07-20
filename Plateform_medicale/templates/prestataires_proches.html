@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}Prestataires proches{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Prestataires proches</h1>
+        <p class="subtitle">
+            {% if localisation_active %}
+            Prestataires du reseau tries du plus proche au plus loin de votre position.
+            {% else %}
+            Liste complete du reseau partenaire, triee par ville.
+            {% endif %}
+        </p>
+    </div>
+</section>
+
+{% if not localisation_active %}
+<div class="avis avis-attente">
+    <p class="avis-titre">Localisation non activee</p>
+    <p>Autorisez la geolocalisation dans votre navigateur pour trier les prestataires du plus proche au plus loin.</p>
+</div>
+{% endif %}
+
+<div id="carte-prestataires-proches" style="height: 360px; border-radius: 14px; margin-bottom: 20px;"></div>
+
+<section class="admin-layout">
+    {% for prestataire, distance in prestataires_tries %}
+    <article class="panel" style="padding: 18px;">
+        <h2 style="margin-top:0;">{{ prestataire.nom }}</h2>
+        <p class="subtitle">{{ prestataire.get_type_prestataire_display }} - {{ prestataire.ville }}</p>
+        {% if distance is not None %}
+        <p><strong>{{ distance }} km</strong></p>
+        {% endif %}
+        <a class="button primary" href="{% url 'ajouter_rendez_vous_assure' %}?prestataire={{ prestataire.pk }}">Prendre rendez-vous</a>
+    </article>
+    {% empty %}
+    <p class="subtitle">Aucun prestataire du reseau n'a encore de position enregistree.</p>
+    {% endfor %}
+</section>
+
+{% if prestataires_sans_coordonnees %}
+<section class="panel" style="margin-top: 20px; padding: 20px;">
+    <h2 style="margin-top:0;">Autres prestataires du reseau</h2>
+    <p class="subtitle">Localisation non renseignee, non affiches sur la carte.</p>
+    <ul>
+        {% for prestataire in prestataires_sans_coordonnees %}
+        <li>{{ prestataire.nom }} ({{ prestataire.get_type_prestataire_display }}, {{ prestataire.ville }}) —
+            <a href="{% url 'ajouter_rendez_vous_assure' %}?prestataire={{ prestataire.pk }}">Prendre rendez-vous</a></li>
+        {% endfor %}
+    </ul>
+</section>
+{% endif %}
+
+{{ prestataires_geojson|json_script:"donnees-prestataires-proches" }}
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+    (function () {
+        var DAKAR = [14.6928, -17.4467];
+        var donnees = JSON.parse(document.getElementById('donnees-prestataires-proches').textContent);
+
+        var carte = L.map('carte-prestataires-proches').setView(DAKAR, 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        }).addTo(carte);
+
+        donnees.forEach(function (prestataire) {
+            L.marker([prestataire.latitude, prestataire.longitude])
+                .addTo(carte)
+                .bindPopup('<strong>' + prestataire.nom + '</strong><br>' + prestataire.type + ' - ' + prestataire.ville);
+        });
+
+        var parametres = new URLSearchParams(window.location.search);
+        if (parametres.has('lat') && parametres.has('lng')) {
+            var latUtilisateur = parseFloat(parametres.get('lat'));
+            var lngUtilisateur = parseFloat(parametres.get('lng'));
+            L.circleMarker([latUtilisateur, lngUtilisateur], {
+                radius: 8, color: '#0f766e', fillColor: '#14b8a6', fillOpacity: 1,
+            }).addTo(carte).bindPopup('Vous');
+            carte.setView([latUtilisateur, lngUtilisateur], 12);
+        } else if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function (position) {
+                var url = new URL(window.location.href);
+                url.searchParams.set('lat', position.coords.latitude);
+                url.searchParams.set('lng', position.coords.longitude);
+                window.location.href = url.toString();
+            }, function () {
+                // Permission refusee ou indisponible : on reste sur la liste de repli deja affichee.
+            });
+        }
+    })();
+</script>
+{% endblock %}

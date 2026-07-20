@@ -83,6 +83,7 @@ urlpatterns = [
     path('assure/ayants-droit/ajouter/', views.ajouter_ayant_droit, name='ajouter_ayant_droit'),
     path('assure/ayants-droit/<int:pk>/modifier/', views.modifier_ayant_droit, name='modifier_ayant_droit'),
     path('assure/ayants-droit/<int:pk>/supprimer/', views.supprimer_ayant_droit, name='supprimer_ayant_droit'),
+    path('assure/prestataires-proches/', views.prestataires_proches, name='prestataires_proches'),
     path('assure/rendez-vous/', views.mes_rendez_vous_assure, name='mes_rendez_vous_assure'),
     path('assure/rendez-vous/ajouter/', views.ajouter_rendez_vous_assure, name='ajouter_rendez_vous_assure'),
     path('assure/rendez-vous/<int:pk>/annuler/', views.annuler_rendez_vous_assure, name='annuler_rendez_vous_assure'),
