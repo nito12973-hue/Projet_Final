@@ -1639,3 +1639,67 @@ class ImportUtilisateursExcelTests(TestCase):
         )
         response = self.client.post(reverse('importer_utilisateurs_excel'), {'fichier': fichier})
         self.assertFalse(User.objects.filter(email='x@ex.sn').exists())
+
+
+class PrestatairesProchesTests(TestCase):
+    def setUp(self):
+        self.utilisateur = creer_utilisateur(User.Role.ASSURE, 'assure1@santesn.sn')
+        self.client.login(username='assure1@santesn.sn', password=PASSWORD)
+        self.proche = Prestataire.objects.create(
+            nom='Clinique Proche', type_prestataire='CLINIQUE', partenaire=True,
+            ville='Dakar', latitude=Decimal('14.6928'), longitude=Decimal('-17.4467'),
+        )
+        self.loin = Prestataire.objects.create(
+            nom='Hopital Lointain', type_prestataire='HOPITAL', partenaire=True,
+            ville='Saint-Louis', latitude=Decimal('16.0179'), longitude=Decimal('-16.4896'),
+        )
+        self.sans_coordonnees = Prestataire.objects.create(
+            nom='Cabinet Sans Pin', type_prestataire='CABINET', partenaire=True, ville='Dakar',
+        )
+        self.non_partenaire = Prestataire.objects.create(
+            nom='Ancien Partenaire', type_prestataire='CLINIQUE', partenaire=False,
+            ville='Dakar', latitude=Decimal('14.70'), longitude=Decimal('-17.44'),
+        )
+
+    def test_interdit_aux_non_assures(self):
+        self.client.logout()
+        creer_utilisateur(User.Role.MEDECIN, 'medecin@santesn.sn')
+        self.client.login(username='medecin@santesn.sn', password=PASSWORD)
+        response = self.client.get(reverse('prestataires_proches'))
+        self.assertEqual(response.status_code, 403)
+
+    def test_sans_localisation_liste_non_triee(self):
+        response = self.client.get(reverse('prestataires_proches'))
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.context['localisation_active'])
+        noms = [p.nom for p, distance in response.context['prestataires_tries']]
+        self.assertIn('Clinique Proche', noms)
+        self.assertIn('Hopital Lointain', noms)
+
+    def test_avec_localisation_tri_par_distance(self):
+        response = self.client.get(reverse('prestataires_proches'), {'lat': '14.6928', 'lng': '-17.4467'})
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['localisation_active'])
+        resultats = response.context['prestataires_tries']
+        self.assertEqual(resultats[0][0], self.proche)
+        self.assertEqual(resultats[1][0], self.loin)
+        self.assertLess(resultats[0][1], resultats[1][1])
+
+    def test_prestataire_sans_coordonnees_affiche_a_part(self):
+        response = self.client.get(reverse('prestataires_proches'))
+        noms_tries = [p.nom for p, distance in response.context['prestataires_tries']]
+        self.assertNotIn('Cabinet Sans Pin', noms_tries)
+        noms_sans_coordonnees = [p.nom for p in response.context['prestataires_sans_coordonnees']]
+        self.assertIn('Cabinet Sans Pin', noms_sans_coordonnees)
+
+    def test_prestataire_non_partenaire_absent(self):
+        response = self.client.get(reverse('prestataires_proches'))
+        noms_tries = [p.nom for p, distance in response.context['prestataires_tries']]
+        noms_sans_coordonnees = [p.nom for p in response.context['prestataires_sans_coordonnees']]
+        self.assertNotIn('Ancien Partenaire', noms_tries)
+        self.assertNotIn('Ancien Partenaire', noms_sans_coordonnees)
+
+    def test_lat_lng_invalides_ignores(self):
+        response = self.client.get(reverse('prestataires_proches'), {'lat': 'abc', 'lng': 'def'})
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.context['localisation_active'])

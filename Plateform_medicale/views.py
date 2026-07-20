@@ -63,6 +63,7 @@ from .models import (
     RendezVous,
     ServiceMedical,
     User,
+    distance_km,
     valider_telephone,
 )
 
@@ -1485,6 +1486,63 @@ def _beneficiaires(patient):
     return Patient.objects.filter(
         Q(pk=patient.pk) | Q(assure_principal=patient)
     ).order_by("nom", "prenom")
+
+
+@role_required(User.Role.ASSURE)
+def prestataires_proches(request):
+    prestataires_partenaires = Prestataire.objects.filter(partenaire=True)
+    avec_coordonnees = prestataires_partenaires.filter(
+        latitude__isnull=False, longitude__isnull=False
+    )
+    sans_coordonnees = prestataires_partenaires.filter(
+        Q(latitude__isnull=True) | Q(longitude__isnull=True)
+    ).order_by("ville", "nom")
+
+    lat_param = request.GET.get("lat")
+    lng_param = request.GET.get("lng")
+    lat_utilisateur = lng_utilisateur = None
+    if lat_param and lng_param:
+        try:
+            lat_utilisateur = float(lat_param)
+            lng_utilisateur = float(lng_param)
+        except ValueError:
+            lat_utilisateur = lng_utilisateur = None
+    localisation_active = lat_utilisateur is not None and lng_utilisateur is not None
+
+    if localisation_active:
+        prestataires_tries = sorted(
+            (
+                (prestataire, round(distance_km(
+                    lat_utilisateur, lng_utilisateur,
+                    float(prestataire.latitude), float(prestataire.longitude),
+                ), 1))
+                for prestataire in avec_coordonnees
+            ),
+            key=lambda item: item[1],
+        )
+    else:
+        prestataires_tries = [
+            (prestataire, None)
+            for prestataire in avec_coordonnees.order_by("ville", "nom")
+        ]
+
+    prestataires_geojson = [
+        {
+            "nom": prestataire.nom,
+            "type": prestataire.get_type_prestataire_display(),
+            "ville": prestataire.ville,
+            "latitude": float(prestataire.latitude),
+            "longitude": float(prestataire.longitude),
+        }
+        for prestataire in avec_coordonnees
+    ]
+
+    return render(request, "prestataires_proches.html", {
+        "prestataires_tries": prestataires_tries,
+        "prestataires_sans_coordonnees": sans_coordonnees,
+        "prestataires_geojson": prestataires_geojson,
+        "localisation_active": localisation_active,
+    })
 
 
 @role_required(User.Role.ASSURE)
