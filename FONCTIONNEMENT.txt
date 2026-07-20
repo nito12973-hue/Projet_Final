@@ -64,7 +64,14 @@ Prestataire
 
 distance_km(lat1, lon1, lat2, lon2)
   Fonction pure (haversine, pas d'acces base) dans models.py : distance a
-  vol d'oiseau entre deux points, en kilometres.
+  vol d'oiseau entre deux points, en kilometres. Choix volontaire plutot
+  qu'un service de routage externe (pas de cle API, pas de dependance
+  reseau pour un simple tri). Coordonnees saisies a la main par l'admin
+  (pin sur la carte) plutot que geocodees automatiquement depuis
+  l'adresse — pas de service de geocodage integre au projet.
+  Hors perimetre (non demande, a ne pas ajouter sans nouvelle demande) :
+  filtrage des medecins par prestataire selectionne, calcul d'itineraire
+  reel, vue carte globale du reseau cote Admin.
 
 Patient
   Assure principal OU ayant droit (type_beneficiaire).
@@ -241,10 +248,23 @@ Assure (role_required(ASSURE), prefixe /assure/ + /espace/assure/)
   prestataires_proches                 liste des prestataires partenaires
                                       (partenaire=True) triee par distance
                                       si le navigateur transmet lat/lng en
-                                      query params, sinon triee par ville ;
-                                      carte Leaflet + lien "Prendre
-                                      rendez-vous" pre-rempli vers
-                                      ajouter_rendez_vous_assure
+                                      query params (rendu serveur initial),
+                                      sinon triee par ville ; carte Leaflet +
+                                      lien "Prendre rendez-vous" pre-rempli
+                                      vers ajouter_rendez_vous_assure. Suivi
+                                      de position en direct cote client
+                                      (navigator.geolocation.watchPosition,
+                                      pas juste un releve unique) : a chaque
+                                      mise a jour de position, le marqueur
+                                      "Vous" se deplace et la liste est
+                                      retriee en JS (distanceKm en JS, miroir
+                                      exact de distance_km cote serveur) sans
+                                      recharger la page — le rendu serveur
+                                      initial (via ?lat=&lng=) reste la seule
+                                      logique de tri testee par tests.py, le
+                                      tri live cote client n'est pas couvert
+                                      par la suite Django (JS non execute par
+                                      le test client).
   mes_rendez_vous_assure / ajouter_rendez_vous_assure /
     annuler_rendez_vous_assure         ajouter_rendez_vous_assure accepte un
                                       parametre ?prestataire=<id> (valide et

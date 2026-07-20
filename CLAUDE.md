@@ -1,5 +1,4 @@
 # SantéSN — plateforme de prise en charge médicale
-
 ## Thème du projet
 
 Plateforme numérique de gestion de la prise en charge médicale des assurés d'une
@@ -104,6 +103,31 @@ Statut : ✅ fait · ⏳ partiel/à compléter · 🔄 continu.
     sur disque ni dans l'historique git, voir section "Comptes de
     démonstration").
 
+## Fonctionnalités additionnelles (post plan directeur)
+
+Fonctionnalités livrées après les 15 phases initiales, hors numérotation :
+
+- **Carte de proximité des prestataires** (Assuré) — `Prestataire.latitude`/
+  `longitude`, helper `distance_km` (haversine), écran `prestataires_proches`
+  (carte Leaflet + tri par distance si le navigateur transmet sa position,
+  repli par ville sinon), présélection du prestataire dans le formulaire de
+  rendez-vous. Détail technique dans `FONCTIONNEMENT.txt` (modèle, vue,
+  templates, règle anti-XSS pour les popups Leaflet).
+
+## Documents de travail (specs / plans)
+
+Les specs et plans d'implémentation générés pendant le développement d'une
+fonctionnalité (habituellement sous `docs/superpowers/`) sont **temporaires** :
+une fois la fonctionnalité livrée et vérifiée, leur contenu utile (ce qui
+change dans le modèle de données, les routes, les décisions d'architecture
+non évidentes) est reporté dans `FONCTIONNEMENT.txt`, puis le dossier de
+travail est supprimé. Ne pas laisser ces dossiers s'accumuler dans le dépôt :
+ce ne sont pas des documents de référence durables, `FONCTIONNEMENT.txt` et
+`GUIDE_UTILISATEUR.md` le sont. Un dossier `.superpowers/` peut aussi
+apparaître localement pendant le travail (état d'avancement d'un plan) : il
+est propre à une session de travail (worktree), pas un document du projet —
+ne pas le recréer à la racine du dépôt principal.
+
 ## Authentification & rôles
 
 - Connexion unique par email + mot de passe (`Plateform_medicale/views.py`,
@@ -196,6 +220,13 @@ police Plus Jakarta Sans. Menu latéral desktop réductible (icônes seules,
 navigation. `landing.html` et `base_auth.html` (pages publiques / connexion)
 ont leur propre CSS autonome avec les mêmes tokens de palette, ne dépendent
 pas de `base.html`.
+Logo/marque : bouclier + pouls (ligne de battement de cœur), dégradé
+turquoise, en SVG inline (pas de fichier image) — présent dans `base.html`
+(sidebar), `landing.html` (en-tête + pied de page) et `base_auth.html`. La
+favicon réutilise le même tracé (aplat `#0d9488`, sans dégradé, en data URI
+SVG dans chaque `<head>`) — pas de fichier statique, cohérent avec le fait
+qu'il n'existe pas de dossier `static/` utilisé dans ce projet (tout le
+CSS/SVG est inline dans les templates).
 Classes CSS existantes à réutiliser (ne pas dupliquer) : `.page-title`,
 `.panel`, `.grid`/`.stat` (obsolètes sur les 4 pages d'accueil par rôle,
 remplacées par `.dash-grid`/`.dash-stat`/`.dash-pill`), `.badge` (+
@@ -207,6 +238,14 @@ d'actions principales des dashboards par rôle), `.erreurs`/`.erreurs-formulaire
 GET), `.action-ligne` (formulaire POST invisible dans une ligne de tableau),
 `.details-tableau` (tableau de données replié sous un graphique, voir
 `rapports.html`).
+
+Anneau de focus clavier (`:focus-visible`, même teinte turquoise que les
+champs de formulaire), barre de défilement et surlignage de sélection de
+texte teintés : dupliqués dans les 3 feuilles de style autonomes
+(`base.html`, `landing.html`, `base_auth.html` — même token de couleur, nom
+de variable propre à chaque fichier). `theme-color` + `color-scheme: light`
+dans les 3 `<head>` ; balises Open Graph/Twitter Card en plus sur
+`landing.html` (seule page destinée à être partagée).
 
 Aucun émoji nulle part dans l'application (sidebar, landing, écrans de
 connexion) : toutes les icônes viennent de `templatetags/icones.py`

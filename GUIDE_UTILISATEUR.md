@@ -51,7 +51,16 @@ votre rôle :
 
 ## Administrateur
 
-Le tableau de bord Admin est le centre de pilotage de la plateforme.
+### Ce que vous voyez en arrivant
+
+Le tableau de bord Admin est le centre de pilotage de la plateforme : des
+compteurs cliquables (assurés, médecins, prestataires, services, prises en
+charge en attente) qui mènent directement à chaque liste, un bloc *Actions
+rapides* (ajouter un assuré, un médecin, un prestataire, suivre les prises
+en charge), et un rappel du principe de moindre privilège : l'administrateur
+gère comptes/prestataires/suivi, mais ne saisit jamais de diagnostic, ne
+crée pas d'ordonnance et ne valide pas de délivrance — ce sont les rôles
+Médecin et Pharmacien qui s'en chargent.
 
 ### Gestion des utilisateurs
 
@@ -122,6 +131,11 @@ consulter l'historique des notifications envoyées.
 naissance, téléphone, adresse) : cela crée votre fiche d'assuré **principal**
 et votre numéro de carte de prise en charge (généré automatiquement).
 
+Une fois votre profil complété, le tableau de bord affiche votre numéro de
+carte, des compteurs cliquables (ayants droit, rendez-vous à venir,
+ordonnances disponibles) et vos prochains rendez-vous, avec un bouton
+*Nouveau rendez-vous* toujours accessible en haut de la page.
+
 ### Mes ayants droit
 
 Ajoutez votre conjoint et vos enfants comme bénéficiaires de votre
@@ -133,10 +147,11 @@ compte de connexion propre** — vous gérez tout pour lui depuis votre espace.
 
 Autorisez la géolocalisation de votre navigateur pour voir, sur une carte,
 les prestataires partenaires les plus proches de vous, triés du plus proche
-au plus loin. Sans localisation, la liste complète du réseau reste
-disponible, triée par ville. Chaque prestataire propose un lien *Prendre
-rendez-vous* qui ouvre le formulaire de rendez-vous avec ce prestataire déjà
-sélectionné.
+au plus loin — la liste et votre position sur la carte se mettent à jour
+**en continu** pendant que vous vous déplacez, sans avoir à recharger la
+page. Sans localisation, la liste complète du réseau reste disponible,
+triée par ville. Chaque prestataire propose un lien *Prendre rendez-vous*
+qui ouvre le formulaire de rendez-vous avec ce prestataire déjà sélectionné.
 
 ### Mes rendez-vous
 
@@ -157,6 +172,13 @@ avec pour chacune la part restant à votre charge et si elle a déjà été
 réglée ou non.
 
 ## Médecin
+
+### Ce que vous voyez en arrivant
+
+Le tableau de bord affiche des compteurs cliquables (rendez-vous à venir,
+patients suivis, consultations enregistrées) et la liste de vos prochains
+rendez-vous avec leur statut. De là, vous accédez à l'agenda, à vos
+patients ou à l'historique des consultations d'un clic.
 
 ### Agenda
 
@@ -190,6 +212,13 @@ Modifiez vos informations (spécialité, téléphone, prestataire de
 rattachement).
 
 ## Pharmacien
+
+### Ce que vous voyez en arrivant
+
+Le tableau de bord met en avant un bouton *Scanner un QR Code* directement
+dans l'en-tête (l'action la plus fréquente), un compteur de délivrances déjà
+validées, et la liste de vos dernières délivrances (date, patient, code
+d'ordonnance).
 
 ### Scanner un QR Code
 
