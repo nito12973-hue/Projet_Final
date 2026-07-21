@@ -23,21 +23,45 @@
 </div>
 {% endif %}
 
-<div id="carte-prestataires-proches" class="panel" style="height: 400px; padding: 0; overflow: hidden; margin-bottom: 20px;"></div>
+<form class="filtres" onsubmit="return false;">
+    <div>
+        <label for="filtre-recherche">Recherche</label>
+        <input type="search" id="filtre-recherche" placeholder="Nom du prestataire">
+    </div>
+    <div>
+        <label for="filtre-ville">Ville</label>
+        <select id="filtre-ville">
+            <option value="">Toutes les villes</option>
+        </select>
+    </div>
+    <div>
+        <label for="filtre-type">Type</label>
+        <select id="filtre-type">
+            <option value="">Tous les types</option>
+            <option value="HOPITAL">Hopital</option>
+            <option value="CLINIQUE">Clinique</option>
+            <option value="PHARMACIE">Pharmacie</option>
+            <option value="CABINET">Cabinet medical</option>
+        </select>
+    </div>
+    <div>
+        <label for="filtre-distance">Distance max</label>
+        <select id="filtre-distance" disabled title="Disponible une fois votre position connue">
+            <option value="">Toutes distances</option>
+            <option value="2">2 km</option>
+            <option value="5">5 km</option>
+            <option value="10">10 km</option>
+            <option value="20">20 km</option>
+            <option value="50">50 km</option>
+        </select>
+    </div>
+</form>
 
-<section class="grid" id="liste-prestataires-proches">
-    {% for prestataire, distance in prestataires_tries %}
-    <article class="panel" style="padding: 18px;">
-        <h2 style="margin-top:0;">{{ prestataire.nom }}</h2>
-        <p class="subtitle">{{ prestataire.get_type_prestataire_display }} - {{ prestataire.ville }}</p>
-        {% if distance is not None %}
-        <p><strong>{{ distance }} km</strong></p>
-        {% endif %}
-        <a class="button primary" href="{% url 'ajouter_rendez_vous_assure' %}?prestataire={{ prestataire.pk }}">Prendre rendez-vous</a>
-    </article>
-    {% empty %}
-    <p class="subtitle">Aucun prestataire du reseau n'a encore de position enregistree.</p>
-    {% endfor %}
+<section class="proches-layout">
+    <div class="carte-colonne">
+        <div id="carte-prestataires-proches" class="panel" style="height: 480px; padding: 0; overflow: hidden;"></div>
+    </div>
+    <div id="liste-prestataires-proches" class="liste-prestataires-proches"></div>
 </section>
 
 {% if prestataires_sans_coordonnees %}
@@ -76,6 +100,25 @@
     .leaflet-popup-content strong {
         color: var(--primary-dark);
         font-size: 14px;
+    }
+
+    .liste-prestataires-proches {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .carte-prestataire-entete {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 10px;
+    }
+
+    .carte-prestataire-entete h3 {
+        margin: 0;
+        font-size: 16px;
+        color: var(--primary-dark);
     }
 </style>
 <script>
