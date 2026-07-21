@@ -163,7 +163,7 @@
             box-shadow: 0 6px 16px rgba(13, 148, 136, 0.30);
         }
 
-        .btn-plein:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(13, 148, 136, 0.40); }
+        .btn-plein:hover { transform: translateY(-2px); box-shadow: var(--ombre-flottante); }
 
         .btn-contour {
             border-color: var(--primary);
@@ -267,23 +267,6 @@
             animation: entree 0.7s ease-out 0.24s both;
         }
 
-        .hero .chiffres {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 34px;
-            margin-top: 44px;
-            animation: entree 0.7s ease-out 0.36s both;
-        }
-
-        .chiffres strong {
-            display: block;
-            font-size: 28px;
-            font-weight: 800;
-            color: var(--primary-dark);
-        }
-
-        .chiffres span { color: var(--muted); font-size: 14px; font-weight: 600; }
-
         @keyframes entree {
             from { opacity: 0; transform: translateY(22px); }
             to   { opacity: 1; transform: translateY(0); }
@@ -340,6 +323,7 @@
             flex-wrap: wrap;
             gap: 10px;
             margin-top: 22px;
+            animation: entree 0.7s ease-out 0.36s both;
         }
 
         .badge-confiance {
@@ -463,6 +447,135 @@
             font-size: 11px;
             color: var(--muted);
             font-weight: 600;
+        }
+
+        /* ===== Illustration Hero : mockup telephone + cartes flottantes (Phase 1) ===== */
+        .hero-visuel {
+            position: relative;
+            animation: entree 0.8s ease-out 0.2s both;
+            display: flex;
+            justify-content: center;
+            padding: 30px 0;
+        }
+
+        .forme-organique.forme-1 { width: 260px; height: 260px; top: -30px; right: 8%; }
+        .forme-organique.forme-2 { width: 200px; height: 200px; bottom: -10px; left: 4%; }
+
+        .telephone-mockup {
+            position: relative;
+            z-index: 1;
+            width: 260px;
+            padding: 14px 10px 26px;
+            background: linear-gradient(160deg, var(--primary-dark) 0%, #1e293b 100%);
+            border-radius: 38px;
+            box-shadow: var(--ombre-forte);
+        }
+
+        .telephone-encoche {
+            position: absolute;
+            top: 14px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 70px;
+            height: 16px;
+            background: #0b1220;
+            border-radius: 999px;
+        }
+
+        .telephone-ecran {
+            background: #f4faf9;
+            border-radius: 26px;
+            padding: 30px 14px 16px;
+        }
+
+        .telephone-entete {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 800;
+            font-size: 14px;
+            color: var(--primary-dark);
+            margin-bottom: 14px;
+            padding: 0 4px;
+        }
+
+        .carte-demo-telephone {
+            padding: 16px;
+            box-shadow: none;
+            border: 1px solid var(--border);
+            animation: none;
+        }
+
+        .carte-satellite {
+            position: absolute;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--verre-fond);
+            backdrop-filter: var(--verre-flou);
+            -webkit-backdrop-filter: var(--verre-flou);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 10px 14px;
+            box-shadow: var(--ombre-flottante);
+            font-size: 12px;
+            max-width: 168px;
+        }
+
+        .carte-satellite strong { display: block; font-size: 13px; color: var(--primary-dark); }
+        .satellite-sous-texte { color: var(--muted); font-size: 11.5px; }
+
+        .pastille-sm { width: 34px; height: 34px; flex-shrink: 0; }
+        .pastille-sm .icone-nav { width: 17px; height: 17px; }
+
+        .satellite-qr {
+            top: 6%;
+            right: -10%;
+            animation: flotter-lent 5.5s ease-in-out infinite;
+        }
+
+        .satellite-medecin {
+            bottom: 32%;
+            left: -14%;
+            animation: flotter-inverse 6.2s ease-in-out infinite;
+            animation-delay: 0.6s;
+        }
+
+        .satellite-ordonnance {
+            bottom: 4%;
+            right: -6%;
+            animation: flotter-lent 5.8s ease-in-out infinite;
+            animation-delay: 1.2s;
+        }
+
+        .avatar-initiales {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary-strong));
+            color: #fff;
+            font-weight: 800;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .motif-qr {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            margin-top: 4px;
+            background-image:
+                linear-gradient(90deg, var(--primary-dark) 30%, transparent 30%),
+                linear-gradient(var(--primary-dark) 30%, transparent 30%);
+            background-size: 6px 6px;
+            background-color: #ffffff;
+            background-repeat: repeat;
+            border: 1px solid var(--border);
+            border-radius: 4px;
         }
 
         /* ===== Sections ===== */
@@ -701,12 +814,27 @@
             .hero { padding: 56px 0 64px; }
             .hero-grille { grid-template-columns: 1fr; gap: 40px; }
             .a-propos-grille { grid-template-columns: 1fr; gap: 32px; }
+
+            .hero-visuel { flex-direction: column; align-items: center; }
+            .cartes-satellites {
+                position: static;
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 8px;
+                margin-top: 16px;
+                width: 100%;
+            }
+            .carte-satellite {
+                position: static;
+                animation: none !important;
+                max-width: none;
+            }
         }
 
         @media (max-width: 560px) {
             section.bloc { padding: 56px 0; }
             .hero .cta .btn { flex: 1; }
-            .hero .chiffres { gap: 22px; }
             .bandeau-demo { padding: 40px 22px; }
         }
 
@@ -774,64 +902,103 @@
 
         <div class="conteneur hero-grille">
             <div>
-                <h1>La santé <span class="accent">connectée</span><br>au service de tous.</h1>
+                <h1>La santé, <span class="accent">connectée</span><br>— du premier clic au remboursement.</h1>
                 <p class="slogan">
-                    SantéSN digitalise le parcours de prise en charge médicale au Sénégal :
-                    rendez-vous, consultations, ordonnances sécurisées par QR Code et
-                    remboursements d'assurance — le tout sur une seule plateforme.
+                    SantéSN réunit rendez-vous, consultations, ordonnances sécurisées par
+                    QR Code et remboursement d'assurance dans un seul espace — pensé pour
+                    les assurés, les médecins et les pharmacies du Sénégal.
                 </p>
                 <div class="cta">
                     <a class="btn btn-plein" href="{% url 'login' %}">Accéder à mon espace</a>
                     <a class="btn btn-contour" href="#acces">Comment obtenir un compte ?</a>
                 </div>
-                <div class="chiffres">
-                    <div><strong>4</strong><span>Espaces dédiés par rôle</span></div>
-                    <div><strong>100%</strong><span>Parcours digitalisé</span></div>
-                    <div><strong>QR</strong><span>Ordonnances sécurisées</span></div>
+                <div class="badges-confiance">
+                    <span class="badge-confiance">{% icone "shield-check" %} Ordonnances infalsifiables</span>
+                    <span class="badge-confiance">{% icone "lock" %} Données sécurisées</span>
+                    <span class="badge-confiance">{% icone "zap" %} Suivi en temps réel</span>
                 </div>
             </div>
 
             <div class="hero-visuel" aria-hidden="true">
-                <div class="carte-demo">
-                    <div class="entete-carte">
-                        <span class="pastille">{% icone "stethoscope" %}</span>
-                        <div>
-                            <h3>Rendez-vous du jour</h3>
-                            <span class="sous">Dr Ndiaye — Clinique Pasteur</span>
+                <span class="forme-organique forme-1"></span>
+                <span class="forme-organique forme-2"></span>
+
+                <div class="telephone-mockup">
+                    <span class="telephone-encoche"></span>
+                    <div class="telephone-ecran">
+                        <div class="telephone-entete">
+                            <svg width="20" height="20" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M24 4 L40 10 V22 C40 33 33 40.5 24 44 C15 40.5 8 33 8 22 V10 Z" fill="url(#degrade-logo-telephone)"/>
+                                <path d="M10 20h4l2.4-5 3 10 2.4-7 1.6 2h6.6" fill="none" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+                                <defs>
+                                    <linearGradient id="degrade-logo-telephone" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+                                        <stop stop-color="#14b8a6"/>
+                                        <stop offset="1" stop-color="#0d9488"/>
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                            <span>SantéSN</span>
+                        </div>
+                        <div class="carte-demo carte-demo-telephone">
+                            <div class="entete-carte">
+                                <span class="pastille">{% icone "stethoscope" %}</span>
+                                <div>
+                                    <h3>Rendez-vous du jour</h3>
+                                    <span class="sous">Dr Ndiaye — Clinique Pasteur</span>
+                                </div>
+                            </div>
+                            <div class="ligne-rdv">
+                                <span class="heure">08h00</span>
+                                <div>
+                                    <div class="nom">Mamadou Diallo</div>
+                                    <div class="detail">IPM Santé · EMP001</div>
+                                </div>
+                                <span class="etiquette">Confirmé</span>
+                            </div>
+                            <div class="ligne-rdv">
+                                <span class="heure">09h00</span>
+                                <div>
+                                    <div class="nom">Aïssatou Diallo</div>
+                                    <div class="detail">Ayant droit · Épouse</div>
+                                </div>
+                                <span class="etiquette">Confirmé</span>
+                            </div>
+                            <div class="mini-stats">
+                                <div class="mini-stat">
+                                    <span class="mini-stat-icon">{% icone "calendar" %}</span>
+                                    <div><strong>37</strong><span>RDV aujourd'hui</span></div>
+                                </div>
+                                <div class="mini-stat">
+                                    <span class="mini-stat-icon">{% icone "pill" %}</span>
+                                    <div><strong>12</strong><span>Ordonnances</span></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="ligne-rdv">
-                        <span class="heure">08h00</span>
+                </div>
+
+                <div class="cartes-satellites">
+                    <div class="carte-satellite satellite-qr">
+                        <span class="pastille pastille-sm">{% icone "qr-scan" %}</span>
                         <div>
-                            <div class="nom">Mamadou Diallo</div>
-                            <div class="detail">IPM Santé · EMP001</div>
+                            <strong>Ordonnance vérifiée</strong>
+                            <span class="motif-qr" aria-hidden="true"></span>
                         </div>
-                        <span class="etiquette">Confirmé</span>
                     </div>
-                    <div class="ligne-rdv">
-                        <span class="heure">09h00</span>
+
+                    <div class="carte-satellite satellite-medecin">
+                        <span class="avatar-initiales">DN</span>
                         <div>
-                            <div class="nom">Aïssatou Diallo</div>
-                            <div class="detail">Ayant droit · Épouse</div>
+                            <strong>Dr Ndiaye</strong>
+                            <span class="satellite-sous-texte">En consultation</span>
                         </div>
-                        <span class="etiquette">Confirmé</span>
                     </div>
-                    <div class="ligne-rdv">
-                        <span class="heure">10h30</span>
+
+                    <div class="carte-satellite satellite-ordonnance">
+                        <span class="pastille pastille-sm">{% icone "pill" %}</span>
                         <div>
-                            <div class="nom">Fatou Diallo</div>
-                            <div class="detail">Ayant droit · Enfant</div>
-                        </div>
-                        <span class="etiquette">En attente</span>
-                    </div>
-                    <div class="mini-stats">
-                        <div class="mini-stat">
-                            <span class="mini-stat-icon">{% icone "calendar" %}</span>
-                            <div><strong>37</strong><span>RDV aujourd'hui</span></div>
-                        </div>
-                        <div class="mini-stat">
-                            <span class="mini-stat-icon">{% icone "pill" %}</span>
-                            <div><strong>12</strong><span>Ordonnances</span></div>
+                            <strong>3 médicaments</strong>
+                            <span class="satellite-sous-texte">Prête</span>
                         </div>
                     </div>
                 </div>
