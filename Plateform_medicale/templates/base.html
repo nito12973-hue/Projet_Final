@@ -400,6 +400,29 @@
             margin-top: 28px;
         }
 
+        .proches-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
+            gap: 20px;
+            align-items: start;
+            margin-top: 20px;
+        }
+
+        .proches-layout .carte-colonne {
+            position: sticky;
+            top: 16px;
+        }
+
+        @media (max-width: 860px) {
+            .proches-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .proches-layout .carte-colonne {
+                position: static;
+            }
+        }
+
         .panel-header {
             display: flex;
             align-items: center;
