@@ -24,3 +24,7 @@ media/
 # OS
 .DS_Store
 Thumbs.db
+
+# Worktrees de travail (superpowers)
+.worktrees/
+
