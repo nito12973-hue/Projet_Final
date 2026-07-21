@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load icones %}
 
 {% block title %}Prestataires proches{% endblock %}
 
@@ -77,6 +78,13 @@
 </section>
 {% endif %}
 
+<div id="icones-types-source" style="display:none;" aria-hidden="true">
+    <span data-type="HOPITAL">{% icone "building" %}</span>
+    <span data-type="CLINIQUE">{% icone "building" %}</span>
+    <span data-type="PHARMACIE">{% icone "pill" %}</span>
+    <span data-type="CABINET">{% icone "stethoscope" %}</span>
+</div>
+
 {{ prestataires_geojson|json_script:"donnees-prestataires-proches" }}
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -127,37 +135,32 @@
         var donnees = JSON.parse(document.getElementById('donnees-prestataires-proches').textContent);
         var urlRendezVous = "{% url 'ajouter_rendez_vous_assure' %}";
 
-        var iconePrestataire = L.divIcon({
-            className: 'pin-prestataire',
-            html: '<svg width="30" height="30" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 3px 5px rgba(15, 23, 42, 0.35));">'
-                + '<path d="M12 21s7-6.4 7-11.5A7 7 0 0 0 5 9.5C5 14.6 12 21 12 21z" fill="#0f766e"/>'
-                + '<circle cx="12" cy="9.5" r="2.6" fill="#ffffff"/>'
-                + '</svg>',
-            iconSize: [30, 30],
-            iconAnchor: [15, 27],
-            popupAnchor: [0, -24],
+        var iconesParType = {};
+        document.querySelectorAll('#icones-types-source [data-type]').forEach(function (element) {
+            iconesParType[element.getAttribute('data-type')] = element.innerHTML;
         });
 
-        var carte = L.map('carte-prestataires-proches').setView(DAKAR, 12);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        }).addTo(carte);
+        var COULEURS_TYPE = {
+            HOPITAL: '#0f172a',
+            CLINIQUE: '#0f766e',
+            PHARMACIE: '#14b8a6',
+            CABINET: '#2dd4bf',
+        };
 
-        donnees.forEach(function (prestataire) {
-            var contenu = document.createElement('div');
-            var titre = document.createElement('strong');
-            titre.textContent = prestataire.nom;
-            contenu.appendChild(titre);
-            contenu.appendChild(document.createElement('br'));
-            contenu.appendChild(document.createTextNode(prestataire.type + ' - ' + prestataire.ville));
+        function creerIconePrestataire(typeCode) {
+            var couleur = COULEURS_TYPE[typeCode] || '#0f766e';
+            return L.divIcon({
+                className: 'pin-prestataire',
+                html: '<svg width="30" height="30" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 3px 5px rgba(15, 23, 42, 0.35));">'
+                    + '<path d="M12 21s7-6.4 7-11.5A7 7 0 0 0 5 9.5C5 14.6 12 21 12 21z" fill="' + couleur + '"/>'
+                    + '<circle cx="12" cy="9.5" r="2.6" fill="#ffffff"/>'
+                    + '</svg>',
+                iconSize: [30, 30],
+                iconAnchor: [15, 27],
+                popupAnchor: [0, -24],
+            });
+        }
 
-            L.marker([prestataire.latitude, prestataire.longitude], { icon: iconePrestataire })
-                .addTo(carte)
-                .bindPopup(contenu);
-        });
-
-        // ===== Suivi de la position en direct =====
         // Distance a vol d'oiseau (haversine), miroir exact de distance_km
         // cote serveur (Plateform_medicale/models.py) pour un tri identique.
         function distanceKm(lat1, lon1, lat2, lon2) {
@@ -171,55 +174,233 @@
             return rayonTerreKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         }
 
+        function estimerMinutes(distanceKmValeur) {
+            return Math.max(1, Math.round(distanceKmValeur / 30 * 60));
+        }
+
+        function creerContenuPopup(prestataire, distance) {
+            var conteneur = document.createElement('div');
+
+            var titre = document.createElement('strong');
+            titre.textContent = prestataire.nom;
+            conteneur.appendChild(titre);
+
+            var ligneType = document.createElement('div');
+            ligneType.textContent = prestataire.type + ' - ' + prestataire.ville;
+            conteneur.appendChild(ligneType);
+
+            if (prestataire.telephone) {
+                var ligneTelephone = document.createElement('div');
+                ligneTelephone.textContent = 'Tel. ' + prestataire.telephone;
+                conteneur.appendChild(ligneTelephone);
+            }
+
+            if (distance !== null) {
+                var ligneDistance = document.createElement('div');
+                ligneDistance.textContent = distance.toFixed(1) + ' km';
+                conteneur.appendChild(ligneDistance);
+            }
+
+            var actions = document.createElement('div');
+            actions.className = 'popup-actions';
+
+            var lienItineraire = document.createElement('a');
+            lienItineraire.className = 'button btn-sm';
+            lienItineraire.href = 'https://www.google.com/maps/dir/?api=1&destination=' + prestataire.latitude + ',' + prestataire.longitude;
+            lienItineraire.target = '_blank';
+            lienItineraire.rel = 'noopener';
+            lienItineraire.textContent = 'Itineraire';
+            actions.appendChild(lienItineraire);
+
+            var lienRdv = document.createElement('a');
+            lienRdv.className = 'button primary btn-sm';
+            lienRdv.href = urlRendezVous + '?prestataire=' + prestataire.pk;
+            lienRdv.textContent = 'Prendre rendez-vous';
+            actions.appendChild(lienRdv);
+
+            conteneur.appendChild(actions);
+            return conteneur;
+        }
+
         function creerCarteProche(prestataire, distance) {
             var article = document.createElement('article');
-            article.className = 'panel';
+            article.className = 'panel carte-prestataire-proche';
             article.style.padding = '18px';
 
-            var titre = document.createElement('h2');
-            titre.style.marginTop = '0';
-            titre.textContent = prestataire.nom;
-            article.appendChild(titre);
+            var entete = document.createElement('div');
+            entete.className = 'carte-prestataire-entete';
 
+            var badge = document.createElement('span');
+            badge.className = 'dash-stat-icon';
+            badge.innerHTML = iconesParType[prestataire.type_code] || '';
+            entete.appendChild(badge);
+
+            var titreBloc = document.createElement('div');
+            var titre = document.createElement('h3');
+            titre.textContent = prestataire.nom;
+            titreBloc.appendChild(titre);
             var sousTitre = document.createElement('p');
             sousTitre.className = 'subtitle';
+            sousTitre.style.margin = '0';
             sousTitre.textContent = prestataire.type + ' - ' + prestataire.ville;
-            article.appendChild(sousTitre);
+            titreBloc.appendChild(sousTitre);
+            entete.appendChild(titreBloc);
 
-            var ligneDistance = document.createElement('p');
-            var fort = document.createElement('strong');
-            fort.textContent = distance.toFixed(1) + ' km';
-            ligneDistance.appendChild(fort);
-            article.appendChild(ligneDistance);
+            article.appendChild(entete);
 
-            var lien = document.createElement('a');
-            lien.className = 'button primary';
-            lien.href = urlRendezVous + '?prestataire=' + prestataire.pk;
-            lien.textContent = 'Prendre rendez-vous';
-            article.appendChild(lien);
+            if (distance !== null) {
+                var ligneDistance = document.createElement('p');
+                var fort = document.createElement('strong');
+                fort.textContent = distance.toFixed(1) + ' km';
+                ligneDistance.appendChild(fort);
+                ligneDistance.appendChild(document.createTextNode(' - ~' + estimerMinutes(distance) + ' min'));
+                article.appendChild(ligneDistance);
+            }
 
+            if (prestataire.medecin_count > 0) {
+                var ligneMedecins = document.createElement('p');
+                ligneMedecins.className = 'subtitle';
+                ligneMedecins.textContent = prestataire.medecin_count + (prestataire.medecin_count > 1 ? ' medecins' : ' medecin');
+                article.appendChild(ligneMedecins);
+            }
+
+            var actions = document.createElement('div');
+            actions.className = 'actions';
+
+            var lienProfil = document.createElement('a');
+            lienProfil.className = 'button';
+            lienProfil.href = '#';
+            lienProfil.textContent = 'Voir le profil';
+            lienProfil.addEventListener('click', function (evenement) {
+                evenement.preventDefault();
+                var marqueur = marqueursParPk[prestataire.pk];
+                if (marqueur) {
+                    carte.flyTo(marqueur.getLatLng(), 15);
+                    marqueur.openPopup();
+                }
+            });
+            actions.appendChild(lienProfil);
+
+            var lienRdv = document.createElement('a');
+            lienRdv.className = 'button primary';
+            lienRdv.href = urlRendezVous + '?prestataire=' + prestataire.pk;
+            lienRdv.textContent = 'Prendre rendez-vous';
+            actions.appendChild(lienRdv);
+
+            article.appendChild(actions);
             return article;
         }
 
-        var marqueurUtilisateur = null;
-        var carteRecentree = false;
+        var carte = L.map('carte-prestataires-proches').setView(DAKAR, 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        }).addTo(carte);
+
+        var groupeMarqueurs = L.layerGroup().addTo(carte);
+        var marqueursParPk = {};
+
+        var champRecherche = document.getElementById('filtre-recherche');
+        var champVille = document.getElementById('filtre-ville');
+        var champType = document.getElementById('filtre-type');
+        var champDistance = document.getElementById('filtre-distance');
         var conteneurListe = document.getElementById('liste-prestataires-proches');
         var baniereLocalisation = document.getElementById('avis-localisation');
         var sousTitrePage = document.getElementById('sous-titre-page');
 
+        var villes = Array.from(new Set(donnees.map(function (p) { return p.ville; }).filter(Boolean))).sort();
+        villes.forEach(function (ville) {
+            var option = document.createElement('option');
+            option.value = ville;
+            option.textContent = ville;
+            champVille.appendChild(option);
+        });
+
+        function appliquerFiltres(liste) {
+            var recherche = champRecherche.value.trim().toLowerCase();
+            var ville = champVille.value;
+            var type = champType.value;
+            var distanceMax = champDistance.value ? parseFloat(champDistance.value) : null;
+
+            return liste.filter(function (item) {
+                var prestataire = item.prestataire;
+                if (recherche && prestataire.nom.toLowerCase().indexOf(recherche) === -1) {
+                    return false;
+                }
+                if (ville && prestataire.ville !== ville) {
+                    return false;
+                }
+                if (type && prestataire.type_code !== type) {
+                    return false;
+                }
+                if (distanceMax !== null && item.distance !== null && item.distance > distanceMax) {
+                    return false;
+                }
+                return true;
+            });
+        }
+
+        var dernierePositionUtilisateur = { lat: null, lng: null };
+        var marqueurUtilisateur = null;
+        var carteRecentree = false;
+
+        function calculerListe() {
+            return donnees.map(function (prestataire) {
+                var distance = (dernierePositionUtilisateur.lat !== null && dernierePositionUtilisateur.lng !== null)
+                    ? distanceKm(dernierePositionUtilisateur.lat, dernierePositionUtilisateur.lng, prestataire.latitude, prestataire.longitude)
+                    : null;
+                return { prestataire: prestataire, distance: distance };
+            });
+        }
+
+        function rafraichirAffichage() {
+            var liste = appliquerFiltres(calculerListe());
+
+            liste.sort(function (a, b) {
+                if (a.distance !== null && b.distance !== null) {
+                    return a.distance - b.distance;
+                }
+                return a.prestataire.ville.localeCompare(b.prestataire.ville) || a.prestataire.nom.localeCompare(b.prestataire.nom);
+            });
+
+            groupeMarqueurs.clearLayers();
+            marqueursParPk = {};
+            liste.forEach(function (item) {
+                var marqueur = L.marker([item.prestataire.latitude, item.prestataire.longitude], {
+                    icon: creerIconePrestataire(item.prestataire.type_code),
+                }).bindPopup(creerContenuPopup(item.prestataire, item.distance));
+                marqueur.addTo(groupeMarqueurs);
+                marqueursParPk[item.prestataire.pk] = marqueur;
+            });
+
+            if (conteneurListe) {
+                conteneurListe.innerHTML = '';
+                if (liste.length === 0) {
+                    var vide = document.createElement('p');
+                    vide.className = 'subtitle';
+                    vide.textContent = "Aucun prestataire ne correspond a votre recherche.";
+                    conteneurListe.appendChild(vide);
+                } else {
+                    liste.forEach(function (item) {
+                        conteneurListe.appendChild(creerCarteProche(item.prestataire, item.distance));
+                    });
+                }
+            }
+        }
+
         function surPosition(position) {
-            var latUtilisateur = position.coords.latitude;
-            var lngUtilisateur = position.coords.longitude;
+            dernierePositionUtilisateur.lat = position.coords.latitude;
+            dernierePositionUtilisateur.lng = position.coords.longitude;
 
             if (marqueurUtilisateur) {
-                marqueurUtilisateur.setLatLng([latUtilisateur, lngUtilisateur]);
+                marqueurUtilisateur.setLatLng([dernierePositionUtilisateur.lat, dernierePositionUtilisateur.lng]);
             } else {
-                marqueurUtilisateur = L.circleMarker([latUtilisateur, lngUtilisateur], {
+                marqueurUtilisateur = L.circleMarker([dernierePositionUtilisateur.lat, dernierePositionUtilisateur.lng], {
                     radius: 8, color: '#0f766e', fillColor: '#14b8a6', fillOpacity: 1,
                 }).addTo(carte).bindPopup('Vous');
             }
             if (!carteRecentree) {
-                carte.setView([latUtilisateur, lngUtilisateur], 12);
+                carte.setView([dernierePositionUtilisateur.lat, dernierePositionUtilisateur.lng], 12);
                 carteRecentree = true;
             }
 
@@ -230,28 +411,35 @@
             if (sousTitrePage) {
                 sousTitrePage.textContent = 'Prestataires du reseau tries du plus proche au plus loin de votre position (mise a jour en direct pendant vos deplacements).';
             }
+            if (champDistance) {
+                champDistance.disabled = false;
+            }
 
-            if (conteneurListe) {
-                var trie = donnees.map(function (prestataire) {
-                    return {
-                        prestataire: prestataire,
-                        distance: distanceKm(latUtilisateur, lngUtilisateur, prestataire.latitude, prestataire.longitude),
-                    };
-                }).sort(function (a, b) { return a.distance - b.distance; });
+            rafraichirAffichage();
+        }
 
-                conteneurListe.innerHTML = '';
-                if (trie.length === 0) {
-                    var vide = document.createElement('p');
-                    vide.className = 'subtitle';
-                    vide.textContent = "Aucun prestataire du reseau n'a encore de position enregistree.";
-                    conteneurListe.appendChild(vide);
-                } else {
-                    trie.forEach(function (item) {
-                        conteneurListe.appendChild(creerCarteProche(item.prestataire, item.distance));
-                    });
-                }
+        [champRecherche, champVille, champType, champDistance].forEach(function (champ) {
+            champ.addEventListener('input', rafraichirAffichage);
+            champ.addEventListener('change', rafraichirAffichage);
+        });
+
+        var parametres = new URLSearchParams(window.location.search);
+        var latInitial = parseFloat(parametres.get('lat'));
+        var lngInitial = parseFloat(parametres.get('lng'));
+        if (isFinite(latInitial) && isFinite(lngInitial)) {
+            dernierePositionUtilisateur.lat = latInitial;
+            dernierePositionUtilisateur.lng = lngInitial;
+            marqueurUtilisateur = L.circleMarker([latInitial, lngInitial], {
+                radius: 8, color: '#0f766e', fillColor: '#14b8a6', fillOpacity: 1,
+            }).addTo(carte).bindPopup('Vous');
+            carte.setView([latInitial, lngInitial], 12);
+            carteRecentree = true;
+            if (champDistance) {
+                champDistance.disabled = false;
             }
         }
+
+        rafraichirAffichage();
 
         if (navigator.geolocation) {
             navigator.geolocation.watchPosition(surPosition, function () {
