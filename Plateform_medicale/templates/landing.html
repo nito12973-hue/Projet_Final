@@ -37,6 +37,16 @@
             --muted: #5f6f7d;
             --surface: #ffffff;
             --masque-croix: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M12 3v18M3 12h18'/%3E%3C/svg%3E");
+            /* Ombres premium (Phase 1 landing) : plus douces/etagees que les
+               box-shadow ponctuelles deja codees en dur ailleurs dans ce fichier. */
+            --ombre-douce: 0 8px 24px rgba(15, 23, 42, 0.08);
+            --ombre-flottante: 0 20px 48px rgba(15, 23, 42, 0.14);
+            --ombre-forte: 0 30px 70px rgba(15, 23, 42, 0.20);
+            /* Glassmorphism leger : meme principe que le <header> sticky
+               (backdrop-filter deja utilise plus bas), applique aux cartes
+               flottantes et badges. */
+            --verre-fond: rgba(255, 255, 255, 0.65);
+            --verre-flou: blur(16px);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -295,6 +305,60 @@
             0%, 100% { transform: translateY(0); }
             50%      { transform: translateY(-12px); }
         }
+
+        /* Variantes desynchronisees de "flotter", pour que plusieurs
+           elements flottants ne bougent pas a l'unisson (cartes satellites
+           du Hero, Task 2). */
+        @keyframes flotter-lent {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50%      { transform: translateY(-16px) rotate(-1.5deg); }
+        }
+
+        @keyframes flotter-inverse {
+            0%, 100% { transform: translateY(-8px) rotate(0deg); }
+            50%      { transform: translateY(6px) rotate(1.5deg); }
+        }
+
+        /* Formes organiques decoratives (Phase 1 landing) : blobs SVG en
+           arriere-plan, basse opacite, purement decoratif. */
+        .forme-organique {
+            position: absolute;
+            border-radius: 42% 58% 63% 37% / 41% 44% 56% 59%;
+            background: linear-gradient(135deg, rgba(20, 184, 166, 0.16), rgba(45, 212, 191, 0.06));
+            filter: blur(6px);
+            pointer-events: none;
+            user-select: none;
+            z-index: 0;
+        }
+
+        /* Badges de confiance (Phase 1 landing) : pastille glassmorphism
+           sous les CTA du Hero. */
+        .badges-confiance {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 22px;
+        }
+
+        .badge-confiance {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: var(--verre-fond);
+            backdrop-filter: var(--verre-flou);
+            -webkit-backdrop-filter: var(--verre-flou);
+            border: 1px solid var(--border);
+            font-size: 12.5px;
+            font-weight: 700;
+            color: var(--primary-strong);
+            box-shadow: var(--ombre-douce);
+        }
+
+        .badge-confiance .icone-nav { width: 15px; height: 15px; }
 
         .carte-demo .entete-carte {
             display: flex;
