@@ -47,8 +47,9 @@ logique métier nouvelle, aucune nouvelle route, aucun nouveau modèle.
   la carte. Le bouton fait défiler jusqu'au marqueur correspondant sur la
   carte Leaflet et ouvre son popup (`flyTo` + `openPopup`), sans navigation.
 - **Nombre de médecins : donnée réelle**, pas fictive.
-  `prestataire.medecin_set.count()` existe déjà (FK `Medecin.prestataire`,
-  pas de `related_name` personnalisé). Affiché seulement si > 0.
+  `prestataire.medecins.count()` existe déjà (FK `Medecin.prestataire`,
+  `related_name="medecins"` — voir `Plateform_medicale/models.py`). Affiché
+  seulement si > 0.
 
 ## Architecture
 
@@ -69,10 +70,10 @@ prestataires_geojson = [
         "type": prestataire.get_type_prestataire_display(),
         "type_code": prestataire.type_prestataire,       # NOUVEAU — HOPITAL/CLINIQUE/PHARMACIE/CABINET, pour le filtre JS
         "ville": prestataire.ville,
-        "telephone": prestataire.telephone,               # NOUVEAU — deja sur le modele, pour le popup
+        "telephone": prestataire.telephone,               # NOUVEAU — deja sur le modele, pour le popup (chaine vide si non renseigne, jamais None : CharField blank=True sans null=True)
         "latitude": float(prestataire.latitude),
         "longitude": float(prestataire.longitude),
-        "medecin_count": prestataire.medecin_set.count(), # NOUVEAU — donnee reelle
+        "medecin_count": prestataire.medecins.count(),    # NOUVEAU — donnee reelle, related_name="medecins"
     }
     for prestataire in avec_coordonnees
 ]
