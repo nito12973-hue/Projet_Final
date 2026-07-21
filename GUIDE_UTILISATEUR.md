@@ -150,8 +150,18 @@ les prestataires partenaires les plus proches de vous, triés du plus proche
 au plus loin — la liste et votre position sur la carte se mettent à jour
 **en continu** pendant que vous vous déplacez, sans avoir à recharger la
 page. Sans localisation, la liste complète du réseau reste disponible,
-triée par ville. Chaque prestataire propose un lien *Prendre rendez-vous*
-qui ouvre le formulaire de rendez-vous avec ce prestataire déjà sélectionné.
+triée par ville.
+
+Une barre de filtres (recherche par nom, ville, type de prestataire,
+distance maximale) affine la liste et la carte instantanément, sans
+rechargement. Chaque prestataire est présenté avec son type, sa distance
+et un temps de trajet estimé, ainsi que le nombre de médecins qui y sont
+rattachés. Le bouton *Voir le profil* centre la carte sur le prestataire
+et ouvre sa fiche (nom, ville, téléphone, itinéraire) directement sur la
+carte, sans changer de page. *Prendre rendez-vous* ouvre le formulaire de
+rendez-vous avec ce prestataire déjà sélectionné. Si aucun prestataire ne
+correspond (réseau vide ou filtres trop restrictifs), un message
+explicite propose d'actualiser ou de réinitialiser les filtres.
 
 ### Mes rendez-vous
 
