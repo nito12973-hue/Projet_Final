@@ -578,6 +578,45 @@
             border-radius: 4px;
         }
 
+        /* ===== Statistiques (Phase 1 landing) ===== */
+        .grille-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 22px;
+        }
+
+        .carte-stat {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 30px 22px;
+            text-align: center;
+            transition: transform 0.22s ease, box-shadow 0.22s ease;
+        }
+
+        .carte-stat:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--ombre-flottante);
+        }
+
+        .carte-stat .pastille { margin: 0 auto 16px; }
+
+        .chiffre-anime {
+            display: block;
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--primary-dark);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .libelle-stat {
+            display: block;
+            margin-top: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--muted);
+        }
+
         /* ===== Sections ===== */
         section.bloc { padding: 78px 0; }
         section.bloc.alterne { background: #eef7f6; }
@@ -1006,6 +1045,39 @@
         </div>
     </section>
 
+    <!-- ===== STATISTIQUES ===== -->
+    <section class="bloc alterne" id="stats">
+        <div class="conteneur">
+            <div class="titre-section revele">
+                <span class="sur-titre">Notre ambition</span>
+                <h2>Une plateforme conçue pour passer à l'échelle</h2>
+                <p>Chiffres cibles de déploiement du réseau partenaire — pas des statistiques d'usage actuelles.</p>
+            </div>
+            <div class="grille-stats">
+                <div class="carte-stat revele">
+                    <span class="pastille">{% icone "users" %}</span>
+                    <strong class="chiffre-anime" data-cible="15000">0</strong>
+                    <span class="libelle-stat">Assurés couverts</span>
+                </div>
+                <div class="carte-stat revele">
+                    <span class="pastille">{% icone "stethoscope" %}</span>
+                    <strong class="chiffre-anime" data-cible="500">0</strong>
+                    <span class="libelle-stat">Médecins partenaires</span>
+                </div>
+                <div class="carte-stat revele">
+                    <span class="pastille">{% icone "building" %}</span>
+                    <strong class="chiffre-anime" data-cible="250">0</strong>
+                    <span class="libelle-stat">Prestataires du réseau</span>
+                </div>
+                <div class="carte-stat revele">
+                    <span class="pastille">{% icone "bar-chart" %}</span>
+                    <strong class="chiffre-anime" data-cible="100000">0</strong>
+                    <span class="libelle-stat">Consultations gérées</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- ===== SERVICES ===== -->
     <section class="bloc" id="services">
         <div class="conteneur">
@@ -1203,6 +1275,39 @@
         }, { threshold: 0.12 });
 
         document.querySelectorAll('.revele').forEach((el) => observateur.observe(el));
+
+        // Compteur anime des statistiques (Phase 1) : desactive si
+        // prefers-reduced-motion, sinon anime de 0 a la valeur cible.
+        const reductionMouvement = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        function animerCompteur(element) {
+            const cible = parseInt(element.dataset.cible, 10);
+            if (reductionMouvement || !cible) {
+                element.textContent = cible.toLocaleString('fr-FR') + '+';
+                return;
+            }
+            const duree = 1200;
+            const debut = performance.now();
+            function etape(instant) {
+                const progression = Math.min((instant - debut) / duree, 1);
+                const progressionAttenuee = 1 - Math.pow(1 - progression, 2);
+                const valeur = Math.round(cible * progressionAttenuee);
+                element.textContent = valeur.toLocaleString('fr-FR') + (progression >= 1 ? '+' : '');
+                if (progression < 1) requestAnimationFrame(etape);
+            }
+            requestAnimationFrame(etape);
+        }
+
+        const observateurStats = new IntersectionObserver((entrees) => {
+            entrees.forEach((entree) => {
+                if (entree.isIntersecting) {
+                    animerCompteur(entree.target);
+                    observateurStats.unobserve(entree.target);
+                }
+            });
+        }, { threshold: 0.4 });
+
+        document.querySelectorAll('.chiffre-anime').forEach((el) => observateurStats.observe(el));
     </script>
 </body>
 </html>
