@@ -1531,9 +1531,12 @@ def prestataires_proches(request):
             "pk": prestataire.pk,
             "nom": prestataire.nom,
             "type": prestataire.get_type_prestataire_display(),
+            "type_code": prestataire.type_prestataire,
             "ville": prestataire.ville,
+            "telephone": prestataire.telephone,
             "latitude": float(prestataire.latitude),
             "longitude": float(prestataire.longitude),
+            "medecin_count": prestataire.medecins.count(),
         }
         for prestataire in avec_coordonnees
     ]
