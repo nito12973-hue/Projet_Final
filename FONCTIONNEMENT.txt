@@ -245,26 +245,70 @@ Assure (role_required(ASSURE), prefixe /assure/ + /espace/assure/)
   liste_ayants_droit / ajouter_ayant_droit / modifier_ayant_droit /
     supprimer_ayant_droit             gestion de la famille par l'assure
                                       principal (jamais de compte cree)
-  prestataires_proches                 liste des prestataires partenaires
-                                      (partenaire=True) triee par distance
-                                      si le navigateur transmet lat/lng en
-                                      query params (rendu serveur initial),
-                                      sinon triee par ville ; carte Leaflet +
-                                      lien "Prendre rendez-vous" pre-rempli
-                                      vers ajouter_rendez_vous_assure. Suivi
-                                      de position en direct cote client
-                                      (navigator.geolocation.watchPosition,
-                                      pas juste un releve unique) : a chaque
-                                      mise a jour de position, le marqueur
-                                      "Vous" se deplace et la liste est
-                                      retriee en JS (distanceKm en JS, miroir
-                                      exact de distance_km cote serveur) sans
-                                      recharger la page — le rendu serveur
-                                      initial (via ?lat=&lng=) reste la seule
-                                      logique de tri testee par tests.py, le
-                                      tri live cote client n'est pas couvert
-                                      par la suite Django (JS non execute par
-                                      le test client).
+  prestataires_proches                 interface deux colonnes (carte a
+                                      gauche en position: sticky, liste a
+                                      droite ; une seule colonne sous
+                                      ~860px) pour les prestataires
+                                      partenaires (partenaire=True).
+                                      prestataires_geojson (contexte de vue)
+                                      transmet pk/nom/type/type_code/ville/
+                                      telephone/latitude/longitude/
+                                      medecin_count (donnee reelle,
+                                      prestataire.medecins.count(), N+1
+                                      assume — reseau de partenaires reduit)
+                                      pour chaque prestataire ; tout le
+                                      filtrage/tri/rendu (liste + marqueurs)
+                                      est fait cote client en JS a partir de
+                                      ce json_script, prestataires_tries
+                                      (contexte serveur, tri par distance si
+                                      lat/lng en query params sinon par
+                                      ville) n'est plus rendu par le
+                                      template mais reste dans le contexte
+                                      pour tests.py.
+                                      Barre de filtres (recherche/ville/
+                                      type/distance max, tous cote client,
+                                      pas de soumission serveur) ; le
+                                      filtre distance est desactive tant
+                                      qu'aucune position n'est connue.
+                                      Cartes prestataires enrichies : icone
+                                      par type (_ICONES : building/pill/
+                                      stethoscope), distance + temps estime
+                                      (distance_km / 30 * 60 min,
+                                      explicitement une estimation),
+                                      nombre de medecins rattaches (affiche
+                                      seulement si > 0). Marqueurs Leaflet
+                                      colores par type (les 4 couleurs de
+                                      la palette --primary*) ; popup
+                                      redessine (nom, ville, telephone si
+                                      renseigne, distance, lien Itineraire
+                                      vers Google Maps, lien Prendre
+                                      rendez-vous). Bouton "Voir le profil"
+                                      : pas de nouvelle page, centre la
+                                      carte sur le marqueur (flyTo) et ouvre
+                                      son popup. Etat vide illustre (SVG
+                                      trait fin) si la liste filtree est
+                                      vide, message different selon la
+                                      cause (reseau vide vs filtres trop
+                                      restrictifs), boutons Actualiser /
+                                      Reinitialiser les filtres.
+                                      Suivi de position en direct cote
+                                      client (navigator.geolocation.
+                                      watchPosition, demarre
+                                      inconditionnellement) : a chaque mise
+                                      a jour de position, le marqueur "Vous"
+                                      se deplace et rafraichirAffichage()
+                                      relance tout le pipeline (filtres +
+                                      tri par distanceKm en JS, miroir
+                                      exact de distance_km cote serveur)
+                                      sans recharger la page — le rendu
+                                      serveur initial (via ?lat=&lng=) reste
+                                      la seule logique de tri testee par
+                                      tests.py, le pipeline JS (filtrage,
+                                      tri live, rendu des cartes/marqueurs,
+                                      etat vide) n'est pas couvert par la
+                                      suite Django (JS non execute par le
+                                      test client) — verification manuelle
+                                      obligatoire pour ce module.
   mes_rendez_vous_assure / ajouter_rendez_vous_assure /
     annuler_rendez_vous_assure         ajouter_rendez_vous_assure accepte un
                                       parametre ?prestataire=<id> (valide et
@@ -321,7 +365,7 @@ Assure (role_required(ASSURE), prefixe /assure/ + /espace/assure/)
 
 6. TESTS (tests.py)
 ----------------------
-python manage.py test Plateform_medicale — 144 tests au moment de la
+python manage.py test Plateform_medicale — 145 tests au moment de la
 redaction de ce document. Couvre : redirections/permissions par role,
 garde-fous anti-lockout (un admin ne peut pas se desactiver/supprimer/
 changer son propre role lui-meme), creation automatique de compte a la
