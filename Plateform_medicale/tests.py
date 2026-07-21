@@ -1718,3 +1718,17 @@ class PrestatairesProchesTests(TestCase):
         response = self.client.get(reverse('prestataires_proches'), {'lat': 'abc', 'lng': 'def'})
         self.assertEqual(response.status_code, 200)
         self.assertFalse(response.context['localisation_active'])
+
+    def test_geojson_contient_les_champs_enrichis(self):
+        Medecin.objects.create(
+            nom='Diallo', prenom='Awa', specialite='Generaliste',
+            telephone='338001122', email='awa.diallo@example.sn',
+            prestataire=self.proche,
+        )
+        response = self.client.get(reverse('prestataires_proches'))
+        geojson = response.context['prestataires_geojson']
+        item = next(p for p in geojson if p['nom'] == 'Clinique Proche')
+        self.assertEqual(item['pk'], self.proche.pk)
+        self.assertEqual(item['type_code'], 'CLINIQUE')
+        self.assertEqual(item['telephone'], '')
+        self.assertEqual(item['medecin_count'], 1)
