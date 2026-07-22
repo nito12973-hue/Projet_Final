@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SantéSN — La santé connectée au service de tous</title>
     <meta name="description" content="SantéSN : plateforme digitale de prise en charge médicale au Sénégal. Rendez-vous, consultations, ordonnances QR, pharmacies et assurance santé.">
-    <meta name="theme-color" content="#0f172a">
+    <meta name="theme-color" content="#0b2027">
     <meta name="color-scheme" content="light">
     <meta property="og:type" content="website">
     <meta property="og:title" content="SantéSN — La santé connectée au service de tous">
@@ -14,24 +14,28 @@
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="SantéSN — La santé connectée au service de tous">
     <meta name="twitter:description" content="Rendez-vous, consultations, ordonnances QR, pharmacies et assurance santé : la prise en charge médicale au Sénégal, en ligne.">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M24 4 L40 10 V22 C40 33 33 40.5 24 44 C15 40.5 8 33 8 22 V10 Z' fill='%230d9488'/%3E%3Cpath d='M10 20h4l2.4-5 3 10 2.4-7 1.6 2h6.6' fill='none' stroke='white' stroke-width='2.3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M11 15 H34 L41 22 V31 A5 5 0 0 1 36 36 H11 A5 5 0 0 1 6 31 V20 A5 5 0 0 1 11 15 Z' fill='%230e7c86'/%3E%3Cpath d='M12 26h4l2.5-5 3 10 2.5-7 1.5 2h11' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
             /* Turquoise vif : bordures, icones sur fond clair (avec texte fonce),
                dégradés decoratifs. Pas assez contraste pour du texte blanc dessus. */
-            --primary: #14b8a6;
+            --primary: #0e7c86;
             /* Teal fonce : seule variante sure pour texte/icones blancs en aplat
                (boutons, pastilles) et pour texte colore sur fond clair. */
-            --primary-strong: #0f766e;
+            --primary-strong: #095059;
             /* Navy : texte fonce, logo, pied de page — identique au menu lateral. */
-            --primary-dark: #0f172a;
+            --primary-dark: #0b2027;
+            /* Variante claire : texte/icone colores sur fond sombre. */
+            --primary-light: #4fb8ae;
             /* Reserve aux degrades decoratifs de grande taille (ex. mot en accent
                du H1) : jamais utilise pour du texte/icone en aplat. */
-            --primary-accent: #2dd4bf;
-            --primary-soft: #e3f7f4;
+            --primary-accent: #4fb8ae;
+            --primary-soft: #dcece9;
+            /* Terracotta : accent ponctuel uniquement (jamais en fond/aplat large). */
+            --accent: #e0824f;
             --border: #d9e2ea;
             --text: #1f2933;
             --muted: #5f6f7d;
@@ -39,9 +43,9 @@
             --masque-croix: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M12 3v18M3 12h18'/%3E%3C/svg%3E");
             /* Ombres premium (Phase 1 landing) : plus douces/etagees que les
                box-shadow ponctuelles deja codees en dur ailleurs dans ce fichier. */
-            --ombre-douce: 0 8px 24px rgba(15, 23, 42, 0.08);
-            --ombre-flottante: 0 20px 48px rgba(15, 23, 42, 0.14);
-            --ombre-forte: 0 30px 70px rgba(15, 23, 42, 0.20);
+            --ombre-douce: 0 8px 24px rgba(11, 32, 39, 0.08);
+            --ombre-flottante: 0 20px 48px rgba(11, 32, 39, 0.14);
+            --ombre-forte: 0 30px 70px rgba(11, 32, 39, 0.20);
             /* Glassmorphism leger : meme principe que le <header> sticky
                (backdrop-filter deja utilise plus bas), applique aux cartes
                flottantes et badges. */
@@ -54,19 +58,19 @@
         html { scroll-behavior: smooth; }
 
         body {
-            font-family: 'Plus Jakarta Sans', 'Segoe UI', Arial, sans-serif;
+            font-family: 'Public Sans', 'Segoe UI', Arial, sans-serif;
             color: var(--text);
             background: #ffffff;
             line-height: 1.6;
         }
 
         ::selection {
-            background: rgba(20, 184, 166, 0.35);
+            background: rgba(14, 124, 134, 0.35);
         }
 
         * {
             scrollbar-width: thin;
-            scrollbar-color: rgba(15, 118, 110, 0.35) transparent;
+            scrollbar-color: rgba(9, 80, 89, 0.35) transparent;
         }
 
         ::-webkit-scrollbar {
@@ -79,12 +83,12 @@
         }
 
         ::-webkit-scrollbar-thumb {
-            background: rgba(15, 118, 110, 0.35);
+            background: rgba(9, 80, 89, 0.35);
             border-radius: 999px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
-            background: rgba(15, 118, 110, 0.55);
+            background: rgba(9, 80, 89, 0.55);
         }
 
         .conteneur {
@@ -160,7 +164,7 @@
         .btn-plein {
             background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-strong) 100%);
             color: #ffffff;
-            box-shadow: 0 6px 16px rgba(13, 148, 136, 0.30);
+            box-shadow: 0 6px 16px rgba(14, 124, 134, 0.30);
         }
 
         .btn-plein:hover { transform: translateY(-2px); box-shadow: var(--ombre-flottante); }
@@ -201,15 +205,15 @@
             position: relative;
             overflow: hidden;
             background:
-                radial-gradient(900px 460px at 88% -10%, rgba(13, 148, 136, 0.10), transparent 60%),
-                radial-gradient(700px 420px at -8% 108%, rgba(15, 23, 42, 0.06), transparent 60%),
+                radial-gradient(900px 460px at 88% -10%, rgba(14, 124, 134, 0.10), transparent 60%),
+                radial-gradient(700px 420px at -8% 108%, rgba(11, 32, 39, 0.06), transparent 60%),
                 linear-gradient(180deg, #eff6f5 0%, #ffffff 100%);
             padding: 84px 0 90px;
         }
 
         .hero .croix {
             position: absolute;
-            background-color: rgba(20, 184, 166, 0.16);
+            background-color: rgba(14, 124, 134, 0.16);
             -webkit-mask-image: var(--masque-croix);
             mask-image: var(--masque-croix);
             -webkit-mask-repeat: no-repeat;
@@ -237,6 +241,7 @@
         }
 
         .hero h1 {
+            font-family: 'Manrope', 'Public Sans', 'Segoe UI', Arial, sans-serif;
             font-size: clamp(32px, 4.6vw, 52px);
             font-weight: 800;
             line-height: 1.14;
@@ -280,7 +285,7 @@
             border: 1px solid var(--border);
             border-radius: 18px;
             padding: 26px;
-            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16);
+            box-shadow: 0 24px 60px rgba(11, 32, 39, 0.16);
             animation: flotter 5s ease-in-out infinite;
         }
 
@@ -307,7 +312,7 @@
         .forme-organique {
             position: absolute;
             border-radius: 42% 58% 63% 37% / 41% 44% 56% 59%;
-            background: linear-gradient(135deg, rgba(20, 184, 166, 0.16), rgba(45, 212, 191, 0.06));
+            background: linear-gradient(135deg, rgba(14, 124, 134, 0.16), rgba(79, 184, 174, 0.06));
             filter: blur(6px);
             pointer-events: none;
             user-select: none;
@@ -361,7 +366,7 @@
             background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-strong) 100%);
             color: #fff;
             font-size: 20px;
-            box-shadow: 0 6px 14px rgba(13, 148, 136, 0.32);
+            box-shadow: 0 6px 14px rgba(14, 124, 134, 0.32);
         }
 
         .pastille .icone-nav { width: 22px; height: 22px; }
@@ -466,7 +471,7 @@
             z-index: 1;
             width: 260px;
             padding: 14px 10px 26px;
-            background: linear-gradient(160deg, var(--primary-dark) 0%, #1e293b 100%);
+            background: linear-gradient(160deg, var(--primary-dark) 0%, #123138 100%);
             border-radius: 38px;
             box-shadow: var(--ombre-forte);
         }
@@ -655,8 +660,8 @@
 
         .carte-service:hover {
             transform: translateY(-6px);
-            border-color: #99e6da;
-            box-shadow: 0 18px 40px rgba(13, 148, 136, 0.16);
+            border-color: #8fcac2;
+            box-shadow: 0 18px 40px rgba(14, 124, 134, 0.16);
         }
 
         .carte-service .pastille { margin-bottom: 16px; }
@@ -735,7 +740,7 @@
 
         /* Bandeau démonstration */
         .bandeau-demo {
-            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-strong) 65%, #134e4a 100%);
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-strong) 65%, #073a3d 100%);
             border-radius: 22px;
             padding: 52px 40px;
             text-align: center;
@@ -792,7 +797,7 @@
 
         /* Footer */
         footer {
-            background: #0f172a;
+            background: #0b2027;
             color: #cbd5e1;
             padding: 44px 0 28px;
         }
@@ -894,7 +899,7 @@
         nav.menu a:focus-visible,
         .menu-toggle:focus-visible {
             outline: none;
-            box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.35);
+            box-shadow: 0 0 0 4px rgba(14, 124, 134, 0.35);
         }
     </style>
 </head>
@@ -903,14 +908,8 @@
         <div class="conteneur barre-nav">
             <a class="logo" href="{% url 'landing' %}" aria-label="SantéSN — Accueil">
                 <svg width="38" height="38" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <path d="M24 4 L40 10 V22 C40 33 33 40.5 24 44 C15 40.5 8 33 8 22 V10 Z" fill="url(#degrade-logo)"/>
-                    <path d="M10 20h4l2.4-5 3 10 2.4-7 1.6 2h6.6" fill="none" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
-                    <defs>
-                        <linearGradient id="degrade-logo" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
-                            <stop stop-color="#14b8a6"/>
-                            <stop offset="1" stop-color="#0d9488"/>
-                        </linearGradient>
-                    </defs>
+                    <path d="M11 15 H34 L41 22 V31 A5 5 0 0 1 36 36 H11 A5 5 0 0 1 6 31 V20 A5 5 0 0 1 11 15 Z" fill="#0e7c86"/>
+                    <path d="M12 26h4l2.5-5 3 10 2.5-7 1.5 2h11" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
                 Santé<span style="color: var(--primary-strong);">SN</span>
             </a>
@@ -967,14 +966,8 @@
                     <div class="telephone-ecran">
                         <div class="telephone-entete">
                             <svg width="20" height="20" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M24 4 L40 10 V22 C40 33 33 40.5 24 44 C15 40.5 8 33 8 22 V10 Z" fill="url(#degrade-logo-telephone)"/>
-                                <path d="M10 20h4l2.4-5 3 10 2.4-7 1.6 2h6.6" fill="none" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
-                                <defs>
-                                    <linearGradient id="degrade-logo-telephone" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
-                                        <stop stop-color="#14b8a6"/>
-                                        <stop offset="1" stop-color="#0d9488"/>
-                                    </linearGradient>
-                                </defs>
+                                <path d="M11 15 H34 L41 22 V31 A5 5 0 0 1 36 36 H11 A5 5 0 0 1 6 31 V20 A5 5 0 0 1 11 15 Z" fill="#0e7c86"/>
+                                <path d="M12 26h4l2.5-5 3 10 2.5-7 1.5 2h11" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
                             <span>SantéSN</span>
                         </div>
@@ -1238,14 +1231,8 @@
             <div class="pied-grille">
                 <a class="logo" href="#accueil">
                     <svg width="30" height="30" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                        <path d="M24 4 L40 10 V22 C40 33 33 40.5 24 44 C15 40.5 8 33 8 22 V10 Z" fill="url(#degrade-logo-pied)"/>
-                        <path d="M10 20h4l2.4-5 3 10 2.4-7 1.6 2h6.6" fill="none" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
-                        <defs>
-                            <linearGradient id="degrade-logo-pied" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
-                                <stop stop-color="#14b8a6"/>
-                                <stop offset="1" stop-color="#0d9488"/>
-                            </linearGradient>
-                        </defs>
+                        <path d="M11 15 H34 L41 22 V31 A5 5 0 0 1 36 36 H11 A5 5 0 0 1 6 31 V20 A5 5 0 0 1 11 15 Z" fill="none" stroke="#EFF4F3" stroke-width="2.4"/>
+                        <path d="M12 26h4l2.5-5 3 10 2.5-7 1.5 2h11" fill="none" stroke="#E0824F" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                     SantéSN
                 </a>

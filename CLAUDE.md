@@ -209,23 +209,34 @@ qui ne couvre que la liste des utilisateurs (Dashboard Admin → Utilisateurs).
 ## Design system
 
 Un seul shell de dashboard (sidebar) dans `base.html`, réutilisé par les 4
-rôles (nav conditionnelle selon `current_role`). Palette navy/turquoise
-SantéSN (`--primary: #14b8a6` turquoise vif — bordures/décoratif seulement,
-`--primary-strong: #0f766e` teal foncé — seule variante sûre pour texte/icône
-blancs en aplat, `--primary-dark: #0f172a` navy — titres/texte foncé,
-`--primary-accent: #2dd4bf` réservé aux dégradés décoratifs non-texte),
-police Plus Jakarta Sans. Menu latéral desktop réductible (icônes seules,
-état persistant via `localStorage`), tiroir mobile, barre de chargement de
-navigation. `landing.html` et `base_auth.html` (pages publiques / connexion)
-ont leur propre CSS autonome avec les mêmes tokens de palette, ne dépendent
-pas de `base.html`.
-Logo/marque : bouclier + pouls (ligne de battement de cœur), dégradé
-turquoise, en SVG inline (pas de fichier image) — présent dans `base.html`
-(sidebar), `landing.html` (en-tête + pied de page) et `base_auth.html`. La
-favicon réutilise le même tracé (aplat `#0d9488`, sans dégradé, en data URI
-SVG dans chaque `<head>`) — pas de fichier statique, cohérent avec le fait
-qu'il n'existe pas de dossier `static/` utilisé dans ce projet (tout le
-CSS/SVG est inline dans les templates).
+rôles (nav conditionnelle selon `current_role`). Identité "Territoire A +
+Carte-bouclier" : palette teal/navy/terracotta SantéSN (`--primary: #0e7c86`
+teal vif — bordures/décoratif seulement, `--primary-strong: #095059` teal
+foncé — seule variante sûre pour texte/icône blancs en aplat,
+`--primary-dark: #0b2027` navy — titres/texte foncé, `--primary-light` /
+`--primary-accent: #4fb8ae` texte/icône colorés sur fond sombre + dégradés
+décoratifs non-texte, `--accent: #e0824f` terracotta — accent ponctuel
+uniquement, jamais en fond/aplat large, ex. ligne de battement de cœur du logo
+sur fond sombre), polices Manrope (titres, `h1`) + Public Sans (texte
+courant) + IBM Plex Mono (importée, réservée à un usage futur). Menu latéral
+desktop réductible (icônes seules, état persistant via `localStorage`),
+tiroir mobile, barre de chargement de navigation. `landing.html` et
+`base_auth.html` (pages publiques / connexion) ont leur propre CSS autonome
+avec les mêmes tokens de palette (nom de variable propre à chaque fichier,
+ex. `--vert`/`--vert-fort`/`--vert-fonce` dans `base_auth.html`), ne
+dépendent pas de `base.html`.
+Logo/marque : carte/bouclier à coins arrondis + pouls (ligne de battement de
+cœur), en SVG inline (pas de fichier image, pas de dégradé) — présent dans
+`base.html` (sidebar), `landing.html` (en-tête, mockup téléphone, pied de
+page) et `base_auth.html` (panneau de marque). Deux variantes selon le fond :
+sur fond clair, tracé plein `--primary` (`#0e7c86`) + battement blanc ; sur
+fond sombre (sidebar, pied de page de `landing.html`, panneau de marque de
+`base_auth.html`), tracé en contour clair (`#EFF4F3`, sans remplissage) +
+battement `--accent` terracotta (`#e0824f`). La favicon réutilise la variante
+fond clair (aplat `#0e7c86`, battement blanc, en data URI SVG dans chaque
+`<head>`) — pas de fichier statique, cohérent avec le fait qu'il n'existe pas
+de dossier `static/` utilisé dans ce projet (tout le CSS/SVG est inline dans
+les templates).
 Classes CSS existantes à réutiliser (ne pas dupliquer) : `.page-title`,
 `.panel`, `.grid`/`.stat` (obsolètes sur les 4 pages d'accueil par rôle,
 remplacées par `.dash-grid`/`.dash-stat`/`.dash-pill`), `.badge` (+
