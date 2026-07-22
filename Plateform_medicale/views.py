@@ -1453,7 +1453,10 @@ def scanner_ordonnance(request):
 @require_POST
 def valider_delivrance(request, pk):
     pharmacien = _pharmacien_courant(request)
-    ordonnance = get_object_or_404(Ordonnance, pk=pk)
+    if pharmacien is None:
+        return render(request, "pharmacien_fiche_manquante.html")
+    code_qr = request.POST.get("code_qr", "").strip().upper()
+    ordonnance = get_object_or_404(Ordonnance, pk=pk, code_qr=code_qr)
     if hasattr(ordonnance, "delivrance"):
         messages.error(request, "Cette ordonnance a deja ete delivree.")
     else:
