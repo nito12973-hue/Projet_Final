@@ -38,6 +38,7 @@
         <p class="subtitle">Confirmez que les medicaments ont ete remis au patient.</p>
         <form method="post" action="{% url 'valider_delivrance' ordonnance.pk %}">
             {% csrf_token %}
+            <input type="hidden" name="code_qr" value="{{ ordonnance.code_qr }}">
             <button type="submit" class="button primary">Valider la delivrance</button>
         </form>
         {% endif %}
