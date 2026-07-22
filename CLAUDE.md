@@ -1,6 +1,5 @@
 # SantéSN — plateforme de prise en charge médicale
 ## Thème du projet
-
 Plateforme numérique de gestion de la prise en charge médicale des assurés d'une
 assurance santé et de leurs ayants droit (conjoint, enfants). Un employé assuré
 enregistre ses ayants droit, chacun ayant une carte/identifiant de prise en

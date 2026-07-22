@@ -331,6 +331,28 @@ Assure (role_required(ASSURE), prefixe /assure/ + /espace/assure/)
   wizard), meme palette, CSS totalement autonome (pas de dependance a
   base.html).
 - landing.html : page publique, CSS autonome, meme palette navy/turquoise.
+  Refonte "premium" en cours, feuille de route en 4 phases (issue d'un
+  spec/plan docs/superpowers, contenu reporte ici puis dossier supprime).
+  Phase 1 livree (fondations + Hero + Statistiques) : nouveaux tokens CSS
+  --ombre-douce/--ombre-flottante/--ombre-forte (ombres etagees) et
+  --verre-fond/--verre-flou (glassmorphism leger, meme principe que le
+  <header> sticky deja en place) ; formes organiques SVG decoratives en
+  arriere-plan (basse opacite) ; Hero restructure avec mockup telephone
+  CSS pur (contenu = sous-ensemble de l'ancienne carte "Rendez-vous du
+  jour", aucune donnee inventee) entoure de 3 cartes satellites flottantes
+  desynchronisees (@keyframes flotter-lent/flotter-inverse, delais
+  differents) et de badges de confiance sous les CTA (icones _ICONES
+  existantes, aucune certification inventee) ; nouvelle section
+  Statistiques entre le Hero et Services (compteur anime au defilement,
+  reutilise l'IntersectionObserver de .revele deja en place) dont les
+  chiffres sont explicitement presentes comme des objectifs de deploiement
+  et non des donnees d'usage reelles (ligne de texte visible, pas cachee).
+  Tout respecte prefers-reduced-motion (bloc existant, aucune regle
+  ajoutee). Aucune route/vue/modele touche, aucune dependance ajoutee ;
+  seul landing.html est modifie. Phases 2-4 restant a faire : partenaires
+  ("Ils nous font confiance"), refonte des cartes Services et timeline
+  "Comment ca marche", section QR Code + showcase des 4 dashboards + carte
+  du Senegal illustrative, temoignages/FAQ/contact enrichi/footer premium.
 - templatetags/icones.py : dictionnaire _ICONES, tag {% icone "nom" %} —
   SVG trait fin 24x24 inline, aucune dependance externe (pas de police
   d'icones, pas de CDN). Toujours reutiliser une icone existante avant d'en
