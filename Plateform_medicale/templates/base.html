@@ -4,43 +4,48 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Plateforme medicale{% endblock %}</title>
-    <meta name="theme-color" content="#0f172a">
+    <meta name="theme-color" content="#0b2027">
     <meta name="color-scheme" content="light">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M24 4 L40 10 V22 C40 33 33 40.5 24 44 C15 40.5 8 33 8 22 V10 Z' fill='%230d9488'/%3E%3Cpath d='M10 20h4l2.4-5 3 10 2.4-7 1.6 2h6.6' fill='none' stroke='white' stroke-width='2.3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M11 15 H34 L41 22 V31 A5 5 0 0 1 36 36 H11 A5 5 0 0 1 6 31 V20 A5 5 0 0 1 11 15 Z' fill='%230e7c86'/%3E%3Cpath d='M12 26h4l2.5-5 3 10 2.5-7 1.5 2h11' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #eef6f5;
+            --bg: #eff4f3;
             --surface: #ffffff;
             /* Turquoise vif : bordures, decoratif, fonds derriere du texte fonce.
                Pas assez de contraste pour du texte/icone blancs en aplat. */
-            --primary: #14b8a6;
+            --primary: #0e7c86;
             /* Teal fonce : seule variante sure pour texte/icone blancs en aplat
                (boutons pleins) et pour texte/icone colores sur fond clair. */
-            --primary-strong: #0f766e;
+            --primary-strong: #095059;
             /* Navy : titres, texte fonce — identique au menu lateral. */
-            --primary-dark: #0f172a;
+            --primary-dark: #0b2027;
+            /* Variante claire : texte/icone colores sur fond sombre (sidebar). */
+            --primary-light: #4fb8ae;
             /* Reserve aux degrades decoratifs (barres, non-texte). */
-            --primary-accent: #2dd4bf;
-            --primary-soft: #e3f7f4;
+            --primary-accent: #4fb8ae;
+            --primary-soft: #dcece9;
+            /* Terracotta : accent ponctuel uniquement (jamais en fond/aplat large). */
+            --accent: #e0824f;
             --border: #d9e2ea;
             --text: #1f2933;
             --muted: #5f6f7d;
-            --danger: #b42318;
-            --success: #167a46;
-            --warning: #9a6700;
+            --danger: #b3261e;
+            --success: #1e7a4c;
+            --warning: #8a5a00;
+            --info: #1d5fa6;
 
             /* Menu lateral : memes teintes navy/turquoise que ci-dessus, tokens
                dedies pour les nuances propres au fond tres sombre de l'aside. */
-            --sb-bg: #0F172A;
+            --sb-bg: #0B2027;
             --sb-hover: rgba(255, 255, 255, 0.07);
             --sb-border: rgba(255, 255, 255, 0.09);
             --sb-text-muted: rgba(231, 236, 243, 0.66);
             --sb-text-faint: rgba(231, 236, 243, 0.42);
-            --accent-turquoise: #14b8a6;
-            --accent-turquoise-wash: rgba(20, 184, 166, 0.16);
+            --accent-turquoise: #0e7c86;
+            --accent-turquoise-wash: rgba(14, 124, 134, 0.16);
         }
 
         * {
@@ -49,19 +54,19 @@
 
         body {
             margin: 0;
-            font-family: 'Plus Jakarta Sans', 'Segoe UI', Arial, Helvetica, sans-serif;
+            font-family: 'Public Sans', 'Segoe UI', Arial, Helvetica, sans-serif;
             color: var(--text);
             background: var(--bg);
             min-height: 100vh;
         }
 
         ::selection {
-            background: rgba(20, 184, 166, 0.35);
+            background: rgba(14, 124, 134, 0.35);
         }
 
         * {
             scrollbar-width: thin;
-            scrollbar-color: rgba(15, 118, 110, 0.35) transparent;
+            scrollbar-color: rgba(9, 80, 89, 0.35) transparent;
         }
 
         ::-webkit-scrollbar {
@@ -297,6 +302,7 @@
         h1 {
             margin: 0 0 8px;
             color: var(--primary-dark);
+            font-family: 'Manrope', 'Public Sans', 'Segoe UI', Arial, sans-serif;
             font-size: 28px;
             font-weight: 800;
             line-height: 1.2;
@@ -529,7 +535,7 @@
         }
 
         .badge.en_attente {
-            background: #fff3cd;
+            background: #fff1d6;
             color: var(--warning);
         }
 
@@ -726,7 +732,7 @@
         .avis-succes { background: #dcfce7; border-color: #bbf7d0; }
         .avis-succes .avis-titre { color: var(--success); }
 
-        .avis-attente { background: #fff3cd; border-color: #ffe69c; }
+        .avis-attente { background: #fff1d6; border-color: #ffe69c; }
         .avis-attente .avis-titre { color: var(--warning); }
 
         /* Barre de filtres (formulaire GET en ligne, au-dessus d'une liste) et
@@ -852,7 +858,7 @@
         }
 
         .dash-pill.ok { background: #dcfce7; color: #15803d; }
-        .dash-pill.attente { background: #fff3cd; color: #9a6700; }
+        .dash-pill.attente { background: #fff1d6; color: var(--warning); }
         .dash-pill.danger { background: #fee4e2; color: #b42318; }
 
         /* ===== Barre de chargement (navigation/formulaires) ===== */
@@ -981,16 +987,10 @@
             <div class="sidebar-head">
                 <a class="brand" href="{% url 'post_login_redirect' %}">
                     <svg width="36" height="36" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="flex-shrink:0;">
-                        <path d="M24 4 L40 10 V22 C40 33 33 40.5 24 44 C15 40.5 8 33 8 22 V10 Z" fill="url(#degrade-logo-app)"/>
-                        <path d="M10 20h4l2.4-5 3 10 2.4-7 1.6 2h6.6" fill="none" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
-                        <defs>
-                            <linearGradient id="degrade-logo-app" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
-                                <stop stop-color="#14b8a6"/>
-                                <stop offset="1" stop-color="#0d9488"/>
-                            </linearGradient>
-                        </defs>
+                        <path d="M11 15 H34 L41 22 V31 A5 5 0 0 1 36 36 H11 A5 5 0 0 1 6 31 V20 A5 5 0 0 1 11 15 Z" fill="none" stroke="#EFF4F3" stroke-width="2.4"/>
+                        <path d="M12 26h4l2.5-5 3 10 2.5-7 1.5 2h11" fill="none" stroke="#E0824F" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
-                    <span class="brand-texte">Santé<span style="color: #5eead4;">SN</span></span>
+                    <span class="brand-texte">Santé<span style="color: var(--primary-light);">SN</span></span>
                 </a>
                 {% if user.is_authenticated %}
                 <button type="button" id="btn-reduire-menu" class="btn-reduire" aria-pressed="false" aria-label="Réduire le menu" aria-controls="barre-laterale">
