@@ -322,15 +322,17 @@ Assure (role_required(ASSURE), prefixe /assure/ + /espace/assure/)
 5. TEMPLATES ET DESIGN SYSTEM
 --------------------------------
 - base.html : shell unique (sidebar + zone de contenu), partage par les 4
-  roles connectes ; navigation conditionnelle selon current_role. Palette
-  navy (#0F172A) / turquoise (#14B8A6) — --primary-strong (#0F766E) reserve
-  aux elements avec texte/icone blancs en aplat (contraste insuffisant avec
-  le turquoise vif seul). Mode reduit du menu (icones seules, persistant via
+  roles connectes ; navigation conditionnelle selon current_role. Identite
+  "Territoire A + Carte-bouclier" : palette navy (#0B2027) / teal (#0E7C86)
+  — --primary-strong (#095059) reserve aux elements avec texte/icone blancs
+  en aplat (contraste insuffisant avec le teal vif seul) — / terracotta
+  (#E0824F, --accent, ponctuel uniquement). Polices Manrope (titres) + Public
+  Sans (texte courant). Mode reduit du menu (icones seules, persistant via
   localStorage), tiroir mobile, barre de chargement de navigation.
 - base_auth.html : shell independant pour connexion/installation (setup
   wizard), meme palette, CSS totalement autonome (pas de dependance a
   base.html).
-- landing.html : page publique, CSS autonome, meme palette navy/turquoise.
+- landing.html : page publique, CSS autonome, meme palette navy/teal.
   Refonte "premium" en cours, feuille de route en 4 phases (issue d'un
   spec/plan docs/superpowers, contenu reporte ici puis dossier supprime).
   Phase 1 livree (fondations + Hero + Statistiques) : nouveaux tokens CSS
