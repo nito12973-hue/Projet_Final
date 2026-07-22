@@ -553,16 +553,43 @@ class EspacePharmacienTests(TestCase):
         self.assertContains(response, 'Aucune ordonnance ne correspond a ce code.')
 
     def test_validation_delivrance(self):
-        response = self.client.post(reverse('valider_delivrance', args=[self.ordonnance.pk]))
+        response = self.client.post(reverse('valider_delivrance', args=[self.ordonnance.pk]), {
+            'code_qr': self.ordonnance.code_qr,
+        })
         self.assertRedirects(response, reverse('historique_delivrances'))
         delivrance = Delivrance.objects.get(ordonnance=self.ordonnance)
         self.assertEqual(delivrance.pharmacien, self.pharmacien)
 
     def test_double_delivrance_refusee(self):
         Delivrance.objects.create(ordonnance=self.ordonnance, pharmacien=self.pharmacien)
-        response = self.client.post(reverse('valider_delivrance', args=[self.ordonnance.pk]))
+        response = self.client.post(reverse('valider_delivrance', args=[self.ordonnance.pk]), {
+            'code_qr': self.ordonnance.code_qr,
+        })
         self.assertRedirects(response, reverse('historique_delivrances'))
         self.assertEqual(Delivrance.objects.filter(ordonnance=self.ordonnance).count(), 1)
+
+    def test_validation_delivrance_sans_scan_prealable_refusee(self):
+        """Contourner le scan en POSTant directement sur l'ordonnance (sans code_qr) doit echouer."""
+        response = self.client.post(reverse('valider_delivrance', args=[self.ordonnance.pk]))
+        self.assertEqual(response.status_code, 404)
+        self.assertFalse(Delivrance.objects.filter(ordonnance=self.ordonnance).exists())
+
+    def test_validation_delivrance_code_qr_incorrect_refusee(self):
+        response = self.client.post(reverse('valider_delivrance', args=[self.ordonnance.pk]), {
+            'code_qr': 'RX-AUTRECODE1',
+        })
+        self.assertEqual(response.status_code, 404)
+        self.assertFalse(Delivrance.objects.filter(ordonnance=self.ordonnance).exists())
+
+    def test_validation_delivrance_pharmacien_sans_fiche(self):
+        self.client.logout()
+        creer_utilisateur(User.Role.PHARMACIEN, 'pharmacien-sans-fiche@santesn.sn')
+        self.client.login(username='pharmacien-sans-fiche@santesn.sn', password=PASSWORD)
+        response = self.client.post(reverse('valider_delivrance', args=[self.ordonnance.pk]), {
+            'code_qr': self.ordonnance.code_qr,
+        })
+        self.assertTemplateUsed(response, 'pharmacien_fiche_manquante.html')
+        self.assertFalse(Delivrance.objects.filter(ordonnance=self.ordonnance).exists())
 
     def test_historique_scope_au_pharmacien_connecte(self):
         autre_pharmacien = creer_pharmacien('pharmacien2@santesn.sn')
