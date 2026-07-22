@@ -58,20 +58,35 @@ Prestataire
   PHARMACIE / CABINET), adresse, ville, telephone, partenaire (bool),
   date_conventionnement, latitude / longitude (DecimalField, null=True,
   blank=True — renseignees en cliquant sur une carte Leaflet dans les
-  formulaires admin ajouter_prestataire / modifier_prestataire).
+  formulaires admin ajouter_prestataire / modifier_prestataire, ou via le
+  bouton "Rechercher sur la carte" qui interroge Nominatim/OpenStreetMap
+  a partir du champ ville, cf. plus bas).
   Rattache a Medecin, Pharmacien, ServiceMedical, RendezVous (tous en
   ForeignKey optionnelle, SET_NULL a la suppression).
+  liste_prestataires : filtre GET "localisation" (sans/avec latitude+
+  longitude renseignees) en plus du tableau existant, pour reperer les
+  prestataires pas encore places sur la carte.
 
 distance_km(lat1, lon1, lat2, lon2)
   Fonction pure (haversine, pas d'acces base) dans models.py : distance a
   vol d'oiseau entre deux points, en kilometres. Choix volontaire plutot
   qu'un service de routage externe (pas de cle API, pas de dependance
-  reseau pour un simple tri). Coordonnees saisies a la main par l'admin
-  (pin sur la carte) plutot que geocodees automatiquement depuis
-  l'adresse — pas de service de geocodage integre au projet.
+  reseau pour un simple tri).
   Hors perimetre (non demande, a ne pas ajouter sans nouvelle demande) :
   filtrage des medecins par prestataire selectionne, calcul d'itineraire
   reel, vue carte globale du reseau cote Admin.
+
+Recherche de lieu sur la carte (ajouter_prestataire / modifier_prestataire)
+  Bouton "Rechercher sur la carte" (JS inline, meme bloc <script> que la
+  carte Leaflet) : requete cote client vers nominatim.openstreetmap.org
+  (recherche d'OpenStreetMap, gratuite, sans cle API, meme service que les
+  tuiles deja utilisees pour la carte), limitee au Senegal
+  (countrycodes=sn), a partir du champ ville. Si un resultat existe, la
+  carte se centre dessus et le marqueur/les champs caches latitude/
+  longitude sont mis a jour automatiquement — exactement comme un clic
+  manuel sur la carte, qui reste toujours possible en complement (message
+  inline si le lieu est introuvable ou le service indisponible, pas
+  d'alerte navigateur).
 
 Patient
   Assure principal OU ayant droit (type_beneficiaire).
