@@ -11,6 +11,21 @@
     <a class="button primary" href="{% url 'ajouter_prestataire' %}">Ajouter un prestataire</a>
 </section>
 
+<form method="get" class="filtres">
+    <div style="min-width:220px;">
+        <label for="localisation">Localisation</label>
+        <select id="localisation" name="localisation" style="margin-bottom:0;">
+            <option value="">Toutes</option>
+            <option value="sans" {% if localisation_choisie == "sans" %}selected{% endif %}>Sans localisation</option>
+            <option value="avec" {% if localisation_choisie == "avec" %}selected{% endif %}>Avec localisation</option>
+        </select>
+    </div>
+    <button type="submit" class="button primary btn">Filtrer</button>
+    {% if localisation_choisie %}
+    <a href="{% url 'liste_prestataires' %}" class="button btn">Reinitialiser</a>
+    {% endif %}
+</form>
+
 {% if prestataires %}
 <section class="panel">
     <table>
@@ -21,6 +36,7 @@
                 <th>Ville</th>
                 <th>Telephone</th>
                 <th>Partenaire</th>
+                <th>Localisation</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -36,6 +52,13 @@
                     <span class="badge validee">Actif</span>
                     {% else %}
                     <span class="badge refusee">Inactif</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if prestataire.latitude and prestataire.longitude %}
+                    <span class="badge validee">Localise</span>
+                    {% else %}
+                    <span class="badge en_attente">Sans localisation</span>
                     {% endif %}
                 </td>
                 <td>

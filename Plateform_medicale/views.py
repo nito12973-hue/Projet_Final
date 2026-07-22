@@ -598,7 +598,22 @@ def marquer_paiement_regle(request, pk):
 @admin_required
 def liste_prestataires(request):
     prestataires = Prestataire.objects.all()
-    return render(request, "liste_prestataires.html", {"prestataires": prestataires})
+
+    localisation = request.GET.get("localisation", "")
+    if localisation == "sans":
+        prestataires = prestataires.filter(
+            Q(latitude__isnull=True) | Q(longitude__isnull=True)
+        )
+    elif localisation == "avec":
+        prestataires = prestataires.filter(
+            latitude__isnull=False, longitude__isnull=False
+        )
+
+    contexte = {
+        "prestataires": prestataires,
+        "localisation_choisie": localisation,
+    }
+    return render(request, "liste_prestataires.html", contexte)
 
 
 @admin_required
@@ -1121,12 +1136,12 @@ def telecharger_modele_import_utilisateurs(request):
     feuille.title = "Import utilisateurs"
     feuille.append(COLONNES_IMPORT_UTILISATEURS)
     feuille.append([
-        "awa.diop@exemple.sn", "Awa", "Diop", "770000000", "Assure",
-        "15/03/1990", "", "", "",
-    ])
-    feuille.append([
-        "moussa.fall@exemple.sn", "Moussa", "Fall", "770000001", "Medecin",
-        "", "Medecine generale", "", "",
+        "email@domaine.com", "Prenom", "Nom", "770000000",
+        "Assure / Medecin / Pharmacien / Administrateur",
+        "JJ/MM/AAAA (uniquement pour un Assure)",
+        "Ex: Medecine generale (uniquement pour un Medecin)",
+        "Nom exact d'un prestataire existant (optionnel)",
+        "Nom exact d'un plan de couverture existant (optionnel)",
     ])
 
     for index, nom_colonne in enumerate(COLONNES_IMPORT_UTILISATEURS, start=1):

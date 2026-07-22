@@ -23,8 +23,12 @@
     {% endfor %}
 
     <label>Emplacement sur la carte (facultatif)</label>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
+        <button type="button" id="bouton-recherche-lieu" class="button btn">Rechercher sur la carte</button>
+        <span id="statut-recherche-lieu" class="subtitle" style="margin:0;"></span>
+    </div>
     <div id="carte-prestataire" style="height: 320px; border-radius: 12px; margin-bottom: 8px;"></div>
-    <p class="subtitle" style="margin-top:0;margin-bottom:16px;">Cliquez sur la carte pour placer ou deplacer le prestataire.</p>
+    <p class="subtitle" style="margin-top:0;margin-bottom:16px;">Cliquez sur la carte pour placer ou deplacer le prestataire, ou renseignez la ville ci-dessus puis utilisez "Rechercher sur la carte".</p>
 
     <button class="button primary" type="submit">Enregistrer</button>
 </form>
@@ -62,6 +66,48 @@
             champLatitude.value = position.lat.toFixed(6);
             champLongitude.value = position.lng.toFixed(6);
         });
+
+        // Recherche du lieu (ville/region/departement) via Nominatim (OpenStreetMap),
+        // meme ecosysteme que les tuiles de la carte : gratuit, sans cle API.
+        var champVille = document.getElementById('id_ville');
+        var boutonRecherche = document.getElementById('bouton-recherche-lieu');
+        var statutRecherche = document.getElementById('statut-recherche-lieu');
+
+        if (boutonRecherche) {
+            boutonRecherche.addEventListener('click', function () {
+                var requete = (champVille.value || '').trim();
+                if (!requete) {
+                    statutRecherche.textContent = "Indiquez d'abord une ville ci-dessus.";
+                    return;
+                }
+                statutRecherche.textContent = 'Recherche en cours...';
+                var url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=sn&q='
+                    + encodeURIComponent(requete + ', Senegal');
+
+                fetch(url, { headers: { 'Accept': 'application/json' } })
+                    .then(function (reponse) { return reponse.ok ? reponse.json() : []; })
+                    .then(function (resultats) {
+                        if (!resultats || !resultats.length) {
+                            statutRecherche.textContent = 'Lieu introuvable. Placez le point manuellement sur la carte.';
+                            return;
+                        }
+                        var lieu = resultats[0];
+                        var position = [parseFloat(lieu.lat), parseFloat(lieu.lon)];
+                        carte.setView(position, 13);
+                        if (marqueur) {
+                            marqueur.setLatLng(position);
+                        } else {
+                            marqueur = L.marker(position).addTo(carte);
+                        }
+                        champLatitude.value = position[0].toFixed(6);
+                        champLongitude.value = position[1].toFixed(6);
+                        statutRecherche.textContent = 'Lieu trouve : ' + (lieu.display_name || requete) + '.';
+                    })
+                    .catch(function () {
+                        statutRecherche.textContent = 'Recherche indisponible pour le moment. Placez le point manuellement.';
+                    });
+            });
+        }
     })();
 </script>
 {% endblock %}

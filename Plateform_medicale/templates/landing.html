@@ -60,7 +60,15 @@
         body {
             font-family: 'Public Sans', 'Segoe UI', Arial, sans-serif;
             color: var(--text);
-            background: #ffffff;
+            /* Arriere-plan de la page : reprend le motif "croix medicale" deja
+               utilise dans le Hero (--masque-croix), en trame tres discrete,
+               plutot qu'une photo (pas de dossier static/ dans ce projet). */
+            background-color: #ffffff;
+            background-image:
+                radial-gradient(1100px 620px at 86% -6%, rgba(14, 124, 134, 0.07), transparent 60%),
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cpath d='M25 6h6v13h13v6H31v13h-6V25H12v-6h13V6z' fill='%230e7c86' fill-opacity='0.05'/%3E%3C/svg%3E");
+            background-repeat: no-repeat, repeat;
+            background-attachment: fixed, fixed;
             line-height: 1.6;
         }
 

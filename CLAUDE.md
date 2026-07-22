@@ -112,6 +112,16 @@ Fonctionnalités livrées après les 15 phases initiales, hors numérotation :
   repli par ville sinon), présélection du prestataire dans le formulaire de
   rendez-vous. Détail technique dans `FONCTIONNEMENT.txt` (modèle, vue,
   templates, règle anti-XSS pour les popups Leaflet).
+- **Recherche de lieu sur la carte** (Admin, `ajouter_prestataire` /
+  `modifier_prestataire`) — bouton "Rechercher sur la carte" à côté du champ
+  ville : requête côté client vers Nominatim (service de recherche
+  d'OpenStreetMap, même écosystème que les tuiles déjà utilisées, gratuit,
+  sans clé API), limitée au Sénégal (`countrycodes=sn`). Si le lieu existe
+  dans les données OpenStreetMap, la carte se centre dessus et le marqueur
+  se place automatiquement (mêmes champs cachés `latitude`/`longitude` que
+  le clic manuel sur la carte, qui reste toujours possible). Si le lieu est
+  introuvable ou le service indisponible, message inline sous le bouton
+  (pas d'alerte navigateur) invitant à placer le point manuellement.
 
 ## Documents de travail (specs / plans)
 
