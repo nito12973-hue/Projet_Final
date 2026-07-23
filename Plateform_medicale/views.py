@@ -1,5 +1,9 @@
 import datetime
+import json
 import unicodedata
+import urllib.error
+import urllib.parse
+import urllib.request
 from functools import wraps
 
 import openpyxl
@@ -17,7 +21,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import Count, Q
 from django.db.models.functions import TruncMonth
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -614,6 +618,49 @@ def liste_prestataires(request):
         "localisation_choisie": localisation,
     }
     return render(request, "liste_prestataires.html", contexte)
+
+
+@admin_required
+def recherche_lieu_prestataire(request):
+    """
+    Relais serveur vers Nominatim (recherche OpenStreetMap) pour le bouton
+    "Rechercher sur la carte" des formulaires prestataire. Un appel direct
+    navigateur -> Nominatim est sujet a des echecs intermittents (CORS
+    incoherent derriere leur cache, User-Agent de fetch() non identifiant) ;
+    en passant par le serveur, la requete est same-origin cote navigateur et
+    peut porter un User-Agent conforme a la politique d'usage de Nominatim.
+    """
+    requete = request.GET.get("q", "").strip()
+    if not requete:
+        return JsonResponse({"trouve": False})
+
+    parametres = urllib.parse.urlencode({
+        "format": "json",
+        "limit": 1,
+        "countrycodes": "sn",
+        "q": f"{requete}, Senegal",
+    })
+    url = f"https://nominatim.openstreetmap.org/search?{parametres}"
+    requete_http = urllib.request.Request(
+        url, headers={"User-Agent": "SanteSN-PlateformeMedicale/1.0"}
+    )
+
+    try:
+        with urllib.request.urlopen(requete_http, timeout=5) as reponse:
+            resultats = json.loads(reponse.read().decode("utf-8"))
+    except (urllib.error.URLError, TimeoutError, ValueError):
+        return JsonResponse({"trouve": False, "erreur": "service_indisponible"})
+
+    if not resultats:
+        return JsonResponse({"trouve": False})
+
+    lieu = resultats[0]
+    return JsonResponse({
+        "trouve": True,
+        "lat": lieu.get("lat"),
+        "lon": lieu.get("lon"),
+        "nom": lieu.get("display_name", requete),
+    })
 
 
 @admin_required

@@ -68,8 +68,9 @@
             champLongitude.value = position.lng.toFixed(6);
         });
 
-        // Recherche du lieu (ville/region/departement) via Nominatim (OpenStreetMap),
-        // meme ecosysteme que les tuiles de la carte : gratuit, sans cle API.
+        // Recherche du lieu (ville/region/departement) : relais serveur
+        // ({% url 'recherche_lieu_prestataire' %}) vers Nominatim (OpenStreetMap),
+        // meme ecosysteme que les tuiles de la carte, gratuit, sans cle API.
         var champVille = document.getElementById('id_ville');
         var boutonRecherche = document.getElementById('bouton-recherche-lieu');
         var statutRecherche = document.getElementById('statut-recherche-lieu');
@@ -82,18 +83,16 @@
                     return;
                 }
                 statutRecherche.textContent = 'Recherche en cours...';
-                var url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=sn&q='
-                    + encodeURIComponent(requete + ', Senegal');
+                var url = '{% url "recherche_lieu_prestataire" %}?q=' + encodeURIComponent(requete);
 
                 fetch(url, { headers: { 'Accept': 'application/json' } })
-                    .then(function (reponse) { return reponse.ok ? reponse.json() : []; })
-                    .then(function (resultats) {
-                        if (!resultats || !resultats.length) {
+                    .then(function (reponse) { return reponse.json(); })
+                    .then(function (resultat) {
+                        if (!resultat || !resultat.trouve) {
                             statutRecherche.textContent = 'Lieu introuvable. Placez le point manuellement sur la carte.';
                             return;
                         }
-                        var lieu = resultats[0];
-                        var position = [parseFloat(lieu.lat), parseFloat(lieu.lon)];
+                        var position = [parseFloat(resultat.lat), parseFloat(resultat.lon)];
                         carte.setView(position, 13);
                         if (marqueur) {
                             marqueur.setLatLng(position);
@@ -102,7 +101,7 @@
                         }
                         champLatitude.value = position[0].toFixed(6);
                         champLongitude.value = position[1].toFixed(6);
-                        statutRecherche.textContent = 'Lieu trouve : ' + (lieu.display_name || requete) + '.';
+                        statutRecherche.textContent = 'Lieu trouve : ' + (resultat.nom || requete) + '.';
                     })
                     .catch(function () {
                         statutRecherche.textContent = 'Recherche indisponible pour le moment. Placez le point manuellement.';

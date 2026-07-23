@@ -114,14 +114,20 @@ Fonctionnalités livrées après les 15 phases initiales, hors numérotation :
   templates, règle anti-XSS pour les popups Leaflet).
 - **Recherche de lieu sur la carte** (Admin, `ajouter_prestataire` /
   `modifier_prestataire`) — bouton "Rechercher sur la carte" à côté du champ
-  ville : requête côté client vers Nominatim (service de recherche
-  d'OpenStreetMap, même écosystème que les tuiles déjà utilisées, gratuit,
-  sans clé API), limitée au Sénégal (`countrycodes=sn`). Si le lieu existe
-  dans les données OpenStreetMap, la carte se centre dessus et le marqueur
-  se place automatiquement (mêmes champs cachés `latitude`/`longitude` que
-  le clic manuel sur la carte, qui reste toujours possible). Si le lieu est
-  introuvable ou le service indisponible, message inline sous le bouton
-  (pas d'alerte navigateur) invitant à placer le point manuellement.
+  ville, qui appelle la vue `recherche_lieu_prestataire` (relais serveur,
+  même origine que le site) plutôt que Nominatim directement depuis le
+  navigateur : un appel client direct s'est révélé peu fiable en test (le
+  cache CDN de Nominatim ne fait pas varier ses réponses selon `Origin`,
+  d'où un en-tête CORS présent une fois sur deux, et `fetch()` ne peut pas
+  porter de User-Agent applicatif identifiant, ce que la politique d'usage
+  de Nominatim attend). La vue interroge Nominatim côté serveur
+  (`urllib.request`, pas de nouvelle dépendance) avec un User-Agent dédié,
+  limité au Sénégal (`countrycodes=sn`), et renvoie un JSON minimal
+  (`trouve`/`lat`/`lon`/`nom`). Si le lieu existe, la carte se centre dessus
+  et le marqueur se place automatiquement (mêmes champs cachés
+  `latitude`/`longitude` que le clic manuel sur la carte, qui reste
+  toujours possible). Si le lieu est introuvable ou le service indisponible,
+  message inline sous le bouton (pas d'alerte navigateur).
 
 ## Documents de travail (specs / plans)
 

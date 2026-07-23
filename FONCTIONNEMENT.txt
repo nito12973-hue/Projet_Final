@@ -78,15 +78,24 @@ distance_km(lat1, lon1, lat2, lon2)
 
 Recherche de lieu sur la carte (ajouter_prestataire / modifier_prestataire)
   Bouton "Rechercher sur la carte" (JS inline, meme bloc <script> que la
-  carte Leaflet) : requete cote client vers nominatim.openstreetmap.org
-  (recherche d'OpenStreetMap, gratuite, sans cle API, meme service que les
-  tuiles deja utilisees pour la carte), limitee au Senegal
-  (countrycodes=sn), a partir du champ ville. Si un resultat existe, la
-  carte se centre dessus et le marqueur/les champs caches latitude/
-  longitude sont mis a jour automatiquement — exactement comme un clic
-  manuel sur la carte, qui reste toujours possible en complement (message
-  inline si le lieu est introuvable ou le service indisponible, pas
-  d'alerte navigateur).
+  carte Leaflet) qui appelle la vue recherche_lieu_prestataire (meme
+  origine que le site) au lieu d'appeler nominatim.openstreetmap.org
+  directement depuis le navigateur. Teste puis abandonne : l'appel direct
+  navigateur -> Nominatim echoue par intermittence (le cache CDN de
+  Nominatim ne varie pas selon l'en-tete Origin, donc l'en-tete CORS
+  Access-Control-Allow-Origin est absent une fois sur deux ; fetch() ne
+  peut pas non plus porter de User-Agent applicatif identifiant, attendu
+  par la politique d'usage de Nominatim).
+  recherche_lieu_prestataire (@admin_required, GET ?q=<ville>) interroge
+  Nominatim cote serveur via urllib.request (stdlib, aucune nouvelle
+  dependance) avec un User-Agent dedie, limite au Senegal
+  (countrycodes=sn), et renvoie un JSON minimal : {"trouve": true/false,
+  "lat", "lon", "nom"} ; erreur reseau/timeout -> {"trouve": false,
+  "erreur": "service_indisponible"} (jamais d'exception non geree).
+  Cote JS : si trouve, la carte se centre et le marqueur/les champs caches
+  latitude/longitude sont mis a jour — exactement comme un clic manuel sur
+  la carte, qui reste toujours possible en complement (message inline si
+  introuvable ou service indisponible, pas d'alerte navigateur).
 
 Patient
   Assure principal OU ayant droit (type_beneficiaire).
