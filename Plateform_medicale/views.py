@@ -1559,9 +1559,17 @@ def prestataires_proches(request):
     avec_coordonnees = prestataires_partenaires.filter(
         latitude__isnull=False, longitude__isnull=False
     )
-    sans_coordonnees = prestataires_partenaires.filter(
-        Q(latitude__isnull=True) | Q(longitude__isnull=True)
-    ).order_by("ville", "nom")
+    sans_coordonnees = list(
+        prestataires_partenaires.filter(
+            Q(latitude__isnull=True) | Q(longitude__isnull=True)
+        ).order_by("ville", "nom")
+    )
+    for prestataire in sans_coordonnees:
+        morceaux = [valeur for valeur in (prestataire.nom, prestataire.ville) if valeur]
+        prestataire.lien_itineraire = (
+            "https://www.google.com/maps/dir/?api=1&destination="
+            + urllib.parse.quote(", ".join(morceaux) + ", Senegal")
+        )
 
     lat_param = request.GET.get("lat")
     lng_param = request.GET.get("lng")
