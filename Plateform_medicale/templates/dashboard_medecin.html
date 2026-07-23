@@ -28,11 +28,11 @@
         <strong>{{ total_consultations }}</strong>
         <span>Consultations</span>
     </a>
-    <div class="dash-stat">
+    <a class="dash-stat" href="{% url 'historique_consultations' %}">
         <span class="dash-stat-icon">{% icone "pill" %}</span>
         <strong>{{ total_ordonnances }}</strong>
         <span>Ordonnances emises</span>
-    </div>
+    </a>
 </section>
 
 <section class="panel" style="margin-top: 22px;">
