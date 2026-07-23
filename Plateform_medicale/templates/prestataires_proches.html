@@ -69,12 +69,26 @@
 <section class="panel" style="margin-top: 20px; padding: 20px;">
     <h2 style="margin-top:0;">Autres prestataires du reseau</h2>
     <p class="subtitle">Localisation non renseignee, non affiches sur la carte.</p>
-    <ul>
+    <div class="grille-prestataires-sans-loc">
         {% for prestataire in prestataires_sans_coordonnees %}
-        <li>{{ prestataire.nom }} ({{ prestataire.get_type_prestataire_display }}, {{ prestataire.ville }}) —
-            <a href="{% url 'ajouter_rendez_vous_assure' %}?prestataire={{ prestataire.pk }}">Prendre rendez-vous</a></li>
+        <article class="panel carte-prestataire-sans-loc">
+            <div class="carte-prestataire-entete">
+                <span class="dash-stat-icon">
+                    {% if prestataire.type_prestataire == "PHARMACIE" %}{% icone "pill" %}
+                    {% elif prestataire.type_prestataire == "CABINET" %}{% icone "stethoscope" %}
+                    {% else %}{% icone "building" %}{% endif %}
+                </span>
+                <div>
+                    <h3>{{ prestataire.nom }}</h3>
+                    <p class="subtitle">{{ prestataire.get_type_prestataire_display }} - {{ prestataire.ville|default:"Ville non renseignee" }}</p>
+                </div>
+            </div>
+            <div class="actions">
+                <a class="button primary" href="{% url 'ajouter_rendez_vous_assure' %}?prestataire={{ prestataire.pk }}">Prendre rendez-vous</a>
+            </div>
+        </article>
         {% endfor %}
-    </ul>
+    </div>
 </section>
 {% endif %}
 
@@ -121,6 +135,28 @@
         display: flex;
         flex-direction: column;
         gap: 14px;
+    }
+
+    .grille-prestataires-sans-loc {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 14px;
+        margin-top: 16px;
+    }
+
+    .carte-prestataire-sans-loc {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        padding: 16px;
+    }
+
+    .carte-prestataire-sans-loc .actions {
+        margin-top: auto;
+    }
+
+    .carte-prestataire-sans-loc .carte-prestataire-entete {
+        margin-bottom: 0;
     }
 
     .carte-prestataire-entete {
