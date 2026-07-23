@@ -18,6 +18,21 @@
         <strong>{{ total_delivrances }}</strong>
         <span>Delivrances validees</span>
     </a>
+    <a class="dash-stat" href="{% url 'historique_delivrances' %}">
+        <span class="dash-stat-icon">{% icone "zap" %}</span>
+        <strong>{{ delivrances_aujourd_hui }}</strong>
+        <span>Aujourd'hui</span>
+    </a>
+    <a class="dash-stat" href="{% url 'historique_delivrances' %}">
+        <span class="dash-stat-icon">{% icone "calendar" %}</span>
+        <strong>{{ delivrances_semaine }}</strong>
+        <span>Cette semaine</span>
+    </a>
+    <a class="dash-stat" href="{% url 'historique_delivrances' %}">
+        <span class="dash-stat-icon">{% icone "users" %}</span>
+        <strong>{{ patients_servis }}</strong>
+        <span>Patients servis</span>
+    </a>
 </section>
 
 <section class="panel" style="margin-top: 22px;">
