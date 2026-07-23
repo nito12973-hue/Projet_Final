@@ -152,6 +152,39 @@ _ICONES = {
         '<line x1="12" y1="9.5" x2="12" y2="14"/>'
         '<line x1="12" y1="17" x2="12" y2="17.01"/>'
     ),
+    "search": (
+        '<circle cx="11" cy="11" r="7"/>'
+        '<line x1="21" y1="21" x2="16.5" y2="16.5"/>'
+    ),
+    "filter": (
+        '<path d="M4 5h16M7 12h10M10 19h4"/>'
+    ),
+    "edit-2": (
+        '<path d="M4 20l1-4L16 5l3 3L8 19l-4 1z"/>'
+    ),
+    "trash-2": (
+        '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>'
+    ),
+    "eye": (
+        '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/>'
+        '<circle cx="12" cy="12" r="2.5"/>'
+    ),
+    "key": (
+        '<circle cx="8" cy="15" r="4"/>'
+        '<path d="M11 12l9-9M16 6l2 2M19 3l2 2"/>'
+    ),
+    "credit-card": (
+        '<rect x="2.5" y="5" width="19" height="14" rx="2"/>'
+        '<line x1="2.5" y1="9.5" x2="21.5" y2="9.5"/>'
+    ),
+    "plus-circle": (
+        '<circle cx="12" cy="12" r="9"/>'
+        '<path d="M12 8v8M8 12h8"/>'
+    ),
+    "copy": (
+        '<rect x="4" y="4" width="13" height="13" rx="2"/>'
+        '<path d="M8 4V2.5h13V15h-1.5"/>'
+    ),
 }
 
 
