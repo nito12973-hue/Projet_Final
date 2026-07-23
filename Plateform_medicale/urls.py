@@ -55,6 +55,7 @@ urlpatterns = [
     path('paiements/<int:pk>/regler/', views.marquer_paiement_regle, name='marquer_paiement_regle'),
 
     path('prestataires/', views.liste_prestataires, name='liste_prestataires'),
+    path('prestataires/recherche-lieu/', views.recherche_lieu_prestataire, name='recherche_lieu_prestataire'),
     path('prestataires/ajouter/', views.ajouter_prestataire, name='ajouter_prestataire'),
     path('prestataires/<int:pk>/modifier/', views.modifier_prestataire, name='modifier_prestataire'),
     path('prestataires/<int:pk>/supprimer/', views.supprimer_prestataire, name='supprimer_prestataire'),
