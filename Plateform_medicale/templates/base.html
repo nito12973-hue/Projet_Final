@@ -720,12 +720,21 @@
         }
 
         .action-tile {
+            display: block;
             padding: 18px;
             border: 1px solid var(--border);
             border-radius: 14px;
             background: var(--primary-soft);
             color: var(--primary-strong);
             font-weight: 700;
+            text-decoration: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+
+        a.action-tile:hover {
+            transform: translateY(-3px);
+            border-color: #8fcac2;
+            box-shadow: 0 12px 28px rgba(14, 124, 134, 0.16);
         }
 
         /* ===== Cartes de stats "accueil" (turquoise), utilisees uniquement sur
@@ -1257,6 +1266,28 @@
 
             document.addEventListener('submit', function () {
                 demarrerBarre();
+            });
+        })();
+
+        (function () {
+            // Compteur anime sur les chiffres cles des dashboards (.dash-stat
+            // strong) : meme principe que la landing (Phase 1), sans le
+            // suffixe "+" car ce sont des totaux exacts, pas des objectifs.
+            var reductionMouvement = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            if (reductionMouvement) { return; }
+
+            document.querySelectorAll('.dash-stat strong').forEach(function (element) {
+                var cible = parseInt(element.textContent.replace(/\s/g, ''), 10);
+                if (!isFinite(cible)) { return; }
+                var duree = 900;
+                var debut = performance.now();
+                function etape(instant) {
+                    var progression = Math.min((instant - debut) / duree, 1);
+                    var progressionAttenuee = 1 - Math.pow(1 - progression, 2);
+                    element.textContent = Math.round(cible * progressionAttenuee).toLocaleString('fr-FR');
+                    if (progression < 1) { requestAnimationFrame(etape); }
+                }
+                requestAnimationFrame(etape);
             });
         })();
     </script>
