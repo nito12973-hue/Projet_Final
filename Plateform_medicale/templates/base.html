@@ -315,6 +315,13 @@
             color: var(--muted);
         }
 
+        /* Aide contextuelle sous un champ de formulaire (field.help_text). */
+        .aide {
+            margin: -10px 0 16px;
+            font-size: 12.5px;
+            color: var(--muted);
+        }
+
         .panel,
         .empty {
             background: var(--surface);
@@ -787,6 +794,120 @@
         .dash-pill.ok { background: #dcfce7; color: #15803d; }
         .dash-pill.attente { background: #fff1d6; color: var(--warning); }
         .dash-pill.danger { background: #fee4e2; color: var(--danger); }
+
+        /* Identifiants/codes (numero de carte, code QR, mot de passe genere) :
+           IBM Plex Mono deja chargee mais jamais utilisee jusqu'ici, chiffres
+           tabulaires pour un alignement propre. */
+        .code {
+            font-family: 'IBM Plex Mono', 'Cascadia Code', Consolas, monospace;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 0.02em;
+        }
+
+        /* ===== Carte de prise en charge (assure/ayant droit) =====
+           Le produit s'appelle une carte de prise en charge ; jusqu'ici son
+           numero n'etait jamais qu'un texte brut. Format proche d'une carte
+           bancaire (ratio ISO/IEC 7810), degrade identique a .button.primary. */
+        .carte-assure {
+            position: relative;
+            width: 100%;
+            max-width: 360px;
+            aspect-ratio: 1.586 / 1;
+            border-radius: 18px;
+            padding: 22px 24px;
+            color: #ffffff;
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-strong) 100%);
+            box-shadow: 0 14px 34px rgba(11, 32, 39, 0.28);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden;
+        }
+
+        .carte-assure::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(120% 100% at 100% 0%, rgba(79, 184, 174, 0.35), transparent 60%);
+            pointer-events: none;
+        }
+
+        .carte-assure-entete {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .carte-assure-puce {
+            width: 34px;
+            height: 24px;
+            border-radius: 5px;
+            background: linear-gradient(135deg, var(--accent) 0%, #f0a875 100%);
+        }
+
+        .carte-assure-label {
+            position: relative;
+            margin: 16px 0 2px;
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.72);
+        }
+
+        .carte-assure-numero {
+            position: relative;
+            margin: 0;
+            font-size: 21px;
+        }
+
+        .carte-assure-pied {
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .carte-assure-nom {
+            display: block;
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        .carte-assure-type {
+            display: block;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.72);
+        }
+
+        .carte-assure-couverture {
+            text-align: right;
+        }
+
+        .carte-assure-couverture strong {
+            display: block;
+            font-size: 20px;
+        }
+
+        .carte-assure-couverture span {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.72);
+        }
+
+        .carte-assure.mini {
+            max-width: 220px;
+            padding: 14px 16px;
+            border-radius: 12px;
+        }
+
+        .carte-assure.mini .carte-assure-numero { font-size: 15px; }
+        .carte-assure.mini .carte-assure-label { margin: 8px 0 1px; font-size: 9.5px; }
+        .carte-assure.mini .carte-assure-nom { font-size: 12.5px; }
+        .carte-assure.mini .carte-assure-type,
+        .carte-assure.mini .carte-assure-couverture span { font-size: 10px; }
+        .carte-assure.mini .carte-assure-couverture strong { font-size: 15px; }
+        .carte-assure.mini .carte-assure-puce { width: 24px; height: 17px; }
 
         /* ===== Barre de chargement (navigation/formulaires) ===== */
         #barre-chargement {

@@ -6,7 +6,7 @@
 <section class="page-title">
     <div>
         <h1>Modifier {{ patient }}</h1>
-        <p class="subtitle">Carte : {{ patient.numero_carte }}</p>
+        <p class="subtitle">Carte : <span class="code">{{ patient.numero_carte }}</span></p>
     </div>
     <a class="button" href="{% url 'liste_patients' %}">Retour</a>
 </section>

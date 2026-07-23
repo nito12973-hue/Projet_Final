@@ -50,7 +50,7 @@
                 <td>{{ patient.prenom }} {{ patient.nom }}</td>
                 <td>{{ patient.get_type_beneficiaire_display }}</td>
                 <td>{{ patient.assure_principal|default:"-" }}</td>
-                <td>{{ patient.numero_carte }}</td>
+                <td class="code">{{ patient.numero_carte }}</td>
                 <td>{{ patient.plan_couverture|default:"Non attribue" }}</td>
                 <td>{{ patient.telephone|default:"-" }}</td>
                 <td>

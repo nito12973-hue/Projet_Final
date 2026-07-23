@@ -7,9 +7,36 @@
 <section class="page-title">
     <div>
         <h1>Bonjour {{ patient.prenom }}</h1>
-        <p class="subtitle">Votre carte : {{ patient.numero_carte }}</p>
+        <p class="subtitle">Votre espace de prise en charge SantéSN.</p>
     </div>
     <a class="button primary" href="{% url 'ajouter_rendez_vous_assure' %}">Nouveau rendez-vous</a>
+</section>
+
+<section style="margin-bottom: 22px;">
+    <div class="carte-assure">
+        <div class="carte-assure-entete">
+            <span class="carte-assure-puce" aria-hidden="true"></span>
+            {% logo_marque taille=26 fond="sombre" %}
+        </div>
+        <div>
+            <p class="carte-assure-label">Carte de prise en charge</p>
+            <p class="carte-assure-numero code">{{ patient.numero_carte }}</p>
+        </div>
+        <div class="carte-assure-pied">
+            <div>
+                <span class="carte-assure-nom">{{ patient.prenom }} {{ patient.nom }}</span>
+                <span class="carte-assure-type">{{ patient.get_type_beneficiaire_display }}</span>
+            </div>
+            <div class="carte-assure-couverture">
+                {% if patient.taux_couverture is not None %}
+                <strong>{{ patient.taux_couverture }}%</strong>
+                <span>{{ patient.titulaire.plan_couverture.nom }}</span>
+                {% else %}
+                <span>Aucun plan attribue</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 </section>
 
 <section class="dash-grid">
