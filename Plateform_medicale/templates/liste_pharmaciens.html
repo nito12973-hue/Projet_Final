@@ -29,7 +29,7 @@
                 <td>{{ pharmacien.user.email }}</td>
                 <td>{{ pharmacien.prestataire|default:"Non affecte" }}</td>
                 <td>
-                    <a href="{% url 'modifier_pharmacien' pharmacien.pk %}" class="button btn btn-primary btn-sm">Affecter une pharmacie</a>
+                    <a href="{% url 'modifier_pharmacien' pharmacien.pk %}" class="button primary btn btn-sm">Affecter une pharmacie</a>
                 </td>
             </tr>
             {% endfor %}

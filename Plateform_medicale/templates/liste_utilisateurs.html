@@ -72,7 +72,7 @@
                 </td>
                 <td>
                     <div class="actions" style="flex-wrap:nowrap;">
-                        <a href="{% url 'modifier_utilisateur' utilisateur.pk %}" class="button btn btn-primary btn-sm">Modifier</a>
+                        <a href="{% url 'modifier_utilisateur' utilisateur.pk %}" class="button primary btn btn-sm">Modifier</a>
                         <a href="{% url 'reinitialiser_mot_de_passe' utilisateur.pk %}" class="button btn btn-sm">Reinitialiser mdp</a>
                         {% if utilisateur.pk != request.user.pk %}
                         <form method="post" action="{% url 'activer_desactiver_utilisateur' utilisateur.pk %}" class="action-ligne">

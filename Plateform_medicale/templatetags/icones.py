@@ -164,3 +164,33 @@ def icone(nom):
         'stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
         f"{contenu}</svg>"
     )
+
+
+# Marque "Carte-Pouls" : source unique du logo, reutilisee partout (sidebar de
+# base.html, panneau de marque de base_auth.html, landing.html x3) pour eviter
+# les copies divergentes du meme SVG en dur. Deux variantes selon le fond, pas
+# de degrade (voir CLAUDE.md, section Design system).
+_CARTE = 'M11 15 H34 L41 22 V31 A5 5 0 0 1 36 36 H11 A5 5 0 0 1 6 31 V20 A5 5 0 0 1 11 15 Z'
+_POULS = 'M12 26h4l2.5-5 3 10 2.5-7 1.5 2h11'
+
+
+@register.simple_tag
+def logo_marque(taille=36, fond="clair"):
+    """Mark SVG du logo (carte a coin coupe + pouls), fond clair ou sombre."""
+    if fond == "sombre":
+        corps = (
+            f'<path d="{_CARTE}" fill="none" stroke="#EFF4F3" stroke-width="2.4"/>'
+            f'<path d="{_POULS}" fill="none" stroke="#E0824F" stroke-width="2.6" '
+            'stroke-linecap="round" stroke-linejoin="round"/>'
+        )
+    else:
+        corps = (
+            f'<path d="{_CARTE}" fill="#0e7c86"/>'
+            f'<path d="{_POULS}" fill="none" stroke="#ffffff" stroke-width="3" '
+            'stroke-linecap="round" stroke-linejoin="round"/>'
+        )
+    return mark_safe(
+        f'<svg width="{taille}" height="{taille}" viewBox="0 0 48 48" fill="none" '
+        'xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="flex-shrink:0;">'
+        f"{corps}</svg>"
+    )

@@ -915,10 +915,7 @@
     <header>
         <div class="conteneur barre-nav">
             <a class="logo" href="{% url 'landing' %}" aria-label="SantéSN — Accueil">
-                <svg width="38" height="38" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <path d="M11 15 H34 L41 22 V31 A5 5 0 0 1 36 36 H11 A5 5 0 0 1 6 31 V20 A5 5 0 0 1 11 15 Z" fill="#0e7c86"/>
-                    <path d="M12 26h4l2.5-5 3 10 2.5-7 1.5 2h11" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
+                {% logo_marque taille=38 fond="clair" %}
                 Santé<span style="color: var(--primary-strong);">SN</span>
             </a>
 
@@ -973,10 +970,7 @@
                     <span class="telephone-encoche"></span>
                     <div class="telephone-ecran">
                         <div class="telephone-entete">
-                            <svg width="20" height="20" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M11 15 H34 L41 22 V31 A5 5 0 0 1 36 36 H11 A5 5 0 0 1 6 31 V20 A5 5 0 0 1 11 15 Z" fill="#0e7c86"/>
-                                <path d="M12 26h4l2.5-5 3 10 2.5-7 1.5 2h11" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
+                            {% logo_marque taille=20 fond="clair" %}
                             <span>SantéSN</span>
                         </div>
                         <div class="carte-demo carte-demo-telephone">
@@ -1238,10 +1232,7 @@
         <div class="conteneur">
             <div class="pied-grille">
                 <a class="logo" href="#accueil">
-                    <svg width="30" height="30" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                        <path d="M11 15 H34 L41 22 V31 A5 5 0 0 1 36 36 H11 A5 5 0 0 1 6 31 V20 A5 5 0 0 1 11 15 Z" fill="none" stroke="#EFF4F3" stroke-width="2.4"/>
-                        <path d="M12 26h4l2.5-5 3 10 2.5-7 1.5 2h11" fill="none" stroke="#E0824F" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
+                    {% logo_marque taille=30 fond="sombre" %}
                     SantéSN
                 </a>
                 <nav aria-label="Liens du pied de page">
