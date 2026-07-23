@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load formats %}
+{% load formats icones %}
 
 {% block title %}Paiements{% endblock %}
 
@@ -75,6 +75,17 @@
         </tbody>
     </table>
 </section>
+{% if paiements.paginator.num_pages > 1 %}
+<nav class="pagination" aria-label="Pagination">
+    {% if paiements.has_previous %}
+    <a href="?{% prefixe_pagination request.GET %}page={{ paiements.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Precedent</a>
+    {% endif %}
+    <span class="pagination-info">Page {{ paiements.number }} sur {{ paiements.paginator.num_pages }}</span>
+    {% if paiements.has_next %}
+    <a href="?{% prefixe_pagination request.GET %}page={{ paiements.next_page_number }}" class="button btn btn-sm">Suivant {% icone "chevron-right" %}</a>
+    {% endif %}
+</nav>
+{% endif %}
 {% else %}
 <p class="empty">Aucun paiement enregistre.</p>
 {% endif %}

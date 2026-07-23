@@ -18,6 +18,7 @@ from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Count, Q, Sum
 from django.db.models.functions import TruncMonth
@@ -70,6 +71,22 @@ from .models import (
     distance_km,
     valider_telephone,
 )
+
+
+# ---------------------------------------------------------------------------
+# Pagination des listes admin
+# ---------------------------------------------------------------------------
+
+TAILLE_PAGE_LISTE = 20
+
+
+def _paginer(request, queryset):
+    """Pagine un queryset pour une liste admin (parametre GET 'page', taille
+    fixe). get_page() plutot que page() : replie silencieusement sur la
+    derniere/premiere page si le numero demande est hors limites, plutot que
+    de lever une exception pour un lien de pagination perime ou trafique."""
+    paginateur = Paginator(queryset, TAILLE_PAGE_LISTE)
+    return paginateur.get_page(request.GET.get("page"))
 
 
 # ---------------------------------------------------------------------------
@@ -437,7 +454,7 @@ def liste_patients(request):
         patients = patients.filter(type_beneficiaire=type_beneficiaire)
 
     contexte = {
-        "patients": patients,
+        "patients": _paginer(request, patients),
         "types_beneficiaire": Patient.TypeBeneficiaire.choices,
         "type_selectionne": type_beneficiaire,
     }
@@ -477,8 +494,8 @@ def ajouter_patient(request):
 
 @admin_required
 def liste_medecins(request):
-    medecins = Medecin.objects.all()
-    return render(request, "liste_medecins.html", {"medecins": medecins})
+    medecins = Medecin.objects.order_by("nom", "prenom")
+    return render(request, "liste_medecins.html", {"medecins": _paginer(request, medecins)})
 
 
 @admin_required
@@ -510,8 +527,8 @@ def ajouter_medecin(request):
 
 @admin_required
 def liste_services(request):
-    services = ServiceMedical.objects.all()
-    return render(request, "liste_services.html", {"services": services})
+    services = ServiceMedical.objects.order_by("nom")
+    return render(request, "liste_services.html", {"services": _paginer(request, services)})
 
 
 @admin_required
@@ -529,11 +546,11 @@ def ajouter_service(request):
 
 @admin_required
 def liste_prises_en_charge(request):
-    prises_en_charge = PriseEnCharge.objects.select_related("patient").all()
+    prises_en_charge = PriseEnCharge.objects.select_related("patient").order_by("-date_demande")
     return render(
         request,
         "liste_prises_en_charge.html",
-        {"prises_en_charge": prises_en_charge},
+        {"prises_en_charge": _paginer(request, prises_en_charge)},
     )
 
 
@@ -599,7 +616,7 @@ def liste_paiements(request):
     )
 
     contexte = {
-        "paiements": paiements,
+        "paiements": _paginer(request, paiements),
         "statut_choisi": statut,
         "statuts": Paiement.Statut.choices,
         "total_regle": totaux["total_regle"] or 0,
@@ -644,7 +661,7 @@ def liste_prestataires(request):
         )
 
     contexte = {
-        "prestataires": prestataires,
+        "prestataires": _paginer(request, prestataires),
         "localisation_choisie": localisation,
     }
     return render(request, "liste_prestataires.html", contexte)
@@ -732,8 +749,8 @@ def supprimer_prestataire(request, pk):
 
 @admin_required
 def liste_plans_couverture(request):
-    plans = PlanCouverture.objects.all()
-    return render(request, "liste_plans_couverture.html", {"plans": plans})
+    plans = PlanCouverture.objects.order_by("nom")
+    return render(request, "liste_plans_couverture.html", {"plans": _paginer(request, plans)})
 
 
 @admin_required
@@ -885,8 +902,8 @@ def supprimer_medecin(request, pk):
 
 @admin_required
 def liste_pharmaciens(request):
-    pharmaciens = Pharmacien.objects.select_related("user", "prestataire").all()
-    return render(request, "liste_pharmaciens.html", {"pharmaciens": pharmaciens})
+    pharmaciens = Pharmacien.objects.select_related("user", "prestataire").order_by("id")
+    return render(request, "liste_pharmaciens.html", {"pharmaciens": _paginer(request, pharmaciens)})
 
 
 @admin_required
@@ -945,7 +962,7 @@ def _filtrer_utilisateurs(request):
 def liste_utilisateurs(request):
     utilisateurs, filtres = _filtrer_utilisateurs(request)
     contexte = {
-        "utilisateurs": utilisateurs,
+        "utilisateurs": _paginer(request, utilisateurs),
         "roles": User.Role.choices,
         "role_selectionne": filtres["role"],
         "statut_selectionne": filtres["statut"],
@@ -1891,7 +1908,11 @@ def envoyer_notification(request):
 @admin_required
 def liste_notifications_envoyees(request):
     notifications = Notification.objects.select_related("destinataire").all()[:200]
-    return render(request, "liste_notifications_envoyees.html", {"notifications": notifications})
+    return render(
+        request,
+        "liste_notifications_envoyees.html",
+        {"notifications": _paginer(request, notifications)},
+    )
 
 
 @login_required

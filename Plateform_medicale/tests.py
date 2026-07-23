@@ -29,6 +29,7 @@ from .models import (
     User,
     distance_km,
 )
+from .views import TAILLE_PAGE_LISTE
 
 PASSWORD = 'MotDePasseSolide2026!'
 
@@ -1822,3 +1823,52 @@ class PrestatairesProchesTests(TestCase):
         self.assertEqual(item['type_code'], 'CLINIQUE')
         self.assertEqual(item['telephone'], '')
         self.assertEqual(item['medecin_count'], 1)
+
+
+class PaginationListesAdminTests(TestCase):
+    """Plan de direction artistique, item 1 : pagination des listes admin."""
+
+    def setUp(self):
+        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
+        self.client.login(username='admin@santesn.sn', password=PASSWORD)
+
+    def test_liste_services_repartie_sur_deux_pages(self):
+        for i in range(25):
+            ServiceMedical.objects.create(nom=f'Service {i:02d}', prix=1000)
+
+        premiere_page = self.client.get(reverse('liste_services'))
+        page = premiere_page.context['services']
+        self.assertEqual(len(page), TAILLE_PAGE_LISTE)
+        self.assertTrue(page.has_next())
+        self.assertEqual(page.paginator.num_pages, 2)
+        self.assertContains(premiere_page, 'page=2')
+
+        deuxieme_page = self.client.get(reverse('liste_services'), {'page': 2})
+        page = deuxieme_page.context['services']
+        self.assertEqual(len(page), 5)
+        self.assertFalse(page.has_next())
+
+    def test_pas_de_navigation_si_une_seule_page(self):
+        ServiceMedical.objects.create(nom='Seul service', prix=1000)
+        response = self.client.get(reverse('liste_services'))
+        self.assertNotContains(response, 'class="pagination"')
+
+    def test_page_hors_limites_repli_sur_la_derniere_page(self):
+        for i in range(25):
+            ServiceMedical.objects.create(nom=f'Service {i:02d}', prix=1000)
+        response = self.client.get(reverse('liste_services'), {'page': 999})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['services'].number, 2)
+
+    def test_filtre_preserve_en_changeant_de_page(self):
+        for i in range(25):
+            creer_utilisateur(User.Role.MEDECIN, f'medecin{i:02d}@santesn.sn')
+        creer_utilisateur(User.Role.PHARMACIEN, 'pharmacien@santesn.sn')
+
+        response = self.client.get(
+            reverse('liste_utilisateurs'), {'role': User.Role.MEDECIN.value, 'page': 2}
+        )
+        emails = [u.email for u in response.context['utilisateurs']]
+        self.assertNotIn('pharmacien@santesn.sn', emails)
+        self.assertEqual(response.context['utilisateurs'].number, 2)
+        self.assertContains(response, f'role={User.Role.MEDECIN.value}')

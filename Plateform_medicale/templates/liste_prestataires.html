@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load icones %}
+{% load formats icones %}
 
 {% block title %}Prestataires{% endblock %}
 
@@ -73,6 +73,17 @@
         </tbody>
     </table>
 </section>
+{% if prestataires.paginator.num_pages > 1 %}
+<nav class="pagination" aria-label="Pagination">
+    {% if prestataires.has_previous %}
+    <a href="?{% prefixe_pagination request.GET %}page={{ prestataires.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Precedent</a>
+    {% endif %}
+    <span class="pagination-info">Page {{ prestataires.number }} sur {{ prestataires.paginator.num_pages }}</span>
+    {% if prestataires.has_next %}
+    <a href="?{% prefixe_pagination request.GET %}page={{ prestataires.next_page_number }}" class="button btn btn-sm">Suivant {% icone "chevron-right" %}</a>
+    {% endif %}
+</nav>
+{% endif %}
 {% else %}
 <p class="empty">Aucun prestataire enregistre.</p>
 {% endif %}
