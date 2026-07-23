@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load icones %}
 
 {% block title %}Mes ordonnances{% endblock %}
 
@@ -28,7 +29,7 @@
                 <td>{{ ordonnance.consultation.patient }}</td>
                 <td>{{ ordonnance.consultation.medecin }}</td>
                 <td>
-                    <a class="button primary btn btn-sm" href="{% url 'voir_ordonnance_assure' ordonnance.pk %}">Voir le QR</a>
+                    <a class="button primary btn btn-sm" href="{% url 'voir_ordonnance_assure' ordonnance.pk %}">{% icone "qr-scan" %} Voir le QR</a>
                 </td>
             </tr>
             {% endfor %}
