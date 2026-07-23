@@ -76,7 +76,7 @@
                         <a href="{% url 'reinitialiser_mot_de_passe' utilisateur.pk %}" class="button btn btn-sm">Reinitialiser mdp</a>
                         {% if utilisateur.pk != request.user.pk %}
                         <form method="post" action="{% url 'activer_desactiver_utilisateur' utilisateur.pk %}" class="action-ligne"
-                              {% if utilisateur.is_active %}onsubmit="return confirm('Desactiver le compte de {{ utilisateur }} ? Il ne pourra plus se connecter tant qu\'il n\'est pas reactive.');"{% endif %}>
+                              {% if utilisateur.is_active %}onsubmit="return confirm('Desactiver le compte de {{ utilisateur|escapejs }} ? Il ne pourra plus se connecter tant qu\'il n\'est pas reactive.');"{% endif %}>
                             {% csrf_token %}
                             {% if utilisateur.is_active %}
                             <button type="submit" class="button btn btn-sm">Desactiver</button>
