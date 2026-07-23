@@ -112,6 +112,27 @@ Fonctionnalités livrées après les 15 phases initiales, hors numérotation :
   repli par ville sinon), présélection du prestataire dans le formulaire de
   rendez-vous. Détail technique dans `FONCTIONNEMENT.txt` (modèle, vue,
   templates, règle anti-XSS pour les popups Leaflet).
+- **Recherche de lieu sur la carte** (Admin, `ajouter_prestataire` /
+  `modifier_prestataire`) — bouton "Rechercher sur la carte" qui combine les
+  champs adresse + ville (adresse en premier, plus précis : quartier/
+  commune ; interroger la seule ville ne suffisait pas à retrouver des
+  lieux précis) et appelle la vue `recherche_lieu_prestataire`
+  (relais serveur, même origine que le site) plutôt que Nominatim
+  directement depuis le navigateur : un appel client direct s'est révélé peu
+  fiable en test (le cache CDN de Nominatim ne fait pas varier ses réponses
+  selon `Origin`, d'où un en-tête CORS présent une fois sur deux, et
+  `fetch()` ne peut pas porter de User-Agent applicatif identifiant, ce que
+  la politique d'usage de Nominatim attend). La vue interroge Nominatim
+  côté serveur (`urllib.request`, pas de nouvelle dépendance) avec un
+  User-Agent dédié, limité au Sénégal (`countrycodes=sn`), et renvoie un
+  JSON minimal (`trouve`/`lat`/`lon`/`nom`). Si le lieu existe dans les
+  données OpenStreetMap, la carte se centre dessus et le marqueur se place
+  automatiquement (mêmes champs cachés `latitude`/`longitude` que le clic
+  manuel sur la carte, qui reste toujours possible — nécessaire pour un
+  hôpital/quartier trop précis ou trop récent pour être déjà référencé sur
+  OpenStreetMap, la couverture au Sénégal restant inégale en dehors des
+  grandes villes/communes). Si le lieu est introuvable ou le service indisponible,
+  message inline sous le bouton (pas d'alerte navigateur).
 
 ## Documents de travail (specs / plans)
 
@@ -209,23 +230,45 @@ qui ne couvre que la liste des utilisateurs (Dashboard Admin → Utilisateurs).
 ## Design system
 
 Un seul shell de dashboard (sidebar) dans `base.html`, réutilisé par les 4
-rôles (nav conditionnelle selon `current_role`). Palette navy/turquoise
-SantéSN (`--primary: #14b8a6` turquoise vif — bordures/décoratif seulement,
-`--primary-strong: #0f766e` teal foncé — seule variante sûre pour texte/icône
-blancs en aplat, `--primary-dark: #0f172a` navy — titres/texte foncé,
-`--primary-accent: #2dd4bf` réservé aux dégradés décoratifs non-texte),
-police Plus Jakarta Sans. Menu latéral desktop réductible (icônes seules,
-état persistant via `localStorage`), tiroir mobile, barre de chargement de
-navigation. `landing.html` et `base_auth.html` (pages publiques / connexion)
-ont leur propre CSS autonome avec les mêmes tokens de palette, ne dépendent
-pas de `base.html`.
-Logo/marque : bouclier + pouls (ligne de battement de cœur), dégradé
-turquoise, en SVG inline (pas de fichier image) — présent dans `base.html`
-(sidebar), `landing.html` (en-tête + pied de page) et `base_auth.html`. La
-favicon réutilise le même tracé (aplat `#0d9488`, sans dégradé, en data URI
-SVG dans chaque `<head>`) — pas de fichier statique, cohérent avec le fait
-qu'il n'existe pas de dossier `static/` utilisé dans ce projet (tout le
-CSS/SVG est inline dans les templates).
+rôles (nav conditionnelle selon `current_role`). Identité "Territoire A +
+Croix-Pouls" : palette teal/navy/terracotta SantéSN (`--primary: #0e7c86`
+teal vif — bordures/décoratif seulement, `--primary-strong: #095059` teal
+foncé — seule variante sûre pour texte/icône blancs en aplat,
+`--primary-dark: #0b2027` navy — titres/texte foncé, `--primary-light` /
+`--primary-accent: #4fb8ae` texte/icône colorés sur fond sombre + dégradés
+décoratifs non-texte, `--accent: #e0824f` terracotta — accent ponctuel
+uniquement, jamais en fond/aplat large, ex. ligne de battement de cœur du logo
+sur fond sombre), polices Manrope (titres, `h1`) + Public Sans (texte
+courant) + IBM Plex Mono (importée, réservée à un usage futur). Menu latéral
+desktop réductible (icônes seules, état persistant via `localStorage`),
+tiroir mobile, barre de chargement de navigation. `landing.html` et
+`base_auth.html` (pages publiques / connexion) ont leur propre CSS autonome
+avec les mêmes tokens de palette, mêmes noms `--primary`/`--primary-strong`/
+`--primary-dark`/`--primary-light`/`--primary-accent`/`--primary-soft` que
+`base.html` (unifié après coup dans `base_auth.html`, qui utilisait au
+départ ses propres noms `--vert`/`--vert-fort`/`--vert-fonce`) ; ne
+dépendent pas de `base.html`.
+Logo/marque "Croix-Pouls" : croix médicale à angles arrondis (deux
+rectangles perpendiculaires) traversée en son centre par un tracé de pouls
+terracotta (`--accent: #e0824f`, toujours cette teinte quel que soit le
+fond). Source unique du mark : tag `{% logo_marque taille=N fond="clair|sombre" %}`
+(`templatetags/icones.py`, `{% load icones %}`) — utilisé dans `base.html`
+(sidebar), `landing.html` (en-tête, mockup téléphone, pied de page),
+`mon_profil_assure.html`/`dashboard_assure.html` (composant "carte de prise
+en charge"). Deux variantes selon le fond : sur fond clair, croix pleine
+`--primary-dark`/`--ink` (`#0b2027`) ; sur fond sombre uni (sidebar, pied de
+page), croix pleine quasi-blanc (`#EFF4F3`). `base_auth.html` (panneau de
+marque à fond dégradé) reste une exception volontaire : mark inline (pas le
+tag), croix blanche translucide (`rgba(255,255,255,0.9)`) pour rester
+cohérent avec le dégradé — cas non couvert par les deux variantes du tag.
+La favicon (variante pleine : croix `--primary` `#0e7c86` + pouls
+terracotta) est dupliquée en data URI SVG dans chaque `<head>` (`base.html`,
+`landing.html`, `base_auth.html`, `404.html`, `500.html`) — pas de fichier
+statique, cohérent avec le fait qu'il n'existe pas de dossier `static/`
+utilisé dans ce projet (tout le CSS/SVG est inline dans les templates).
+Logo secondaire (empilé), icône d'application et version monochrome existent
+dans la spec d'origine mais ne sont pas implémentés (aucun usage actif dans
+le projet à ce jour) — ne pas les recréer sans un besoin concret identifié.
 Classes CSS existantes à réutiliser (ne pas dupliquer) : `.page-title`,
 `.panel`, `.grid`/`.stat` (obsolètes sur les 4 pages d'accueil par rôle,
 remplacées par `.dash-grid`/`.dash-stat`/`.dash-pill`), `.badge` (+

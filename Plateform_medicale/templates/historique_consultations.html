@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load icones %}
 
 {% block title %}Mes consultations{% endblock %}
 
@@ -33,9 +34,9 @@
                 <td>
                     {% with ordonnance=consultation.ordonnance_set.first %}
                     {% if ordonnance %}
-                    <a class="button btn btn-primary btn-sm" href="{% url 'voir_ordonnance_medecin' ordonnance.pk %}">Voir</a>
+                    <a class="button primary btn btn-sm" href="{% url 'voir_ordonnance_medecin' ordonnance.pk %}">{% icone "qr-scan" %} Voir</a>
                     {% else %}
-                    <a class="button btn btn-sm" href="{% url 'ajouter_ordonnance_medecin' consultation.pk %}">Creer</a>
+                    <a class="button btn btn-sm" href="{% url 'ajouter_ordonnance_medecin' consultation.pk %}">{% icone "plus-circle" %} Creer</a>
                     {% endif %}
                     {% endwith %}
                 </td>
@@ -45,6 +46,9 @@
     </table>
 </section>
 {% else %}
-<p class="empty">Aucune consultation enregistree.</p>
+<div class="etat-vide">
+    {% illustration_vide "clipboard-list" %}
+    <p>Aucune consultation enregistree.</p>
+</div>
 {% endif %}
 {% endblock %}

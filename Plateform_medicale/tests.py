@@ -1,6 +1,9 @@
 import datetime
 import io
+import json
+import urllib.error
 from decimal import Decimal
+from unittest.mock import MagicMock, patch
 
 import openpyxl
 from django.core.cache import cache
@@ -828,6 +831,66 @@ class AdminPrestatairesTests(TestCase):
         response = self.client.post(reverse('supprimer_prestataire', args=[prestataire.pk]))
         self.assertRedirects(response, reverse('liste_prestataires'))
         self.assertFalse(Prestataire.objects.filter(pk=prestataire.pk).exists())
+
+    def test_liste_prestataires_filtre_sans_localisation(self):
+        Prestataire.objects.create(nom='Avec position', type_prestataire='HOPITAL',
+                                    latitude=Decimal('14.6928'), longitude=Decimal('-17.4467'))
+        Prestataire.objects.create(nom='Sans position', type_prestataire='HOPITAL')
+
+        response = self.client.get(reverse('liste_prestataires'), {'localisation': 'sans'})
+        noms = [prestataire.nom for prestataire in response.context['prestataires']]
+        self.assertEqual(noms, ['Sans position'])
+
+        response = self.client.get(reverse('liste_prestataires'), {'localisation': 'avec'})
+        noms = [prestataire.nom for prestataire in response.context['prestataires']]
+        self.assertEqual(noms, ['Avec position'])
+
+
+def _reponse_nominatim(payload):
+    """Simule le context manager renvoye par urllib.request.urlopen."""
+    mock_reponse = MagicMock()
+    mock_reponse.__enter__.return_value.read.return_value = json.dumps(payload).encode('utf-8')
+    return mock_reponse
+
+
+class RechercheLieuPrestataireTests(TestCase):
+    def setUp(self):
+        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
+        self.client.login(username='admin@santesn.sn', password=PASSWORD)
+
+    def test_interdite_aux_non_admins(self):
+        self.client.logout()
+        creer_utilisateur(User.Role.MEDECIN, 'medecin@santesn.sn')
+        self.client.login(username='medecin@santesn.sn', password=PASSWORD)
+        response = self.client.get(reverse('recherche_lieu_prestataire'), {'q': 'Dakar'})
+        self.assertEqual(response.status_code, 403)
+
+    def test_sans_query_renvoie_non_trouve(self):
+        response = self.client.get(reverse('recherche_lieu_prestataire'))
+        self.assertEqual(response.json(), {'trouve': False})
+
+    @patch('Plateform_medicale.views.urllib.request.urlopen')
+    def test_lieu_trouve(self, mock_urlopen):
+        mock_urlopen.return_value = _reponse_nominatim([
+            {'lat': '14.7645', 'lon': '-16.9557', 'display_name': 'Thies, Senegal'},
+        ])
+        response = self.client.get(reverse('recherche_lieu_prestataire'), {'q': 'Thies'})
+        self.assertEqual(response.json(), {
+            'trouve': True, 'lat': '14.7645', 'lon': '-16.9557', 'nom': 'Thies, Senegal',
+        })
+
+    @patch('Plateform_medicale.views.urllib.request.urlopen')
+    def test_lieu_introuvable(self, mock_urlopen):
+        mock_urlopen.return_value = _reponse_nominatim([])
+        response = self.client.get(reverse('recherche_lieu_prestataire'), {'q': 'Zzznotarealplace'})
+        self.assertEqual(response.json(), {'trouve': False})
+
+    @patch('Plateform_medicale.views.urllib.request.urlopen',
+           side_effect=urllib.error.URLError('offline'))
+    def test_service_indisponible_ne_plante_pas(self, mock_urlopen):
+        response = self.client.get(reverse('recherche_lieu_prestataire'), {'q': 'Dakar'})
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.json()['trouve'])
 
 
 class DistanceKmTests(TestCase):
