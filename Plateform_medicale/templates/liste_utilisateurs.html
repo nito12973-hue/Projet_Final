@@ -72,8 +72,8 @@
                 </td>
                 <td>
                     <div class="actions" style="flex-wrap:nowrap;">
-                        <a href="{% url 'modifier_utilisateur' utilisateur.pk %}" class="button primary btn btn-sm">Modifier</a>
-                        <a href="{% url 'reinitialiser_mot_de_passe' utilisateur.pk %}" class="button btn btn-sm">Reinitialiser mdp</a>
+                        <a href="{% url 'modifier_utilisateur' utilisateur.pk %}" class="button primary btn btn-sm">{% icone "edit-2" %} Modifier</a>
+                        <a href="{% url 'reinitialiser_mot_de_passe' utilisateur.pk %}" class="button btn btn-sm">{% icone "key" %} Reinitialiser mdp</a>
                         {% if utilisateur.pk != request.user.pk %}
                         <form method="post" action="{% url 'activer_desactiver_utilisateur' utilisateur.pk %}" class="action-ligne"
                               {% if utilisateur.is_active %}onsubmit="return confirm('Desactiver le compte de {{ utilisateur|escapejs }} ? Il ne pourra plus se connecter tant qu\'il n\'est pas reactive.');"{% endif %}>
@@ -84,7 +84,7 @@
                             <button type="submit" class="button btn btn-sm">Activer</button>
                             {% endif %}
                         </form>
-                        <a href="{% url 'supprimer_utilisateur' utilisateur.pk %}" class="button btn btn-danger btn-sm">Supprimer</a>
+                        <a href="{% url 'supprimer_utilisateur' utilisateur.pk %}" class="button btn btn-danger btn-sm">{% icone "trash-2" %} Supprimer</a>
                         {% else %}
                         <span class="badge">Vous</span>
                         {% endif %}

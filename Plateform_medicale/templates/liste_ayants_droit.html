@@ -33,8 +33,8 @@
                 <td class="code">{{ ayant_droit.numero_carte }}</td>
                 <td>
                     <div class="actions">
-                        <a href="{% url 'modifier_ayant_droit' ayant_droit.pk %}" class="button primary btn btn-sm">Modifier</a>
-                        <a href="{% url 'supprimer_ayant_droit' ayant_droit.pk %}" class="button btn btn-danger btn-sm">Supprimer</a>
+                        <a href="{% url 'modifier_ayant_droit' ayant_droit.pk %}" class="button primary btn btn-sm">{% icone "edit-2" %} Modifier</a>
+                        <a href="{% url 'supprimer_ayant_droit' ayant_droit.pk %}" class="button btn btn-danger btn-sm">{% icone "trash-2" %} Supprimer</a>
                     </div>
                 </td>
             </tr>
