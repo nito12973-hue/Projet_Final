@@ -1175,6 +1175,46 @@ class NotificationsTests(TestCase):
         response = self.client.post(reverse('marquer_notification_lue', args=[notification.pk]))
         self.assertEqual(response.status_code, 404)
 
+    def test_filtre_lue_sur_mes_notifications(self):
+        """Plan de direction artistique, item 6 : filtres lu/non-lu + recherche."""
+        medecin_user = creer_utilisateur(User.Role.MEDECIN, 'medecin@santesn.sn')
+        lue = Notification.objects.create(destinataire=medecin_user, message='Deja lue', lue=True)
+        Notification.objects.create(destinataire=medecin_user, message='Pas encore lue', lue=False)
+
+        self.client.logout()
+        self.client.login(username='medecin@santesn.sn', password=PASSWORD)
+
+        response = self.client.get(reverse('mes_notifications'), {'lue': 'non'})
+        self.assertContains(response, 'Pas encore lue')
+        self.assertNotContains(response, 'Deja lue')
+
+        response = self.client.get(reverse('mes_notifications'), {'lue': 'oui'})
+        self.assertContains(response, 'Deja lue')
+        self.assertNotContains(response, 'Pas encore lue')
+
+    def test_filtre_lue_sur_liste_notifications_envoyees(self):
+        medecin_user = creer_utilisateur(User.Role.MEDECIN, 'medecin@santesn.sn')
+        Notification.objects.create(destinataire=medecin_user, message='Deja lue', lue=True)
+        Notification.objects.create(destinataire=medecin_user, message='Pas encore lue', lue=False)
+
+        response = self.client.get(reverse('liste_notifications_envoyees'), {'lue': 'non'})
+        self.assertContains(response, 'Pas encore lue')
+        self.assertNotContains(response, 'Deja lue')
+
+    def test_recherche_sur_liste_notifications_envoyees(self):
+        medecin_user = creer_utilisateur(User.Role.MEDECIN, 'ousmane.fall@santesn.sn')
+        autre_user = creer_utilisateur(User.Role.PHARMACIEN, 'autre@santesn.sn')
+        Notification.objects.create(destinataire=medecin_user, message='Reunion demain')
+        Notification.objects.create(destinataire=autre_user, message='Livraison de stock')
+
+        response = self.client.get(reverse('liste_notifications_envoyees'), {'q': 'ousmane'})
+        self.assertContains(response, 'Reunion demain')
+        self.assertNotContains(response, 'Livraison de stock')
+
+        response = self.client.get(reverse('liste_notifications_envoyees'), {'q': 'livraison'})
+        self.assertContains(response, 'Livraison de stock')
+        self.assertNotContains(response, 'Reunion demain')
+
 
 class RapportsTests(TestCase):
     def setUp(self):
