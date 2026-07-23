@@ -281,6 +281,19 @@ class GestionUtilisateursTests(TestCase):
         response = self.client.get(reverse('liste_utilisateurs'))
         self.assertEqual(response.status_code, 200)
 
+    def test_desactivation_passe_par_la_modale_pas_par_confirm_natif(self):
+        """Plan de direction artistique, item 2 : plus de confirm() natif."""
+        actif = creer_utilisateur(User.Role.MEDECIN, 'actif@santesn.sn')
+        inactif = creer_utilisateur(User.Role.MEDECIN, 'inactif@santesn.sn')
+        inactif.is_active = False
+        inactif.save(update_fields=['is_active'])
+
+        response = self.client.get(reverse('liste_utilisateurs'))
+        self.assertNotContains(response, 'onsubmit="return confirm(')
+        self.assertContains(response, 'id="modale-confirmation"')
+        self.assertContains(response, f'data-confirmation="Desactiver le compte de {actif} ?')
+        self.assertNotContains(response, f'data-confirmation="Desactiver le compte de {inactif} ?')
+
     def test_creation_utilisateur_genere_un_mot_de_passe_fonctionnel(self):
         response = self.client.post(reverse('ajouter_utilisateur'), {
             'first_name': 'Fatou',

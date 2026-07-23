@@ -727,6 +727,50 @@
             font-weight: 600;
         }
 
+        /* Modale de confirmation on-brand : remplace confirm() natif du
+           navigateur pour les actions critiques. Un seul dialogue partage,
+           cible via l'attribut data-confirmation sur un formulaire POST
+           (voir le script en bas de page). */
+        .modale-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(11, 32, 39, 0.55);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 200;
+        }
+
+        .modale-overlay[hidden] {
+            display: none;
+        }
+
+        .modale-panel {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 28px;
+            max-width: 440px;
+            width: 100%;
+            box-shadow: 0 20px 50px rgba(11, 32, 39, 0.35);
+        }
+
+        .modale-panel h3 {
+            margin: 0 0 12px;
+            color: var(--primary-dark);
+        }
+
+        .modale-panel p {
+            margin: 0 0 24px;
+            color: var(--text);
+        }
+
+        .modale-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
         /* Tuiles "actions principales" des dashboards par role (distinct de .actions, boutons de ligne de tableau) */
         .action-tiles {
             display: grid;
@@ -1193,6 +1237,19 @@
         </section>
     </div>
 
+    {% if user.is_authenticated %}
+    <div id="modale-confirmation" class="modale-overlay" hidden>
+        <div class="modale-panel" role="alertdialog" aria-modal="true" aria-labelledby="modale-titre" aria-describedby="modale-message">
+            <h3 id="modale-titre">Confirmer l'action</h3>
+            <p id="modale-message"></p>
+            <div class="modale-actions">
+                <button type="button" class="button btn" id="modale-annuler">Annuler</button>
+                <button type="button" class="button btn-danger" id="modale-confirmer">Confirmer</button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <script>
         (function () {
             // Menu mobile : ouverture/fermeture du tiroir de navigation.
@@ -1253,6 +1310,57 @@
 
             window.addEventListener('resize', function () {
                 appliquer(window.localStorage.getItem(CLE_STOCKAGE) === '1');
+            });
+        })();
+
+        (function () {
+            // Modale de confirmation on-brand : intercepte (phase de capture,
+            // pour passer avant la barre de chargement ci-dessous) tout
+            // formulaire portant data-confirmation="message", au lieu du
+            // confirm() natif du navigateur.
+            var overlay = document.getElementById('modale-confirmation');
+            if (!overlay) { return; }
+            var messageEl = document.getElementById('modale-message');
+            var boutonAnnuler = document.getElementById('modale-annuler');
+            var boutonConfirmer = document.getElementById('modale-confirmer');
+            var formulaireEnAttente = null;
+
+            function fermerModale() {
+                overlay.hidden = true;
+                formulaireEnAttente = null;
+            }
+
+            document.addEventListener('submit', function (evenement) {
+                var formulaire = evenement.target;
+                if (!(formulaire instanceof HTMLFormElement)) { return; }
+                var message = formulaire.getAttribute('data-confirmation');
+                if (!message || formulaire.dataset.confirme === 'oui') { return; }
+                evenement.preventDefault();
+                evenement.stopImmediatePropagation();
+                messageEl.textContent = message;
+                formulaireEnAttente = formulaire;
+                overlay.hidden = false;
+                boutonConfirmer.focus();
+            }, true);
+
+            boutonAnnuler.addEventListener('click', fermerModale);
+            overlay.addEventListener('click', function (evenement) {
+                if (evenement.target === overlay) { fermerModale(); }
+            });
+            document.addEventListener('keydown', function (evenement) {
+                if (evenement.key === 'Escape' && !overlay.hidden) { fermerModale(); }
+            });
+
+            boutonConfirmer.addEventListener('click', function () {
+                if (!formulaireEnAttente) { return; }
+                formulaireEnAttente.dataset.confirme = 'oui';
+                overlay.hidden = true;
+                if (formulaireEnAttente.requestSubmit) {
+                    formulaireEnAttente.requestSubmit();
+                } else {
+                    formulaireEnAttente.submit();
+                }
+                formulaireEnAttente = null;
             });
         })();
 
