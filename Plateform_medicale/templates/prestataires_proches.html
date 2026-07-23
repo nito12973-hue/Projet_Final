@@ -257,6 +257,18 @@
             return Math.max(1, Math.round(distanceKmValeur / 30 * 60));
         }
 
+        // Sur mobile, la carte passe au-dessus de la liste (empilement) : au-dela
+        // des toutes premieres cartes, cliquer "Voir le profil" faisait bien
+        // voler le marqueur mais la carte etait hors ecran, donc rien de visible.
+        function assurerCarteVisible() {
+            var conteneurCarte = document.getElementById('carte-prestataires-proches');
+            var rect = conteneurCarte.getBoundingClientRect();
+            var visible = rect.top >= 0 && rect.bottom <= window.innerHeight;
+            if (!visible) {
+                conteneurCarte.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
         function creerContenuPopup(prestataire, distance) {
             var conteneur = document.createElement('div');
 
@@ -362,6 +374,7 @@
                 evenement.preventDefault();
                 var marqueur = marqueursParPk[prestataire.pk];
                 if (marqueur) {
+                    assurerCarteVisible();
                     carte.flyTo(marqueur.getLatLng(), 15);
                     marqueur.openPopup();
                 }
