@@ -1442,7 +1442,27 @@ def historique_consultations(request):
     consultations = Consultation.objects.filter(medecin=medecin).select_related(
         "patient", "service", "prise_en_charge"
     ).prefetch_related("ordonnance_set").order_by("-date_consultation")
-    return render(request, "historique_consultations.html", {"consultations": consultations})
+
+    patient_id = request.GET.get("patient", "")
+    if patient_id.isdigit():
+        consultations = consultations.filter(patient_id=patient_id)
+
+    date_filtre = request.GET.get("date", "")
+    if date_filtre:
+        try:
+            date_valide = datetime.date.fromisoformat(date_filtre)
+        except ValueError:
+            date_filtre = ""
+        else:
+            consultations = consultations.filter(date_consultation__date=date_valide)
+
+    contexte = {
+        "consultations": consultations,
+        "patients_du_medecin": _patients_du_medecin(medecin),
+        "patient_selectionne": patient_id,
+        "date_selectionnee": date_filtre,
+    }
+    return render(request, "historique_consultations.html", contexte)
 
 
 @role_required(User.Role.MEDECIN)

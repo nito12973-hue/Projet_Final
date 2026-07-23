@@ -560,6 +560,46 @@ class EspaceMedecinTests(TestCase):
         self.assertEqual(self.medecin.email, 'medecin1@santesn.sn')
 
 
+class HistoriqueConsultationsTests(TestCase):
+    """Plan de direction artistique, item 5 : filtres patient/date."""
+
+    def setUp(self):
+        self.medecin = creer_medecin('medecin1@santesn.sn')
+        self.patient_a = creer_patient(nom='Diop', prenom='Aissatou')
+        self.patient_b = creer_patient(nom='Fall', prenom='Ibrahima')
+        self.client.login(username='medecin1@santesn.sn', password=PASSWORD)
+
+        self.consultation_a = Consultation.objects.create(
+            patient=self.patient_a, medecin=self.medecin,
+            date_consultation=datetime.datetime(2026, 6, 1, 9, 0, tzinfo=datetime.timezone.utc),
+            diagnostic='Rhume',
+        )
+        self.consultation_b = Consultation.objects.create(
+            patient=self.patient_b, medecin=self.medecin,
+            date_consultation=datetime.datetime(2026, 6, 15, 14, 0, tzinfo=datetime.timezone.utc),
+            diagnostic='Entorse',
+        )
+
+    def test_formulaire_de_creation_dans_un_panel(self):
+        response = self.client.get(reverse('ajouter_consultation_medecin'))
+        self.assertContains(response, 'class="panel"')
+
+    def test_filtre_par_patient(self):
+        response = self.client.get(reverse('historique_consultations'), {'patient': self.patient_a.pk})
+        consultations = list(response.context['consultations'])
+        self.assertEqual(consultations, [self.consultation_a])
+
+    def test_filtre_par_date(self):
+        response = self.client.get(reverse('historique_consultations'), {'date': '2026-06-15'})
+        consultations = list(response.context['consultations'])
+        self.assertEqual(consultations, [self.consultation_b])
+
+    def test_date_invalide_ignoree_sans_erreur(self):
+        response = self.client.get(reverse('historique_consultations'), {'date': 'pas-une-date'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context['consultations']), 2)
+
+
 class EspacePharmacienTests(TestCase):
     def setUp(self):
         self.pharmacien = creer_pharmacien('pharmacien1@santesn.sn')
