@@ -84,6 +84,7 @@
                 </div>
             </div>
             <div class="actions">
+                <a class="button" href="{{ prestataire.lien_itineraire }}" target="_blank" rel="noopener">Itineraire</a>
                 <a class="button primary" href="{% url 'ajouter_rendez_vous_assure' %}?prestataire={{ prestataire.pk }}">Prendre rendez-vous</a>
             </div>
         </article>
