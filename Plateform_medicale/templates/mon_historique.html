@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load formats %}
 
 {% block title %}Mon historique{% endblock %}
 
@@ -32,7 +33,7 @@
                 <td>{{ consultation.medecin }}</td>
                 <td>{{ consultation.diagnostic }}</td>
                 <td>{{ consultation.traitement|default:"-" }}</td>
-                <td>{{ consultation.paiement.montant_part_patient|default:"-" }}</td>
+                <td>{{ consultation.paiement.montant_part_patient|franc_cfa|default:"-" }}</td>
                 <td>
                     {% if consultation.paiement %}
                     <span class="badge {% if consultation.paiement.statut == 'regle' %}validee{% else %}en_attente{% endif %}">{{ consultation.paiement.get_statut_display }}</span>

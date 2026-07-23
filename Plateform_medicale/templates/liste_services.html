@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load formats %}
 
 {% block title %}Services medicaux{% endblock %}
 
@@ -27,7 +28,7 @@
             <tr>
                 <td>{{ service.nom }}</td>
                 <td>{{ service.description|default:"-" }}</td>
-                <td>{{ service.prix }} FCFA</td>
+                <td>{{ service.prix|franc_cfa }}</td>
                 <td>
                     <div class="actions">
                         <a href="{% url 'modifier_service' service.pk %}" class="button primary btn btn-sm">Modifier</a>

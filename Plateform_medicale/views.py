@@ -19,7 +19,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Sum
 from django.db.models.functions import TruncMonth
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -570,10 +570,17 @@ def liste_paiements(request):
     if statut:
         paiements = paiements.filter(statut=statut)
 
+    totaux = Paiement.objects.aggregate(
+        total_regle=Sum("montant_part_patient", filter=Q(statut=Paiement.Statut.REGLE)),
+        total_non_regle=Sum("montant_part_patient", filter=Q(statut=Paiement.Statut.NON_REGLE)),
+    )
+
     contexte = {
         "paiements": paiements,
         "statut_choisi": statut,
         "statuts": Paiement.Statut.choices,
+        "total_regle": totaux["total_regle"] or 0,
+        "total_non_regle": totaux["total_non_regle"] or 0,
     }
     return render(request, "liste_paiements.html", contexte)
 

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load formats %}
 
 {% block title %}Paiements{% endblock %}
 
@@ -7,6 +8,17 @@
     <div>
         <h1>Paiements</h1>
         <p class="subtitle">Suivi du reglement des consultations.</p>
+    </div>
+</section>
+
+<section class="dash-grid" style="margin-bottom: 18px;">
+    <div class="dash-stat" style="cursor: default;">
+        <strong>{{ total_regle|franc_cfa }}</strong>
+        <span>Deja percu des patients</span>
+    </div>
+    <div class="dash-stat" style="cursor: default;">
+        <strong>{{ total_non_regle|franc_cfa }}</strong>
+        <span>Reste a percevoir des patients</span>
     </div>
 </section>
 
@@ -45,9 +57,9 @@
             <tr>
                 <td>{{ paiement.consultation.patient }}</td>
                 <td>{{ paiement.consultation.date_consultation|date:"d/m/Y H:i" }}</td>
-                <td>{{ paiement.montant_total }}</td>
-                <td>{{ paiement.montant_part_assurance }}</td>
-                <td>{{ paiement.montant_part_patient }}</td>
+                <td>{{ paiement.montant_total|franc_cfa }}</td>
+                <td>{{ paiement.montant_part_assurance|franc_cfa }}</td>
+                <td>{{ paiement.montant_part_patient|franc_cfa }}</td>
                 <td><span class="badge {% if paiement.statut == 'regle' %}validee{% else %}en_attente{% endif %}">{{ paiement.get_statut_display }}</span></td>
                 <td>
                     <div class="actions">
