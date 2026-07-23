@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load icones %}
 
 {% block title %}Prises en charge{% endblock %}
 
@@ -32,8 +33,8 @@
                 <td><span class="badge {{ prise.statut }}">{{ prise.get_statut_display }}</span></td>
                 <td>
                     <div class="actions">
-                        <a href="{% url 'modifier_prise_en_charge' prise.pk %}" class="button primary btn btn-sm">Modifier</a>
-                        <a href="{% url 'supprimer_prise_en_charge' prise.pk %}" class="button btn btn-danger btn-sm">Supprimer</a>
+                        <a href="{% url 'modifier_prise_en_charge' prise.pk %}" class="button primary btn btn-sm">{% icone "edit-2" %} Modifier</a>
+                        <a href="{% url 'supprimer_prise_en_charge' prise.pk %}" class="button btn btn-danger btn-sm">{% icone "trash-2" %} Supprimer</a>
                     </div>
                 </td>
             </tr>
