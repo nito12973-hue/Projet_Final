@@ -14,6 +14,20 @@
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="SantéSN — La santé connectée au service de tous">
     <meta name="twitter:description" content="Rendez-vous, consultations, ordonnances QR, pharmacies et assurance santé : la prise en charge médicale au Sénégal, en ligne.">
+    <link rel="canonical" href="{{ request.build_absolute_uri }}">
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "MedicalBusiness",
+        "name": "SantéSN",
+        "description": "Plateforme digitale de prise en charge médicale au Sénégal : rendez-vous, consultations, ordonnances QR, pharmacies et assurance santé.",
+        "url": "{{ request.build_absolute_uri }}",
+        "areaServed": {
+            "@type": "Country",
+            "name": "Sénégal"
+        }
+    }
+    </script>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M11 15 H34 L41 22 V31 A5 5 0 0 1 36 36 H11 A5 5 0 0 1 6 31 V20 A5 5 0 0 1 11 15 Z' fill='%230e7c86'/%3E%3Cpath d='M12 26h4l2.5-5 3 10 2.5-7 1.5 2h11' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
