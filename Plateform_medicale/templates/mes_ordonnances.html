@@ -37,6 +37,9 @@
     </table>
 </section>
 {% else %}
-<p class="empty">Aucune ordonnance disponible.</p>
+<div class="etat-vide">
+    {% illustration_vide "pill" %}
+    <p>Aucune ordonnance disponible.</p>
+</div>
 {% endif %}
 {% endblock %}

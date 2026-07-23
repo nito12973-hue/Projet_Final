@@ -373,6 +373,27 @@
             color: var(--muted);
         }
 
+        /* Etat vide illustre (liste sans resultat) : generalise depuis
+           prestataires_proches.html, qui etait jusqu'ici le seul ecran a en
+           avoir un. */
+        .etat-vide {
+            text-align: center;
+            padding: 32px 20px;
+        }
+
+        .etat-vide svg {
+            margin-bottom: 12px;
+        }
+
+        .etat-vide p {
+            color: var(--muted);
+            margin: 0 0 16px;
+        }
+
+        .etat-vide .actions {
+            justify-content: center;
+        }
+
         /* Tableau de donnees replie par defaut (ex. sous un graphique) : evite
            de dupliquer visuellement chart + tableau, tout en gardant les
            valeurs exactes accessibles (natif, sans JS, lisible au clavier/

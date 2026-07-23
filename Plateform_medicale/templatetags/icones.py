@@ -208,6 +208,21 @@ _POULS = 'M12 26h4l2.5-5 3 10 2.5-7 1.5 2h11'
 
 
 @register.simple_tag
+def illustration_vide(nom):
+    """Illustration d'etat vide (72x72) : cercle + icone existante, meme
+    trait fin que le reste du systeme (pas un nouveau style d'illustration
+    a maintenir). Remplace le texte seul de <p class="empty"> sur les
+    listes qui en ont l'usage le plus frequent (demo, premiere utilisation)."""
+    contenu = _ICONES.get(nom, "")
+    return mark_safe(
+        '<svg width="72" height="72" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
+        '<circle cx="12" cy="12" r="11.3" stroke="#d9e2ea" stroke-width="0.6"/>'
+        f'<g stroke="#0e7c86" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">{contenu}</g>'
+        "</svg>"
+    )
+
+
+@register.simple_tag
 def logo_marque(taille=36, fond="clair"):
     """Mark SVG du logo (carte a coin coupe + pouls), fond clair ou sombre."""
     if fond == "sombre":

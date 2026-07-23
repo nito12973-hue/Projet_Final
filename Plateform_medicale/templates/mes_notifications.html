@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load icones %}
 
 {% block title %}Mes notifications{% endblock %}
 
@@ -49,6 +50,9 @@
     </table>
 </section>
 {% else %}
-<p class="empty">Aucune notification.</p>
+<div class="etat-vide">
+    {% illustration_vide "bell" %}
+    <p>Aucune notification.</p>
+</div>
 {% endif %}
 {% endblock %}
