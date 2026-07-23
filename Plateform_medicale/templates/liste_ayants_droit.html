@@ -29,7 +29,7 @@
                 <td>{{ ayant_droit.prenom }} {{ ayant_droit.nom }}</td>
                 <td>{{ ayant_droit.get_lien_parente_display|default:"-" }}</td>
                 <td>{{ ayant_droit.date_naissance|date:"d/m/Y" }}</td>
-                <td>{{ ayant_droit.numero_carte }}</td>
+                <td class="code">{{ ayant_droit.numero_carte }}</td>
                 <td>
                     <div class="actions">
                         <a href="{% url 'modifier_ayant_droit' ayant_droit.pk %}" class="button primary btn btn-sm">Modifier</a>
