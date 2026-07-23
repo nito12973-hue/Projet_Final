@@ -71,7 +71,7 @@
                     {% endif %}
                 </td>
                 <td>
-                    <div class="actions">
+                    <div class="actions" style="flex-wrap:nowrap;">
                         <a href="{% url 'modifier_utilisateur' utilisateur.pk %}" class="button btn btn-primary btn-sm">Modifier</a>
                         <a href="{% url 'reinitialiser_mot_de_passe' utilisateur.pk %}" class="button btn btn-sm">Reinitialiser mdp</a>
                         {% if utilisateur.pk != request.user.pk %}
