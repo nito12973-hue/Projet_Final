@@ -1512,8 +1512,15 @@ def dashboard_pharmacien(request):
         return render(request, "pharmacien_fiche_manquante.html")
 
     delivrances = Delivrance.objects.filter(pharmacien=pharmacien)
+    aujourd_hui = timezone.localdate()
+    debut_semaine = aujourd_hui - datetime.timedelta(days=aujourd_hui.weekday())
     contexte = {
         "total_delivrances": delivrances.count(),
+        "delivrances_aujourd_hui": delivrances.filter(date_delivrance__date=aujourd_hui).count(),
+        "delivrances_semaine": delivrances.filter(date_delivrance__date__gte=debut_semaine).count(),
+        "patients_servis": delivrances.values(
+            "ordonnance__consultation__patient"
+        ).distinct().count(),
         "dernieres_delivrances": delivrances.select_related(
             "ordonnance__consultation__patient"
         ).order_by("-date_delivrance")[:5],
