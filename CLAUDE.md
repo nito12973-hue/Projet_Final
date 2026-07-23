@@ -113,20 +113,25 @@ Fonctionnalités livrées après les 15 phases initiales, hors numérotation :
   rendez-vous. Détail technique dans `FONCTIONNEMENT.txt` (modèle, vue,
   templates, règle anti-XSS pour les popups Leaflet).
 - **Recherche de lieu sur la carte** (Admin, `ajouter_prestataire` /
-  `modifier_prestataire`) — bouton "Rechercher sur la carte" à côté du champ
-  ville, qui appelle la vue `recherche_lieu_prestataire` (relais serveur,
-  même origine que le site) plutôt que Nominatim directement depuis le
-  navigateur : un appel client direct s'est révélé peu fiable en test (le
-  cache CDN de Nominatim ne fait pas varier ses réponses selon `Origin`,
-  d'où un en-tête CORS présent une fois sur deux, et `fetch()` ne peut pas
-  porter de User-Agent applicatif identifiant, ce que la politique d'usage
-  de Nominatim attend). La vue interroge Nominatim côté serveur
-  (`urllib.request`, pas de nouvelle dépendance) avec un User-Agent dédié,
-  limité au Sénégal (`countrycodes=sn`), et renvoie un JSON minimal
-  (`trouve`/`lat`/`lon`/`nom`). Si le lieu existe, la carte se centre dessus
-  et le marqueur se place automatiquement (mêmes champs cachés
-  `latitude`/`longitude` que le clic manuel sur la carte, qui reste
-  toujours possible). Si le lieu est introuvable ou le service indisponible,
+  `modifier_prestataire`) — bouton "Rechercher sur la carte" qui combine les
+  champs adresse + ville (adresse en premier, plus précis : quartier/
+  commune ; interroger la seule ville ne suffisait pas à retrouver des
+  lieux précis) et appelle la vue `recherche_lieu_prestataire`
+  (relais serveur, même origine que le site) plutôt que Nominatim
+  directement depuis le navigateur : un appel client direct s'est révélé peu
+  fiable en test (le cache CDN de Nominatim ne fait pas varier ses réponses
+  selon `Origin`, d'où un en-tête CORS présent une fois sur deux, et
+  `fetch()` ne peut pas porter de User-Agent applicatif identifiant, ce que
+  la politique d'usage de Nominatim attend). La vue interroge Nominatim
+  côté serveur (`urllib.request`, pas de nouvelle dépendance) avec un
+  User-Agent dédié, limité au Sénégal (`countrycodes=sn`), et renvoie un
+  JSON minimal (`trouve`/`lat`/`lon`/`nom`). Si le lieu existe dans les
+  données OpenStreetMap, la carte se centre dessus et le marqueur se place
+  automatiquement (mêmes champs cachés `latitude`/`longitude` que le clic
+  manuel sur la carte, qui reste toujours possible — nécessaire pour un
+  hôpital/quartier trop précis ou trop récent pour être déjà référencé sur
+  OpenStreetMap, la couverture au Sénégal restant inégale en dehors des
+  grandes villes/communes). Si le lieu est introuvable ou le service indisponible,
   message inline sous le bouton (pas d'alerte navigateur).
 
 ## Documents de travail (specs / plans)

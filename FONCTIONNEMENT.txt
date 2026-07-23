@@ -86,14 +86,18 @@ Recherche de lieu sur la carte (ajouter_prestataire / modifier_prestataire)
   Access-Control-Allow-Origin est absent une fois sur deux ; fetch() ne
   peut pas non plus porter de User-Agent applicatif identifiant, attendu
   par la politique d'usage de Nominatim).
-  recherche_lieu_prestataire (@admin_required, GET ?q=<ville>) interroge
+  recherche_lieu_prestataire (@admin_required, GET ?q=<requete>) interroge
   Nominatim cote serveur via urllib.request (stdlib, aucune nouvelle
   dependance) avec un User-Agent dedie, limite au Senegal
   (countrycodes=sn), et renvoie un JSON minimal : {"trouve": true/false,
   "lat", "lon", "nom"} ; erreur reseau/timeout -> {"trouve": false,
   "erreur": "service_indisponible"} (jamais d'exception non geree).
-  Cote JS : si trouve, la carte se centre et le marqueur/les champs caches
-  latitude/longitude sont mis a jour — exactement comme un clic manuel sur
+  Cote JS : le bouton combine les champs adresse + ville du formulaire
+  (adresse en premier, plus precis) avant d'appeler la vue — interroger la
+  seule ville ne retrouvait pas les lieux precis (quartier/commune) testes
+  par l'utilisateur. Si trouve, la carte se centre et le marqueur/les
+  champs caches latitude/longitude sont mis a jour — exactement comme un
+  clic manuel sur
   la carte, qui reste toujours possible en complement (message inline si
   introuvable ou service indisponible, pas d'alerte navigateur).
 
