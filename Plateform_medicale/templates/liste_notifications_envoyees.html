@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load icones %}
+{% load formats icones %}
 
 {% block title %}Notifications envoyees{% endblock %}
 
@@ -41,6 +41,17 @@
         </tbody>
     </table>
 </section>
+{% if notifications.paginator.num_pages > 1 %}
+<nav class="pagination" aria-label="Pagination">
+    {% if notifications.has_previous %}
+    <a href="?{% prefixe_pagination request.GET %}page={{ notifications.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Precedent</a>
+    {% endif %}
+    <span class="pagination-info">Page {{ notifications.number }} sur {{ notifications.paginator.num_pages }}</span>
+    {% if notifications.has_next %}
+    <a href="?{% prefixe_pagination request.GET %}page={{ notifications.next_page_number }}" class="button btn btn-sm">Suivant {% icone "chevron-right" %}</a>
+    {% endif %}
+</nav>
+{% endif %}
 {% else %}
 <div class="etat-vide">
     {% illustration_vide "bell" %}

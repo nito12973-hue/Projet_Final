@@ -40,6 +40,17 @@
         </tbody>
     </table>
 </section>
+{% if services.paginator.num_pages > 1 %}
+<nav class="pagination" aria-label="Pagination">
+    {% if services.has_previous %}
+    <a href="?{% prefixe_pagination request.GET %}page={{ services.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Precedent</a>
+    {% endif %}
+    <span class="pagination-info">Page {{ services.number }} sur {{ services.paginator.num_pages }}</span>
+    {% if services.has_next %}
+    <a href="?{% prefixe_pagination request.GET %}page={{ services.next_page_number }}" class="button btn btn-sm">Suivant {% icone "chevron-right" %}</a>
+    {% endif %}
+</nav>
+{% endif %}
 {% else %}
 <p class="empty">Aucun service medical enregistre.</p>
 {% endif %}

@@ -711,6 +711,22 @@
             box-shadow: none;
         }
 
+        /* Pagination des listes (Django Paginator) : precedent/suivant +
+           indicateur de page, sous chaque tableau paginable. */
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .pagination-info {
+            font-size: 13px;
+            color: var(--muted);
+            font-weight: 600;
+        }
+
         /* Tuiles "actions principales" des dashboards par role (distinct de .actions, boutons de ligne de tableau) */
         .action-tiles {
             display: grid;

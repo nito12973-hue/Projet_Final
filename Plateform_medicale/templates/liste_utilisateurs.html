@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load icones %}
+{% load formats icones %}
 
 {% block title %}Utilisateurs{% endblock %}
 
@@ -95,6 +95,17 @@
         </tbody>
     </table>
 </section>
+{% if utilisateurs.paginator.num_pages > 1 %}
+<nav class="pagination" aria-label="Pagination">
+    {% if utilisateurs.has_previous %}
+    <a href="?{% prefixe_pagination request.GET %}page={{ utilisateurs.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Precedent</a>
+    {% endif %}
+    <span class="pagination-info">Page {{ utilisateurs.number }} sur {{ utilisateurs.paginator.num_pages }}</span>
+    {% if utilisateurs.has_next %}
+    <a href="?{% prefixe_pagination request.GET %}page={{ utilisateurs.next_page_number }}" class="button btn btn-sm">Suivant {% icone "chevron-right" %}</a>
+    {% endif %}
+</nav>
+{% endif %}
 {% else %}
 <p class="empty">Aucun utilisateur ne correspond a ces criteres.</p>
 {% endif %}

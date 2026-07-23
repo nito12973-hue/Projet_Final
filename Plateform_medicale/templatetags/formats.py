@@ -17,3 +17,14 @@ def franc_cfa(montant):
     signe = "-" if valeur < 0 else ""
     groupes = f"{abs(valeur):,}".replace(",", " ")
     return f"{signe}{groupes} FCFA"
+
+
+@register.simple_tag
+def prefixe_pagination(get_params):
+    """Chaine de requete GET (filtres actifs, hors 'page') a placer devant
+    page=N dans un lien de pagination, pour ne pas perdre les filtres en
+    changeant de page. Retourne une chaine vide si aucun filtre actif."""
+    params = get_params.copy()
+    params.pop("page", None)
+    chaine = params.urlencode()
+    return f"{chaine}&" if chaine else ""

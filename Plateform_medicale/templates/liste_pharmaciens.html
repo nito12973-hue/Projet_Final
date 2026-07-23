@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load icones %}
+{% load formats icones %}
 
 {% block title %}Pharmaciens{% endblock %}
 
@@ -37,6 +37,17 @@
         </tbody>
     </table>
 </section>
+{% if pharmaciens.paginator.num_pages > 1 %}
+<nav class="pagination" aria-label="Pagination">
+    {% if pharmaciens.has_previous %}
+    <a href="?{% prefixe_pagination request.GET %}page={{ pharmaciens.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Precedent</a>
+    {% endif %}
+    <span class="pagination-info">Page {{ pharmaciens.number }} sur {{ pharmaciens.paginator.num_pages }}</span>
+    {% if pharmaciens.has_next %}
+    <a href="?{% prefixe_pagination request.GET %}page={{ pharmaciens.next_page_number }}" class="button btn btn-sm">Suivant {% icone "chevron-right" %}</a>
+    {% endif %}
+</nav>
+{% endif %}
 {% else %}
 <p class="empty">Aucun pharmacien enregistre.</p>
 {% endif %}
