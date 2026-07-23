@@ -32,7 +32,7 @@
                 <td><span class="badge {{ prise.statut }}">{{ prise.get_statut_display }}</span></td>
                 <td>
                     <div class="actions">
-                        <a href="{% url 'modifier_prise_en_charge' prise.pk %}" class="button btn btn-primary btn-sm">Modifier</a>
+                        <a href="{% url 'modifier_prise_en_charge' prise.pk %}" class="button primary btn btn-sm">Modifier</a>
                         <a href="{% url 'supprimer_prise_en_charge' prise.pk %}" class="button btn btn-danger btn-sm">Supprimer</a>
                     </div>
                 </td>
