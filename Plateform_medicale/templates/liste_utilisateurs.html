@@ -9,12 +9,13 @@
         <h1>Utilisateurs</h1>
         <p class="subtitle">Comptes de la plateforme : creation, roles, activation et mots de passe.</p>
     </div>
-    <div class="actions">
-        <a class="button" href="{% url 'exporter_utilisateurs_excel' %}?{{ request.GET.urlencode }}">{% icone "download" %} Exporter en Excel</a>
-        <a class="button" href="{% url 'importer_utilisateurs_excel' %}">{% icone "upload" %} Importer depuis Excel</a>
-        <a class="button primary" href="{% url 'ajouter_utilisateur' %}">Ajouter un utilisateur</a>
-    </div>
+    <a class="button primary" href="{% url 'ajouter_utilisateur' %}">Ajouter un utilisateur</a>
 </section>
+
+<div class="actions" style="justify-content:flex-end;margin-bottom:16px;">
+    <a class="button btn" href="{% url 'exporter_utilisateurs_excel' %}?{{ request.GET.urlencode }}">{% icone "download" %} Exporter en Excel</a>
+    <a class="button btn" href="{% url 'importer_utilisateurs_excel' %}">{% icone "upload" %} Importer depuis Excel</a>
+</div>
 
 <form method="get" class="filtres">
     <div style="min-width:180px;">
