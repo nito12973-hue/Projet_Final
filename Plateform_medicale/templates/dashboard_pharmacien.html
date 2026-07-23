@@ -45,7 +45,10 @@
         </tbody>
     </table>
     {% else %}
-    <p class="empty">Aucune delivrance validee pour le moment.</p>
+    <div class="etat-vide">
+        {% illustration_vide "pill" %}
+        <p>Aucune delivrance validee pour le moment.</p>
+    </div>
     {% endif %}
 </section>
 {% endblock %}

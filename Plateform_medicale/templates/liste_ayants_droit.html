@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load icones %}
 
 {% block title %}Mes ayants droit{% endblock %}
 
@@ -29,11 +30,11 @@
                 <td>{{ ayant_droit.prenom }} {{ ayant_droit.nom }}</td>
                 <td>{{ ayant_droit.get_lien_parente_display|default:"-" }}</td>
                 <td>{{ ayant_droit.date_naissance|date:"d/m/Y" }}</td>
-                <td>{{ ayant_droit.numero_carte }}</td>
+                <td class="code">{{ ayant_droit.numero_carte }}</td>
                 <td>
                     <div class="actions">
-                        <a href="{% url 'modifier_ayant_droit' ayant_droit.pk %}" class="button btn btn-primary btn-sm">Modifier</a>
-                        <a href="{% url 'supprimer_ayant_droit' ayant_droit.pk %}" class="button btn btn-danger btn-sm">Supprimer</a>
+                        <a href="{% url 'modifier_ayant_droit' ayant_droit.pk %}" class="button primary btn btn-sm">{% icone "edit-2" %} Modifier</a>
+                        <a href="{% url 'supprimer_ayant_droit' ayant_droit.pk %}" class="button btn btn-danger btn-sm">{% icone "trash-2" %} Supprimer</a>
                     </div>
                 </td>
             </tr>
@@ -42,6 +43,12 @@
     </table>
 </section>
 {% else %}
-<p class="empty">Aucun ayant droit enregistre.</p>
+<div class="etat-vide">
+    {% illustration_vide "family" %}
+    <p>Aucun ayant droit enregistre.</p>
+    <div class="actions">
+        <a class="button primary" href="{% url 'ajouter_ayant_droit' %}">Ajouter un ayant droit</a>
+    </div>
+</div>
 {% endif %}
 {% endblock %}

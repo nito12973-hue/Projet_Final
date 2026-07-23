@@ -1,5 +1,9 @@
 import datetime
+import json
 import unicodedata
+import urllib.error
+import urllib.parse
+import urllib.request
 from functools import wraps
 
 import openpyxl
@@ -15,9 +19,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Sum
 from django.db.models.functions import TruncMonth
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -210,6 +214,29 @@ def changer_mot_de_passe(request):
 def landing(request):
     """Page d'accueil publique de SantéSN (vitrine)."""
     return render(request, "landing.html")
+
+
+def robots_txt(request):
+    """Une seule page publique (landing) : tout le reste (espaces authentifies)
+    n'a pas vocation a etre indexe."""
+    contenu = (
+        "User-agent: *\n"
+        "Allow: /$\n"
+        "Disallow: /\n\n"
+        f"Sitemap: {request.build_absolute_uri('/sitemap.xml')}\n"
+    )
+    return HttpResponse(contenu, content_type="text/plain")
+
+
+def sitemap_xml(request):
+    contenu = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        f"  <url><loc>{request.build_absolute_uri('/')}</loc>"
+        "<changefreq>monthly</changefreq><priority>1.0</priority></url>\n"
+        "</urlset>\n"
+    )
+    return HttpResponse(contenu, content_type="application/xml")
 
 
 # ---------------------------------------------------------------------------
@@ -566,10 +593,17 @@ def liste_paiements(request):
     if statut:
         paiements = paiements.filter(statut=statut)
 
+    totaux = Paiement.objects.aggregate(
+        total_regle=Sum("montant_part_patient", filter=Q(statut=Paiement.Statut.REGLE)),
+        total_non_regle=Sum("montant_part_patient", filter=Q(statut=Paiement.Statut.NON_REGLE)),
+    )
+
     contexte = {
         "paiements": paiements,
         "statut_choisi": statut,
         "statuts": Paiement.Statut.choices,
+        "total_regle": totaux["total_regle"] or 0,
+        "total_non_regle": totaux["total_non_regle"] or 0,
     }
     return render(request, "liste_paiements.html", contexte)
 
@@ -598,7 +632,65 @@ def marquer_paiement_regle(request, pk):
 @admin_required
 def liste_prestataires(request):
     prestataires = Prestataire.objects.all()
-    return render(request, "liste_prestataires.html", {"prestataires": prestataires})
+
+    localisation = request.GET.get("localisation", "")
+    if localisation == "sans":
+        prestataires = prestataires.filter(
+            Q(latitude__isnull=True) | Q(longitude__isnull=True)
+        )
+    elif localisation == "avec":
+        prestataires = prestataires.filter(
+            latitude__isnull=False, longitude__isnull=False
+        )
+
+    contexte = {
+        "prestataires": prestataires,
+        "localisation_choisie": localisation,
+    }
+    return render(request, "liste_prestataires.html", contexte)
+
+
+@admin_required
+def recherche_lieu_prestataire(request):
+    """
+    Relais serveur vers Nominatim (recherche OpenStreetMap) pour le bouton
+    "Rechercher sur la carte" des formulaires prestataire. Un appel direct
+    navigateur -> Nominatim est sujet a des echecs intermittents (CORS
+    incoherent derriere leur cache, User-Agent de fetch() non identifiant) ;
+    en passant par le serveur, la requete est same-origin cote navigateur et
+    peut porter un User-Agent conforme a la politique d'usage de Nominatim.
+    """
+    requete = request.GET.get("q", "").strip()
+    if not requete:
+        return JsonResponse({"trouve": False})
+
+    parametres = urllib.parse.urlencode({
+        "format": "json",
+        "limit": 1,
+        "countrycodes": "sn",
+        "q": f"{requete}, Senegal",
+    })
+    url = f"https://nominatim.openstreetmap.org/search?{parametres}"
+    requete_http = urllib.request.Request(
+        url, headers={"User-Agent": "SanteSN-PlateformeMedicale/1.0"}
+    )
+
+    try:
+        with urllib.request.urlopen(requete_http, timeout=5) as reponse:
+            resultats = json.loads(reponse.read().decode("utf-8"))
+    except (urllib.error.URLError, TimeoutError, ValueError):
+        return JsonResponse({"trouve": False, "erreur": "service_indisponible"})
+
+    if not resultats:
+        return JsonResponse({"trouve": False})
+
+    lieu = resultats[0]
+    return JsonResponse({
+        "trouve": True,
+        "lat": lieu.get("lat"),
+        "lon": lieu.get("lon"),
+        "nom": lieu.get("display_name", requete),
+    })
 
 
 @admin_required
@@ -1121,12 +1213,12 @@ def telecharger_modele_import_utilisateurs(request):
     feuille.title = "Import utilisateurs"
     feuille.append(COLONNES_IMPORT_UTILISATEURS)
     feuille.append([
-        "awa.diop@exemple.sn", "Awa", "Diop", "770000000", "Assure",
-        "15/03/1990", "", "", "",
-    ])
-    feuille.append([
-        "moussa.fall@exemple.sn", "Moussa", "Fall", "770000001", "Medecin",
-        "", "Medecine generale", "", "",
+        "email@domaine.com", "Prenom", "Nom", "770000000",
+        "Assure / Medecin / Pharmacien / Administrateur",
+        "JJ/MM/AAAA (uniquement pour un Assure)",
+        "Ex: Medecine generale (uniquement pour un Medecin)",
+        "Nom exact d'un prestataire existant (optionnel)",
+        "Nom exact d'un plan de couverture existant (optionnel)",
     ])
 
     for index, nom_colonne in enumerate(COLONNES_IMPORT_UTILISATEURS, start=1):
@@ -1497,9 +1589,17 @@ def prestataires_proches(request):
     avec_coordonnees = prestataires_partenaires.filter(
         latitude__isnull=False, longitude__isnull=False
     )
-    sans_coordonnees = prestataires_partenaires.filter(
-        Q(latitude__isnull=True) | Q(longitude__isnull=True)
-    ).order_by("ville", "nom")
+    sans_coordonnees = list(
+        prestataires_partenaires.filter(
+            Q(latitude__isnull=True) | Q(longitude__isnull=True)
+        ).order_by("ville", "nom")
+    )
+    for prestataire in sans_coordonnees:
+        morceaux = [valeur for valeur in (prestataire.nom, prestataire.ville) if valeur]
+        prestataire.lien_itineraire = (
+            "https://www.google.com/maps/dir/?api=1&destination="
+            + urllib.parse.quote(", ".join(morceaux) + ", Senegal")
+        )
 
     lat_param = request.GET.get("lat")
     lng_param = request.GET.get("lng")

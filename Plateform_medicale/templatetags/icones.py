@@ -152,6 +152,39 @@ _ICONES = {
         '<line x1="12" y1="9.5" x2="12" y2="14"/>'
         '<line x1="12" y1="17" x2="12" y2="17.01"/>'
     ),
+    "search": (
+        '<circle cx="11" cy="11" r="7"/>'
+        '<line x1="21" y1="21" x2="16.5" y2="16.5"/>'
+    ),
+    "filter": (
+        '<path d="M4 5h16M7 12h10M10 19h4"/>'
+    ),
+    "edit-2": (
+        '<path d="M4 20l1-4L16 5l3 3L8 19l-4 1z"/>'
+    ),
+    "trash-2": (
+        '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>'
+    ),
+    "eye": (
+        '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/>'
+        '<circle cx="12" cy="12" r="2.5"/>'
+    ),
+    "key": (
+        '<circle cx="8" cy="15" r="4"/>'
+        '<path d="M11 12l9-9M16 6l2 2M19 3l2 2"/>'
+    ),
+    "credit-card": (
+        '<rect x="2.5" y="5" width="19" height="14" rx="2"/>'
+        '<line x1="2.5" y1="9.5" x2="21.5" y2="9.5"/>'
+    ),
+    "plus-circle": (
+        '<circle cx="12" cy="12" r="9"/>'
+        '<path d="M12 8v8M8 12h8"/>'
+    ),
+    "copy": (
+        '<rect x="4" y="4" width="13" height="13" rx="2"/>'
+        '<path d="M8 4V2.5h13V15h-1.5"/>'
+    ),
 }
 
 
@@ -163,4 +196,47 @@ def icone(nom):
         '<svg class="icone-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
         'stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
         f"{contenu}</svg>"
+    )
+
+
+# Marque "Croix-Pouls" : source unique du logo, reutilisee partout (sidebar de
+# base.html, sections de landing.html, carte de prise en charge) pour eviter
+# les copies divergentes du meme SVG en dur. base_auth.html reste a part (mark
+# inline translucide sur fond degrade, cas non couvert par ce tag - voir
+# CLAUDE.md, section Design system). Deux variantes selon le fond, pas de
+# degrade.
+_CROIX_V = 'rect x="18" y="6" width="12" height="36" rx="4"'
+_CROIX_H = 'rect x="6" y="18" width="36" height="12" rx="4"'
+_POULS = 'M6 24H14L17 16L21 32L25 19L27.5 24H42'
+
+
+@register.simple_tag
+def illustration_vide(nom):
+    """Illustration d'etat vide (72x72) : cercle + icone existante, meme
+    trait fin que le reste du systeme (pas un nouveau style d'illustration
+    a maintenir). Remplace le texte seul de <p class="empty"> sur les
+    listes qui en ont l'usage le plus frequent (demo, premiere utilisation)."""
+    contenu = _ICONES.get(nom, "")
+    return mark_safe(
+        '<svg width="72" height="72" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
+        '<circle cx="12" cy="12" r="11.3" stroke="#d9e2ea" stroke-width="0.6"/>'
+        f'<g stroke="#0e7c86" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">{contenu}</g>'
+        "</svg>"
+    )
+
+
+@register.simple_tag
+def logo_marque(taille=36, fond="clair", epaisseur_pouls=2.6):
+    """Mark SVG du logo (croix medicale + pouls), fond clair ou sombre."""
+    couleur_croix = "#EFF4F3" if fond == "sombre" else "#0B2027"
+    corps = (
+        f'<{_CROIX_V} fill="{couleur_croix}"/>'
+        f'<{_CROIX_H} fill="{couleur_croix}"/>'
+        f'<path d="{_POULS}" fill="none" stroke="#E0824F" stroke-width="{epaisseur_pouls}" '
+        'stroke-linecap="round" stroke-linejoin="round"/>'
+    )
+    return mark_safe(
+        f'<svg width="{taille}" height="{taille}" viewBox="0 0 48 48" fill="none" '
+        'xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="flex-shrink:0;">'
+        f"{corps}</svg>"
     )

@@ -9,12 +9,13 @@
         <h1>Utilisateurs</h1>
         <p class="subtitle">Comptes de la plateforme : creation, roles, activation et mots de passe.</p>
     </div>
-    <div class="actions">
-        <a class="button" href="{% url 'exporter_utilisateurs_excel' %}?{{ request.GET.urlencode }}">{% icone "download" %} Exporter en Excel</a>
-        <a class="button" href="{% url 'importer_utilisateurs_excel' %}">{% icone "upload" %} Importer depuis Excel</a>
-        <a class="button primary" href="{% url 'ajouter_utilisateur' %}">Ajouter un utilisateur</a>
-    </div>
+    <a class="button primary" href="{% url 'ajouter_utilisateur' %}">Ajouter un utilisateur</a>
 </section>
+
+<div class="actions" style="justify-content:flex-end;margin-bottom:16px;">
+    <a class="button btn" href="{% url 'exporter_utilisateurs_excel' %}?{{ request.GET.urlencode }}">{% icone "download" %} Exporter en Excel</a>
+    <a class="button btn" href="{% url 'importer_utilisateurs_excel' %}">{% icone "upload" %} Importer depuis Excel</a>
+</div>
 
 <form method="get" class="filtres">
     <div style="min-width:180px;">
@@ -70,11 +71,12 @@
                     {% endif %}
                 </td>
                 <td>
-                    <div class="actions">
-                        <a href="{% url 'modifier_utilisateur' utilisateur.pk %}" class="button btn btn-primary btn-sm">Modifier</a>
-                        <a href="{% url 'reinitialiser_mot_de_passe' utilisateur.pk %}" class="button btn btn-sm">Reinitialiser mdp</a>
+                    <div class="actions" style="flex-wrap:nowrap;">
+                        <a href="{% url 'modifier_utilisateur' utilisateur.pk %}" class="button primary btn btn-sm">{% icone "edit-2" %} Modifier</a>
+                        <a href="{% url 'reinitialiser_mot_de_passe' utilisateur.pk %}" class="button btn btn-sm">{% icone "key" %} Reinitialiser mdp</a>
                         {% if utilisateur.pk != request.user.pk %}
-                        <form method="post" action="{% url 'activer_desactiver_utilisateur' utilisateur.pk %}" class="action-ligne">
+                        <form method="post" action="{% url 'activer_desactiver_utilisateur' utilisateur.pk %}" class="action-ligne"
+                              {% if utilisateur.is_active %}onsubmit="return confirm('Desactiver le compte de {{ utilisateur|escapejs }} ? Il ne pourra plus se connecter tant qu\'il n\'est pas reactive.');"{% endif %}>
                             {% csrf_token %}
                             {% if utilisateur.is_active %}
                             <button type="submit" class="button btn btn-sm">Desactiver</button>
@@ -82,7 +84,7 @@
                             <button type="submit" class="button btn btn-sm">Activer</button>
                             {% endif %}
                         </form>
-                        <a href="{% url 'supprimer_utilisateur' utilisateur.pk %}" class="button btn btn-danger btn-sm">Supprimer</a>
+                        <a href="{% url 'supprimer_utilisateur' utilisateur.pk %}" class="button btn btn-danger btn-sm">{% icone "trash-2" %} Supprimer</a>
                         {% else %}
                         <span class="badge">Vous</span>
                         {% endif %}

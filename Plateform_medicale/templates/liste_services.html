@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load formats icones %}
 
 {% block title %}Services medicaux{% endblock %}
 
@@ -27,11 +28,11 @@
             <tr>
                 <td>{{ service.nom }}</td>
                 <td>{{ service.description|default:"-" }}</td>
-                <td>{{ service.prix }} FCFA</td>
+                <td>{{ service.prix|franc_cfa }}</td>
                 <td>
                     <div class="actions">
-                        <a href="{% url 'modifier_service' service.pk %}" class="button btn btn-primary btn-sm">Modifier</a>
-                        <a href="{% url 'supprimer_service' service.pk %}" class="button btn btn-danger btn-sm">Supprimer</a>
+                        <a href="{% url 'modifier_service' service.pk %}" class="button primary btn btn-sm">{% icone "edit-2" %} Modifier</a>
+                        <a href="{% url 'supprimer_service' service.pk %}" class="button btn btn-danger btn-sm">{% icone "trash-2" %} Supprimer</a>
                     </div>
                 </td>
             </tr>

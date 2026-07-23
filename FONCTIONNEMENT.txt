@@ -58,20 +58,48 @@ Prestataire
   PHARMACIE / CABINET), adresse, ville, telephone, partenaire (bool),
   date_conventionnement, latitude / longitude (DecimalField, null=True,
   blank=True — renseignees en cliquant sur une carte Leaflet dans les
-  formulaires admin ajouter_prestataire / modifier_prestataire).
+  formulaires admin ajouter_prestataire / modifier_prestataire, ou via le
+  bouton "Rechercher sur la carte" qui interroge Nominatim/OpenStreetMap
+  a partir du champ ville, cf. plus bas).
   Rattache a Medecin, Pharmacien, ServiceMedical, RendezVous (tous en
   ForeignKey optionnelle, SET_NULL a la suppression).
+  liste_prestataires : filtre GET "localisation" (sans/avec latitude+
+  longitude renseignees) en plus du tableau existant, pour reperer les
+  prestataires pas encore places sur la carte.
 
 distance_km(lat1, lon1, lat2, lon2)
   Fonction pure (haversine, pas d'acces base) dans models.py : distance a
   vol d'oiseau entre deux points, en kilometres. Choix volontaire plutot
   qu'un service de routage externe (pas de cle API, pas de dependance
-  reseau pour un simple tri). Coordonnees saisies a la main par l'admin
-  (pin sur la carte) plutot que geocodees automatiquement depuis
-  l'adresse — pas de service de geocodage integre au projet.
+  reseau pour un simple tri).
   Hors perimetre (non demande, a ne pas ajouter sans nouvelle demande) :
   filtrage des medecins par prestataire selectionne, calcul d'itineraire
   reel, vue carte globale du reseau cote Admin.
+
+Recherche de lieu sur la carte (ajouter_prestataire / modifier_prestataire)
+  Bouton "Rechercher sur la carte" (JS inline, meme bloc <script> que la
+  carte Leaflet) qui appelle la vue recherche_lieu_prestataire (meme
+  origine que le site) au lieu d'appeler nominatim.openstreetmap.org
+  directement depuis le navigateur. Teste puis abandonne : l'appel direct
+  navigateur -> Nominatim echoue par intermittence (le cache CDN de
+  Nominatim ne varie pas selon l'en-tete Origin, donc l'en-tete CORS
+  Access-Control-Allow-Origin est absent une fois sur deux ; fetch() ne
+  peut pas non plus porter de User-Agent applicatif identifiant, attendu
+  par la politique d'usage de Nominatim).
+  recherche_lieu_prestataire (@admin_required, GET ?q=<requete>) interroge
+  Nominatim cote serveur via urllib.request (stdlib, aucune nouvelle
+  dependance) avec un User-Agent dedie, limite au Senegal
+  (countrycodes=sn), et renvoie un JSON minimal : {"trouve": true/false,
+  "lat", "lon", "nom"} ; erreur reseau/timeout -> {"trouve": false,
+  "erreur": "service_indisponible"} (jamais d'exception non geree).
+  Cote JS : le bouton combine les champs adresse + ville du formulaire
+  (adresse en premier, plus precis) avant d'appeler la vue — interroger la
+  seule ville ne retrouvait pas les lieux precis (quartier/commune) testes
+  par l'utilisateur. Si trouve, la carte se centre et le marqueur/les
+  champs caches latitude/longitude sont mis a jour — exactement comme un
+  clic manuel sur
+  la carte, qui reste toujours possible en complement (message inline si
+  introuvable ou service indisponible, pas d'alerte navigateur).
 
 Patient
   Assure principal OU ayant droit (type_beneficiaire).
@@ -322,15 +350,38 @@ Assure (role_required(ASSURE), prefixe /assure/ + /espace/assure/)
 5. TEMPLATES ET DESIGN SYSTEM
 --------------------------------
 - base.html : shell unique (sidebar + zone de contenu), partage par les 4
-  roles connectes ; navigation conditionnelle selon current_role. Palette
-  navy (#0F172A) / turquoise (#14B8A6) — --primary-strong (#0F766E) reserve
-  aux elements avec texte/icone blancs en aplat (contraste insuffisant avec
-  le turquoise vif seul). Mode reduit du menu (icones seules, persistant via
+  roles connectes ; navigation conditionnelle selon current_role. Identite
+  "Territoire A + Croix-Pouls" : palette navy (#0B2027) / teal (#0E7C86)
+  — --primary-strong (#095059) reserve aux elements avec texte/icone blancs
+  en aplat (contraste insuffisant avec le teal vif seul) — / terracotta
+  (#E0824F, --accent, ponctuel uniquement). Polices Manrope (titres) + Public
+  Sans (texte courant). Mode reduit du menu (icones seules, persistant via
   localStorage), tiroir mobile, barre de chargement de navigation.
+- Logo/marque "Croix-Pouls" (remplace l'ancien concept "Carte-bouclier") :
+  une croix medicale a angles arrondis (deux rectangles perpendiculaires)
+  traversee en son centre par un trace de pouls terracotta (#E0824F,
+  toujours cette teinte, quel que soit le fond). Source unique du mark :
+  {% load icones %} + {% logo_marque taille=N fond="clair|sombre" %}
+  (templatetags/icones.py) — utilise dans base.html (sidebar), landing.html
+  (en-tete, mockup telephone, pied de page), mon_profil_assure.html /
+  dashboard_assure.html (composant "carte de prise en charge"). Fond clair :
+  croix pleine --ink/#0B2027. Fond sombre uni (sidebar, pied de page) :
+  croix pleine #EFF4F3. base_auth.html (panneau de marque a fond degrade)
+  reste une exception intentionnelle : mark inline (pas le tag), croix
+  blanche translucide (rgba(255,255,255,0.9)) pour rester coherent avec le
+  degrade — non couvert par les deux variantes clair/sombre du tag. Favicon
+  (data URI SVG dans les 5 <head> — base.html, landing.html, base_auth.html,
+  404.html, 500.html) : variante pleine, croix --primary/#0E7C86 + pouls
+  terracotta, dupliquee car generee hors du moteur de template Django.
+  Zone de protection, logo secondaire (empile), icone d'application et
+  version monochrome sont documentes dans la spec d'origine mais non
+  implementes (aucun usage actif dans le projet a ce jour).
 - base_auth.html : shell independant pour connexion/installation (setup
-  wizard), meme palette, CSS totalement autonome (pas de dependance a
-  base.html).
-- landing.html : page publique, CSS autonome, meme palette navy/turquoise.
+  wizard), meme palette (tokens renommes --vert*/--primary* pour rester
+  coherent avec base.html/landing.html — seul gabarit ou ce renommage etait
+  necessaire, les deux autres utilisaient deja --primary* des le depart),
+  CSS totalement autonome (pas de dependance a base.html).
+- landing.html : page publique, CSS autonome, meme palette navy/teal.
   Refonte "premium" en cours, feuille de route en 4 phases (issue d'un
   spec/plan docs/superpowers, contenu reporte ici puis dossier supprime).
   Phase 1 livree (fondations + Hero + Statistiques) : nouveaux tokens CSS
@@ -387,7 +438,7 @@ Assure (role_required(ASSURE), prefixe /assure/ + /espace/assure/)
 
 6. TESTS (tests.py)
 ----------------------
-python manage.py test Plateform_medicale — 145 tests au moment de la
+python manage.py test Plateform_medicale — 154 tests au moment de la
 redaction de ce document. Couvre : redirections/permissions par role,
 garde-fous anti-lockout (un admin ne peut pas se desactiver/supprimer/
 changer son propre role lui-meme), creation automatique de compte a la

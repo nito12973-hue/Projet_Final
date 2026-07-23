@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load icones %}
 
 {% block title %}Mes notifications{% endblock %}
 
@@ -37,7 +38,7 @@
                     {% if not notification.lue %}
                     <form method="post" action="{% url 'marquer_notification_lue' notification.pk %}" class="action-ligne">
                         {% csrf_token %}
-                        <button type="submit" class="button btn btn-primary btn-sm">Marquer comme lue</button>
+                        <button type="submit" class="button primary btn btn-sm">Marquer comme lue</button>
                     </form>
                     {% else %}
                     -
@@ -49,6 +50,9 @@
     </table>
 </section>
 {% else %}
-<p class="empty">Aucune notification.</p>
+<div class="etat-vide">
+    {% illustration_vide "bell" %}
+    <p>Aucune notification.</p>
+</div>
 {% endif %}
 {% endblock %}

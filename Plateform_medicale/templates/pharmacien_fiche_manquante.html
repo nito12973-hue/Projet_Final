@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load icones %}
 
 {% block title %}Profil incomplet{% endblock %}
 
@@ -6,7 +7,12 @@
 <section class="page-title">
     <div>
         <h1>Profil pharmacien incomplet</h1>
-        <p class="subtitle">Votre compte n'est pas encore associe a une fiche pharmacien. Contactez l'administrateur.</p>
+        <p class="subtitle">Il manque une etape avant d'acceder a votre espace.</p>
     </div>
 </section>
+
+<div class="avis avis-attente">
+    <p class="avis-titre">{% icone "alert-triangle" %} Votre compte n'est pas encore associe a une fiche pharmacien</p>
+    <p>Un administrateur doit vous rattacher a une fiche pharmacien (prestataire) depuis Gestion des utilisateurs pour que votre espace pharmacien s'active. Contactez-le pour finaliser cette etape.</p>
+</div>
 {% endblock %}

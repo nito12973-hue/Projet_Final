@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load icones %}
 
 {% block title %}Mon agenda{% endblock %}
 
@@ -40,14 +41,14 @@
                         <form method="post" action="{% url 'changer_statut_rendez_vous' rdv.pk %}" class="action-ligne">
                             {% csrf_token %}
                             <input type="hidden" name="statut" value="CONFIRME">
-                            <button type="submit" class="button btn btn-primary btn-sm">Confirmer</button>
+                            <button type="submit" class="button primary btn btn-sm">Confirmer</button>
                         </form>
                         {% endif %}
                         {% if rdv.statut == 'CONFIRME' %}
                         <form method="post" action="{% url 'changer_statut_rendez_vous' rdv.pk %}" class="action-ligne">
                             {% csrf_token %}
                             <input type="hidden" name="statut" value="TERMINE">
-                            <button type="submit" class="button btn btn-primary btn-sm">Marquer termine</button>
+                            <button type="submit" class="button primary btn btn-sm">Marquer termine</button>
                         </form>
                         {% endif %}
                         {% if rdv.statut == 'DEMANDE' or rdv.statut == 'CONFIRME' %}
@@ -65,6 +66,9 @@
     </table>
 </section>
 {% else %}
-<p class="empty">Aucun rendez-vous enregistre.</p>
+<div class="etat-vide">
+    {% illustration_vide "calendar" %}
+    <p>Aucun rendez-vous enregistre.</p>
+</div>
 {% endif %}
 {% endblock %}

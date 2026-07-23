@@ -33,6 +33,8 @@
             --text: #1f2933;
             --muted: #5f6f7d;
             --danger: #b3261e;
+            /* Survol des boutons de suppression : seule variante sombre du rouge --danger. */
+            --danger-strong: #8f1e18;
             --success: #1e7a4c;
             --warning: #8a5a00;
             --info: #1d5fa6;
@@ -313,12 +315,19 @@
             color: var(--muted);
         }
 
+        /* Aide contextuelle sous un champ de formulaire (field.help_text). */
+        .aide {
+            margin: -10px 0 16px;
+            font-size: 12.5px;
+            color: var(--muted);
+        }
+
         .panel,
         .empty {
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: 14px;
-            box-shadow: 0 6px 24px rgba(15, 23, 42, 0.07);
+            box-shadow: 0 6px 24px rgba(11, 32, 39, 0.07);
         }
 
         .panel {
@@ -364,6 +373,27 @@
             color: var(--muted);
         }
 
+        /* Etat vide illustre (liste sans resultat) : generalise depuis
+           prestataires_proches.html, qui etait jusqu'ici le seul ecran a en
+           avoir un. */
+        .etat-vide {
+            text-align: center;
+            padding: 32px 20px;
+        }
+
+        .etat-vide svg {
+            margin-bottom: 12px;
+        }
+
+        .etat-vide p {
+            color: var(--muted);
+            margin: 0 0 16px;
+        }
+
+        .etat-vide .actions {
+            justify-content: center;
+        }
+
         /* Tableau de donnees replie par defaut (ex. sous un graphique) : evite
            de dupliquer visuellement chart + tableau, tout en gardant les
            valeurs exactes accessibles (natif, sans JS, lisible au clavier/
@@ -391,12 +421,6 @@
 
         .details-tableau table {
             margin-top: 12px;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 16px;
         }
 
         .admin-layout {
@@ -460,66 +484,9 @@
             padding: 0 24px 24px;
         }
 
-        .stat {
-            position: relative;
-            display: block;
-            text-decoration: none;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 20px 18px 18px;
-            overflow: hidden;
-            box-shadow: 0 6px 24px rgba(15, 23, 42, 0.07);
-            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-            animation: entree-carte 0.5s ease-out both;
-        }
-
-        .grid .stat:nth-child(1) { animation-delay: 0.04s; }
-        .grid .stat:nth-child(2) { animation-delay: 0.08s; }
-        .grid .stat:nth-child(3) { animation-delay: 0.12s; }
-        .grid .stat:nth-child(4) { animation-delay: 0.16s; }
-        .grid .stat:nth-child(5) { animation-delay: 0.20s; }
-        .grid .stat:nth-child(6) { animation-delay: 0.24s; }
-
         @keyframes entree-carte {
             from { opacity: 0; transform: translateY(16px); }
             to   { opacity: 1; transform: translateY(0); }
-        }
-
-        .stat::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary) 0%, var(--primary-accent) 100%);
-        }
-
-        .stat:hover {
-            transform: translateY(-4px);
-            border-color: #99e6da;
-            box-shadow: 0 14px 34px rgba(13, 148, 136, 0.16);
-        }
-
-        .stat strong {
-            display: block;
-            color: var(--primary-dark);
-            font-size: 32px;
-            font-weight: 800;
-            line-height: 1;
-            margin-bottom: 8px;
-        }
-
-        .stat span {
-            color: var(--muted);
-            font-weight: 600;
-        }
-
-        .stat p.aide {
-            margin: 8px 0 0;
-            font-size: 13px;
-            color: var(--muted);
         }
 
         .badge {
@@ -557,7 +524,7 @@
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: 14px;
-            box-shadow: 0 6px 24px rgba(15, 23, 42, 0.07);
+            box-shadow: 0 6px 24px rgba(11, 32, 39, 0.07);
         }
 
         label {
@@ -584,7 +551,7 @@
         input:hover,
         select:hover,
         textarea:hover {
-            border-color: #a8d8d0;
+            border-color: #9ecbc6;
         }
 
         input:focus,
@@ -593,7 +560,7 @@
             outline: none;
             border-color: var(--primary);
             background: #ffffff;
-            box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.16);
+            box-shadow: 0 0 0 4px rgba(14, 124, 134, 0.16);
         }
 
         textarea {
@@ -619,7 +586,7 @@
 
         .button:hover {
             background: var(--primary-soft);
-            border-color: #99e6da;
+            border-color: #8fcac2;
             transform: translateY(-1px);
         }
 
@@ -627,14 +594,14 @@
             border-color: transparent;
             background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-strong) 100%);
             color: #ffffff;
-            box-shadow: 0 6px 16px rgba(13, 148, 136, 0.30);
+            box-shadow: 0 6px 16px rgba(14, 124, 134, 0.30);
         }
 
         .button.primary:hover {
             background: linear-gradient(135deg, var(--primary-strong) 0%, var(--primary-dark) 100%);
             border-color: transparent;
             transform: translateY(-2px);
-            box-shadow: 0 10px 22px rgba(13, 148, 136, 0.40);
+            box-shadow: 0 10px 22px rgba(14, 124, 134, 0.40);
         }
 
         .button.btn {
@@ -651,26 +618,14 @@
             font-size: 12px;
         }
 
-        .button.btn-primary {
-            border-color: transparent;
-            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-strong) 100%);
-            color: #ffffff;
-            box-shadow: 0 4px 12px rgba(13, 148, 136, 0.28);
-        }
-
-        .button.btn-primary:hover {
-            background: linear-gradient(135deg, var(--primary-strong) 0%, var(--primary-dark) 100%);
-            border-color: transparent;
-        }
-
         .button.btn-danger {
             border-color: transparent;
-            background: #dc3545;
+            background: var(--danger);
             color: #ffffff;
         }
 
         .button.btn-danger:hover {
-            background: #bb2d3b;
+            background: var(--danger-strong);
             border-color: transparent;
         }
 
@@ -765,12 +720,21 @@
         }
 
         .action-tile {
+            display: block;
             padding: 18px;
             border: 1px solid var(--border);
             border-radius: 14px;
             background: var(--primary-soft);
             color: var(--primary-strong);
             font-weight: 700;
+            text-decoration: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+
+        a.action-tile:hover {
+            transform: translateY(-3px);
+            border-color: #8fcac2;
+            box-shadow: 0 12px 28px rgba(14, 124, 134, 0.16);
         }
 
         /* ===== Cartes de stats "accueil" (turquoise), utilisees uniquement sur
@@ -790,7 +754,7 @@
             border: 1px solid var(--border);
             border-radius: 16px;
             padding: 18px;
-            box-shadow: 0 6px 20px rgba(15, 23, 42, 0.07);
+            box-shadow: 0 6px 20px rgba(11, 32, 39, 0.07);
             transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
             animation: entree-carte 0.5s ease-out both;
         }
@@ -803,8 +767,8 @@
 
         a.dash-stat:hover {
             transform: translateY(-4px);
-            border-color: #99e6da;
-            box-shadow: 0 14px 32px rgba(20, 184, 166, 0.18);
+            border-color: #8fcac2;
+            box-shadow: 0 14px 32px rgba(14, 124, 134, 0.18);
         }
 
         .dash-stat-icon {
@@ -816,7 +780,7 @@
             margin-bottom: 14px;
             border-radius: 10px;
             background: var(--accent-turquoise-wash);
-            color: #0d9488;
+            color: var(--primary);
         }
 
         .dash-stat-icon .icone-nav { width: 17px; height: 17px; }
@@ -857,9 +821,123 @@
             background: currentColor;
         }
 
-        .dash-pill.ok { background: #dcfce7; color: #15803d; }
+        .dash-pill.ok { background: #dcfce7; color: var(--success); }
         .dash-pill.attente { background: #fff1d6; color: var(--warning); }
-        .dash-pill.danger { background: #fee4e2; color: #b42318; }
+        .dash-pill.danger { background: #fee4e2; color: var(--danger); }
+
+        /* Identifiants/codes (numero de carte, code QR, mot de passe genere) :
+           IBM Plex Mono deja chargee mais jamais utilisee jusqu'ici, chiffres
+           tabulaires pour un alignement propre. */
+        .code {
+            font-family: 'IBM Plex Mono', 'Cascadia Code', Consolas, monospace;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 0.02em;
+        }
+
+        /* ===== Carte de prise en charge (assure/ayant droit) =====
+           Le produit s'appelle une carte de prise en charge ; jusqu'ici son
+           numero n'etait jamais qu'un texte brut. Format proche d'une carte
+           bancaire (ratio ISO/IEC 7810), degrade identique a .button.primary. */
+        .carte-assure {
+            position: relative;
+            width: 100%;
+            max-width: 360px;
+            aspect-ratio: 1.586 / 1;
+            border-radius: 18px;
+            padding: 22px 24px;
+            color: #ffffff;
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-strong) 100%);
+            box-shadow: 0 14px 34px rgba(11, 32, 39, 0.28);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden;
+        }
+
+        .carte-assure::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(120% 100% at 100% 0%, rgba(79, 184, 174, 0.35), transparent 60%);
+            pointer-events: none;
+        }
+
+        .carte-assure-entete {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .carte-assure-puce {
+            width: 34px;
+            height: 24px;
+            border-radius: 5px;
+            background: linear-gradient(135deg, var(--accent) 0%, #f0a875 100%);
+        }
+
+        .carte-assure-label {
+            position: relative;
+            margin: 16px 0 2px;
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.72);
+        }
+
+        .carte-assure-numero {
+            position: relative;
+            margin: 0;
+            font-size: 21px;
+        }
+
+        .carte-assure-pied {
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .carte-assure-nom {
+            display: block;
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        .carte-assure-type {
+            display: block;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.72);
+        }
+
+        .carte-assure-couverture {
+            text-align: right;
+        }
+
+        .carte-assure-couverture strong {
+            display: block;
+            font-size: 20px;
+        }
+
+        .carte-assure-couverture span {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.72);
+        }
+
+        .carte-assure.mini {
+            max-width: 220px;
+            padding: 14px 16px;
+            border-radius: 12px;
+        }
+
+        .carte-assure.mini .carte-assure-numero { font-size: 15px; }
+        .carte-assure.mini .carte-assure-label { margin: 8px 0 1px; font-size: 9.5px; }
+        .carte-assure.mini .carte-assure-nom { font-size: 12.5px; }
+        .carte-assure.mini .carte-assure-type,
+        .carte-assure.mini .carte-assure-couverture span { font-size: 10px; }
+        .carte-assure.mini .carte-assure-couverture strong { font-size: 15px; }
+        .carte-assure.mini .carte-assure-puce { width: 24px; height: 17px; }
 
         /* ===== Barre de chargement (navigation/formulaires) ===== */
         #barre-chargement {
@@ -965,6 +1043,26 @@
             box-shadow: 0 0 0 4px rgba(14, 124, 134, 0.35);
         }
 
+        /* Lien d'evitement clavier : invisible jusqu'a recevoir le focus,
+           permet de sauter la sidebar pour aller droit au contenu. */
+        .lien-evitement {
+            position: absolute;
+            top: -48px;
+            left: 12px;
+            z-index: 3000;
+            background: var(--primary-dark);
+            color: #ffffff;
+            padding: 12px 18px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: top 0.2s ease;
+        }
+
+        .lien-evitement:focus {
+            top: 12px;
+        }
+
         /* Accessibilité : réduire les animations si demandé */
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after {
@@ -976,6 +1074,7 @@
     </style>
 </head>
 <body>
+    <a href="#contenu-principal" class="lien-evitement">Aller au contenu</a>
     <div id="barre-chargement"></div>
     <div id="fond-sidebar" class="sidebar-overlay"></div>
     <div class="shell">
@@ -986,11 +1085,7 @@
             </button>
             <div class="sidebar-head">
                 <a class="brand" href="{% url 'post_login_redirect' %}">
-                    <svg width="36" height="36" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="flex-shrink:0;">
-                        <rect x="18" y="6" width="12" height="36" rx="4" fill="#EFF4F3"/>
-                        <rect x="6" y="18" width="36" height="12" rx="4" fill="#EFF4F3"/>
-                        <path d="M6 24H14L17 16L21 32L25 19L27.5 24H42" fill="none" stroke="#E0824F" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
+                    {% logo_marque taille=36 fond="sombre" %}
                     <span class="brand-texte">Santé<span style="color: var(--primary-light);">SN</span></span>
                 </a>
                 {% if user.is_authenticated %}
@@ -1058,7 +1153,7 @@
         </aside>
 
         <section class="contenu">
-            <main>
+            <main id="contenu-principal">
                 {% if user.is_authenticated %}
                 <button type="button" id="bouton-menu-mobile" class="sidebar-toggle"
                         aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="barre-laterale">
@@ -1069,7 +1164,7 @@
                 <ul style="list-style:none;padding:0;margin:0 0 20px;">
                     {% for message in messages %}
                     <li style="padding:14px 18px;border-radius:10px;margin-bottom:10px;font-weight:600;
-                        {% if message.tags == 'error' %}background:#fee4e2;color:#b42318;border:1px solid #fecdca;
+                        {% if message.tags == 'error' %}background:#fee4e2;color:var(--danger);border:1px solid #fecdca;
                         {% elif message.tags == 'success' %}background:#dcfce7;color:#167a46;border:1px solid #bbf7d0;
                         {% else %}background:#eef2f6;color:#40515f;border:1px solid #d9e2ea;{% endif %}">
                         {{ message }}
@@ -1171,6 +1266,28 @@
 
             document.addEventListener('submit', function () {
                 demarrerBarre();
+            });
+        })();
+
+        (function () {
+            // Compteur anime sur les chiffres cles des dashboards (.dash-stat
+            // strong) : meme principe que la landing (Phase 1), sans le
+            // suffixe "+" car ce sont des totaux exacts, pas des objectifs.
+            var reductionMouvement = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            if (reductionMouvement) { return; }
+
+            document.querySelectorAll('.dash-stat strong').forEach(function (element) {
+                var cible = parseInt(element.textContent.replace(/\s/g, ''), 10);
+                if (!isFinite(cible)) { return; }
+                var duree = 900;
+                var debut = performance.now();
+                function etape(instant) {
+                    var progression = Math.min((instant - debut) / duree, 1);
+                    var progressionAttenuee = 1 - Math.pow(1 - progression, 2);
+                    element.textContent = Math.round(cible * progressionAttenuee).toLocaleString('fr-FR');
+                    if (progression < 1) { requestAnimationFrame(etape); }
+                }
+                requestAnimationFrame(etape);
             });
         })();
     </script>
