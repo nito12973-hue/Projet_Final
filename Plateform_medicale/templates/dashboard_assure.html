@@ -86,7 +86,10 @@
         </tbody>
     </table>
     {% else %}
-    <p class="empty">Aucun rendez-vous a venir.</p>
+    <div class="etat-vide">
+        {% illustration_vide "calendar" %}
+        <p>Aucun rendez-vous a venir.</p>
+    </div>
     {% endif %}
 </section>
 {% endblock %}

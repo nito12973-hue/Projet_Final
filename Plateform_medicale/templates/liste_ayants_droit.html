@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load icones %}
 
 {% block title %}Mes ayants droit{% endblock %}
 
@@ -42,6 +43,12 @@
     </table>
 </section>
 {% else %}
-<p class="empty">Aucun ayant droit enregistre.</p>
+<div class="etat-vide">
+    {% illustration_vide "family" %}
+    <p>Aucun ayant droit enregistre.</p>
+    <div class="actions">
+        <a class="button primary" href="{% url 'ajouter_ayant_droit' %}">Ajouter un ayant droit</a>
+    </div>
+</div>
 {% endif %}
 {% endblock %}
