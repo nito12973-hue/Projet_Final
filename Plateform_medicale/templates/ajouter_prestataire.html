@@ -29,7 +29,7 @@
         <span id="statut-recherche-lieu" class="subtitle" style="margin:0;"></span>
     </div>
     <div id="carte-prestataire" style="height: 320px; border-radius: 12px; margin-bottom: 8px;"></div>
-    <p class="subtitle" style="margin-top:0;margin-bottom:16px;">Cliquez sur la carte pour placer le prestataire, ou renseignez la ville ci-dessus puis utilisez "Rechercher sur la carte".</p>
+    <p class="subtitle" style="margin-top:0;margin-bottom:16px;">Cliquez sur la carte pour placer le prestataire, ou renseignez l'adresse et/ou la ville ci-dessus puis utilisez "Rechercher sur la carte".</p>
 
     <button class="button primary" type="submit">Enregistrer</button>
 </form>
@@ -68,20 +68,24 @@
             champLongitude.value = position.lng.toFixed(6);
         });
 
-        // Recherche du lieu (ville/region/departement) : relais serveur
+        // Recherche du lieu (adresse/quartier/commune/ville) : relais serveur
         // ({% url 'recherche_lieu_prestataire' %}) vers Nominatim (OpenStreetMap),
         // meme ecosysteme que les tuiles de la carte, gratuit, sans cle API.
+        var champAdresse = document.getElementById('id_adresse');
         var champVille = document.getElementById('id_ville');
         var boutonRecherche = document.getElementById('bouton-recherche-lieu');
         var statutRecherche = document.getElementById('statut-recherche-lieu');
 
         if (boutonRecherche) {
             boutonRecherche.addEventListener('click', function () {
-                var requete = (champVille.value || '').trim();
-                if (!requete) {
-                    statutRecherche.textContent = "Indiquez d'abord une ville ci-dessus.";
+                var adresse = (champAdresse.value || '').replace(/\s+/g, ' ').trim();
+                var ville = (champVille.value || '').trim();
+                var morceaux = [adresse, ville].filter(function (valeur) { return valeur; });
+                if (!morceaux.length) {
+                    statutRecherche.textContent = "Indiquez une adresse ou une ville ci-dessus.";
                     return;
                 }
+                var requete = morceaux.join(', ');
                 statutRecherche.textContent = 'Recherche en cours...';
                 var url = '{% url "recherche_lieu_prestataire" %}?q=' + encodeURIComponent(requete);
 
