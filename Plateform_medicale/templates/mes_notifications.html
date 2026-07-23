@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load icones %}
+{% load formats icones %}
 
 {% block title %}Mes notifications{% endblock %}
 
@@ -10,6 +10,21 @@
         <p class="subtitle">Messages recus de l'administration.</p>
     </div>
 </section>
+
+<form method="get" class="filtres">
+    <div style="min-width:180px;">
+        <label for="lue">Statut</label>
+        <select id="lue" name="lue" style="margin-bottom:0;">
+            <option value="">Toutes</option>
+            <option value="non" {% if lue_choisie == "non" %}selected{% endif %}>Non lues</option>
+            <option value="oui" {% if lue_choisie == "oui" %}selected{% endif %}>Lues</option>
+        </select>
+    </div>
+    <button type="submit" class="button primary btn">Filtrer</button>
+    {% if lue_choisie %}
+    <a href="{% url 'mes_notifications' %}" class="button btn">Reinitialiser</a>
+    {% endif %}
+</form>
 
 {% if notifications %}
 <section class="panel">
@@ -49,10 +64,25 @@
         </tbody>
     </table>
 </section>
+{% if notifications.paginator.num_pages > 1 %}
+<nav class="pagination" aria-label="Pagination">
+    {% if notifications.has_previous %}
+    <a href="?{% prefixe_pagination request.GET %}page={{ notifications.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Precedent</a>
+    {% endif %}
+    <span class="pagination-info">Page {{ notifications.number }} sur {{ notifications.paginator.num_pages }}</span>
+    {% if notifications.has_next %}
+    <a href="?{% prefixe_pagination request.GET %}page={{ notifications.next_page_number }}" class="button btn btn-sm">Suivant {% icone "chevron-right" %}</a>
+    {% endif %}
+</nav>
+{% endif %}
 {% else %}
 <div class="etat-vide">
     {% illustration_vide "bell" %}
+    {% if lue_choisie %}
+    <p>Aucune notification ne correspond a ces criteres.</p>
+    {% else %}
     <p>Aucune notification.</p>
+    {% endif %}
 </div>
 {% endif %}
 {% endblock %}

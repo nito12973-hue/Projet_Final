@@ -12,6 +12,25 @@
     <a class="button primary" href="{% url 'envoyer_notification' %}">Envoyer une notification</a>
 </section>
 
+<form method="get" class="filtres">
+    <div style="min-width:180px;">
+        <label for="lue">Statut</label>
+        <select id="lue" name="lue" style="margin-bottom:0;">
+            <option value="">Toutes</option>
+            <option value="non" {% if lue_choisie == "non" %}selected{% endif %}>Non lues</option>
+            <option value="oui" {% if lue_choisie == "oui" %}selected{% endif %}>Lues</option>
+        </select>
+    </div>
+    <div style="min-width:220px;flex:1;">
+        <label for="q">Recherche</label>
+        <input id="q" type="text" name="q" placeholder="Message ou destinataire" value="{{ recherche }}" style="margin-bottom:0;">
+    </div>
+    <button type="submit" class="button primary btn">Filtrer</button>
+    {% if lue_choisie or recherche %}
+    <a href="{% url 'liste_notifications_envoyees' %}" class="button btn">Reinitialiser</a>
+    {% endif %}
+</form>
+
 {% if notifications %}
 <section class="panel">
     <table>
@@ -55,7 +74,11 @@
 {% else %}
 <div class="etat-vide">
     {% illustration_vide "bell" %}
+    {% if lue_choisie or recherche %}
+    <p>Aucune notification ne correspond a ces criteres.</p>
+    {% else %}
     <p>Aucune notification envoyee.</p>
+    {% endif %}
 </div>
 {% endif %}
 {% endblock %}

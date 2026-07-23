@@ -1927,18 +1927,51 @@ def envoyer_notification(request):
 
 @admin_required
 def liste_notifications_envoyees(request):
-    notifications = Notification.objects.select_related("destinataire").all()[:200]
-    return render(
-        request,
-        "liste_notifications_envoyees.html",
-        {"notifications": _paginer(request, notifications)},
-    )
+    notifications = Notification.objects.select_related("destinataire").all()
+
+    lue = request.GET.get("lue", "")
+    if lue == "oui":
+        notifications = notifications.filter(lue=True)
+    elif lue == "non":
+        notifications = notifications.filter(lue=False)
+
+    recherche = request.GET.get("q", "").strip()
+    if recherche:
+        notifications = notifications.filter(
+            Q(message__icontains=recherche)
+            | Q(destinataire__email__icontains=recherche)
+            | Q(destinataire__first_name__icontains=recherche)
+            | Q(destinataire__last_name__icontains=recherche)
+        )
+
+    # Le plafond des 200 plus recentes s'applique une fois les filtres
+    # appliques (sinon une recherche pourrait manquer une notification plus
+    # ancienne que les 200 dernieres notifications tous destinataires confondus).
+    notifications = notifications[:200]
+
+    contexte = {
+        "notifications": _paginer(request, notifications),
+        "lue_choisie": lue,
+        "recherche": recherche,
+    }
+    return render(request, "liste_notifications_envoyees.html", contexte)
 
 
 @login_required
 def mes_notifications(request):
     notifications = request.user.notifications.all()
-    return render(request, "mes_notifications.html", {"notifications": notifications})
+
+    lue = request.GET.get("lue", "")
+    if lue == "oui":
+        notifications = notifications.filter(lue=True)
+    elif lue == "non":
+        notifications = notifications.filter(lue=False)
+
+    contexte = {
+        "notifications": _paginer(request, notifications),
+        "lue_choisie": lue,
+    }
+    return render(request, "mes_notifications.html", contexte)
 
 
 @login_required
