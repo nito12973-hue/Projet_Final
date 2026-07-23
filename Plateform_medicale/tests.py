@@ -398,6 +398,30 @@ class GestionUtilisateursTests(TestCase):
         self.assertNotIn('autre@santesn.sn', emails)
 
 
+class ToastsMessagesTests(TestCase):
+    """Plan de direction artistique, item 3 : messages Django en toasts."""
+
+    def setUp(self):
+        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
+        self.client.login(username='admin@santesn.sn', password=PASSWORD)
+
+    def test_message_succes_rendu_en_toast(self):
+        cible = creer_utilisateur(User.Role.MEDECIN, 'cible@santesn.sn')
+        response = self.client.post(
+            reverse('activer_desactiver_utilisateur', args=[cible.pk]), follow=True
+        )
+        self.assertContains(response, 'class="toasts"')
+        self.assertContains(response, 'class="toast toast-success"')
+        self.assertContains(response, 'toast-fermer')
+        self.assertNotContains(response, '<ul style="list-style:none')
+
+    def test_message_erreur_rendu_en_toast_error(self):
+        response = self.client.post(
+            reverse('activer_desactiver_utilisateur', args=[self.admin.pk]), follow=True
+        )
+        self.assertContains(response, 'class="toast toast-error"')
+
+
 class EspaceMedecinTests(TestCase):
     def setUp(self):
         self.medecin = creer_medecin('medecin1@santesn.sn')

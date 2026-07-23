@@ -771,6 +771,53 @@
             gap: 10px;
         }
 
+        /* Toasts pour les messages Django : flottants, empilables et
+           refermables (bouton + auto-disparition), remplacent le bandeau
+           statique qui restait en haut de page indefiniment. */
+        .toasts {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 300;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 360px;
+        }
+
+        .toast {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 14px 16px;
+            border-radius: 10px;
+            font-weight: 600;
+            box-shadow: 0 10px 30px rgba(11, 32, 39, 0.18);
+        }
+
+        .toast span {
+            flex: 1;
+        }
+
+        .toast-fermer {
+            flex-shrink: 0;
+            display: flex;
+            padding: 2px;
+            border: 0;
+            background: none;
+            color: inherit;
+            cursor: pointer;
+        }
+
+        .toast-fermer .icone-nav {
+            width: 16px;
+            height: 16px;
+        }
+
+        .toast-error { background: #fee4e2; color: var(--danger); border: 1px solid #fecdca; }
+        .toast-success { background: #dcfce7; color: #167a46; border: 1px solid #bbf7d0; }
+        .toast-info, .toast-warning, .toast-debug { background: #eef2f6; color: #40515f; border: 1px solid #d9e2ea; }
+
         /* Tuiles "actions principales" des dashboards par role (distinct de .actions, boutons de ligne de tableau) */
         .action-tiles {
             display: grid;
@@ -1085,6 +1132,13 @@
             .actions .button { flex: 1; justify-content: center; }
 
             .admin-layout { grid-template-columns: 1fr; }
+
+            .toasts {
+                top: 12px;
+                right: 12px;
+                left: 12px;
+                max-width: none;
+            }
         }
 
         /* Focus clavier : meme anneau turquoise que les champs de formulaire,
@@ -1221,16 +1275,14 @@
                 </button>
                 {% endif %}
                 {% if messages %}
-                <ul style="list-style:none;padding:0;margin:0 0 20px;">
+                <div class="toasts" id="toasts" aria-live="polite" aria-atomic="true">
                     {% for message in messages %}
-                    <li style="padding:14px 18px;border-radius:10px;margin-bottom:10px;font-weight:600;
-                        {% if message.tags == 'error' %}background:#fee4e2;color:var(--danger);border:1px solid #fecdca;
-                        {% elif message.tags == 'success' %}background:#dcfce7;color:#167a46;border:1px solid #bbf7d0;
-                        {% else %}background:#eef2f6;color:#40515f;border:1px solid #d9e2ea;{% endif %}">
-                        {{ message }}
-                    </li>
+                    <div class="toast toast-{{ message.tags|default:'info' }}" role="status">
+                        <span>{{ message }}</span>
+                        <button type="button" class="toast-fermer" aria-label="Fermer">{% icone "x" %}</button>
+                    </div>
                     {% endfor %}
-                </ul>
+                </div>
                 {% endif %}
                 {% block content %}{% endblock %}
             </main>
@@ -1361,6 +1413,22 @@
                     formulaireEnAttente.submit();
                 }
                 formulaireEnAttente = null;
+            });
+        })();
+
+        (function () {
+            // Toasts (messages Django) : fermeture manuelle (bouton) ou
+            // automatique apres quelques secondes.
+            var DUREE_AFFICHAGE = 6000;
+            document.querySelectorAll('.toast').forEach(function (toast) {
+                var minuteur = window.setTimeout(function () { toast.remove(); }, DUREE_AFFICHAGE);
+                var bouton = toast.querySelector('.toast-fermer');
+                if (bouton) {
+                    bouton.addEventListener('click', function () {
+                        window.clearTimeout(minuteur);
+                        toast.remove();
+                    });
+                }
             });
         })();
 
