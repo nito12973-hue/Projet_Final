@@ -83,6 +83,13 @@
                     <p class="subtitle">{{ prestataire.get_type_prestataire_display }} - {{ prestataire.ville|default:"Ville non renseignee" }}</p>
                 </div>
             </div>
+            <details class="details-tableau">
+                <summary>Voir le profil</summary>
+                <p class="subtitle" style="margin:8px 0 0;">
+                    Adresse : {{ prestataire.adresse|default:"Non renseignee" }}<br>
+                    Telephone : {{ prestataire.telephone|default:"Non renseigne" }}
+                </p>
+            </details>
             <div class="actions">
                 <a class="button" href="{{ prestataire.lien_itineraire }}" target="_blank" rel="noopener">Itineraire</a>
                 <a class="button primary" href="{% url 'ajouter_rendez_vous_assure' %}?prestataire={{ prestataire.pk }}">Prendre rendez-vous</a>
