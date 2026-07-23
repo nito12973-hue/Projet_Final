@@ -346,6 +346,14 @@
             var actions = document.createElement('div');
             actions.className = 'actions';
 
+            var lienItineraire = document.createElement('a');
+            lienItineraire.className = 'button';
+            lienItineraire.href = 'https://www.google.com/maps/dir/?api=1&destination=' + prestataire.latitude + ',' + prestataire.longitude;
+            lienItineraire.target = '_blank';
+            lienItineraire.rel = 'noopener';
+            lienItineraire.textContent = 'Itineraire';
+            actions.appendChild(lienItineraire);
+
             var lienProfil = document.createElement('a');
             lienProfil.className = 'button';
             lienProfil.href = '#';
