@@ -1034,6 +1034,26 @@
             box-shadow: 0 0 0 4px rgba(14, 124, 134, 0.35);
         }
 
+        /* Lien d'evitement clavier : invisible jusqu'a recevoir le focus,
+           permet de sauter la sidebar pour aller droit au contenu. */
+        .lien-evitement {
+            position: absolute;
+            top: -48px;
+            left: 12px;
+            z-index: 3000;
+            background: var(--primary-dark);
+            color: #ffffff;
+            padding: 12px 18px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: top 0.2s ease;
+        }
+
+        .lien-evitement:focus {
+            top: 12px;
+        }
+
         /* Accessibilité : réduire les animations si demandé */
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after {
@@ -1045,6 +1065,7 @@
     </style>
 </head>
 <body>
+    <a href="#contenu-principal" class="lien-evitement">Aller au contenu</a>
     <div id="barre-chargement"></div>
     <div id="fond-sidebar" class="sidebar-overlay"></div>
     <div class="shell">
@@ -1123,7 +1144,7 @@
         </aside>
 
         <section class="contenu">
-            <main>
+            <main id="contenu-principal">
                 {% if user.is_authenticated %}
                 <button type="button" id="bouton-menu-mobile" class="sidebar-toggle"
                         aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="barre-laterale">
