@@ -16,7 +16,7 @@
 
 <form method="post" style="max-width: 720px;">
     {% csrf_token %}
-    <button type="submit" class="button primary">Generer un nouveau mot de passe</button>
+    <button class="button primary" type="submit">Generer un nouveau mot de passe</button>
     <a href="{% url 'liste_utilisateurs' %}" class="button">Annuler</a>
 </form>
 {% endblock %}
