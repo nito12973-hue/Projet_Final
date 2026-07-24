@@ -1305,6 +1305,39 @@ class RapportsTests(TestCase):
         self.assertEqual(len(donnees['totaux']), 6)
         self.assertEqual(donnees['totaux'][-1], 1)
 
+    def test_rapports_inclut_consultations_par_jour_et_par_annee(self):
+        """Bascule de periode (jour/mois/annee) sur le graphique des consultations."""
+        patient = creer_patient()
+        medecin = creer_medecin('medecin@santesn.sn')
+        Consultation.objects.create(
+            patient=patient,
+            medecin=medecin,
+            date_consultation=timezone.now(),
+            diagnostic='Controle',
+        )
+        response = self.client.get(reverse('rapports'))
+
+        donnees_jour = response.context['consultations_par_jour']
+        self.assertEqual(len(donnees_jour['labels']), 30)
+        self.assertEqual(len(donnees_jour['totaux']), 30)
+        self.assertEqual(donnees_jour['totaux'][-1], 1)
+
+        donnees_annee = response.context['consultations_par_annee']
+        self.assertEqual(len(donnees_annee['labels']), 5)
+        self.assertEqual(len(donnees_annee['totaux']), 5)
+        self.assertEqual(donnees_annee['totaux'][-1], 1)
+        self.assertEqual(donnees_annee['labels'][-1], str(timezone.now().year))
+
+    def test_rapports_boutons_periode_consultations_presents(self):
+        response = self.client.get(reverse('rapports'))
+        self.assertContains(response, 'id="boutons-periode-consultations"')
+        self.assertContains(response, 'data-periode="jour"')
+        self.assertContains(response, 'data-periode="mois"')
+        self.assertContains(response, 'data-periode="annee"')
+        self.assertContains(response, 'id="graphe-consultations"')
+        self.assertContains(response, 'donnees-consultations-jour')
+        self.assertContains(response, 'donnees-consultations-annee')
+
     def test_export_rapports_excel_interdit_aux_non_admins(self):
         self.client.logout()
         creer_utilisateur(User.Role.MEDECIN, 'medecin@santesn.sn')

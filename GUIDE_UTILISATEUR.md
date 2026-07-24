@@ -113,10 +113,10 @@ Médecin et Pharmacien qui s'en chargent.
 
 ### Rapports
 
-Graphiques (consultations par mois, répartitions par rôle/type/statut) et
-tableaux de données détaillés (repliables sous chaque graphique). Deux
-exports disponibles : Excel (un onglet par tableau) et PDF (mise en forme
-imprimable).
+Graphiques (consultations — bascule jour / mois / année, répartitions par
+rôle/type/statut) et tableaux de données détaillés (repliables sous chaque
+graphique). Deux exports disponibles : Excel (un onglet par tableau) et PDF
+(mise en forme imprimable, toujours sur la vue "par mois").
 
 ### Notifications
 
