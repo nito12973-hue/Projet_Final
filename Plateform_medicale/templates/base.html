@@ -818,6 +818,20 @@
         .toast-success { background: #dcfce7; color: #167a46; border: 1px solid #bbf7d0; }
         .toast-info, .toast-warning, .toast-debug { background: #eef2f6; color: #40515f; border: 1px solid #d9e2ea; }
 
+        /* Contenu reserve aux lecteurs d'ecran (ex. legende de tableau) :
+           visible pour les technologies d'assistance, retire du rendu visuel. */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
         /* Tuiles "actions principales" des dashboards par role (distinct de .actions, boutons de ligne de tableau) */
         .action-tiles {
             display: grid;

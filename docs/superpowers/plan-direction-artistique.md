@@ -74,13 +74,13 @@ Aucun ne recouvre les ~30 correctifs déjà livrés sous "audit Top 50 v1".
 
 | # | Chantier | Pourquoi | Difficulté | Temps | Fichiers |
 |---|---|---|---|---|---|
-| 1 | Pagination sur toutes les listes | Aucune liste paginée, charge tout d'un coup | Moyenne | 2-3 j | views.py (vues liste_*), templates liste_*.html |
-| 2 | Modale on-brand pour remplacer `confirm()` | Casse l'identité au moment le plus sensible | Moyenne | 2 j | base.html, liste_utilisateurs.html |
-| 3 | Toasts pour les messages Django | Messages statiques non dismissibles | Faible | 1-2 j | base.html |
+| 1 | ~~Pagination sur toutes les listes~~ | **FAIT** (commit 0d10bc0) | Moyenne | 2-3 j | views.py (vues liste_*), templates liste_*.html |
+| 2 | ~~Modale on-brand pour remplacer `confirm()`~~ | **FAIT** (commit 49acae5) | Moyenne | 2 j | base.html, liste_utilisateurs.html |
+| 3 | ~~Toasts pour les messages Django~~ | **FAIT** (commit 6c438cd) | Faible | 1-2 j | base.html |
 | 4 | ~~Enrichir le dashboard Pharmacien~~ | **FAIT** (commit 24a467e) | Faible | 1 j | dashboard_pharmacien.html, views.py |
-| 5 | Refondre l'écran Consultations | Formulaire brut + tableau nu, cœur de métier médecin | Moyenne | 2 j | ajouter_consultation_medecin.html, historique_consultations.html |
-| 6 | Filtres + recherche sur Notifications | "200 dernières" annoncées sans moyen de les explorer | Moyenne | 1 j | mes_notifications.html, liste_notifications_envoyees.html, views.py |
-| 7 | Passe accessibilité (aria) sur les formulaires | 0 attribut sur les 2 écrans les plus complexes | Moyenne | 3-4 j | ajouter_prestataire.html, liste_utilisateurs.html, puis reste |
+| 5 | ~~Refondre l'écran Consultations~~ | **FAIT** (commit 70b026f) | Moyenne | 2 j | ajouter_consultation_medecin.html, historique_consultations.html |
+| 6 | ~~Filtres + recherche sur Notifications~~ | **FAIT** (commit 4a6e728) | Moyenne | 1 j | mes_notifications.html, liste_notifications_envoyees.html, views.py |
+| 7 | ~~Passe accessibilité (aria) sur les formulaires~~ | **FAIT** (non commité) | Moyenne | 3-4 j | ajouter_prestataire.html, liste_utilisateurs.html, puis reste |
 | 8 | Clarifier le scan pharmacien (caméra vs douchette) | "Scan" central dans le pitch, écran = saisie texte | Faible-moyenne | 0,5-3 j | scanner_ordonnance.html |
 
 ### P1 — Consolidation du design system (12 chantiers)

@@ -193,6 +193,8 @@ class LoginTests(TestCase):
         })
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Email ou mot de passe incorrect.')
+        # Plan de direction artistique, item 7 : erreur annoncee aux lecteurs d'ecran.
+        self.assertContains(response, 'class="erreurs" role="alert"')
 
 
 class LimitationTentativesConnexionTests(TestCase):
@@ -280,6 +282,12 @@ class GestionUtilisateursTests(TestCase):
     def test_liste_utilisateurs_accessible_a_l_admin(self):
         response = self.client.get(reverse('liste_utilisateurs'))
         self.assertEqual(response.status_code, 200)
+
+    def test_tableau_utilisateurs_accessible(self):
+        """Plan de direction artistique, item 7 : legende + en-tetes scopes."""
+        response = self.client.get(reverse('liste_utilisateurs'))
+        self.assertContains(response, '<caption class="sr-only">')
+        self.assertContains(response, '<th scope="col">')
 
     def test_desactivation_passe_par_la_modale_pas_par_confirm_natif(self):
         """Plan de direction artistique, item 2 : plus de confirm() natif."""
@@ -880,6 +888,18 @@ class AdminPrestatairesTests(TestCase):
         self.client.login(username='medecin@santesn.sn', password=PASSWORD)
         response = self.client.get(reverse('liste_prestataires'))
         self.assertEqual(response.status_code, 403)
+
+    def test_formulaire_prestataire_carte_accessible(self):
+        """Plan de direction artistique, item 7 : passe accessibilite."""
+        response = self.client.get(reverse('ajouter_prestataire'))
+        self.assertContains(response, 'role="group"')
+        self.assertContains(response, 'aria-labelledby="titre-carte-prestataire"')
+        self.assertContains(response, 'aria-live="polite"')
+
+        prestataire = Prestataire.objects.create(nom='Hopital Accessible', type_prestataire='HOPITAL')
+        response = self.client.get(reverse('modifier_prestataire', args=[prestataire.pk]))
+        self.assertContains(response, 'role="group"')
+        self.assertContains(response, 'aria-live="polite"')
 
     def test_creation_prestataire(self):
         response = self.client.post(reverse('ajouter_prestataire'), {
@@ -1705,6 +1725,8 @@ class ChangerMotDePasseTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.utilisateur.refresh_from_db()
         self.assertTrue(self.utilisateur.check_password(PASSWORD))
+        # Plan de direction artistique, item 7 : erreur annoncee aux lecteurs d'ecran.
+        self.assertContains(response, 'class="erreurs" role="alert"')
 
     def test_confirmation_differente_refusee(self):
         self.client.login(username='assure@santesn.sn', password=PASSWORD)
