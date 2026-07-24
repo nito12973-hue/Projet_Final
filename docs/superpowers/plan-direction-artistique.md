@@ -87,7 +87,7 @@ Aucun ne recouvre les ~30 correctifs déjà livrés sous "audit Top 50 v1".
 
 | # | Chantier | Pourquoi | Difficulté | Temps | Fichiers |
 |---|---|---|---|---|---|
-| 9 | Retirer `.action-tiles`/`.action-tile` | CSS mort, 0 usage | Faible | 15 min | base.html |
+| 9 | ~~Retirer `.action-tiles`/`.action-tile`~~ | **FAIT** (commit 7067c92) | Faible | 15 min | base.html |
 | 10 | Trancher le sort de `.carte-assure.mini` | Variante définie, jamais utilisée | Faible | 15 min – 0,5 j | base.html |
 | 11 | Composant recherche dédié | Actuellement `<input>` nu dans `.filtres` | Faible | 1 j | base.html + écrans avec recherche |
 | 12 | Composant tooltip on-brand | Seul `title=""` natif existe | Faible | 1 j | base.html |
