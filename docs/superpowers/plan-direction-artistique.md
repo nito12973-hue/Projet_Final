@@ -80,7 +80,7 @@ Aucun ne recouvre les ~30 correctifs déjà livrés sous "audit Top 50 v1".
 | 4 | ~~Enrichir le dashboard Pharmacien~~ | **FAIT** (commit 24a467e) | Faible | 1 j | dashboard_pharmacien.html, views.py |
 | 5 | ~~Refondre l'écran Consultations~~ | **FAIT** (commit 70b026f) | Moyenne | 2 j | ajouter_consultation_medecin.html, historique_consultations.html |
 | 6 | ~~Filtres + recherche sur Notifications~~ | **FAIT** (commit 4a6e728) | Moyenne | 1 j | mes_notifications.html, liste_notifications_envoyees.html, views.py |
-| 7 | ~~Passe accessibilité (aria) sur les formulaires~~ | **FAIT** (non commité) | Moyenne | 3-4 j | ajouter_prestataire.html, liste_utilisateurs.html, puis reste |
+| 7 | ~~Passe accessibilité (aria) sur les formulaires~~ | **FAIT** (commit 4240642) | Moyenne | 3-4 j | ajouter_prestataire.html, liste_utilisateurs.html, puis reste |
 | 8 | Clarifier le scan pharmacien (caméra vs douchette) | "Scan" central dans le pitch, écran = saisie texte | Faible-moyenne | 0,5-3 j | scanner_ordonnance.html |
 
 ### P1 — Consolidation du design system (12 chantiers)
