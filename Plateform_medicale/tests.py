@@ -657,6 +657,19 @@ class EspacePharmacienTests(TestCase):
             '<button type="button" id="bouton-scan-camera" class="button btn" hidden>',
         )
 
+    def test_scan_camera_panneau_et_gestion_erreurs(self):
+        """Plan de direction artistique, item 8 : panneau video + repli si camera indisponible."""
+        response = self.client.get(reverse('scanner_ordonnance'))
+        self.assertContains(response, 'id="panneau-scan-camera"')
+        self.assertContains(response, 'id="video-scan-camera"')
+        self.assertContains(response, 'id="canvas-scan-camera"')
+        self.assertContains(response, 'id="bouton-fermer-scan-camera"')
+        self.assertContains(response, 'function demarrerScan')
+        self.assertContains(response, 'function arreterScan')
+        self.assertContains(response, "NotAllowedError")
+        self.assertContains(response, "NotFoundError")
+        self.assertContains(response, 'requestSubmit')
+
     def test_validation_delivrance(self):
         response = self.client.post(reverse('valider_delivrance', args=[self.ordonnance.pk]), {
             'code_qr': self.ordonnance.code_qr,
