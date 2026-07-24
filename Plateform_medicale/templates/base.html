@@ -832,32 +832,6 @@
             border: 0;
         }
 
-        /* Tuiles "actions principales" des dashboards par role (distinct de .actions, boutons de ligne de tableau) */
-        .action-tiles {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 14px;
-            margin-top: 18px;
-        }
-
-        .action-tile {
-            display: block;
-            padding: 18px;
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            background: var(--primary-soft);
-            color: var(--primary-strong);
-            font-weight: 700;
-            text-decoration: none;
-            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-        }
-
-        a.action-tile:hover {
-            transform: translateY(-3px);
-            border-color: #8fcac2;
-            box-shadow: 0 12px 28px rgba(14, 124, 134, 0.16);
-        }
-
         /* ===== Cartes de stats "accueil" (turquoise), utilisees uniquement sur
            les 4 pages d'accueil par role (dashboard*.html) — n'affecte pas
            .stat/.grid utilises ailleurs dans l'application. ===== */
