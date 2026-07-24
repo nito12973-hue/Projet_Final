@@ -641,6 +641,22 @@ class EspacePharmacienTests(TestCase):
         self.assertIsNone(response.context['ordonnance'])
         self.assertContains(response, 'Aucune ordonnance ne correspond a ce code.')
 
+    def test_scan_camera_script_et_bouton_presents(self):
+        """Plan de direction artistique, item 8 : scan QR par camera."""
+        response = self.client.get(reverse('scanner_ordonnance'))
+        self.assertContains(
+            response,
+            'src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"',
+        )
+        self.assertContains(
+            response,
+            'integrity="sha384-b5Ya4Bq3qCyz39m2ISh+4DxjAIljdeFwK/BsXLuj9gugaNwAcj/ia15fxNZL9Nlx"',
+        )
+        self.assertContains(
+            response,
+            '<button type="button" id="bouton-scan-camera" class="button btn" hidden>',
+        )
+
     def test_validation_delivrance(self):
         response = self.client.post(reverse('valider_delivrance', args=[self.ordonnance.pk]), {
             'code_qr': self.ordonnance.code_qr,

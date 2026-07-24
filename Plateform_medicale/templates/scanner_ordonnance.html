@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load icones %}
 
 {% block title %}Scanner un QR Code{% endblock %}
 
@@ -15,6 +16,11 @@
     <label for="code_qr">Code de l'ordonnance</label>
     <input id="code_qr" name="code_qr" type="text" placeholder="RX-XXXXXXXXXX" autofocus required>
     <button class="button primary" type="submit">Verifier</button>
+
+    <div style="margin-top:16px;">
+        <button type="button" id="bouton-scan-camera" class="button btn" hidden>{% icone "qr-scan" %} Scanner avec la camera</button>
+        <p id="statut-scan-camera" class="subtitle" style="margin:8px 0 0;" role="status" aria-live="polite"></p>
+    </div>
 </form>
 
 {% if ordonnance %}
@@ -45,4 +51,15 @@
     </aside>
 </section>
 {% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" integrity="sha384-b5Ya4Bq3qCyz39m2ISh+4DxjAIljdeFwK/BsXLuj9gugaNwAcj/ia15fxNZL9Nlx" crossorigin="anonymous"></script>
+<script>
+    (function () {
+        var boutonScan = document.getElementById('bouton-scan-camera');
+        var cameraDisponible = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+        if (cameraDisponible && typeof jsQR === 'function' && boutonScan) {
+            boutonScan.hidden = false;
+        }
+    })();
+</script>
 {% endblock %}
