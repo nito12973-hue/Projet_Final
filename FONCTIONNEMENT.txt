@@ -151,6 +151,13 @@ Ordonnance
   automatiquement, RX-xxxxxxxxxx, unique), date_creation.
   Propriete qr_svg : genere le QR code (SVG) a la volee a partir de
   code_qr — rien n'est stocke en image, uniquement le code texte.
+  Scan pharmacien (scanner_ordonnance.html) : saisie manuelle/douchette
+  (comportement clavier standard) ou scan camera (lib jsQR via CDN,
+  bouton explicite masque si le navigateur ne supporte pas getUserMedia).
+  Dans les deux cas, meme champ code_qr, meme soumission POST -- aucune
+  route ni vue dediee au scan camera, c'est une simple facon
+  supplementaire de remplir le meme champ avant l'envoi du formulaire
+  existant.
 
 RendezVous
   patient, medecin, prestataire (optionnel), date_heure, motif, statut
