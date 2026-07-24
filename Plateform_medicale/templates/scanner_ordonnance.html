@@ -20,6 +20,13 @@
     <div style="margin-top:16px;">
         <button type="button" id="bouton-scan-camera" class="button btn" hidden>{% icone "qr-scan" %} Scanner avec la camera</button>
         <p id="statut-scan-camera" class="subtitle" style="margin:8px 0 0;" role="status" aria-live="polite"></p>
+
+        <div id="panneau-scan-camera" hidden style="position:relative;max-width:360px;margin-top:12px;border-radius:12px;overflow:hidden;background:#000;">
+            <video id="video-scan-camera" autoplay muted playsinline aria-hidden="true" style="width:100%;display:block;"></video>
+            <canvas id="canvas-scan-camera" style="display:none;"></canvas>
+            <div aria-hidden="true" style="position:absolute;inset:15%;border:2px solid var(--primary-accent);border-radius:12px;pointer-events:none;"></div>
+            <button type="button" id="bouton-fermer-scan-camera" class="button btn" style="position:absolute;top:8px;right:8px;">Fermer la camera</button>
+        </div>
     </div>
 </form>
 
@@ -56,10 +63,74 @@
 <script>
     (function () {
         var boutonScan = document.getElementById('bouton-scan-camera');
+        var boutonFermer = document.getElementById('bouton-fermer-scan-camera');
+        var panneau = document.getElementById('panneau-scan-camera');
+        var statut = document.getElementById('statut-scan-camera');
+        var video = document.getElementById('video-scan-camera');
+        var canvas = document.getElementById('canvas-scan-camera');
+        var contexte = canvas.getContext('2d');
+        var champCode = document.getElementById('code_qr');
+        var flux = null;
+        var idAnimation = null;
+
         var cameraDisponible = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
         if (cameraDisponible && typeof jsQR === 'function' && boutonScan) {
             boutonScan.hidden = false;
         }
+
+        function arreterScan() {
+            if (idAnimation) {
+                window.cancelAnimationFrame(idAnimation);
+                idAnimation = null;
+            }
+            if (flux) {
+                flux.getTracks().forEach(function (piste) { piste.stop(); });
+                flux = null;
+            }
+            panneau.hidden = true;
+        }
+
+        function analyserImage() {
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                contexte.drawImage(video, 0, 0, canvas.width, canvas.height);
+                var image = contexte.getImageData(0, 0, canvas.width, canvas.height);
+                var resultat = jsQR(image.data, image.width, image.height);
+                if (resultat && resultat.data) {
+                    statut.textContent = 'Code detecte, verification...';
+                    arreterScan();
+                    champCode.value = resultat.data;
+                    champCode.form.requestSubmit();
+                    return;
+                }
+            }
+            idAnimation = window.requestAnimationFrame(analyserImage);
+        }
+
+        function demarrerScan() {
+            statut.textContent = "Demande d'acces a la camera...";
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } })
+                .then(function (fluxObtenu) {
+                    flux = fluxObtenu;
+                    video.srcObject = flux;
+                    panneau.hidden = false;
+                    statut.textContent = "Recherche d'un code...";
+                    idAnimation = window.requestAnimationFrame(analyserImage);
+                })
+                .catch(function (erreur) {
+                    if (erreur.name === 'NotAllowedError') {
+                        statut.textContent = "Acces a la camera refuse. Autorisez la camera dans les parametres du navigateur, ou utilisez la saisie manuelle.";
+                    } else if (erreur.name === 'NotFoundError') {
+                        statut.textContent = 'Aucune camera detectee sur cet appareil.';
+                    } else {
+                        statut.textContent = 'Scan par camera indisponible sur cet appareil ou cette connexion (HTTPS requis). Utilisez la saisie manuelle ou une douchette ci-dessous.';
+                    }
+                });
+        }
+
+        if (boutonScan) { boutonScan.addEventListener('click', demarrerScan); }
+        if (boutonFermer) { boutonFermer.addEventListener('click', arreterScan); }
     })();
 </script>
 {% endblock %}
