@@ -7,7 +7,7 @@
 <p class="sous-titre">Accédez à votre espace sécurisé.</p>
 
 {% if form.non_field_errors %}
-<div class="erreurs">
+<div class="erreurs" role="alert">
     {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
 </div>
 {% endif %}
@@ -17,11 +17,11 @@
 
     <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
     {{ form.email }}
-    {% if form.email.errors %}<div class="erreurs">{{ form.email.errors }}</div>{% endif %}
+    {% if form.email.errors %}<div class="erreurs" role="alert">{{ form.email.errors }}</div>{% endif %}
 
     <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
     {{ form.password }}
-    {% if form.password.errors %}<div class="erreurs">{{ form.password.errors }}</div>{% endif %}
+    {% if form.password.errors %}<div class="erreurs" role="alert">{{ form.password.errors }}</div>{% endif %}
 
     <button type="submit" class="btn-principal">Se connecter</button>
 </form>
