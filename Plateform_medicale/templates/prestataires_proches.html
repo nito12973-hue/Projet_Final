@@ -60,7 +60,7 @@
 
 <section class="proches-layout">
     <div class="carte-colonne">
-        <div id="carte-prestataires-proches" class="panel" style="height: 480px; padding: 0; overflow: hidden;"></div>
+        <div id="carte-prestataires-proches" class="panel"></div>
     </div>
     <div id="liste-prestataires-proches" class="liste-prestataires-proches"></div>
 </section>
@@ -188,6 +188,18 @@
 
     .leaflet-control-zoom {
         border: none !important;
+    }
+
+    #carte-prestataires-proches {
+        height: 480px;
+        padding: 0;
+        overflow: hidden;
+    }
+
+    @media (max-width: 560px) {
+        #carte-prestataires-proches {
+            height: 340px;
+        }
     }
 
 </style>

@@ -241,6 +241,43 @@
             color: var(--primary-dark);
         }
 
+        /* Lien de retour vers le landing page (Task : ajout ecran connexion).
+           Cible tactile elargie via le padding (au-dela du seul texte 14px),
+           sans avoir l'air d'un gros bouton -- reste un lien secondaire discret. */
+        .lien-retour-accueil {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin: -8px 0 16px -6px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            color: var(--muted);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: color 0.18s ease, background 0.18s ease;
+        }
+
+        .lien-retour-accueil .icone-nav {
+            width: 16px;
+            height: 16px;
+            transition: transform 0.18s ease;
+        }
+
+        .lien-retour-accueil:hover {
+            color: var(--primary-strong);
+            background: var(--primary-soft);
+        }
+
+        .lien-retour-accueil:hover .icone-nav {
+            transform: translateX(-3px);
+        }
+
+        .lien-retour-accueil:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(14, 124, 134, 0.35);
+        }
+
         .sous-titre {
             margin: 0 0 24px;
             color: var(--muted);
@@ -361,6 +398,7 @@
 
         @media (max-width: 400px) {
             body { padding: 12px; }
+            .panneau-marque { padding: 22px 18px; }
             .panneau-form { padding: 24px 18px 28px; }
         }
 

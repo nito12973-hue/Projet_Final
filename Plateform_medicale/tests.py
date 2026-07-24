@@ -186,6 +186,12 @@ class LoginTests(TestCase):
         response = self.client.get(reverse('post_login_redirect'))
         self.assertRedirects(response, reverse('dashboard_pharmacien'))
 
+    def test_lien_retour_accueil_present(self):
+        """Lien de retour vers le landing page, au-dessus du formulaire de connexion."""
+        response = self.client.get(reverse('login'))
+        self.assertContains(response, 'class="lien-retour-accueil"')
+        self.assertContains(response, f'href="{reverse("landing")}"')
+
     def test_mauvais_mot_de_passe_refuse(self):
         response = self.client.post(reverse('login'), {
             'email': 'admin@santesn.sn',
