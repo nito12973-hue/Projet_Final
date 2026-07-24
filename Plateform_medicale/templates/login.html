@@ -1,8 +1,10 @@
 {% extends "base_auth.html" %}
+{% load icones %}
 
 {% block title %}Connexion — SantéSN{% endblock %}
 
 {% block content %}
+<a href="{% url 'landing' %}" class="lien-retour-accueil">{% icone "chevron-left" %} Retour à l'accueil</a>
 <h1>Connexion</h1>
 <p class="sous-titre">Accédez à votre espace sécurisé.</p>
 
