@@ -216,16 +216,23 @@ les templates gèrent ce cas (`{% if consultation.paiement %}`).
 
 Vue `rapports` (Dashboard Admin) : comptages (utilisateurs par rôle, assurés
 par type, rendez-vous par statut, prises en charge par statut, consultations/
-ordonnances/délivrances/prestataires partenaires) et agrégat
-`_consultations_par_mois` (6 derniers mois, mois courant inclus). Graphiques
-Chart.js (CDN jsdelivr avec intégrité SRI) rendus côté client à partir de
-`json_script`, en plus des tableaux existants (pas de remplacement). Deux
-exports dédiés, tous deux `@admin_required` et construits à partir de la même
-fonction `_donnees_rapports()` que la vue (pas de duplication de requêtes) :
-`exporter_rapports_excel` (openpyxl, un onglet par tableau) et
-`exporter_rapports_pdf` (reportlab, nouvelle dépendance — tableaux mis en
-forme, un par section). Ne pas confondre avec `exporter_utilisateurs_excel`
-qui ne couvre que la liste des utilisateurs (Dashboard Admin → Utilisateurs).
+ordonnances/délivrances/prestataires partenaires) et trois agrégats de
+consultations sur des fenêtres glissantes — `_consultations_par_jour` (30
+derniers jours), `_consultations_par_mois` (6 derniers mois) et
+`_consultations_par_annee` (5 dernières années), toutes incluant la période
+courante. Le graphique "Consultations" bascule entre les trois via des
+boutons (`#boutons-periode-consultations`, un seul Chart.js réutilisé —
+`data` remplacée + `update()` — pas d'instance recréée à chaque clic).
+Graphiques Chart.js (CDN jsdelivr avec intégrité SRI) rendus côté client à
+partir de `json_script`, en plus des tableaux existants (pas de
+remplacement). Deux exports dédiés, tous deux `@admin_required` et construits
+à partir de la même fonction `_donnees_rapports()` que la vue (pas de
+duplication de requêtes) : `exporter_rapports_excel` (openpyxl, un onglet par
+tableau) et `exporter_rapports_pdf` (reportlab, nouvelle dépendance —
+tableaux mis en forme, un par section) — les deux exports ne couvrent que la
+vue "par mois" (snapshot statique, pas de bascule de période dans un
+document exporté). Ne pas confondre avec `exporter_utilisateurs_excel` qui ne
+couvre que la liste des utilisateurs (Dashboard Admin → Utilisateurs).
 
 ## Design system
 

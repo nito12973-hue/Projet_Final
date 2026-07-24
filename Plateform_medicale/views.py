@@ -21,7 +21,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Count, Q, Sum
-from django.db.models.functions import TruncMonth
+from django.db.models.functions import TruncDate, TruncMonth, TruncYear
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -305,6 +305,42 @@ def _consultations_par_mois(nombre_mois=6):
     }
 
 
+def _consultations_par_jour(nombre_jours=30):
+    """Nombre de consultations par jour, sur les `nombre_jours` derniers jours (jour courant inclus)."""
+    aujourd_hui = timezone.now().date()
+    jours_reference = [aujourd_hui - datetime.timedelta(days=delta) for delta in range(nombre_jours - 1, -1, -1)]
+
+    comptages = (
+        Consultation.objects.annotate(jour=TruncDate("date_consultation"))
+        .values("jour")
+        .annotate(total=Count("id"))
+    )
+    totaux_par_cle = {c["jour"]: c["total"] for c in comptages if c["jour"]}
+
+    return {
+        "labels": [jour.strftime("%d/%m") for jour in jours_reference],
+        "totaux": [totaux_par_cle.get(jour, 0) for jour in jours_reference],
+    }
+
+
+def _consultations_par_annee(nombre_annees=5):
+    """Nombre de consultations par annee, sur les `nombre_annees` dernieres annees (annee courante incluse)."""
+    annee_courante = timezone.now().year
+    annees_reference = list(range(annee_courante - nombre_annees + 1, annee_courante + 1))
+
+    comptages = (
+        Consultation.objects.annotate(annee=TruncYear("date_consultation"))
+        .values("annee")
+        .annotate(total=Count("id"))
+    )
+    totaux_par_cle = {c["annee"].year: c["total"] for c in comptages if c["annee"]}
+
+    return {
+        "labels": [str(annee) for annee in annees_reference],
+        "totaux": [totaux_par_cle.get(annee, 0) for annee in annees_reference],
+    }
+
+
 def _donnees_rapports():
     """Comptages et agregats de synthese de l'activite de la plateforme (Phase 13)."""
     return {
@@ -328,7 +364,9 @@ def _donnees_rapports():
         "total_ordonnances": Ordonnance.objects.count(),
         "total_delivrances": Delivrance.objects.count(),
         "total_prestataires_partenaires": Prestataire.objects.filter(partenaire=True).count(),
+        "consultations_par_jour": _consultations_par_jour(),
         "consultations_par_mois": _consultations_par_mois(),
+        "consultations_par_annee": _consultations_par_annee(),
     }
 
 

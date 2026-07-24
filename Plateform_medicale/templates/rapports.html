@@ -16,15 +16,20 @@
 </section>
 
 <section class="panel" style="margin-bottom:18px;padding:22px 24px;">
-    <div class="panel-header" style="padding:0 0 16px;">
-        <h2>Consultations par mois</h2>
+    <div class="panel-header" style="padding:0 0 16px;flex-wrap:wrap;gap:10px;">
+        <h2 id="titre-graphe-consultations">Consultations par mois</h2>
+        <div class="actions" id="boutons-periode-consultations" role="group" aria-label="Periode du graphique des consultations">
+            <button type="button" class="button btn" data-periode="jour" aria-pressed="false">Jour</button>
+            <button type="button" class="button btn primary" data-periode="mois" aria-pressed="true">Mois</button>
+            <button type="button" class="button btn" data-periode="annee" aria-pressed="false">Annee</button>
+        </div>
     </div>
-    <canvas id="graphe-consultations-mois" style="max-height:260px;"></canvas>
-    <details class="details-tableau" id="repli-consultations-mois" hidden>
+    <canvas id="graphe-consultations" style="max-height:260px;"></canvas>
+    <details class="details-tableau" id="repli-consultations" hidden>
         <summary>Voir le tableau</summary>
         <table>
-            <thead><tr><th>Mois</th><th>Total</th></tr></thead>
-            <tbody id="corps-tableau-consultations-mois"></tbody>
+            <thead><tr><th id="entete-periode-consultations">Mois</th><th>Total</th></tr></thead>
+            <tbody id="corps-tableau-consultations"></tbody>
         </table>
     </details>
 </section>
@@ -107,7 +112,9 @@
     </details>
 </section>
 
+{{ consultations_par_jour|json_script:"donnees-consultations-jour" }}
 {{ consultations_par_mois|json_script:"donnees-consultations-mois" }}
+{{ consultations_par_annee|json_script:"donnees-consultations-annee" }}
 {{ utilisateurs_par_role|json_script:"donnees-utilisateurs-role" }}
 {{ patients_par_type|json_script:"donnees-patients-type" }}
 {{ rendez_vous_par_statut|json_script:"donnees-rendez-vous-statut" }}
@@ -177,7 +184,7 @@
         }
 
         if (typeof Chart === 'undefined') {
-            ['graphe-consultations-mois', 'graphe-utilisateurs-role', 'graphe-patients-type',
+            ['graphe-consultations', 'graphe-utilisateurs-role', 'graphe-patients-type',
                 'graphe-rendez-vous-statut', 'graphe-prises-en-charge-statut'].forEach(function (id) {
                 signalerGraphiqueIndisponible(id, 'Graphique indisponible (bibliotheque non chargee).');
             });
@@ -244,46 +251,86 @@
             });
         }
 
-        var moisData = lireDonnees('donnees-consultations-mois');
-        var canevasMois = document.getElementById('graphe-consultations-mois');
-        if (canevasMois && moisData.labels && moisData.labels.length) {
-            new Chart(canevasMois, {
-                type: 'line',
-                data: {
-                    labels: moisData.labels,
-                    datasets: [{
-                        label: 'Consultations',
-                        data: moisData.totaux,
-                        borderColor: tokenCouleur('--primary', '#0e7c86'),
-                        backgroundColor: tokenCouleurRgba('--primary', '#0e7c86', 0.15),
-                        tension: 0.3,
-                        fill: true,
-                    }],
-                },
-                options: {
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
-                },
-            });
+        // Graphique "Consultations" avec bascule de periode (jour/mois/annee) :
+        // un seul Chart.js reutilise (data remplacee + update()), plutot que
+        // recreer/detruire l'instance a chaque clic.
+        var PERIODES_CONSULTATIONS = {
+            jour: { id: 'donnees-consultations-jour', titre: 'Consultations par jour', entete: 'Jour' },
+            mois: { id: 'donnees-consultations-mois', titre: 'Consultations par mois', entete: 'Mois' },
+            annee: { id: 'donnees-consultations-annee', titre: 'Consultations par annee', entete: 'Annee' },
+        };
+        var grapheConsultations = null;
 
-            var repli = document.getElementById('repli-consultations-mois');
-            var corps = document.getElementById('corps-tableau-consultations-mois');
+        function afficherPeriodeConsultations(periode) {
+            var config = PERIODES_CONSULTATIONS[periode];
+            var donneesPeriode = lireDonnees(config.id);
+            var canevas = document.getElementById('graphe-consultations');
+            if (!canevas || !donneesPeriode.labels || !donneesPeriode.labels.length) { return; }
+
+            if (grapheConsultations) {
+                grapheConsultations.data.labels = donneesPeriode.labels;
+                grapheConsultations.data.datasets[0].data = donneesPeriode.totaux;
+                grapheConsultations.update();
+            } else {
+                grapheConsultations = new Chart(canevas, {
+                    type: 'line',
+                    data: {
+                        labels: donneesPeriode.labels,
+                        datasets: [{
+                            label: 'Consultations',
+                            data: donneesPeriode.totaux,
+                            borderColor: tokenCouleur('--primary', '#0e7c86'),
+                            backgroundColor: tokenCouleurRgba('--primary', '#0e7c86', 0.15),
+                            tension: 0.3,
+                            fill: true,
+                        }],
+                    },
+                    options: {
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+                    },
+                });
+            }
+
+            var titre = document.getElementById('titre-graphe-consultations');
+            if (titre) { titre.textContent = config.titre; }
+
+            var repli = document.getElementById('repli-consultations');
+            var enteteColonne = document.getElementById('entete-periode-consultations');
+            var corps = document.getElementById('corps-tableau-consultations');
             if (repli && corps) {
-                moisData.labels.forEach(function (label, i) {
+                corps.innerHTML = '';
+                if (enteteColonne) { enteteColonne.textContent = config.entete; }
+                donneesPeriode.labels.forEach(function (label, i) {
                     var ligne = document.createElement('tr');
-                    var celluleMois = document.createElement('td');
-                    celluleMois.textContent = label;
+                    var celluleLabel = document.createElement('td');
+                    celluleLabel.textContent = label;
                     var celluleTotal = document.createElement('td');
-                    celluleTotal.textContent = moisData.totaux[i];
-                    ligne.appendChild(celluleMois);
+                    celluleTotal.textContent = donneesPeriode.totaux[i];
+                    ligne.appendChild(celluleLabel);
                     ligne.appendChild(celluleTotal);
                     corps.appendChild(ligne);
                 });
                 repli.hidden = false;
             }
-        } else if (canevasMois) {
-            signalerGraphiqueIndisponible('graphe-consultations-mois', 'Aucune donnee pour le moment.');
+
+            document.querySelectorAll('#boutons-periode-consultations button').forEach(function (bouton) {
+                var actif = bouton.dataset.periode === periode;
+                bouton.classList.toggle('primary', actif);
+                bouton.setAttribute('aria-pressed', actif ? 'true' : 'false');
+            });
         }
+
+        var boutonsPeriodeConsultations = document.getElementById('boutons-periode-consultations');
+        if (boutonsPeriodeConsultations) {
+            boutonsPeriodeConsultations.addEventListener('click', function (evenement) {
+                var bouton = evenement.target.closest('button[data-periode]');
+                if (!bouton) { return; }
+                afficherPeriodeConsultations(bouton.dataset.periode);
+            });
+        }
+
+        afficherPeriodeConsultations('mois');
 
         traceDonut('graphe-utilisateurs-role', 'donnees-utilisateurs-role');
         traceDonut('graphe-patients-type', 'donnees-patients-type');
