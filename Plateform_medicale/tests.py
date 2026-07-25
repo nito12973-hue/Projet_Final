@@ -802,6 +802,17 @@ class FichePatientMedecinTests(TestCase):
         self.assertNotContains(response, 'Deja suivi')
 
 
+class WidgetRecherchePatientsTests(TestCase):
+    def setUp(self):
+        self.medecin = creer_medecin('medecin1@santesn.sn')
+        self.client.login(username='medecin1@santesn.sn', password=PASSWORD)
+
+    def test_widget_present_sur_mes_patients(self):
+        response = self.client.get(reverse('mes_patients'))
+        self.assertContains(response, 'id="recherche-patients-champ"')
+        self.assertContains(response, reverse('rechercher_patients_medecin'))
+
+
 class HistoriqueConsultationsTests(TestCase):
     """Plan de direction artistique, item 5 : filtres patient/date."""
 
