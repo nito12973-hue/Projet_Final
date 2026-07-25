@@ -674,6 +674,55 @@ class RecherchePatientsMedecinTests(TestCase):
         self.assertEqual(response.json(), {'resultats': []})
 
 
+class PreRemplissagePatientConsultationTests(TestCase):
+    def setUp(self):
+        self.medecin = creer_medecin('medecin1@santesn.sn')
+        self.patient = creer_patient(nom='Diop', prenom='Awa')
+        self.client.login(username='medecin1@santesn.sn', password=PASSWORD)
+
+    def test_patient_preselectionne_si_parametre_valide(self):
+        response = self.client.get(
+            reverse('ajouter_consultation_medecin'), {'patient': self.patient.pk}
+        )
+        self.assertEqual(response.context['form'].initial.get('patient'), str(self.patient.pk))
+
+    def test_formulaire_vide_sans_parametre(self):
+        response = self.client.get(reverse('ajouter_consultation_medecin'))
+        self.assertNotIn('patient', response.context['form'].initial)
+
+    def test_parametre_non_numerique_ignore_silencieusement(self):
+        response = self.client.get(
+            reverse('ajouter_consultation_medecin'), {'patient': 'abc'}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('patient', response.context['form'].initial)
+
+    def test_parametre_patient_inexistant_ignore_silencieusement(self):
+        response = self.client.get(
+            reverse('ajouter_consultation_medecin'), {'patient': '999999'}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('patient', response.context['form'].initial)
+
+    def test_soumission_post_inchangee_avec_parametre_dans_l_url(self):
+        """Non-regression : le POST ignore le query-string, comme avant."""
+        response = self.client.post(
+            reverse('ajouter_consultation_medecin') + '?patient=%s' % self.patient.pk,
+            {
+                'patient': self.patient.pk,
+                'service': '',
+                'prise_en_charge': '',
+                'date_consultation': '2026-08-01T10:00',
+                'diagnostic': 'RAS',
+                'traitement': '',
+            },
+        )
+        consultation = Consultation.objects.get(patient=self.patient)
+        self.assertRedirects(
+            response, reverse('ajouter_ordonnance_medecin', args=[consultation.pk])
+        )
+
+
 class HistoriqueConsultationsTests(TestCase):
     """Plan de direction artistique, item 5 : filtres patient/date."""
 
