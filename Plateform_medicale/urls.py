@@ -71,6 +71,7 @@ urlpatterns = [
     path('medecin/rendez-vous/ajouter/', views.ajouter_rendez_vous, name='ajouter_rendez_vous'),
     path('medecin/rendez-vous/<int:pk>/statut/', views.changer_statut_rendez_vous, name='changer_statut_rendez_vous'),
     path('medecin/patients/', views.mes_patients, name='mes_patients'),
+    path('medecin/patients/recherche/', views.rechercher_patients_medecin, name='rechercher_patients_medecin'),
     path('medecin/consultations/', views.historique_consultations, name='historique_consultations'),
     path('medecin/consultations/ajouter/', views.ajouter_consultation_medecin, name='ajouter_consultation_medecin'),
     path('medecin/consultations/<int:consultation_pk>/ordonnance/ajouter/', views.ajouter_ordonnance_medecin, name='ajouter_ordonnance_medecin'),

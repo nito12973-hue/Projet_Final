@@ -20,7 +20,7 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import Count, Q, Sum
+from django.db.models import Case, Count, IntegerField, Q, Sum, Value, When
 from django.db.models.functions import TruncDate, TruncMonth, TruncYear
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -1469,6 +1469,60 @@ def mes_patients(request):
     if medecin is None:
         return render(request, "medecin_fiche_manquante.html")
     return render(request, "mes_patients.html", {"patients": _patients_du_medecin(medecin)})
+
+
+@role_required(User.Role.MEDECIN)
+def rechercher_patients_medecin(request):
+    """
+    Recherche live pour la barre de recherche rapide du medecin (numero de
+    carte, nom, prenom, identifiant numerique). Renvoie du JSON, jamais de
+    donnee medicale : seulement de quoi identifier le bon patient avant
+    d'ouvrir sa fiche (voir fiche_patient_medecin).
+    """
+    medecin = _medecin_courant(request)
+    if medecin is None:
+        return JsonResponse({"resultats": []})
+
+    requete = request.GET.get("q", "").strip()
+    if len(requete) < 2:
+        return JsonResponse({"resultats": []})
+
+    filtre = (
+        Q(numero_carte__icontains=requete)
+        | Q(nom__icontains=requete)
+        | Q(prenom__icontains=requete)
+    )
+    if requete.isdigit():
+        filtre |= Q(pk=requete)
+
+    patients_lies = set(_patients_du_medecin(medecin).values_list("pk", flat=True))
+
+    patients = (
+        Patient.objects.filter(filtre)
+        .select_related("assure_principal", "plan_couverture")
+        .annotate(
+            priorite=Case(
+                When(numero_carte__iexact=requete, then=Value(0)),
+                default=Value(1),
+                output_field=IntegerField(),
+            )
+        )
+        .order_by("priorite", "nom", "prenom")[:8]
+    )
+
+    resultats = [
+        {
+            "id": patient.pk,
+            "nom": patient.nom,
+            "prenom": patient.prenom,
+            "numero_carte": patient.numero_carte,
+            "type_beneficiaire": patient.get_type_beneficiaire_display(),
+            "date_naissance": patient.date_naissance.isoformat(),
+            "deja_vu": patient.pk in patients_lies,
+        }
+        for patient in patients
+    ]
+    return JsonResponse({"resultats": resultats})
 
 
 @role_required(User.Role.MEDECIN)
