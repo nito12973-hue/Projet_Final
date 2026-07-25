@@ -1526,6 +1526,48 @@ def rechercher_patients_medecin(request):
 
 
 @role_required(User.Role.MEDECIN)
+def fiche_patient_medecin(request, pk):
+    """
+    Fiche d'un patient, ouverte depuis la recherche rapide. L'historique
+    n'expose que les consultations du medecin connecte avec ce patient
+    (jamais celles d'un autre medecin - voir la spec, section "Decisions
+    actees").
+    """
+    medecin = _medecin_courant(request)
+    if medecin is None:
+        return render(request, "medecin_fiche_manquante.html")
+
+    patient = get_object_or_404(
+        Patient.objects.select_related("assure_principal", "plan_couverture"), pk=pk
+    )
+    historique = (
+        Consultation.objects.filter(medecin=medecin, patient=patient)
+        .select_related("service", "prise_en_charge")
+        .prefetch_related("ordonnance_set")
+        .order_by("-date_consultation")
+    )
+    if patient.type_beneficiaire == Patient.TypeBeneficiaire.PRINCIPAL:
+        ayants_droit = patient.ayants_droit.all()
+    else:
+        ayants_droit = Patient.objects.none()
+
+    prochains_rendez_vous = (
+        RendezVous.objects.filter(medecin=medecin, patient=patient, date_heure__gte=timezone.now())
+        .exclude(statut=RendezVous.Statut.ANNULE)
+        .order_by("date_heure")
+    )
+
+    contexte = {
+        "patient": patient,
+        "historique": historique,
+        "ayants_droit": ayants_droit,
+        "prochains_rendez_vous": prochains_rendez_vous,
+        "deja_vu": _patients_du_medecin(medecin).filter(pk=patient.pk).exists(),
+    }
+    return render(request, "fiche_patient_medecin.html", contexte)
+
+
+@role_required(User.Role.MEDECIN)
 def historique_consultations(request):
     medecin = _medecin_courant(request)
     if medecin is None:

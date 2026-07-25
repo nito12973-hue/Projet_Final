@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% load icones %}
+
+{% block title %}{{ patient.prenom }} {{ patient.nom }} - Fiche patient{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>{{ patient.prenom }} {{ patient.nom }}</h1>
+        <p class="subtitle">
+            {{ patient.numero_carte }}
+            {% if deja_vu %}<span class="badge">Deja suivi</span>{% endif %}
+        </p>
+    </div>
+    <div class="actions">
+        <a class="button" href="{% url 'mes_patients' %}">{% icone "chevron-left" %} Mes patients</a>
+        <a class="button primary" href="{% url 'ajouter_consultation_medecin' %}?patient={{ patient.pk }}">{% icone "plus-circle" %} Nouvelle consultation</a>
+    </div>
+</section>
+
+<section class="admin-layout">
+    <article class="panel" style="padding:22px 24px;">
+        <div class="panel-header" style="padding:0 0 16px;">
+            <h2>Identite</h2>
+        </div>
+        <table>
+            <tbody>
+                <tr><th>Date de naissance</th><td>{{ patient.date_naissance|date:"d/m/Y" }}</td></tr>
+                <tr><th>Telephone</th><td>{{ patient.telephone|default:"-" }}</td></tr>
+                <tr><th>Numero de carte</th><td>{{ patient.numero_carte }}</td></tr>
+                <tr><th>Type</th><td><span class="badge">{{ patient.get_type_beneficiaire_display }}</span></td></tr>
+                <tr><th>Plan de couverture</th><td>{{ patient.titulaire.plan_couverture|default:"-" }}</td></tr>
+            </tbody>
+        </table>
+    </article>
+
+    {% if ayants_droit %}
+    <article class="panel" style="padding:22px 24px;">
+        <div class="panel-header" style="padding:0 0 16px;">
+            <h2>Ayants droit</h2>
+        </div>
+        <table>
+            <thead><tr><th>Nom complet</th><th>Lien</th><th>Numero de carte</th></tr></thead>
+            <tbody>
+                {% for ayant_droit in ayants_droit %}
+                <tr>
+                    <td>{{ ayant_droit.prenom }} {{ ayant_droit.nom }}</td>
+                    <td>{{ ayant_droit.get_lien_parente_display }}</td>
+                    <td>{{ ayant_droit.numero_carte }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </article>
+    {% endif %}
+</section>
+
+{% if prochains_rendez_vous %}
+<section class="panel" style="margin-top:18px;">
+    <div class="panel-header">
+        <h2>Prochains rendez-vous</h2>
+    </div>
+    <table>
+        <thead><tr><th>Date</th><th>Motif</th><th>Statut</th></tr></thead>
+        <tbody>
+            {% for rdv in prochains_rendez_vous %}
+            <tr>
+                <td>{{ rdv.date_heure|date:"d/m/Y H:i" }}</td>
+                <td>{{ rdv.motif|default:"-" }}</td>
+                <td><span class="dash-pill {% if rdv.statut == 'CONFIRME' %}ok{% else %}attente{% endif %}">{{ rdv.get_statut_display }}</span></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endif %}
+
+<section class="panel" style="margin-top:18px;">
+    <div class="panel-header">
+        <h2>Historique des consultations (avec vous)</h2>
+    </div>
+    {% if historique %}
+    <table>
+        <thead>
+            <tr><th>Date</th><th>Diagnostic</th><th>Traitement</th><th>Ordonnance</th></tr>
+        </thead>
+        <tbody>
+            {% for consultation in historique %}
+            <tr>
+                <td>{{ consultation.date_consultation|date:"d/m/Y H:i" }}</td>
+                <td>{{ consultation.diagnostic }}</td>
+                <td>{{ consultation.traitement|default:"-" }}</td>
+                <td>
+                    {% with ordonnance=consultation.ordonnance_set.first %}
+                    {% if ordonnance %}
+                    <a class="button primary btn btn-sm" href="{% url 'voir_ordonnance_medecin' ordonnance.pk %}">{% icone "qr-scan" %} Voir</a>
+                    {% else %}
+                    <a class="button btn btn-sm" href="{% url 'ajouter_ordonnance_medecin' consultation.pk %}">{% icone "plus-circle" %} Creer</a>
+                    {% endif %}
+                    {% endwith %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="etat-vide">
+        {% illustration_vide "clipboard-list" %}
+        <p>Aucune consultation avec ce patient pour le moment.</p>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

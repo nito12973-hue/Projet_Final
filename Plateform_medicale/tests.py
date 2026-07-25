@@ -723,6 +723,85 @@ class PreRemplissagePatientConsultationTests(TestCase):
         )
 
 
+class FichePatientMedecinTests(TestCase):
+    def setUp(self):
+        self.medecin = creer_medecin('medecin1@santesn.sn')
+        self.autre_medecin = creer_medecin('medecin2@santesn.sn')
+        self.patient = creer_patient(nom='Diop', prenom='Awa')
+        self.client.login(username='medecin1@santesn.sn', password=PASSWORD)
+
+    def test_fiche_interdite_aux_non_medecins(self):
+        self.client.logout()
+        creer_utilisateur(User.Role.ASSURE, 'assure@santesn.sn')
+        self.client.login(username='assure@santesn.sn', password=PASSWORD)
+        response = self.client.get(reverse('fiche_patient_medecin', args=[self.patient.pk]))
+        self.assertEqual(response.status_code, 403)
+
+    def test_fiche_interdite_a_l_anonyme(self):
+        self.client.logout()
+        response = self.client.get(reverse('fiche_patient_medecin', args=[self.patient.pk]))
+        self.assertEqual(response.status_code, 302)
+
+    def test_fiche_patient_inexistant_donne_404(self):
+        response = self.client.get(reverse('fiche_patient_medecin', args=[999999]))
+        self.assertEqual(response.status_code, 404)
+
+    def test_fiche_accessible_pour_un_patient_jamais_vu(self):
+        response = self.client.get(reverse('fiche_patient_medecin', args=[self.patient.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.patient.numero_carte)
+
+    def test_historique_limite_aux_consultations_du_medecin_connecte(self):
+        Consultation.objects.create(
+            patient=self.patient, medecin=self.medecin,
+            date_consultation=timezone.now(), diagnostic='Vue par moi',
+        )
+        Consultation.objects.create(
+            patient=self.patient, medecin=self.autre_medecin,
+            date_consultation=timezone.now(), diagnostic='ConfidentielAutreMedecin',
+        )
+        response = self.client.get(reverse('fiche_patient_medecin', args=[self.patient.pk]))
+        historique = list(response.context['historique'])
+        self.assertEqual(len(historique), 1)
+        self.assertEqual(historique[0].diagnostic, 'Vue par moi')
+        self.assertNotContains(response, 'ConfidentielAutreMedecin')
+
+    def test_bouton_nouvelle_consultation_pre_remplit_le_patient(self):
+        response = self.client.get(reverse('fiche_patient_medecin', args=[self.patient.pk]))
+        url_attendue = reverse('ajouter_consultation_medecin') + '?patient=%s' % self.patient.pk
+        self.assertContains(response, url_attendue)
+
+    def test_ayants_droit_affiches_pour_un_assure_principal(self):
+        ayant_droit = creer_patient(nom='Diop', prenom='Petit')
+        ayant_droit.type_beneficiaire = Patient.TypeBeneficiaire.AYANT_DROIT
+        ayant_droit.assure_principal = self.patient
+        ayant_droit.save()
+        response = self.client.get(reverse('fiche_patient_medecin', args=[self.patient.pk]))
+        self.assertContains(response, ayant_droit.numero_carte)
+
+    def test_pas_d_ayants_droit_pour_un_ayant_droit(self):
+        ayant_droit = creer_patient(nom='Diop', prenom='Petit')
+        ayant_droit.type_beneficiaire = Patient.TypeBeneficiaire.AYANT_DROIT
+        ayant_droit.assure_principal = self.patient
+        ayant_droit.save()
+        response = self.client.get(reverse('fiche_patient_medecin', args=[ayant_droit.pk]))
+        self.assertEqual(len(response.context['ayants_droit']), 0)
+
+    def test_badge_deja_suivi_si_relation_existante(self):
+        Consultation.objects.create(
+            patient=self.patient, medecin=self.medecin,
+            date_consultation=timezone.now(), diagnostic='RAS',
+        )
+        response = self.client.get(reverse('fiche_patient_medecin', args=[self.patient.pk]))
+        self.assertTrue(response.context['deja_vu'])
+        self.assertContains(response, 'Deja suivi')
+
+    def test_pas_de_badge_deja_suivi_sans_relation(self):
+        response = self.client.get(reverse('fiche_patient_medecin', args=[self.patient.pk]))
+        self.assertFalse(response.context['deja_vu'])
+        self.assertNotContains(response, 'Deja suivi')
+
+
 class HistoriqueConsultationsTests(TestCase):
     """Plan de direction artistique, item 5 : filtres patient/date."""
 
