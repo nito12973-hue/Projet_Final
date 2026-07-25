@@ -73,6 +73,10 @@
         }
 
         function fermerResultats() {
+            if (requeteEnCours) {
+                requeteEnCours.abort();
+                requeteEnCours = null;
+            }
             conteneurResultats.hidden = true;
             conteneurResultats.innerHTML = '';
             champ.setAttribute('aria-expanded', 'false');
