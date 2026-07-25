@@ -812,6 +812,11 @@ class WidgetRecherchePatientsTests(TestCase):
         self.assertContains(response, 'id="recherche-patients-champ"')
         self.assertContains(response, reverse('rechercher_patients_medecin'))
 
+    def test_widget_present_sur_dashboard_medecin(self):
+        response = self.client.get(reverse('dashboard_medecin'))
+        self.assertContains(response, 'id="recherche-patients-champ"')
+        self.assertContains(response, reverse('rechercher_patients_medecin'))
+
 
 class HistoriqueConsultationsTests(TestCase):
     """Plan de direction artistique, item 5 : filtres patient/date."""
