@@ -12,6 +12,19 @@
     <a class="button primary" href="{% url 'ajouter_rendez_vous' %}">Nouveau rendez-vous</a>
 </section>
 
+<section class="panel" style="padding:18px 22px;margin-bottom:18px;">
+    <label for="recherche-patients-champ">Recherche rapide</label>
+    <div class="recherche-patients">
+        <input type="search" id="recherche-patients-champ" name="q" autocomplete="off"
+               placeholder="Numero de carte, nom ou prenom..."
+               aria-expanded="false" aria-controls="recherche-patients-resultats"
+               aria-haspopup="listbox" role="combobox" aria-autocomplete="list">
+        <p id="recherche-patients-indice" class="subtitle" style="margin:6px 0 0;" hidden></p>
+        <ul id="recherche-patients-resultats" class="recherche-patients-resultats" role="listbox"
+            aria-live="polite" hidden></ul>
+    </div>
+</section>
+
 <section class="dash-grid">
     <a class="dash-stat" href="{% url 'agenda_medecin' %}">
         <span class="dash-stat-icon">{% icone "calendar" %}</span>
@@ -70,4 +83,146 @@
     </div>
     {% endif %}
 </section>
+
+<script>
+    (function () {
+        var champ = document.getElementById('recherche-patients-champ');
+        var conteneurResultats = document.getElementById('recherche-patients-resultats');
+        var indiceFormat = document.getElementById('recherche-patients-indice');
+        if (!champ) { return; }
+
+        var URL_RECHERCHE = '{% url "rechercher_patients_medecin" %}';
+        var GABARIT_URL_FICHE = '{% url "fiche_patient_medecin" pk=0 %}';
+        var FORMAT_CARTE = /^SN-[0-9A-Fa-f]{10}$/;
+        var minuteur = null;
+        var requeteEnCours = null;
+        var indexActif = -1;
+
+        function formatRessembleCarte(valeur) {
+            return /^SN-/i.test(valeur) && !FORMAT_CARTE.test(valeur);
+        }
+
+        function fermerResultats() {
+            if (requeteEnCours) {
+                requeteEnCours.abort();
+                requeteEnCours = null;
+            }
+            conteneurResultats.hidden = true;
+            conteneurResultats.innerHTML = '';
+            champ.setAttribute('aria-expanded', 'false');
+            champ.removeAttribute('aria-activedescendant');
+            indexActif = -1;
+        }
+
+        function afficherResultats(resultats) {
+            conteneurResultats.innerHTML = '';
+            if (!resultats.length) {
+                var vide = document.createElement('li');
+                vide.className = 'recherche-patients-vide';
+                vide.textContent = 'Aucun patient trouve.';
+                conteneurResultats.appendChild(vide);
+                conteneurResultats.hidden = false;
+                champ.setAttribute('aria-expanded', 'true');
+                return;
+            }
+            resultats.forEach(function (patient, index) {
+                var item = document.createElement('li');
+                item.className = 'recherche-patients-item';
+                item.id = 'recherche-patients-item-' + index;
+                item.setAttribute('role', 'option');
+
+                var nom = document.createElement('strong');
+                nom.textContent = patient.prenom + ' ' + patient.nom;
+                var details = document.createElement('span');
+                details.textContent = patient.numero_carte + ' - ' + patient.type_beneficiaire;
+                item.appendChild(nom);
+                item.appendChild(details);
+
+                if (patient.deja_vu) {
+                    var badge = document.createElement('span');
+                    badge.className = 'badge';
+                    badge.textContent = 'Deja suivi';
+                    item.appendChild(badge);
+                }
+
+                item.addEventListener('click', function () {
+                    window.location.href = GABARIT_URL_FICHE.replace(/0\/$/, patient.id + '/');
+                });
+                conteneurResultats.appendChild(item);
+            });
+            conteneurResultats.hidden = false;
+            champ.setAttribute('aria-expanded', 'true');
+        }
+
+        function lancerRecherche(valeur) {
+            if (requeteEnCours) { requeteEnCours.abort(); }
+            var controleur = new AbortController();
+            requeteEnCours = controleur;
+            fetch(URL_RECHERCHE + '?q=' + encodeURIComponent(valeur), {
+                headers: { 'Accept': 'application/json' },
+                signal: controleur.signal,
+            })
+                .then(function (reponse) { return reponse.json(); })
+                .then(function (donnees) { afficherResultats(donnees.resultats || []); })
+                .catch(function (erreur) {
+                    if (erreur.name !== 'AbortError') { fermerResultats(); }
+                });
+        }
+
+        champ.addEventListener('input', function () {
+            var valeur = champ.value.trim();
+            window.clearTimeout(minuteur);
+
+            if (indiceFormat) {
+                if (formatRessembleCarte(valeur)) {
+                    indiceFormat.textContent = 'Format attendu : SN-XXXXXXXXXX';
+                    indiceFormat.hidden = false;
+                } else {
+                    indiceFormat.hidden = true;
+                }
+            }
+
+            if (valeur.length < 2) {
+                fermerResultats();
+                return;
+            }
+            minuteur = window.setTimeout(function () { lancerRecherche(valeur); }, 300);
+        });
+
+        champ.addEventListener('keydown', function (evenement) {
+            var items = conteneurResultats.querySelectorAll('.recherche-patients-item');
+            if (!items.length || conteneurResultats.hidden) { return; }
+
+            if (evenement.key === 'ArrowDown') {
+                evenement.preventDefault();
+                indexActif = Math.min(indexActif + 1, items.length - 1);
+            } else if (evenement.key === 'ArrowUp') {
+                evenement.preventDefault();
+                indexActif = Math.max(indexActif - 1, 0);
+            } else if (evenement.key === 'Enter') {
+                if (indexActif >= 0) {
+                    evenement.preventDefault();
+                    items[indexActif].click();
+                }
+                return;
+            } else if (evenement.key === 'Escape') {
+                fermerResultats();
+                return;
+            } else {
+                return;
+            }
+
+            items.forEach(function (item, index) {
+                item.classList.toggle('actif', index === indexActif);
+            });
+            champ.setAttribute('aria-activedescendant', items[indexActif].id);
+        });
+
+        document.addEventListener('click', function (evenement) {
+            if (!champ.contains(evenement.target) && !conteneurResultats.contains(evenement.target)) {
+                fermerResultats();
+            }
+        });
+    })();
+</script>
 {% endblock %}
