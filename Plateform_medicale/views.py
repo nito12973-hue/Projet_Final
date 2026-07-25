@@ -1573,7 +1573,11 @@ def ajouter_consultation_medecin(request):
             messages.success(request, "Consultation enregistree.")
             return redirect("ajouter_ordonnance_medecin", consultation_pk=consultation.pk)
     else:
-        form = ConsultationForm()
+        patient_id = request.GET.get("patient", "")
+        initial = {}
+        if patient_id.isdigit() and Patient.objects.filter(pk=patient_id).exists():
+            initial["patient"] = patient_id
+        form = ConsultationForm(initial=initial)
     return render(request, "ajouter_consultation_medecin.html", {"form": form})
 
 
