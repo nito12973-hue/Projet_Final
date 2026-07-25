@@ -574,6 +574,106 @@ class EspaceMedecinTests(TestCase):
         self.assertEqual(self.medecin.email, 'medecin1@santesn.sn')
 
 
+class RecherchePatientsMedecinTests(TestCase):
+    def setUp(self):
+        self.medecin = creer_medecin('medecin1@santesn.sn')
+        self.autre_medecin = creer_medecin('medecin2@santesn.sn')
+        self.patient = creer_patient(nom='Diop', prenom='Awa')
+        self.client.login(username='medecin1@santesn.sn', password=PASSWORD)
+
+    def test_recherche_interdite_aux_non_medecins(self):
+        self.client.logout()
+        creer_utilisateur(User.Role.ASSURE, 'assure@santesn.sn')
+        self.client.login(username='assure@santesn.sn', password=PASSWORD)
+        response = self.client.get(reverse('rechercher_patients_medecin'), {'q': 'Diop'})
+        self.assertEqual(response.status_code, 403)
+
+    def test_recherche_interdite_a_l_anonyme(self):
+        self.client.logout()
+        response = self.client.get(reverse('rechercher_patients_medecin'), {'q': 'Diop'})
+        self.assertEqual(response.status_code, 302)
+
+    def test_recherche_moins_de_deux_caracteres_ne_renvoie_rien(self):
+        response = self.client.get(reverse('rechercher_patients_medecin'), {'q': 'D'})
+        self.assertEqual(response.json(), {'resultats': []})
+
+    def test_recherche_par_nom_partiel_insensible_a_la_casse(self):
+        response = self.client.get(reverse('rechercher_patients_medecin'), {'q': 'dio'})
+        resultats = response.json()['resultats']
+        self.assertEqual(len(resultats), 1)
+        self.assertEqual(resultats[0]['id'], self.patient.pk)
+        self.assertEqual(resultats[0]['numero_carte'], self.patient.numero_carte)
+
+    def test_recherche_par_numero_de_carte_exact(self):
+        response = self.client.get(
+            reverse('rechercher_patients_medecin'), {'q': self.patient.numero_carte}
+        )
+        resultats = response.json()['resultats']
+        self.assertEqual(len(resultats), 1)
+        self.assertEqual(resultats[0]['id'], self.patient.pk)
+
+    def test_recherche_plafonnee_a_huit_resultats(self):
+        for i in range(10):
+            creer_patient(nom='Diop%s' % i, prenom='Test')
+        response = self.client.get(reverse('rechercher_patients_medecin'), {'q': 'Diop'})
+        self.assertEqual(len(response.json()['resultats']), 8)
+
+    def test_recherche_priorise_toujours_la_correspondance_exacte_de_carte(self):
+        carte_recherchee = 'SN-TESTPRIOR01'
+        patient_carte = creer_patient(nom='Zzz', prenom='Zzz')
+        patient_carte.numero_carte = carte_recherchee
+        patient_carte.save()
+        # 8 patients dont le nom contient litteralement le numero recherche,
+        # tries alphabetiquement avant "Zzz" : sans priorisation explicite,
+        # la correspondance exacte serait evincee du top 8 par le tri nom/prenom.
+        for i in range(8):
+            creer_patient(nom='Aaa%s%s' % (carte_recherchee, i), prenom='Test')
+        response = self.client.get(
+            reverse('rechercher_patients_medecin'), {'q': carte_recherchee}
+        )
+        resultats = response.json()['resultats']
+        self.assertEqual(len(resultats), 8)
+        self.assertEqual(resultats[0]['id'], patient_carte.pk)
+
+    def test_recherche_ne_renvoie_aucune_donnee_medicale(self):
+        response = self.client.get(reverse('rechercher_patients_medecin'), {'q': 'Diop'})
+        resultat = response.json()['resultats'][0]
+        self.assertEqual(
+            set(resultat.keys()),
+            {'id', 'nom', 'prenom', 'numero_carte', 'type_beneficiaire', 'date_naissance', 'deja_vu'},
+        )
+
+    def test_recherche_indique_deja_vu(self):
+        Consultation.objects.create(
+            patient=self.patient, medecin=self.medecin,
+            date_consultation=timezone.now(), diagnostic='RAS',
+        )
+        autre_patient = creer_patient(nom='Diopsy', prenom='Fatou')
+        response = self.client.get(reverse('rechercher_patients_medecin'), {'q': 'Diop'})
+        resultats = {r['id']: r['deja_vu'] for r in response.json()['resultats']}
+        self.assertTrue(resultats[self.patient.pk])
+        self.assertFalse(resultats[autre_patient.pk])
+
+    def test_recherche_trouve_un_patient_non_suivi_par_ce_medecin(self):
+        """Portee actee dans la spec : tous les patients, pas seulement ceux du medecin connecte."""
+        Consultation.objects.create(
+            patient=self.patient, medecin=self.autre_medecin,
+            date_consultation=timezone.now(), diagnostic='RAS',
+        )
+        response = self.client.get(reverse('rechercher_patients_medecin'), {'q': 'Diop'})
+        resultats = response.json()['resultats']
+        self.assertEqual(len(resultats), 1)
+        self.assertFalse(resultats[0]['deja_vu'])
+
+    def test_medecin_sans_fiche_recoit_une_liste_vide(self):
+        self.client.logout()
+        creer_utilisateur(User.Role.MEDECIN, 'orphelin@santesn.sn')
+        self.client.login(username='orphelin@santesn.sn', password=PASSWORD)
+        response = self.client.get(reverse('rechercher_patients_medecin'), {'q': 'Diop'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {'resultats': []})
+
+
 class HistoriqueConsultationsTests(TestCase):
     """Plan de direction artistique, item 5 : filtres patient/date."""
 
