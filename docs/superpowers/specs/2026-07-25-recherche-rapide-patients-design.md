@@ -157,8 +157,12 @@ GET /medecin/patients/<int:pk>/
 
 ## Frontend
 
-- Nouveau template partiel `_recherche_patients_medecin.html`, inclus dans
-  `mes_patients.html` et `dashboard_medecin.html` :
+- **Pas de template partiel** (`{% include %}` n'est utilisé nulle part dans
+  ce projet — voir `FONCTIONNEMENT.txt`, section design system, à propos du
+  bloc Leaflet dupliqué intentionnellement sur 3 templates pour la même
+  raison). Le même bloc HTML + `<script>` (recherche live) est donc **dupliqué**
+  à l'identique dans `mes_patients.html` et `dashboard_medecin.html`, plutôt
+  que factorisé — cohérent avec le seul précédent existant dans le projet.
   - `<input type="search">` avec `aria-expanded`, `aria-controls`, et un
     conteneur de résultats `role="listbox"` (`aria-live="polite"`, même
     esprit que le conteneur toasts déjà présent dans `base.html`).
@@ -180,8 +184,10 @@ GET /medecin/patients/<int:pk>/
     `SN-XXXXXXXXXX`, un texte discret sous le champ affiche "Format attendu :
     SN-XXXXXXXXXX". Ne bloque jamais la recherche par nom/prénom.
   - Aucun jeton CSRF nécessaire (endpoint en lecture seule, GET).
-- Le widget dashboard et la barre "Mes patients" partagent le même partiel et
-  le même script — un seul endroit à maintenir.
+- Le widget dashboard et la barre "Mes patients" ont un balisage et un script
+  identiques (copiés-collés), chacun avec ses propres IDs DOM pour éviter
+  toute collision si les deux venaient à apparaître un jour sur une même
+  page.
 
 ## Sécurité
 
