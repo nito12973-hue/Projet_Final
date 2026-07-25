@@ -710,6 +710,63 @@
             box-shadow: none;
         }
 
+        /* Recherche rapide de patients (medecin) : champ + liste de resultats
+           en direct (AJAX). Dupliquee a l'identique sur "Mes patients" et le
+           dashboard medecin (pas de template partiel dans ce projet, voir
+           FONCTIONNEMENT.txt). */
+        .recherche-patients {
+            position: relative;
+            max-width: 480px;
+        }
+
+        .recherche-patients-resultats {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            right: 0;
+            z-index: 20;
+            margin: 0;
+            padding: 6px;
+            list-style: none;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 12px 32px rgba(11, 32, 39, 0.16);
+            max-height: 320px;
+            overflow-y: auto;
+        }
+
+        .recherche-patients-item {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--text);
+        }
+
+        .recherche-patients-item strong {
+            flex: 1 0 auto;
+        }
+
+        .recherche-patients-item span {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .recherche-patients-item:hover,
+        .recherche-patients-item.actif {
+            background: var(--primary-soft);
+        }
+
+        .recherche-patients-vide {
+            padding: 10px 12px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
         /* Pagination des listes (Django Paginator) : precedent/suivant +
            indicateur de page, sous chaque tableau paginable. */
         .pagination {
