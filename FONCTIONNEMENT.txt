@@ -441,6 +441,21 @@ Assure (role_required(ASSURE), prefixe /assure/ + /espace/assure/)
   contenu construit dans un popup Leaflet a partir de donnees stockees doit
   passer par une construction DOM (textContent) et jamais par une
   concatenation de chaines HTML, pour eviter un XSS stocke.
+- Recherche rapide de patients (medecin, plan direction commerciale premium,
+  etape 1) : widget de recherche live (AJAX) duplique sur mes_patients.html
+  et dashboard_medecin.html (pas de template partiel dans ce projet, meme
+  raison que pour Leaflet ci-dessus). Endpoint JSON
+  rechercher_patients_medecin (numero de carte / nom / prenom / id, min 2
+  caracteres, plafond 8 resultats, correspondance exacte de carte toujours
+  en tete via annotate(Case/When)) ; ne renvoie jamais de donnee medicale.
+  Nouvelle page fiche_patient_medecin : historique limite aux consultations
+  du medecin connecte avec ce patient (jamais une vue transversale
+  multi-medecins - choix de confidentialite delibere). La recherche porte
+  sur tous les patients du systeme (pas seulement _patients_du_medecin) car
+  ConsultationForm.patient n'a jamais ete restreint : ce n'est donc pas une
+  extension de permission, seulement une meilleure UX pour une capacite qui
+  existait deja. ajouter_consultation_medecin accepte desormais
+  ?patient=<pk> en GET pour pre-selectionner le patient.
 
 
 6. TESTS (tests.py)
