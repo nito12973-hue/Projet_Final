@@ -677,6 +677,29 @@ class RecherchePatientsMedecinTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {'resultats': []})
 
+    def test_recherche_par_pk_numerique(self):
+        # pk force a 2 chiffres : la recherche ignore les requetes de moins
+        # de 2 caracteres (test_recherche_moins_de_deux_caracteres_ne_renvoie_rien),
+        # donc un pk a 1 chiffre ne suffirait pas a exercer la branche Q(pk=...).
+        patient_cible = Patient.objects.create(
+            pk=42, nom='Sow', prenom='Ndeye',
+            date_naissance=datetime.date(1990, 1, 1), telephone='770000002',
+        )
+        response = self.client.get(
+            reverse('rechercher_patients_medecin'), {'q': str(patient_cible.pk)}
+        )
+        resultats = response.json()['resultats']
+        self.assertIn(patient_cible.pk, [r['id'] for r in resultats])
+
+    def test_recherche_avec_chiffre_unicode_non_convertible_ne_plante_pas(self):
+        """
+        '²²' passe str.isdigit() mais fait planter int() (ValueError) : sans
+        isdecimal(), Q(pk=requete) remontait un 500 sur Patient.objects.filter.
+        """
+        response = self.client.get(reverse('rechercher_patients_medecin'), {'q': '²²'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {'resultats': []})
+
 
 class PreRemplissagePatientConsultationTests(TestCase):
     def setUp(self):
@@ -697,6 +720,17 @@ class PreRemplissagePatientConsultationTests(TestCase):
     def test_parametre_non_numerique_ignore_silencieusement(self):
         response = self.client.get(
             reverse('ajouter_consultation_medecin'), {'patient': 'abc'}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('patient', response.context['form'].initial)
+
+    def test_parametre_chiffre_unicode_non_convertible_ignore_silencieusement(self):
+        """
+        '²²' passe str.isdigit() mais fait planter int() (ValueError) : sans
+        isdecimal(), Patient.objects.filter(pk='²²') remontait un 500.
+        """
+        response = self.client.get(
+            reverse('ajouter_consultation_medecin'), {'patient': '²²'}
         )
         self.assertEqual(response.status_code, 200)
         self.assertNotIn('patient', response.context['form'].initial)
