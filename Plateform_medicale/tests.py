@@ -465,7 +465,7 @@ class EspaceMedecinTests(TestCase):
         response = self.client.post(reverse('ajouter_rendez_vous'), {
             'patient': self.patient.pk,
             'prestataire': '',
-            'date_heure': '2026-08-01T09:30',
+            'date_heure': (timezone.now() + datetime.timedelta(days=1)).strftime('%Y-%m-%dT%H:%M'),
             'motif': 'Controle',
         })
         self.assertRedirects(response, reverse('agenda_medecin'))
@@ -1085,7 +1085,7 @@ class EspaceAssureTests(TestCase):
             'patient': patient.pk,
             'medecin': medecin.pk,
             'prestataire': '',
-            'date_heure': '2026-09-01T09:00',
+            'date_heure': (timezone.now() + datetime.timedelta(days=1)).strftime('%Y-%m-%dT%H:%M'),
             'motif': 'Controle',
         })
         self.assertRedirects(response, reverse('mes_rendez_vous_assure'))
@@ -1116,7 +1116,7 @@ class EspaceAssureTests(TestCase):
             'patient': autre_patient.pk,
             'medecin': medecin.pk,
             'prestataire': '',
-            'date_heure': '2026-09-01T09:00',
+            'date_heure': (timezone.now() + datetime.timedelta(days=1)).strftime('%Y-%m-%dT%H:%M'),
             'motif': 'Controle',
         })
         self.assertEqual(response.status_code, 200)
