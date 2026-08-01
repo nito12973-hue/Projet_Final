@@ -455,7 +455,14 @@ Assure (role_required(ASSURE), prefixe /assure/ + /espace/assure/)
   ConsultationForm.patient n'a jamais ete restreint : ce n'est donc pas une
   extension de permission, seulement une meilleure UX pour une capacite qui
   existait deja. ajouter_consultation_medecin accepte desormais
-  ?patient=<pk> en GET pour pre-selectionner le patient.
+  ?patient=<pk> en GET pour pre-selectionner le patient. Pour la meme
+  raison, fiche_patient_medecin affiche aussi les ayants droit (noms,
+  lien_parente, numeros de carte) et le plan de couverture du patient
+  consulte, quel que soit le patient (pas seulement ceux deja suivis par
+  le medecin connecte) : ce sont des donnees d'identite/administratives,
+  pas des donnees medicales - seuls diagnostic/traitement/ordonnance
+  restent limites aux consultations du medecin connecte (historique
+  ci-dessus).
 
 
 6. TESTS (tests.py)

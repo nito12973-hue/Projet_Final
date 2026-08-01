@@ -114,8 +114,16 @@
             indexActif = -1;
         }
 
+        function formatDateNaissance(valeurIso) {
+            var parties = (valeurIso || '').split('-');
+            if (parties.length !== 3) { return ''; }
+            return parties[2] + '/' + parties[1] + '/' + parties[0];
+        }
+
         function afficherResultats(resultats) {
             conteneurResultats.innerHTML = '';
+            indexActif = -1;
+            champ.removeAttribute('aria-activedescendant');
             if (!resultats.length) {
                 var vide = document.createElement('li');
                 vide.className = 'recherche-patients-vide';
@@ -134,7 +142,10 @@
                 var nom = document.createElement('strong');
                 nom.textContent = patient.prenom + ' ' + patient.nom;
                 var details = document.createElement('span');
-                details.textContent = patient.numero_carte + ' - ' + patient.type_beneficiaire;
+                var texteDetails = patient.numero_carte + ' - ' + patient.type_beneficiaire;
+                var dateNaissance = formatDateNaissance(patient.date_naissance);
+                if (dateNaissance) { texteDetails += ' - ' + dateNaissance; }
+                details.textContent = texteDetails;
                 item.appendChild(nom);
                 item.appendChild(details);
 
@@ -200,7 +211,7 @@
                 evenement.preventDefault();
                 indexActif = Math.max(indexActif - 1, 0);
             } else if (evenement.key === 'Enter') {
-                if (indexActif >= 0) {
+                if (indexActif >= 0 && items[indexActif]) {
                     evenement.preventDefault();
                     items[indexActif].click();
                 }
