@@ -1495,11 +1495,8 @@ def rechercher_patients_medecin(request):
     if requete.isdecimal():
         filtre |= Q(pk=requete)
 
-    patients_lies = set(_patients_du_medecin(medecin).values_list("pk", flat=True))
-
-    patients = (
+    patients = list(
         Patient.objects.filter(filtre)
-        .select_related("assure_principal", "plan_couverture")
         .annotate(
             priorite=Case(
                 When(numero_carte__iexact=requete, then=Value(0)),
@@ -1508,6 +1505,12 @@ def rechercher_patients_medecin(request):
             )
         )
         .order_by("priorite", "nom", "prenom")[:8]
+    )
+
+    patients_lies = set(
+        _patients_du_medecin(medecin)
+        .filter(pk__in=[patient.pk for patient in patients])
+        .values_list("pk", flat=True)
     )
 
     resultats = [
@@ -1538,7 +1541,10 @@ def fiche_patient_medecin(request, pk):
         return render(request, "medecin_fiche_manquante.html")
 
     patient = get_object_or_404(
-        Patient.objects.select_related("assure_principal", "plan_couverture"), pk=pk
+        Patient.objects.select_related(
+            "assure_principal", "assure_principal__plan_couverture", "plan_couverture"
+        ),
+        pk=pk,
     )
     historique = (
         Consultation.objects.filter(medecin=medecin, patient=patient)
