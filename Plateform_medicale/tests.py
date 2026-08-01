@@ -603,6 +603,10 @@ class RecherchePatientsMedecinTests(TestCase):
         self.assertEqual(len(resultats), 1)
         self.assertEqual(resultats[0]['id'], self.patient.pk)
         self.assertEqual(resultats[0]['numero_carte'], self.patient.numero_carte)
+        # Le widget (mes_patients.html / dashboard_medecin.html) formate cette
+        # valeur en JJ/MM/AAAA cote JS : le contrat JSON doit rester une date
+        # ISO (AAAA-MM-JJ), sans quoi le formatage clic-a-clic serait fausse.
+        self.assertEqual(resultats[0]['date_naissance'], self.patient.date_naissance.isoformat())
 
     def test_recherche_par_numero_de_carte_exact(self):
         response = self.client.get(
