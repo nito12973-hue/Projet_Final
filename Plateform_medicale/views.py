@@ -1492,7 +1492,7 @@ def rechercher_patients_medecin(request):
         | Q(nom__icontains=requete)
         | Q(prenom__icontains=requete)
     )
-    if requete.isdigit():
+    if requete.isdecimal():
         filtre |= Q(pk=requete)
 
     patients_lies = set(_patients_du_medecin(medecin).values_list("pk", flat=True))
@@ -1617,7 +1617,7 @@ def ajouter_consultation_medecin(request):
     else:
         patient_id = request.GET.get("patient", "")
         initial = {}
-        if patient_id.isdigit() and Patient.objects.filter(pk=patient_id).exists():
+        if patient_id.isdecimal() and Patient.objects.filter(pk=patient_id).exists():
             initial["patient"] = patient_id
         form = ConsultationForm(initial=initial)
     return render(request, "ajouter_consultation_medecin.html", {"form": form})
