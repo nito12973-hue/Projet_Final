@@ -127,6 +127,7 @@
             if (!resultats.length) {
                 var vide = document.createElement('li');
                 vide.className = 'recherche-patients-vide';
+                vide.setAttribute('role', 'presentation');
                 vide.textContent = 'Aucun patient trouve.';
                 conteneurResultats.appendChild(vide);
                 conteneurResultats.hidden = false;
@@ -201,6 +202,11 @@
         });
 
         champ.addEventListener('keydown', function (evenement) {
+            if (evenement.key === 'Escape') {
+                fermerResultats();
+                return;
+            }
+
             var items = conteneurResultats.querySelectorAll('.recherche-patients-item');
             if (!items.length || conteneurResultats.hidden) { return; }
 
@@ -215,9 +221,6 @@
                     evenement.preventDefault();
                     items[indexActif].click();
                 }
-                return;
-            } else if (evenement.key === 'Escape') {
-                fermerResultats();
                 return;
             } else {
                 return;

@@ -67,7 +67,7 @@
             <tr>
                 <td>{{ rdv.date_heure|date:"d/m/Y H:i" }}</td>
                 <td>{{ rdv.motif|default:"-" }}</td>
-                <td><span class="dash-pill {% if rdv.statut == 'CONFIRME' %}ok{% else %}attente{% endif %}">{{ rdv.get_statut_display }}</span></td>
+                <td><span class="dash-pill {% if rdv.statut == 'CONFIRME' or rdv.statut == 'TERMINE' %}ok{% elif rdv.statut == 'ANNULE' %}danger{% else %}attente{% endif %}">{{ rdv.get_statut_display }}</span></td>
             </tr>
             {% endfor %}
         </tbody>

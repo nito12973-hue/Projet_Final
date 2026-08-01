@@ -839,6 +839,24 @@ class FichePatientMedecinTests(TestCase):
         self.assertFalse(response.context['deja_vu'])
         self.assertNotContains(response, 'Deja suivi')
 
+    def test_rendez_vous_termine_affiche_le_badge_ok(self):
+        RendezVous.objects.create(
+            patient=self.patient, medecin=self.medecin,
+            date_heure=timezone.now() + datetime.timedelta(days=1),
+            statut=RendezVous.Statut.TERMINE,
+        )
+        response = self.client.get(reverse('fiche_patient_medecin', args=[self.patient.pk]))
+        self.assertContains(response, 'dash-pill ok')
+
+    def test_rendez_vous_demande_affiche_le_badge_attente(self):
+        RendezVous.objects.create(
+            patient=self.patient, medecin=self.medecin,
+            date_heure=timezone.now() + datetime.timedelta(days=1),
+            statut=RendezVous.Statut.DEMANDE,
+        )
+        response = self.client.get(reverse('fiche_patient_medecin', args=[self.patient.pk]))
+        self.assertContains(response, 'dash-pill attente')
+
 
 class WidgetRecherchePatientsTests(TestCase):
     def setUp(self):
