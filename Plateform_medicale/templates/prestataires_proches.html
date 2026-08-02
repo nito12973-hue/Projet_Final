@@ -27,7 +27,10 @@
 <form class="filtres" onsubmit="return false;">
     <div>
         <label for="filtre-recherche">Recherche</label>
-        <input type="search" id="filtre-recherche" placeholder="Nom du prestataire">
+        <div class="champ-recherche">
+            {% icone "search" %}
+            <input type="search" id="filtre-recherche" placeholder="Nom du prestataire">
+        </div>
     </div>
     <div>
         <label for="filtre-ville">Ville</label>

@@ -37,7 +37,10 @@
     </div>
     <div style="min-width:220px;flex:1;">
         <label for="q">Recherche</label>
-        <input id="q" type="text" name="q" placeholder="Nom ou email" value="{{ recherche }}" style="margin-bottom:0;">
+        <div class="champ-recherche">
+            {% icone "search" %}
+            <input id="q" type="text" name="q" placeholder="Nom ou email" value="{{ recherche }}" style="margin-bottom:0;">
+        </div>
     </div>
     <button type="submit" class="button primary btn">Filtrer</button>
     {% if role_selectionne or statut_selectionne or recherche %}
