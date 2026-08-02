@@ -9,6 +9,7 @@
         <h1>Paiements</h1>
         <p class="subtitle">Suivi du reglement des consultations.</p>
     </div>
+    <a class="button btn" href="{% url 'exporter_paiements_csv' %}?{{ request.GET.urlencode }}">{% icone "download" %} Exporter en CSV</a>
 </section>
 
 <section class="dash-grid" style="margin-bottom: 18px;">

@@ -1,3 +1,4 @@
+import csv
 import datetime
 import json
 import unicodedata
@@ -687,8 +688,8 @@ def supprimer_prise_en_charge(request, pk):
     return render(request, "confirmer_suppression.html", {"objet": prise_en_charge, "type": "Prise en charge"})
 
 
-@admin_required
-def liste_paiements(request):
+def _filtrer_paiements(request):
+    """Filtres partages entre la liste et l'export CSV des paiements."""
     paiements = Paiement.objects.select_related(
         "consultation", "consultation__patient", "consultation__service"
     )
@@ -710,6 +711,13 @@ def liste_paiements(request):
         "-consultation__date_consultation",
     )
 
+    return paiements, {"statut": statut, "recherche": recherche}
+
+
+@admin_required
+def liste_paiements(request):
+    paiements, filtres = _filtrer_paiements(request)
+
     totaux = Paiement.objects.aggregate(
         total_regle=Sum("montant_part_patient", filter=Q(statut=Paiement.Statut.REGLE)),
         total_non_regle=Sum("montant_part_patient", filter=Q(statut=Paiement.Statut.NON_REGLE)),
@@ -717,13 +725,39 @@ def liste_paiements(request):
 
     contexte = {
         "paiements": _paginer(request, paiements),
-        "statut_choisi": statut,
+        "statut_choisi": filtres["statut"],
         "statuts": Paiement.Statut.choices,
-        "recherche": recherche,
+        "recherche": filtres["recherche"],
         "total_regle": totaux["total_regle"] or 0,
         "total_non_regle": totaux["total_non_regle"] or 0,
     }
     return render(request, "liste_paiements.html", contexte)
+
+
+@admin_required
+def exporter_paiements_csv(request):
+    paiements, _ = _filtrer_paiements(request)
+
+    reponse = HttpResponse(content_type="text/csv")
+    reponse["Content-Disposition"] = 'attachment; filename="paiements_santesn.csv"'
+    reponse.write("﻿")  # BOM : Excel (FR) detecte l'UTF-8 sans le confondre avec l'encodage local.
+    ecrivain = csv.writer(reponse, delimiter=";")
+    ecrivain.writerow([
+        "Patient", "Date de consultation", "Montant total", "Part assurance",
+        "Part patient", "Statut", "Mode de reglement", "Date de reglement",
+    ])
+    for paiement in paiements:
+        ecrivain.writerow([
+            str(paiement.consultation.patient),
+            paiement.consultation.date_consultation.strftime("%d/%m/%Y %H:%M"),
+            paiement.montant_total,
+            paiement.montant_part_assurance,
+            paiement.montant_part_patient,
+            paiement.get_statut_display(),
+            paiement.get_mode_reglement_display() if paiement.mode_reglement else "",
+            paiement.date_reglement.strftime("%d/%m/%Y %H:%M") if paiement.date_reglement else "",
+        ])
+    return reponse
 
 
 @admin_required
@@ -1110,6 +1144,28 @@ def exporter_utilisateurs_excel(request):
     )
     reponse["Content-Disposition"] = 'attachment; filename="utilisateurs_santesn.xlsx"'
     classeur.save(reponse)
+    return reponse
+
+
+@admin_required
+def exporter_utilisateurs_csv(request):
+    utilisateurs, _ = _filtrer_utilisateurs(request)
+
+    reponse = HttpResponse(content_type="text/csv")
+    reponse["Content-Disposition"] = 'attachment; filename="utilisateurs_santesn.csv"'
+    reponse.write("﻿")  # BOM : Excel (FR) detecte l'UTF-8 sans le confondre avec l'encodage local.
+    ecrivain = csv.writer(reponse, delimiter=";")
+    ecrivain.writerow(["Email", "Prenom", "Nom", "Telephone", "Role", "Statut", "Date de creation"])
+    for utilisateur in utilisateurs:
+        ecrivain.writerow([
+            utilisateur.email,
+            utilisateur.first_name,
+            utilisateur.last_name,
+            utilisateur.phone_number,
+            utilisateur.get_role_display(),
+            "Actif" if utilisateur.is_active else "Inactif",
+            utilisateur.date_joined.strftime("%d/%m/%Y %H:%M"),
+        ])
     return reponse
 
 
