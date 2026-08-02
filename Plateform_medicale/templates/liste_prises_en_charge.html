@@ -17,10 +17,10 @@
     <table>
         <thead>
             <tr>
-                <th>Patient</th>
-                <th>Date demande</th>
+                {% entete_tri request.GET "patient__nom" "Patient" %}
+                {% entete_tri request.GET "date_demande" "Date demande" %}
                 <th>Motif</th>
-                <th>Statut</th>
+                {% entete_tri request.GET "statut" "Statut" %}
                 <th>Actions</th>
             </tr>
         </thead>

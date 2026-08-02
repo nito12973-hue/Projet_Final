@@ -142,6 +142,9 @@ _ICONES = {
     "chevron-right": (
         '<path d="M9 6l6 6-6 6"/>'
     ),
+    "chevron-down": (
+        '<path d="M6 9l6 6 6-6"/>'
+    ),
     "log-out": (
         '<path d="M9 21H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3"/>'
         '<path d="M16 17l5-5-5-5"/>'

@@ -54,10 +54,10 @@
         <caption class="sr-only">Liste des utilisateurs de la plateforme, avec leurs actions de gestion</caption>
         <thead>
             <tr>
-                <th scope="col">Nom complet</th>
-                <th scope="col">Email</th>
-                <th scope="col">Role</th>
-                <th scope="col">Statut</th>
+                {% entete_tri request.GET "last_name" "Nom complet" %}
+                {% entete_tri request.GET "email" "Email" %}
+                {% entete_tri request.GET "role" "Role" %}
+                {% entete_tri request.GET "is_active" "Statut" %}
                 <th scope="col">Actions</th>
             </tr>
         </thead>

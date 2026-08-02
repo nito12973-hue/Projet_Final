@@ -17,9 +17,9 @@
     <table>
         <thead>
             <tr>
-                <th>Nom</th>
-                <th>Taux de couverture</th>
-                <th>Plafond annuel</th>
+                {% entete_tri request.GET "nom" "Nom" %}
+                {% entete_tri request.GET "taux_couverture" "Taux de couverture" %}
+                {% entete_tri request.GET "plafond_annuel" "Plafond annuel" %}
                 <th>Actions</th>
             </tr>
         </thead>

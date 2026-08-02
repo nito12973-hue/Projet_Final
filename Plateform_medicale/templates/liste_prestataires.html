@@ -32,11 +32,11 @@
     <table>
         <thead>
             <tr>
-                <th>Nom</th>
-                <th>Type</th>
-                <th>Ville</th>
+                {% entete_tri request.GET "nom" "Nom" %}
+                {% entete_tri request.GET "type_prestataire" "Type" %}
+                {% entete_tri request.GET "ville" "Ville" %}
                 <th>Telephone</th>
-                <th>Partenaire</th>
+                {% entete_tri request.GET "partenaire" "Partenaire" %}
                 <th>Localisation</th>
                 <th>Actions</th>
             </tr>
