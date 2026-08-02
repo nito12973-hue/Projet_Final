@@ -20,7 +20,10 @@
         </div>
         <div>
             <p class="carte-assure-label">Carte de prise en charge</p>
-            <p class="carte-assure-numero code">{{ patient.numero_carte }}</p>
+            <p class="carte-assure-numero code">
+                {{ patient.numero_carte }}
+                <button type="button" class="btn-copier-carte" data-copier="{{ patient.numero_carte }}" aria-label="Copier le numero de carte">{% icone "copy" %}</button>
+            </p>
         </div>
         <div class="carte-assure-pied">
             <div>
