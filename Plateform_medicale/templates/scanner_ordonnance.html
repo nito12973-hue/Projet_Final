@@ -11,24 +11,26 @@
     </div>
 </section>
 
-<form method="post" style="max-width: 480px;">
-    {% csrf_token %}
-    <label for="code_qr">Code de l'ordonnance</label>
-    <input id="code_qr" name="code_qr" type="text" placeholder="RX-XXXXXXXXXX" autofocus required>
-    <button class="button primary" type="submit">Verifier</button>
+<section class="panel" style="padding: 22px 24px; max-width: 480px;">
+    <form method="post">
+        {% csrf_token %}
+        <label for="code_qr">Code de l'ordonnance</label>
+        <input id="code_qr" name="code_qr" type="text" placeholder="RX-XXXXXXXXXX" autofocus required>
+        <button class="button primary" type="submit">Verifier</button>
 
-    <div style="margin-top:16px;">
-        <button type="button" id="bouton-scan-camera" class="button btn" hidden>{% icone "qr-scan" %} Scanner avec la camera</button>
-        <p id="statut-scan-camera" class="subtitle" style="margin:8px 0 0;" role="status" aria-live="polite"></p>
+        <div style="margin-top:16px;">
+            <button type="button" id="bouton-scan-camera" class="button btn" hidden>{% icone "qr-scan" %} Scanner avec la camera</button>
+            <p id="statut-scan-camera" class="subtitle" style="margin:8px 0 0;" role="status" aria-live="polite"></p>
 
-        <div id="panneau-scan-camera" hidden style="position:relative;max-width:360px;margin-top:12px;border-radius:12px;overflow:hidden;background:#000;">
-            <video id="video-scan-camera" autoplay muted playsinline aria-hidden="true" style="width:100%;display:block;"></video>
-            <canvas id="canvas-scan-camera" style="display:none;"></canvas>
-            <div aria-hidden="true" style="position:absolute;inset:15%;border:2px solid var(--primary-accent);border-radius:12px;pointer-events:none;"></div>
-            <button type="button" id="bouton-fermer-scan-camera" class="button btn" style="position:absolute;top:8px;right:8px;">Fermer la camera</button>
+            <div id="panneau-scan-camera" hidden style="position:relative;max-width:360px;margin-top:12px;border-radius:12px;overflow:hidden;background:#000;">
+                <video id="video-scan-camera" autoplay muted playsinline aria-hidden="true" style="width:100%;display:block;"></video>
+                <canvas id="canvas-scan-camera" style="display:none;"></canvas>
+                <div aria-hidden="true" style="position:absolute;inset:15%;border:2px solid var(--primary-accent);border-radius:12px;pointer-events:none;"></div>
+                <button type="button" id="bouton-fermer-scan-camera" class="button btn" style="position:absolute;top:8px;right:8px;">Fermer la camera</button>
+            </div>
         </div>
-    </div>
-</form>
+    </form>
+</section>
 
 {% if ordonnance %}
 <section class="admin-layout" style="margin-top: 22px;">

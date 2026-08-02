@@ -4,12 +4,12 @@
 {% block title %}Confirmer la suppression{% endblock %}
 
 {% block content %}
-<div class="page-title">
+<section class="page-title">
     <div>
         <h1>Confirmer la suppression</h1>
         <p class="subtitle">Êtes-vous sûr de vouloir supprimer cet élément ?</p>
     </div>
-</div>
+</section>
 
 <div class="avis avis-danger">
     <p class="avis-titre">{% icone "alert-triangle" %} Attention : cette action est irréversible</p>
@@ -19,11 +19,13 @@
     {% endif %}
 </div>
 
-<form method="post" style="max-width: 720px;">
-    {% csrf_token %}
-    <button type="submit" class="button btn-danger">
-        Confirmer la suppression
-    </button>
-    <a href="javascript:history.back()" class="button">Annuler</a>
-</form>
+<section class="panel" style="padding: 22px 24px; max-width: 720px;">
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="button btn-danger">
+            Confirmer la suppression
+        </button>
+        <a href="javascript:history.back()" class="button">Annuler</a>
+    </form>
+</section>
 {% endblock %}

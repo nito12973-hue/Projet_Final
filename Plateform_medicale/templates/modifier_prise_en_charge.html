@@ -11,17 +11,19 @@
     <a class="button" href="{% url 'liste_prises_en_charge' %}">Retour</a>
 </section>
 
-{% if form.non_field_errors %}
-<div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
-{% endif %}
+<section class="panel" style="padding: 22px 24px; max-width: 720px;">
+    {% if form.non_field_errors %}
+    <div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
+    {% endif %}
 
-<form method="post">
-    {% csrf_token %}
-    {% for field in form %}
-    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-    {{ field }}
-    {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
-    {% endfor %}
-    <button class="button primary" type="submit">Enregistrer</button>
-</form>
+    <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
+        {% endfor %}
+        <button class="button primary" type="submit">Enregistrer</button>
+    </form>
+</section>
 {% endblock %}

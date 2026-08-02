@@ -11,28 +11,30 @@
     <a class="button" href="{% url 'liste_prestataires' %}">Retour</a>
 </section>
 
-{% if form.non_field_errors %}
-<div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
-{% endif %}
+<section class="panel" style="padding: 22px 24px; max-width: 720px;">
+    {% if form.non_field_errors %}
+    <div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
+    {% endif %}
 
-<form method="post">
-    {% csrf_token %}
-    {% for field in form %}
-    {% if not field.is_hidden %}<label for="{{ field.id_for_label }}">{{ field.label }}</label>{% endif %}
-    {{ field }}
-    {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
-    {% endfor %}
+    <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+        {% if not field.is_hidden %}<label for="{{ field.id_for_label }}">{{ field.label }}</label>{% endif %}
+        {{ field }}
+        {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
+        {% endfor %}
 
-    <label id="titre-carte-prestataire">Emplacement sur la carte (facultatif)</label>
-    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
-        <button type="button" id="bouton-recherche-lieu" class="button btn">Rechercher sur la carte</button>
-        <span id="statut-recherche-lieu" class="subtitle" style="margin:0;" role="status" aria-live="polite"></span>
-    </div>
-    <div id="carte-prestataire" role="group" aria-labelledby="titre-carte-prestataire" aria-describedby="aide-carte-prestataire" style="height: 320px; border-radius: 12px; margin-bottom: 8px;"></div>
-    <p id="aide-carte-prestataire" class="subtitle" style="margin-top:0;margin-bottom:16px;">Cliquez sur la carte pour placer le prestataire, ou renseignez l'adresse et/ou la ville ci-dessus puis utilisez "Rechercher sur la carte" (accessible au clavier).</p>
+        <label id="titre-carte-prestataire">Emplacement sur la carte (facultatif)</label>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
+            <button type="button" id="bouton-recherche-lieu" class="button btn">Rechercher sur la carte</button>
+            <span id="statut-recherche-lieu" class="subtitle" style="margin:0;" role="status" aria-live="polite"></span>
+        </div>
+        <div id="carte-prestataire" role="group" aria-labelledby="titre-carte-prestataire" aria-describedby="aide-carte-prestataire" style="height: 320px; border-radius: 12px; margin-bottom: 8px;"></div>
+        <p id="aide-carte-prestataire" class="subtitle" style="margin-top:0;margin-bottom:16px;">Cliquez sur la carte pour placer le prestataire, ou renseignez l'adresse et/ou la ville ci-dessus puis utilisez "Rechercher sur la carte" (accessible au clavier).</p>
 
-    <button class="button primary" type="submit">Enregistrer</button>
-</form>
+        <button class="button primary" type="submit">Enregistrer</button>
+    </form>
+</section>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
       integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
