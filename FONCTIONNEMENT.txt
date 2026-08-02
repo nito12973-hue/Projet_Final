@@ -194,6 +194,29 @@ Relations cle a retenir :
   aucun admin n'existe encore en base (_admin_exists()).
 - changer_mot_de_passe : libre-service, disponible pour les 4 roles,
   update_session_auth_hash() pour ne pas deconnecter l'utilisateur.
+- login_view lit request.GET['next'] (pose par @login_required quand une
+  page protegee redirige ici), le valide avec url_has_allowed_host_and_scheme
+  (allowed_hosts=request.get_host()) avant de s'en servir comme cible de
+  redirection post-connexion -- empeche un ?next=https://... trafique de
+  rediriger hors du site. Si next est present et valide : bandeau
+  "Votre session a expire..." (.avis-info, base_auth.html) sur login.html,
+  et redirection vers la page initialement visee (pas juste le dashboard du
+  role) une fois connecte. Sans next (connexion normale) : comportement
+  inchange.
+- admin.py restreint la suppression depuis /admin/ (Django admin, monte sur
+  /admin/) pour les 7 modeles qui ont une vue supprimer_* dediee dans
+  l'app (User, Patient, Medecin, Prestataire, PlanCouverture,
+  ServiceMedical, PriseEnCharge) via SuppressionGereeParLAppMixin
+  (has_delete_permission -> False) : sans ca, le compte admin reel
+  (is_staff=True via create_superuser du setup_wizard) pouvait supprimer
+  un Patient depuis /admin/ sans que le User lie soit desactive, en
+  contournant entierement la logique metier des vues supprimer_* (voir
+  section 4, "symetrie a la suppression"). Liste/consultation/modification
+  restent accessibles depuis /admin/, seule la suppression est bloquee.
+  Pharmacien/RendezVous/Delivrance/Notification/Consultation/Ordonnance ne
+  sont pas concernes : aucune vue supprimer_* dediee n'existe pour ces
+  modeles, /admin/ reste leur seul mecanisme de suppression (rien a
+  contourner).
 
 
 4. VUES ET ROUTES (views.py / urls.py), par domaine
@@ -211,7 +234,28 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
 /medecins/, /pharmaciens/, /services/, /prises-en-charge/, /paiements/,
 /prestataires/, /plans-de-couverture/, /rapports/, /tableau-de-bord/,
 /notifications/envoyer|envoyees/)
+  _paginer(request, queryset) / _trier(request, queryset, champs_autorises,
+    defaut)              helpers partages par toutes les vues liste_* :
+                          pagination (parametre GET 'page', taille fixe
+                          TAILLE_PAGE_LISTE) et tri (parametre GET 'tri',
+                          ex. 'nom' / '-nom') restreint a un allowlist par
+                          vue pour ne jamais passer un champ arbitraire a
+                          order_by(). Cote template, {% entete_tri
+                          request.GET "champ" "Libelle" %} (templatetags/
+                          formats.py) rend le <th> entier (lien + icone
+                          chevron-down, un seul SVG reutilise/tourne selon
+                          l'etat plutot que 3 icones), preserve les autres
+                          filtres actifs (meme mecanisme que
+                          prefixe_pagination). Appliquee aux 9 listes admin
+                          (utilisateurs, patients, medecins, pharmaciens,
+                          prestataires, services, plans de couverture,
+                          prises en charge, paiements).
   dashboard                          page d'accueil admin (stats + actions)
+                          + mini-graphique de tendance des consultations
+                          (30 derniers jours, sparkline Chart.js compacte,
+                          meme donnee que _consultations_par_jour() de
+                          rapports mais reutilisable avec un queryset filtre
+                          -- voir dashboard_medecin plus bas)
   rapports / exporter_rapports_excel / exporter_rapports_pdf
                                       _donnees_rapports() est la SEULE
                                       source de donnees, partagee par la
@@ -220,9 +264,13 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
   liste_utilisateurs / ajouter_utilisateur / modifier_utilisateur /
     activer_desactiver_utilisateur / reinitialiser_mot_de_passe /
     supprimer_utilisateur / exporter_utilisateurs_excel /
-    importer_utilisateurs_excel / telecharger_modele_import_utilisateurs
-                                      CRUD utilisateurs + import/export Excel
-                                      import : regle "tout ou rien", voir
+    exporter_utilisateurs_csv / importer_utilisateurs_excel /
+    telecharger_modele_import_utilisateurs
+                                      CRUD utilisateurs + import/export
+                                      Excel + export CSV (meme filtres,
+                                      _filtrer_utilisateurs partagee par
+                                      les 3). import : regle "tout ou
+                                      rien", voir
                                       _analyser_ligne_import_utilisateurs
   liste_patients / ajouter_patient / modifier_patient / supprimer_patient
                                       affiche et gere les assures PRINCIPAUX
@@ -245,7 +293,24 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
   liste_services / ajouter_service / modifier_service / supprimer_service
   liste_prises_en_charge / ajouter_prise_en_charge /
     modifier_prise_en_charge / supprimer_prise_en_charge
-  liste_paiements / marquer_paiement_regle
+                                      recherche par nom/prenom du patient
+                                      (parametre GET 'q')
+  liste_paiements / marquer_paiement_regle / exporter_paiements_csv
+                                      recherche par nom/prenom du patient en
+                                      plus du filtre statut existant ;
+                                      _filtrer_paiements partagee entre la
+                                      liste et l'export CSV. Les deux exports
+                                      CSV (utilisateurs, paiements) passent
+                                      chaque cellule par _cellule_csv() :
+                                      prefixe d'une apostrophe toute valeur
+                                      commencant par =/+/-/@/tabulation/
+                                      retour chariot, pour neutraliser une
+                                      injection de formule si le fichier est
+                                      ouvert dans un tableur (Excel,
+                                      LibreOffice) -- ces champs viennent
+                                      d'une saisie admin (pas d'inscription
+                                      publique) mais rien n'empeche une
+                                      saisie malveillante ou accidentelle.
   liste_prestataires / ajouter_prestataire / modifier_prestataire /
     supprimer_prestataire
   liste_plans_couverture / ajouter_plan_couverture /
@@ -277,6 +342,23 @@ Assure (role_required(ASSURE), prefixe /assure/ + /espace/assure/)
   dashboard_assure                    redirige vers mon_profil_assure si
                                       aucune fiche Patient n'est encore liee
   mon_profil_assure
+  ma_carte_assure                     ecran dedie affichant uniquement le
+                                      widget .carte-assure (meme
+                                      _patient_principal que les autres
+                                      vues assure), bouton Imprimer
+                                      (window.print()) + regle @media print
+                                      qui masque sidebar/nav/toasts et passe
+                                      .shell en display:block (sinon la
+                                      colonne sidebar reste reservee meme
+                                      masquee). "Exportable" = Imprimer ->
+                                      Enregistrer en PDF du navigateur, pas
+                                      de pipeline reportlab dedie (le
+                                      degrade/coins arrondis de la carte
+                                      sont deja en CSS). Lien "Voir /
+                                      imprimer ma carte" depuis
+                                      mon_profil_assure.html et
+                                      dashboard_assure.html, pas d'entree
+                                      sidebar dediee (action occasionnelle).
   liste_ayants_droit / ajouter_ayant_droit / modifier_ayant_droit /
     supprimer_ayant_droit             gestion de la famille par l'assure
                                       principal (jamais de compte cree)
@@ -370,8 +452,10 @@ Assure (role_required(ASSURE), prefixe /assure/ + /espace/assure/)
   toujours cette teinte, quel que soit le fond). Source unique du mark :
   {% load icones %} + {% logo_marque taille=N fond="clair|sombre" %}
   (templatetags/icones.py) — utilise dans base.html (sidebar), landing.html
-  (en-tete, mockup telephone, pied de page), mon_profil_assure.html /
-  dashboard_assure.html (composant "carte de prise en charge"). Fond clair :
+  (en-tete, mockup telephone, pied de page), et dans le composant "carte de
+  prise en charge" (.carte-assure) partout ou il apparait : mon_profil_
+  assure.html, dashboard_assure.html, fiche_patient_medecin.html (cote
+  medecin, verification d'identite), ma_carte_assure.html. Fond clair :
   croix pleine --ink/#0B2027. Fond sombre uni (sidebar, pied de page) :
   croix pleine #EFF4F3. base_auth.html (panneau de marque a fond degrade)
   reste une exception intentionnelle : mark inline (pas le tag), croix
@@ -419,13 +503,85 @@ Assure (role_required(ASSURE), prefixe /assure/ + /espace/assure/)
   .panel/.panel-header, .grid/.stat (obsoletes, remplacees par .dash-grid/
   .dash-stat sur les 4 pages d'accueil), .badge (+ .validee/.refusee/
   .en_attente), .button (+ .primary/.btn/.btn-sm/.btn-danger), .actions,
-  .action-tiles/.action-tile, .erreurs/.erreurs-formulaire (erreurs de
-  formulaire), .filtres (barre de filtres GET), .action-ligne (formulaire
-  POST invisible dans une ligne de tableau), .details-tableau (tableau de
-  donnees replie sous un graphique), .avis/.avis-danger/.avis-succes/
-  .avis-attente (bandeau d'alerte ou d'info, voir confirmer_suppression.html/
-  mot_de_passe_genere.html/reinitialiser_mot_de_passe.html/
-  importer_utilisateurs.html).
+  .erreurs/.erreurs-formulaire (erreurs de formulaire), .filtres (barre de
+  filtres GET), .action-ligne (formulaire POST invisible dans une ligne de
+  tableau), .details-tableau (tableau de donnees replie sous un graphique),
+  .avis/.avis-danger/.avis-succes/.avis-attente (bandeau d'alerte,
+  confirmer_suppression.html/mot_de_passe_genere.html/
+  reinitialiser_mot_de_passe.html/importer_utilisateurs.html),
+  .avis-info (variante neutre teal, ex. bandeau "session expiree" sur
+  login.html -- base_auth.html uniquement, ce n'est pas une erreur de
+  saisie donc pas .erreurs). .action-tiles/.action-tile retiree (0 usage,
+  remplacee par .dash-grid/.dash-stat), .carte-assure.mini retiree (0
+  usage, aucun besoin identifie pour une variante compacte de la carte de
+  prise en charge).
+- Tous les formulaires "bruts" (page-title puis <form> directement, sans
+  conteneur) ont ete enveloppes dans <section class="panel" style="padding:
+  22px 24px; max-width: 720px;"> (meme recette que ajouter_consultation_
+  medecin.html/mon_profil_assure.html, deja conformes) : 26 ecrans au total.
+  Les barres de filtres (method="get", .filtres) ne sont volontairement pas
+  concernees, .filtres est une classe distincte et deja etablie pour ce cas.
+- .champ-recherche (icone loupe dans un champ de recherche, base.html) :
+  {% icone "search" %} + input dans un wrapper position:relative, padding-
+  left sur l'input. Utilisee sur liste_utilisateurs.html, liste_
+  notifications_envoyees.html, prestataires_proches.html, liste_paiements/
+  liste_prises_en_charge.html (recherche par nom de patient). La recherche
+  rapide de patients medecin (section 4) reste un composant a part, deja
+  plus riche (resultats en direct).
+- Info-bulle sidebar reduite : title="" remplace par data-tooltip=""
+  + aria-label="" sur les liens de nav / bouton de deconnexion. La bulle
+  CSS (::after sur attr(data-tooltip), classes .lien-tri/.icone-tri
+  independantes du systeme de tri malgre le nom proche -- pas de collision,
+  contextes disjoints) ne s'affiche qu'en sidebar reduite (body.sidebar-
+  reduite), au clavier (:focus-visible) comme a la souris. Le title="" du
+  select desactive de prestataires_proches.html reste natif : cas isole
+  hors systeme de nav.
+- Bouton "Copier" generique : n'importe quel element avec
+  data-copier="valeur" (ecouteur delegue unique dans base.html) copie la
+  valeur dans le presse-papiers, feedback "Copie !" 1.6s. .btn-copier-carte
+  (icone seule, base.html) l'applique au numero de carte sur mon_profil_
+  assure.html / dashboard_assure.html / fiche_patient_medecin.html /
+  ma_carte_assure.html ; le bouton .button.btn classique l'applique au code
+  QR sur voir_ordonnance.html et au mot de passe genere sur mot_de_passe_
+  genere.html (plus de script par ecran).
+- Retour visuel sur actions asynchrones : data-chargement="Texte" (liens
+  d'export Excel/PDF/CSV) bascule le lien sur un tourniquet CSS
+  (.tourniquet, currentColor donc s'adapte aux boutons clairs/fonces) +
+  le texte, reverti apres un delai fixe (un <a href> vers une reponse
+  Content-Disposition:attachment ne navigue pas, pas d'evenement de fin
+  cote client pour un signal plus precis). Le bouton "Rechercher sur la
+  carte" (deja un message textuel) est en plus desactive pendant le fetch.
+- Micro-interaction de succes : messages.success(request, "...",
+  extra_tags="succes-critique") (Django messages framework, message.tags
+  combine deja niveau + extra_tags) fait apparaitre un badge vert anime
+  (.toast-icone-succes, pop avec rebond) dans le toast, pour les 3 actions
+  jugees "critiques" : ordonnance creee, delivrance validee, paiement
+  regle.
+- Toasts et modale de confirmation : animations d'entree/sortie
+  (@keyframes toast-glisse / modale-fondu / modale-entree). La fermeture
+  rejoue les memes keyframes en sens inverse (animation-direction: reverse)
+  plutot que d'en dupliquer ; le JS attend animationend avant de retirer
+  le toast du DOM / remettre [hidden] sur la modale.
+- Etats vides illustres : {% illustration_vide "icone" %} generalisee aux
+  9 dernieres listes CRUD qui affichaient encore <p class="empty"> texte
+  seul, + repli "graphique indisponible" de rapports.html (donnees
+  absentes ou Chart.js indisponible) via un <template> cache clone en JS
+  (illustration_vide est un tag serveur, un <template> est le moyen le
+  plus simple de le rendre disponible au JS sans dupliquer le SVG en dur).
+  404.html/500.html ont recu la meme recette en SVG inline (pas le tag,
+  ces pages restent autonomes comme base_auth.html) : loupe pour 404,
+  triangle d'alerte pour 500, sous le logo Croix-Pouls existant.
+- rapports.html : Chart.js (~200 Ko) est charge a la demande via
+  document.createElement('script') (memes SRI) plutot qu'un <script src>
+  statique -- la logique de dessin existante est inchangee, juste deplacee
+  dans une fonction demarrerGraphiques() appelee au onload.
+- .tableau-carte (opt-in, base.html) : sous 560px (breakpoint mobile deja
+  etabli), thead masque, chaque <tr> devient une carte, chaque <td> une
+  ligne "libelle : valeur" via .libelle-mobile (vrai texte dans le DOM,
+  pas de content: attr() CSS genere -- peu fiable pour les lecteurs
+  d'ecran -- affiche uniquement sous 560px). Applique a mes_rendez_vous.html
+  et mes_ordonnances.html (tableaux cote assure les plus consultes sur
+  mobile), pas a tous les tableaux de l'app.
 - dashboard.html / dashboard_medecin.html / dashboard_pharmacien.html /
   dashboard_assure.html : pages d'accueil par role, cartes .dash-stat +
   tableau .dash-pill pour les statuts (couleurs alignees avec les badges).
@@ -470,7 +626,7 @@ Assure (role_required(ASSURE), prefixe /assure/ + /espace/assure/)
 
 6. TESTS (tests.py)
 ----------------------
-python manage.py test Plateform_medicale — 154 tests au moment de la
+python manage.py test Plateform_medicale — 208 tests au moment de la
 redaction de ce document. Couvre : redirections/permissions par role,
 garde-fous anti-lockout (un admin ne peut pas se desactiver/supprimer/
 changer son propre role lui-meme), creation automatique de compte a la
@@ -478,6 +634,10 @@ creation d'une fiche Medecin/Patient principal, import/export Excel,
 calcul des paiements selon le statut de prise en charge, generation et
 validation des QR codes d'ordonnance, calcul de distance (distance_km) et
 tri des prestataires proches.
+Le tri (_trier), la recherche (Paiements/Prises en charge), la
+redirection post-connexion via 'next' et l'ecran Ma carte sont verifies
+manuellement (Client Django, ALLOWED_HOSTS elargi en shell) plutot que
+par des tests dedies dans tests.py -- a completer si ces zones evoluent.
 Chaque nouvelle fonctionnalite doit etre testee avant d'etre consideree
 terminee (regle imposee par CLAUDE.md).
 
