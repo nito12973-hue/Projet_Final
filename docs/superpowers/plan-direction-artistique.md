@@ -143,7 +143,7 @@ Statut par item : voir la colonne "Chantier" des tableaux ci-dessous
 | 47 | ~~Manifest PWA + icône d'application~~ | **Non retenu** (2026-08-02) : CLAUDE.md tranche deja ce point explicitement ("icone d'application... existe dans la spec d'origine mais n'est pas implementee... a ne pas recreer sans un besoin concret identifie"). Aucun besoin concret identifie a ce jour. | Faible | 0,5 j | nouveau manifest.json, base.html |
 | 48 | Comportement hors-ligne minimal | Pertinent en zone à connexion intermittente | Élevée | À chiffrer séparément | hors scope design pur |
 | 49 | ~~État "session expirée" explicite~~ | **FAIT** (commit 400e6b7) | Faible-moyenne | 1 j | views.py, base_auth.html |
-| 50 | Documenter les nouveaux composants transverses dans FONCTIONNEMENT.txt | Cohérence avec la méthode du projet | Faible | 0,5 j | FONCTIONNEMENT.txt |
+| 50 | ~~Documenter les nouveaux composants transverses dans FONCTIONNEMENT.txt~~ | **FAIT** (commit 45c1742). Ce document (`plan-direction-artistique.md`) n'est pas encore supprimé : items 16, 21-25 et 48 restent bloqués/non traités (voir plus haut) -- a supprimer une fois ces derniers tranchés, conformement a CLAUDE.md ("Documents de travail"). | Faible | 0,5 j | FONCTIONNEMENT.txt |
 
 ## Méthode d'exécution (rappel, déjà en vigueur sur ce projet)
 
