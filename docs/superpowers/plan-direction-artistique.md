@@ -97,7 +97,7 @@ Statut par item : voir la colonne "Chantier" des tableaux ci-dessous
 | 11 | ~~Composant recherche dédié~~ | **FAIT** (commit 45a52e8) | Faible | 1 j | base.html + écrans avec recherche |
 | 12 | ~~Composant tooltip on-brand~~ | **FAIT** (commit ffd2408) | Faible | 1 j | base.html |
 | 13 | ~~Skeleton loaders sur les tableaux~~ | **Non retenu** (2026-08-02) : la pagination (item 1) est un lien `<a href="?page=N">` classique, navigation complete cote serveur -- pas de fetch client qui laisserait un tableau vide a couvrir. Un skeleton supposerait d'intercepter les clics en JS (fetch + history API + re-render), un changement d'architecture disproportionne par rapport au gain, sans precedent ailleurs dans l'app. Le retour visuel existe deja au niveau global (#barre-chargement). | Moyenne | 1-2 j | base.html |
-| 14 | Mini-graphique de tendance (Admin/Médecin) | Chart.js déjà maîtrisé, absent des dashboards | Moyenne | 2 j | dashboard.html, dashboard_medecin.html, views.py |
+| 14 | ~~Mini-graphique de tendance (Admin/Médecin)~~ | **FAIT** (commit 4f0ff44) | Moyenne | 2 j | dashboard.html, dashboard_medecin.html, views.py |
 | 15 | Uniformiser les formulaires bruts | Plusieurs écrans hors `.panel` | Moyenne | 2-3 j | ajouter_consultation_medecin.html, changer_mot_de_passe.html, etc. |
 | 16 | Rendre utile l'encart "gouvernance" du dashboard admin | Actuellement pavé de texte statique | Faible-moyenne | 1 j | dashboard.html, views.py |
 | 17 | ~~Corriger la stat non cliquable du dashboard médecin~~ | **FAIT** (commit dd11904) | Faible | 15 min | dashboard_medecin.html |
