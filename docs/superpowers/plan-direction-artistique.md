@@ -56,19 +56,20 @@ Profil (5/10).
 
 Mature : boutons, badges/statuts, cartes/panneaux, alertes/avis, sidebar/
 navbar/footer, icônes (39, style unique cohérent).
-Incomplet : tableaux (pas de tri/pagination, `min-width:680px` fixe pénalise
+Incomplet : tableaux (pas de tri, `min-width:680px` fixe pénalise
 mobile), formulaires (plusieurs écrans hors `.panel`), états vides (13/23
 écrans).
-**Absent** : modale/dialog (confirmations en `confirm()` natif), pagination
-(aucun `Paginator` Django nulle part), recherche dédiée, tooltip, toast/
-message dismissible, skeleton loader.
-Dette : 2 classes CSS mortes (`.action-tiles`/`.action-tile`,
-`.carte-assure.mini`).
+**Absent** : recherche dédiée (item 11), tooltip on-brand (item 12),
+skeleton loader (item 13). Modale, pagination et toasts déjà livrés
+(items 1-3).
+Dette CSS morte : aucune connue à ce jour (`.action-tiles`/`.action-tile`
+retiré item 9, `.carte-assure.mini` retiré item 10).
 
 ## Plan d'action — 50 chantiers (numérotés par priorité décroissante)
 
 Aucun ne recouvre les ~30 correctifs déjà livrés sous "audit Top 50 v1".
-**Fait** : item 4, item 17 (commits `24a467e`, `dd11904`).
+Statut par item : voir la colonne "Chantier" des tableaux ci-dessous
+(barré + **FAIT** (commit) = livré).
 
 ### P0 — Fondations manquantes (8 chantiers, bloquent une image "prêt pour l'échelle")
 
@@ -88,7 +89,7 @@ Aucun ne recouvre les ~30 correctifs déjà livrés sous "audit Top 50 v1".
 | # | Chantier | Pourquoi | Difficulté | Temps | Fichiers |
 |---|---|---|---|---|---|
 | 9 | ~~Retirer `.action-tiles`/`.action-tile`~~ | **FAIT** (commit 7067c92) | Faible | 15 min | base.html |
-| 10 | Trancher le sort de `.carte-assure.mini` | Variante définie, jamais utilisée | Faible | 15 min – 0,5 j | base.html |
+| 10 | ~~Trancher le sort de `.carte-assure.mini`~~ | **FAIT** (commit f31d8fc) | Faible | 15 min – 0,5 j | base.html |
 | 11 | Composant recherche dédié | Actuellement `<input>` nu dans `.filtres` | Faible | 1 j | base.html + écrans avec recherche |
 | 12 | Composant tooltip on-brand | Seul `title=""` natif existe | Faible | 1 j | base.html |
 | 13 | Skeleton loaders sur les tableaux | Accompagne la pagination (item 1) | Moyenne | 1-2 j | base.html |
