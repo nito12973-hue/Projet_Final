@@ -129,7 +129,7 @@ Statut par item : voir la colonne "Chantier" des tableaux ci-dessous
 | 33 | ~~Illustration dédiée pour 404/500~~ | **FAIT** (commit 3d153fc) | Faible | 0,5 j | 404.html, 500.html |
 | 34 | ~~Illustration pour "graphique indisponible"~~ | **FAIT** (commit 4b58140) | Faible | 0,5 j | rapports.html |
 | 35 | ~~Étendre le bouton "copier" à tous les identifiants copiables~~ | **FAIT** (commit cbf7217) | Faible | 1 j | mon_profil_assure.html, voir_ordonnance.html, etc. |
-| 36 | Micro-interaction de succès sur actions critiques | Actuellement simple message Django statique | Moyenne | 1-2 j | ajouter_ordonnance_medecin.html, scanner_ordonnance.html, marquer_paiement_regle.html |
+| 36 | ~~Micro-interaction de succès sur actions critiques~~ | **FAIT** (commit c9735d2) | Moyenne | 1-2 j | ajouter_ordonnance_medecin.html, scanner_ordonnance.html, marquer_paiement_regle.html |
 | 37 | ~~Loader inline sur boutons d'action asynchrone~~ | **FAIT** (commit cb5d7d2) | Faible-moyenne | 1 j | rapports.html, ajouter_prestataire.html |
 | 38 | Écran "Ma carte" dédié, imprimable/exportable | Carte de prise en charge sous-exploitée (2 usages) | Moyenne | 2 j | nouveau template + views.py |
 | 39 | ~~Réutiliser `.carte-assure` côté fiche patient médecin~~ | **FAIT** (commit ff79ce7) : sur fiche_patient_medecin.html (fiche detail, pas mes_patients.html qui est la liste). | Faible-moyenne | 1 j | mes_patients.html |
