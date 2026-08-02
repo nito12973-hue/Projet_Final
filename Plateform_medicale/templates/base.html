@@ -225,6 +225,43 @@
             display: none;
         }
 
+        /* Info-bulle on-brand : sidebar reduite = icones seules, le
+           libelle passe de title="" (bulle native du navigateur) a
+           data-tooltip="" + ce pseudo-element, visible aussi au clavier
+           (:focus-visible) et pas seulement a la souris. */
+        body.sidebar-reduite .logout-button {
+            position: relative;
+        }
+
+        body.sidebar-reduite aside nav a::after,
+        body.sidebar-reduite .logout-button::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: calc(100% + 12px);
+            top: 50%;
+            transform: translateY(-50%) scale(0.95);
+            padding: 6px 10px;
+            border-radius: 7px;
+            background: var(--primary-dark);
+            color: #ffffff;
+            font-size: 12.5px;
+            font-weight: 600;
+            white-space: nowrap;
+            box-shadow: 0 6px 18px rgba(8, 15, 30, 0.35);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.15s ease, transform 0.15s ease;
+            z-index: 1200;
+        }
+
+        body.sidebar-reduite aside nav a:hover::after,
+        body.sidebar-reduite aside nav a:focus-visible::after,
+        body.sidebar-reduite .logout-button:hover::after,
+        body.sidebar-reduite .logout-button:focus-visible::after {
+            opacity: 1;
+            transform: translateY(-50%) scale(1);
+        }
+
         .icone-nav {
             width: 18px;
             height: 18px;
@@ -1295,49 +1332,49 @@
 
             <nav aria-label="Navigation principale">
                 {% if current_role == "ADMIN" %}
-                <a href="{% url 'dashboard' %}" title="Tableau de bord" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord</span></a>
-                <a href="{% url 'liste_utilisateurs' %}" title="Utilisateurs" class="{% if request.resolver_match.url_name == 'liste_utilisateurs' %}active{% endif %}">{% icone "users" %} <span class="nav-texte">Utilisateurs</span></a>
-                <a href="{% url 'liste_patients' %}" title="Assurés" class="{% if request.resolver_match.url_name == 'liste_patients' %}active{% endif %}">{% icone "id-card" %} <span class="nav-texte">Assurés</span></a>
-                <a href="{% url 'liste_medecins' %}" title="Médecins" class="{% if request.resolver_match.url_name == 'liste_medecins' %}active{% endif %}">{% icone "stethoscope" %} <span class="nav-texte">Médecins</span></a>
-                <a href="{% url 'liste_pharmaciens' %}" title="Pharmaciens" class="{% if request.resolver_match.url_name == 'liste_pharmaciens' %}active{% endif %}">{% icone "pill" %} <span class="nav-texte">Pharmaciens</span></a>
-                <a href="{% url 'liste_prestataires' %}" title="Prestataires" class="{% if request.resolver_match.url_name == 'liste_prestataires' %}active{% endif %}">{% icone "building" %} <span class="nav-texte">Prestataires</span></a>
-                <a href="{% url 'liste_prises_en_charge' %}" title="Prises en charge" class="{% if request.resolver_match.url_name == 'liste_prises_en_charge' %}active{% endif %}">{% icone "shield-check" %} <span class="nav-texte">Prises en charge</span></a>
-                <a href="{% url 'liste_paiements' %}" title="Paiements" class="{% if request.resolver_match.url_name == 'liste_paiements' %}active{% endif %}">{% icone "receipt" %} <span class="nav-texte">Paiements</span></a>
-                <a href="{% url 'rapports' %}" title="Rapports" class="{% if request.resolver_match.url_name == 'rapports' %}active{% endif %}">{% icone "bar-chart" %} <span class="nav-texte">Rapports</span></a>
-                <a href="{% url 'envoyer_notification' %}" title="Notifications" class="{% if request.resolver_match.url_name == 'envoyer_notification' or request.resolver_match.url_name == 'liste_notifications_envoyees' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span></a>
-                <a href="{% url 'changer_mot_de_passe' %}" title="Mot de passe" class="{% if request.resolver_match.url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "lock" %} <span class="nav-texte">Mot de passe</span></a>
+                <a href="{% url 'dashboard' %}" aria-label="Tableau de bord" data-tooltip="Tableau de bord" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord</span></a>
+                <a href="{% url 'liste_utilisateurs' %}" aria-label="Utilisateurs" data-tooltip="Utilisateurs" class="{% if request.resolver_match.url_name == 'liste_utilisateurs' %}active{% endif %}">{% icone "users" %} <span class="nav-texte">Utilisateurs</span></a>
+                <a href="{% url 'liste_patients' %}" aria-label="Assurés" data-tooltip="Assurés" class="{% if request.resolver_match.url_name == 'liste_patients' %}active{% endif %}">{% icone "id-card" %} <span class="nav-texte">Assurés</span></a>
+                <a href="{% url 'liste_medecins' %}" aria-label="Médecins" data-tooltip="Médecins" class="{% if request.resolver_match.url_name == 'liste_medecins' %}active{% endif %}">{% icone "stethoscope" %} <span class="nav-texte">Médecins</span></a>
+                <a href="{% url 'liste_pharmaciens' %}" aria-label="Pharmaciens" data-tooltip="Pharmaciens" class="{% if request.resolver_match.url_name == 'liste_pharmaciens' %}active{% endif %}">{% icone "pill" %} <span class="nav-texte">Pharmaciens</span></a>
+                <a href="{% url 'liste_prestataires' %}" aria-label="Prestataires" data-tooltip="Prestataires" class="{% if request.resolver_match.url_name == 'liste_prestataires' %}active{% endif %}">{% icone "building" %} <span class="nav-texte">Prestataires</span></a>
+                <a href="{% url 'liste_prises_en_charge' %}" aria-label="Prises en charge" data-tooltip="Prises en charge" class="{% if request.resolver_match.url_name == 'liste_prises_en_charge' %}active{% endif %}">{% icone "shield-check" %} <span class="nav-texte">Prises en charge</span></a>
+                <a href="{% url 'liste_paiements' %}" aria-label="Paiements" data-tooltip="Paiements" class="{% if request.resolver_match.url_name == 'liste_paiements' %}active{% endif %}">{% icone "receipt" %} <span class="nav-texte">Paiements</span></a>
+                <a href="{% url 'rapports' %}" aria-label="Rapports" data-tooltip="Rapports" class="{% if request.resolver_match.url_name == 'rapports' %}active{% endif %}">{% icone "bar-chart" %} <span class="nav-texte">Rapports</span></a>
+                <a href="{% url 'envoyer_notification' %}" aria-label="Notifications" data-tooltip="Notifications" class="{% if request.resolver_match.url_name == 'envoyer_notification' or request.resolver_match.url_name == 'liste_notifications_envoyees' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span></a>
+                <a href="{% url 'changer_mot_de_passe' %}" aria-label="Mot de passe" data-tooltip="Mot de passe" class="{% if request.resolver_match.url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "lock" %} <span class="nav-texte">Mot de passe</span></a>
                 {% elif current_role == "MEDECIN" %}
-                <a href="{% url 'dashboard_medecin' %}" title="Tableau de bord" class="{% if request.resolver_match.url_name == 'dashboard_medecin' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord</span></a>
-                <a href="{% url 'agenda_medecin' %}" title="Agenda" class="{% if request.resolver_match.url_name == 'agenda_medecin' %}active{% endif %}">{% icone "calendar" %} <span class="nav-texte">Agenda</span></a>
-                <a href="{% url 'mes_patients' %}" title="Patients" class="{% if request.resolver_match.url_name == 'mes_patients' %}active{% endif %}">{% icone "users" %} <span class="nav-texte">Patients</span></a>
-                <a href="{% url 'historique_consultations' %}" title="Consultations" class="{% if request.resolver_match.url_name == 'historique_consultations' %}active{% endif %}">{% icone "clipboard-list" %} <span class="nav-texte">Consultations</span></a>
-                <a href="{% url 'mes_notifications' %}" title="Notifications" class="{% if request.resolver_match.url_name == 'mes_notifications' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span>{% if notifications_non_lues %} <span class="badge-non-lues">{{ notifications_non_lues }}</span>{% endif %}</a>
-                <a href="{% url 'modifier_profil_medecin' %}" title="Mon profil" class="{% if request.resolver_match.url_name == 'modifier_profil_medecin' %}active{% endif %}">{% icone "user-circle" %} <span class="nav-texte">Mon profil</span></a>
-                <a href="{% url 'changer_mot_de_passe' %}" title="Mot de passe" class="{% if request.resolver_match.url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "lock" %} <span class="nav-texte">Mot de passe</span></a>
+                <a href="{% url 'dashboard_medecin' %}" aria-label="Tableau de bord" data-tooltip="Tableau de bord" class="{% if request.resolver_match.url_name == 'dashboard_medecin' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord</span></a>
+                <a href="{% url 'agenda_medecin' %}" aria-label="Agenda" data-tooltip="Agenda" class="{% if request.resolver_match.url_name == 'agenda_medecin' %}active{% endif %}">{% icone "calendar" %} <span class="nav-texte">Agenda</span></a>
+                <a href="{% url 'mes_patients' %}" aria-label="Patients" data-tooltip="Patients" class="{% if request.resolver_match.url_name == 'mes_patients' %}active{% endif %}">{% icone "users" %} <span class="nav-texte">Patients</span></a>
+                <a href="{% url 'historique_consultations' %}" aria-label="Consultations" data-tooltip="Consultations" class="{% if request.resolver_match.url_name == 'historique_consultations' %}active{% endif %}">{% icone "clipboard-list" %} <span class="nav-texte">Consultations</span></a>
+                <a href="{% url 'mes_notifications' %}" aria-label="Notifications" data-tooltip="Notifications" class="{% if request.resolver_match.url_name == 'mes_notifications' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span>{% if notifications_non_lues %} <span class="badge-non-lues">{{ notifications_non_lues }}</span>{% endif %}</a>
+                <a href="{% url 'modifier_profil_medecin' %}" aria-label="Mon profil" data-tooltip="Mon profil" class="{% if request.resolver_match.url_name == 'modifier_profil_medecin' %}active{% endif %}">{% icone "user-circle" %} <span class="nav-texte">Mon profil</span></a>
+                <a href="{% url 'changer_mot_de_passe' %}" aria-label="Mot de passe" data-tooltip="Mot de passe" class="{% if request.resolver_match.url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "lock" %} <span class="nav-texte">Mot de passe</span></a>
                 {% elif current_role == "PHARMACIEN" %}
-                <a href="{% url 'dashboard_pharmacien' %}" title="Tableau de bord" class="{% if request.resolver_match.url_name == 'dashboard_pharmacien' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord</span></a>
-                <a href="{% url 'scanner_ordonnance' %}" title="Scanner un QR Code" class="{% if request.resolver_match.url_name == 'scanner_ordonnance' %}active{% endif %}">{% icone "qr-scan" %} <span class="nav-texte">Scanner un QR Code</span></a>
-                <a href="{% url 'historique_delivrances' %}" title="Historique" class="{% if request.resolver_match.url_name == 'historique_delivrances' %}active{% endif %}">{% icone "clock-history" %} <span class="nav-texte">Historique</span></a>
-                <a href="{% url 'mes_notifications' %}" title="Notifications" class="{% if request.resolver_match.url_name == 'mes_notifications' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span>{% if notifications_non_lues %} <span class="badge-non-lues">{{ notifications_non_lues }}</span>{% endif %}</a>
-                <a href="{% url 'changer_mot_de_passe' %}" title="Mot de passe" class="{% if request.resolver_match.url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "lock" %} <span class="nav-texte">Mot de passe</span></a>
+                <a href="{% url 'dashboard_pharmacien' %}" aria-label="Tableau de bord" data-tooltip="Tableau de bord" class="{% if request.resolver_match.url_name == 'dashboard_pharmacien' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord</span></a>
+                <a href="{% url 'scanner_ordonnance' %}" aria-label="Scanner un QR Code" data-tooltip="Scanner un QR Code" class="{% if request.resolver_match.url_name == 'scanner_ordonnance' %}active{% endif %}">{% icone "qr-scan" %} <span class="nav-texte">Scanner un QR Code</span></a>
+                <a href="{% url 'historique_delivrances' %}" aria-label="Historique" data-tooltip="Historique" class="{% if request.resolver_match.url_name == 'historique_delivrances' %}active{% endif %}">{% icone "clock-history" %} <span class="nav-texte">Historique</span></a>
+                <a href="{% url 'mes_notifications' %}" aria-label="Notifications" data-tooltip="Notifications" class="{% if request.resolver_match.url_name == 'mes_notifications' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span>{% if notifications_non_lues %} <span class="badge-non-lues">{{ notifications_non_lues }}</span>{% endif %}</a>
+                <a href="{% url 'changer_mot_de_passe' %}" aria-label="Mot de passe" data-tooltip="Mot de passe" class="{% if request.resolver_match.url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "lock" %} <span class="nav-texte">Mot de passe</span></a>
                 {% elif current_role == "ASSURE" %}
                 {% with url_name=request.resolver_match.url_name %}
-                <a href="{% url 'dashboard_assure' %}" title="Tableau de bord" class="{% if url_name == 'dashboard_assure' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord</span></a>
-                <a href="{% url 'mon_profil_assure' %}" title="Mon profil" class="{% if url_name == 'mon_profil_assure' %}active{% endif %}">{% icone "user-circle" %} <span class="nav-texte">Mon profil</span></a>
-                <a href="{% url 'liste_ayants_droit' %}" title="Mes ayants droit" class="{% if url_name == 'liste_ayants_droit' or url_name == 'ajouter_ayant_droit' or url_name == 'modifier_ayant_droit' %}active{% endif %}">{% icone "users" %} <span class="nav-texte">Mes ayants droit</span></a>
-                <a href="{% url 'prestataires_proches' %}" title="Prestataires proches" class="{% if url_name == 'prestataires_proches' %}active{% endif %}">{% icone "map-pin" %} <span class="nav-texte">Prestataires proches</span></a>
-                <a href="{% url 'mes_rendez_vous_assure' %}" title="Mes rendez-vous" class="{% if url_name == 'mes_rendez_vous_assure' or url_name == 'ajouter_rendez_vous_assure' %}active{% endif %}">{% icone "calendar" %} <span class="nav-texte">Mes rendez-vous</span></a>
-                <a href="{% url 'mes_ordonnances_assure' %}" title="Mes ordonnances" class="{% if url_name == 'mes_ordonnances_assure' or url_name == 'voir_ordonnance_assure' %}active{% endif %}">{% icone "pill" %} <span class="nav-texte">Mes ordonnances</span></a>
-                <a href="{% url 'mon_historique_assure' %}" title="Mon historique" class="{% if url_name == 'mon_historique_assure' %}active{% endif %}">{% icone "clock-history" %} <span class="nav-texte">Mon historique</span></a>
-                <a href="{% url 'mes_notifications' %}" title="Notifications" class="{% if url_name == 'mes_notifications' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span>{% if notifications_non_lues %} <span class="badge-non-lues">{{ notifications_non_lues }}</span>{% endif %}</a>
-                <a href="{% url 'changer_mot_de_passe' %}" title="Mot de passe" class="{% if url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "lock" %} <span class="nav-texte">Mot de passe</span></a>
+                <a href="{% url 'dashboard_assure' %}" aria-label="Tableau de bord" data-tooltip="Tableau de bord" class="{% if url_name == 'dashboard_assure' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord</span></a>
+                <a href="{% url 'mon_profil_assure' %}" aria-label="Mon profil" data-tooltip="Mon profil" class="{% if url_name == 'mon_profil_assure' %}active{% endif %}">{% icone "user-circle" %} <span class="nav-texte">Mon profil</span></a>
+                <a href="{% url 'liste_ayants_droit' %}" aria-label="Mes ayants droit" data-tooltip="Mes ayants droit" class="{% if url_name == 'liste_ayants_droit' or url_name == 'ajouter_ayant_droit' or url_name == 'modifier_ayant_droit' %}active{% endif %}">{% icone "users" %} <span class="nav-texte">Mes ayants droit</span></a>
+                <a href="{% url 'prestataires_proches' %}" aria-label="Prestataires proches" data-tooltip="Prestataires proches" class="{% if url_name == 'prestataires_proches' %}active{% endif %}">{% icone "map-pin" %} <span class="nav-texte">Prestataires proches</span></a>
+                <a href="{% url 'mes_rendez_vous_assure' %}" aria-label="Mes rendez-vous" data-tooltip="Mes rendez-vous" class="{% if url_name == 'mes_rendez_vous_assure' or url_name == 'ajouter_rendez_vous_assure' %}active{% endif %}">{% icone "calendar" %} <span class="nav-texte">Mes rendez-vous</span></a>
+                <a href="{% url 'mes_ordonnances_assure' %}" aria-label="Mes ordonnances" data-tooltip="Mes ordonnances" class="{% if url_name == 'mes_ordonnances_assure' or url_name == 'voir_ordonnance_assure' %}active{% endif %}">{% icone "pill" %} <span class="nav-texte">Mes ordonnances</span></a>
+                <a href="{% url 'mon_historique_assure' %}" aria-label="Mon historique" data-tooltip="Mon historique" class="{% if url_name == 'mon_historique_assure' %}active{% endif %}">{% icone "clock-history" %} <span class="nav-texte">Mon historique</span></a>
+                <a href="{% url 'mes_notifications' %}" aria-label="Notifications" data-tooltip="Notifications" class="{% if url_name == 'mes_notifications' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span>{% if notifications_non_lues %} <span class="badge-non-lues">{{ notifications_non_lues }}</span>{% endif %}</a>
+                <a href="{% url 'changer_mot_de_passe' %}" aria-label="Mot de passe" data-tooltip="Mot de passe" class="{% if url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "lock" %} <span class="nav-texte">Mot de passe</span></a>
                 {% endwith %}
                 {% endif %}
             </nav>
 
             <form class="logout-form" method="post" action="{% url 'logout' %}">
                 {% csrf_token %}
-                <button class="logout-button" type="submit" title="Déconnexion">
+                <button class="logout-button" type="submit" aria-label="Déconnexion" data-tooltip="Déconnexion">
                     {% icone "log-out" %} <span class="nav-texte">Déconnexion</span>
                 </button>
             </form>
