@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% load icones %}
+
+{% block title %}Ma carte{% endblock %}
+
+{% block content %}
+<section class="page-title no-print">
+    <div>
+        <h1>Ma carte de prise en charge</h1>
+        <p class="subtitle">A presenter chez un prestataire partenaire, ou a imprimer / exporter en PDF.</p>
+    </div>
+    <div class="actions">
+        <a class="button" href="{% url 'mon_profil_assure' %}">Retour</a>
+        <button type="button" class="button primary" onclick="window.print()">{% icone "download" %} Imprimer / Exporter en PDF</button>
+    </div>
+</section>
+
+<section class="carte-assure-page">
+    <div class="carte-assure">
+        <div class="carte-assure-entete">
+            <span class="carte-assure-puce" aria-hidden="true"></span>
+            {% logo_marque taille=30 fond="sombre" %}
+        </div>
+        <div>
+            <p class="carte-assure-label">Carte de prise en charge</p>
+            <p class="carte-assure-numero code">
+                {{ patient.numero_carte }}
+                <button type="button" class="btn-copier-carte no-print" data-copier="{{ patient.numero_carte }}" aria-label="Copier le numero de carte">{% icone "copy" %}</button>
+            </p>
+        </div>
+        <div class="carte-assure-pied">
+            <div>
+                <span class="carte-assure-nom">{{ patient.prenom }} {{ patient.nom }}</span>
+                <span class="carte-assure-type">{{ patient.get_type_beneficiaire_display }}</span>
+            </div>
+            <div class="carte-assure-couverture">
+                {% if patient.taux_couverture is not None %}
+                <strong>{{ patient.taux_couverture }}%</strong>
+                <span>{{ patient.titulaire.plan_couverture.nom }}</span>
+                {% else %}
+                <span>Aucun plan attribue</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <p class="subtitle no-print" style="text-align:center;max-width:360px;margin:16px auto 0;">Cette carte identifie votre prise en charge aupres des prestataires partenaires SantéSN.</p>
+</section>
+
+<style>
+    .carte-assure-page {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 24px;
+    }
+
+    @media print {
+        .no-print,
+        aside,
+        .sidebar-toggle,
+        #barre-chargement,
+        .toasts {
+            display: none !important;
+        }
+
+        .shell {
+            display: block;
+        }
+
+        .contenu main {
+            width: 100%;
+            padding: 0;
+            animation: none;
+        }
+
+        .carte-assure-page {
+            margin-top: 0;
+        }
+    }
+</style>
+{% endblock %}
