@@ -363,6 +363,21 @@
             animation: secouer 0.4s ease;
         }
 
+        /* Avis neutre (ex. redirection vers la connexion suite a une
+           session expiree) : meme forme que .erreurs, teinte primaire au
+           lieu de danger -- ce n'est pas une erreur de saisie. */
+        .avis-info {
+            margin: 0 0 16px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            background: var(--primary-soft);
+            border: 1px solid var(--border);
+            color: var(--primary-strong);
+            font-size: 14px;
+        }
+
+        .avis-info p { margin: 0; }
+
         @keyframes secouer {
             0%, 100% { transform: translateX(0); }
             25%      { transform: translateX(-5px); }

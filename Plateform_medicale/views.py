@@ -25,6 +25,7 @@ from django.db.models.functions import TruncDate, TruncMonth, TruncYear
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from .forms import (
@@ -158,15 +159,28 @@ def login_view(request):
     if not _admin_exists():
         return redirect('setup_wizard')
 
+    # 'next' est pose par @login_required quand une page protegee redirige
+    # ici (session expiree, ou lien direct sans etre connecte). Valide avant
+    # de s'en servir comme cible (empeche un lien ?next=https://... trafique
+    # de rediriger hors du site) ; sa seule presence sert aussi a expliquer
+    # explicitement la redirection sur l'ecran de connexion plutot que de
+    # rester muet (le formulaire n'a pas d'action explicite, la query string
+    # de la page suit donc telle quelle jusqu'au POST).
+    next_url = request.GET.get('next', '')
+    next_valide = bool(next_url) and url_has_allowed_host_and_scheme(
+        next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    )
+    destination = next_url if next_valide else 'post_login_redirect'
+
     if request.user.is_authenticated:
-        return redirect('post_login_redirect')
+        return redirect(destination)
 
     form = LoginForm(request=request, data=request.POST or None)
     if request.method == 'POST' and form.is_valid():
         login(request, form.user)
-        return redirect('post_login_redirect')
+        return redirect(destination)
 
-    return render(request, 'login.html', {'form': form})
+    return render(request, 'login.html', {'form': form, 'session_expiree': next_valide})
 
 
 @require_POST

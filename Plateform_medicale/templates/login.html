@@ -8,6 +8,12 @@
 <h1>Connexion</h1>
 <p class="sous-titre">Accédez à votre espace sécurisé.</p>
 
+{% if session_expiree %}
+<div class="avis-info" role="status">
+    <p>Votre session a expiré ou nécessite une reconnexion. Connectez-vous pour continuer.</p>
+</div>
+{% endif %}
+
 {% if form.non_field_errors %}
 <div class="erreurs" role="alert">
     {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
