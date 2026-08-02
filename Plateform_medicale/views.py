@@ -787,7 +787,7 @@ def marquer_paiement_regle(request, pk):
             paiement.statut = Paiement.Statut.REGLE
             paiement.date_reglement = timezone.now()
             paiement.save()
-            messages.success(request, "Paiement marque comme regle.")
+            messages.success(request, "Paiement marque comme regle.", extra_tags="succes-critique")
             return redirect("liste_paiements")
     else:
         form = PaiementReglementForm(instance=paiement)
@@ -1782,6 +1782,7 @@ def ajouter_ordonnance_medecin(request, consultation_pk):
             ordonnance = form.save(commit=False)
             ordonnance.consultation = consultation
             ordonnance.save()
+            messages.success(request, "Ordonnance creee.", extra_tags="succes-critique")
             return redirect("voir_ordonnance_medecin", pk=ordonnance.pk)
     else:
         form = OrdonnanceForm()
@@ -1883,7 +1884,7 @@ def valider_delivrance(request, pk):
         messages.error(request, "Cette ordonnance a deja ete delivree.")
     else:
         Delivrance.objects.create(ordonnance=ordonnance, pharmacien=pharmacien)
-        messages.success(request, "Delivrance validee.")
+        messages.success(request, "Delivrance validee.", extra_tags="succes-critique")
     return redirect("historique_delivrances")
 
 

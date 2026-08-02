@@ -1007,6 +1007,33 @@
             flex: 1;
         }
 
+        /* Micro-interaction sur les actions critiques (ordonnance creee,
+           delivrance validee, paiement regle) : badge qui "pop" apres
+           l'arrivee du toast plutot qu'un simple message statique.
+           Selecteur a 2 classes pour l'emporter sur ".toast span". */
+        .toast .toast-icone-succes {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--success);
+            color: #ffffff;
+            animation: toast-icone-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both;
+        }
+
+        .toast-icone-succes .icone-nav {
+            width: 13px;
+            height: 13px;
+        }
+
+        @keyframes toast-icone-pop {
+            from { transform: scale(0); }
+            to   { transform: scale(1); }
+        }
+
         .toast-fermer {
             flex-shrink: 0;
             display: flex;
@@ -1497,6 +1524,9 @@
                 <div class="toasts" id="toasts" aria-live="polite" aria-atomic="true">
                     {% for message in messages %}
                     <div class="toast toast-{{ message.tags|default:'info' }}" role="status">
+                        {% if "succes-critique" in message.tags %}
+                        <span class="toast-icone-succes" aria-hidden="true">{% icone "check" %}</span>
+                        {% endif %}
                         <span>{{ message }}</span>
                         <button type="button" class="toast-fermer" aria-label="Fermer">{% icone "x" %}</button>
                     </div>
