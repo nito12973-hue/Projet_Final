@@ -137,7 +137,7 @@ Statut par item : voir la colonne "Chantier" des tableaux ci-dessous
 | 41 | Audit des balises `<title>` par écran | Vérifier surcharge du titre générique de base.html | Faible | 1 j | 67 templates |
 | 42 | Vérifier le cache CDN Leaflet (SRI, cache long) | Chargé sur 3 templates, dupliqué intentionnellement | Faible | 0,5 j | ajouter_prestataire.html, modifier_prestataire.html, prestataires_proches.html |
 | 43 | Lazy-load Chart.js sur rapports.html | Chargé systématiquement même sans données | Faible-moyenne | 1 j | rapports.html |
-| 44 | Auditer les suppressions hors confirmer_suppression.html | S'assurer qu'aucune suppression ne contourne la confirmation | Faible | 1 j | views.py |
+| 44 | ~~Auditer les suppressions hors confirmer_suppression.html~~ | **FAIT** (commit b9470fd) : les 8 vues supprimer_* de l'app etaient deja correctement gardees, mais /admin/ (Django admin) contournait entierement leur logique metier (desactivation du User lie, garde-fou anti-auto-suppression, avertissements de cascade) -- corrige. | Faible | 1 j | views.py |
 | 45 | ~~Recherche par nom sur Paiements / Prises en charge~~ | **FAIT** (commit 284a5eb) | Faible | 0,5 j | liste_paiements.html, liste_prises_en_charge.html |
 | 46 | Export CSV en plus d'Excel/PDF | Utile pour intégration comptabilité côté client entreprise | Faible | 1 j | liste_paiements.html, liste_utilisateurs.html |
 | 47 | Manifest PWA + icône d'application | Documenté en spec logo, jamais implémenté | Faible | 0,5 j | nouveau manifest.json, base.html |
