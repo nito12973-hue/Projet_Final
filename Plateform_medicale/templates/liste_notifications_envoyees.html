@@ -23,7 +23,10 @@
     </div>
     <div style="min-width:220px;flex:1;">
         <label for="q">Recherche</label>
-        <input id="q" type="text" name="q" placeholder="Message ou destinataire" value="{{ recherche }}" style="margin-bottom:0;">
+        <div class="champ-recherche">
+            {% icone "search" %}
+            <input id="q" type="text" name="q" placeholder="Message ou destinataire" value="{{ recherche }}" style="margin-bottom:0;">
+        </div>
     </div>
     <button type="submit" class="button primary btn">Filtrer</button>
     {% if lue_choisie or recherche %}

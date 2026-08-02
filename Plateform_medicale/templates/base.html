@@ -701,6 +701,29 @@
             align-items: flex-end;
         }
 
+        /* Champ de recherche avec icone (barre de filtres) : le conteneur ne
+           doit englober que l'input, pas le label, sinon l'icone se
+           decentre verticalement. */
+        .champ-recherche {
+            position: relative;
+        }
+
+        .champ-recherche .icone-nav {
+            position: absolute;
+            left: 13px;
+            top: 13px;
+            color: var(--muted);
+            pointer-events: none;
+        }
+
+        .champ-recherche input {
+            padding-left: 40px;
+        }
+
+        .champ-recherche:focus-within .icone-nav {
+            color: var(--primary);
+        }
+
         form.action-ligne {
             display: inline;
             max-width: none;
