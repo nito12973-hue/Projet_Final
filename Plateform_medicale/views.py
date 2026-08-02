@@ -734,6 +734,19 @@ def liste_paiements(request):
     return render(request, "liste_paiements.html", contexte)
 
 
+def _cellule_csv(valeur):
+    """Neutralise l'injection de formule CSV : un tableur (Excel, LibreOffice)
+    execute une cellule commencant par =, +, -, @ ou une tabulation/retour
+    chariot comme une formule. Nom/prenom/email etc. viennent de champs
+    remplis par un administrateur (pas d'inscription publique), mais rien
+    n'empeche une saisie malveillante ou accidentelle -- le prefixe
+    (apostrophe) neutralise la formule sans changer la valeur affichee."""
+    texte = "" if valeur is None else str(valeur)
+    if texte and texte[0] in ("=", "+", "-", "@", "\t", "\r"):
+        return "'" + texte
+    return texte
+
+
 @admin_required
 def exporter_paiements_csv(request):
     paiements, _ = _filtrer_paiements(request)
@@ -747,7 +760,7 @@ def exporter_paiements_csv(request):
         "Part patient", "Statut", "Mode de reglement", "Date de reglement",
     ])
     for paiement in paiements:
-        ecrivain.writerow([
+        ecrivain.writerow([_cellule_csv(v) for v in [
             str(paiement.consultation.patient),
             paiement.consultation.date_consultation.strftime("%d/%m/%Y %H:%M"),
             paiement.montant_total,
@@ -756,7 +769,7 @@ def exporter_paiements_csv(request):
             paiement.get_statut_display(),
             paiement.get_mode_reglement_display() if paiement.mode_reglement else "",
             paiement.date_reglement.strftime("%d/%m/%Y %H:%M") if paiement.date_reglement else "",
-        ])
+        ]])
     return reponse
 
 
@@ -1157,7 +1170,7 @@ def exporter_utilisateurs_csv(request):
     ecrivain = csv.writer(reponse, delimiter=";")
     ecrivain.writerow(["Email", "Prenom", "Nom", "Telephone", "Role", "Statut", "Date de creation"])
     for utilisateur in utilisateurs:
-        ecrivain.writerow([
+        ecrivain.writerow([_cellule_csv(v) for v in [
             utilisateur.email,
             utilisateur.first_name,
             utilisateur.last_name,
@@ -1165,7 +1178,7 @@ def exporter_utilisateurs_csv(request):
             utilisateur.get_role_display(),
             "Actif" if utilisateur.is_active else "Inactif",
             utilisateur.date_joined.strftime("%d/%m/%Y %H:%M"),
-        ])
+        ]])
     return reponse
 
 
