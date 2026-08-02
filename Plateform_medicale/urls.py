@@ -86,6 +86,7 @@ urlpatterns = [
     path('pharmacien/historique/', views.historique_delivrances, name='historique_delivrances'),
 
     path('assure/profil/', views.mon_profil_assure, name='mon_profil_assure'),
+    path('assure/ma-carte/', views.ma_carte_assure, name='ma_carte_assure'),
     path('assure/ayants-droit/', views.liste_ayants_droit, name='liste_ayants_droit'),
     path('assure/ayants-droit/ajouter/', views.ajouter_ayant_droit, name='ajouter_ayant_droit'),
     path('assure/ayants-droit/<int:pk>/modifier/', views.modifier_ayant_droit, name='modifier_ayant_droit'),

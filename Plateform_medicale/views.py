@@ -2030,6 +2030,14 @@ def mon_profil_assure(request):
 
 
 @role_required(User.Role.ASSURE)
+def ma_carte_assure(request):
+    patient = _patient_principal(request)
+    if patient is None:
+        return redirect("mon_profil_assure")
+    return render(request, "ma_carte_assure.html", {"patient": patient})
+
+
+@role_required(User.Role.ASSURE)
 def liste_ayants_droit(request):
     patient = _patient_principal(request)
     if patient is None:
