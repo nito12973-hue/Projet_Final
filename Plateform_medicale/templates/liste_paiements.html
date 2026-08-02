@@ -23,6 +23,13 @@
 </section>
 
 <form method="get" class="filtres">
+    <div style="min-width:220px;flex:1;">
+        <label for="q">Recherche</label>
+        <div class="champ-recherche">
+            {% icone "search" %}
+            <input id="q" type="text" name="q" placeholder="Nom ou prenom du patient" value="{{ recherche }}" style="margin-bottom:0;">
+        </div>
+    </div>
     <div style="min-width:220px;">
         <label for="statut">Statut</label>
         <select id="statut" name="statut" style="margin-bottom:0;">
@@ -33,7 +40,7 @@
         </select>
     </div>
     <button type="submit" class="button primary btn">Filtrer</button>
-    {% if statut_choisi %}
+    {% if statut_choisi or recherche %}
     <a href="{% url 'liste_paiements' %}" class="button btn">Reinitialiser</a>
     {% endif %}
 </form>
@@ -89,7 +96,7 @@
 {% else %}
 <div class="etat-vide">
     {% illustration_vide "receipt" %}
-    <p>Aucun paiement enregistre.</p>
+    <p>{% if recherche or statut_choisi %}Aucun paiement ne correspond a ces criteres.{% else %}Aucun paiement enregistre.{% endif %}</p>
 </div>
 {% endif %}
 {% endblock %}
