@@ -342,23 +342,6 @@ Assure (role_required(ASSURE), prefixe /assure/ + /espace/assure/)
   dashboard_assure                    redirige vers mon_profil_assure si
                                       aucune fiche Patient n'est encore liee
   mon_profil_assure
-  ma_carte_assure                     ecran dedie affichant uniquement le
-                                      widget .carte-assure (meme
-                                      _patient_principal que les autres
-                                      vues assure), bouton Imprimer
-                                      (window.print()) + regle @media print
-                                      qui masque sidebar/nav/toasts et passe
-                                      .shell en display:block (sinon la
-                                      colonne sidebar reste reservee meme
-                                      masquee). "Exportable" = Imprimer ->
-                                      Enregistrer en PDF du navigateur, pas
-                                      de pipeline reportlab dedie (le
-                                      degrade/coins arrondis de la carte
-                                      sont deja en CSS). Lien "Voir /
-                                      imprimer ma carte" depuis
-                                      mon_profil_assure.html et
-                                      dashboard_assure.html, pas d'entree
-                                      sidebar dediee (action occasionnelle).
   liste_ayants_droit / ajouter_ayant_droit / modifier_ayant_droit /
     supprimer_ayant_droit             gestion de la famille par l'assure
                                       principal (jamais de compte cree)
@@ -455,7 +438,7 @@ Assure (role_required(ASSURE), prefixe /assure/ + /espace/assure/)
   (en-tete, mockup telephone, pied de page), et dans le composant "carte de
   prise en charge" (.carte-assure) partout ou il apparait : mon_profil_
   assure.html, dashboard_assure.html, fiche_patient_medecin.html (cote
-  medecin, verification d'identite), ma_carte_assure.html. Fond clair :
+  medecin, verification d'identite). Fond clair :
   croix pleine --ink/#0B2027. Fond sombre uni (sidebar, pied de page) :
   croix pleine #EFF4F3. base_auth.html (panneau de marque a fond degrade)
   reste une exception intentionnelle : mark inline (pas le tag), croix
@@ -540,10 +523,10 @@ Assure (role_required(ASSURE), prefixe /assure/ + /espace/assure/)
   data-copier="valeur" (ecouteur delegue unique dans base.html) copie la
   valeur dans le presse-papiers, feedback "Copie !" 1.6s. .btn-copier-carte
   (icone seule, base.html) l'applique au numero de carte sur mon_profil_
-  assure.html / dashboard_assure.html / fiche_patient_medecin.html /
-  ma_carte_assure.html ; le bouton .button.btn classique l'applique au code
-  QR sur voir_ordonnance.html et au mot de passe genere sur mot_de_passe_
-  genere.html (plus de script par ecran).
+  assure.html / dashboard_assure.html / fiche_patient_medecin.html ; le
+  bouton .button.btn classique l'applique au code QR sur voir_ordonnance.html
+  et au mot de passe genere sur mot_de_passe_genere.html (plus de script
+  par ecran).
 - Retour visuel sur actions asynchrones : data-chargement="Texte" (liens
   d'export Excel/PDF/CSV) bascule le lien sur un tourniquet CSS
   (.tourniquet, currentColor donc s'adapte aux boutons clairs/fonces) +
