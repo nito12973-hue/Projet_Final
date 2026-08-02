@@ -101,7 +101,7 @@ Statut par item : voir la colonne "Chantier" des tableaux ci-dessous
 | 15 | Uniformiser les formulaires bruts | Plusieurs écrans hors `.panel` | Moyenne | 2-3 j | ajouter_consultation_medecin.html, changer_mot_de_passe.html, etc. |
 | 16 | Rendre utile l'encart "gouvernance" du dashboard admin | **Bloqué (2026-08-02)** : quel contenu concret afficher est une decision produit (quelles metriques de gouvernance -- comptes desactives ? dernieres connexions admin ? autre ?), pas une consequence mecanique du code existant. A trancher avec l'utilisateur avant d'implementer, pour ne pas deviner. | Faible-moyenne | 1 j | dashboard.html, views.py |
 | 17 | ~~Corriger la stat non cliquable du dashboard médecin~~ | **FAIT** (commit dd11904) | Faible | 15 min | dashboard_medecin.html |
-| 18 | Étendre les états vides illustrés aux 9-10 listes CRUD restantes | Tag `illustration_vide` existe déjà | Faible | 1 j | liste_utilisateurs.html, liste_patients.html, etc. |
+| 18 | ~~Étendre les états vides illustrés aux 9-10 listes CRUD restantes~~ | **FAIT** (commit 21dc4be) | Faible | 1 j | liste_utilisateurs.html, liste_patients.html, etc. |
 | 19 | ~~En-tête de tableau collant (sticky)~~ | **FAIT** (commit 63c0839) | Faible | 0,5 j | base.html |
 | 20 | Tri de colonnes (dates, statuts) | Aucun tri possible nulle part | Moyenne | 2 j | base.html, vues liste_* |
 
