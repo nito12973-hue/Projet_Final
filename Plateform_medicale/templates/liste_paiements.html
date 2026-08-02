@@ -43,12 +43,12 @@
     <table>
         <thead>
             <tr>
-                <th>Patient</th>
+                {% entete_tri request.GET "consultation__patient__nom" "Patient" %}
                 <th>Consultation</th>
-                <th>Montant total</th>
-                <th>Part assurance</th>
-                <th>Part patient</th>
-                <th>Statut</th>
+                {% entete_tri request.GET "montant_total" "Montant total" %}
+                {% entete_tri request.GET "montant_part_assurance" "Part assurance" %}
+                {% entete_tri request.GET "montant_part_patient" "Part patient" %}
+                {% entete_tri request.GET "statut" "Statut" %}
                 <th>Actions</th>
             </tr>
         </thead>

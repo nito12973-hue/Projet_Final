@@ -89,6 +89,19 @@ def _paginer(request, queryset):
     return paginateur.get_page(request.GET.get("page"))
 
 
+def _trier(request, queryset, champs_autorises, defaut):
+    """Trie un queryset de liste admin depuis le parametre GET 'tri' (ex.
+    'nom' ou '-nom'), restreint a `champs_autorises` (sans le signe -) pour
+    ne jamais passer un champ arbitraire a order_by(). Retombe sur `defaut`
+    (nom de champ ou tuple/liste de noms) si absent ou hors liste."""
+    tri = request.GET.get("tri", "")
+    if tri.lstrip("-") in champs_autorises:
+        return queryset.order_by(tri)
+    if isinstance(defaut, (list, tuple)):
+        return queryset.order_by(*defaut)
+    return queryset.order_by(defaut)
+
+
 # ---------------------------------------------------------------------------
 # Permissions par rôle
 # ---------------------------------------------------------------------------
@@ -497,6 +510,12 @@ def liste_patients(request):
     if type_beneficiaire:
         patients = patients.filter(type_beneficiaire=type_beneficiaire)
 
+    patients = _trier(
+        request, patients,
+        ["nom", "type_beneficiaire", "assure_principal__nom", "numero_carte", "plan_couverture__nom"],
+        ["nom", "prenom"],
+    )
+
     contexte = {
         "patients": _paginer(request, patients),
         "types_beneficiaire": Patient.TypeBeneficiaire.choices,
@@ -538,7 +557,7 @@ def ajouter_patient(request):
 
 @admin_required
 def liste_medecins(request):
-    medecins = Medecin.objects.order_by("nom", "prenom")
+    medecins = _trier(request, Medecin.objects.all(), ["nom", "specialite", "email"], ["nom", "prenom"])
     return render(request, "liste_medecins.html", {"medecins": _paginer(request, medecins)})
 
 
@@ -571,7 +590,7 @@ def ajouter_medecin(request):
 
 @admin_required
 def liste_services(request):
-    services = ServiceMedical.objects.order_by("nom")
+    services = _trier(request, ServiceMedical.objects.all(), ["nom", "prix"], "nom")
     return render(request, "liste_services.html", {"services": _paginer(request, services)})
 
 
@@ -590,7 +609,10 @@ def ajouter_service(request):
 
 @admin_required
 def liste_prises_en_charge(request):
-    prises_en_charge = PriseEnCharge.objects.select_related("patient").order_by("-date_demande")
+    prises_en_charge = PriseEnCharge.objects.select_related("patient")
+    prises_en_charge = _trier(
+        request, prises_en_charge, ["patient__nom", "date_demande", "statut"], "-date_demande",
+    )
     return render(
         request,
         "liste_prises_en_charge.html",
@@ -648,11 +670,17 @@ def supprimer_prise_en_charge(request, pk):
 def liste_paiements(request):
     paiements = Paiement.objects.select_related(
         "consultation", "consultation__patient", "consultation__service"
-    ).order_by("-consultation__date_consultation")
+    )
 
     statut = request.GET.get("statut", "")
     if statut:
         paiements = paiements.filter(statut=statut)
+
+    paiements = _trier(
+        request, paiements,
+        ["consultation__patient__nom", "montant_total", "montant_part_assurance", "montant_part_patient", "statut"],
+        "-consultation__date_consultation",
+    )
 
     totaux = Paiement.objects.aggregate(
         total_regle=Sum("montant_part_patient", filter=Q(statut=Paiement.Statut.REGLE)),
@@ -703,6 +731,10 @@ def liste_prestataires(request):
         prestataires = prestataires.filter(
             latitude__isnull=False, longitude__isnull=False
         )
+
+    prestataires = _trier(
+        request, prestataires, ["nom", "type_prestataire", "ville", "partenaire"], "nom",
+    )
 
     contexte = {
         "prestataires": _paginer(request, prestataires),
@@ -793,7 +825,7 @@ def supprimer_prestataire(request, pk):
 
 @admin_required
 def liste_plans_couverture(request):
-    plans = PlanCouverture.objects.order_by("nom")
+    plans = _trier(request, PlanCouverture.objects.all(), ["nom", "taux_couverture", "plafond_annuel"], "nom")
     return render(request, "liste_plans_couverture.html", {"plans": _paginer(request, plans)})
 
 
@@ -946,7 +978,10 @@ def supprimer_medecin(request, pk):
 
 @admin_required
 def liste_pharmaciens(request):
-    pharmaciens = Pharmacien.objects.select_related("user", "prestataire").order_by("id")
+    pharmaciens = Pharmacien.objects.select_related("user", "prestataire")
+    pharmaciens = _trier(
+        request, pharmaciens, ["user__last_name", "user__email", "prestataire__nom"], "id",
+    )
     return render(request, "liste_pharmaciens.html", {"pharmaciens": _paginer(request, pharmaciens)})
 
 
@@ -998,6 +1033,8 @@ def _filtrer_utilisateurs(request):
             | Q(first_name__icontains=recherche)
             | Q(last_name__icontains=recherche)
         )
+
+    utilisateurs = _trier(request, utilisateurs, ["last_name", "email", "role", "is_active"], ["last_name", "first_name"])
 
     return utilisateurs, {"role": role, "statut": statut, "recherche": recherche}
 

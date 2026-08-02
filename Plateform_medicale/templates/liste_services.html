@@ -17,9 +17,9 @@
     <table>
         <thead>
             <tr>
-                <th>Service</th>
+                {% entete_tri request.GET "nom" "Service" %}
                 <th>Description</th>
-                <th>Prix</th>
+                {% entete_tri request.GET "prix" "Prix" %}
                 <th>Actions</th>
             </tr>
         </thead>

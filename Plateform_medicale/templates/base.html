@@ -400,6 +400,36 @@
             z-index: 5;
         }
 
+        /* Colonnes triables (entete_tri) : meme chevron dans les 3 etats,
+           distingue par opacite/couleur/rotation plutot que 3 icones. */
+        .lien-tri {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .lien-tri .icone-tri .icone-nav {
+            width: 13px;
+            height: 13px;
+            opacity: 0.4;
+            transition: opacity 0.15s ease, transform 0.15s ease;
+        }
+
+        th:hover .lien-tri .icone-tri .icone-nav {
+            opacity: 0.75;
+        }
+
+        .lien-tri-actif .icone-tri .icone-nav {
+            opacity: 1;
+            color: var(--primary-accent);
+        }
+
+        .lien-tri-asc .icone-tri .icone-nav {
+            transform: rotate(180deg);
+        }
+
         tbody tr {
             transition: background 0.15s ease;
         }

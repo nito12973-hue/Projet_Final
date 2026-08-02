@@ -17,10 +17,10 @@
     <table>
         <thead>
             <tr>
-                <th>Nom complet</th>
-                <th>Specialite</th>
+                {% entete_tri request.GET "nom" "Nom complet" %}
+                {% entete_tri request.GET "specialite" "Specialite" %}
                 <th>Telephone</th>
-                <th>Email</th>
+                {% entete_tri request.GET "email" "Email" %}
                 <th>Actions</th>
             </tr>
         </thead>

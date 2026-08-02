@@ -17,9 +17,9 @@
     <table>
         <thead>
             <tr>
-                <th>Nom complet</th>
-                <th>Email</th>
-                <th>Pharmacie affectee</th>
+                {% entete_tri request.GET "user__last_name" "Nom complet" %}
+                {% entete_tri request.GET "user__email" "Email" %}
+                {% entete_tri request.GET "prestataire__nom" "Pharmacie affectee" %}
                 <th>Actions</th>
             </tr>
         </thead>
