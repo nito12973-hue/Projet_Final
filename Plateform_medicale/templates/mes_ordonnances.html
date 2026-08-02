@@ -13,7 +13,7 @@
 
 {% if ordonnances %}
 <section class="panel">
-    <table>
+    <table class="tableau-carte">
         <thead>
             <tr>
                 <th>Date</th>
@@ -25,10 +25,11 @@
         <tbody>
             {% for ordonnance in ordonnances %}
             <tr>
-                <td>{{ ordonnance.date_creation|date:"d/m/Y H:i" }}</td>
-                <td>{{ ordonnance.consultation.patient }}</td>
-                <td>{{ ordonnance.consultation.medecin }}</td>
+                <td><span class="libelle-mobile">Date</span>{{ ordonnance.date_creation|date:"d/m/Y H:i" }}</td>
+                <td><span class="libelle-mobile">Beneficiaire</span>{{ ordonnance.consultation.patient }}</td>
+                <td><span class="libelle-mobile">Medecin</span>{{ ordonnance.consultation.medecin }}</td>
                 <td>
+                    <span class="libelle-mobile">Actions</span>
                     <a class="button primary btn btn-sm" href="{% url 'voir_ordonnance_assure' ordonnance.pk %}">{% icone "qr-scan" %} Voir le QR</a>
                 </td>
             </tr>
