@@ -77,6 +77,9 @@
 </nav>
 {% endif %}
 {% else %}
-<p class="empty">Aucun assure enregistre.</p>
+<div class="etat-vide">
+    {% illustration_vide "id-card" %}
+    <p>Aucun assure enregistre.</p>
+</div>
 {% endif %}
 {% endblock %}
