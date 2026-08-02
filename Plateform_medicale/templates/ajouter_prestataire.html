@@ -87,6 +87,7 @@
                 }
                 var requete = morceaux.join(', ');
                 statutRecherche.textContent = 'Recherche en cours...';
+                boutonRecherche.disabled = true;
                 var url = '{% url "recherche_lieu_prestataire" %}?q=' + encodeURIComponent(requete);
 
                 fetch(url, { headers: { 'Accept': 'application/json' } })
@@ -109,6 +110,9 @@
                     })
                     .catch(function () {
                         statutRecherche.textContent = 'Recherche indisponible pour le moment. Placez le point manuellement.';
+                    })
+                    .finally(function () {
+                        boutonRecherche.disabled = false;
                     });
             });
         }
