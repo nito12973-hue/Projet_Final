@@ -610,13 +610,20 @@ def ajouter_service(request):
 @admin_required
 def liste_prises_en_charge(request):
     prises_en_charge = PriseEnCharge.objects.select_related("patient")
+
+    recherche = request.GET.get("q", "").strip()
+    if recherche:
+        prises_en_charge = prises_en_charge.filter(
+            Q(patient__nom__icontains=recherche) | Q(patient__prenom__icontains=recherche)
+        )
+
     prises_en_charge = _trier(
         request, prises_en_charge, ["patient__nom", "date_demande", "statut"], "-date_demande",
     )
     return render(
         request,
         "liste_prises_en_charge.html",
-        {"prises_en_charge": _paginer(request, prises_en_charge)},
+        {"prises_en_charge": _paginer(request, prises_en_charge), "recherche": recherche},
     )
 
 
@@ -676,6 +683,13 @@ def liste_paiements(request):
     if statut:
         paiements = paiements.filter(statut=statut)
 
+    recherche = request.GET.get("q", "").strip()
+    if recherche:
+        paiements = paiements.filter(
+            Q(consultation__patient__nom__icontains=recherche)
+            | Q(consultation__patient__prenom__icontains=recherche)
+        )
+
     paiements = _trier(
         request, paiements,
         ["consultation__patient__nom", "montant_total", "montant_part_assurance", "montant_part_patient", "statut"],
@@ -691,6 +705,7 @@ def liste_paiements(request):
         "paiements": _paginer(request, paiements),
         "statut_choisi": statut,
         "statuts": Paiement.Statut.choices,
+        "recherche": recherche,
         "total_regle": totaux["total_regle"] or 0,
         "total_non_regle": totaux["total_non_regle"] or 0,
     }
