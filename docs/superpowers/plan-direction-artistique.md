@@ -119,11 +119,11 @@ Statut par item : voir la colonne "Chantier" des tableaux ci-dessous
 
 | # | Chantier | Pourquoi | Difficulté | Temps | Fichiers |
 |---|---|---|---|---|---|
-| 26 | Vérifier la cohérence 404/500 post-Croix-Pouls | CSS dupliqué en dur | Faible | 0,5 j | 404.html, 500.html |
+| 26 | ~~Vérifier la cohérence 404/500 post-Croix-Pouls~~ | **Vérifié conforme** (2026-08-02) : les deux pages sont identiques entre elles, memes tokens de couleur que base.html (#0e7c86/#0b2027/#e0824f/#eff4f3/#5f6f7d), meme favicon en data URI. Seul ecart : police systeme (`Segoe UI`) au lieu de Manrope/Public Sans -- choix delibere pour une page d'erreur qui doit s'afficher sans dependance externe, pas une regression a corriger. | Faible | 0,5 j | 404.html, 500.html |
 | 27 | Animation d'entrée/sortie des toasts et de la modale | Cohérence avec `entree-page` | Faible | 0,5 j | base.html (avec items 2-3) |
 | 28 | Revoir `min-width:680px` des tableaux courts | Force un scroll horizontal même pour 3 colonnes | Faible | 0,5 j | base.html |
 | 29 | Mode "carte" responsive pour tableaux mobiles clés | Aujourd'hui uniquement scroll horizontal | Moyenne-élevée | 3 j | mes_rendez_vous.html, mes_ordonnances.html |
-| 30 | Documenter ou utiliser le token `--info` | Ajouté mais aucun usage recensé | Faible | 0,5 j | base.html |
+| 30 | ~~Documenter ou utiliser le token `--info`~~ | **FAIT** (commit 6fe6c5e) : retire, 0 usage et aucun besoin identifie (toasts "info" partagent deja le gris neutre de warning/debug). | Faible | 0,5 j | base.html |
 | 31 | Icône "vital"/"urgence" dédiée | Absente au-delà de stethoscope/pill | Faible | 0,5 j | templatetags/icones.py |
 | 32 | Icône "paiement en attente" distincte | credit-card réutilisée pour tous les états | Faible | 0,5 j | templatetags/icones.py |
 | 33 | Illustration dédiée pour 404/500 | Actuellement logo seul | Faible | 0,5 j | 404.html, 500.html |
