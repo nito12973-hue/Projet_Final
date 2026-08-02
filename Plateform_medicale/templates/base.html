@@ -355,6 +355,15 @@
             letter-spacing: 0.04em;
         }
 
+        /* En-tete de tableau collant : reste visible en scrollant une
+           liste longue. Le fond opaque de th (ci-dessus) masque les
+           lignes qui defilent en dessous. */
+        thead th {
+            position: sticky;
+            top: 0;
+            z-index: 5;
+        }
+
         tbody tr {
             transition: background 0.15s ease;
         }
