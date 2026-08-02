@@ -59,9 +59,8 @@ navbar/footer, icônes (39, style unique cohérent).
 Incomplet : tableaux (pas de tri, `min-width:680px` fixe pénalise
 mobile), formulaires (plusieurs écrans hors `.panel`), états vides (13/23
 écrans).
-**Absent** : recherche dédiée (item 11), tooltip on-brand (item 12),
-skeleton loader (item 13). Modale, pagination et toasts déjà livrés
-(items 1-3).
+**Absent** : tooltip on-brand (item 12), skeleton loader (item 13).
+Modale, pagination, toasts et recherche dédiée déjà livrés (items 1-3, 11).
 Dette CSS morte : aucune connue à ce jour (`.action-tiles`/`.action-tile`
 retiré item 9, `.carte-assure.mini` retiré item 10).
 
@@ -90,7 +89,7 @@ Statut par item : voir la colonne "Chantier" des tableaux ci-dessous
 |---|---|---|---|---|---|
 | 9 | ~~Retirer `.action-tiles`/`.action-tile`~~ | **FAIT** (commit 7067c92) | Faible | 15 min | base.html |
 | 10 | ~~Trancher le sort de `.carte-assure.mini`~~ | **FAIT** (commit f31d8fc) | Faible | 15 min – 0,5 j | base.html |
-| 11 | Composant recherche dédié | Actuellement `<input>` nu dans `.filtres` | Faible | 1 j | base.html + écrans avec recherche |
+| 11 | ~~Composant recherche dédié~~ | **FAIT** (commit 45a52e8) | Faible | 1 j | base.html + écrans avec recherche |
 | 12 | Composant tooltip on-brand | Seul `title=""` natif existe | Faible | 1 j | base.html |
 | 13 | Skeleton loaders sur les tableaux | Accompagne la pagination (item 1) | Moyenne | 1-2 j | base.html |
 | 14 | Mini-graphique de tendance (Admin/Médecin) | Chart.js déjà maîtrisé, absent des dashboards | Moyenne | 2 j | dashboard.html, dashboard_medecin.html, views.py |
