@@ -19,8 +19,26 @@ from .models import (
 )
 
 
+class SuppressionGereeParLAppMixin:
+    """
+    Bloque la suppression depuis /admin/ pour les modeles dont la vue
+    supprimer_* de l'app porte une logique metier que /admin/ ignore
+    completement (desactivation du User lie, avertissements de cascade,
+    garde-fou anti-auto-suppression sur l'utilisateur courant -- voir
+    supprimer_patient/supprimer_medecin/supprimer_utilisateur dans
+    views.py). Verifie manuellement avant ce correctif : le compte admin
+    de la plateforme (is_staff=True via create_superuser du setup_wizard)
+    pouvait supprimer un Patient depuis /admin/ sans que le User associe
+    soit desactive -- exactement le bug que "Symetrie a la suppression"
+    (CLAUDE.md) corrige cote app, silencieusement contourne ici.
+    """
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
 @admin.register(User)
-class UserAdmin(BaseUserAdmin):
+class UserAdmin(SuppressionGereeParLAppMixin, BaseUserAdmin):
     ordering = ['email']
     list_display = ['email', 'first_name', 'last_name', 'role', 'is_active', 'is_staff']
     list_filter = ['role', 'is_active', 'is_staff']
@@ -43,14 +61,14 @@ class UserAdmin(BaseUserAdmin):
 
 
 @admin.register(Patient)
-class PatientAdmin(admin.ModelAdmin):
+class PatientAdmin(SuppressionGereeParLAppMixin, admin.ModelAdmin):
     list_display = ["nom", "prenom", "type_beneficiaire", "numero_carte", "assure_principal", "plan_couverture"]
     list_filter = ["type_beneficiaire", "plan_couverture"]
     search_fields = ["nom", "prenom", "numero_carte"]
 
 
 @admin.register(Medecin)
-class MedecinAdmin(admin.ModelAdmin):
+class MedecinAdmin(SuppressionGereeParLAppMixin, admin.ModelAdmin):
     list_display = ["nom", "prenom", "specialite", "email", "prestataire", "user"]
     list_filter = ["specialite", "prestataire"]
     search_fields = ["nom", "prenom", "email"]
@@ -63,14 +81,14 @@ class PharmacienAdmin(admin.ModelAdmin):
 
 
 @admin.register(Prestataire)
-class PrestataireAdmin(admin.ModelAdmin):
+class PrestataireAdmin(SuppressionGereeParLAppMixin, admin.ModelAdmin):
     list_display = ["nom", "type_prestataire", "ville", "partenaire"]
     list_filter = ["type_prestataire", "partenaire"]
     search_fields = ["nom", "ville"]
 
 
 @admin.register(PlanCouverture)
-class PlanCouvertureAdmin(admin.ModelAdmin):
+class PlanCouvertureAdmin(SuppressionGereeParLAppMixin, admin.ModelAdmin):
     list_display = ["nom", "taux_couverture", "plafond_annuel"]
 
 
@@ -94,8 +112,19 @@ class NotificationAdmin(admin.ModelAdmin):
     search_fields = ["destinataire__email", "message"]
 
 
-admin.site.register(ServiceMedical)
-admin.site.register(PriseEnCharge)
+@admin.register(ServiceMedical)
+class ServiceMedicalAdmin(SuppressionGereeParLAppMixin, admin.ModelAdmin):
+    list_display = ["nom", "prix", "prestataire"]
+    search_fields = ["nom"]
+
+
+@admin.register(PriseEnCharge)
+class PriseEnChargeAdmin(SuppressionGereeParLAppMixin, admin.ModelAdmin):
+    list_display = ["patient", "date_demande", "statut"]
+    list_filter = ["statut"]
+    search_fields = ["patient__nom", "patient__prenom"]
+
+
 admin.site.register(Consultation)
 admin.site.register(Ordonnance)
 
