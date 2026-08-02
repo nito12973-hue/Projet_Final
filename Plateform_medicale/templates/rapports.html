@@ -120,11 +120,15 @@
 {{ rendez_vous_par_statut|json_script:"donnees-rendez-vous-statut" }}
 {{ prises_en_charge_par_statut|json_script:"donnees-prises-en-charge-statut" }}
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"
-        integrity="sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC"
-        crossorigin="anonymous"></script>
 <script>
     (function () {
+        // Chart.js (~200 Ko) charge a la demande via JS plutot qu'un <script
+        // src> statique : cette page est la seule a en avoir besoin, autant
+        // ne pas le telecharger avant que le reste de la page (tableaux,
+        // filtres) soit deja affiche. En cas d'echec de chargement (reseau,
+        // CDN indisponible), les 5 canevas basculent sur le meme message de
+        // repli que "donnees absentes" plutot que de rester silencieux.
+
         // Couleurs de marque lues depuis les tokens CSS de base.html (une seule
         // source de verite), avec repli en dur seulement si la variable est
         // introuvable (feuille de style non chargee).
@@ -183,13 +187,12 @@
             canevas.replaceWith(message);
         }
 
-        if (typeof Chart === 'undefined') {
-            ['graphe-consultations', 'graphe-utilisateurs-role', 'graphe-patients-type',
-                'graphe-rendez-vous-statut', 'graphe-prises-en-charge-statut'].forEach(function (id) {
-                signalerGraphiqueIndisponible(id, 'Graphique indisponible (bibliotheque non chargee).');
-            });
-            return;
-        }
+        var IDS_CANEVAS = ['graphe-consultations', 'graphe-utilisateurs-role', 'graphe-patients-type',
+            'graphe-rendez-vous-statut', 'graphe-prises-en-charge-statut'];
+
+        // Tout ce qui suit suppose Chart.js deja charge -- n'est appele
+        // qu'une fois le <script> injecte plus bas resolu avec succes.
+        function demarrerGraphiques() {
 
         function traceBarres(idCanevas, idDonnees) {
             var lignes = lireDonnees(idDonnees);
@@ -336,6 +339,19 @@
         traceDonut('graphe-patients-type', 'donnees-patients-type');
         traceBarres('graphe-rendez-vous-statut', 'donnees-rendez-vous-statut');
         traceBarres('graphe-prises-en-charge-statut', 'donnees-prises-en-charge-statut');
+        } // fin demarrerGraphiques
+
+        var scriptChartJs = document.createElement('script');
+        scriptChartJs.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js';
+        scriptChartJs.integrity = 'sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC';
+        scriptChartJs.crossOrigin = 'anonymous';
+        scriptChartJs.onload = demarrerGraphiques;
+        scriptChartJs.onerror = function () {
+            IDS_CANEVAS.forEach(function (id) {
+                signalerGraphiqueIndisponible(id, 'Graphique indisponible (bibliotheque non chargee).');
+            });
+        };
+        document.body.appendChild(scriptChartJs);
     })();
 </script>
 {% endblock %}
