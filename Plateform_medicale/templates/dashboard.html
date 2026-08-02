@@ -39,6 +39,17 @@
     </a>
 </section>
 
+<section class="panel" style="margin-top:18px;padding:20px 24px;">
+    <div class="panel-header" style="padding:0 0 14px;">
+        <div>
+            <h2>Tendance des consultations</h2>
+            <p class="subtitle" style="margin:2px 0 0;">30 derniers jours</p>
+        </div>
+        <a class="button btn" href="{% url 'rapports' %}">Voir les rapports</a>
+    </div>
+    <canvas id="graphe-tendance-consultations" style="max-height:140px;"></canvas>
+</section>
+
 <section class="admin-layout">
     <article class="panel admin-card-large">
         <div class="panel-header">
@@ -122,4 +133,70 @@
         {% endif %}
     </article>
 </section>
+
+{{ tendance_consultations|json_script:"donnees-tendance-consultations" }}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"
+        integrity="sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC"
+        crossorigin="anonymous"></script>
+<script>
+    (function () {
+        // Mini-graphique de tendance : version compacte du graphique de
+        // rapports.html (memes tokens de couleur, meme repli si Chart.js
+        // indisponible), sans axes ni legende pour rester lisible en petit.
+        var canevas = document.getElementById('graphe-tendance-consultations');
+        if (!canevas) { return; }
+
+        if (typeof Chart === 'undefined') {
+            var message = document.createElement('p');
+            message.className = 'empty';
+            message.textContent = 'Graphique indisponible (bibliotheque non chargee).';
+            canevas.replaceWith(message);
+            return;
+        }
+
+        var element = document.getElementById('donnees-tendance-consultations');
+        var donnees = element ? JSON.parse(element.textContent) : { labels: [], totaux: [] };
+        if (!donnees.totaux.some(function (total) { return total > 0; })) {
+            var vide = document.createElement('p');
+            vide.className = 'empty';
+            vide.textContent = 'Aucune consultation sur les 30 derniers jours.';
+            canevas.replaceWith(vide);
+            return;
+        }
+
+        function tokenCouleur(nom, repli) {
+            var valeur = getComputedStyle(document.documentElement).getPropertyValue(nom).trim();
+            return valeur || repli;
+        }
+
+        new Chart(canevas, {
+            type: 'line',
+            data: {
+                labels: donnees.labels,
+                datasets: [{
+                    data: donnees.totaux,
+                    borderColor: tokenCouleur('--primary', '#0e7c86'),
+                    backgroundColor: 'rgba(14, 124, 134, 0.12)',
+                    fill: true,
+                    tension: 0.35,
+                    pointRadius: 0,
+                    borderWidth: 2,
+                }],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { title: function (items) { return items[0].label; } } },
+                },
+                scales: {
+                    x: { display: false },
+                    y: { display: false, beginAtZero: true },
+                },
+            },
+        });
+    })();
+</script>
 {% endblock %}

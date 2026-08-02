@@ -274,6 +274,7 @@ def dashboard(request):
         "total_ordonnances": Ordonnance.objects.count(),
         "dernieres_prises_en_charge": dernieres_prises_en_charge,
         "derniers_patients": derniers_patients,
+        "tendance_consultations": _consultations_par_jour(),
     }
     return render(request, "dashboard.html", contexte)
 
@@ -305,13 +306,18 @@ def _consultations_par_mois(nombre_mois=6):
     }
 
 
-def _consultations_par_jour(nombre_jours=30):
-    """Nombre de consultations par jour, sur les `nombre_jours` derniers jours (jour courant inclus)."""
+def _consultations_par_jour(nombre_jours=30, queryset=None):
+    """Nombre de consultations par jour, sur les `nombre_jours` derniers jours (jour courant inclus).
+
+    `queryset` permet de restreindre le comptage (ex. aux consultations d'un
+    seul medecin) ; par defaut, porte sur toutes les consultations.
+    """
     aujourd_hui = timezone.now().date()
     jours_reference = [aujourd_hui - datetime.timedelta(days=delta) for delta in range(nombre_jours - 1, -1, -1)]
 
+    base = Consultation.objects.all() if queryset is None else queryset
     comptages = (
-        Consultation.objects.annotate(jour=TruncDate("date_consultation"))
+        base.annotate(jour=TruncDate("date_consultation"))
         .values("jour")
         .annotate(total=Count("id"))
     )
@@ -1417,6 +1423,7 @@ def dashboard_medecin(request):
         "total_ordonnances": Ordonnance.objects.filter(consultation__medecin=medecin).count(),
         "prochains_rendez_vous": rendez_vous_a_venir.select_related("patient").order_by("date_heure")[:5],
         "medecin": medecin,
+        "tendance_consultations": _consultations_par_jour(queryset=Consultation.objects.filter(medecin=medecin)),
     }
     return render(request, "dashboard_medecin.html", contexte)
 
