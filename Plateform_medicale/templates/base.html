@@ -1385,6 +1385,61 @@
             .button.btn-sm {
                 min-height: 40px;
             }
+
+            /* Mode "carte" pour les tableaux cles cote assure (opt-in via
+               .tableau-carte, pas applique partout) : plus de scroll
+               horizontal a ce format, chaque ligne devient une carte.
+               .libelle-mobile est du vrai texte (pas de contenu CSS genere,
+               peu fiable pour les lecteurs d'ecran) affiche uniquement ici ;
+               a largeur normale le <thead> fournit deja l'association
+               d'en-tete standard. */
+            .tableau-carte thead {
+                display: none;
+            }
+
+            .tableau-carte,
+            .tableau-carte tbody,
+            .tableau-carte tr,
+            .tableau-carte td {
+                display: block;
+                width: 100%;
+            }
+
+            .tableau-carte tr {
+                margin-bottom: 14px;
+                padding: 4px 16px;
+                border: 1px solid var(--border);
+                border-radius: 12px;
+            }
+
+            .tableau-carte tr:last-child {
+                margin-bottom: 0;
+            }
+
+            .tableau-carte td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 12px;
+                padding: 10px 0;
+                text-align: right;
+            }
+
+            .tableau-carte td:not(:last-child) {
+                border-bottom: 1px solid var(--border);
+            }
+
+            .libelle-mobile {
+                display: inline-block;
+                font-weight: 700;
+                color: var(--primary-dark);
+                text-align: left;
+                flex-shrink: 0;
+            }
+        }
+
+        .libelle-mobile {
+            display: none;
         }
 
         /* Focus clavier : meme anneau turquoise que les champs de formulaire,

@@ -14,7 +14,7 @@
 
 {% if rendez_vous %}
 <section class="panel">
-    <table>
+    <table class="tableau-carte">
         <thead>
             <tr>
                 <th>Date</th>
@@ -29,15 +29,17 @@
         <tbody>
             {% for rdv in rendez_vous %}
             <tr>
-                <td>{{ rdv.date_heure|date:"d/m/Y H:i" }}</td>
-                <td>{{ rdv.patient }}</td>
-                <td>{{ rdv.medecin }}</td>
-                <td>{{ rdv.prestataire|default:"-" }}</td>
-                <td>{{ rdv.motif|default:"-" }}</td>
+                <td><span class="libelle-mobile">Date</span>{{ rdv.date_heure|date:"d/m/Y H:i" }}</td>
+                <td><span class="libelle-mobile">Beneficiaire</span>{{ rdv.patient }}</td>
+                <td><span class="libelle-mobile">Medecin</span>{{ rdv.medecin }}</td>
+                <td><span class="libelle-mobile">Prestataire</span>{{ rdv.prestataire|default:"-" }}</td>
+                <td><span class="libelle-mobile">Motif</span>{{ rdv.motif|default:"-" }}</td>
                 <td>
+                    <span class="libelle-mobile">Statut</span>
                     <span class="badge {% if rdv.statut == 'DEMANDE' %}en_attente{% elif rdv.statut == 'CONFIRME' %}confirme{% elif rdv.statut == 'ANNULE' %}refusee{% elif rdv.statut == 'TERMINE' %}terminee{% endif %}">{{ rdv.get_statut_display }}</span>
                 </td>
                 <td>
+                    <span class="libelle-mobile">Actions</span>
                     {% if rdv.statut == 'DEMANDE' or rdv.statut == 'CONFIRME' %}
                     <form method="post" action="{% url 'annuler_rendez_vous_assure' rdv.pk %}" class="action-ligne">
                         {% csrf_token %}
