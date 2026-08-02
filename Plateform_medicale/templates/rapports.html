@@ -112,6 +112,17 @@
     </details>
 </section>
 
+{# Modele clone par signalerGraphiqueIndisponible() : meme composant .etat-vide
+   (icone + texte) que le reste de l'application, plutot qu'un <p class="empty">
+   texte seul -- illustration_vide est un tag serveur, un <template> est le
+   moyen le plus simple de mettre son rendu a disposition du JS. #}
+<template id="modele-graphique-indisponible">
+    <div class="etat-vide">
+        {% illustration_vide "bar-chart" %}
+        <p></p>
+    </div>
+</template>
+
 {{ consultations_par_jour|json_script:"donnees-consultations-jour" }}
 {{ consultations_par_mois|json_script:"donnees-consultations-mois" }}
 {{ consultations_par_annee|json_script:"donnees-consultations-annee" }}
@@ -175,16 +186,19 @@
             return labels.map(function (label) { return COULEURS_STATUT[label] || tokenCouleur('--muted', '#5f6f7d'); });
         }
 
-        // Affiche un message a la place d'un canevas vide (donnees absentes ou
-        // Chart.js indisponible) plutot que de laisser un rectangle silencieux.
+        // Affiche un etat vide illustre a la place d'un canevas vide (donnees
+        // absentes ou Chart.js indisponible), meme composant que le reste de
+        // l'application plutot qu'un <p class="empty"> texte seul.
+        var modeleGraphiqueIndisponible = document.getElementById('modele-graphique-indisponible');
+
         function signalerGraphiqueIndisponible(idCanevas, texte) {
             var canevas = document.getElementById(idCanevas);
             if (!canevas || canevas.dataset.remplace) { return; }
             canevas.dataset.remplace = '1';
-            var message = document.createElement('p');
-            message.className = 'empty';
-            message.textContent = texte;
-            canevas.replaceWith(message);
+            if (!modeleGraphiqueIndisponible) { return; }
+            var noeud = modeleGraphiqueIndisponible.content.cloneNode(true);
+            noeud.querySelector('p').textContent = texte;
+            canevas.replaceWith(noeud);
         }
 
         var IDS_CANEVAS = ['graphe-consultations', 'graphe-utilisateurs-role', 'graphe-patients-type',
