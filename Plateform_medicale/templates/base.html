@@ -1174,6 +1174,27 @@
             font-size: 21px;
         }
 
+        .btn-copier-carte {
+            display: inline-flex;
+            vertical-align: middle;
+            margin-left: 8px;
+            padding: 3px;
+            border: 0;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.12);
+            color: inherit;
+            cursor: pointer;
+        }
+
+        .btn-copier-carte:hover {
+            background: rgba(255, 255, 255, 0.22);
+        }
+
+        .btn-copier-carte .icone-nav {
+            width: 14px;
+            height: 14px;
+        }
+
         .carte-assure-pied {
             position: relative;
             display: flex;
@@ -1620,6 +1641,24 @@
                         fermerToast(toast);
                     });
                 }
+            });
+        })();
+
+        (function () {
+            // Bouton "Copier" generique : n'importe quel bouton portant
+            // data-copier="valeur" declenche la copie, un seul ecouteur
+            // delegue plutot qu'un script par ecran (introduit sur
+            // mot_de_passe_genere.html seul, generalise ici).
+            document.addEventListener('click', function (evenement) {
+                var bouton = evenement.target.closest('[data-copier]');
+                if (!bouton || !navigator.clipboard) { return; }
+                var valeur = bouton.getAttribute('data-copier');
+                if (!valeur) { return; }
+                navigator.clipboard.writeText(valeur).then(function () {
+                    var libelleOriginal = bouton.innerHTML;
+                    bouton.textContent = 'Copie !';
+                    window.setTimeout(function () { bouton.innerHTML = libelleOriginal; }, 1600);
+                });
             });
         })();
 

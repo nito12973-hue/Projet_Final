@@ -9,6 +9,7 @@
         <h1>{{ patient.prenom }} {{ patient.nom }}</h1>
         <p class="subtitle">
             {{ patient.numero_carte }}
+            <button type="button" class="btn-copier-carte" style="background:rgba(11,32,39,0.08);" data-copier="{{ patient.numero_carte }}" aria-label="Copier le numero de carte">{% icone "copy" %}</button>
             {% if deja_vu %}<span class="badge">Deja suivi</span>{% endif %}
         </p>
     </div>

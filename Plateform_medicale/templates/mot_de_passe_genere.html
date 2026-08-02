@@ -15,24 +15,9 @@
     <p class="avis-titre">Compte : {{ utilisateur.email }}</p>
     <div style="display:flex;align-items:center;gap:12px;">
         <p id="mot-de-passe-genere" class="code" style="font-size: 20px; font-weight: 800; color: var(--primary-strong); margin: 0;">{{ mot_de_passe }}</p>
-        <button type="button" class="button btn btn-sm" id="bouton-copier-mdp">{% icone "copy" %} Copier</button>
+        <button type="button" class="button btn btn-sm" data-copier="{{ mot_de_passe }}">{% icone "copy" %} Copier</button>
     </div>
 </div>
 
 <a class="button primary" href="{% url 'liste_utilisateurs' %}">Retour a la liste des utilisateurs</a>
-
-<script>
-    (function () {
-        var bouton = document.getElementById('bouton-copier-mdp');
-        var texte = document.getElementById('mot-de-passe-genere');
-        if (!bouton || !texte) { return; }
-        bouton.addEventListener('click', function () {
-            navigator.clipboard.writeText(texte.textContent.trim()).then(function () {
-                var libelleOriginal = bouton.textContent;
-                bouton.textContent = 'Copie !';
-                setTimeout(function () { bouton.innerHTML = '{% icone "copy" %} Copier'; }, 1600);
-            });
-        });
-    })();
-</script>
 {% endblock %}
