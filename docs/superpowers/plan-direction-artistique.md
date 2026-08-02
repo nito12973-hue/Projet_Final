@@ -139,7 +139,7 @@ Statut par item : voir la colonne "Chantier" des tableaux ci-dessous
 | 43 | ~~Lazy-load Chart.js sur rapports.html~~ | **FAIT** (commit 7c96133) | Faible-moyenne | 1 j | rapports.html |
 | 44 | ~~Auditer les suppressions hors confirmer_suppression.html~~ | **FAIT** (commit b9470fd) : les 8 vues supprimer_* de l'app etaient deja correctement gardees, mais /admin/ (Django admin) contournait entierement leur logique metier (desactivation du User lie, garde-fou anti-auto-suppression, avertissements de cascade) -- corrige. | Faible | 1 j | views.py |
 | 45 | ~~Recherche par nom sur Paiements / Prises en charge~~ | **FAIT** (commit 284a5eb) | Faible | 0,5 j | liste_paiements.html, liste_prises_en_charge.html |
-| 46 | Export CSV en plus d'Excel/PDF | Utile pour intégration comptabilité côté client entreprise | Faible | 1 j | liste_paiements.html, liste_utilisateurs.html |
+| 46 | ~~Export CSV en plus d'Excel/PDF~~ | **FAIT** (commit 8e29c88) | Faible | 1 j | liste_paiements.html, liste_utilisateurs.html |
 | 47 | ~~Manifest PWA + icône d'application~~ | **Non retenu** (2026-08-02) : CLAUDE.md tranche deja ce point explicitement ("icone d'application... existe dans la spec d'origine mais n'est pas implementee... a ne pas recreer sans un besoin concret identifie"). Aucun besoin concret identifie a ce jour. | Faible | 0,5 j | nouveau manifest.json, base.html |
 | 48 | Comportement hors-ligne minimal | Pertinent en zone à connexion intermittente | Élevée | À chiffrer séparément | hors scope design pur |
 | 49 | ~~État "session expirée" explicite~~ | **FAIT** (commit 400e6b7) | Faible-moyenne | 1 j | views.py, base_auth.html |
