@@ -85,7 +85,10 @@
 </nav>
 {% endif %}
 {% else %}
-<p class="empty">Aucun prestataire enregistre.</p>
+<div class="etat-vide">
+    {% illustration_vide "building" %}
+    <p>Aucun prestataire enregistre.</p>
+</div>
 {% endif %}
 
 <p class="subtitle" style="margin-top:18px;">

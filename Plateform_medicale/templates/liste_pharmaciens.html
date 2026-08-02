@@ -49,6 +49,9 @@
 </nav>
 {% endif %}
 {% else %}
-<p class="empty">Aucun pharmacien enregistre.</p>
+<div class="etat-vide">
+    {% illustration_vide "pill" %}
+    <p>Aucun pharmacien enregistre.</p>
+</div>
 {% endif %}
 {% endblock %}

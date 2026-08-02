@@ -102,7 +102,10 @@
             </tbody>
         </table>
         {% else %}
-        <p class="empty">Aucun assure enregistre.</p>
+        <div class="etat-vide">
+            {% illustration_vide "id-card" %}
+            <p>Aucun assure enregistre.</p>
+        </div>
         {% endif %}
     </article>
 
@@ -129,7 +132,10 @@
             </tbody>
         </table>
         {% else %}
-        <p class="empty">Aucune prise en charge enregistree.</p>
+        <div class="etat-vide">
+            {% illustration_vide "shield-check" %}
+            <p>Aucune prise en charge enregistree.</p>
+        </div>
         {% endif %}
     </article>
 </section>

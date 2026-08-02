@@ -111,6 +111,9 @@
 </nav>
 {% endif %}
 {% else %}
-<p class="empty">Aucun utilisateur ne correspond a ces criteres.</p>
+<div class="etat-vide">
+    {% illustration_vide "users" %}
+    <p>Aucun utilisateur ne correspond a ces criteres.</p>
+</div>
 {% endif %}
 {% endblock %}

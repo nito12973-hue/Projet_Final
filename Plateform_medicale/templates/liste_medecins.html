@@ -54,6 +54,9 @@
 </nav>
 {% endif %}
 {% else %}
-<p class="empty">Aucun medecin enregistre.</p>
+<div class="etat-vide">
+    {% illustration_vide "stethoscope" %}
+    <p>Aucun medecin enregistre.</p>
+</div>
 {% endif %}
 {% endblock %}
