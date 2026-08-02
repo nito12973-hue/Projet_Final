@@ -128,7 +128,7 @@ Statut par item : voir la colonne "Chantier" des tableaux ci-dessous
 | 32 | ~~Icône "paiement en attente" distincte~~ | **Non retenu** (2026-08-02) : grep confirme 0 usage de l'icone `credit-card` nulle part dans l'app -- la premisse (reutilisee pour tous les etats) ne correspond plus a l'ecran actuel, qui distingue les statuts uniquement par badge colore (`.badge`/`.dash-pill`), exactement comme tous les autres statuts de l'appli (prises en charge, rendez-vous...). Ajouter une icone seulement pour les paiements casserait cette coherence plutot que de l'ameliorer. | Faible | 0,5 j | templatetags/icones.py |
 | 33 | Illustration dédiée pour 404/500 | Actuellement logo seul | Faible | 0,5 j | 404.html, 500.html |
 | 34 | Illustration pour "graphique indisponible" | Actuellement texte JS brut | Faible | 0,5 j | rapports.html |
-| 35 | Étendre le bouton "copier" à tous les identifiants copiables | Ajouté sur un écran (audit v1), pas généralisé | Faible | 1 j | mon_profil_assure.html, voir_ordonnance.html, etc. |
+| 35 | ~~Étendre le bouton "copier" à tous les identifiants copiables~~ | **FAIT** (commit cbf7217) | Faible | 1 j | mon_profil_assure.html, voir_ordonnance.html, etc. |
 | 36 | Micro-interaction de succès sur actions critiques | Actuellement simple message Django statique | Moyenne | 1-2 j | ajouter_ordonnance_medecin.html, scanner_ordonnance.html, marquer_paiement_regle.html |
 | 37 | Loader inline sur boutons d'action asynchrone | Export Excel/PDF, recherche de lieu : pas de retour visuel | Faible-moyenne | 1 j | rapports.html, ajouter_prestataire.html |
 | 38 | Écran "Ma carte" dédié, imprimable/exportable | Carte de prise en charge sous-exploitée (2 usages) | Moyenne | 2 j | nouveau template + views.py |
