@@ -22,6 +22,7 @@ urlpatterns = [
 
     path('utilisateurs/', views.liste_utilisateurs, name='liste_utilisateurs'),
     path('utilisateurs/exporter/', views.exporter_utilisateurs_excel, name='exporter_utilisateurs_excel'),
+    path('utilisateurs/exporter/csv/', views.exporter_utilisateurs_csv, name='exporter_utilisateurs_csv'),
     path('utilisateurs/importer/', views.importer_utilisateurs_excel, name='importer_utilisateurs_excel'),
     path('utilisateurs/importer/modele/', views.telecharger_modele_import_utilisateurs, name='telecharger_modele_import_utilisateurs'),
     path('utilisateurs/ajouter/', views.ajouter_utilisateur, name='ajouter_utilisateur'),
@@ -54,6 +55,7 @@ urlpatterns = [
     path('prises-en-charge/<int:pk>/supprimer/', views.supprimer_prise_en_charge, name='supprimer_prise_en_charge'),
 
     path('paiements/', views.liste_paiements, name='liste_paiements'),
+    path('paiements/exporter/csv/', views.exporter_paiements_csv, name='exporter_paiements_csv'),
     path('paiements/<int:pk>/regler/', views.marquer_paiement_regle, name='marquer_paiement_regle'),
 
     path('prestataires/', views.liste_prestataires, name='liste_prestataires'),
