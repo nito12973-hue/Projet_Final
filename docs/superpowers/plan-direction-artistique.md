@@ -97,7 +97,7 @@ Statut par item : voir la colonne "Chantier" des tableaux ci-dessous
 | 16 | Rendre utile l'encart "gouvernance" du dashboard admin | Actuellement pavé de texte statique | Faible-moyenne | 1 j | dashboard.html, views.py |
 | 17 | ~~Corriger la stat non cliquable du dashboard médecin~~ | **FAIT** (commit dd11904) | Faible | 15 min | dashboard_medecin.html |
 | 18 | Étendre les états vides illustrés aux 9-10 listes CRUD restantes | Tag `illustration_vide` existe déjà | Faible | 1 j | liste_utilisateurs.html, liste_patients.html, etc. |
-| 19 | En-tête de tableau collant (sticky) | Lisibilité en attendant la pagination | Faible | 0,5 j | base.html |
+| 19 | ~~En-tête de tableau collant (sticky)~~ | **FAIT** (commit 63c0839) | Faible | 0,5 j | base.html |
 | 20 | Tri de colonnes (dates, statuts) | Aucun tri possible nulle part | Moyenne | 2 j | base.html, vues liste_* |
 
 ### P2 — Confiance commerciale (5 chantiers)
