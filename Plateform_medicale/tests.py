@@ -158,6 +158,22 @@ class LandingTests(TestCase):
         self.assertContains(response, 'class="mini-repartition"')
         self.assertContains(response, 'class="mini-famille"')
 
+    def test_page_publique_affiche_la_section_verification_qr(self):
+        response = self.client.get(reverse('landing'))
+        self.assertContains(response, "Vérification en un scan")
+        self.assertContains(response, "Le médecin génère")
+        self.assertContains(response, "QR Code unique")
+        self.assertContains(response, "Le pharmacien scanne")
+
+    def test_page_publique_affiche_le_showcase_des_dashboards(self):
+        response = self.client.get(reverse('landing'))
+        self.assertContains(response, "Un espace dédié pour chaque rôle")
+        self.assertContains(response, "Aperçu illustratif")
+        self.assertContains(response, "Agenda — Dr Ndiaye")
+        self.assertContains(response, "Scan d'ordonnance")
+        self.assertContains(response, "Ordonnance disponible")
+        self.assertContains(response, "Tableau de bord")
+
 
 class LoginTests(TestCase):
     def setUp(self):
