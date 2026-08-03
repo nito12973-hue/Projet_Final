@@ -255,7 +255,30 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
                           (30 derniers jours, sparkline Chart.js compacte,
                           meme donnee que _consultations_par_jour() de
                           rapports mais reutilisable avec un queryset filtre
-                          -- voir dashboard_medecin plus bas)
+                          -- voir dashboard_medecin plus bas).
+                          Refonte (module par module, dashboard admin
+                          traite en premier) : bandeau financier (.dash-hero,
+                          meme signature degradee que .carte-assure --
+                          montant regle/en attente/taux de reglement, meme
+                          agregat Sum(...,filter=Q(statut=...)) que
+                          liste_paiements), grille KPI enrichie (Pharmaciens
+                          ajoute -- role jusque-la absent du dashboard ;
+                          Prestataires corrige pour ne compter que
+                          partenaire=True, avant tous les prestataires
+                          enregistres ; Consultations/Ordonnances ajoutes --
+                          deja calcules dans le contexte mais jamais
+                          affiches), encart gouvernance enrichi (comptes
+                          actifs/desactives, donnee reelle a la place du
+                          texte seul), tableaux "Derniers assures"/"Suivi
+                          des prises en charge" enrichis (colonne Type /
+                          colonne Date), et une carte Leaflet du reseau de
+                          partenaires geolocalises (memes conventions que
+                          prestataires_proches.html : couleur par type,
+                          construction des popups via textContent -- jamais
+                          de concatenation de chaines HTML --,
+                          scrollWheelZoom desactive car widget dans une
+                          page qui defile). 7 tests dedies
+                          (DashboardAdminTests).
   rapports / exporter_rapports_excel / exporter_rapports_pdf
                                       _donnees_rapports() est la SEULE
                                       source de donnees, partagee par la

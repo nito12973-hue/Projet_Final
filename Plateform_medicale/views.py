@@ -292,17 +292,45 @@ def sitemap_xml(request):
 def dashboard(request):
     dernieres_prises_en_charge = PriseEnCharge.objects.select_related("patient").order_by("-date_demande")[:5]
     derniers_patients = Patient.objects.order_by("-id")[:5]
+
+    # Bandeau financier : meme agregat que liste_paiements (Sum filtre par
+    # statut), pour un signal de sante financiere absent jusqu'ici du
+    # dashboard alors que c'est la donnee la plus parlante pour une
+    # compagnie d'assurance/IPM qui evaluerait la plateforme.
+    totaux_paiements = Paiement.objects.aggregate(
+        total_regle=Sum("montant_part_patient", filter=Q(statut=Paiement.Statut.REGLE)),
+        total_non_regle=Sum("montant_part_patient", filter=Q(statut=Paiement.Statut.NON_REGLE)),
+    )
+    montant_regle = totaux_paiements["total_regle"] or 0
+    montant_non_regle = totaux_paiements["total_non_regle"] or 0
+    montant_total_paiements = montant_regle + montant_non_regle
+    taux_reglement = round((montant_regle / montant_total_paiements) * 100) if montant_total_paiements else None
+
+    # Reseau de partenaires geolocalises, pour la carte du dashboard : seuls
+    # les champs necessaires au rendu (pas d'instances completes).
+    prestataires_carte = list(
+        Prestataire.objects.filter(partenaire=True, latitude__isnull=False, longitude__isnull=False)
+        .values("nom", "type_prestataire", "ville", "latitude", "longitude")
+    )
+
     contexte = {
         "total_patients": Patient.objects.count(),
         "total_medecins": Medecin.objects.count(),
-        "total_prestataires": Prestataire.objects.count(),
+        "total_pharmaciens": Pharmacien.objects.count(),
+        "total_prestataires": Prestataire.objects.filter(partenaire=True).count(),
         "total_services": ServiceMedical.objects.count(),
         "total_prises_en_charge": PriseEnCharge.objects.count(),
         "total_consultations": Consultation.objects.count(),
         "total_ordonnances": Ordonnance.objects.count(),
+        "montant_regle": montant_regle,
+        "montant_non_regle": montant_non_regle,
+        "taux_reglement": taux_reglement,
+        "total_comptes_actifs": User.objects.filter(is_active=True).count(),
+        "total_comptes_inactifs": User.objects.filter(is_active=False).count(),
         "dernieres_prises_en_charge": dernieres_prises_en_charge,
         "derniers_patients": derniers_patients,
         "tendance_consultations": _consultations_par_jour(),
+        "prestataires_carte": prestataires_carte,
     }
     return render(request, "dashboard.html", contexte)
 

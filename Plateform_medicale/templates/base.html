@@ -1155,6 +1155,88 @@
         .dash-pill.attente { background: #fff1d6; color: var(--warning); }
         .dash-pill.danger { background: #fee4e2; color: var(--danger); }
 
+        /* Bandeau financier du dashboard admin : meme signature que
+           .carte-assure/.button.primary (degrade --primary-dark ->
+           --primary-strong + accent radial), pas une nouvelle couleur --
+           sert a distinguer visuellement les 2-3 chiffres les plus
+           strategiques (paiements) du reste de la grille KPI. */
+        .dash-hero {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 14px;
+            margin-top: 18px;
+        }
+
+        .dash-hero-carte {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-strong) 100%);
+            color: #ffffff;
+            border-radius: 16px;
+            padding: 20px 22px;
+            box-shadow: 0 10px 28px rgba(11, 32, 39, 0.22);
+        }
+
+        .dash-hero-carte::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(120% 100% at 100% 0%, rgba(79, 184, 174, 0.3), transparent 60%);
+            pointer-events: none;
+        }
+
+        .dash-hero-icon {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            margin-bottom: 14px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.14);
+        }
+
+        .dash-hero-carte strong {
+            position: relative;
+            display: block;
+            font-size: 25px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 4px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .dash-hero-carte span {
+            position: relative;
+            display: block;
+            color: rgba(239, 255, 247, 0.78);
+            font-weight: 600;
+            font-size: 13.5px;
+        }
+
+        /* Mini-chiffres de l'encart gouvernance (comptes actifs/desactives) :
+           simple paire cote a cote, pas une nouvelle grille a part. */
+        .gouvernance-comptes {
+            display: flex;
+            gap: 20px;
+            margin: 16px 0;
+        }
+
+        .gouvernance-comptes strong {
+            display: block;
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--primary-dark);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .gouvernance-comptes span {
+            color: var(--muted);
+            font-weight: 600;
+            font-size: 12.5px;
+        }
+
         /* Identifiants/codes (numero de carte, code QR, mot de passe genere) :
            IBM Plex Mono deja chargee mais jamais utilisee jusqu'ici, chiffres
            tabulaires pour un alignement propre. */
