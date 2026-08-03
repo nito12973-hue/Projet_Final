@@ -133,14 +133,14 @@
             Il ne saisit pas de diagnostic, ne cree pas d'ordonnance et ne valide pas de delivrance.
         </p>
         <div class="gouvernance-comptes">
-            <div>
+            <a href="{% url 'liste_utilisateurs' %}?statut=actif">
                 <strong>{{ total_comptes_actifs }}</strong>
                 <span>Comptes actifs</span>
-            </div>
-            <div>
+            </a>
+            <a href="{% url 'liste_utilisateurs' %}?statut=inactif">
                 <strong>{{ total_comptes_inactifs }}</strong>
                 <span>Comptes desactives</span>
-            </div>
+            </a>
         </div>
         <a class="button btn" href="{% url 'liste_utilisateurs' %}">Gerer les utilisateurs</a>
     </aside>
@@ -273,6 +273,35 @@
         <div class="etat-vide">
             {% illustration_vide "building" %}
             <p>Aucun prestataire enregistre.</p>
+        </div>
+        {% endif %}
+    </article>
+
+    <article class="panel">
+        <div class="panel-header">
+            <h2>Dernieres connexions admin</h2>
+        </div>
+        {% if dernieres_connexions_admin %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Administrateur</th>
+                    <th>Derniere connexion</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for compte in dernieres_connexions_admin %}
+                <tr>
+                    <td>{{ compte.get_full_name|default:compte.email }}</td>
+                    <td>{{ compte.last_login|date:"d/m/Y H:i" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="etat-vide">
+            {% illustration_vide "lock" %}
+            <p>Aucune connexion administrateur enregistree.</p>
         </div>
         {% endif %}
     </article>

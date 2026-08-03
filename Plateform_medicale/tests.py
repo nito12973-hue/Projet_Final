@@ -384,6 +384,29 @@ class DashboardAdminTests(TestCase):
         self.assertEqual(response.context['total_comptes_inactifs'], 1)
         self.assertGreaterEqual(response.context['total_comptes_actifs'], 1)
 
+    def test_gouvernance_stats_actifs_inactifs_sont_cliquables(self):
+        response = self.client.get(reverse('dashboard'))
+        self.assertContains(response, f'href="{reverse("liste_utilisateurs")}?statut=actif"')
+        self.assertContains(response, f'href="{reverse("liste_utilisateurs")}?statut=inactif"')
+
+    def test_dernieres_connexions_admin_triees_par_recence(self):
+        ancien = creer_utilisateur(User.Role.ADMIN, 'ancien-admin@santesn.sn')
+        ancien.last_login = timezone.now() - datetime.timedelta(days=5)
+        ancien.save()
+        recent = creer_utilisateur(User.Role.ADMIN, 'recent-admin@santesn.sn')
+        recent.last_login = timezone.now()
+        recent.save()
+
+        response = self.client.get(reverse('dashboard'))
+        emails = [u.email for u in response.context['dernieres_connexions_admin']]
+        self.assertLess(emails.index('recent-admin@santesn.sn'), emails.index('ancien-admin@santesn.sn'))
+
+    def test_dernieres_connexions_admin_exclut_ceux_jamais_connectes(self):
+        jamais_connecte = creer_utilisateur(User.Role.ADMIN, 'jamais-connecte@santesn.sn')
+        response = self.client.get(reverse('dashboard'))
+        emails = [u.email for u in response.context['dernieres_connexions_admin']]
+        self.assertNotIn('jamais-connecte@santesn.sn', emails)
+
     def test_carte_reseau_ignore_les_prestataires_sans_coordonnees(self):
         Prestataire.objects.create(nom='Sans coordonnees', type_prestataire='HOPITAL', partenaire=True)
         Prestataire.objects.create(
