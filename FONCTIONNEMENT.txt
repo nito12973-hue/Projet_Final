@@ -539,10 +539,14 @@ Assure (role_required(ASSURE), prefixe /assure/ + /espace/assure/)
   deja affiche section A propos, aucune donnee inventee), avatars
   initiales empiles (.avatar-initiales, deja utilise Hero). Timeline
   "Comment ca marche" : ligne de connexion entre les 5 etapes
-  (horizontale des que les cartes tiennent sur une seule ligne >=861px,
-  verticale en dessous), simple pseudo-element positionne derriere les
-  cartes (z-index), cachee par leur fond opaque sauf dans les espaces
-  entre cartes -- .etape::before (cercle numerote) non modifie.
+  (horizontale uniquement a partir de 1112px -- grille epinglee a 5
+  colonnes, palier reel ou les 5 etapes tiennent sur une seule ligne --,
+  verticale uniquement sous ~460px -- etat naturel a 1 colonne --, aucune
+  ligne dans la zone intermediaire ou la grille auto-fit affiche 3 ou 4
+  colonnes, les cartes continuant de se reorganiser normalement), simple
+  pseudo-element positionne derriere les cartes (z-index), cachee par leur
+  fond opaque sauf dans les espaces entre cartes -- .etape::before (cercle
+  numerote) non modifie.
   Phases 3-4 restant a faire : section QR Code + showcase des 4
   dashboards + carte du Senegal illustrative (item 22), mention RGPD/
   hebergement sante + page contact commercial B2B (items 24-25) +

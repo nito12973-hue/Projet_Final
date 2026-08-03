@@ -776,9 +776,17 @@
 
         /* Ligne de connexion (Phase 2) : visible uniquement dans les
            espaces entre cartes, cachee derriere le fond opaque de .etape.
-           Horizontale des que les 5 etapes tiennent sur une seule ligne,
-           verticale des que .parcours repasse en une colonne. */
-        @media (min-width: 861px) {
+           Horizontale uniquement a partir de 1112px (grille epinglee a 5
+           colonnes, palier reel ou les 5 etapes tiennent sur une seule
+           ligne), verticale uniquement sous 460px (etat naturel a 1
+           colonne). Pas de ligne dans la zone intermediaire (3-4
+           colonnes) : degradation propre plutot qu'une ligne mal alignee,
+           les cartes continuent de se reorganiser normalement via la
+           grille auto-fit inchangee. */
+        @media (min-width: 1112px) {
+            .parcours {
+                grid-template-columns: repeat(5, 1fr);
+            }
             .parcours::before {
                 content: "";
                 position: absolute;
@@ -786,12 +794,12 @@
                 left: 0;
                 right: 0;
                 height: 2px;
-                background: var(--primary-soft);
+                background: var(--muted);
                 z-index: 0;
             }
         }
 
-        @media (max-width: 860px) {
+        @media (max-width: 460px) {
             .parcours::before {
                 content: "";
                 position: absolute;
@@ -799,7 +807,7 @@
                 bottom: 0;
                 left: 50%;
                 width: 2px;
-                background: var(--primary-soft);
+                background: var(--muted);
                 transform: translateX(-50%);
                 z-index: 0;
             }
