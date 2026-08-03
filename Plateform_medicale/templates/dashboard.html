@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load icones %}
+{% load icones formats %}
 
 {% block title %}Tableau de bord - Administrateur{% endblock %}
 
@@ -11,7 +11,25 @@
     </div>
 </section>
 
-<section class="dash-grid">
+<section class="dash-hero">
+    <div class="dash-hero-carte">
+        <span class="dash-hero-icon">{% icone "receipt" %}</span>
+        <strong>{{ montant_regle|franc_cfa }}</strong>
+        <span>Paiements regles</span>
+    </div>
+    <div class="dash-hero-carte">
+        <span class="dash-hero-icon">{% icone "clock-history" %}</span>
+        <strong>{{ montant_non_regle|franc_cfa }}</strong>
+        <span>En attente de reglement</span>
+    </div>
+    <div class="dash-hero-carte">
+        <span class="dash-hero-icon">{% icone "shield-check" %}</span>
+        <strong>{% if taux_reglement is not None %}{{ taux_reglement }}%{% else %}—{% endif %}</strong>
+        <span>Taux de reglement</span>
+    </div>
+</section>
+
+<section class="dash-grid" style="margin-top:14px;">
     <a class="dash-stat" href="{% url 'liste_patients' %}">
         <span class="dash-stat-icon">{% icone "id-card" %}</span>
         <strong>{{ total_patients }}</strong>
@@ -22,20 +40,30 @@
         <strong>{{ total_medecins }}</strong>
         <span>Medecins actifs</span>
     </a>
+    <a class="dash-stat" href="{% url 'liste_pharmaciens' %}">
+        <span class="dash-stat-icon">{% icone "pill" %}</span>
+        <strong>{{ total_pharmaciens }}</strong>
+        <span>Pharmaciens actifs</span>
+    </a>
     <a class="dash-stat" href="{% url 'liste_prestataires' %}">
         <span class="dash-stat-icon">{% icone "building" %}</span>
         <strong>{{ total_prestataires }}</strong>
-        <span>Prestataires</span>
+        <span>Prestataires partenaires</span>
     </a>
     <a class="dash-stat" href="{% url 'liste_services' %}">
-        <span class="dash-stat-icon">{% icone "pill" %}</span>
+        <span class="dash-stat-icon">{% icone "credit-card" %}</span>
         <strong>{{ total_services }}</strong>
         <span>Services medicaux</span>
     </a>
-    <a class="dash-stat" href="{% url 'liste_prises_en_charge' %}">
-        <span class="dash-stat-icon">{% icone "shield-check" %}</span>
-        <strong>{{ total_prises_en_charge }}</strong>
-        <span>Prises en charge</span>
+    <a class="dash-stat" href="{% url 'rapports' %}">
+        <span class="dash-stat-icon">{% icone "clipboard-list" %}</span>
+        <strong>{{ total_consultations }}</strong>
+        <span>Consultations</span>
+    </a>
+    <a class="dash-stat" href="{% url 'rapports' %}">
+        <span class="dash-stat-icon">{% icone "qr-scan" %}</span>
+        <strong>{{ total_ordonnances }}</strong>
+        <span>Ordonnances emises</span>
     </a>
 </section>
 
@@ -68,11 +96,22 @@
 
     <aside class="panel governance-card">
         <span class="dash-stat-icon">{% icone "lock" %}</span>
-        <h2>Principe de moindre privilege</h2>
+        <h2>Comptes et gouvernance</h2>
         <p class="subtitle">
             L'administrateur gere les comptes, les prestataires et le suivi.
             Il ne saisit pas de diagnostic, ne cree pas d'ordonnance et ne valide pas de delivrance.
         </p>
+        <div class="gouvernance-comptes">
+            <div>
+                <strong>{{ total_comptes_actifs }}</strong>
+                <span>Comptes actifs</span>
+            </div>
+            <div>
+                <strong>{{ total_comptes_inactifs }}</strong>
+                <span>Comptes desactives</span>
+            </div>
+        </div>
+        <a class="button btn" href="{% url 'liste_utilisateurs' %}">Gerer les utilisateurs</a>
     </aside>
 </section>
 
@@ -87,16 +126,16 @@
             <thead>
                 <tr>
                     <th>Assure</th>
+                    <th>Type</th>
                     <th>Telephone</th>
-                    <th>Adresse</th>
                 </tr>
             </thead>
             <tbody>
                 {% for patient in derniers_patients %}
                 <tr>
                     <td>{{ patient.prenom }} {{ patient.nom }}</td>
-                    <td>{{ patient.telephone }}</td>
-                    <td>{{ patient.adresse|default:"-" }}</td>
+                    <td>{{ patient.get_type_beneficiaire_display }}</td>
+                    <td>{{ patient.telephone|default:"-" }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -119,6 +158,7 @@
             <thead>
                 <tr>
                     <th>Assure</th>
+                    <th>Date</th>
                     <th>Statut</th>
                 </tr>
             </thead>
@@ -126,6 +166,7 @@
                 {% for prise in dernieres_prises_en_charge %}
                 <tr>
                     <td>{{ prise.patient }}</td>
+                    <td>{{ prise.date_demande|date:"d/m/Y" }}</td>
                     <td><span class="dash-pill {% if prise.statut == 'validee' or prise.statut == 'terminee' %}ok{% elif prise.statut == 'refusee' %}danger{% else %}attente{% endif %}">{{ prise.get_statut_display }}</span></td>
                 </tr>
                 {% endfor %}
@@ -140,7 +181,26 @@
     </article>
 </section>
 
+<section class="panel" style="margin-top:18px;padding:22px 24px;">
+    <div class="panel-header" style="padding:0 0 16px;">
+        <div>
+            <h2>Reseau de prestataires partenaires</h2>
+            <p class="subtitle" style="margin:2px 0 0;">Couverture geographique du reseau conventionne.</p>
+        </div>
+        <a class="button btn" href="{% url 'liste_prestataires' %}">Voir tout</a>
+    </div>
+    {% if prestataires_carte %}
+    <div id="carte-reseau-admin" style="height:320px;border-radius:12px;"></div>
+    {% else %}
+    <div class="etat-vide">
+        {% illustration_vide "map-pin" %}
+        <p>Aucun prestataire partenaire geolocalise pour le moment.</p>
+    </div>
+    {% endif %}
+</section>
+
 {{ tendance_consultations|json_script:"donnees-tendance-consultations" }}
+{{ prestataires_carte|json_script:"donnees-prestataires-carte" }}
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"
         integrity="sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC"
@@ -203,6 +263,79 @@
                 },
             },
         });
+    })();
+</script>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+    (function () {
+        // Carte du reseau de partenaires : cercles colores par type (memes
+        // tokens de couleur --primary*), scrollWheelZoom desactive (widget
+        // dans une page qui defile, pas la carte plein-ecran de
+        // prestataires_proches.html). Construction des popups via
+        // textContent (jamais de concatenation de chaines), meme regle que
+        // partout ailleurs ou Leaflet affiche des donnees stockees.
+        var conteneur = document.getElementById('carte-reseau-admin');
+        if (!conteneur || typeof L === 'undefined') { return; }
+
+        var element = document.getElementById('donnees-prestataires-carte');
+        var prestataires = element ? JSON.parse(element.textContent) : [];
+        if (!prestataires.length) { return; }
+
+        function tokenCouleur(nom, repli) {
+            var valeur = getComputedStyle(document.documentElement).getPropertyValue(nom).trim();
+            return valeur || repli;
+        }
+
+        var COULEURS_TYPE = {
+            HOPITAL: tokenCouleur('--primary', '#0e7c86'),
+            CLINIQUE: tokenCouleur('--primary-accent', '#4fb8ae'),
+            PHARMACIE: tokenCouleur('--accent', '#e0824f'),
+            CABINET: tokenCouleur('--primary-strong', '#095059'),
+        };
+
+        var premiere = prestataires[0];
+        var carte = L.map('carte-reseau-admin', { scrollWheelZoom: false }).setView(
+            [parseFloat(premiere.latitude), parseFloat(premiere.longitude)], 7
+        );
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            maxZoom: 18,
+        }).addTo(carte);
+
+        var bornes = [];
+        prestataires.forEach(function (prestataire) {
+            var position = [parseFloat(prestataire.latitude), parseFloat(prestataire.longitude)];
+            bornes.push(position);
+            var couleur = COULEURS_TYPE[prestataire.type_prestataire] || COULEURS_TYPE.CABINET;
+
+            var marqueur = L.circleMarker(position, {
+                radius: 7,
+                color: couleur,
+                fillColor: couleur,
+                fillOpacity: 0.85,
+                weight: 2,
+            }).addTo(carte);
+
+            var contenu = document.createElement('div');
+            var titre = document.createElement('strong');
+            titre.textContent = prestataire.nom;
+            contenu.appendChild(titre);
+            if (prestataire.ville) {
+                contenu.appendChild(document.createElement('br'));
+                var ville = document.createElement('span');
+                ville.textContent = prestataire.ville;
+                contenu.appendChild(ville);
+            }
+            marqueur.bindPopup(contenu);
+        });
+
+        if (bornes.length > 1) {
+            carte.fitBounds(bornes, { padding: [24, 24] });
+        }
     })();
 </script>
 {% endblock %}

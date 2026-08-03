@@ -273,6 +273,76 @@ class ProtectionDesVuesTests(TestCase):
         self.assertEqual(response.status_code, 403)
 
 
+class DashboardAdminTests(TestCase):
+    def setUp(self):
+        creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
+        self.client.login(username='admin@santesn.sn', password=PASSWORD)
+
+    def test_sans_donnees_le_bandeau_financier_affiche_un_tiret(self):
+        response = self.client.get(reverse('dashboard'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '—')
+        self.assertContains(response, '0\xa0FCFA')
+
+    def test_bandeau_financier_calcule_les_montants_regles_et_en_attente(self):
+        medecin = creer_medecin('medecin@santesn.sn')
+        patient = creer_patient()
+        service = ServiceMedical.objects.create(nom='Consultation', prix=Decimal('10000'))
+
+        consultation_reglee = Consultation.objects.create(
+            patient=patient, medecin=medecin, service=service,
+            date_consultation=timezone.now(), diagnostic='Test',
+        )
+        paiement_regle = Paiement.calculer_pour(consultation_reglee)
+        paiement_regle.statut = Paiement.Statut.REGLE
+        paiement_regle.save()
+
+        consultation_non_reglee = Consultation.objects.create(
+            patient=patient, medecin=medecin, service=service,
+            date_consultation=timezone.now(), diagnostic='Test',
+        )
+        Paiement.calculer_pour(consultation_non_reglee).save()
+
+        response = self.client.get(reverse('dashboard'))
+        self.assertEqual(response.context['montant_regle'], Decimal('10000'))
+        self.assertEqual(response.context['montant_non_regle'], Decimal('10000'))
+        self.assertEqual(response.context['taux_reglement'], 50)
+
+    def test_compte_les_pharmaciens(self):
+        creer_pharmacien('pharmacien@santesn.sn')
+        response = self.client.get(reverse('dashboard'))
+        self.assertEqual(response.context['total_pharmaciens'], 1)
+        self.assertContains(response, 'Pharmaciens actifs')
+
+    def test_ne_compte_que_les_prestataires_partenaires(self):
+        Prestataire.objects.create(nom='Clinique partenaire', type_prestataire='CLINIQUE', partenaire=True)
+        Prestataire.objects.create(nom='Cabinet non partenaire', type_prestataire='CABINET', partenaire=False)
+        response = self.client.get(reverse('dashboard'))
+        self.assertEqual(response.context['total_prestataires'], 1)
+
+    def test_gouvernance_compte_les_comptes_actifs_et_inactifs(self):
+        inactif = creer_utilisateur(User.Role.MEDECIN, 'inactif@santesn.sn')
+        inactif.is_active = False
+        inactif.save()
+        response = self.client.get(reverse('dashboard'))
+        self.assertEqual(response.context['total_comptes_inactifs'], 1)
+        self.assertGreaterEqual(response.context['total_comptes_actifs'], 1)
+
+    def test_carte_reseau_ignore_les_prestataires_sans_coordonnees(self):
+        Prestataire.objects.create(nom='Sans coordonnees', type_prestataire='HOPITAL', partenaire=True)
+        Prestataire.objects.create(
+            nom='Avec coordonnees', type_prestataire='HOPITAL', partenaire=True,
+            latitude=Decimal('14.6928'), longitude=Decimal('-17.4467'),
+        )
+        response = self.client.get(reverse('dashboard'))
+        self.assertEqual(len(response.context['prestataires_carte']), 1)
+        self.assertContains(response, 'carte-reseau-admin')
+
+    def test_carte_reseau_etat_vide_sans_prestataire_geolocalise(self):
+        response = self.client.get(reverse('dashboard'))
+        self.assertContains(response, 'Aucun prestataire partenaire geolocalise')
+
+
 class GestionUtilisateursTests(TestCase):
     def setUp(self):
         self.admin = creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
