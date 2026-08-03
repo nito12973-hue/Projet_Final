@@ -578,9 +578,12 @@ Assure (role_required(ASSURE), prefixe /assure/ + /espace/assure/)
   reutilisant .liste-atouts -- uniquement des pratiques reellement
   implementees (acces par role, pas d'inscription publique, QR unique,
   tentatives de connexion limitees), avec une ligne de disclosure
-  explicite et visible : aucune certification formelle (hebergement
-  sante, audit RGPD) n'est encore en place, jamais affirmee comme
-  acquise. Section FAQ : HTML natif <details>/<summary>, aucun JS, 5
+  explicite et visible : aucune certification formelle (hebergement de
+  donnees de sante HDS, audit RGPD) n'est en place a ce jour, jamais
+  affirmee comme acquise ou en cours d'evaluation -- corrigee en ce
+  sens apres une revue finale ayant releve qu'une premiere version
+  ("en cours d'evaluation") laissait a tort croire a un processus de
+  certification actif. Section FAQ : HTML natif <details>/<summary>, aucun JS, 5
   questions ancrees dans des faits produit deja livres -- aucun
   engagement commercial invente (pas de prix, pas de SLA, pas de
   delai). Footer restructure en 3 colonnes (marque + slogan,
