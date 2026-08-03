@@ -756,6 +756,134 @@
 
         .mini-famille .avatar-initiales:first-child { margin-left: 0; }
 
+        /* ===== Vérification QR (Phase 3) ===== */
+        .flux-qr {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 18px;
+        }
+
+        @media (min-width: 640px) {
+            .flux-qr {
+                grid-template-columns: repeat(3, 1fr);
+                position: relative;
+            }
+
+            .flux-qr::before {
+                content: "";
+                position: absolute;
+                top: 50px;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: var(--muted);
+                z-index: 0;
+            }
+
+            .flux-etape {
+                position: relative;
+                z-index: 1;
+            }
+        }
+
+        .flux-etape {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px 20px 24px;
+            text-align: center;
+        }
+
+        .flux-etape .pastille { margin: 0 auto 14px; }
+        .flux-etape h3 { font-size: 16px; margin-bottom: 6px; }
+        .flux-etape p { font-size: 13.5px; color: var(--muted); }
+
+        /* ===== Showcase dashboards (Phase 3) ===== */
+        .onglet-input {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        .onglets-liste {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 22px;
+        }
+
+        .onglet-label {
+            display: inline-flex;
+            align-items: center;
+            padding: 10px 22px;
+            border-radius: 999px;
+            border: 1.5px solid var(--border);
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--muted);
+            cursor: pointer;
+            transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+        }
+
+        .onglet-label:hover { border-color: var(--primary); color: var(--primary-dark); }
+
+        .disclosure-demo {
+            text-align: center;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--muted);
+            margin-bottom: 24px;
+        }
+
+        .onglet-panneau { display: none; }
+
+        .onglet-panneau .carte-demo { animation: none; }
+
+        #onglet-admin:checked ~ .onglets-liste label[for="onglet-admin"],
+        #onglet-assure:checked ~ .onglets-liste label[for="onglet-assure"],
+        #onglet-medecin:checked ~ .onglets-liste label[for="onglet-medecin"],
+        #onglet-pharmacien:checked ~ .onglets-liste label[for="onglet-pharmacien"] {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-strong) 100%);
+            border-color: transparent;
+            color: #fff;
+        }
+
+        #onglet-admin:checked ~ .onglets-panneaux .panneau-admin,
+        #onglet-assure:checked ~ .onglets-panneaux .panneau-assure,
+        #onglet-medecin:checked ~ .onglets-panneaux .panneau-medecin,
+        #onglet-pharmacien:checked ~ .onglets-panneaux .panneau-pharmacien {
+            display: block;
+        }
+
+        #onglet-admin:focus-visible ~ .onglets-liste label[for="onglet-admin"],
+        #onglet-assure:focus-visible ~ .onglets-liste label[for="onglet-assure"],
+        #onglet-medecin:focus-visible ~ .onglets-liste label[for="onglet-medecin"],
+        #onglet-pharmacien:focus-visible ~ .onglets-liste label[for="onglet-pharmacien"] {
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(14, 124, 134, 0.35);
+        }
+
+        .onglets-panneaux {
+            max-width: 560px;
+            margin: 0 auto;
+        }
+
+        .mini-stats-grille {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid var(--border);
+        }
+
         /* Parcours (étapes) */
         .parcours {
             display: grid;
@@ -1285,6 +1413,170 @@
                     <span class="pastille">{% icone "bar-chart" %}</span>
                     <h3>Suivi et statistiques</h3>
                     <p>Tableaux de bord en temps réel : consultations, ordonnances, rendez-vous et paiements.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== VÉRIFICATION QR ===== -->
+    <section class="bloc alterne" id="verification">
+        <div class="conteneur">
+            <div class="titre-section revele">
+                <span class="sur-titre">Sécurité</span>
+                <h2>Vérification en un scan</h2>
+                <p>Chaque ordonnance est infalsifiable, de la consultation à la pharmacie.</p>
+            </div>
+            <div class="flux-qr">
+                <div class="flux-etape revele">
+                    <span class="pastille">{% icone "stethoscope" %}</span>
+                    <h3>Le médecin génère</h3>
+                    <p>Diagnostic, traitement et médicaments enregistrés, ordonnance créée en un clic.</p>
+                </div>
+                <div class="flux-etape revele">
+                    <span class="pastille">{% icone "qr-scan" %}</span>
+                    <h3>QR Code unique</h3>
+                    <p>Chaque ordonnance reçoit un identifiant infalsifiable, généré automatiquement.</p>
+                </div>
+                <div class="flux-etape revele">
+                    <span class="pastille">{% icone "pill" %}</span>
+                    <h3>Le pharmacien scanne</h3>
+                    <p>Un scan suffit pour vérifier l'authenticité et valider la délivrance.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== SHOWCASE DASHBOARDS ===== -->
+    <section class="bloc" id="dashboards">
+        <div class="conteneur">
+            <div class="titre-section revele">
+                <span class="sur-titre">Aperçu</span>
+                <h2>Un espace dédié pour chaque rôle</h2>
+                <p>Découvrez ce que voit chaque acteur de la plateforme, selon son rôle.</p>
+            </div>
+            <div class="onglets-dashboards revele" role="group" aria-label="Choisir un rôle">
+                <input type="radio" name="onglet-dashboard" id="onglet-admin" class="onglet-input" checked>
+                <input type="radio" name="onglet-dashboard" id="onglet-assure" class="onglet-input">
+                <input type="radio" name="onglet-dashboard" id="onglet-medecin" class="onglet-input">
+                <input type="radio" name="onglet-dashboard" id="onglet-pharmacien" class="onglet-input">
+
+                <div class="onglets-liste">
+                    <label for="onglet-admin" class="onglet-label">Admin</label>
+                    <label for="onglet-assure" class="onglet-label">Assuré</label>
+                    <label for="onglet-medecin" class="onglet-label">Médecin</label>
+                    <label for="onglet-pharmacien" class="onglet-label">Pharmacien</label>
+                </div>
+
+                <p class="disclosure-demo">Aperçu illustratif — données d'exemple, pas un compte réel.</p>
+
+                <div class="onglets-panneaux">
+                    <div class="onglet-panneau panneau-admin">
+                        <div class="carte-demo" aria-hidden="true">
+                            <div class="entete-carte">
+                                <span class="pastille">{% icone "bar-chart" %}</span>
+                                <div>
+                                    <h3>Tableau de bord</h3>
+                                    <span class="sous">Vue d'ensemble</span>
+                                </div>
+                            </div>
+                            <div class="mini-stats-grille">
+                                <div class="mini-stat">
+                                    <span class="mini-stat-icon">{% icone "users" %}</span>
+                                    <div><strong>128</strong><span>Patients</span></div>
+                                </div>
+                                <div class="mini-stat">
+                                    <span class="mini-stat-icon">{% icone "stethoscope" %}</span>
+                                    <div><strong>14</strong><span>Médecins</span></div>
+                                </div>
+                                <div class="mini-stat">
+                                    <span class="mini-stat-icon">{% icone "building" %}</span>
+                                    <div><strong>11</strong><span>Prestataires</span></div>
+                                </div>
+                                <div class="mini-stat">
+                                    <span class="mini-stat-icon">{% icone "shield-check" %}</span>
+                                    <div><strong>9</strong><span>Prises en charge</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="onglet-panneau panneau-assure">
+                        <div class="carte-demo" aria-hidden="true">
+                            <div class="entete-carte">
+                                <span class="pastille">{% icone "user-circle" %}</span>
+                                <div>
+                                    <h3>Mamadou Diallo</h3>
+                                    <span class="sous">IPM Santé · EMP001</span>
+                                </div>
+                            </div>
+                            <div class="ligne-rdv">
+                                <span class="heure">09h00</span>
+                                <div>
+                                    <div class="nom">Dr Ndiaye</div>
+                                    <div class="detail">Clinique Pasteur</div>
+                                </div>
+                                <span class="etiquette">À venir</span>
+                            </div>
+                            <div class="ligne-rdv">
+                                <span class="nom">Ordonnance disponible</span>
+                                <span class="etiquette">Prête</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="onglet-panneau panneau-medecin">
+                        <div class="carte-demo" aria-hidden="true">
+                            <div class="entete-carte">
+                                <span class="pastille">{% icone "stethoscope" %}</span>
+                                <div>
+                                    <h3>Agenda — Dr Ndiaye</h3>
+                                    <span class="sous">Clinique Pasteur</span>
+                                </div>
+                            </div>
+                            <div class="ligne-rdv">
+                                <span class="heure">08h00</span>
+                                <div>
+                                    <div class="nom">Mamadou Diallo</div>
+                                    <div class="detail">IPM Santé · EMP001</div>
+                                </div>
+                                <span class="etiquette">Confirmé</span>
+                            </div>
+                            <div class="ligne-rdv">
+                                <span class="heure">09h00</span>
+                                <div>
+                                    <div class="nom">Aïssatou Diallo</div>
+                                    <div class="detail">Ayant droit · Épouse</div>
+                                </div>
+                                <span class="etiquette">Confirmé</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="onglet-panneau panneau-pharmacien">
+                        <div class="carte-demo" aria-hidden="true">
+                            <div class="entete-carte">
+                                <span class="pastille">{% icone "qr-scan" %}</span>
+                                <div>
+                                    <h3>Scan d'ordonnance</h3>
+                                    <span class="sous">Pharmacie Saint-Louis</span>
+                                </div>
+                            </div>
+                            <div class="ligne-rdv">
+                                <span class="motif-qr" aria-hidden="true"></span>
+                                <div>
+                                    <div class="nom">Ordonnance vérifiée</div>
+                                    <div class="detail">Mamadou Diallo</div>
+                                </div>
+                                <span class="etiquette">Valide</span>
+                            </div>
+                            <div class="mini-stats">
+                                <div class="mini-stat">
+                                    <span class="mini-stat-icon">{% icone "pill" %}</span>
+                                    <div><strong>3</strong><span>Médicaments</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

@@ -547,10 +547,32 @@ Assure (role_required(ASSURE), prefixe /assure/ + /espace/assure/)
   pseudo-element positionne derriere les cartes (z-index), cachee par leur
   fond opaque sauf dans les espaces entre cartes -- .etape::before (cercle
   numerote) non modifie.
-  Phases 3-4 restant a faire : section QR Code + showcase des 4
-  dashboards + carte du Senegal illustrative (item 22), mention RGPD/
-  hebergement sante + page contact commercial B2B (items 24-25) +
-  temoignages/FAQ/footer premium.
+  Phase 3 livree (Verification QR + showcase des 4 dashboards, item 22) :
+  section "Verification en un scan", 3 etapes (medecin genere -> QR
+  unique -> pharmacien scanne), grille fixe repeat(3, 1fr) (pas
+  auto-fit/minmax, contrairement a la Parcours de Phase 1) -- avec
+  seulement 3 items la grille tient sur une seule ligne des 640px, pas
+  de palier intermediaire a gerer. Ligne de connexion en --muted (lecon
+  de Phase 2 sur le contraste, jamais --primary-soft). Showcase des 4
+  dashboards (Admin/Assure/Medecin/Pharmacien) : onglets 100% CSS
+  (input radio + label + selecteur :checked, meme principe que le
+  bouton menu mobile deja en place), aucun JS ajoute. Reutilise les
+  identites deja etablies dans le mockup telephone du Hero (Dr Ndiaye,
+  Mamadou Diallo, Aissatou Diallo, IPM Sante/EMP001) plutot que d'en
+  inventer de nouvelles ; une seule ligne de disclosure visible
+  ("Apercu illustratif -- donnees d'exemple"), meme principe que les
+  compteurs Statistiques (Phase 1). `.onglet-input` masque visuellement
+  via la technique clip-based standard (pas display:none), reste
+  focusable au clavier ; role="group" aria-label sur le conteneur (pas
+  role="tablist", invalide sans enfants role="tab" -- corrige apres
+  revue). Carte du Senegal illustrative abandonnee (hors perimetre) :
+  les 11 Prestataire partenaires en base sont des donnees de seed/test
+  (ex. "Clinique Mbour", 3 sur 11 geocodes), pas de vrais partenaires
+  signes -- meme probleme que les faux logos clients deja ecarte en
+  Phase 2.
+  Phase 4 restant a faire : mention RGPD/hebergement sante + page
+  contact commercial B2B (items 24-25) + temoignages/FAQ/footer
+  premium.
 - templatetags/icones.py : dictionnaire _ICONES, tag {% icone "nom" %} —
   SVG trait fin 24x24 inline, aucune dependance externe (pas de police
   d'icones, pas de CDN). Toujours reutiliser une icone existante avant d'en
