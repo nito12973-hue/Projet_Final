@@ -313,6 +313,28 @@ def dashboard(request):
         .values("nom", "type_prestataire", "ville", "latitude", "longitude")
     )
 
+    # Activite du jour, plateforme entiere (pas un seul medecin) : pouls de
+    # l'activite absent jusqu'ici, seuls des totaux globaux sans notion de
+    # temps etaient affiches.
+    maintenant = timezone.now()
+    debut_jour = maintenant.replace(hour=0, minute=0, second=0, microsecond=0)
+    fin_jour = debut_jour + datetime.timedelta(days=1)
+    total_rendez_vous_aujourd_hui = (
+        RendezVous.objects.filter(date_heure__gte=debut_jour, date_heure__lt=fin_jour)
+        .exclude(statut=RendezVous.Statut.ANNULE)
+        .count()
+    )
+    total_consultations_aujourd_hui = Consultation.objects.filter(
+        date_consultation__gte=debut_jour, date_consultation__lt=fin_jour
+    ).count()
+
+    # Comptes recemment crees, tous roles confondus (remplace la seule vue
+    # "derniers assures" qui ne montrait pas la croissance medecins/
+    # pharmaciens) ; les prestataires n'ont pas de compte utilisateur, liste
+    # separee.
+    derniers_comptes = User.objects.order_by("-date_joined")[:5]
+    derniers_prestataires = Prestataire.objects.order_by("-id")[:5]
+
     contexte = {
         "total_patients": Patient.objects.count(),
         "total_medecins": Medecin.objects.count(),
@@ -320,15 +342,21 @@ def dashboard(request):
         "total_prestataires": Prestataire.objects.filter(partenaire=True).count(),
         "total_services": ServiceMedical.objects.count(),
         "total_prises_en_charge": PriseEnCharge.objects.count(),
+        "total_prises_en_charge_attente": PriseEnCharge.objects.filter(statut="en_attente").count(),
         "total_consultations": Consultation.objects.count(),
         "total_ordonnances": Ordonnance.objects.count(),
         "montant_regle": montant_regle,
         "montant_non_regle": montant_non_regle,
         "taux_reglement": taux_reglement,
+        "total_paiements_non_regles": Paiement.objects.filter(statut=Paiement.Statut.NON_REGLE).count(),
         "total_comptes_actifs": User.objects.filter(is_active=True).count(),
         "total_comptes_inactifs": User.objects.filter(is_active=False).count(),
+        "total_rendez_vous_aujourd_hui": total_rendez_vous_aujourd_hui,
+        "total_consultations_aujourd_hui": total_consultations_aujourd_hui,
         "dernieres_prises_en_charge": dernieres_prises_en_charge,
         "derniers_patients": derniers_patients,
+        "derniers_comptes": derniers_comptes,
+        "derniers_prestataires": derniers_prestataires,
         "tendance_consultations": _consultations_par_jour(),
         "prestataires_carte": prestataires_carte,
     }
@@ -660,13 +688,22 @@ def liste_prises_en_charge(request):
             Q(patient__nom__icontains=recherche) | Q(patient__prenom__icontains=recherche)
         )
 
+    statut = request.GET.get("statut", "")
+    if statut:
+        prises_en_charge = prises_en_charge.filter(statut=statut)
+
     prises_en_charge = _trier(
         request, prises_en_charge, ["patient__nom", "date_demande", "statut"], "-date_demande",
     )
     return render(
         request,
         "liste_prises_en_charge.html",
-        {"prises_en_charge": _paginer(request, prises_en_charge), "recherche": recherche},
+        {
+            "prises_en_charge": _paginer(request, prises_en_charge),
+            "recherche": recherche,
+            "statut_choisi": statut,
+            "statuts": PriseEnCharge.STATUT_CHOICES,
+        },
     )
 
 

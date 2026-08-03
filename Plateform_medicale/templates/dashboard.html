@@ -67,6 +67,37 @@
     </a>
 </section>
 
+<section class="panel" style="margin-top:14px;padding:20px 24px;">
+    <div class="panel-header" style="padding:0 0 14px;">
+        <div>
+            <h2>Aujourd'hui</h2>
+            <p class="subtitle" style="margin:2px 0 0;">Activite de la plateforme, tous roles confondus.</p>
+        </div>
+    </div>
+    <div class="dash-grid">
+        <div class="dash-stat" style="cursor:default;">
+            <span class="dash-stat-icon">{% icone "calendar" %}</span>
+            <strong>{{ total_rendez_vous_aujourd_hui }}</strong>
+            <span>Rendez-vous</span>
+        </div>
+        <div class="dash-stat" style="cursor:default;">
+            <span class="dash-stat-icon">{% icone "clipboard-list" %}</span>
+            <strong>{{ total_consultations_aujourd_hui }}</strong>
+            <span>Consultations</span>
+        </div>
+        <a class="dash-stat" href="{% url 'liste_prises_en_charge' %}?statut=en_attente">
+            <span class="dash-stat-icon">{% icone "clock-history" %}</span>
+            <strong>{{ total_prises_en_charge_attente }}</strong>
+            <span>Prises en charge en attente</span>
+        </a>
+        <a class="dash-stat" href="{% url 'liste_paiements' %}?statut=non_regle">
+            <span class="dash-stat-icon">{% icone "alert-triangle" %}</span>
+            <strong>{{ total_paiements_non_regles }}</strong>
+            <span>Paiements en attente</span>
+        </a>
+    </div>
+</section>
+
 <section class="panel" style="margin-top:18px;padding:20px 24px;">
     <div class="panel-header" style="padding:0 0 14px;">
         <div>
@@ -176,6 +207,72 @@
         <div class="etat-vide">
             {% illustration_vide "shield-check" %}
             <p>Aucune prise en charge enregistree.</p>
+        </div>
+        {% endif %}
+    </article>
+</section>
+
+<section class="admin-layout">
+    <article class="panel">
+        <div class="panel-header">
+            <h2>Comptes recemment crees</h2>
+            <a class="button" href="{% url 'liste_utilisateurs' %}">Voir tout</a>
+        </div>
+        {% if derniers_comptes %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Utilisateur</th>
+                    <th>Role</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for compte in derniers_comptes %}
+                <tr>
+                    <td>{{ compte.get_full_name|default:compte.email }}</td>
+                    <td>{{ compte.get_role_display }}</td>
+                    <td>{{ compte.date_joined|date:"d/m/Y" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="etat-vide">
+            {% illustration_vide "users" %}
+            <p>Aucun compte enregistre.</p>
+        </div>
+        {% endif %}
+    </article>
+
+    <article class="panel">
+        <div class="panel-header">
+            <h2>Derniers prestataires ajoutes</h2>
+            <a class="button" href="{% url 'liste_prestataires' %}">Voir tout</a>
+        </div>
+        {% if derniers_prestataires %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Prestataire</th>
+                    <th>Type</th>
+                    <th>Ville</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for prestataire in derniers_prestataires %}
+                <tr>
+                    <td>{{ prestataire.nom }}</td>
+                    <td>{{ prestataire.get_type_prestataire_display }}</td>
+                    <td>{{ prestataire.ville|default:"-" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="etat-vide">
+            {% illustration_vide "building" %}
+            <p>Aucun prestataire enregistre.</p>
         </div>
         {% endif %}
     </article>

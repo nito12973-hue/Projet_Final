@@ -20,8 +20,17 @@
             <input id="q" type="text" name="q" placeholder="Nom ou prenom du patient" value="{{ recherche }}" style="margin-bottom:0;">
         </div>
     </div>
+    <div style="min-width:220px;">
+        <label for="statut">Statut</label>
+        <select id="statut" name="statut" style="margin-bottom:0;">
+            <option value="">Tous</option>
+            {% for value, label in statuts %}
+            <option value="{{ value }}" {% if value == statut_choisi %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
     <button type="submit" class="button primary btn">Filtrer</button>
-    {% if recherche %}
+    {% if recherche or statut_choisi %}
     <a href="{% url 'liste_prises_en_charge' %}" class="button btn">Reinitialiser</a>
     {% endif %}
 </form>
@@ -70,7 +79,7 @@
 {% else %}
 <div class="etat-vide">
     {% illustration_vide "shield-check" %}
-    <p>{% if recherche %}Aucune prise en charge ne correspond a cette recherche.{% else %}Aucune prise en charge enregistree.{% endif %}</p>
+    <p>{% if recherche or statut_choisi %}Aucune prise en charge ne correspond a ces criteres.{% else %}Aucune prise en charge enregistree.{% endif %}</p>
 </div>
 {% endif %}
 {% endblock %}

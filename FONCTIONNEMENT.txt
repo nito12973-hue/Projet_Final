@@ -277,8 +277,30 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
                           construction des popups via textContent -- jamais
                           de concatenation de chaines HTML --,
                           scrollWheelZoom desactive car widget dans une
-                          page qui defile). 7 tests dedies
-                          (DashboardAdminTests).
+                          page qui defile).
+                          Deuxieme passe (meme module, audit approfondi) :
+                          panel "Aujourd'hui" (rendez-vous + consultations
+                          du jour, plateforme entiere -- pas un seul
+                          medecin), compteurs "Prises en charge en attente"/
+                          "Paiements en attente" cliquables (le premier a
+                          necessite d'ajouter un filtre 'statut' a
+                          liste_prises_en_charge, qui n'en avait pas --
+                          meme convention que liste_paiements), "Comptes
+                          recemment crees" (tous roles, User.date_joined --
+                          complete "Derniers assures" qui ne couvre pas
+                          medecins/pharmaciens) et "Derniers prestataires
+                          ajoutes" (Prestataire n'a pas de compte
+                          utilisateur, ne peut pas apparaitre dans le widget
+                          precedent). Explicitement hors perimetre de cette
+                          refonte visuelle (demanderaient un nouveau modele
+                          de donnees, pas un ajustement du dashboard) :
+                          gestion d'entreprises/employeurs (concept absent
+                          du modele de donnees SantesN), journal d'audit
+                          applicatif, workflow de validation formelle des
+                          prestataires (distinct du simple booleen
+                          partenaire). 11 tests dedies au total
+                          (DashboardAdminTests) + 1 sur le nouveau filtre
+                          statut de liste_prises_en_charge.
   rapports / exporter_rapports_excel / exporter_rapports_pdf
                                       _donnees_rapports() est la SEULE
                                       source de donnees, partagee par la
@@ -317,7 +339,10 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
   liste_prises_en_charge / ajouter_prise_en_charge /
     modifier_prise_en_charge / supprimer_prise_en_charge
                                       recherche par nom/prenom du patient
-                                      (parametre GET 'q')
+                                      (parametre GET 'q') + filtre par
+                                      statut (parametre GET 'statut',
+                                      ajoute pour le lien cliquable du
+                                      dashboard admin)
   liste_paiements / marquer_paiement_regle / exporter_paiements_csv
                                       recherche par nom/prenom du patient en
                                       plus du filtre statut existant ;

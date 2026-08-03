@@ -14,10 +14,9 @@ Ce guide explique comment utiliser la plateforme SantéSN au quotidien, écran p
 - [Médecin](#médecin)
 - [Pharmacien](#pharmacien)
 - [Questions fréquentes](#questions-fréquentes)
-
 ---
-
 ## Se connecter
+
 
 SantéSN n'a pas d'inscription libre : **seul un administrateur peut créer un
 compte**. Si vous n'avez pas encore d'identifiants, contactez votre
