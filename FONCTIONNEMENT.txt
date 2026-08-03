@@ -522,10 +522,31 @@ Assure (role_required(ASSURE), prefixe /assure/ + /espace/assure/)
   et non des donnees d'usage reelles (ligne de texte visible, pas cachee).
   Tout respecte prefers-reduced-motion (bloc existant, aucune regle
   ajoutee). Aucune route/vue/modele touche, aucune dependance ajoutee ;
-  seul landing.html est modifie. Phases 2-4 restant a faire : partenaires
-  ("Ils nous font confiance"), refonte des cartes Services et timeline
-  "Comment ca marche", section QR Code + showcase des 4 dashboards + carte
-  du Senegal illustrative, temoignages/FAQ/contact enrichi/footer premium.
+  seul landing.html est modifie.
+  Phase 2 livree (Ecosysteme + Services + Parcours) : nouvelle section
+  "Ecosysteme" entre le Hero et Statistiques -- remplace le concept
+  "Ils nous font confiance" (item 21 du plan direction artistique),
+  absent de sens tant qu'aucun client reel n'est signe (le modele de
+  donnees n'a meme pas de concept d'entreprise/employeur). 6 badges
+  categorie (Assurances sante, IPM, Hopitaux, Cliniques, Pharmacies,
+  Grandes entreprises), aucun logo/nom d'organisation fictif -- meme
+  logique de transparence que les compteurs de la section Statistiques
+  (Phase 1). Cartes Services : 3 des 6 cartes (Ordonnances QR Code,
+  Prise en charge assurance, Couverture familiale) recoivent un
+  mini-visuel CSS/SVG pur decoratif (aria-hidden) reutilisant des
+  composants existants -- motif QR (.motif-qr, deja utilise Hero),
+  repartition assurance/patient 90/10 (memes chiffres que l'exemple
+  deja affiche section A propos, aucune donnee inventee), avatars
+  initiales empiles (.avatar-initiales, deja utilise Hero). Timeline
+  "Comment ca marche" : ligne de connexion entre les 5 etapes
+  (horizontale des que les cartes tiennent sur une seule ligne >=861px,
+  verticale en dessous), simple pseudo-element positionne derriere les
+  cartes (z-index), cachee par leur fond opaque sauf dans les espaces
+  entre cartes -- .etape::before (cercle numerote) non modifie.
+  Phases 3-4 restant a faire : section QR Code + showcase des 4
+  dashboards + carte du Senegal illustrative (item 22), mention RGPD/
+  hebergement sante + page contact commercial B2B (items 24-25) +
+  temoignages/FAQ/footer premium.
 - templatetags/icones.py : dictionnaire _ICONES, tag {% icone "nom" %} —
   SVG trait fin 24x24 inline, aucune dependance externe (pas de police
   d'icones, pas de CDN). Toujours reutiliser une icone existante avant d'en

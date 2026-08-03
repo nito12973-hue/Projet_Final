@@ -141,6 +141,24 @@ class SetupWizardTests(TestCase):
         self.assertRedirects(response, reverse('login'))
 
 
+class LandingTests(TestCase):
+    def test_page_publique_affiche_la_section_ecosysteme(self):
+        response = self.client.get(reverse('landing'))
+        self.assertContains(response, "Pensé pour tout l'écosystème de la santé")
+        self.assertContains(response, "Assurances santé")
+        self.assertContains(response, "IPM")
+        self.assertContains(response, "Hôpitaux")
+        self.assertContains(response, "Cliniques")
+        self.assertContains(response, "Pharmacies")
+        self.assertContains(response, "Grandes entreprises")
+
+    def test_cartes_services_ont_des_mini_visuels(self):
+        response = self.client.get(reverse('landing'))
+        self.assertContains(response, 'class="motif-qr carte-service-visuel"')
+        self.assertContains(response, 'class="mini-repartition"')
+        self.assertContains(response, 'class="mini-famille"')
+
+
 class LoginTests(TestCase):
     def setUp(self):
         self.admin = creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
