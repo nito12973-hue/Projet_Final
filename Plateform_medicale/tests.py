@@ -342,6 +342,53 @@ class DashboardAdminTests(TestCase):
         response = self.client.get(reverse('dashboard'))
         self.assertContains(response, 'Aucun prestataire partenaire geolocalise')
 
+    def test_aujourd_hui_ne_compte_que_les_rendez_vous_et_consultations_du_jour(self):
+        medecin = creer_medecin('medecin@santesn.sn')
+        patient = creer_patient()
+        service = ServiceMedical.objects.create(nom='Consultation', prix=Decimal('5000'))
+
+        RendezVous.objects.create(
+            patient=patient, medecin=medecin, date_heure=timezone.now(), statut='CONFIRME',
+        )
+        RendezVous.objects.create(
+            patient=patient, medecin=medecin,
+            date_heure=timezone.now() + datetime.timedelta(days=3), statut='CONFIRME',
+        )
+        Consultation.objects.create(
+            patient=patient, medecin=medecin, service=service,
+            date_consultation=timezone.now(), diagnostic='Test',
+        )
+
+        response = self.client.get(reverse('dashboard'))
+        self.assertEqual(response.context['total_rendez_vous_aujourd_hui'], 1)
+        self.assertEqual(response.context['total_consultations_aujourd_hui'], 1)
+
+    def test_compte_les_prises_en_charge_et_paiements_en_attente(self):
+        patient = creer_patient()
+        PriseEnCharge.objects.create(patient=patient, motif='Test', statut='en_attente')
+        PriseEnCharge.objects.create(patient=patient, motif='Test', statut='validee')
+
+        medecin = creer_medecin('medecin@santesn.sn')
+        service = ServiceMedical.objects.create(nom='Consultation', prix=Decimal('5000'))
+        consultation = Consultation.objects.create(
+            patient=patient, medecin=medecin, service=service,
+            date_consultation=timezone.now(), diagnostic='Test',
+        )
+        Paiement.calculer_pour(consultation).save()
+
+        response = self.client.get(reverse('dashboard'))
+        self.assertEqual(response.context['total_prises_en_charge_attente'], 1)
+        self.assertEqual(response.context['total_paiements_non_regles'], 1)
+
+    def test_comptes_recents_et_derniers_prestataires(self):
+        creer_medecin('nouveau.medecin@santesn.sn')
+        Prestataire.objects.create(nom='Nouvelle clinique', type_prestataire='CLINIQUE', partenaire=True)
+
+        response = self.client.get(reverse('dashboard'))
+        self.assertContains(response, 'Comptes recemment crees')
+        self.assertContains(response, 'nouveau.medecin@santesn.sn')
+        self.assertContains(response, 'Nouvelle clinique')
+
 
 class GestionUtilisateursTests(TestCase):
     def setUp(self):
@@ -1887,6 +1934,14 @@ class AdminPriseEnChargeFormTests(TestCase):
     def test_suppression_prise_en_charge_inexistante_donne_404(self):
         response = self.client.post(reverse('supprimer_prise_en_charge', args=[9999]))
         self.assertEqual(response.status_code, 404)
+
+    def test_liste_prises_en_charge_filtre_par_statut(self):
+        PriseEnCharge.objects.create(patient=self.patient, motif='Motif attente', statut='en_attente')
+        PriseEnCharge.objects.create(patient=self.patient, motif='Motif valide', statut='validee')
+
+        response = self.client.get(reverse('liste_prises_en_charge'), {'statut': 'en_attente'})
+        self.assertContains(response, 'Motif attente')
+        self.assertNotContains(response, 'Motif valide')
 
 
 class PaiementTests(TestCase):
