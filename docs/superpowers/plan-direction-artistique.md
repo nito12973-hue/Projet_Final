@@ -109,9 +109,9 @@ Statut par item : voir la colonne "Chantier" des tableaux ci-dessous
 
 | # | Chantier | Pourquoi | Difficulté | Temps | Fichiers |
 |---|---|---|---|---|---|
-| 21 | Section "ils nous font confiance" (landing) | Aucune preuve sociale actuellement | Faible (dev) | 1 j | landing.html |
+| 21 | ~~Section "ils nous font confiance" (landing)~~ | **FAIT** (commit 0538f86) : livré comme 6 badges catégorie (Assurances santé, IPM, Hôpitaux, Cliniques, Pharmacies, Grandes entreprises), pas de logos/noms de clients — aucun client réel signé à ce jour (le modèle de données n'a pas de concept d'entreprise/employeur), même logique de transparence que les compteurs de la section Statistiques (Phase 1). | Faible (dev) | 1 j | landing.html |
 | 22 | Showcase des 4 dashboards (landing) | Phase déjà planifiée dans FONCTIONNEMENT.txt | Moyenne | 3-4 j | landing.html |
-| 23 | Captures réelles des dashboards (section Services) | Actuellement texte seul | Moyenne | 2 j | landing.html |
+| 23 | Captures réelles des dashboards (section Services) | **Partiellement fait** (commit 0538f86) : 3 des 6 cartes Services ont un mini-visuel CSS/SVG pur décoratif (motif QR, répartition assurance/patient, avatars famille) — pas de vraie capture d'écran, aucune n'existe. Le volet "showcase des 4 dashboards" (item 22) reste ouvert, prévu Phase 3. | Moyenne | 2 j | landing.html |
 | 24 | Mention conformité RGPD / hébergement santé | Absent, question fréquente acheteur assurance/hôpital | Faible (texte) | 0,5 j | landing.html |
 | 25 | Page contact commercial / processus de vente | "L'admin crée les comptes" pas expliqué au visiteur B2B | Faible-moyenne | 1 j | landing.html |
 
