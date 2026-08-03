@@ -550,7 +550,7 @@ Assure (role_required(ASSURE), prefixe /assure/ + /espace/assure/)
   Phase 3 livree (Verification QR + showcase des 4 dashboards, item 22) :
   section "Verification en un scan", 3 etapes (medecin genere -> QR
   unique -> pharmacien scanne), grille fixe repeat(3, 1fr) (pas
-  auto-fit/minmax, contrairement a la Parcours de Phase 1) -- avec
+  auto-fit/minmax, contrairement au Parcours de Phase 2) -- avec
   seulement 3 items la grille tient sur une seule ligne des 640px, pas
   de palier intermediaire a gerer. Ligne de connexion en --muted (lecon
   de Phase 2 sur le contraste, jamais --primary-soft). Showcase des 4

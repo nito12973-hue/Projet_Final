@@ -799,6 +799,7 @@
         .flux-etape p { font-size: 13.5px; color: var(--muted); }
 
         /* ===== Showcase dashboards (Phase 3) ===== */
+        .lecture-ecran,
         .onglet-input {
             position: absolute;
             width: 1px;
@@ -1430,17 +1431,17 @@
                 <div class="flux-etape revele">
                     <span class="pastille">{% icone "stethoscope" %}</span>
                     <h3>Le médecin génère</h3>
-                    <p>Diagnostic, traitement et médicaments enregistrés, ordonnance créée en un clic.</p>
+                    <p>Chaque ordonnance reçoit un identifiant unique dès sa création dans le dossier du patient — impossible à dupliquer.</p>
                 </div>
                 <div class="flux-etape revele">
                     <span class="pastille">{% icone "qr-scan" %}</span>
                     <h3>QR Code unique</h3>
-                    <p>Chaque ordonnance reçoit un identifiant infalsifiable, généré automatiquement.</p>
+                    <p>Le QR Code encode cet identifiant : contrairement à une ordonnance papier, il ne peut être ni reproduit ni falsifié.</p>
                 </div>
                 <div class="flux-etape revele">
                     <span class="pastille">{% icone "pill" %}</span>
                     <h3>Le pharmacien scanne</h3>
-                    <p>Un scan suffit pour vérifier l'authenticité et valider la délivrance.</p>
+                    <p>Le scan vérifie l'authenticité en temps réel et horodate la délivrance, pour un contrôle fiable des remboursements.</p>
                 </div>
             </div>
         </div>
@@ -1471,6 +1472,7 @@
 
                 <div class="onglets-panneaux">
                     <div class="onglet-panneau panneau-admin">
+                        <p class="lecture-ecran">Espace Administrateur : nombre de patients, de médecins, de prestataires et de prises en charge en un coup d'œil.</p>
                         <div class="carte-demo" aria-hidden="true">
                             <div class="entete-carte">
                                 <span class="pastille">{% icone "bar-chart" %}</span>
@@ -1501,6 +1503,7 @@
                     </div>
 
                     <div class="onglet-panneau panneau-assure">
+                        <p class="lecture-ecran">Espace Assuré : prochain rendez-vous et ordonnances disponibles pour Mamadou Diallo.</p>
                         <div class="carte-demo" aria-hidden="true">
                             <div class="entete-carte">
                                 <span class="pastille">{% icone "user-circle" %}</span>
@@ -1525,6 +1528,7 @@
                     </div>
 
                     <div class="onglet-panneau panneau-medecin">
+                        <p class="lecture-ecran">Espace Médecin : agenda du jour du Dr Ndiaye avec ses patients et rendez-vous confirmés.</p>
                         <div class="carte-demo" aria-hidden="true">
                             <div class="entete-carte">
                                 <span class="pastille">{% icone "stethoscope" %}</span>
@@ -1553,6 +1557,7 @@
                     </div>
 
                     <div class="onglet-panneau panneau-pharmacien">
+                        <p class="lecture-ecran">Espace Pharmacien : vérification d'une ordonnance scannée et détail des médicaments à délivrer.</p>
                         <div class="carte-demo" aria-hidden="true">
                             <div class="entete-carte">
                                 <span class="pastille">{% icone "qr-scan" %}</span>
