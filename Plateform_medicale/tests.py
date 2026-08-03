@@ -180,7 +180,7 @@ class LandingTests(TestCase):
         self.assertContains(response, "Prenez contact")
         self.assertContains(response, "Nous configurons votre espace")
         self.assertContains(response, "Vous êtes opérationnel")
-        self.assertContains(response, "en cours d'évaluation")
+        self.assertContains(response, "aucune certification formelle")
 
     def test_page_publique_affiche_la_faq(self):
         response = self.client.get(reverse('landing'))
