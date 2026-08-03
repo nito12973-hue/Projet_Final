@@ -301,6 +301,25 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
                           partenaire). 11 tests dedies au total
                           (DashboardAdminTests) + 1 sur le nouveau filtre
                           statut de liste_prises_en_charge.
+                          Troisieme passe (item 16 du plan direction
+                          artistique, debloque par decision utilisateur le
+                          2026-08-03 : comptes desactives + dernieres
+                          connexions admin) : les stats "Comptes actifs"/
+                          "Comptes desactives" de l'encart gouvernance
+                          deviennent cliquables (reutilisent le filtre
+                          ?statut= deja existant de liste_utilisateurs,
+                          aucun changement backend sur cette vue). Nouveau
+                          panel "Dernieres connexions admin" (5 plus
+                          recentes parmi les comptes ADMIN, User.last_login
+                          -- champ standard deja mis a jour automatiquement
+                          par la vue login existante, jamais affiche
+                          jusqu'ici ; exclut les admins jamais connectes).
+                          Pas de bouton "Voir tout" sur ce panel, a la
+                          difference de ses voisins : aucune page de liste
+                          des connexions n'existe (journal d'audit complet
+                          deja hors perimetre, voir deuxieme passe
+                          ci-dessus). 3 tests dedies supplementaires
+                          (DashboardAdminTests).
   rapports / exporter_rapports_excel / exporter_rapports_pdf
                                       _donnees_rapports() est la SEULE
                                       source de donnees, partagee par la
