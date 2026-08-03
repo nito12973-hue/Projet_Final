@@ -570,9 +570,26 @@ Assure (role_required(ASSURE), prefixe /assure/ + /espace/assure/)
   (ex. "Clinique Mbour", 3 sur 11 geocodes), pas de vrais partenaires
   signes -- meme probleme que les faux logos clients deja ecarte en
   Phase 2.
-  Phase 4 restant a faire : mention RGPD/hebergement sante + page
-  contact commercial B2B (items 24-25) + temoignages/FAQ/footer
-  premium.
+  Phase 4 livree (Devenir partenaire + FAQ + footer premium, items
+  24-25) -- derniere phase de la refonte premium landing.html, les 4
+  phases sont desormais completes. Section "Devenir partenaire" :
+  processus en 3 etapes reutilisant tel quel le composant .flux-qr/
+  .flux-etape de la Phase 3 (aucune nouvelle CSS), bloc securite
+  reutilisant .liste-atouts -- uniquement des pratiques reellement
+  implementees (acces par role, pas d'inscription publique, QR unique,
+  tentatives de connexion limitees), avec une ligne de disclosure
+  explicite et visible : aucune certification formelle (hebergement
+  sante, audit RGPD) n'est encore en place, jamais affirmee comme
+  acquise. Section FAQ : HTML natif <details>/<summary>, aucun JS, 5
+  questions ancrees dans des faits produit deja livres -- aucun
+  engagement commercial invente (pas de prix, pas de SLA, pas de
+  delai). Footer restructure en 3 colonnes (marque + slogan,
+  navigation avec les nouvelles ancres #dashboards/#partenaires/#faq,
+  rappel contact identique a la section Contact existante) -- aucun
+  lien vers une page legale inexistante (verifie dans urls.py), aucun
+  lien reseau social invente. Temoignages abandonnes (aucun client reel
+  signe a ce jour, meme raison que les faux logos Phase 2 et la carte
+  du Senegal Phase 3).
 - templatetags/icones.py : dictionnaire _ICONES, tag {% icone "nom" %} —
   SVG trait fin 24x24 inline, aucune dependance externe (pas de police
   d'icones, pas de CDN). Toujours reutiliser une icone existante avant d'en

@@ -174,6 +174,28 @@ class LandingTests(TestCase):
         self.assertContains(response, "Ordonnance disponible")
         self.assertContains(response, "Tableau de bord")
 
+    def test_page_publique_affiche_devenir_partenaire(self):
+        response = self.client.get(reverse('landing'))
+        self.assertContains(response, "Devenir partenaire SantéSN")
+        self.assertContains(response, "Prenez contact")
+        self.assertContains(response, "Nous configurons votre espace")
+        self.assertContains(response, "Vous êtes opérationnel")
+        self.assertContains(response, "en cours d'évaluation")
+
+    def test_page_publique_affiche_la_faq(self):
+        response = self.client.get(reverse('landing'))
+        self.assertContains(response, "Tout ce qu'il faut savoir avant de commencer")
+        self.assertContains(response, "Comment nos collaborateurs ou assurés obtiennent-ils un accès")
+        self.assertContains(response, "Qui peut rejoindre le réseau de prestataires")
+        self.assertContains(response, "Peut-on gérer les ayants droit")
+
+    def test_footer_affiche_les_nouvelles_ancres_et_le_contact(self):
+        response = self.client.get(reverse('landing'))
+        self.assertContains(response, 'href="#partenaires"')
+        self.assertContains(response, 'href="#faq"')
+        self.assertContains(response, 'href="#dashboards"')
+        self.assertContains(response, "La santé connectée, pensée pour l'écosystème sénégalais")
+
 
 class LoginTests(TestCase):
     def setUp(self):
