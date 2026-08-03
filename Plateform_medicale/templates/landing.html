@@ -609,6 +609,32 @@
             border-radius: 4px;
         }
 
+        /* ===== Écosystème (Phase 2 landing) ===== */
+        .grille-ecosysteme {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 16px;
+        }
+
+        .badge-ecosysteme {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px 18px;
+            font-weight: 700;
+            font-size: 14.5px;
+            color: var(--primary-dark);
+            transition: transform 0.22s ease, box-shadow 0.22s ease;
+        }
+
+        .badge-ecosysteme:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--ombre-douce);
+        }
+
         /* ===== Statistiques (Phase 1 landing) ===== */
         .grille-stats {
             display: grid;
@@ -694,20 +720,89 @@
         .carte-service h3 { font-size: 17px; margin-bottom: 8px; }
         .carte-service p { font-size: 14px; color: var(--muted); }
 
+        .carte-service-visuel { margin-top: 16px; }
+
+        .mini-repartition { margin-top: 16px; }
+
+        .mini-repartition-barre {
+            display: flex;
+            height: 8px;
+            border-radius: 999px;
+            overflow: hidden;
+            background: var(--primary-soft);
+        }
+
+        .mini-repartition-assurance { background: var(--primary-strong); }
+        .mini-repartition-patient { background: var(--accent); }
+
+        .mini-repartition-legende {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--muted);
+        }
+
+        .mini-famille { display: flex; margin-top: 16px; }
+
+        .mini-famille .avatar-initiales {
+            width: 30px;
+            height: 30px;
+            font-size: 11px;
+            border: 2px solid var(--surface);
+            margin-left: -10px;
+        }
+
+        .mini-famille .avatar-initiales:first-child { margin-left: 0; }
+
         /* Parcours (étapes) */
         .parcours {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 18px;
             counter-reset: etape;
+            position: relative;
         }
 
         .etape {
             position: relative;
+            z-index: 1;
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: 14px;
             padding: 24px 20px 20px;
+        }
+
+        /* Ligne de connexion (Phase 2) : visible uniquement dans les
+           espaces entre cartes, cachee derriere le fond opaque de .etape.
+           Horizontale des que les 5 etapes tiennent sur une seule ligne,
+           verticale des que .parcours repasse en une colonne. */
+        @media (min-width: 861px) {
+            .parcours::before {
+                content: "";
+                position: absolute;
+                top: 41px;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: var(--primary-soft);
+                z-index: 0;
+            }
+        }
+
+        @media (max-width: 860px) {
+            .parcours::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                left: 50%;
+                width: 2px;
+                background: var(--primary-soft);
+                transform: translateX(-50%);
+                z-index: 0;
+            }
         }
 
         .etape::before {
@@ -1058,6 +1153,43 @@
         </div>
     </section>
 
+    <!-- ===== ÉCOSYSTÈME ===== -->
+    <section class="bloc" id="ecosysteme">
+        <div class="conteneur">
+            <div class="titre-section revele">
+                <span class="sur-titre">Écosystème</span>
+                <h2>Pensé pour tout l'écosystème de la santé</h2>
+                <p>Une plateforme ouverte aux acteurs qui organisent et délivrent les soins, du financement à la dispensation.</p>
+            </div>
+            <div class="grille-ecosysteme">
+                <div class="badge-ecosysteme revele">
+                    <span class="pastille pastille-sm">{% icone "shield-check" %}</span>
+                    <span>Assurances santé</span>
+                </div>
+                <div class="badge-ecosysteme revele">
+                    <span class="pastille pastille-sm">{% icone "id-card" %}</span>
+                    <span>IPM</span>
+                </div>
+                <div class="badge-ecosysteme revele">
+                    <span class="pastille pastille-sm">{% icone "building" %}</span>
+                    <span>Hôpitaux</span>
+                </div>
+                <div class="badge-ecosysteme revele">
+                    <span class="pastille pastille-sm">{% icone "stethoscope" %}</span>
+                    <span>Cliniques</span>
+                </div>
+                <div class="badge-ecosysteme revele">
+                    <span class="pastille pastille-sm">{% icone "pill" %}</span>
+                    <span>Pharmacies</span>
+                </div>
+                <div class="badge-ecosysteme revele">
+                    <span class="pastille pastille-sm">{% icone "users" %}</span>
+                    <span>Grandes entreprises</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- ===== STATISTIQUES ===== -->
     <section class="bloc alterne" id="stats">
         <div class="conteneur">
@@ -1114,16 +1246,32 @@
                     <span class="pastille">{% icone "pill" %}</span>
                     <h3>Ordonnances QR Code</h3>
                     <p>Chaque ordonnance est générée en PDF avec un QR Code unique, vérifiable en pharmacie en un scan.</p>
+                    <span class="motif-qr carte-service-visuel" aria-hidden="true"></span>
                 </div>
                 <div class="carte-service revele">
                     <span class="pastille">{% icone "shield-check" %}</span>
                     <h3>Prise en charge assurance</h3>
                     <p>Le calcul de la part assurance et de la part patient est automatique et transparent pour tous.</p>
+                    <div class="mini-repartition" aria-hidden="true">
+                        <div class="mini-repartition-barre">
+                            <span class="mini-repartition-assurance" style="width:90%;"></span>
+                            <span class="mini-repartition-patient" style="width:10%;"></span>
+                        </div>
+                        <div class="mini-repartition-legende">
+                            <span>Assurance 90%</span>
+                            <span>Patient 10%</span>
+                        </div>
+                    </div>
                 </div>
                 <div class="carte-service revele">
                     <span class="pastille">{% icone "family" %}</span>
                     <h3>Couverture familiale</h3>
                     <p>L'assuré déclare ses ayants droit (conjoint, enfants) qui bénéficient de la même couverture santé.</p>
+                    <div class="mini-famille" aria-hidden="true">
+                        <span class="avatar-initiales">MD</span>
+                        <span class="avatar-initiales">AD</span>
+                        <span class="avatar-initiales">+2</span>
+                    </div>
                 </div>
                 <div class="carte-service revele">
                     <span class="pastille">{% icone "bar-chart" %}</span>
