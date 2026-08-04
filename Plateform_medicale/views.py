@@ -328,22 +328,16 @@ def dashboard(request):
         date_consultation__gte=debut_jour, date_consultation__lt=fin_jour
     ).count()
 
-    # Comptes recemment crees, tous roles confondus (remplace la seule vue
-    # "derniers assures" qui ne montrait pas la croissance medecins/
-    # pharmaciens) ; les prestataires n'ont pas de compte utilisateur, liste
-    # separee.
-    derniers_comptes = User.objects.order_by("-date_joined")[:5]
-    derniers_prestataires = Prestataire.objects.order_by("-id")[:5]
-
-    # Dernieres connexions admin (item 16, plan direction artistique) :
-    # activite recente des comptes a privilege le plus eleve, absent
-    # jusqu'ici du dashboard. Exclut les admins jamais connectes (last_login
-    # NULL) -- ce n'est pas une liste de tous les admins, seulement de
-    # l'activite recente.
-    dernieres_connexions_admin = (
-        User.objects.filter(role=User.Role.ADMIN, last_login__isnull=False)
-        .order_by("-last_login")[:5]
+    # Derniers comptes crees, hors assures (remplace "derniers assures" qui
+    # ne montrait pas la croissance medecins/pharmaciens ; exclut desormais
+    # les assures car "Derniers assures" plus bas les couvre deja, y
+    # compris les ayants droit qui n'ont jamais de User -- fusionner les
+    # deux aurait fait disparaitre ces derniers du dashboard). Les
+    # prestataires n'ont pas de compte utilisateur, liste separee.
+    derniers_comptes = (
+        User.objects.exclude(role=User.Role.ASSURE).order_by("-date_joined")[:5]
     )
+    derniers_prestataires = Prestataire.objects.order_by("-id")[:5]
 
     contexte = {
         "total_patients": Patient.objects.count(),
@@ -351,14 +345,12 @@ def dashboard(request):
         "total_pharmaciens": Pharmacien.objects.count(),
         "total_prestataires": Prestataire.objects.filter(partenaire=True).count(),
         "total_services": ServiceMedical.objects.count(),
-        "total_prises_en_charge": PriseEnCharge.objects.count(),
         "total_prises_en_charge_attente": PriseEnCharge.objects.filter(statut="en_attente").count(),
         "total_consultations": Consultation.objects.count(),
         "total_ordonnances": Ordonnance.objects.count(),
         "montant_regle": montant_regle,
         "montant_non_regle": montant_non_regle,
         "taux_reglement": taux_reglement,
-        "total_paiements_non_regles": Paiement.objects.filter(statut=Paiement.Statut.NON_REGLE).count(),
         "total_comptes_actifs": User.objects.filter(is_active=True).count(),
         "total_comptes_inactifs": User.objects.filter(is_active=False).count(),
         "total_rendez_vous_aujourd_hui": total_rendez_vous_aujourd_hui,
@@ -367,7 +359,6 @@ def dashboard(request):
         "derniers_patients": derniers_patients,
         "derniers_comptes": derniers_comptes,
         "derniers_prestataires": derniers_prestataires,
-        "dernieres_connexions_admin": dernieres_connexions_admin,
         "tendance_consultations": _consultations_par_jour(),
         "prestataires_carte": prestataires_carte,
     }
