@@ -559,6 +559,49 @@ class GestionUtilisateursTests(TestCase):
         self.admin.refresh_from_db()
         self.assertTrue(self.admin.is_active)
 
+    def test_ajouter_utilisateur_ne_propose_pas_le_role_admin(self):
+        response = self.client.get(reverse('ajouter_utilisateur'))
+        self.assertNotContains(response, '<option value="ADMIN">')
+
+    def test_creation_utilisateur_avec_role_admin_est_rejetee(self):
+        response = self.client.post(reverse('ajouter_utilisateur'), {
+            'first_name': 'Faux',
+            'last_name': 'Admin',
+            'email': 'faux.admin@santesn.sn',
+            'phone_number': '',
+            'role': User.Role.ADMIN.value,
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(User.objects.filter(email='faux.admin@santesn.sn').exists())
+
+    def test_modifier_utilisateur_ne_permet_pas_de_promouvoir_admin(self):
+        cible = creer_utilisateur(User.Role.MEDECIN, 'cible@santesn.sn')
+        response = self.client.post(reverse('modifier_utilisateur', args=[cible.pk]), {
+            'first_name': cible.first_name,
+            'last_name': cible.last_name,
+            'email': cible.email,
+            'phone_number': '',
+            'role': User.Role.ADMIN.value,
+        })
+        self.assertEqual(response.status_code, 200)
+        cible.refresh_from_db()
+        self.assertEqual(cible.role, User.Role.MEDECIN)
+
+    def test_modifier_utilisateur_admin_garde_son_propre_role_dans_le_formulaire(self):
+        response = self.client.get(reverse('modifier_utilisateur', args=[self.admin.pk]))
+        choix = dict(response.context['form'].fields['role'].choices)
+        self.assertIn(User.Role.ADMIN.value, choix)
+
+    def test_reactivation_bloquee_si_un_autre_admin_est_deja_actif(self):
+        ancien_admin = creer_utilisateur(User.Role.ADMIN, 'ancien-admin@santesn.sn')
+        ancien_admin.is_active = False
+        ancien_admin.save(update_fields=['is_active'])
+
+        response = self.client.post(reverse('activer_desactiver_utilisateur', args=[ancien_admin.pk]))
+        self.assertRedirects(response, reverse('liste_utilisateurs'))
+        ancien_admin.refresh_from_db()
+        self.assertFalse(ancien_admin.is_active)
+
     def test_admin_ne_peut_pas_se_supprimer_lui_meme(self):
         response = self.client.post(reverse('supprimer_utilisateur', args=[self.admin.pk]))
         self.assertRedirects(response, reverse('liste_utilisateurs'))

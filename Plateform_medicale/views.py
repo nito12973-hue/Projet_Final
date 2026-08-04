@@ -1556,6 +1556,24 @@ def activer_desactiver_utilisateur(request, pk):
         messages.error(request, "Vous ne pouvez pas desactiver votre propre compte.")
         return redirect("liste_utilisateurs")
 
+    # Un seul administrateur actif a la fois (comme dans un veritable SaaS) :
+    # reactiver un ancien compte ADMIN ne doit pas en creer un second en
+    # silence. Les creations/promotions ADMIN sont deja bloquees cote
+    # formulaire (UtilisateurCreationForm/UtilisateurModificationForm) ; ce
+    # garde-fou couvre le seul autre chemin qui pourrait faire exister un
+    # deuxieme administrateur actif.
+    if (
+        utilisateur.role == User.Role.ADMIN
+        and not utilisateur.is_active
+        and User.objects.filter(role=User.Role.ADMIN, is_active=True).exclude(pk=utilisateur.pk).exists()
+    ):
+        messages.error(
+            request,
+            "Un seul administrateur peut etre actif a la fois. "
+            "Desactivez d'abord l'administrateur actuel.",
+        )
+        return redirect("liste_utilisateurs")
+
     utilisateur.is_active = not utilisateur.is_active
     utilisateur.save(update_fields=["is_active"])
     if utilisateur.is_active:

@@ -159,6 +159,16 @@ class UtilisateurCreationForm(forms.ModelForm):
         model = User
         fields = ['first_name', 'last_name', 'email', 'phone_number', 'role']
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Un seul administrateur, jamais recreable depuis l'interface classique
+        # (voir UtilisateurModificationForm) : cette vue n'est accessible qu'a
+        # un administrateur deja existant (@admin_required), donc ADMIN n'est
+        # jamais un choix valide ici.
+        self.fields['role'].choices = [
+            choix for choix in User.Role.choices if choix[0] != User.Role.ADMIN
+        ]
+
     def save(self, commit=True):
         self.mot_de_passe_genere = generer_mot_de_passe()
         utilisateur = super().save(commit=False)
@@ -176,6 +186,19 @@ class UtilisateurModificationForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ['first_name', 'last_name', 'email', 'phone_number', 'role']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Un seul administrateur, comme dans un veritable SaaS : personne ne
+        # peut etre promu ADMIN depuis cette interface. Exception : editer la
+        # fiche de l'administrateur actuel doit continuer a afficher/accepter
+        # son propre role (ADMIN), sinon le formulaire casse pour lui -- le
+        # garde-fou qui l'empeche de changer SON role reste dans la vue
+        # modifier_utilisateur (deja en place, non modifie ici).
+        if self.instance.role != User.Role.ADMIN:
+            self.fields['role'].choices = [
+                choix for choix in User.Role.choices if choix[0] != User.Role.ADMIN
+            ]
 
 
 class RendezVousForm(forms.ModelForm):
