@@ -344,7 +344,6 @@ def dashboard(request):
         "total_medecins": Medecin.objects.count(),
         "total_pharmaciens": Pharmacien.objects.count(),
         "total_prestataires": Prestataire.objects.filter(partenaire=True).count(),
-        "total_services": ServiceMedical.objects.count(),
         "total_prises_en_charge_attente": PriseEnCharge.objects.filter(statut="en_attente").count(),
         "total_consultations": Consultation.objects.count(),
         "total_ordonnances": Ordonnance.objects.count(),
