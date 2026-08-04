@@ -389,23 +389,6 @@ class DashboardAdminTests(TestCase):
         self.assertContains(response, f'href="{reverse("liste_utilisateurs")}?statut=actif"')
         self.assertContains(response, f'href="{reverse("liste_utilisateurs")}?statut=inactif"')
 
-    def test_dernieres_connexions_admin_triees_par_recence(self):
-        ancien = creer_utilisateur(User.Role.ADMIN, 'ancien-admin@santesn.sn')
-        ancien.last_login = timezone.now() - datetime.timedelta(days=5)
-        ancien.save()
-        recent = creer_utilisateur(User.Role.ADMIN, 'recent-admin@santesn.sn')
-        recent.last_login = timezone.now()
-        recent.save()
-
-        response = self.client.get(reverse('dashboard'))
-        emails = [u.email for u in response.context['dernieres_connexions_admin']]
-        self.assertLess(emails.index('recent-admin@santesn.sn'), emails.index('ancien-admin@santesn.sn'))
-
-    def test_dernieres_connexions_admin_exclut_ceux_jamais_connectes(self):
-        jamais_connecte = creer_utilisateur(User.Role.ADMIN, 'jamais-connecte@santesn.sn')
-        response = self.client.get(reverse('dashboard'))
-        emails = [u.email for u in response.context['dernieres_connexions_admin']]
-        self.assertNotIn('jamais-connecte@santesn.sn', emails)
 
     def test_carte_reseau_ignore_les_prestataires_sans_coordonnees(self):
         Prestataire.objects.create(nom='Sans coordonnees', type_prestataire='HOPITAL', partenaire=True)
@@ -419,7 +402,7 @@ class DashboardAdminTests(TestCase):
 
     def test_carte_reseau_etat_vide_sans_prestataire_geolocalise(self):
         response = self.client.get(reverse('dashboard'))
-        self.assertContains(response, 'Aucun prestataire partenaire geolocalise')
+        self.assertContains(response, 'Aucun prestataire partenaire géolocalisé')
 
     def test_aujourd_hui_ne_compte_que_les_rendez_vous_et_consultations_du_jour(self):
         medecin = creer_medecin('medecin@santesn.sn')
@@ -442,31 +425,28 @@ class DashboardAdminTests(TestCase):
         self.assertEqual(response.context['total_rendez_vous_aujourd_hui'], 1)
         self.assertEqual(response.context['total_consultations_aujourd_hui'], 1)
 
-    def test_compte_les_prises_en_charge_et_paiements_en_attente(self):
+    def test_compte_les_prises_en_charge_en_attente(self):
         patient = creer_patient()
         PriseEnCharge.objects.create(patient=patient, motif='Test', statut='en_attente')
         PriseEnCharge.objects.create(patient=patient, motif='Test', statut='validee')
 
-        medecin = creer_medecin('medecin@santesn.sn')
-        service = ServiceMedical.objects.create(nom='Consultation', prix=Decimal('5000'))
-        consultation = Consultation.objects.create(
-            patient=patient, medecin=medecin, service=service,
-            date_consultation=timezone.now(), diagnostic='Test',
-        )
-        Paiement.calculer_pour(consultation).save()
-
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.context['total_prises_en_charge_attente'], 1)
-        self.assertEqual(response.context['total_paiements_non_regles'], 1)
 
-    def test_comptes_recents_et_derniers_prestataires(self):
+    def test_derniers_comptes_et_derniers_prestataires(self):
         creer_medecin('nouveau.medecin@santesn.sn')
         Prestataire.objects.create(nom='Nouvelle clinique', type_prestataire='CLINIQUE', partenaire=True)
 
         response = self.client.get(reverse('dashboard'))
-        self.assertContains(response, 'Comptes recemment crees')
+        self.assertContains(response, 'Derniers comptes cr')
         self.assertContains(response, 'nouveau.medecin@santesn.sn')
         self.assertContains(response, 'Nouvelle clinique')
+
+    def test_derniers_comptes_exclut_les_assures(self):
+        creer_utilisateur(User.Role.ASSURE, 'assure@santesn.sn')
+        response = self.client.get(reverse('dashboard'))
+        emails = [u.email for u in response.context['derniers_comptes']]
+        self.assertNotIn('assure@santesn.sn', emails)
 
 
 class GestionUtilisateursTests(TestCase):

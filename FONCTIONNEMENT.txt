@@ -337,6 +337,82 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
                           deja hors perimetre, voir deuxieme passe
                           ci-dessus). 3 tests dedies supplementaires
                           (DashboardAdminTests).
+                          Panel "Dernieres connexions admin" retire des la
+                          quatrieme passe ci-dessous (quasi inutile sous la
+                          contrainte "un seul administrateur" livree le
+                          lendemain, et cause d'un bug de grille) -- ne plus
+                          chercher ce panel dans le template.
+                          Quatrieme passe (audit UX/UI complet du module
+                          Administrateur, 2026-08-04, agent de recherche
+                          dedie -- rapport non archive separement, execute
+                          via plan docs/superpowers puis supprime une fois
+                          livre) : dashboard juge surcharge (14 tuiles, 5
+                          tableaux, 1 graphe, 1 carte) sans hierarchie de
+                          decision. Supprime : panel "Dernieres connexions
+                          admin" (voir ci-dessus), tuile "Services
+                          medicaux" (compteur de configuration, n'evolue
+                          jamais -- total_services reste calcule dans
+                          views.py mais n'est plus affiche nulle part,
+                          dette mineure identifiee en revue, non traitee
+                          dans ce chantier), tuile "Paiements en attente"
+                          du panel "Aujourd'hui" (devenue redondante),
+                          total_prises_en_charge (calcule, jamais rendu).
+                          Bandeau financier (.dash-hero) : les 3 cartes
+                          deviennent des liens cliquables vers des vues
+                          filtrees ; la carte "Paiements regles" absorbe le
+                          graphique de tendance des consultations en
+                          sparkline (#graphe-tendance-consultations
+                          deplace dans .dash-hero-sparkline-zone, panel
+                          dedie "Tendance des consultations" supprime) --
+                          legende explicite "Consultations . 30 j" pour ne
+                          pas laisser croire que le graphique trace des
+                          paiements. "Comptes recemment crees" renomme
+                          "Derniers comptes crees" et exclut desormais le
+                          role ASSURE (User.objects.exclude(role=ASSURE))
+                          -- pas une fusion complete avec "Derniers
+                          assures" comme le suggerait l'audit initial : les
+                          ayants droit n'ont jamais de User (CLAUDE.md),
+                          une fusion les aurait fait disparaitre du
+                          dashboard. CTA "Ajouter" sur 4 etats vides qui
+                          n'en avaient pas (reutilise le pattern .actions
+                          deja etabli sur liste_ayants_droit.html). Passe
+                          complete d'accents francais sur dashboard.html
+                          (0 caractere accentue avant ce chantier).
+                          Effet de bord sciemment accepte, portee
+                          site-entiere : la regle CSS tbody tr:hover
+                          (base.html) a ete modifiee -- pas dupliquee, car
+                          une regle identique existait deja plus bas dans
+                          le fichier et une duplication au point d'insertion
+                          initialement prevu aurait ete de la CSS morte
+                          (ecrasee par cascade) -- le survol de ligne de
+                          tableau change donc sur TOUTES les listes de
+                          l'application (var(--accent-turquoise-wash) au
+                          lieu d'un ancien #f3fbfa code en dur), pas
+                          seulement le dashboard admin.
+                          Legende de la carte reseau (#carte-reseau-admin) :
+                          composant dedie .legende-type/.legende-puce (pas
+                          une reutilisation de .dash-pill -- premiere
+                          version en revue reutilisait .dash-pill.ok/
+                          .attente/.danger, dont les couleurs de statut
+                          (vert/ambre/rouge) ne correspondaient a aucune
+                          des 4 couleurs reelles des marqueurs Leaflet
+                          [COULEURS_TYPE] et entraient en collision
+                          semantique avec les memes classes deja utilisees
+                          pour les badges de statut des prises en charge
+                          sur le meme ecran -- corrige en revue de tache).
+                          Barre laterale (branche ADMIN de base.html
+                          uniquement) : 2 entrees ajoutees (Services
+                          medicaux, Plans de couverture -- ecrans qui
+                          pilotaient respectivement le prix des actes et le
+                          taux de couverture, invisibles en navigation
+                          jusqu'ici, atteignables seulement par des liens
+                          detournes ailleurs) ; etat actif etendu a toutes
+                          les sous-pages de chaque section (meme technique
+                          {% with url_name=... %} que la branche ASSURE
+                          deja en place). 233 tests (DashboardAdminTests
+                          passe de 13 a 12 : 2 tests retires avec le panel
+                          connexions admin, 1 test scinde en 2 pour couvrir
+                          l'exclusion ASSURE).
   rapports / exporter_rapports_excel / exporter_rapports_pdf
                                       _donnees_rapports() est la SEULE
                                       source de donnees, partagee par la

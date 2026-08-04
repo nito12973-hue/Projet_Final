@@ -7,38 +7,42 @@
 <section class="page-title">
     <div>
         <h1>Dashboard Administrateur</h1>
-        <p class="subtitle">Piloter la plateforme sans intervenir dans les actes medicaux.</p>
+        <p class="subtitle">Piloter la plateforme sans intervenir dans les actes médicaux.</p>
     </div>
 </section>
 
 <section class="dash-hero">
-    <div class="dash-hero-carte">
+    <a class="dash-hero-carte" href="{% url 'liste_paiements' %}?statut=regle">
         <span class="dash-hero-icon">{% icone "receipt" %}</span>
         <strong>{{ montant_regle|franc_cfa }}</strong>
-        <span>Paiements regles</span>
-    </div>
-    <div class="dash-hero-carte">
+        <span>Paiements réglés</span>
+        <div class="dash-hero-sparkline-zone">
+            <canvas id="graphe-tendance-consultations" aria-label="Tendance des consultations, 30 derniers jours"></canvas>
+        </div>
+        <span class="dash-hero-sparkline-legende">Consultations · 30 j</span>
+    </a>
+    <a class="dash-hero-carte" href="{% url 'liste_paiements' %}?statut=non_regle">
         <span class="dash-hero-icon">{% icone "clock-history" %}</span>
         <strong>{{ montant_non_regle|franc_cfa }}</strong>
-        <span>En attente de reglement</span>
-    </div>
-    <div class="dash-hero-carte">
+        <span>En attente de règlement</span>
+    </a>
+    <a class="dash-hero-carte" href="{% url 'rapports' %}">
         <span class="dash-hero-icon">{% icone "shield-check" %}</span>
         <strong>{% if taux_reglement is not None %}{{ taux_reglement }}%{% else %}—{% endif %}</strong>
-        <span>Taux de reglement</span>
-    </div>
+        <span>Taux de règlement</span>
+    </a>
 </section>
 
 <section class="dash-grid" style="margin-top:14px;">
     <a class="dash-stat" href="{% url 'liste_patients' %}">
         <span class="dash-stat-icon">{% icone "id-card" %}</span>
         <strong>{{ total_patients }}</strong>
-        <span>Assures geres</span>
+        <span>Assurés gérés</span>
     </a>
     <a class="dash-stat" href="{% url 'liste_medecins' %}">
         <span class="dash-stat-icon">{% icone "stethoscope" %}</span>
         <strong>{{ total_medecins }}</strong>
-        <span>Medecins actifs</span>
+        <span>Médecins actifs</span>
     </a>
     <a class="dash-stat" href="{% url 'liste_pharmaciens' %}">
         <span class="dash-stat-icon">{% icone "pill" %}</span>
@@ -50,11 +54,6 @@
         <strong>{{ total_prestataires }}</strong>
         <span>Prestataires partenaires</span>
     </a>
-    <a class="dash-stat" href="{% url 'liste_services' %}">
-        <span class="dash-stat-icon">{% icone "credit-card" %}</span>
-        <strong>{{ total_services }}</strong>
-        <span>Services medicaux</span>
-    </a>
     <a class="dash-stat" href="{% url 'rapports' %}">
         <span class="dash-stat-icon">{% icone "clipboard-list" %}</span>
         <strong>{{ total_consultations }}</strong>
@@ -63,7 +62,7 @@
     <a class="dash-stat" href="{% url 'rapports' %}">
         <span class="dash-stat-icon">{% icone "qr-scan" %}</span>
         <strong>{{ total_ordonnances }}</strong>
-        <span>Ordonnances emises</span>
+        <span>Ordonnances émises</span>
     </a>
 </section>
 
@@ -71,7 +70,7 @@
     <div class="panel-header" style="padding:0 0 14px;">
         <div>
             <h2>Aujourd'hui</h2>
-            <p class="subtitle" style="margin:2px 0 0;">Activite de la plateforme, tous roles confondus.</p>
+            <p class="subtitle" style="margin:2px 0 0;">Activité de la plateforme, tous rôles confondus.</p>
         </div>
     </div>
     <div class="dash-grid">
@@ -90,23 +89,7 @@
             <strong>{{ total_prises_en_charge_attente }}</strong>
             <span>Prises en charge en attente</span>
         </a>
-        <a class="dash-stat" href="{% url 'liste_paiements' %}?statut=non_regle">
-            <span class="dash-stat-icon">{% icone "alert-triangle" %}</span>
-            <strong>{{ total_paiements_non_regles }}</strong>
-            <span>Paiements en attente</span>
-        </a>
     </div>
-</section>
-
-<section class="panel" style="margin-top:18px;padding:20px 24px;">
-    <div class="panel-header" style="padding:0 0 14px;">
-        <div>
-            <h2>Tendance des consultations</h2>
-            <p class="subtitle" style="margin:2px 0 0;">30 derniers jours</p>
-        </div>
-        <a class="button btn" href="{% url 'rapports' %}">Voir les rapports</a>
-    </div>
-    <canvas id="graphe-tendance-consultations" style="max-height:140px;"></canvas>
 </section>
 
 <section class="admin-layout">
@@ -114,12 +97,12 @@
         <div class="panel-header">
             <div>
                 <h2>Actions rapides</h2>
-                <p class="subtitle">Actions autorisees pour administrer la plateforme.</p>
+                <p class="subtitle">Actions autorisées pour administrer la plateforme.</p>
             </div>
         </div>
         <div class="quick-actions">
-            <a class="button primary" href="{% url 'ajouter_patient' %}">Ajouter un assure</a>
-            <a class="button primary" href="{% url 'ajouter_medecin' %}">Ajouter un medecin</a>
+            <a class="button primary" href="{% url 'ajouter_patient' %}">Ajouter un assuré</a>
+            <a class="button primary" href="{% url 'ajouter_medecin' %}">Ajouter un médecin</a>
             <a class="button primary" href="{% url 'ajouter_prestataire' %}">Ajouter un prestataire</a>
             <a class="button" href="{% url 'liste_prises_en_charge' %}">Suivre les prises en charge</a>
         </div>
@@ -129,8 +112,8 @@
         <span class="dash-stat-icon">{% icone "lock" %}</span>
         <h2>Comptes et gouvernance</h2>
         <p class="subtitle">
-            L'administrateur gere les comptes, les prestataires et le suivi.
-            Il ne saisit pas de diagnostic, ne cree pas d'ordonnance et ne valide pas de delivrance.
+            L'administrateur gère les comptes, les prestataires et le suivi.
+            Il ne saisit pas de diagnostic, ne crée pas d'ordonnance et ne valide pas de délivrance.
         </p>
         <div class="gouvernance-comptes">
             <a href="{% url 'liste_utilisateurs' %}?statut=actif">
@@ -139,26 +122,26 @@
             </a>
             <a href="{% url 'liste_utilisateurs' %}?statut=inactif">
                 <strong>{{ total_comptes_inactifs }}</strong>
-                <span>Comptes desactives</span>
+                <span>Comptes désactivés</span>
             </a>
         </div>
-        <a class="button btn" href="{% url 'liste_utilisateurs' %}">Gerer les utilisateurs</a>
+        <a class="button btn" href="{% url 'liste_utilisateurs' %}">Gérer les utilisateurs</a>
     </aside>
 </section>
 
 <section class="admin-layout">
     <article class="panel">
         <div class="panel-header">
-            <h2>Derniers assures</h2>
+            <h2>Derniers assurés</h2>
             <a class="button" href="{% url 'liste_patients' %}">Voir tout</a>
         </div>
         {% if derniers_patients %}
         <table>
             <thead>
                 <tr>
-                    <th>Assure</th>
+                    <th>Assuré</th>
                     <th>Type</th>
-                    <th>Telephone</th>
+                    <th>Téléphone</th>
                 </tr>
             </thead>
             <tbody>
@@ -174,7 +157,10 @@
         {% else %}
         <div class="etat-vide">
             {% illustration_vide "id-card" %}
-            <p>Aucun assure enregistre.</p>
+            <p>Aucun assuré enregistré.</p>
+            <div class="actions">
+                <a class="button primary" href="{% url 'ajouter_patient' %}">Ajouter un assuré</a>
+            </div>
         </div>
         {% endif %}
     </article>
@@ -188,7 +174,7 @@
         <table>
             <thead>
                 <tr>
-                    <th>Assure</th>
+                    <th>Assuré</th>
                     <th>Date</th>
                     <th>Statut</th>
                 </tr>
@@ -206,7 +192,10 @@
         {% else %}
         <div class="etat-vide">
             {% illustration_vide "shield-check" %}
-            <p>Aucune prise en charge enregistree.</p>
+            <p>Aucune prise en charge enregistrée.</p>
+            <div class="actions">
+                <a class="button primary" href="{% url 'ajouter_prise_en_charge' %}">Ajouter une prise en charge</a>
+            </div>
         </div>
         {% endif %}
     </article>
@@ -215,7 +204,7 @@
 <section class="admin-layout">
     <article class="panel">
         <div class="panel-header">
-            <h2>Comptes recemment crees</h2>
+            <h2>Derniers comptes créés</h2>
             <a class="button" href="{% url 'liste_utilisateurs' %}">Voir tout</a>
         </div>
         {% if derniers_comptes %}
@@ -223,7 +212,7 @@
             <thead>
                 <tr>
                     <th>Utilisateur</th>
-                    <th>Role</th>
+                    <th>Rôle</th>
                     <th>Date</th>
                 </tr>
             </thead>
@@ -240,14 +229,17 @@
         {% else %}
         <div class="etat-vide">
             {% illustration_vide "users" %}
-            <p>Aucun compte enregistre.</p>
+            <p>Aucun compte enregistré.</p>
+            <div class="actions">
+                <a class="button primary" href="{% url 'ajouter_utilisateur' %}">Ajouter un utilisateur</a>
+            </div>
         </div>
         {% endif %}
     </article>
 
     <article class="panel">
         <div class="panel-header">
-            <h2>Derniers prestataires ajoutes</h2>
+            <h2>Derniers prestataires ajoutés</h2>
             <a class="button" href="{% url 'liste_prestataires' %}">Voir tout</a>
         </div>
         {% if derniers_prestataires %}
@@ -272,55 +264,36 @@
         {% else %}
         <div class="etat-vide">
             {% illustration_vide "building" %}
-            <p>Aucun prestataire enregistre.</p>
+            <p>Aucun prestataire enregistré.</p>
+            <div class="actions">
+                <a class="button primary" href="{% url 'ajouter_prestataire' %}">Ajouter un prestataire</a>
+            </div>
         </div>
         {% endif %}
     </article>
 
-    <article class="panel">
-        <div class="panel-header">
-            <h2>Dernieres connexions admin</h2>
-        </div>
-        {% if dernieres_connexions_admin %}
-        <table>
-            <thead>
-                <tr>
-                    <th>Administrateur</th>
-                    <th>Derniere connexion</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for compte in dernieres_connexions_admin %}
-                <tr>
-                    <td>{{ compte.get_full_name|default:compte.email }}</td>
-                    <td>{{ compte.last_login|date:"d/m/Y H:i" }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-        <div class="etat-vide">
-            {% illustration_vide "lock" %}
-            <p>Aucune connexion administrateur enregistree.</p>
-        </div>
-        {% endif %}
-    </article>
 </section>
 
 <section class="panel" style="margin-top:18px;padding:22px 24px;">
     <div class="panel-header" style="padding:0 0 16px;">
         <div>
-            <h2>Reseau de prestataires partenaires</h2>
-            <p class="subtitle" style="margin:2px 0 0;">Couverture geographique du reseau conventionne.</p>
+            <h2>Réseau de prestataires partenaires</h2>
+            <p class="subtitle" style="margin:2px 0 0;">Couverture géographique du réseau conventionné.</p>
         </div>
         <a class="button btn" href="{% url 'liste_prestataires' %}">Voir tout</a>
     </div>
     {% if prestataires_carte %}
-    <div id="carte-reseau-admin" style="height:320px;border-radius:12px;"></div>
+    <div id="carte-reseau-admin" style="height:320px;border-radius:12px;border:1px solid var(--border);"></div>
+    <div class="carte-legende" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:16px;">
+        <span class="legende-type"><span class="legende-puce" style="background:var(--primary);"></span>Hôpital</span>
+        <span class="legende-type"><span class="legende-puce" style="background:var(--primary-accent);"></span>Clinique</span>
+        <span class="legende-type"><span class="legende-puce" style="background:var(--accent);"></span>Pharmacie</span>
+        <span class="legende-type"><span class="legende-puce" style="background:var(--primary-strong);"></span>Cabinet</span>
+    </div>
     {% else %}
     <div class="etat-vide">
         {% illustration_vide "map-pin" %}
-        <p>Aucun prestataire partenaire geolocalise pour le moment.</p>
+        <p>Aucun prestataire partenaire géolocalisé pour le moment.</p>
     </div>
     {% endif %}
 </section>
@@ -342,7 +315,7 @@
         if (typeof Chart === 'undefined') {
             var message = document.createElement('p');
             message.className = 'empty';
-            message.textContent = 'Graphique indisponible (bibliotheque non chargee).';
+            message.textContent = 'Graphique indisponible (bibliothèque non chargée).';
             canevas.replaceWith(message);
             return;
         }
@@ -368,11 +341,13 @@
                 labels: donnees.labels,
                 datasets: [{
                     data: donnees.totaux,
-                    borderColor: tokenCouleur('--primary', '#0e7c86'),
-                    backgroundColor: 'rgba(14, 124, 134, 0.12)',
+                    borderColor: 'rgba(255, 255, 255, 0.9)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.18)',
                     fill: true,
                     tension: 0.35,
                     pointRadius: 0,
+                    pointHoverRadius: 4,
+                    pointHoverBackgroundColor: '#ffffff',
                     borderWidth: 2,
                 }],
             },

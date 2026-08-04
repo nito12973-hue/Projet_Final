@@ -398,6 +398,7 @@
             position: sticky;
             top: 0;
             z-index: 5;
+            box-shadow: 0 1px 0 var(--border);
         }
 
         /* Colonnes triables (entete_tri) : meme chevron dans les 3 etats,
@@ -435,7 +436,7 @@
         }
 
         tbody tr:hover {
-            background: #f3fbfa;
+            background: var(--accent-turquoise-wash);
         }
 
         tr:last-child td {
@@ -1094,6 +1095,7 @@
         .dash-grid .dash-stat:nth-child(3) { animation-delay: 0.12s; }
         .dash-grid .dash-stat:nth-child(4) { animation-delay: 0.16s; }
         .dash-grid .dash-stat:nth-child(5) { animation-delay: 0.20s; }
+        .dash-grid .dash-stat:nth-child(6) { animation-delay: 0.24s; }
 
         a.dash-stat:hover {
             transform: translateY(-4px);
@@ -1213,6 +1215,59 @@
             color: rgba(239, 255, 247, 0.78);
             font-weight: 600;
             font-size: 13.5px;
+        }
+
+        .dash-hero-carte {
+            text-decoration: none;
+            display: block;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        a.dash-hero-carte:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 36px rgba(11, 32, 39, 0.3);
+        }
+
+        .dash-hero-sparkline-zone {
+            position: relative;
+            height: 40px;
+            margin-top: 10px;
+        }
+
+        .dash-hero-carte span.dash-hero-sparkline-legende {
+            position: relative;
+            display: block;
+            margin-top: 4px;
+            font-size: 10.5px;
+            font-weight: 600;
+            color: rgba(239, 255, 247, 0.6);
+        }
+
+        .dash-hero-sparkline-zone .empty {
+            background: none;
+            border: none;
+            padding: 6px 0 0;
+            margin: 0;
+            font-size: 11px;
+            color: rgba(239, 255, 247, 0.7);
+            text-align: left;
+        }
+
+        .legende-type {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .legende-puce {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 999px;
+            flex-shrink: 0;
         }
 
         /* Mini-chiffres de l'encart gouvernance (comptes actifs/desactives) :
@@ -1612,17 +1667,21 @@
 
             <nav aria-label="Navigation principale">
                 {% if current_role == "ADMIN" %}
-                <a href="{% url 'dashboard' %}" aria-label="Tableau de bord" data-tooltip="Tableau de bord" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord</span></a>
-                <a href="{% url 'liste_utilisateurs' %}" aria-label="Utilisateurs" data-tooltip="Utilisateurs" class="{% if request.resolver_match.url_name == 'liste_utilisateurs' %}active{% endif %}">{% icone "users" %} <span class="nav-texte">Utilisateurs</span></a>
-                <a href="{% url 'liste_patients' %}" aria-label="Assurés" data-tooltip="Assurés" class="{% if request.resolver_match.url_name == 'liste_patients' %}active{% endif %}">{% icone "id-card" %} <span class="nav-texte">Assurés</span></a>
-                <a href="{% url 'liste_medecins' %}" aria-label="Médecins" data-tooltip="Médecins" class="{% if request.resolver_match.url_name == 'liste_medecins' %}active{% endif %}">{% icone "stethoscope" %} <span class="nav-texte">Médecins</span></a>
-                <a href="{% url 'liste_pharmaciens' %}" aria-label="Pharmaciens" data-tooltip="Pharmaciens" class="{% if request.resolver_match.url_name == 'liste_pharmaciens' %}active{% endif %}">{% icone "pill" %} <span class="nav-texte">Pharmaciens</span></a>
-                <a href="{% url 'liste_prestataires' %}" aria-label="Prestataires" data-tooltip="Prestataires" class="{% if request.resolver_match.url_name == 'liste_prestataires' %}active{% endif %}">{% icone "building" %} <span class="nav-texte">Prestataires</span></a>
-                <a href="{% url 'liste_prises_en_charge' %}" aria-label="Prises en charge" data-tooltip="Prises en charge" class="{% if request.resolver_match.url_name == 'liste_prises_en_charge' %}active{% endif %}">{% icone "shield-check" %} <span class="nav-texte">Prises en charge</span></a>
-                <a href="{% url 'liste_paiements' %}" aria-label="Paiements" data-tooltip="Paiements" class="{% if request.resolver_match.url_name == 'liste_paiements' %}active{% endif %}">{% icone "receipt" %} <span class="nav-texte">Paiements</span></a>
-                <a href="{% url 'rapports' %}" aria-label="Rapports" data-tooltip="Rapports" class="{% if request.resolver_match.url_name == 'rapports' %}active{% endif %}">{% icone "bar-chart" %} <span class="nav-texte">Rapports</span></a>
-                <a href="{% url 'envoyer_notification' %}" aria-label="Notifications" data-tooltip="Notifications" class="{% if request.resolver_match.url_name == 'envoyer_notification' or request.resolver_match.url_name == 'liste_notifications_envoyees' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span></a>
-                <a href="{% url 'changer_mot_de_passe' %}" aria-label="Mot de passe" data-tooltip="Mot de passe" class="{% if request.resolver_match.url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "lock" %} <span class="nav-texte">Mot de passe</span></a>
+                {% with url_name=request.resolver_match.url_name %}
+                <a href="{% url 'dashboard' %}" aria-label="Tableau de bord" data-tooltip="Tableau de bord" class="{% if url_name == 'dashboard' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord</span></a>
+                <a href="{% url 'liste_utilisateurs' %}" aria-label="Utilisateurs" data-tooltip="Utilisateurs" class="{% if url_name == 'liste_utilisateurs' or url_name == 'ajouter_utilisateur' or url_name == 'modifier_utilisateur' or url_name == 'importer_utilisateurs_excel' or url_name == 'reinitialiser_mot_de_passe' or url_name == 'supprimer_utilisateur' %}active{% endif %}">{% icone "users" %} <span class="nav-texte">Utilisateurs</span></a>
+                <a href="{% url 'liste_patients' %}" aria-label="Assurés" data-tooltip="Assurés" class="{% if url_name == 'liste_patients' or url_name == 'ajouter_patient' or url_name == 'modifier_patient' or url_name == 'supprimer_patient' %}active{% endif %}">{% icone "id-card" %} <span class="nav-texte">Assurés</span></a>
+                <a href="{% url 'liste_medecins' %}" aria-label="Médecins" data-tooltip="Médecins" class="{% if url_name == 'liste_medecins' or url_name == 'ajouter_medecin' or url_name == 'modifier_medecin' or url_name == 'supprimer_medecin' %}active{% endif %}">{% icone "stethoscope" %} <span class="nav-texte">Médecins</span></a>
+                <a href="{% url 'liste_pharmaciens' %}" aria-label="Pharmaciens" data-tooltip="Pharmaciens" class="{% if url_name == 'liste_pharmaciens' or url_name == 'modifier_pharmacien' %}active{% endif %}">{% icone "pill" %} <span class="nav-texte">Pharmaciens</span></a>
+                <a href="{% url 'liste_prestataires' %}" aria-label="Prestataires" data-tooltip="Prestataires" class="{% if url_name == 'liste_prestataires' or url_name == 'ajouter_prestataire' or url_name == 'modifier_prestataire' or url_name == 'supprimer_prestataire' %}active{% endif %}">{% icone "building" %} <span class="nav-texte">Prestataires</span></a>
+                <a href="{% url 'liste_services' %}" aria-label="Services médicaux" data-tooltip="Services médicaux" class="{% if url_name == 'liste_services' or url_name == 'ajouter_service' or url_name == 'modifier_service' or url_name == 'supprimer_service' %}active{% endif %}">{% icone "credit-card" %} <span class="nav-texte">Services médicaux</span></a>
+                <a href="{% url 'liste_plans_couverture' %}" aria-label="Plans de couverture" data-tooltip="Plans de couverture" class="{% if url_name == 'liste_plans_couverture' or url_name == 'ajouter_plan_couverture' or url_name == 'modifier_plan_couverture' or url_name == 'supprimer_plan_couverture' %}active{% endif %}">{% icone "clipboard-list" %} <span class="nav-texte">Plans de couverture</span></a>
+                <a href="{% url 'liste_prises_en_charge' %}" aria-label="Prises en charge" data-tooltip="Prises en charge" class="{% if url_name == 'liste_prises_en_charge' or url_name == 'ajouter_prise_en_charge' or url_name == 'modifier_prise_en_charge' or url_name == 'supprimer_prise_en_charge' %}active{% endif %}">{% icone "shield-check" %} <span class="nav-texte">Prises en charge</span></a>
+                <a href="{% url 'liste_paiements' %}" aria-label="Paiements" data-tooltip="Paiements" class="{% if url_name == 'liste_paiements' or url_name == 'marquer_paiement_regle' %}active{% endif %}">{% icone "receipt" %} <span class="nav-texte">Paiements</span></a>
+                <a href="{% url 'rapports' %}" aria-label="Rapports" data-tooltip="Rapports" class="{% if url_name == 'rapports' %}active{% endif %}">{% icone "bar-chart" %} <span class="nav-texte">Rapports</span></a>
+                <a href="{% url 'envoyer_notification' %}" aria-label="Notifications" data-tooltip="Notifications" class="{% if url_name == 'envoyer_notification' or url_name == 'liste_notifications_envoyees' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span></a>
+                <a href="{% url 'changer_mot_de_passe' %}" aria-label="Mot de passe" data-tooltip="Mot de passe" class="{% if url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "lock" %} <span class="nav-texte">Mot de passe</span></a>
+                {% endwith %}
                 {% elif current_role == "MEDECIN" %}
                 <a href="{% url 'dashboard_medecin' %}" aria-label="Tableau de bord" data-tooltip="Tableau de bord" class="{% if request.resolver_match.url_name == 'dashboard_medecin' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord</span></a>
                 <a href="{% url 'agenda_medecin' %}" aria-label="Agenda" data-tooltip="Agenda" class="{% if request.resolver_match.url_name == 'agenda_medecin' %}active{% endif %}">{% icone "calendar" %} <span class="nav-texte">Agenda</span></a>
