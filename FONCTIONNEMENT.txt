@@ -353,8 +353,8 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
                           medicaux" (compteur de configuration, n'evolue
                           jamais -- total_services reste calcule dans
                           views.py mais n'est plus affiche nulle part,
-                          dette mineure identifiee en revue, non traitee
-                          dans ce chantier), tuile "Paiements en attente"
+                          dette mineure identifiee en revue, retiree dans
+                          la cinquieme passe ci-dessous), tuile "Paiements en attente"
                           du panel "Aujourd'hui" (devenue redondante),
                           total_prises_en_charge (calcule, jamais rendu).
                           Bandeau financier (.dash-hero) : les 3 cartes
@@ -413,6 +413,30 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
                           passe de 13 a 12 : 2 tests retires avec le panel
                           connexions admin, 1 test scinde en 2 pour couvrir
                           l'exclusion ASSURE).
+                          Cinquieme passe (audit qualite multi-expertise,
+                          perimetre volontairement restreint a 4 corrections
+                          ciblees, aucun changement de mise en page) :
+                          total_services (ServiceMedical.objects.count())
+                          retire du contexte de dashboard(), dette orpheline
+                          depuis la quatrieme passe (voir ci-dessus). Legende
+                          du mini-graphique (.dash-hero-sparkline-legende) :
+                          contraste insuffisant cote --primary-strong du
+                          degrade (~4.3:1, sous le seuil WCAG AA pour du
+                          texte normal) -- opacite 0.6 -> 0.78, meme valeur
+                          deja verifiee sur le libelle principal de la carte
+                          (.dash-hero-carte span). Bandeau financier
+                          (.dash-hero-carte) : animation d'entree
+                          entree-carte ajoutee avec cascade sur les 3 cartes
+                          (0s/0.04s/0.08s), absente jusqu'ici alors que la
+                          grille KPI juste en dessous en a une -- les 3
+                          chiffres les plus strategiques de la page etaient
+                          les seuls sans animation d'entree. Leaflet (CSS +
+                          JS, carte du reseau de partenaires) desormais
+                          charge uniquement si prestataires_carte est non
+                          vide (`{% if %}` autour des deux `<script>`/
+                          `<link>`) -- evite ~150 Ko charges pour rien quand
+                          aucun prestataire n'est geolocalise. 233 tests
+                          inchange (aucun test ne couvrait ces 4 points).
   rapports / exporter_rapports_excel / exporter_rapports_pdf
                                       _donnees_rapports() est la SEULE
                                       source de donnees, partagee par la
