@@ -192,6 +192,23 @@ Relations cle a retenir :
   (dashboard / dashboard_assure / dashboard_medecin / dashboard_pharmacien).
 - setup_wizard : creation du tout premier admin, accessible seulement si
   aucun admin n'existe encore en base (_admin_exists()).
+- Un seul administrateur, comme dans un veritable SaaS (decision
+  utilisateur, 2026-08-04) : le role ADMIN n'est jamais un choix propose
+  par UtilisateurCreationForm (ajouter_utilisateur), et
+  UtilisateurModificationForm ne l'inclut dans ses choix que lorsque
+  l'instance editee est deja l'administrateur (sinon le formulaire casserait
+  pour sa propre fiche) -- personne ne peut donc etre cree ou promu ADMIN
+  depuis l'interface classique. activer_desactiver_utilisateur refuse aussi
+  de reactiver un compte ADMIN inactif tant qu'un autre administrateur est
+  deja actif (sinon la reactivation d'un ancien compte admin contournerait
+  silencieusement la regle). setup_wizard reste le seul chemin de creation
+  du tout premier admin ; /admin/ (Django admin, usage interne) n'est pas
+  restreint de la meme facon -- echappatoire volontaire, reservee a une
+  intervention manuelle et deliberee, jamais exposee dans l'interface
+  classique. Nettoyage ponctuel effectue le 2026-08-04 : 5 comptes ADMIN
+  existaient en base (accumules au fil des sessions de test), un seul
+  conserve actif (admin@sante.com), les 4 autres desactives (pas
+  supprimes, role ADMIN inchange -- reversible si besoin).
 - changer_mot_de_passe : libre-service, disponible pour les 4 roles,
   update_session_auth_hash() pour ne pas deconnecter l'utilisateur.
 - login_view lit request.GET['next'] (pose par @login_required quand une
