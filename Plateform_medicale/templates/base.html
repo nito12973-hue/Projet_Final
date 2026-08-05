@@ -20,7 +20,7 @@
             /* Teal fonce : seule variante sure pour texte/icone blancs en aplat
                (boutons pleins) et pour texte/icone colores sur fond clair. */
             --primary-strong: #095059;
-            /* Navy : titres, texte fonce â€” identique au menu lateral. */
+            /* Navy : titres, texte fonce — identique au menu lateral. */
             --primary-dark: #0b2027;
             /* Variante claire : texte/icone colores sur fond sombre (sidebar). */
             --primary-light: #4fb8ae;
@@ -484,7 +484,7 @@
         .details-tableau summary::-webkit-details-marker { display: none; }
 
         .details-tableau summary::before {
-            content: "â–¸";
+            content: "▸";
             display: inline-block;
             margin-right: 6px;
             transition: transform 0.15s ease;
@@ -778,7 +778,7 @@
 
         /* Barre de filtres (formulaire GET en ligne, au-dessus d'une liste) et
            formulaire POST "invisible" habillant un seul bouton d'action dans
-           une ligne de tableau â€” classes manquantes, dupliquees en inline. */
+           une ligne de tableau — classes manquantes, dupliquees en inline. */
         form.filtres {
             max-width: none;
             padding: 20px;
@@ -1080,7 +1080,7 @@
         }
 
         /* ===== Cartes de stats "accueil" (turquoise), utilisees uniquement sur
-           les 4 pages d'accueil par role (dashboard*.html) â€” n'affecte pas
+           les 4 pages d'accueil par role (dashboard*.html) — n'affecte pas
            .stat/.grid utilises ailleurs dans l'application. ===== */
         .dash-grid {
             display: grid;
@@ -1203,7 +1203,7 @@
         }
 
         /* Statuts en pastille a point colore, utilises uniquement sur les 4
-           pages d'accueil â€” n'affecte pas .badge utilise ailleurs. */
+           pages d'accueil — n'affecte pas .badge utilise ailleurs. */
         .dash-pill {
             display: inline-flex;
             align-items: center;
@@ -1320,7 +1320,7 @@
             font-weight: 600;
             /* Meme opacite que .dash-hero-carte span (label principal) :
                0.6 tombait sous 4.5:1 (WCAG AA, texte normal) cote --primary-strong
-               du degrade â€” 0.78 est deja verifie ailleurs sur cette carte. */
+               du degrade — 0.78 est deja verifie ailleurs sur cette carte. */
             color: rgba(239, 255, 247, 0.78);
         }
 
@@ -1781,7 +1781,7 @@
             top: 12px;
         }
 
-        /* AccessibilitÃ© : rÃ©duire les animations si demandÃ© */
+        /* Accessibilité : réduire les animations si demandé */
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after {
                 animation-duration: 0.01ms !important;
@@ -1804,10 +1804,10 @@
             <div class="sidebar-head">
                 <a class="brand" href="{% url 'post_login_redirect' %}">
                     {% logo_marque taille=36 fond="sombre" %}
-                    <span class="brand-texte">SantÃ©<span style="color: var(--primary-light);">SN</span></span>
+                    <span class="brand-texte">Santé<span style="color: var(--primary-light);">SN</span></span>
                 </a>
                 {% if user.is_authenticated %}
-                <button type="button" id="btn-reduire-menu" class="btn-reduire" aria-pressed="false" aria-label="RÃ©duire le menu" aria-controls="barre-laterale">
+                <button type="button" id="btn-reduire-menu" class="btn-reduire" aria-pressed="false" aria-label="Réduire le menu" aria-controls="barre-laterale">
                     {% icone "chevron-left" %}
                 </button>
                 {% endif %}
@@ -1824,11 +1824,11 @@
                 {% with url_name=request.resolver_match.url_name %}
                 <a href="{% url 'dashboard' %}" aria-label="Tableau de bord" data-tooltip="Tableau de bord" class="{% if url_name == 'dashboard' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord</span></a>
                 <a href="{% url 'liste_utilisateurs' %}" aria-label="Utilisateurs" data-tooltip="Utilisateurs" class="{% if url_name == 'liste_utilisateurs' or url_name == 'ajouter_utilisateur' or url_name == 'modifier_utilisateur' or url_name == 'importer_utilisateurs_excel' or url_name == 'reinitialiser_mot_de_passe' or url_name == 'supprimer_utilisateur' %}active{% endif %}">{% icone "users" %} <span class="nav-texte">Utilisateurs</span></a>
-                <a href="{% url 'liste_patients' %}" aria-label="AssurÃ©s" data-tooltip="AssurÃ©s" class="{% if url_name == 'liste_patients' or url_name == 'ajouter_patient' or url_name == 'modifier_patient' or url_name == 'supprimer_patient' %}active{% endif %}">{% icone "id-card" %} <span class="nav-texte">AssurÃ©s</span></a>
-                <a href="{% url 'liste_medecins' %}" aria-label="MÃ©decins" data-tooltip="MÃ©decins" class="{% if url_name == 'liste_medecins' or url_name == 'ajouter_medecin' or url_name == 'modifier_medecin' or url_name == 'supprimer_medecin' %}active{% endif %}">{% icone "stethoscope" %} <span class="nav-texte">MÃ©decins</span></a>
+                <a href="{% url 'liste_patients' %}" aria-label="Assurés" data-tooltip="Assurés" class="{% if url_name == 'liste_patients' or url_name == 'ajouter_patient' or url_name == 'modifier_patient' or url_name == 'supprimer_patient' %}active{% endif %}">{% icone "id-card" %} <span class="nav-texte">Assurés</span></a>
+                <a href="{% url 'liste_medecins' %}" aria-label="Médecins" data-tooltip="Médecins" class="{% if url_name == 'liste_medecins' or url_name == 'ajouter_medecin' or url_name == 'modifier_medecin' or url_name == 'supprimer_medecin' %}active{% endif %}">{% icone "stethoscope" %} <span class="nav-texte">Médecins</span></a>
                 <a href="{% url 'liste_pharmaciens' %}" aria-label="Pharmaciens" data-tooltip="Pharmaciens" class="{% if url_name == 'liste_pharmaciens' or url_name == 'modifier_pharmacien' %}active{% endif %}">{% icone "pill" %} <span class="nav-texte">Pharmaciens</span></a>
                 <a href="{% url 'liste_prestataires' %}" aria-label="Prestataires" data-tooltip="Prestataires" class="{% if url_name == 'liste_prestataires' or url_name == 'ajouter_prestataire' or url_name == 'modifier_prestataire' or url_name == 'supprimer_prestataire' %}active{% endif %}">{% icone "building" %} <span class="nav-texte">Prestataires</span></a>
-                <a href="{% url 'liste_services' %}" aria-label="Services mÃ©dicaux" data-tooltip="Services mÃ©dicaux" class="{% if url_name == 'liste_services' or url_name == 'ajouter_service' or url_name == 'modifier_service' or url_name == 'supprimer_service' %}active{% endif %}">{% icone "credit-card" %} <span class="nav-texte">Services mÃ©dicaux</span></a>
+                <a href="{% url 'liste_services' %}" aria-label="Services médicaux" data-tooltip="Services médicaux" class="{% if url_name == 'liste_services' or url_name == 'ajouter_service' or url_name == 'modifier_service' or url_name == 'supprimer_service' %}active{% endif %}">{% icone "credit-card" %} <span class="nav-texte">Services médicaux</span></a>
                 <a href="{% url 'liste_plans_couverture' %}" aria-label="Plans de couverture" data-tooltip="Plans de couverture" class="{% if url_name == 'liste_plans_couverture' or url_name == 'ajouter_plan_couverture' or url_name == 'modifier_plan_couverture' or url_name == 'supprimer_plan_couverture' %}active{% endif %}">{% icone "clipboard-list" %} <span class="nav-texte">Plans de couverture</span></a>
                 <a href="{% url 'liste_prises_en_charge' %}" aria-label="Prises en charge" data-tooltip="Prises en charge" class="{% if url_name == 'liste_prises_en_charge' or url_name == 'ajouter_prise_en_charge' or url_name == 'modifier_prise_en_charge' or url_name == 'supprimer_prise_en_charge' %}active{% endif %}">{% icone "shield-check" %} <span class="nav-texte">Prises en charge</span></a>
                 <a href="{% url 'liste_paiements' %}" aria-label="Paiements" data-tooltip="Paiements" class="{% if url_name == 'liste_paiements' or url_name == 'marquer_paiement_regle' %}active{% endif %}">{% icone "receipt" %} <span class="nav-texte">Paiements</span></a>
@@ -1867,8 +1867,8 @@
 
             <form class="logout-form" method="post" action="{% url 'logout' %}">
                 {% csrf_token %}
-                <button class="logout-button" type="submit" aria-label="DÃ©connexion" data-tooltip="DÃ©connexion">
-                    {% icone "log-out" %} <span class="nav-texte">DÃ©connexion</span>
+                <button class="logout-button" type="submit" aria-label="Déconnexion" data-tooltip="Déconnexion">
+                    {% icone "log-out" %} <span class="nav-texte">Déconnexion</span>
                 </button>
             </form>
             {% endif %}
@@ -1956,7 +1956,7 @@
                 var actif = reduit && estBureau();
                 corps.classList.toggle('sidebar-reduite', actif);
                 bouton.setAttribute('aria-pressed', actif ? 'true' : 'false');
-                bouton.setAttribute('aria-label', actif ? 'DÃ©ployer le menu' : 'RÃ©duire le menu');
+                bouton.setAttribute('aria-label', actif ? 'Déployer le menu' : 'Réduire le menu');
                 bouton.innerHTML = actif
                     ? '{% icone "chevron-right" %}'
                     : '{% icone "chevron-left" %}';
