@@ -1320,18 +1320,33 @@
             text-align: left;
         }
 
-        /* Filigrane discret (croix seule, sans le pouls) sur la carte hero
-           principale uniquement -- pas les 3 cartes, pour ne pas diluer
-           l'effet (une seule carte porte le bandeau financier "vedette",
-           avec la trace ; les 2 autres restent sobres). */
-        .dash-hero-watermark {
+        /* Trace de pouls decorative en haut a droite de la carte hero
+           principale, derriere l'icone/le montant -- pas au meme endroit
+           que le sparkline Chart.js reel (en bas de la carte), pour ne
+           jamais se superposer a une donnee reelle. */
+        .dc-hero-trace {
             position: absolute;
-            top: -18px;
-            right: -14px;
-            width: 150px;
-            height: 150px;
-            opacity: 0.06;
+            top: 10px;
+            right: -6px;
+            width: 220px;
+            height: 70px;
+            opacity: 0.16;
             pointer-events: none;
+        }
+
+        .dc-hero-trace path {
+            fill: none;
+            stroke: var(--accent);
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-dasharray: 200;
+            stroke-dashoffset: 200;
+            animation: dc-trace 3.2s ease-in-out infinite;
+        }
+
+        @keyframes dc-trace {
+            to { stroke-dashoffset: 0; }
         }
 
         /* Point "vivant" : reserve aux endroits qui refletent reellement une

@@ -14,9 +14,8 @@
 <div class="dash-command">
 <section class="dash-hero">
     <a class="dash-hero-carte" href="{% url 'liste_paiements' %}?statut=regle">
-        <svg class="dash-hero-watermark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
-            <rect x="18" y="6" width="12" height="36" rx="4" fill="#ffffff"/>
-            <rect x="6" y="18" width="36" height="12" rx="4" fill="#ffffff"/>
+        <svg class="dc-hero-trace" viewBox="0 0 220 70" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0,42 L30,42 L36,42 L41,18 L46,60 L51,30 L57,42 L95,42 L101,42 L106,18 L111,60 L117,30 L123,42 L160,42 L166,42 L171,18 L176,60 L182,30 L188,42 L220,42"/>
         </svg>
         <span class="dash-hero-icon">{% icone "receipt" %}</span>
         <strong class="code">{{ montant_regle|franc_cfa }}</strong>
