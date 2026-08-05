@@ -71,31 +71,18 @@
     </a>
 </section>
 
-<section class="panel" style="margin-top:14px;padding:20px 24px;">
-    <div class="panel-header" style="padding:0 0 14px;">
-        <div>
-            <h2 style="display:flex;align-items:center;gap:9px;"><span class="pulse-dot" aria-hidden="true"></span>Aujourd'hui</h2>
-            <p class="subtitle" style="margin:2px 0 0;">Activité de la plateforme, tous rôles confondus.</p>
-        </div>
-    </div>
-    <div class="dash-grid">
-        <div class="dash-stat" style="cursor:default;">
-            <span class="dash-stat-icon">{% icone "calendar" %}</span>
-            <strong class="code">{{ total_rendez_vous_aujourd_hui }}</strong>
-            <span>Rendez-vous</span>
-        </div>
-        <div class="dash-stat" style="cursor:default;">
-            <span class="dash-stat-icon">{% icone "clipboard-list" %}</span>
-            <strong class="code">{{ total_consultations_aujourd_hui }}</strong>
-            <span>Consultations</span>
-        </div>
-        <a class="dash-stat{% if total_prises_en_charge_attente %} dash-stat-urgent{% endif %}" href="{% url 'liste_prises_en_charge' %}?statut=en_attente">
-            <span class="dash-stat-icon">{% icone "clock-history" %}</span>
-            <strong class="code">{{ total_prises_en_charge_attente }}</strong>
-            <span>Prises en charge en attente</span>
-        </a>
-    </div>
-</section>
+<div class="dc-status">
+    <span class="pulse-dot" aria-hidden="true"></span>
+    <span>Aujourd'hui</span>
+    <span class="dc-status-sep" aria-hidden="true"></span>
+    <span><strong class="code">{{ total_rendez_vous_aujourd_hui }}</strong> rendez-vous</span>
+    <span class="dc-status-sep" aria-hidden="true"></span>
+    <span><strong class="code">{{ total_consultations_aujourd_hui }}</strong> consultations</span>
+    <span class="dc-status-sep" aria-hidden="true"></span>
+    <a class="dc-status-link{% if total_prises_en_charge_attente %} dc-status-urgent{% endif %}" href="{% url 'liste_prises_en_charge' %}?statut=en_attente">
+        <strong class="code">{{ total_prises_en_charge_attente }}</strong> prise(s) en charge en attente
+    </a>
+</div>
 
 <section class="admin-layout">
     <article class="panel admin-card-large panel-discret">
