@@ -453,8 +453,15 @@ class DashboardAdminTests(TestCase):
         self.assertContains(response, 'class="dc-status"')
 
     def test_listes_du_dashboard_sont_en_grille_de_digests(self):
+        patient = creer_patient()
+        PriseEnCharge.objects.create(patient=patient, motif='Test validee', statut='validee')
+        PriseEnCharge.objects.create(patient=patient, motif='Test refusee', statut='refusee')
+
         response = self.client.get(reverse('dashboard'))
         self.assertContains(response, 'class="dc-digests"')
+        self.assertContains(response, 'class="dc-row"')
+        self.assertContains(response, 'dash-pill ok')
+        self.assertContains(response, 'dash-pill danger')
 
 
 class GestionUtilisateursTests(TestCase):
