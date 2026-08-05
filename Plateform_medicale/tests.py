@@ -514,6 +514,37 @@ class DashboardAdminTests(TestCase):
         self.assertEqual(response.context['montant_regle_7j'], Decimal('5000'))
         self.assertContains(response, 'class="dc-hero-delta"')
 
+    def test_kpi_consultations_et_ordonnances_affichent_le_delta_7_jours(self):
+        medecin = creer_medecin('medecin@santesn.sn')
+        patient = creer_patient()
+        service = ServiceMedical.objects.create(nom='Consultation', prix=Decimal('5000'))
+        consultation = Consultation.objects.create(
+            patient=patient, medecin=medecin, service=service,
+            date_consultation=timezone.now(), diagnostic='Test',
+        )
+        Ordonnance.objects.create(consultation=consultation, medicaments='Paracetamol')
+
+        response = self.client.get(reverse('dashboard'))
+        self.assertEqual(response.context['consultations_7j'], 1)
+        self.assertEqual(response.context['ordonnances_7j'], 1)
+        self.assertContains(response, 'class="dc-kpi-delta"')
+
+    def test_kpi_ignore_les_consultations_et_ordonnances_hors_7_jours(self):
+        medecin = creer_medecin('medecin@santesn.sn')
+        patient = creer_patient()
+        service = ServiceMedical.objects.create(nom='Consultation', prix=Decimal('5000'))
+        ancienne = Consultation.objects.create(
+            patient=patient, medecin=medecin, service=service,
+            date_consultation=timezone.now() - datetime.timedelta(days=10), diagnostic='Test',
+        )
+        ancienne_ordonnance = Ordonnance.objects.create(consultation=ancienne, medicaments='Paracetamol')
+        ancienne_ordonnance.date_creation = timezone.now() - datetime.timedelta(days=10)
+        ancienne_ordonnance.save()
+
+        response = self.client.get(reverse('dashboard'))
+        self.assertEqual(response.context['consultations_7j'], 0)
+        self.assertEqual(response.context['ordonnances_7j'], 0)
+
 
 class GestionUtilisateursTests(TestCase):
     def setUp(self):

@@ -63,11 +63,13 @@
         <span class="dash-stat-icon">{% icone "clipboard-list" %}</span>
         <strong class="code">{{ total_consultations }}</strong>
         <span>Consultations</span>
+        {% if consultations_7j %}<span class="dc-kpi-delta">+{{ consultations_7j }} (7j)</span>{% endif %}
     </a>
     <a class="dash-stat" href="{% url 'rapports' %}">
         <span class="dash-stat-icon">{% icone "qr-scan" %}</span>
         <strong class="code">{{ total_ordonnances }}</strong>
         <span>Ordonnances émises</span>
+        {% if ordonnances_7j %}<span class="dc-kpi-delta">+{{ ordonnances_7j }} (7j)</span>{% endif %}
     </a>
 </section>
 
