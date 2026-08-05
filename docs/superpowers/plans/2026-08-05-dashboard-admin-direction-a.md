@@ -1311,21 +1311,35 @@ Remplacer par :
     </a>
 ```
 
-**Note :** ces 2 tuiles gardent `dash-stat-discret` ici (retiré seulement à
-la Tâche 4, pas encore exécutée à ce stade si les tâches sont suivies dans
-l'ordre — si la Tâche 4 est déjà passée, adapter : `class="dash-stat"` sans
-le modificateur, le reste de ce Step est identique).
+**Note :** la Tâche 4 est déjà passée à ce stade (fusionnée dans `main`) —
+les 6 tuiles KPI portent donc déjà `class="dash-stat"` sans le modificateur
+`dash-stat-discret`. Le reste de ce Step est identique.
 
 - [ ] **Step 5: Add the CSS**
 
 In `base.html`, juste après la règle `.dc-hero-delta` ajoutée par la
 Tâche 8, ajouter :
 
+**Attention specificite CSS (lecon de la Tache 8) :** `.dash-command .dash-stat
+span` (regle deja en place depuis la Tache 4, specificite 0,2,1) fixe la
+couleur de TOUT `<span>` a l'interieur d'une tuile `.dash-stat` a
+`var(--dc-text-muted)`. Un selecteur `.dc-kpi-delta` nu (specificite 0,1,0)
+perdrait cette bataille de cascade exactement comme `.dc-hero-delta` l'a
+perdue face a `.dash-hero-carte span` en Tache 8 (bug trouve et corrige en
+revue) -- le vert n'apparaitrait jamais. Le selecteur doit donc etre
+`.dash-command .dash-stat span.dc-kpi-delta` (specificite 0,3,1) pour
+gagner face a `.dash-command .dash-stat span` (0,2,1), suivant le meme
+principe que le correctif de la Tache 8.
+
 ```css
         /* Meme principe que .dc-hero-delta (Tache 8), variante compacte pour
            une tuile KPI : reutilise la meme teinte verte, pas de fond ni de
-           padding pour rester discret sous le libelle de la tuile. */
-        .dc-kpi-delta {
+           padding pour rester discret sous le libelle de la tuile.
+           Selecteur qualifie (.dash-command .dash-stat span.dc-kpi-delta,
+           specificite 0,3,1) pour gagner face a .dash-command .dash-stat
+           span (0,2,1) -- meme piege de cascade que .dc-hero-delta en
+           Tache 8, corrige ici des le depart plutot qu'en revue. */
+        .dash-command .dash-stat span.dc-kpi-delta {
             display: block;
             margin-top: 2px;
             font-size: 10.5px;
