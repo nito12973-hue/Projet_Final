@@ -136,6 +136,31 @@ documentée dans `CLAUDE.md` pour la croix du logo sur fond sombre,
 - Focus clavier visible sur tous les éléments interactifs des nouvelles
   listes condensées (mêmes règles `:focus-visible` que le reste de l'app).
 
+## Amendement — Direction A+ (retour utilisateur, 2026-08-05)
+
+Après une première maquette de la direction A (voir Tâches 1-7 du plan
+d'implémentation), retour direct : la composition la plus aboutie
+visuellement, mais il manquait quelque chose — diagnostiqué comme
+*le mouvement* : des totaux figés, sur un design censé évoquer un moniteur
+de battements. Décision (validée via question à choix explicite, pas
+supposée) : ajouter de vraies tendances "7 derniers jours" là où la donnée
+existe déjà en base, et n'en inventer aucune ailleurs.
+
+- **Hero paiements** ("Paiements réglés") : delta réel via
+  `Paiement.date_reglement` (déjà renseigné à chaque règlement).
+- **KPI Consultations** : delta réel via `Consultation.date_consultation`.
+- **KPI Ordonnances** : delta réel via `Ordonnance.date_creation`.
+- **KPI Assurés / Médecins / Pharmaciens / Prestataires** : **aucun
+  changement.** `Patient` et `Prestataire` n'ont pas de champ de date de
+  création exploitable sans migration (`Medecin`/`Pharmacien` pourraient en
+  dériver un depuis leur `User.date_joined` lié, mais pas ces deux modèles).
+  Ouvrir cette migration a été explicitement écarté pour rester un seul
+  module — pas de chiffre inventé en attendant.
+
+Amende le périmètre initial ("Aucune vue... n'est modifiée") : les Tâches 8
+et 9 du plan ajoutent 3 agrégats en lecture seule dans la vue `dashboard`,
+aucune migration ni nouveau modèle.
+
 ## Non-objectifs
 
 - Pas de mode sombre basculable par l'utilisateur (`color-scheme: light`

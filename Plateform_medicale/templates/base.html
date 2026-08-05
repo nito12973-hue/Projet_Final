@@ -1,4 +1,4 @@
-{% load icones %}<!DOCTYPE html>
+﻿{% load icones %}<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -543,12 +543,11 @@
             font-size: 21px;
         }
 
-        /* Meme logique que .dash-stat-discret : la profondeur (ombre) reste
-           reservee au bandeau financier, seul element "vedette" de la page.
-           Panels d'action/tableaux/carte du dashboard admin : bordure fine,
-           pas d'ombre -- pas de survol qui souleve (ce ne sont pas des
-           cartes-lien uniques, un survol qui souleve toute la carte serait
-           trompeur). .panel seul, utilise partout ailleurs dans
+        /* Profondeur (ombre) reservee au bandeau financier, seul element
+           "vedette" de la page. Panels d'action/tableaux/carte du dashboard
+           admin : bordure fine, pas d'ombre -- pas de survol qui souleve (ce
+           ne sont pas des cartes-lien uniques, un survol qui souleve toute la
+           carte serait trompeur). .panel seul, utilise partout ailleurs dans
            l'application, reste inchange. */
         .panel-discret {
             box-shadow: none;
@@ -1128,54 +1127,6 @@
 
         .dash-stat-icon .icone-nav { width: 17px; height: 17px; }
 
-        /* Totaux de reference (grille KPI globale du dashboard admin, ex.
-           "Medecins actifs") : traitement plus discret que .dash-stat
-           standard, pour laisser "Aujourd'hui" (activite qui change
-           reellement au quotidien, meme composant .dash-stat juste en
-           dessous) rester la donnee la plus visible sous le bandeau
-           financier. Modificateur, ne redefinit pas .dash-stat -- aucun
-           impact sur les 3 autres dashboards (Assure/Medecin/Pharmacien)
-           qui utilisent .dash-stat sans ce modificateur. */
-        .dash-stat-discret {
-            /* Meme teinte que --primary-soft (220,236,233), en transparence
-               sur --bg plutot qu'en aplat : meme principe deja utilise par
-               --accent-turquoise-wash (rgba de --primary), pas une nouvelle
-               couleur. Distingue ces tuiles de reference du blanc plein des
-               tuiles "Aujourd'hui" juste en dessous. */
-            background: rgba(220, 236, 233, 0.5);
-            border-color: rgba(14, 124, 134, 0.16);
-            padding: 14px 16px;
-            box-shadow: none;
-        }
-
-        .dash-stat-discret .dash-stat-icon {
-            width: 28px;
-            height: 28px;
-            margin-bottom: 10px;
-        }
-
-        /* Specificite .dash-stat.dash-stat-discret (pas .dash-stat-discret
-           seul) : meme specificite que .dash-stat strong sinon, et cette
-           regle-ci arrive avant elle dans le fichier -- perdrait la
-           cascade sans la classe composee. */
-        .dash-stat.dash-stat-discret strong {
-            font-size: 20px;
-        }
-
-        /* Tuile "Aujourd'hui" qui merite une action immediate (ex. prises en
-           charge en attente > 0, condition posee cote template) : accent
-           terracotta au sens ou CLAUDE.md le documente deja (ponctuel, jamais
-           en aplat large) -- pas un style permanent, seulement quand il y a
-           reellement quelque chose a traiter. */
-        .dash-stat-urgent {
-            border-left: 3px solid var(--accent);
-        }
-
-        .dash-stat-urgent .dash-stat-icon {
-            background: rgba(224, 130, 79, 0.14);
-            color: var(--accent);
-        }
-
         /* IBM Plex Mono n'existe pas en graisse 800 (seul .dash-stat strong /
            .dash-hero-carte strong / .gouvernance-comptes strong l'utilisent) :
            sans cette regle le navigateur synthetiserait un faux gras sur un
@@ -1295,6 +1246,25 @@
             font-size: 13.5px;
         }
 
+        /* Tendance reelle (paiements regles ces 7 derniers jours), pas un
+           chiffre invente : meme teinte verte que .dash-pill.ok sur fond
+           sombre (#6fd39a, Tache 6), reutilisee ici plutot qu'une nouvelle
+           couleur "succes". N'apparait que si au moins un paiement a ete
+           regle sur la fenetre (sinon rien, jamais de "+0"). Selecteur
+           .dash-hero-carte span.dc-hero-delta (specificity 0,2,1) pour
+           surmonter .dash-hero-carte span (0,1,1) qui forcerait la couleur
+           off-white, suivant le pattern de .dash-hero-carte span.dash-hero-sparkline-legende
+           deux regles plus bas. */
+        .dash-hero-carte span.dc-hero-delta {
+            position: relative;
+            display: block;
+            margin: 2px 0 6px;
+            font-size: 12px;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            color: #6fd39a;
+        }
+
         .dash-hero-carte {
             text-decoration: none;
             display: block;
@@ -1334,18 +1304,33 @@
             text-align: left;
         }
 
-        /* Filigrane discret (croix seule, sans le pouls) sur la carte hero
-           principale uniquement -- pas les 3 cartes, pour ne pas diluer
-           l'effet (une seule carte porte le bandeau financier "vedette",
-           avec la trace ; les 2 autres restent sobres). */
-        .dash-hero-watermark {
+        /* Trace de pouls decorative en haut a droite de la carte hero
+           principale, derriere l'icone/le montant -- pas au meme endroit
+           que le sparkline Chart.js reel (en bas de la carte), pour ne
+           jamais se superposer a une donnee reelle. */
+        .dc-hero-trace {
             position: absolute;
-            top: -18px;
-            right: -14px;
-            width: 150px;
-            height: 150px;
-            opacity: 0.06;
+            top: 10px;
+            right: -6px;
+            width: 220px;
+            height: 70px;
+            opacity: 0.16;
             pointer-events: none;
+        }
+
+        .dc-hero-trace path {
+            fill: none;
+            stroke: var(--accent);
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-dasharray: 200;
+            stroke-dashoffset: 200;
+            animation: dc-trace 3.2s ease-in-out infinite;
+        }
+
+        @keyframes dc-trace {
+            to { stroke-dashoffset: 0; }
         }
 
         /* Point "vivant" : reserve aux endroits qui refletent reellement une
@@ -1376,6 +1361,199 @@
             0% { opacity: 0.65; transform: scale(0.6); }
             75% { opacity: 0; transform: scale(1.6); }
             100% { opacity: 0; transform: scale(1.6); }
+        }
+
+        /* Poste de pilotage (dashboard admin uniquement) : canevas sombre qui
+           enveloppe tout le contenu sous le titre de page. Toutes les
+           redefinitions sombres de composants partages (.panel, .dash-grid,
+           .dash-stat, .dash-pill, .admin-layout, .governance-card, .button)
+           vivent imbriquees sous .dash-command -- jamais dans la regle de
+           base, qui reste utilisee telle quelle par les 3 autres dashboards
+           et par d'autres pages admin (scanner_ordonnance.html, rapports.html). */
+        .dash-command {
+            margin-top: 24px;
+            padding: 28px 30px 34px;
+            border-radius: 24px;
+            background: radial-gradient(140% 160% at 100% 0%, var(--primary-strong) 0%, var(--primary-dark) 55%);
+            /* Texte clair sur fond sombre : reutilise les tokens deja concus
+               pour ce contexte (sidebar), plus un seul token local pour le
+               texte principal (meme valeur que la croix du logo sur fond
+               sombre, deja documentee dans CLAUDE.md -- pas une couleur
+               inventee). */
+            --dc-text: #EFF4F3;
+            --dc-text-muted: var(--sb-text-muted);
+            --dc-text-faint: var(--sb-text-faint);
+            --dc-border: var(--sb-border);
+            --dc-hover: var(--sb-hover);
+            color: var(--dc-text);
+        }
+
+        .dash-command .subtitle {
+            color: var(--dc-text-muted);
+        }
+
+        .dash-command .dc-status {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            font-size: 13px;
+            color: var(--dc-text-muted);
+            margin-bottom: 20px;
+        }
+
+        .dash-command .dc-status strong {
+            color: var(--dc-text);
+            font-family: 'IBM Plex Mono', 'Cascadia Code', Consolas, monospace;
+            font-weight: 600;
+        }
+
+        .dash-command .dc-status-sep {
+            width: 1px;
+            height: 12px;
+            background: var(--dc-border);
+        }
+
+        .dash-command .dc-status-link {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .dash-command .dc-status-link:hover strong {
+            color: var(--primary-accent);
+        }
+
+        .dash-command .dc-status-urgent strong {
+            color: var(--accent);
+        }
+
+        .dash-command .dash-stat {
+            background: var(--dc-hover);
+            border-color: var(--dc-border);
+            box-shadow: none;
+            color: var(--dc-text);
+        }
+
+        .dash-command a.dash-stat:hover {
+            border-color: rgba(255, 255, 255, 0.22);
+            box-shadow: none;
+        }
+
+        .dash-command .dash-stat strong {
+            color: var(--dc-text);
+        }
+
+        .dash-command .dash-stat span {
+            color: var(--dc-text-muted);
+        }
+
+        .dash-command .dash-stat-icon {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--primary-accent);
+        }
+
+        .dash-command .panel {
+            background: var(--dc-hover);
+            border-color: var(--dc-border);
+            box-shadow: none;
+            color: var(--dc-text);
+        }
+
+        .dash-command .panel-header h2,
+        .dash-command .governance-card h2 {
+            color: var(--dc-text);
+        }
+
+        .dash-command .gouvernance-comptes strong {
+            color: var(--dc-text);
+        }
+
+        .dash-command .gouvernance-comptes span {
+            color: var(--dc-text-muted);
+        }
+
+        .dash-command .button:not(.primary) {
+            background: var(--dc-hover);
+            border-color: var(--dc-border);
+            color: var(--dc-text);
+        }
+
+        .dash-command .button:not(.primary):hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.22);
+        }
+
+        .dash-command .dc-digests {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 720px) {
+            .dash-command .dc-digests {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .dash-command .dc-list {
+            padding: 0 24px 18px;
+        }
+
+        .dash-command .dc-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 0;
+            border-top: 1px solid var(--dc-border);
+            font-size: 13px;
+        }
+
+        .dash-command .dc-row:first-child {
+            border-top: none;
+        }
+
+        .dash-command .dc-avatar {
+            flex-shrink: 0;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10.5px;
+            font-weight: 700;
+            font-family: 'IBM Plex Mono', 'Cascadia Code', Consolas, monospace;
+            background: rgba(79, 184, 174, 0.18);
+            color: var(--primary-accent);
+        }
+
+        .dash-command .dc-meta {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .dash-command .dc-name {
+            display: block;
+            color: var(--dc-text);
+        }
+
+        .dash-command .dc-sub {
+            display: block;
+            font-size: 11.5px;
+            color: var(--dc-text-faint);
+        }
+
+        .dash-command .etat-vide p {
+            color: var(--dc-text-muted);
+        }
+
+        .dash-command .dash-pill.ok { background: rgba(30, 122, 76, 0.22); color: #6fd39a; }
+        .dash-command .dash-pill.attente { background: rgba(138, 90, 0, 0.28); color: #f0c375; }
+        .dash-command .dash-pill.danger { background: rgba(179, 38, 30, 0.24); color: #ec8a83; }
+
+        .dash-command .legende-type {
+            color: var(--dc-text-muted);
         }
 
         .legende-type {
@@ -2129,3 +2307,4 @@
     </script>
 </body>
 </html>
+
