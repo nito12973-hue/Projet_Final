@@ -448,6 +448,72 @@ class DashboardAdminTests(TestCase):
         emails = [u.email for u in response.context['derniers_comptes']]
         self.assertNotIn('assure@santesn.sn', emails)
 
+    def test_aujourd_hui_est_un_bandeau_compact(self):
+        response = self.client.get(reverse('dashboard'))
+        self.assertContains(response, 'class="dc-status"')
+
+    def test_listes_du_dashboard_sont_en_grille_de_digests(self):
+        patient = creer_patient()
+        PriseEnCharge.objects.create(patient=patient, motif='Test validee', statut='validee')
+        PriseEnCharge.objects.create(patient=patient, motif='Test refusee', statut='refusee')
+
+        response = self.client.get(reverse('dashboard'))
+        self.assertContains(response, 'class="dc-digests"')
+        self.assertContains(response, 'class="dc-row"')
+        self.assertContains(response, 'dash-pill ok')
+        self.assertContains(response, 'dash-pill danger')
+
+    def test_hero_paiements_affiche_le_delta_7_jours(self):
+        medecin = creer_medecin('medecin@santesn.sn')
+        patient = creer_patient()
+        service = ServiceMedical.objects.create(nom='Consultation', prix=Decimal('10000'))
+        consultation = Consultation.objects.create(
+            patient=patient, medecin=medecin, service=service,
+            date_consultation=timezone.now(), diagnostic='Test',
+        )
+        paiement = Paiement.calculer_pour(consultation)
+        paiement.statut = Paiement.Statut.REGLE
+        paiement.date_reglement = timezone.now()
+        paiement.save()
+
+        response = self.client.get(reverse('dashboard'))
+        self.assertEqual(response.context['montant_regle_7j'], Decimal('10000'))
+        self.assertContains(response, 'class="dc-hero-delta"')
+
+    def test_hero_paiements_ignore_les_reglements_hors_7_jours(self):
+        medecin = creer_medecin('medecin@santesn.sn')
+        patient = creer_patient()
+        service = ServiceMedical.objects.create(nom='Consultation', prix=Decimal('10000'))
+        consultation = Consultation.objects.create(
+            patient=patient, medecin=medecin, service=service,
+            date_consultation=timezone.now(), diagnostic='Test',
+        )
+        paiement = Paiement.calculer_pour(consultation)
+        paiement.statut = Paiement.Statut.REGLE
+        paiement.date_reglement = timezone.now() - datetime.timedelta(days=8)
+        paiement.save()
+
+        response = self.client.get(reverse('dashboard'))
+        self.assertEqual(response.context['montant_regle_7j'], 0)
+        self.assertNotContains(response, 'class="dc-hero-delta"')
+
+    def test_hero_paiements_inclut_les_reglements_a_6_jours(self):
+        medecin = creer_medecin('medecin@santesn.sn')
+        patient = creer_patient()
+        service = ServiceMedical.objects.create(nom='Consultation', prix=Decimal('5000'))
+        consultation = Consultation.objects.create(
+            patient=patient, medecin=medecin, service=service,
+            date_consultation=timezone.now(), diagnostic='Test',
+        )
+        paiement = Paiement.calculer_pour(consultation)
+        paiement.statut = Paiement.Statut.REGLE
+        paiement.date_reglement = timezone.now() - datetime.timedelta(days=6)
+        paiement.save()
+
+        response = self.client.get(reverse('dashboard'))
+        self.assertEqual(response.context['montant_regle_7j'], Decimal('5000'))
+        self.assertContains(response, 'class="dc-hero-delta"')
+
 
 class GestionUtilisateursTests(TestCase):
     def setUp(self):

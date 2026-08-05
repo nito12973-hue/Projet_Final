@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 {% load icones formats %}
 
 {% block title %}Tableau de bord - Administrateur{% endblock %}
@@ -11,14 +11,15 @@
     </div>
 </section>
 
+<div class="dash-command">
 <section class="dash-hero">
     <a class="dash-hero-carte" href="{% url 'liste_paiements' %}?statut=regle">
-        <svg class="dash-hero-watermark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
-            <rect x="18" y="6" width="12" height="36" rx="4" fill="#ffffff"/>
-            <rect x="6" y="18" width="36" height="12" rx="4" fill="#ffffff"/>
+        <svg class="dc-hero-trace" viewBox="0 0 220 70" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0,42 L30,42 L36,42 L41,18 L46,60 L51,30 L57,42 L95,42 L101,42 L106,18 L111,60 L117,30 L123,42 L160,42 L166,42 L171,18 L176,60 L182,30 L188,42 L220,42"/>
         </svg>
         <span class="dash-hero-icon">{% icone "receipt" %}</span>
         <strong class="code">{{ montant_regle|franc_cfa }}</strong>
+        {% if montant_regle_7j %}<span class="dc-hero-delta">&#9650; +{{ montant_regle_7j|franc_cfa }} ces 7 derniers jours</span>{% endif %}
         <span>Paiements réglés</span>
         <div class="dash-hero-sparkline-zone">
             <canvas id="graphe-tendance-consultations" aria-label="Tendance des consultations, 30 derniers jours"></canvas>
@@ -37,64 +38,51 @@
     </a>
 </section>
 
-<section class="dash-grid" style="margin-top:14px;">
-    <a class="dash-stat dash-stat-discret" href="{% url 'liste_patients' %}">
+<section class="dash-grid" style="margin-top:20px;">
+    <a class="dash-stat" href="{% url 'liste_patients' %}">
         <span class="dash-stat-icon">{% icone "id-card" %}</span>
         <strong class="code">{{ total_patients }}</strong>
         <span>Assurés gérés</span>
     </a>
-    <a class="dash-stat dash-stat-discret" href="{% url 'liste_medecins' %}">
+    <a class="dash-stat" href="{% url 'liste_medecins' %}">
         <span class="dash-stat-icon">{% icone "stethoscope" %}</span>
         <strong class="code">{{ total_medecins }}</strong>
         <span>Médecins actifs</span>
     </a>
-    <a class="dash-stat dash-stat-discret" href="{% url 'liste_pharmaciens' %}">
+    <a class="dash-stat" href="{% url 'liste_pharmaciens' %}">
         <span class="dash-stat-icon">{% icone "pill" %}</span>
         <strong class="code">{{ total_pharmaciens }}</strong>
         <span>Pharmaciens actifs</span>
     </a>
-    <a class="dash-stat dash-stat-discret" href="{% url 'liste_prestataires' %}">
+    <a class="dash-stat" href="{% url 'liste_prestataires' %}">
         <span class="dash-stat-icon">{% icone "building" %}</span>
         <strong class="code">{{ total_prestataires }}</strong>
         <span>Prestataires partenaires</span>
     </a>
-    <a class="dash-stat dash-stat-discret" href="{% url 'rapports' %}">
+    <a class="dash-stat" href="{% url 'rapports' %}">
         <span class="dash-stat-icon">{% icone "clipboard-list" %}</span>
         <strong class="code">{{ total_consultations }}</strong>
         <span>Consultations</span>
     </a>
-    <a class="dash-stat dash-stat-discret" href="{% url 'rapports' %}">
+    <a class="dash-stat" href="{% url 'rapports' %}">
         <span class="dash-stat-icon">{% icone "qr-scan" %}</span>
         <strong class="code">{{ total_ordonnances }}</strong>
         <span>Ordonnances émises</span>
     </a>
 </section>
 
-<section class="panel" style="margin-top:14px;padding:20px 24px;">
-    <div class="panel-header" style="padding:0 0 14px;">
-        <div>
-            <h2 style="display:flex;align-items:center;gap:9px;"><span class="pulse-dot" aria-hidden="true"></span>Aujourd'hui</h2>
-            <p class="subtitle" style="margin:2px 0 0;">Activité de la plateforme, tous rôles confondus.</p>
-        </div>
-    </div>
-    <div class="dash-grid">
-        <div class="dash-stat" style="cursor:default;">
-            <span class="dash-stat-icon">{% icone "calendar" %}</span>
-            <strong class="code">{{ total_rendez_vous_aujourd_hui }}</strong>
-            <span>Rendez-vous</span>
-        </div>
-        <div class="dash-stat" style="cursor:default;">
-            <span class="dash-stat-icon">{% icone "clipboard-list" %}</span>
-            <strong class="code">{{ total_consultations_aujourd_hui }}</strong>
-            <span>Consultations</span>
-        </div>
-        <a class="dash-stat{% if total_prises_en_charge_attente %} dash-stat-urgent{% endif %}" href="{% url 'liste_prises_en_charge' %}?statut=en_attente">
-            <span class="dash-stat-icon">{% icone "clock-history" %}</span>
-            <strong class="code">{{ total_prises_en_charge_attente }}</strong>
-            <span>Prises en charge en attente</span>
-        </a>
-    </div>
-</section>
+<div class="dc-status">
+    <span class="pulse-dot" aria-hidden="true"></span>
+    <span>Aujourd'hui</span>
+    <span class="dc-status-sep" aria-hidden="true"></span>
+    <span><strong class="code">{{ total_rendez_vous_aujourd_hui }}</strong> rendez-vous</span>
+    <span class="dc-status-sep" aria-hidden="true"></span>
+    <span><strong class="code">{{ total_consultations_aujourd_hui }}</strong> consultations</span>
+    <span class="dc-status-sep" aria-hidden="true"></span>
+    <a class="dc-status-link{% if total_prises_en_charge_attente %} dc-status-urgent{% endif %}" href="{% url 'liste_prises_en_charge' %}?statut=en_attente">
+        <strong class="code">{{ total_prises_en_charge_attente }}</strong> prise(s) en charge en attente
+    </a>
+</div>
 
 <section class="admin-layout">
     <article class="panel admin-card-large panel-discret">
@@ -133,31 +121,24 @@
     </aside>
 </section>
 
-<section class="admin-layout">
-    <article class="panel panel-discret">
+<section class="dc-digests">
+    <article class="panel">
         <div class="panel-header">
             <h2>Derniers assurés</h2>
             <a class="button" href="{% url 'liste_patients' %}">Voir tout</a>
         </div>
         {% if derniers_patients %}
-        <table>
-            <thead>
-                <tr>
-                    <th>Assuré</th>
-                    <th>Type</th>
-                    <th>Téléphone</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for patient in derniers_patients %}
-                <tr>
-                    <td>{{ patient.prenom }} {{ patient.nom }}</td>
-                    <td>{{ patient.get_type_beneficiaire_display }}</td>
-                    <td class="code">{{ patient.telephone|default:"-" }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="dc-list">
+            {% for patient in derniers_patients %}
+            <div class="dc-row">
+                <span class="dc-avatar" aria-hidden="true">{{ patient.prenom|slice:":1"|upper }}{{ patient.nom|slice:":1"|upper }}</span>
+                <span class="dc-meta">
+                    <span class="dc-name">{{ patient.prenom }} {{ patient.nom }}</span>
+                    <span class="dc-sub">{{ patient.get_type_beneficiaire_display }} · {{ patient.telephone|default:"-" }}</span>
+                </span>
+            </div>
+            {% endfor %}
+        </div>
         {% else %}
         <div class="etat-vide">
             {% illustration_vide "id-card" %}
@@ -169,30 +150,23 @@
         {% endif %}
     </article>
 
-    <article class="panel panel-discret">
+    <article class="panel">
         <div class="panel-header">
             <h2>Suivi des prises en charge</h2>
             <a class="button" href="{% url 'liste_prises_en_charge' %}">Voir tout</a>
         </div>
         {% if dernieres_prises_en_charge %}
-        <table>
-            <thead>
-                <tr>
-                    <th>Assuré</th>
-                    <th>Date</th>
-                    <th>Statut</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for prise in dernieres_prises_en_charge %}
-                <tr>
-                    <td>{{ prise.patient }}</td>
-                    <td class="code">{{ prise.date_demande|date:"d/m/Y" }}</td>
-                    <td><span class="dash-pill {% if prise.statut == 'validee' or prise.statut == 'terminee' %}ok{% elif prise.statut == 'refusee' %}danger{% else %}attente{% endif %}">{{ prise.get_statut_display }}</span></td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="dc-list">
+            {% for prise in dernieres_prises_en_charge %}
+            <div class="dc-row">
+                <span class="dc-meta">
+                    <span class="dc-name">{{ prise.patient }}</span>
+                    <span class="dc-sub">{{ prise.date_demande|date:"d/m/Y" }}</span>
+                </span>
+                <span class="dash-pill {% if prise.statut == 'validee' or prise.statut == 'terminee' %}ok{% elif prise.statut == 'refusee' %}danger{% else %}attente{% endif %}">{{ prise.get_statut_display }}</span>
+            </div>
+            {% endfor %}
+        </div>
         {% else %}
         <div class="etat-vide">
             {% illustration_vide "shield-check" %}
@@ -203,33 +177,24 @@
         </div>
         {% endif %}
     </article>
-</section>
 
-<section class="admin-layout">
-    <article class="panel panel-discret">
+    <article class="panel">
         <div class="panel-header">
             <h2>Derniers comptes créés</h2>
             <a class="button" href="{% url 'liste_utilisateurs' %}">Voir tout</a>
         </div>
         {% if derniers_comptes %}
-        <table>
-            <thead>
-                <tr>
-                    <th>Utilisateur</th>
-                    <th>Rôle</th>
-                    <th>Date</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for compte in derniers_comptes %}
-                <tr>
-                    <td>{{ compte.get_full_name|default:compte.email }}</td>
-                    <td>{{ compte.get_role_display }}</td>
-                    <td class="code">{{ compte.date_joined|date:"d/m/Y" }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="dc-list">
+            {% for compte in derniers_comptes %}
+            <div class="dc-row">
+                <span class="dc-avatar" aria-hidden="true">{{ compte.get_full_name|default:compte.email|slice:":2"|upper }}</span>
+                <span class="dc-meta">
+                    <span class="dc-name">{{ compte.get_full_name|default:compte.email }}</span>
+                    <span class="dc-sub">{{ compte.get_role_display }} · {{ compte.date_joined|date:"d/m/Y" }}</span>
+                </span>
+            </div>
+            {% endfor %}
+        </div>
         {% else %}
         <div class="etat-vide">
             {% illustration_vide "users" %}
@@ -241,30 +206,23 @@
         {% endif %}
     </article>
 
-    <article class="panel panel-discret">
+    <article class="panel">
         <div class="panel-header">
             <h2>Derniers prestataires ajoutés</h2>
             <a class="button" href="{% url 'liste_prestataires' %}">Voir tout</a>
         </div>
         {% if derniers_prestataires %}
-        <table>
-            <thead>
-                <tr>
-                    <th>Prestataire</th>
-                    <th>Type</th>
-                    <th>Ville</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for prestataire in derniers_prestataires %}
-                <tr>
-                    <td>{{ prestataire.nom }}</td>
-                    <td>{{ prestataire.get_type_prestataire_display }}</td>
-                    <td>{{ prestataire.ville|default:"-" }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="dc-list">
+            {% for prestataire in derniers_prestataires %}
+            <div class="dc-row">
+                <span class="dc-avatar" aria-hidden="true">{{ prestataire.nom|slice:":2"|upper }}</span>
+                <span class="dc-meta">
+                    <span class="dc-name">{{ prestataire.nom }}</span>
+                    <span class="dc-sub">{{ prestataire.get_type_prestataire_display }} · {{ prestataire.ville|default:"-" }}</span>
+                </span>
+            </div>
+            {% endfor %}
+        </div>
         {% else %}
         <div class="etat-vide">
             {% illustration_vide "building" %}
@@ -275,10 +233,9 @@
         </div>
         {% endif %}
     </article>
-
 </section>
 
-<section class="panel panel-discret" style="margin-top:18px;padding:22px 24px;">
+<section class="panel" style="margin-top:20px;padding:22px 24px;">
     <div class="panel-header" style="padding:0 0 16px;">
         <div>
             <h2>Réseau de prestataires partenaires</h2>
@@ -287,7 +244,7 @@
         <a class="button btn" href="{% url 'liste_prestataires' %}">Voir tout</a>
     </div>
     {% if prestataires_carte %}
-    <div id="carte-reseau-admin" style="height:320px;border-radius:12px;border:1px solid var(--border);"></div>
+    <div id="carte-reseau-admin" style="height:320px;border-radius:12px;border:1px solid var(--dc-border);"></div>
     <div class="carte-legende" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:16px;">
         <span class="legende-type"><span class="legende-puce" style="background:var(--primary);"></span>Hôpital</span>
         <span class="legende-type"><span class="legende-puce" style="background:var(--primary-accent);"></span>Clinique</span>
@@ -301,6 +258,7 @@
     </div>
     {% endif %}
 </section>
+</div>
 
 {{ tendance_consultations|json_script:"donnees-tendance-consultations" }}
 {{ prestataires_carte|json_script:"donnees-prestataires-carte" }}
