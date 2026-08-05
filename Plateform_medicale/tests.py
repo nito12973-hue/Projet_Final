@@ -452,6 +452,10 @@ class DashboardAdminTests(TestCase):
         response = self.client.get(reverse('dashboard'))
         self.assertContains(response, 'class="dc-status"')
 
+    def test_listes_du_dashboard_sont_en_grille_de_digests(self):
+        response = self.client.get(reverse('dashboard'))
+        self.assertContains(response, 'class="dc-digests"')
+
 
 class GestionUtilisateursTests(TestCase):
     def setUp(self):
