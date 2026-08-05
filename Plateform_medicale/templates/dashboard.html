@@ -7,7 +7,7 @@
 <section class="page-title">
     <div>
         <h1>Dashboard Administrateur</h1>
-        <p class="subtitle">Piloter la plateforme sans intervenir dans les actes mÃ©dicaux.</p>
+        <p class="subtitle">Piloter la plateforme sans intervenir dans les actes médicaux.</p>
     </div>
 </section>
 
@@ -20,21 +20,21 @@
         </svg>
         <span class="dash-hero-icon">{% icone "receipt" %}</span>
         <strong class="code">{{ montant_regle|franc_cfa }}</strong>
-        <span>Paiements rÃ©glÃ©s</span>
+        <span>Paiements réglés</span>
         <div class="dash-hero-sparkline-zone">
             <canvas id="graphe-tendance-consultations" aria-label="Tendance des consultations, 30 derniers jours"></canvas>
         </div>
-        <span class="dash-hero-sparkline-legende">Consultations Â· 30 j</span>
+        <span class="dash-hero-sparkline-legende">Consultations · 30 j</span>
     </a>
     <a class="dash-hero-carte" href="{% url 'liste_paiements' %}?statut=non_regle">
         <span class="dash-hero-icon">{% icone "clock-history" %}</span>
         <strong class="code">{{ montant_non_regle|franc_cfa }}</strong>
-        <span>En attente de rÃ¨glement</span>
+        <span>En attente de règlement</span>
     </a>
     <a class="dash-hero-carte" href="{% url 'rapports' %}">
         <span class="dash-hero-icon">{% icone "shield-check" %}</span>
-        <strong class="code">{% if taux_reglement is not None %}{{ taux_reglement }}%{% else %}â€”{% endif %}</strong>
-        <span>Taux de rÃ¨glement</span>
+        <strong class="code">{% if taux_reglement is not None %}{{ taux_reglement }}%{% else %}—{% endif %}</strong>
+        <span>Taux de règlement</span>
     </a>
 </section>
 
@@ -42,12 +42,12 @@
     <a class="dash-stat dash-stat-discret" href="{% url 'liste_patients' %}">
         <span class="dash-stat-icon">{% icone "id-card" %}</span>
         <strong class="code">{{ total_patients }}</strong>
-        <span>AssurÃ©s gÃ©rÃ©s</span>
+        <span>Assurés gérés</span>
     </a>
     <a class="dash-stat dash-stat-discret" href="{% url 'liste_medecins' %}">
         <span class="dash-stat-icon">{% icone "stethoscope" %}</span>
         <strong class="code">{{ total_medecins }}</strong>
-        <span>MÃ©decins actifs</span>
+        <span>Médecins actifs</span>
     </a>
     <a class="dash-stat dash-stat-discret" href="{% url 'liste_pharmaciens' %}">
         <span class="dash-stat-icon">{% icone "pill" %}</span>
@@ -67,7 +67,7 @@
     <a class="dash-stat dash-stat-discret" href="{% url 'rapports' %}">
         <span class="dash-stat-icon">{% icone "qr-scan" %}</span>
         <strong class="code">{{ total_ordonnances }}</strong>
-        <span>Ordonnances Ã©mises</span>
+        <span>Ordonnances émises</span>
     </a>
 </section>
 
@@ -75,7 +75,7 @@
     <div class="panel-header" style="padding:0 0 14px;">
         <div>
             <h2 style="display:flex;align-items:center;gap:9px;"><span class="pulse-dot" aria-hidden="true"></span>Aujourd'hui</h2>
-            <p class="subtitle" style="margin:2px 0 0;">ActivitÃ© de la plateforme, tous rÃ´les confondus.</p>
+            <p class="subtitle" style="margin:2px 0 0;">Activité de la plateforme, tous rôles confondus.</p>
         </div>
     </div>
     <div class="dash-grid">
@@ -102,12 +102,12 @@
         <div class="panel-header">
             <div>
                 <h2>Actions rapides</h2>
-                <p class="subtitle">Actions autorisÃ©es pour administrer la plateforme.</p>
+                <p class="subtitle">Actions autorisées pour administrer la plateforme.</p>
             </div>
         </div>
         <div class="quick-actions">
-            <a class="button primary" href="{% url 'ajouter_patient' %}">Ajouter un assurÃ©</a>
-            <a class="button primary" href="{% url 'ajouter_medecin' %}">Ajouter un mÃ©decin</a>
+            <a class="button primary" href="{% url 'ajouter_patient' %}">Ajouter un assuré</a>
+            <a class="button primary" href="{% url 'ajouter_medecin' %}">Ajouter un médecin</a>
             <a class="button primary" href="{% url 'ajouter_prestataire' %}">Ajouter un prestataire</a>
             <a class="button" href="{% url 'liste_prises_en_charge' %}">Suivre les prises en charge</a>
         </div>
@@ -117,8 +117,8 @@
         <span class="dash-stat-icon">{% icone "lock" %}</span>
         <h2>Comptes et gouvernance</h2>
         <p class="subtitle">
-            L'administrateur gÃ¨re les comptes, les prestataires et le suivi.
-            Il ne saisit pas de diagnostic, ne crÃ©e pas d'ordonnance et ne valide pas de dÃ©livrance.
+            L'administrateur gère les comptes, les prestataires et le suivi.
+            Il ne saisit pas de diagnostic, ne crée pas d'ordonnance et ne valide pas de délivrance.
         </p>
         <div class="gouvernance-comptes">
             <a href="{% url 'liste_utilisateurs' %}?statut=actif">
@@ -127,26 +127,26 @@
             </a>
             <a href="{% url 'liste_utilisateurs' %}?statut=inactif">
                 <strong class="code">{{ total_comptes_inactifs }}</strong>
-                <span>Comptes dÃ©sactivÃ©s</span>
+                <span>Comptes désactivés</span>
             </a>
         </div>
-        <a class="button btn" href="{% url 'liste_utilisateurs' %}">GÃ©rer les utilisateurs</a>
+        <a class="button btn" href="{% url 'liste_utilisateurs' %}">Gérer les utilisateurs</a>
     </aside>
 </section>
 
 <section class="admin-layout">
     <article class="panel panel-discret">
         <div class="panel-header">
-            <h2>Derniers assurÃ©s</h2>
+            <h2>Derniers assurés</h2>
             <a class="button" href="{% url 'liste_patients' %}">Voir tout</a>
         </div>
         {% if derniers_patients %}
         <table>
             <thead>
                 <tr>
-                    <th>AssurÃ©</th>
+                    <th>Assuré</th>
                     <th>Type</th>
-                    <th>TÃ©lÃ©phone</th>
+                    <th>Téléphone</th>
                 </tr>
             </thead>
             <tbody>
@@ -162,9 +162,9 @@
         {% else %}
         <div class="etat-vide">
             {% illustration_vide "id-card" %}
-            <p>Aucun assurÃ© enregistrÃ©.</p>
+            <p>Aucun assuré enregistré.</p>
             <div class="actions">
-                <a class="button primary" href="{% url 'ajouter_patient' %}">Ajouter un assurÃ©</a>
+                <a class="button primary" href="{% url 'ajouter_patient' %}">Ajouter un assuré</a>
             </div>
         </div>
         {% endif %}
@@ -179,7 +179,7 @@
         <table>
             <thead>
                 <tr>
-                    <th>AssurÃ©</th>
+                    <th>Assuré</th>
                     <th>Date</th>
                     <th>Statut</th>
                 </tr>
@@ -197,7 +197,7 @@
         {% else %}
         <div class="etat-vide">
             {% illustration_vide "shield-check" %}
-            <p>Aucune prise en charge enregistrÃ©e.</p>
+            <p>Aucune prise en charge enregistrée.</p>
             <div class="actions">
                 <a class="button primary" href="{% url 'ajouter_prise_en_charge' %}">Ajouter une prise en charge</a>
             </div>
@@ -209,7 +209,7 @@
 <section class="admin-layout">
     <article class="panel panel-discret">
         <div class="panel-header">
-            <h2>Derniers comptes crÃ©Ã©s</h2>
+            <h2>Derniers comptes créés</h2>
             <a class="button" href="{% url 'liste_utilisateurs' %}">Voir tout</a>
         </div>
         {% if derniers_comptes %}
@@ -217,7 +217,7 @@
             <thead>
                 <tr>
                     <th>Utilisateur</th>
-                    <th>RÃ´le</th>
+                    <th>Rôle</th>
                     <th>Date</th>
                 </tr>
             </thead>
@@ -234,7 +234,7 @@
         {% else %}
         <div class="etat-vide">
             {% illustration_vide "users" %}
-            <p>Aucun compte enregistrÃ©.</p>
+            <p>Aucun compte enregistré.</p>
             <div class="actions">
                 <a class="button primary" href="{% url 'ajouter_utilisateur' %}">Ajouter un utilisateur</a>
             </div>
@@ -244,7 +244,7 @@
 
     <article class="panel panel-discret">
         <div class="panel-header">
-            <h2>Derniers prestataires ajoutÃ©s</h2>
+            <h2>Derniers prestataires ajoutés</h2>
             <a class="button" href="{% url 'liste_prestataires' %}">Voir tout</a>
         </div>
         {% if derniers_prestataires %}
@@ -269,7 +269,7 @@
         {% else %}
         <div class="etat-vide">
             {% illustration_vide "building" %}
-            <p>Aucun prestataire enregistrÃ©.</p>
+            <p>Aucun prestataire enregistré.</p>
             <div class="actions">
                 <a class="button primary" href="{% url 'ajouter_prestataire' %}">Ajouter un prestataire</a>
             </div>
@@ -282,15 +282,15 @@
 <section class="panel panel-discret" style="margin-top:18px;padding:22px 24px;">
     <div class="panel-header" style="padding:0 0 16px;">
         <div>
-            <h2>RÃ©seau de prestataires partenaires</h2>
-            <p class="subtitle" style="margin:2px 0 0;">Couverture gÃ©ographique du rÃ©seau conventionnÃ©.</p>
+            <h2>Réseau de prestataires partenaires</h2>
+            <p class="subtitle" style="margin:2px 0 0;">Couverture géographique du réseau conventionné.</p>
         </div>
         <a class="button btn" href="{% url 'liste_prestataires' %}">Voir tout</a>
     </div>
     {% if prestataires_carte %}
     <div id="carte-reseau-admin" style="height:320px;border-radius:12px;border:1px solid var(--border);"></div>
     <div class="carte-legende" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:16px;">
-        <span class="legende-type"><span class="legende-puce" style="background:var(--primary);"></span>HÃ´pital</span>
+        <span class="legende-type"><span class="legende-puce" style="background:var(--primary);"></span>Hôpital</span>
         <span class="legende-type"><span class="legende-puce" style="background:var(--primary-accent);"></span>Clinique</span>
         <span class="legende-type"><span class="legende-puce" style="background:var(--accent);"></span>Pharmacie</span>
         <span class="legende-type"><span class="legende-puce" style="background:var(--primary-strong);"></span>Cabinet</span>
@@ -298,7 +298,7 @@
     {% else %}
     <div class="etat-vide">
         {% illustration_vide "map-pin" %}
-        <p>Aucun prestataire partenaire gÃ©olocalisÃ© pour le moment.</p>
+        <p>Aucun prestataire partenaire géolocalisé pour le moment.</p>
     </div>
     {% endif %}
 </section>
@@ -321,7 +321,7 @@
         if (typeof Chart === 'undefined') {
             var message = document.createElement('p');
             message.className = 'empty';
-            message.textContent = 'Graphique indisponible (bibliothÃ¨que non chargÃ©e).';
+            message.textContent = 'Graphique indisponible (bibliothèque non chargée).';
             canevas.replaceWith(message);
             return;
         }
