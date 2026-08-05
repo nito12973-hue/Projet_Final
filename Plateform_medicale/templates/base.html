@@ -543,12 +543,11 @@
             font-size: 21px;
         }
 
-        /* Meme logique que .dash-stat-discret : la profondeur (ombre) reste
-           reservee au bandeau financier, seul element "vedette" de la page.
-           Panels d'action/tableaux/carte du dashboard admin : bordure fine,
-           pas d'ombre -- pas de survol qui souleve (ce ne sont pas des
-           cartes-lien uniques, un survol qui souleve toute la carte serait
-           trompeur). .panel seul, utilise partout ailleurs dans
+        /* Profondeur (ombre) reservee au bandeau financier, seul element
+           "vedette" de la page. Panels d'action/tableaux/carte du dashboard
+           admin : bordure fine, pas d'ombre -- pas de survol qui souleve (ce
+           ne sont pas des cartes-lien uniques, un survol qui souleve toute la
+           carte serait trompeur). .panel seul, utilise partout ailleurs dans
            l'application, reste inchange. */
         .panel-discret {
             box-shadow: none;
@@ -1128,40 +1127,6 @@
 
         .dash-stat-icon .icone-nav { width: 17px; height: 17px; }
 
-        /* Totaux de reference (grille KPI globale du dashboard admin, ex.
-           "Medecins actifs") : traitement plus discret que .dash-stat
-           standard, pour laisser "Aujourd'hui" (activite qui change
-           reellement au quotidien, meme composant .dash-stat juste en
-           dessous) rester la donnee la plus visible sous le bandeau
-           financier. Modificateur, ne redefinit pas .dash-stat -- aucun
-           impact sur les 3 autres dashboards (Assure/Medecin/Pharmacien)
-           qui utilisent .dash-stat sans ce modificateur. */
-        .dash-stat-discret {
-            /* Meme teinte que --primary-soft (220,236,233), en transparence
-               sur --bg plutot qu'en aplat : meme principe deja utilise par
-               --accent-turquoise-wash (rgba de --primary), pas une nouvelle
-               couleur. Distingue ces tuiles de reference du blanc plein des
-               tuiles "Aujourd'hui" juste en dessous. */
-            background: rgba(220, 236, 233, 0.5);
-            border-color: rgba(14, 124, 134, 0.16);
-            padding: 14px 16px;
-            box-shadow: none;
-        }
-
-        .dash-stat-discret .dash-stat-icon {
-            width: 28px;
-            height: 28px;
-            margin-bottom: 10px;
-        }
-
-        /* Specificite .dash-stat.dash-stat-discret (pas .dash-stat-discret
-           seul) : meme specificite que .dash-stat strong sinon, et cette
-           regle-ci arrive avant elle dans le fichier -- perdrait la
-           cascade sans la classe composee. */
-        .dash-stat.dash-stat-discret strong {
-            font-size: 20px;
-        }
-
         /* IBM Plex Mono n'existe pas en graisse 800 (seul .dash-stat strong /
            .dash-hero-carte strong / .gouvernance-comptes strong l'utilisent) :
            sans cette regle le navigateur synthetiserait un faux gras sur un
@@ -1441,6 +1406,31 @@
 
         .dash-command .dc-status-urgent strong {
             color: var(--accent);
+        }
+
+        .dash-command .dash-stat {
+            background: var(--dc-hover);
+            border-color: var(--dc-border);
+            box-shadow: none;
+            color: var(--dc-text);
+        }
+
+        .dash-command a.dash-stat:hover {
+            border-color: rgba(255, 255, 255, 0.22);
+            box-shadow: none;
+        }
+
+        .dash-command .dash-stat strong {
+            color: var(--dc-text);
+        }
+
+        .dash-command .dash-stat span {
+            color: var(--dc-text-muted);
+        }
+
+        .dash-command .dash-stat-icon {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--primary-accent);
         }
 
         .legende-type {
