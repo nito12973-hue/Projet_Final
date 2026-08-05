@@ -1024,7 +1024,342 @@ git commit -m "feat(dashboard-admin): habillage sombre du panneau carte reseau"
 
 ---
 
-### Task 8: Vérification finale et nettoyage
+### Task 8: Hero paiements — tendance réelle (7 jours)
+
+> **Amendement Direction A+ (2026-08-05).** Après livraison de la direction
+> A ci-dessus, retour utilisateur : la composition manquait une notion de
+> *mouvement* (des totaux figés, sur un design censé évoquer un moniteur de
+> pouls). Décision, validée via question à choix explicite : ajouter de
+> vraies tendances là où la donnée existe déjà en base (pas de valeur
+> inventée), et ne rien afficher ailleurs. Ce Task 8 couvre le hero
+> paiements ; Task 9 couvre les KPI Consultations/Ordonnances. Les 4 autres
+> tuiles KPI (Assurés, Médecins, Pharmaciens, Prestataires) ne gagnent
+> aucune tendance : `Patient` et `Prestataire` n'ont pas de champ de date de
+> création exploitable sans migration — décision explicite de ne rien
+> ajouter plutôt que d'ouvrir un module de migration séparé.
+
+**Files:**
+- Modify: `Plateform_medicale/views.py` (fonction `dashboard`, juste après le
+  calcul de `total_consultations_aujourd_hui`, avant le commentaire "Derniers
+  comptes crees")
+- Modify: `Plateform_medicale/templates/dashboard.html` (premier
+  `.dash-hero-carte`, "Paiements réglés")
+- Modify: `Plateform_medicale/templates/base.html` (juste après la règle
+  `.dash-hero-carte span`)
+- Test: `Plateform_medicale/tests.py` (append to `DashboardAdminTests`)
+
+**Interfaces:**
+- Consomme : `Paiement.date_reglement` (champ déjà existant, renseigné à
+  chaque règlement — aucune migration) ; `maintenant` (variable locale déjà
+  définie dans `dashboard()`, juste avant le bloc "Activité du jour").
+- Produit : clé de contexte `montant_regle_7j` ; classe CSS `.dc-hero-delta`.
+
+- [ ] **Step 1: Write the failing tests**
+
+Append to `DashboardAdminTests` in `Plateform_medicale/tests.py` :
+
+```python
+
+    def test_hero_paiements_affiche_le_delta_7_jours(self):
+        medecin = creer_medecin('medecin@santesn.sn')
+        patient = creer_patient()
+        service = ServiceMedical.objects.create(nom='Consultation', prix=Decimal('10000'))
+        consultation = Consultation.objects.create(
+            patient=patient, medecin=medecin, service=service,
+            date_consultation=timezone.now(), diagnostic='Test',
+        )
+        paiement = Paiement.calculer_pour(consultation)
+        paiement.statut = Paiement.Statut.REGLE
+        paiement.date_reglement = timezone.now()
+        paiement.save()
+
+        response = self.client.get(reverse('dashboard'))
+        self.assertEqual(response.context['montant_regle_7j'], Decimal('10000'))
+        self.assertContains(response, 'class="dc-hero-delta"')
+
+    def test_hero_paiements_ignore_les_reglements_hors_7_jours(self):
+        medecin = creer_medecin('medecin@santesn.sn')
+        patient = creer_patient()
+        service = ServiceMedical.objects.create(nom='Consultation', prix=Decimal('10000'))
+        consultation = Consultation.objects.create(
+            patient=patient, medecin=medecin, service=service,
+            date_consultation=timezone.now(), diagnostic='Test',
+        )
+        paiement = Paiement.calculer_pour(consultation)
+        paiement.statut = Paiement.Statut.REGLE
+        paiement.date_reglement = timezone.now() - datetime.timedelta(days=10)
+        paiement.save()
+
+        response = self.client.get(reverse('dashboard'))
+        self.assertEqual(response.context['montant_regle_7j'], 0)
+        self.assertNotContains(response, 'class="dc-hero-delta"')
+```
+
+- [ ] **Step 2: Run tests to verify they fail**
+
+Run: `python manage.py test Plateform_medicale.tests.DashboardAdminTests.test_hero_paiements_affiche_le_delta_7_jours Plateform_medicale.tests.DashboardAdminTests.test_hero_paiements_ignore_les_reglements_hors_7_jours -v 2`
+Expected: both FAIL (`montant_regle_7j` absent du contexte).
+
+- [ ] **Step 3: Add the view computation**
+
+In `Plateform_medicale/views.py`, dans la fonction `dashboard`, juste après
+le bloc qui calcule `total_consultations_aujourd_hui` (juste avant le
+commentaire "Derniers comptes crees, hors assures"), ajouter :
+
+```python
+
+    # Tendance des paiements regles sur les 7 derniers jours, pour le delta
+    # affiche sous le montant regle du hero (direction A+, retour utilisateur
+    # 2026-08-05 : la version initiale de "poste de pilotage" n'affichait
+    # qu'un instantane, jamais de notion de mouvement). Reutilise
+    # Paiement.date_reglement, deja renseigne a chaque reglement -- aucune
+    # migration necessaire.
+    il_y_a_7_jours = maintenant - datetime.timedelta(days=7)
+    montant_regle_7j = Paiement.objects.filter(
+        statut=Paiement.Statut.REGLE, date_reglement__gte=il_y_a_7_jours
+    ).aggregate(total=Sum("montant_part_patient"))["total"] or 0
+```
+
+Puis dans le dictionnaire `contexte`, juste après `"montant_regle": montant_regle,`, ajouter :
+
+```python
+        "montant_regle_7j": montant_regle_7j,
+```
+
+- [ ] **Step 4: Add the template markup**
+
+In `Plateform_medicale/templates/dashboard.html`, trouver :
+
+```html
+        <strong class="code">{{ montant_regle|franc_cfa }}</strong>
+        <span>Paiements réglés</span>
+```
+
+Remplacer par :
+
+```html
+        <strong class="code">{{ montant_regle|franc_cfa }}</strong>
+        {% if montant_regle_7j %}<span class="dc-hero-delta">&#9650; +{{ montant_regle_7j|franc_cfa }} ces 7 derniers jours</span>{% endif %}
+        <span>Paiements réglés</span>
+```
+
+- [ ] **Step 5: Add the CSS**
+
+In `Plateform_medicale/templates/base.html`, juste après la règle
+`.dash-hero-carte span { ... }` (avant `.dash-hero-carte { text-decoration: none; ... }`), ajouter :
+
+```css
+        /* Tendance reelle (paiements regles ces 7 derniers jours), pas un
+           chiffre invente : meme teinte verte que .dash-pill.ok sur fond
+           sombre (#6fd39a, Tache 6), reutilisee ici plutot qu'une nouvelle
+           couleur "succes". N'apparait que si au moins un paiement a ete
+           regle sur la fenetre (sinon rien, jamais de "+0"). */
+        .dc-hero-delta {
+            position: relative;
+            display: block;
+            margin: 2px 0 6px;
+            font-size: 12px;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            color: #6fd39a;
+        }
+```
+
+- [ ] **Step 6: Run tests to verify they pass, then the full suite**
+
+Run: `python manage.py test Plateform_medicale.tests.DashboardAdminTests.test_hero_paiements_affiche_le_delta_7_jours Plateform_medicale.tests.DashboardAdminTests.test_hero_paiements_ignore_les_reglements_hors_7_jours -v 2`
+Expected: both PASS.
+
+Run: `python manage.py test Plateform_medicale`
+Expected: all tests PASS.
+
+- [ ] **Step 7: Manual check**
+
+`runserver`, admin login, dashboard : régler un paiement récemment (via
+"Paiements" → "Marquer réglé") et confirmer que la ligne verte "+X FCFA ces
+7 derniers jours" apparaît sous le montant réglé ; confirmer qu'elle
+n'apparaît pas quand aucun paiement n'a été réglé sur la fenêtre.
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add Plateform_medicale/views.py Plateform_medicale/templates/dashboard.html Plateform_medicale/templates/base.html Plateform_medicale/tests.py
+git commit -m "feat(dashboard-admin): tendance reelle sur le hero paiements (direction A+)"
+```
+
+---
+
+### Task 9: KPI Consultations/Ordonnances — tendance réelle (7 jours)
+
+**Files:**
+- Modify: `Plateform_medicale/views.py` (fonction `dashboard`, juste après le
+  bloc ajouté par la Tâche 8)
+- Modify: `Plateform_medicale/templates/dashboard.html` (tuiles KPI
+  Consultations et Ordonnances dans `.dash-grid`)
+- Modify: `Plateform_medicale/templates/base.html` (réutilise `.dc-hero-delta`
+  — Tâche 8 — plus une variante `.dc-kpi-delta` pour le contexte tuile)
+- Test: `Plateform_medicale/tests.py` (append to `DashboardAdminTests`)
+
+**Interfaces:**
+- Consomme : `Consultation.date_consultation`, `Ordonnance.date_creation`
+  (champs déjà existants) ; `il_y_a_7_jours` (variable ajoutée en Tâche 8).
+- Produit : clés de contexte `consultations_7j`, `ordonnances_7j` ; classe
+  CSS `.dc-kpi-delta`.
+- **Ne concerne que ces 2 tuiles** — les 4 autres tuiles KPI
+  (`total_patients`, `total_medecins`, `total_pharmaciens`,
+  `total_prestataires`) restent strictement inchangées par cette tâche
+  (décision explicite, voir note en tête de la Tâche 8).
+
+- [ ] **Step 1: Write the failing tests**
+
+Append to `DashboardAdminTests` :
+
+```python
+
+    def test_kpi_consultations_et_ordonnances_affichent_le_delta_7_jours(self):
+        medecin = creer_medecin('medecin@santesn.sn')
+        patient = creer_patient()
+        service = ServiceMedical.objects.create(nom='Consultation', prix=Decimal('5000'))
+        consultation = Consultation.objects.create(
+            patient=patient, medecin=medecin, service=service,
+            date_consultation=timezone.now(), diagnostic='Test',
+        )
+        Ordonnance.objects.create(consultation=consultation, contenu='Paracetamol')
+
+        response = self.client.get(reverse('dashboard'))
+        self.assertEqual(response.context['consultations_7j'], 1)
+        self.assertEqual(response.context['ordonnances_7j'], 1)
+        self.assertContains(response, 'class="dc-kpi-delta"')
+
+    def test_kpi_ignore_les_consultations_et_ordonnances_hors_7_jours(self):
+        medecin = creer_medecin('medecin@santesn.sn')
+        patient = creer_patient()
+        service = ServiceMedical.objects.create(nom='Consultation', prix=Decimal('5000'))
+        ancienne = Consultation.objects.create(
+            patient=patient, medecin=medecin, service=service,
+            date_consultation=timezone.now() - datetime.timedelta(days=10), diagnostic='Test',
+        )
+        ancienne_ordonnance = Ordonnance.objects.create(consultation=ancienne, contenu='Paracetamol')
+        ancienne_ordonnance.date_creation = timezone.now() - datetime.timedelta(days=10)
+        ancienne_ordonnance.save()
+
+        response = self.client.get(reverse('dashboard'))
+        self.assertEqual(response.context['consultations_7j'], 0)
+        self.assertEqual(response.context['ordonnances_7j'], 0)
+```
+
+**Note d'implémentation :** `Ordonnance.date_creation` a `auto_now_add=True`
+(voir `models.py:440`), donc `Ordonnance.objects.create(...)` fixe la date à
+maintenant — il faut un `.save()` explicite après coup pour forcer une
+ancienne date en test, comme montré ci-dessus (`auto_now_add` ignore la
+valeur passée à la création, mais un `UPDATE` explicite ensuite fonctionne).
+
+- [ ] **Step 2: Run tests to verify they fail**
+
+Run: `python manage.py test Plateform_medicale.tests.DashboardAdminTests.test_kpi_consultations_et_ordonnances_affichent_le_delta_7_jours Plateform_medicale.tests.DashboardAdminTests.test_kpi_ignore_les_consultations_et_ordonnances_hors_7_jours -v 2`
+Expected: both FAIL.
+
+- [ ] **Step 3: Add the view computation**
+
+In `Plateform_medicale/views.py`, juste après le bloc `montant_regle_7j`
+ajouté par la Tâche 8, ajouter :
+
+```python
+    consultations_7j = Consultation.objects.filter(date_consultation__gte=il_y_a_7_jours).count()
+    ordonnances_7j = Ordonnance.objects.filter(date_creation__gte=il_y_a_7_jours).count()
+```
+
+Puis dans `contexte`, juste après `"montant_regle_7j": montant_regle_7j,`, ajouter :
+
+```python
+        "consultations_7j": consultations_7j,
+        "ordonnances_7j": ordonnances_7j,
+```
+
+- [ ] **Step 4: Add the template markup**
+
+In `dashboard.html`, trouver les 2 tuiles Consultations et Ordonnances dans
+`.dash-grid` :
+
+```html
+    <a class="dash-stat dash-stat-discret" href="{% url 'rapports' %}">
+        <span class="dash-stat-icon">{% icone "clipboard-list" %}</span>
+        <strong class="code">{{ total_consultations }}</strong>
+        <span>Consultations</span>
+    </a>
+    <a class="dash-stat dash-stat-discret" href="{% url 'rapports' %}">
+        <span class="dash-stat-icon">{% icone "qr-scan" %}</span>
+        <strong class="code">{{ total_ordonnances }}</strong>
+        <span>Ordonnances émises</span>
+    </a>
+```
+
+Remplacer par :
+
+```html
+    <a class="dash-stat dash-stat-discret" href="{% url 'rapports' %}">
+        <span class="dash-stat-icon">{% icone "clipboard-list" %}</span>
+        <strong class="code">{{ total_consultations }}</strong>
+        <span>Consultations</span>
+        {% if consultations_7j %}<span class="dc-kpi-delta">+{{ consultations_7j }} (7j)</span>{% endif %}
+    </a>
+    <a class="dash-stat dash-stat-discret" href="{% url 'rapports' %}">
+        <span class="dash-stat-icon">{% icone "qr-scan" %}</span>
+        <strong class="code">{{ total_ordonnances }}</strong>
+        <span>Ordonnances émises</span>
+        {% if ordonnances_7j %}<span class="dc-kpi-delta">+{{ ordonnances_7j }} (7j)</span>{% endif %}
+    </a>
+```
+
+**Note :** ces 2 tuiles gardent `dash-stat-discret` ici (retiré seulement à
+la Tâche 4, pas encore exécutée à ce stade si les tâches sont suivies dans
+l'ordre — si la Tâche 4 est déjà passée, adapter : `class="dash-stat"` sans
+le modificateur, le reste de ce Step est identique).
+
+- [ ] **Step 5: Add the CSS**
+
+In `base.html`, juste après la règle `.dc-hero-delta` ajoutée par la
+Tâche 8, ajouter :
+
+```css
+        /* Meme principe que .dc-hero-delta (Tache 8), variante compacte pour
+           une tuile KPI : reutilise la meme teinte verte, pas de fond ni de
+           padding pour rester discret sous le libelle de la tuile. */
+        .dc-kpi-delta {
+            display: block;
+            margin-top: 2px;
+            font-size: 10.5px;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            color: #6fd39a;
+        }
+```
+
+- [ ] **Step 6: Run tests to verify they pass, then the full suite**
+
+Run: `python manage.py test Plateform_medicale.tests.DashboardAdminTests.test_kpi_consultations_et_ordonnances_affichent_le_delta_7_jours Plateform_medicale.tests.DashboardAdminTests.test_kpi_ignore_les_consultations_et_ordonnances_hors_7_jours -v 2`
+Expected: both PASS.
+
+Run: `python manage.py test Plateform_medicale`
+Expected: all tests PASS.
+
+- [ ] **Step 7: Manual check**
+
+`runserver`, admin login, dashboard : confirmer que les tuiles
+Consultations et Ordonnances affichent "+N (7j)" en vert quand des
+consultations/ordonnances récentes existent, et rien de plus quand il n'y
+en a aucune (pas de "+0").
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add Plateform_medicale/views.py Plateform_medicale/templates/dashboard.html Plateform_medicale/templates/base.html Plateform_medicale/tests.py
+git commit -m "feat(dashboard-admin): tendance reelle sur les KPI consultations/ordonnances (direction A+)"
+```
+
+---
+
+### Task 10: Vérification finale et nettoyage
 
 **Files:**
 - Verify only: `Plateform_medicale/templates/dashboard.html`, `Plateform_medicale/templates/base.html`
@@ -1068,7 +1403,16 @@ git commit -m "docs(dashboard-admin): reporte la refonte poste de pilotage dans 
 
 ## Self-Review
 
-**Spec coverage:** every section of the design spec maps to a task — périmètre/wrapper (Task 1), simplification "Aujourd'hui" (Task 2), hero + pulse trace (Task 3), grille KPI libellés complets (Task 4), actions/gouvernance (Task 5), 4 listes en 2×2 (Task 6), carte réseau (Task 7), accessibilité + tests (Task 8). No gaps found.
+**Spec coverage:** every section of the design spec maps to a task — périmètre/wrapper (Task 1), simplification "Aujourd'hui" (Task 2), hero + pulse trace (Task 3), grille KPI libellés complets (Task 4), actions/gouvernance (Task 5), 4 listes en 2×2 (Task 6), carte réseau (Task 7), accessibilité + tests (Task 10). No gaps found.
+
+**Amendement Direction A+ :** Task 8 (hero paiements, tendance réelle 7j) et
+Task 9 (KPI Consultations/Ordonnances, tendance réelle 7j) couvrent le
+retour utilisateur du 2026-08-05 ("il manque le mouvement"). Périmètre
+initial amendé en conséquence : la contrainte "Aucune vue (`views.py`)...
+n'est modifiée" (voir "Global Constraints" et la spec) ne s'applique plus
+qu'aux tâches 1-7 — les tâches 8-9 ajoutent 3 agrégats en lecture seule
+(`montant_regle_7j`, `consultations_7j`, `ordonnances_7j`), aucune migration,
+aucun nouveau modèle.
 
 **Placeholder scan:** no "TBD"/"TODO"/"add appropriate styling" left in any step — every step has real Django template code or real CSS.
 
