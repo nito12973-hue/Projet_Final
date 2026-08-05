@@ -37,33 +37,33 @@
     </a>
 </section>
 
-<section class="dash-grid" style="margin-top:14px;">
-    <a class="dash-stat dash-stat-discret" href="{% url 'liste_patients' %}">
+<section class="dash-grid" style="margin-top:20px;">
+    <a class="dash-stat" href="{% url 'liste_patients' %}">
         <span class="dash-stat-icon">{% icone "id-card" %}</span>
         <strong class="code">{{ total_patients }}</strong>
         <span>Assurés gérés</span>
     </a>
-    <a class="dash-stat dash-stat-discret" href="{% url 'liste_medecins' %}">
+    <a class="dash-stat" href="{% url 'liste_medecins' %}">
         <span class="dash-stat-icon">{% icone "stethoscope" %}</span>
         <strong class="code">{{ total_medecins }}</strong>
         <span>Médecins actifs</span>
     </a>
-    <a class="dash-stat dash-stat-discret" href="{% url 'liste_pharmaciens' %}">
+    <a class="dash-stat" href="{% url 'liste_pharmaciens' %}">
         <span class="dash-stat-icon">{% icone "pill" %}</span>
         <strong class="code">{{ total_pharmaciens }}</strong>
         <span>Pharmaciens actifs</span>
     </a>
-    <a class="dash-stat dash-stat-discret" href="{% url 'liste_prestataires' %}">
+    <a class="dash-stat" href="{% url 'liste_prestataires' %}">
         <span class="dash-stat-icon">{% icone "building" %}</span>
         <strong class="code">{{ total_prestataires }}</strong>
         <span>Prestataires partenaires</span>
     </a>
-    <a class="dash-stat dash-stat-discret" href="{% url 'rapports' %}">
+    <a class="dash-stat" href="{% url 'rapports' %}">
         <span class="dash-stat-icon">{% icone "clipboard-list" %}</span>
         <strong class="code">{{ total_consultations }}</strong>
         <span>Consultations</span>
     </a>
-    <a class="dash-stat dash-stat-discret" href="{% url 'rapports' %}">
+    <a class="dash-stat" href="{% url 'rapports' %}">
         <span class="dash-stat-icon">{% icone "qr-scan" %}</span>
         <strong class="code">{{ total_ordonnances }}</strong>
         <span>Ordonnances émises</span>
