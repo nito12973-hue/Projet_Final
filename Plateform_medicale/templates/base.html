@@ -543,6 +543,17 @@
             font-size: 21px;
         }
 
+        /* Meme logique que .dash-stat-discret : la profondeur (ombre) reste
+           reservee au bandeau financier, seul element "vedette" de la page.
+           Panels d'action/tableaux/carte du dashboard admin : bordure fine,
+           pas d'ombre -- pas de survol qui souleve (ce ne sont pas des
+           cartes-lien uniques, un survol qui souleve toute la carte serait
+           trompeur). .panel seul, utilise partout ailleurs dans
+           l'application, reste inchange. */
+        .panel-discret {
+            box-shadow: none;
+        }
+
         .admin-card-large,
         .governance-card {
             padding: 0;
@@ -1117,6 +1128,64 @@
 
         .dash-stat-icon .icone-nav { width: 17px; height: 17px; }
 
+        /* Totaux de reference (grille KPI globale du dashboard admin, ex.
+           "Medecins actifs") : traitement plus discret que .dash-stat
+           standard, pour laisser "Aujourd'hui" (activite qui change
+           reellement au quotidien, meme composant .dash-stat juste en
+           dessous) rester la donnee la plus visible sous le bandeau
+           financier. Modificateur, ne redefinit pas .dash-stat -- aucun
+           impact sur les 3 autres dashboards (Assure/Medecin/Pharmacien)
+           qui utilisent .dash-stat sans ce modificateur. */
+        .dash-stat-discret {
+            /* Meme teinte que --primary-soft (220,236,233), en transparence
+               sur --bg plutot qu'en aplat : meme principe deja utilise par
+               --accent-turquoise-wash (rgba de --primary), pas une nouvelle
+               couleur. Distingue ces tuiles de reference du blanc plein des
+               tuiles "Aujourd'hui" juste en dessous. */
+            background: rgba(220, 236, 233, 0.5);
+            border-color: rgba(14, 124, 134, 0.16);
+            padding: 14px 16px;
+            box-shadow: none;
+        }
+
+        .dash-stat-discret .dash-stat-icon {
+            width: 28px;
+            height: 28px;
+            margin-bottom: 10px;
+        }
+
+        /* Specificite .dash-stat.dash-stat-discret (pas .dash-stat-discret
+           seul) : meme specificite que .dash-stat strong sinon, et cette
+           regle-ci arrive avant elle dans le fichier -- perdrait la
+           cascade sans la classe composee. */
+        .dash-stat.dash-stat-discret strong {
+            font-size: 20px;
+        }
+
+        /* Tuile "Aujourd'hui" qui merite une action immediate (ex. prises en
+           charge en attente > 0, condition posee cote template) : accent
+           terracotta au sens ou CLAUDE.md le documente deja (ponctuel, jamais
+           en aplat large) -- pas un style permanent, seulement quand il y a
+           reellement quelque chose a traiter. */
+        .dash-stat-urgent {
+            border-left: 3px solid var(--accent);
+        }
+
+        .dash-stat-urgent .dash-stat-icon {
+            background: rgba(224, 130, 79, 0.14);
+            color: var(--accent);
+        }
+
+        /* IBM Plex Mono n'existe pas en graisse 800 (seul .dash-stat strong /
+           .dash-hero-carte strong / .gouvernance-comptes strong l'utilisent) :
+           sans cette regle le navigateur synthetiserait un faux gras sur un
+           gras deja charge en 700, rendu plus lourd qu'attendu. */
+        .dash-stat strong.code,
+        .dash-hero-carte strong.code,
+        .gouvernance-comptes strong.code {
+            font-weight: 700;
+        }
+
         .dash-stat strong {
             display: block;
             font-size: 28px;
@@ -1263,6 +1332,50 @@
             font-size: 11px;
             color: rgba(239, 255, 247, 0.7);
             text-align: left;
+        }
+
+        /* Filigrane discret (croix seule, sans le pouls) sur la carte hero
+           principale uniquement -- pas les 3 cartes, pour ne pas diluer
+           l'effet (une seule carte porte le bandeau financier "vedette",
+           avec la trace ; les 2 autres restent sobres). */
+        .dash-hero-watermark {
+            position: absolute;
+            top: -18px;
+            right: -14px;
+            width: 150px;
+            height: 150px;
+            opacity: 0.06;
+            pointer-events: none;
+        }
+
+        /* Point "vivant" : reserve aux endroits qui refletent reellement une
+           donnee qui bouge (ex. titre "Aujourd'hui"), jamais decoratif seul.
+           Anneau anime capte par la regle globale prefers-reduced-motion
+           (animation-duration forcee a 0.01ms) -- pas de media query dediee
+           ici. */
+        .pulse-dot {
+            position: relative;
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            border-radius: 999px;
+            background: var(--accent);
+            flex-shrink: 0;
+        }
+
+        .pulse-dot::after {
+            content: "";
+            position: absolute;
+            inset: -5px;
+            border-radius: 999px;
+            border: 1.5px solid var(--accent);
+            animation: pulse-anneau 2.2s ease-out infinite;
+        }
+
+        @keyframes pulse-anneau {
+            0% { opacity: 0.65; transform: scale(0.6); }
+            75% { opacity: 0; transform: scale(1.6); }
+            100% { opacity: 0; transform: scale(1.6); }
         }
 
         .legende-type {
@@ -1988,8 +2101,16 @@
             // Compteur anime sur les chiffres cles des dashboards (.dash-stat
             // strong) : meme principe que la landing (Phase 1), sans le
             // suffixe "+" car ce sont des totaux exacts, pas des objectifs.
+            // Desactive sur le dashboard admin (.dash-hero, present
+            // uniquement sur dashboard.html) : ecran consulte plusieurs fois
+            // par jour par la meme personne, la choregraphie 0->N repetee a
+            // chaque visite gene plus qu'elle ne confirme quoi que ce soit.
+            // L'entree en fondu/glissement des cartes (entree-carte, CSS)
+            // reste inchangee. Les 3 autres dashboards (Assure/Medecin/
+            // Pharmacien) ne sont pas concernes.
             var reductionMouvement = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
             if (reductionMouvement) { return; }
+            if (document.querySelector('.dash-hero')) { return; }
 
             document.querySelectorAll('.dash-stat strong').forEach(function (element) {
                 var cible = parseInt(element.textContent.replace(/\s/g, ''), 10);

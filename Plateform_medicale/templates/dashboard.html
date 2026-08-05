@@ -13,8 +13,12 @@
 
 <section class="dash-hero">
     <a class="dash-hero-carte" href="{% url 'liste_paiements' %}?statut=regle">
+        <svg class="dash-hero-watermark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+            <rect x="18" y="6" width="12" height="36" rx="4" fill="#ffffff"/>
+            <rect x="6" y="18" width="36" height="12" rx="4" fill="#ffffff"/>
+        </svg>
         <span class="dash-hero-icon">{% icone "receipt" %}</span>
-        <strong>{{ montant_regle|franc_cfa }}</strong>
+        <strong class="code">{{ montant_regle|franc_cfa }}</strong>
         <span>Paiements réglés</span>
         <div class="dash-hero-sparkline-zone">
             <canvas id="graphe-tendance-consultations" aria-label="Tendance des consultations, 30 derniers jours"></canvas>
@@ -23,45 +27,45 @@
     </a>
     <a class="dash-hero-carte" href="{% url 'liste_paiements' %}?statut=non_regle">
         <span class="dash-hero-icon">{% icone "clock-history" %}</span>
-        <strong>{{ montant_non_regle|franc_cfa }}</strong>
+        <strong class="code">{{ montant_non_regle|franc_cfa }}</strong>
         <span>En attente de règlement</span>
     </a>
     <a class="dash-hero-carte" href="{% url 'rapports' %}">
         <span class="dash-hero-icon">{% icone "shield-check" %}</span>
-        <strong>{% if taux_reglement is not None %}{{ taux_reglement }}%{% else %}—{% endif %}</strong>
+        <strong class="code">{% if taux_reglement is not None %}{{ taux_reglement }}%{% else %}—{% endif %}</strong>
         <span>Taux de règlement</span>
     </a>
 </section>
 
 <section class="dash-grid" style="margin-top:14px;">
-    <a class="dash-stat" href="{% url 'liste_patients' %}">
+    <a class="dash-stat dash-stat-discret" href="{% url 'liste_patients' %}">
         <span class="dash-stat-icon">{% icone "id-card" %}</span>
-        <strong>{{ total_patients }}</strong>
+        <strong class="code">{{ total_patients }}</strong>
         <span>Assurés gérés</span>
     </a>
-    <a class="dash-stat" href="{% url 'liste_medecins' %}">
+    <a class="dash-stat dash-stat-discret" href="{% url 'liste_medecins' %}">
         <span class="dash-stat-icon">{% icone "stethoscope" %}</span>
-        <strong>{{ total_medecins }}</strong>
+        <strong class="code">{{ total_medecins }}</strong>
         <span>Médecins actifs</span>
     </a>
-    <a class="dash-stat" href="{% url 'liste_pharmaciens' %}">
+    <a class="dash-stat dash-stat-discret" href="{% url 'liste_pharmaciens' %}">
         <span class="dash-stat-icon">{% icone "pill" %}</span>
-        <strong>{{ total_pharmaciens }}</strong>
+        <strong class="code">{{ total_pharmaciens }}</strong>
         <span>Pharmaciens actifs</span>
     </a>
-    <a class="dash-stat" href="{% url 'liste_prestataires' %}">
+    <a class="dash-stat dash-stat-discret" href="{% url 'liste_prestataires' %}">
         <span class="dash-stat-icon">{% icone "building" %}</span>
-        <strong>{{ total_prestataires }}</strong>
+        <strong class="code">{{ total_prestataires }}</strong>
         <span>Prestataires partenaires</span>
     </a>
-    <a class="dash-stat" href="{% url 'rapports' %}">
+    <a class="dash-stat dash-stat-discret" href="{% url 'rapports' %}">
         <span class="dash-stat-icon">{% icone "clipboard-list" %}</span>
-        <strong>{{ total_consultations }}</strong>
+        <strong class="code">{{ total_consultations }}</strong>
         <span>Consultations</span>
     </a>
-    <a class="dash-stat" href="{% url 'rapports' %}">
+    <a class="dash-stat dash-stat-discret" href="{% url 'rapports' %}">
         <span class="dash-stat-icon">{% icone "qr-scan" %}</span>
-        <strong>{{ total_ordonnances }}</strong>
+        <strong class="code">{{ total_ordonnances }}</strong>
         <span>Ordonnances émises</span>
     </a>
 </section>
@@ -69,31 +73,31 @@
 <section class="panel" style="margin-top:14px;padding:20px 24px;">
     <div class="panel-header" style="padding:0 0 14px;">
         <div>
-            <h2>Aujourd'hui</h2>
+            <h2 style="display:flex;align-items:center;gap:9px;"><span class="pulse-dot" aria-hidden="true"></span>Aujourd'hui</h2>
             <p class="subtitle" style="margin:2px 0 0;">Activité de la plateforme, tous rôles confondus.</p>
         </div>
     </div>
     <div class="dash-grid">
         <div class="dash-stat" style="cursor:default;">
             <span class="dash-stat-icon">{% icone "calendar" %}</span>
-            <strong>{{ total_rendez_vous_aujourd_hui }}</strong>
+            <strong class="code">{{ total_rendez_vous_aujourd_hui }}</strong>
             <span>Rendez-vous</span>
         </div>
         <div class="dash-stat" style="cursor:default;">
             <span class="dash-stat-icon">{% icone "clipboard-list" %}</span>
-            <strong>{{ total_consultations_aujourd_hui }}</strong>
+            <strong class="code">{{ total_consultations_aujourd_hui }}</strong>
             <span>Consultations</span>
         </div>
-        <a class="dash-stat" href="{% url 'liste_prises_en_charge' %}?statut=en_attente">
+        <a class="dash-stat{% if total_prises_en_charge_attente %} dash-stat-urgent{% endif %}" href="{% url 'liste_prises_en_charge' %}?statut=en_attente">
             <span class="dash-stat-icon">{% icone "clock-history" %}</span>
-            <strong>{{ total_prises_en_charge_attente }}</strong>
+            <strong class="code">{{ total_prises_en_charge_attente }}</strong>
             <span>Prises en charge en attente</span>
         </a>
     </div>
 </section>
 
 <section class="admin-layout">
-    <article class="panel admin-card-large">
+    <article class="panel admin-card-large panel-discret">
         <div class="panel-header">
             <div>
                 <h2>Actions rapides</h2>
@@ -108,7 +112,7 @@
         </div>
     </article>
 
-    <aside class="panel governance-card">
+    <aside class="panel governance-card panel-discret">
         <span class="dash-stat-icon">{% icone "lock" %}</span>
         <h2>Comptes et gouvernance</h2>
         <p class="subtitle">
@@ -117,11 +121,11 @@
         </p>
         <div class="gouvernance-comptes">
             <a href="{% url 'liste_utilisateurs' %}?statut=actif">
-                <strong>{{ total_comptes_actifs }}</strong>
+                <strong class="code">{{ total_comptes_actifs }}</strong>
                 <span>Comptes actifs</span>
             </a>
             <a href="{% url 'liste_utilisateurs' %}?statut=inactif">
-                <strong>{{ total_comptes_inactifs }}</strong>
+                <strong class="code">{{ total_comptes_inactifs }}</strong>
                 <span>Comptes désactivés</span>
             </a>
         </div>
@@ -130,7 +134,7 @@
 </section>
 
 <section class="admin-layout">
-    <article class="panel">
+    <article class="panel panel-discret">
         <div class="panel-header">
             <h2>Derniers assurés</h2>
             <a class="button" href="{% url 'liste_patients' %}">Voir tout</a>
@@ -149,7 +153,7 @@
                 <tr>
                     <td>{{ patient.prenom }} {{ patient.nom }}</td>
                     <td>{{ patient.get_type_beneficiaire_display }}</td>
-                    <td>{{ patient.telephone|default:"-" }}</td>
+                    <td class="code">{{ patient.telephone|default:"-" }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -165,7 +169,7 @@
         {% endif %}
     </article>
 
-    <article class="panel">
+    <article class="panel panel-discret">
         <div class="panel-header">
             <h2>Suivi des prises en charge</h2>
             <a class="button" href="{% url 'liste_prises_en_charge' %}">Voir tout</a>
@@ -183,7 +187,7 @@
                 {% for prise in dernieres_prises_en_charge %}
                 <tr>
                     <td>{{ prise.patient }}</td>
-                    <td>{{ prise.date_demande|date:"d/m/Y" }}</td>
+                    <td class="code">{{ prise.date_demande|date:"d/m/Y" }}</td>
                     <td><span class="dash-pill {% if prise.statut == 'validee' or prise.statut == 'terminee' %}ok{% elif prise.statut == 'refusee' %}danger{% else %}attente{% endif %}">{{ prise.get_statut_display }}</span></td>
                 </tr>
                 {% endfor %}
@@ -202,7 +206,7 @@
 </section>
 
 <section class="admin-layout">
-    <article class="panel">
+    <article class="panel panel-discret">
         <div class="panel-header">
             <h2>Derniers comptes créés</h2>
             <a class="button" href="{% url 'liste_utilisateurs' %}">Voir tout</a>
@@ -221,7 +225,7 @@
                 <tr>
                     <td>{{ compte.get_full_name|default:compte.email }}</td>
                     <td>{{ compte.get_role_display }}</td>
-                    <td>{{ compte.date_joined|date:"d/m/Y" }}</td>
+                    <td class="code">{{ compte.date_joined|date:"d/m/Y" }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -237,7 +241,7 @@
         {% endif %}
     </article>
 
-    <article class="panel">
+    <article class="panel panel-discret">
         <div class="panel-header">
             <h2>Derniers prestataires ajoutés</h2>
             <a class="button" href="{% url 'liste_prestataires' %}">Voir tout</a>
@@ -274,7 +278,7 @@
 
 </section>
 
-<section class="panel" style="margin-top:18px;padding:22px 24px;">
+<section class="panel panel-discret" style="margin-top:18px;padding:22px 24px;">
     <div class="panel-header" style="padding:0 0 16px;">
         <div>
             <h2>Réseau de prestataires partenaires</h2>
@@ -335,19 +339,31 @@
             return valeur || repli;
         }
 
+        // Trace "pouls" : segments anguleux (tension 0, pas de courbe lissee)
+        // et couleur terracotta -- reprend l'usage deja documente de --accent
+        // ("ligne de battement de coeur du logo sur fond sombre", CLAUDE.md),
+        // applique ici au graphique plutot qu'au logo. Dernier point mis en
+        // evidence (rayon fixe, pas seulement au survol) : c'est la valeur
+        // du jour, le repere le plus utile sur une tendance 30 jours.
+        var rayonsPoints = donnees.totaux.map(function (_, index) {
+            return index === donnees.totaux.length - 1 ? 4 : 0;
+        });
+
         new Chart(canevas, {
             type: 'line',
             data: {
                 labels: donnees.labels,
                 datasets: [{
                     data: donnees.totaux,
-                    borderColor: 'rgba(255, 255, 255, 0.9)',
-                    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+                    borderColor: tokenCouleur('--accent', '#e0824f'),
+                    backgroundColor: 'rgba(255, 255, 255, 0.10)',
                     fill: true,
-                    tension: 0.35,
-                    pointRadius: 0,
+                    tension: 0,
+                    pointRadius: rayonsPoints,
+                    pointBackgroundColor: tokenCouleur('--accent', '#e0824f'),
+                    pointBorderWidth: 0,
                     pointHoverRadius: 4,
-                    pointHoverBackgroundColor: '#ffffff',
+                    pointHoverBackgroundColor: tokenCouleur('--accent', '#e0824f'),
                     borderWidth: 2,
                 }],
             },
@@ -360,7 +376,18 @@
                 },
                 scales: {
                     x: { display: false },
-                    y: { display: false, beginAtZero: true },
+                    y: {
+                        display: true,
+                        beginAtZero: true,
+                        ticks: { display: false, maxTicksLimit: 3 },
+                        // Chart.js 4 : le pointille des lignes de grille se
+                        // configure via scales.y.border.dash (pas
+                        // grid.borderDash, retire depuis la v4) -- s'applique
+                        // meme avec border.display:false (verifie sur la
+                        // doc/discussion officielle du projet).
+                        grid: { color: 'rgba(255, 255, 255, 0.14)', drawTicks: false },
+                        border: { display: false, dash: [2, 4] },
+                    },
                 },
             },
         });
