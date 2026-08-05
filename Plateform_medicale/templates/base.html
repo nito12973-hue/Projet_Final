@@ -1265,6 +1265,22 @@
             color: #6fd39a;
         }
 
+        /* Meme principe que .dc-hero-delta (Tache 8), variante compacte pour
+           une tuile KPI : reutilise la meme teinte verte, pas de fond ni de
+           padding pour rester discret sous le libelle de la tuile.
+           Selecteur qualifie (.dash-command .dash-stat span.dc-kpi-delta,
+           specificite 0,3,1) pour gagner face a .dash-command .dash-stat
+           span (0,2,1) -- meme piege de cascade que .dc-hero-delta en
+           Tache 8, corrige ici des le depart plutot qu'en revue. */
+        .dash-command .dash-stat span.dc-kpi-delta {
+            display: block;
+            margin-top: 2px;
+            font-size: 10.5px;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            color: #6fd39a;
+        }
+
         .dash-hero-carte {
             text-decoration: none;
             display: block;

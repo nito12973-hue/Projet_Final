@@ -339,6 +339,9 @@ def dashboard(request):
         statut=Paiement.Statut.REGLE, date_reglement__gte=il_y_a_7_jours
     ).aggregate(total=Sum("montant_part_patient"))["total"] or 0
 
+    consultations_7j = Consultation.objects.filter(date_consultation__gte=il_y_a_7_jours).count()
+    ordonnances_7j = Ordonnance.objects.filter(date_creation__gte=il_y_a_7_jours).count()
+
     # Derniers comptes crees, hors assures (remplace "derniers assures" qui
     # ne montrait pas la croissance medecins/pharmaciens ; exclut desormais
     # les assures car "Derniers assures" plus bas les couvre deja, y
@@ -362,6 +365,8 @@ def dashboard(request):
         "montant_regle_7j": montant_regle_7j,
         "montant_non_regle": montant_non_regle,
         "taux_reglement": taux_reglement,
+        "consultations_7j": consultations_7j,
+        "ordonnances_7j": ordonnances_7j,
         "total_comptes_actifs": User.objects.filter(is_active=True).count(),
         "total_comptes_inactifs": User.objects.filter(is_active=False).count(),
         "total_rendez_vous_aujourd_hui": total_rendez_vous_aujourd_hui,
