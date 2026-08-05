@@ -328,6 +328,17 @@ def dashboard(request):
         date_consultation__gte=debut_jour, date_consultation__lt=fin_jour
     ).count()
 
+    # Tendance des paiements regles sur les 7 derniers jours, pour le delta
+    # affiche sous le montant regle du hero (direction A+, retour utilisateur
+    # 2026-08-05 : la version initiale de "poste de pilotage" n'affichait
+    # qu'un instantane, jamais de notion de mouvement). Reutilise
+    # Paiement.date_reglement, deja renseigne a chaque reglement -- aucune
+    # migration necessaire.
+    il_y_a_7_jours = maintenant - datetime.timedelta(days=7)
+    montant_regle_7j = Paiement.objects.filter(
+        statut=Paiement.Statut.REGLE, date_reglement__gte=il_y_a_7_jours
+    ).aggregate(total=Sum("montant_part_patient"))["total"] or 0
+
     # Derniers comptes crees, hors assures (remplace "derniers assures" qui
     # ne montrait pas la croissance medecins/pharmaciens ; exclut desormais
     # les assures car "Derniers assures" plus bas les couvre deja, y
@@ -348,6 +359,7 @@ def dashboard(request):
         "total_consultations": Consultation.objects.count(),
         "total_ordonnances": Ordonnance.objects.count(),
         "montant_regle": montant_regle,
+        "montant_regle_7j": montant_regle_7j,
         "montant_non_regle": montant_non_regle,
         "taux_reglement": taux_reglement,
         "total_comptes_actifs": User.objects.filter(is_active=True).count(),

@@ -19,6 +19,7 @@
         </svg>
         <span class="dash-hero-icon">{% icone "receipt" %}</span>
         <strong class="code">{{ montant_regle|franc_cfa }}</strong>
+        {% if montant_regle_7j %}<span class="dc-hero-delta">&#9650; +{{ montant_regle_7j|franc_cfa }} ces 7 derniers jours</span>{% endif %}
         <span>Paiements réglés</span>
         <div class="dash-hero-sparkline-zone">
             <canvas id="graphe-tendance-consultations" aria-label="Tendance des consultations, 30 derniers jours"></canvas>

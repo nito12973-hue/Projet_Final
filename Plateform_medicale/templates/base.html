@@ -1246,6 +1246,21 @@
             font-size: 13.5px;
         }
 
+        /* Tendance reelle (paiements regles ces 7 derniers jours), pas un
+           chiffre invente : meme teinte verte que .dash-pill.ok sur fond
+           sombre (#6fd39a, Tache 6), reutilisee ici plutot qu'une nouvelle
+           couleur "succes". N'apparait que si au moins un paiement a ete
+           regle sur la fenetre (sinon rien, jamais de "+0"). */
+        .dc-hero-delta {
+            position: relative;
+            display: block;
+            margin: 2px 0 6px;
+            font-size: 12px;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            color: #6fd39a;
+        }
+
         .dash-hero-carte {
             text-decoration: none;
             display: block;
