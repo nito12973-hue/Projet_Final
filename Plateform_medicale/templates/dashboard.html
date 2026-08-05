@@ -234,7 +234,7 @@
     </article>
 </section>
 
-<section class="panel panel-discret" style="margin-top:18px;padding:22px 24px;">
+<section class="panel" style="margin-top:20px;padding:22px 24px;">
     <div class="panel-header" style="padding:0 0 16px;">
         <div>
             <h2>Réseau de prestataires partenaires</h2>
@@ -243,7 +243,7 @@
         <a class="button btn" href="{% url 'liste_prestataires' %}">Voir tout</a>
     </div>
     {% if prestataires_carte %}
-    <div id="carte-reseau-admin" style="height:320px;border-radius:12px;border:1px solid var(--border);"></div>
+    <div id="carte-reseau-admin" style="height:320px;border-radius:12px;border:1px solid var(--dc-border);"></div>
     <div class="carte-legende" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:16px;">
         <span class="legende-type"><span class="legende-puce" style="background:var(--primary);"></span>Hôpital</span>
         <span class="legende-type"><span class="legende-puce" style="background:var(--primary-accent);"></span>Clinique</span>
