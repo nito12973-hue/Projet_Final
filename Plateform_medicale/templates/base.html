@@ -1250,8 +1250,12 @@
            chiffre invente : meme teinte verte que .dash-pill.ok sur fond
            sombre (#6fd39a, Tache 6), reutilisee ici plutot qu'une nouvelle
            couleur "succes". N'apparait que si au moins un paiement a ete
-           regle sur la fenetre (sinon rien, jamais de "+0"). */
-        .dc-hero-delta {
+           regle sur la fenetre (sinon rien, jamais de "+0"). Selecteur
+           .dash-hero-carte span.dc-hero-delta (specificity 0,2,1) pour
+           surmonter .dash-hero-carte span (0,1,1) qui forcerait la couleur
+           off-white, suivant le pattern de .dash-hero-carte span.dash-hero-sparkline-legende
+           deux regles plus bas. */
+        .dash-hero-carte span.dc-hero-delta {
             position: relative;
             display: block;
             margin: 2px 0 6px;
