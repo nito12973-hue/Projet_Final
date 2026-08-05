@@ -130,7 +130,7 @@
         <div class="dc-list">
             {% for patient in derniers_patients %}
             <div class="dc-row">
-                <span class="dc-avatar">{{ patient.prenom|slice:":1"|upper }}{{ patient.nom|slice:":1"|upper }}</span>
+                <span class="dc-avatar" aria-hidden="true">{{ patient.prenom|slice:":1"|upper }}{{ patient.nom|slice:":1"|upper }}</span>
                 <span class="dc-meta">
                     <span class="dc-name">{{ patient.prenom }} {{ patient.nom }}</span>
                     <span class="dc-sub">{{ patient.get_type_beneficiaire_display }} · {{ patient.telephone|default:"-" }}</span>
@@ -186,7 +186,7 @@
         <div class="dc-list">
             {% for compte in derniers_comptes %}
             <div class="dc-row">
-                <span class="dc-avatar">{{ compte.get_full_name|default:compte.email|slice:":2"|upper }}</span>
+                <span class="dc-avatar" aria-hidden="true">{{ compte.get_full_name|default:compte.email|slice:":2"|upper }}</span>
                 <span class="dc-meta">
                     <span class="dc-name">{{ compte.get_full_name|default:compte.email }}</span>
                     <span class="dc-sub">{{ compte.get_role_display }} · {{ compte.date_joined|date:"d/m/Y" }}</span>
@@ -214,7 +214,7 @@
         <div class="dc-list">
             {% for prestataire in derniers_prestataires %}
             <div class="dc-row">
-                <span class="dc-avatar">{{ prestataire.nom|slice:":2"|upper }}</span>
+                <span class="dc-avatar" aria-hidden="true">{{ prestataire.nom|slice:":2"|upper }}</span>
                 <span class="dc-meta">
                     <span class="dc-name">{{ prestataire.nom }}</span>
                     <span class="dc-sub">{{ prestataire.get_type_prestataire_display }} · {{ prestataire.ville|default:"-" }}</span>
