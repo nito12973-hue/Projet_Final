@@ -437,6 +437,37 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
                           `<link>`) -- evite ~150 Ko charges pour rien quand
                           aucun prestataire n'est geolocalise. 233 tests
                           inchange (aucun test ne couvrait ces 4 points).
+                          Sixieme passe ("poste de pilotage", direction A+) :
+                          tout le contenu sous le titre est enveloppe dans un
+                          canevas sombre .dash-command (habillage CSS, voir
+                          section 5). Le panel "Aujourd'hui" devient une ligne
+                          compacte .dc-status placee en TETE du canevas (au
+                          dessus du bandeau financier) et non plus sous la
+                          grille KPI ; les 4 tableaux de bas de page laissent
+                          place a une grille de listes condensees .dc-digests.
+                          Cote donnees, 3 agregats de tendance sur 7 jours
+                          glissants, tous derives d'un meme il_y_a_7_jours
+                          (= maintenant - 7 jours, meme "maintenant" que le
+                          bloc "Aujourd'hui") : montant_regle_7j (Sum de
+                          montant_part_patient, statut=REGLE, sur
+                          date_reglement — exactement le meme champ et le meme
+                          filtre que le montant_regle affiche au dessus, donc
+                          un vrai sous-ensemble et pas un chiffre d'une autre
+                          nature), consultations_7j et ordonnances_7j.
+                          consultations_7j est le seul a porter une borne
+                          haute (date_consultation__lte=maintenant) :
+                          date_consultation est saisie par le medecin et
+                          ConsultationForm n'interdit pas une date future,
+                          alors que date_reglement et date_creation sont
+                          posees par le code. Chaque delta n'est rendu que
+                          s'il est non nul (jamais de "+0").
+                          Decision de perimetre explicite, a ne pas "corriger"
+                          plus tard : les tuiles Assures / Medecins /
+                          Pharmaciens / Prestataires n'ont volontairement
+                          aucun delta de tendance — ni Patient ni Prestataire
+                          n'a de champ de date de creation exploitable, en
+                          ajouter un demanderait une migration, hors
+                          perimetre d'une refonte visuelle.
   rapports / exporter_rapports_excel / exporter_rapports_pdf
                                       _donnees_rapports() est la SEULE
                                       source de donnees, partagee par la
@@ -819,6 +850,43 @@ Assure (role_required(ASSURE), prefixe /assure/ + /espace/assure/)
 - dashboard.html / dashboard_medecin.html / dashboard_pharmacien.html /
   dashboard_assure.html : pages d'accueil par role, cartes .dash-stat +
   tableau .dash-pill pour les statuts (couleurs alignees avec les badges).
+- .dash-command ("poste de pilotage") : canevas sombre du seul dashboard
+  Administrateur — la classe n'existe que dans dashboard.html. Regle de
+  travail a respecter pour toute evolution de cet ecran : les redefinitions
+  sombres des composants partages (.panel, .dash-stat, .dash-pill, .button,
+  .governance-card, .legende-type, .etat-vide, .admin-layout) sont TOUTES
+  imbriquees sous .dash-command ; aucune regle de base n'a ete modifiee.
+  C'est ce qui garantit que les 3 autres dashboards et les autres ecrans
+  admin (rapports.html, scanner_ordonnance.html, toutes les listes) sont
+  inchanges. Ne jamais "simplifier" en editant la regle de base.
+  Tokens locaux declares sur .dash-command : --dc-text (#EFF4F3, meme
+  valeur que la croix du logo sur fond sombre), --dc-text-muted /
+  --dc-text-faint / --dc-border / --dc-hover (alias des --sb-* deja concus
+  pour la sidebar), et --dc-success / --dc-warning / --dc-danger, variantes
+  eclaircies de --success / --warning / --danger dont les versions claires
+  (vert/ambre/rouge fonces) sont illisibles sur ce fond. Ces 3 derniers
+  servent aux pastilles .dash-pill ET aux deltas de tendance
+  .dc-hero-delta / .dc-kpi-delta : une seule definition, pas de hex repete.
+- Piege de specificite a connaitre avant d'ajouter un <span> dans une tuile
+  du poste de pilotage (delta, badge, mention secondaire) : la couleur du
+  texte y est deja posee par .dash-command .dash-stat span (0,2,1) et par
+  .dash-hero-carte span (0,1,1). Une nouvelle regle .maclasse (0,1,0) ou
+  .dash-command .maclasse (0,2,0) perd la cascade et la couleur voulue ne
+  s'applique pas — le symptome est silencieux (le texte s'affiche, dans la
+  mauvaise teinte). Il faut qualifier le selecteur par l'element :
+  .dash-command .dash-stat span.dc-kpi-delta (0,3,1),
+  .dash-hero-carte span.dc-hero-delta (0,2,1). Le meme piege touchait
+  .dash-stat-icon (l'icone est un <span> elle aussi), d'ou la regle
+  qualifiee .dash-command .dash-stat span.dash-stat-icon.
+- Contraste sur ce canevas : le fond est un radial-gradient dont le coin
+  haut-droit vaut --primary-strong, nettement plus clair que le
+  --primary-dark du reste. Toute verification de contraste doit se faire
+  sur ce coin, pas sur la zone sombre — c'est la que --dc-text-muted
+  retombe sous 4.5:1 (d'ou les libelles de tuiles KPI en --dc-text), et
+  --dc-text-faint n'y passe nulle part (d'ou .dc-sub en --dc-text-muted).
+  Meme raison pour l'anneau :focus-visible : l'anneau partage
+  rgba(14,124,134,0.35) se confond avec ce fond (~1.4:1), une regle scopee
+  .dash-command le remplace par --primary-accent opaque.
 - rapports.html : graphiques Chart.js (CDN, integrite SRI) + tableaux de
   donnees repliés (<details>) pour eviter de dupliquer visuellement chart
   et tableau ; palette categorielle validee anti-daltonisme pour role/type,
