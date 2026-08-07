@@ -339,7 +339,15 @@ def dashboard(request):
         statut=Paiement.Statut.REGLE, date_reglement__gte=il_y_a_7_jours
     ).aggregate(total=Sum("montant_part_patient"))["total"] or 0
 
-    consultations_7j = Consultation.objects.filter(date_consultation__gte=il_y_a_7_jours).count()
+    # Borne haute explicite, contrairement aux deux agregats voisins :
+    # Consultation.date_consultation est saisie par le medecin (et
+    # ConsultationForm ne refuse pas une date future), alors que
+    # Paiement.date_reglement et Ordonnance.date_creation sont posees par le
+    # code. Sans elle, une consultation datee par erreur dans le futur
+    # gonflerait un delta libelle "7 derniers jours".
+    consultations_7j = Consultation.objects.filter(
+        date_consultation__gte=il_y_a_7_jours, date_consultation__lte=maintenant
+    ).count()
     ordonnances_7j = Ordonnance.objects.filter(date_creation__gte=il_y_a_7_jours).count()
 
     # Derniers comptes crees, hors assures (remplace "derniers assures" qui
