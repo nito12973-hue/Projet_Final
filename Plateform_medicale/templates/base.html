@@ -1,4 +1,4 @@
-﻿{% load icones %}<!DOCTYPE html>
+{% load icones %}<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -1248,9 +1248,10 @@
 
         /* Tendance reelle (paiements regles ces 7 derniers jours), pas un
            chiffre invente : meme teinte verte que .dash-pill.ok sur fond
-           sombre (#6fd39a, Tache 6), reutilisee ici plutot qu'une nouvelle
-           couleur "succes". N'apparait que si au moins un paiement a ete
-           regle sur la fenetre (sinon rien, jamais de "+0"). Selecteur
+           sombre (token --dc-success, defini sur .dash-command), reutilisee
+           ici plutot qu'une nouvelle couleur "succes". N'apparait que si au
+           moins un paiement a ete regle sur la fenetre (sinon rien, jamais
+           de "+0"). Selecteur
            .dash-hero-carte span.dc-hero-delta (specificity 0,2,1) pour
            surmonter .dash-hero-carte span (0,1,1) qui forcerait la couleur
            off-white, suivant le pattern de .dash-hero-carte span.dash-hero-sparkline-legende
@@ -1262,7 +1263,7 @@
             font-size: 12px;
             font-weight: 600;
             font-variant-numeric: tabular-nums;
-            color: #6fd39a;
+            color: var(--dc-success);
         }
 
         /* Meme principe que .dc-hero-delta (Tache 8), variante compacte pour
@@ -1278,7 +1279,7 @@
             font-size: 10.5px;
             font-weight: 700;
             font-variant-numeric: tabular-nums;
-            color: #6fd39a;
+            color: var(--dc-success);
         }
 
         .dash-hero-carte {
@@ -1401,6 +1402,15 @@
             --dc-text-faint: var(--sb-text-faint);
             --dc-border: var(--sb-border);
             --dc-hover: var(--sb-hover);
+            /* Trio semantique (statuts, deltas de tendance) : variantes
+               eclaircies de --success/--warning/--danger, dont les versions
+               claires (vert/ambre/rouge fonces) sont illisibles sur ce fond.
+               Tokenisees ici parce qu'elles servent a la fois aux pastilles
+               .dash-pill et aux deltas .dc-hero-delta/.dc-kpi-delta -- une
+               seule definition, jamais de hex repete. */
+            --dc-success: #6fd39a;
+            --dc-warning: #f0c375;
+            --dc-danger: #ec8a83;
             color: var(--dc-text);
         }
 
@@ -1459,12 +1469,28 @@
             color: var(--dc-text);
         }
 
+        /* Libelles des tuiles KPI : --dc-text-muted ne tenait que sur la
+           partie sombre du degrade (~6:1) et retombait a ~3.8-4.2:1 sur les
+           tuiles les plus proches du coin haut-droit, ou le radial-gradient
+           vaut --primary-strong -- sous le seuil WCAG AA. --dc-text tient
+           partout (>=7.9:1) ; la hierarchie avec le chiffre reste portee par
+           la taille et la graisse (28px/800 contre 13.5px/600). */
         .dash-command .dash-stat span {
-            color: var(--dc-text-muted);
+            color: var(--dc-text);
         }
 
+        /* Regle non qualifiee : couvre aussi l'icone de .governance-card,
+           qui n'est pas dans une .dash-stat. */
         .dash-command .dash-stat-icon {
             background: rgba(255, 255, 255, 0.08);
+            color: var(--primary-accent);
+        }
+
+        /* Selecteur qualifie (0,3,1) : dans une tuile KPI, l'icone est un
+           <span>, donc .dash-command .dash-stat span (0,2,1) l'emportait sur
+           la regle ci-dessus (0,2,0) et repeignait l'icone en couleur de
+           texte. Meme piege de cascade que .dc-kpi-delta. */
+        .dash-command .dash-stat span.dash-stat-icon {
             color: var(--primary-accent);
         }
 
@@ -1506,7 +1532,10 @@
             margin-top: 20px;
         }
 
-        @media (max-width: 720px) {
+        /* Meme palier que .admin-layout (section juste au-dessus, voir
+           @media max-width 560px plus bas) : les deux grilles a deux colonnes
+           de cette page basculent donc en une colonne au meme moment. */
+        @media (max-width: 560px) {
             .dash-command .dc-digests {
                 grid-template-columns: 1fr;
             }
@@ -1554,19 +1583,49 @@
             color: var(--dc-text);
         }
 
+        /* --dc-text-faint (alias de --sb-text-faint, alpha 0.42) tombait a
+           ~3.0-3.3:1 sur ce fond, sous le seuil WCAG AA texte normal, alors
+           que cette ligne porte une vraie information (role, telephone,
+           ville). --dc-text-muted remonte a ~5.1-6.0:1 selon l'endroit du
+           degrade. Le token --dc-text-faint lui-meme est conserve : il reste
+           utilisable a plus grande taille. */
         .dash-command .dc-sub {
             display: block;
             font-size: 11.5px;
-            color: var(--dc-text-faint);
+            color: var(--dc-text-muted);
         }
 
         .dash-command .etat-vide p {
             color: var(--dc-text-muted);
         }
 
-        .dash-command .dash-pill.ok { background: rgba(30, 122, 76, 0.22); color: #6fd39a; }
-        .dash-command .dash-pill.attente { background: rgba(138, 90, 0, 0.28); color: #f0c375; }
-        .dash-command .dash-pill.danger { background: rgba(179, 38, 30, 0.24); color: #ec8a83; }
+        /* Le tag illustration_vide (templatetags/icones.py) code ses couleurs
+           en attributs de presentation SVG (cercle #d9e2ea, glyphe #0e7c86) :
+           concu pour un fond clair, illisible sur le canevas sombre (glyphe
+           ~2.8:1). Le tag est partage avec une dizaine d'ecrans clairs, donc
+           on ne le touche pas -- une regle CSS l'emporte de toute facon sur
+           un attribut de presentation.
+           Meme traitement que .dash-command .dash-stat-icon : glyphe en
+           --primary-accent (partie informative), anneau ramene a --dc-border
+           (purement decoratif, sinon plus visible que le glyphe). */
+        .dash-command .etat-vide svg g {
+            stroke: var(--primary-accent);
+        }
+
+        /* Enfant DIRECT du <svg> : c'est l'anneau decoratif. Sans le ">",
+           le selecteur attraperait aussi les <circle> qui font partie du
+           glyphe lui-meme (la tete du bonhomme de "id-card", par exemple),
+           et les effacerait. */
+        .dash-command .etat-vide svg > circle {
+            stroke: var(--dc-border);
+        }
+
+        /* Fonds = rgb exact de --success/--warning/--danger en transparence,
+           textes = les tokens eclaircis --dc-success/--dc-warning/--dc-danger
+           definis sur .dash-command. */
+        .dash-command .dash-pill.ok { background: rgba(30, 122, 76, 0.22); color: var(--dc-success); }
+        .dash-command .dash-pill.attente { background: rgba(138, 90, 0, 0.28); color: var(--dc-warning); }
+        .dash-command .dash-pill.danger { background: rgba(179, 38, 30, 0.24); color: var(--dc-danger); }
 
         .dash-command .legende-type {
             color: var(--dc-text-muted);
@@ -1921,9 +1980,22 @@
         .btn-reduire:focus-visible,
         .sidebar-toggle:focus-visible,
         .dash-stat:focus-visible,
+        .dash-command .dc-status-link:focus-visible,
         .brand:focus-visible {
             outline: none;
             box-shadow: 0 0 0 4px rgba(14, 124, 134, 0.35);
+        }
+
+        /* Exception du poste de pilotage (dashboard admin) : sur son canevas
+           sombre l'anneau ci-dessus (turquoise a 0.35) se confond avec le
+           fond (~1.4:1), donc moins visible que le contour par defaut du
+           navigateur qu'il remplace. Meme anneau, teinte --primary-accent
+           opaque -- deja la couleur des icones de ce canevas -- qui passe le
+           seuil 3:1 de WCAG 1.4.11 sur tout le degrade. Regle scopee a
+           .dash-command : les 3 autres dashboards gardent l'anneau standard. */
+        .dash-command .dash-stat:focus-visible,
+        .dash-command .dc-status-link:focus-visible {
+            box-shadow: 0 0 0 3px var(--primary-accent);
         }
 
         /* Lien d'evitement clavier : invisible jusqu'a recevoir le focus,

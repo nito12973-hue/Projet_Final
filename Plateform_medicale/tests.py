@@ -448,6 +448,10 @@ class DashboardAdminTests(TestCase):
         emails = [u.email for u in response.context['derniers_comptes']]
         self.assertNotIn('assure@santesn.sn', emails)
 
+    def test_dashboard_utilise_le_conteneur_sombre(self):
+        response = self.client.get(reverse('dashboard'))
+        self.assertContains(response, 'class="dash-command"')
+
     def test_aujourd_hui_est_un_bandeau_compact(self):
         response = self.client.get(reverse('dashboard'))
         self.assertContains(response, 'class="dc-status"')

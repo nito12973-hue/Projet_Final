@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% load icones formats %}
 
 {% block title %}Tableau de bord - Administrateur{% endblock %}
@@ -12,6 +12,19 @@
 </section>
 
 <div class="dash-command">
+<div class="dc-status">
+    <span class="pulse-dot" aria-hidden="true"></span>
+    <span>Aujourd'hui</span>
+    <span class="dc-status-sep" aria-hidden="true"></span>
+    <span><strong class="code">{{ total_rendez_vous_aujourd_hui }}</strong> rendez-vous</span>
+    <span class="dc-status-sep" aria-hidden="true"></span>
+    <span><strong class="code">{{ total_consultations_aujourd_hui }}</strong> consultations</span>
+    <span class="dc-status-sep" aria-hidden="true"></span>
+    <a class="dc-status-link{% if total_prises_en_charge_attente %} dc-status-urgent{% endif %}" href="{% url 'liste_prises_en_charge' %}?statut=en_attente">
+        <strong class="code">{{ total_prises_en_charge_attente }}</strong> prise(s) en charge en attente
+    </a>
+</div>
+
 <section class="dash-hero">
     <a class="dash-hero-carte" href="{% url 'liste_paiements' %}?statut=regle">
         <svg class="dc-hero-trace" viewBox="0 0 220 70" preserveAspectRatio="none" aria-hidden="true">
@@ -72,19 +85,6 @@
         {% if ordonnances_7j %}<span class="dc-kpi-delta">+{{ ordonnances_7j }} (7j)</span>{% endif %}
     </a>
 </section>
-
-<div class="dc-status">
-    <span class="pulse-dot" aria-hidden="true"></span>
-    <span>Aujourd'hui</span>
-    <span class="dc-status-sep" aria-hidden="true"></span>
-    <span><strong class="code">{{ total_rendez_vous_aujourd_hui }}</strong> rendez-vous</span>
-    <span class="dc-status-sep" aria-hidden="true"></span>
-    <span><strong class="code">{{ total_consultations_aujourd_hui }}</strong> consultations</span>
-    <span class="dc-status-sep" aria-hidden="true"></span>
-    <a class="dc-status-link{% if total_prises_en_charge_attente %} dc-status-urgent{% endif %}" href="{% url 'liste_prises_en_charge' %}?statut=en_attente">
-        <strong class="code">{{ total_prises_en_charge_attente }}</strong> prise(s) en charge en attente
-    </a>
-</div>
 
 <section class="admin-layout">
     <article class="panel admin-card-large panel-discret">
