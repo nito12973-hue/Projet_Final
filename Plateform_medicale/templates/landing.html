@@ -171,6 +171,14 @@
 
         nav.menu a:hover { background: var(--primary-soft); color: var(--primary-dark); }
 
+        /* Doublon volontaire de "Se connecter" : masque par defaut (voir
+           .btn-connexion-entete plus bas, toujours visible en desktop),
+           reapparait uniquement dans le menu mobile deplie -- l'entete
+           n'a alors plus le bouton persistant (cause du debordement
+           horizontal ci-dessous), donc le lien de connexion doit rester
+           joignable autrement. */
+        .lien-connexion-mobile { display: none; }
+
         .btn {
             display: inline-flex;
             align-items: center;
@@ -573,9 +581,13 @@
             animation-delay: 0.6s;
         }
 
+        /* bottom:4% chevauchait la ligne mini-stats du telephone (verifie
+           sur capture d'ecran, scratchpad landing_hero.png : "12
+           Ordonnances" partiellement cache derriere cette carte) --
+           descendue sous le telephone plutot que devant son contenu. */
         .satellite-ordonnance {
-            bottom: 4%;
-            right: -6%;
+            bottom: -8%;
+            right: -8%;
             animation: flotter-lent 5.8s ease-in-out infinite;
             animation-delay: 1.2s;
         }
@@ -1196,6 +1208,26 @@
 
             nav.menu a { min-height: 46px; display: flex; align-items: center; }
 
+            /* Bug corrige (capture d'ecran headless, 390px de large) : logo
+               (white-space nowrap) + bouton hamburger + ce bouton "Se
+               connecter" ne tenaient jamais sur une seule ligne d'entete
+               en dessous de ~430px, aucun des 3 ne pouvant retrecir --
+               l'entete entiere (et donc toute la page, en flex) debordait
+               horizontalement. Le lien de connexion mobile ci-dessous
+               (dans nav.menu, deja plein-largeur une fois le menu deplie)
+               le remplace. */
+            .btn-connexion-entete { display: none; }
+
+            .lien-connexion-mobile {
+                display: flex;
+                margin-top: 6px;
+                background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-strong) 100%);
+                color: #ffffff;
+                justify-content: center;
+                border-radius: 9px;
+                font-weight: 700;
+            }
+
             .hero { padding: 56px 0 64px; }
             .hero-grille { grid-template-columns: 1fr; gap: 40px; }
             .a-propos-grille { grid-template-columns: 1fr; gap: 32px; }
@@ -1261,12 +1293,13 @@
                 <a href="#accueil">Accueil</a>
                 <a href="#services">Services</a>
                 <a href="#a-propos">À propos</a>
-                <a href="#contact">Contact</a>
-                <a href="#partenaires">Partenaires</a>
                 <a href="#acces">Accès</a>
+                <a href="#partenaires">Partenaires</a>
+                <a href="#contact">Contact</a>
+                <a class="lien-connexion-mobile" href="{% url 'login' %}">Se connecter</a>
             </nav>
 
-            <a class="btn btn-plein" href="{% url 'login' %}">Se connecter</a>
+            <a class="btn btn-plein btn-connexion-entete" href="{% url 'login' %}">Se connecter</a>
         </div>
     </header>
 
@@ -1466,7 +1499,7 @@
                 <div class="carte-service revele">
                     <span class="pastille">{% icone "pill" %}</span>
                     <h3>Ordonnances QR Code</h3>
-                    <p>Chaque ordonnance est générée en PDF avec un QR Code unique, vérifiable en pharmacie en un scan.</p>
+                    <p>Chaque ordonnance reçoit un QR Code unique, vérifiable en pharmacie en un scan.</p>
                     <span class="motif-qr carte-service-visuel" aria-hidden="true"></span>
                 </div>
                 <div class="carte-service revele">
@@ -1690,7 +1723,7 @@
                 </div>
                 <div class="etape revele">
                     <h3>Je reçois mon ordonnance</h3>
-                    <p>PDF sécurisé avec QR Code unique, disponible immédiatement.</p>
+                    <p>Ordonnance sécurisée avec QR Code unique, disponible immédiatement.</p>
                 </div>
                 <div class="etape revele">
                     <h3>La pharmacie scanne</h3>
