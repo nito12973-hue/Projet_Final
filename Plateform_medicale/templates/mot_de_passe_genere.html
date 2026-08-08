@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% load icones %}
 
-{% block title %}Mot de passe genere{% endblock %}
+{% block title %}Mot de passe généré{% endblock %}
 
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>{% if action == "creation" %}Utilisateur cree{% else %}Mot de passe reinitialise{% endif %}</h1>
-        <p class="subtitle">Communiquez ce mot de passe a {{ utilisateur }} : il ne sera plus jamais affiche.</p>
+        <h1>{% if action == "creation" %}Utilisateur créé{% else %}Mot de passe réinitialisé{% endif %}</h1>
+        <p class="subtitle">Communiquez ce mot de passe à {{ utilisateur }} : il ne sera plus jamais affiché.</p>
     </div>
 </section>
 
@@ -19,5 +19,5 @@
     </div>
 </div>
 
-<a class="button primary" href="{% url 'liste_utilisateurs' %}">Retour a la liste des utilisateurs</a>
+<a class="button primary" href="{% url 'liste_utilisateurs' %}">Retour à la liste des utilisateurs</a>
 {% endblock %}
