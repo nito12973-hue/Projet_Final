@@ -7,7 +7,7 @@
 <section class="page-title">
     <div>
         <h1>Rapports</h1>
-        <p class="subtitle">Synthese de l'activite de la plateforme.</p>
+        <p class="subtitle">Synthèse de l'activité de la plateforme.</p>
     </div>
     <div class="actions">
         <a class="button" data-chargement="Generation..." href="{% url 'exporter_rapports_excel' %}">{% icone "download" %} Exporter en Excel</a>
@@ -362,7 +362,7 @@
         scriptChartJs.onload = demarrerGraphiques;
         scriptChartJs.onerror = function () {
             IDS_CANEVAS.forEach(function (id) {
-                signalerGraphiqueIndisponible(id, 'Graphique indisponible (bibliotheque non chargee).');
+                signalerGraphiqueIndisponible(id, 'Graphique indisponible (bibliothèque non chargée).');
             });
         };
         document.body.appendChild(scriptChartJs);
