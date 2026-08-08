@@ -21,7 +21,7 @@
     <span><strong class="code">{{ total_consultations_aujourd_hui }}</strong> consultations</span>
     <span class="dc-status-sep" aria-hidden="true"></span>
     <a class="dc-status-link{% if total_prises_en_charge_attente %} dc-status-urgent{% endif %}" href="{% url 'liste_prises_en_charge' %}?statut=en_attente">
-        <strong class="code">{{ total_prises_en_charge_attente }}</strong> prise(s) en charge en attente
+        <strong class="code">{{ total_prises_en_charge_attente }}</strong> prise(s) en charge en attente{% if jours_attente_max %} (la plus ancienne : {{ jours_attente_max }} j){% endif %}
     </a>
 </div>
 

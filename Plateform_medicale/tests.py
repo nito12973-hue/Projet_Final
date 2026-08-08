@@ -433,6 +433,18 @@ class DashboardAdminTests(TestCase):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.context['total_prises_en_charge_attente'], 1)
 
+    def test_bandeau_urgent_affiche_l_anciennete_de_la_plus_ancienne_prise_en_charge(self):
+        patient = creer_patient()
+        ancienne = PriseEnCharge.objects.create(patient=patient, motif='Ancienne', statut='en_attente')
+        PriseEnCharge.objects.filter(pk=ancienne.pk).update(
+            date_demande=timezone.now() - datetime.timedelta(days=12)
+        )
+        PriseEnCharge.objects.create(patient=patient, motif='Recente', statut='en_attente')
+
+        response = self.client.get(reverse('dashboard'))
+        self.assertEqual(response.context['jours_attente_max'], 12)
+        self.assertContains(response, 'la plus ancienne : 12 j')
+
     def test_derniers_comptes_et_derniers_prestataires(self):
         creer_medecin('nouveau.medecin@santesn.sn')
         Prestataire.objects.create(nom='Nouvelle clinique', type_prestataire='CLINIQUE', partenaire=True)
