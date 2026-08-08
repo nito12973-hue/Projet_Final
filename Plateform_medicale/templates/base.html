@@ -1563,9 +1563,14 @@
            .dash-grid .dash-stat:nth-child(N) = 0,4,0, bat largement
            .dash-command .dash-stat (0,2,0) qui pose border-color sur les 4
            cotes.
-           Teintes : --primary-accent partout sauf la tuile 3 en --accent
-           (terracotta, "ponctuel" -- voir CLAUDE.md -- une seule tuile sur
-           6, jamais en aplat large). Premiere version cyclait aussi
+           Teintes : --primary-accent sur les 4 tuiles "effectif" (Assures/
+           Medecins/Pharmaciens/Prestataires, comptes bruts sans notion de
+           mouvement), --accent (terracotta, "ponctuel" -- voir CLAUDE.md --
+           jamais en aplat large) sur les 2 tuiles qui portent un vrai delta
+           7 jours (Consultations, Ordonnances) -- l'accent souligne
+           desormais les tuiles qui bougent plutot qu'une tuile choisie pour
+           la seule variete visuelle (version precedente : tuile 3, sans
+           lien avec la donnee). Premiere version cyclait aussi
            --primary et --primary-strong (essai visuel captures dans
            dashboard_top.png/dashboard_digests.png, scratchpad) : mesure de
            contraste WCAG 1.4.11 (non-texte, seuil 3:1) contre le
@@ -1581,10 +1586,10 @@
 
         .dash-command .dash-grid .dash-stat:nth-child(1) { border-top-color: var(--primary-accent); }
         .dash-command .dash-grid .dash-stat:nth-child(2) { border-top-color: var(--primary-accent); }
-        .dash-command .dash-grid .dash-stat:nth-child(3) { border-top-color: var(--accent); }
+        .dash-command .dash-grid .dash-stat:nth-child(3) { border-top-color: var(--primary-accent); }
         .dash-command .dash-grid .dash-stat:nth-child(4) { border-top-color: var(--primary-accent); }
-        .dash-command .dash-grid .dash-stat:nth-child(5) { border-top-color: var(--primary-accent); }
-        .dash-command .dash-grid .dash-stat:nth-child(6) { border-top-color: var(--primary-accent); }
+        .dash-command .dash-grid .dash-stat:nth-child(5) { border-top-color: var(--accent); }
+        .dash-command .dash-grid .dash-stat:nth-child(6) { border-top-color: var(--accent); }
 
         /* .admin-layout (base.html) est en display:grid sans align-items,
            donc stretch par defaut : "Actions rapides" (4 boutons, contenu
