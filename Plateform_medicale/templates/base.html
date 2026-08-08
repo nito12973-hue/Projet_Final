@@ -101,7 +101,13 @@
             grid-template-columns: 84px minmax(0, 1fr);
         }
 
-        aside {
+        /* Selecteur d'ID (#barre-laterale), pas l'element aside seul : la page
+           dashboard.html (admin) a un second <aside> (.governance-card, carte
+           "Comptes et gouvernance") qui heritait sinon de tout le style et du
+           comportement du menu lateral (position fixed hors ecran sous
+           900px, cf. plus bas) -- la carte disparaissait purement et
+           simplement en dessous de ce seuil. */
+        #barre-laterale {
             display: flex;
             flex-direction: column;
             gap: 18px;
@@ -1526,12 +1532,16 @@
            autres dashboards, dont les grilles ont un nombre de tuiles
            different -- jamais touche a la regle de base). Repli 3 puis 2
            colonnes sur les ecrans etroits : l'auto-fit d'origine gerait deja
-           le responsive, une rangee fixe doit le refaire elle-meme. */
+           le responsive, une rangee fixe doit le refaire elle-meme.
+           Seuil verifie par capture d'ecran (sidebar en largeur complete,
+           pas encore le tiroir mobile) : a 900px, 6 colonnes debordaient
+           deja du canevas sombre des ~1100px de large de fenetre -- les 6
+           tuiles ne tiennent confortablement qu'a partir de ~1200px. */
         .dash-command .dash-grid {
             grid-template-columns: repeat(6, 1fr);
         }
 
-        @media (max-width: 900px) {
+        @media (max-width: 1180px) {
             .dash-command .dash-grid {
                 grid-template-columns: repeat(3, 1fr);
             }
@@ -1575,6 +1585,18 @@
         .dash-command .dash-grid .dash-stat:nth-child(4) { border-top-color: var(--primary-accent); }
         .dash-command .dash-grid .dash-stat:nth-child(5) { border-top-color: var(--primary-accent); }
         .dash-command .dash-grid .dash-stat:nth-child(6) { border-top-color: var(--primary-accent); }
+
+        /* .admin-layout (base.html) est en display:grid sans align-items,
+           donc stretch par defaut : "Actions rapides" (4 boutons, contenu
+           court) etait etire a la meme hauteur que "Comptes et
+           gouvernance" (paragraphe + stats + bouton, plus haute), laissant
+           un grand vide sous les boutons -- verifie sur capture d'ecran.
+           Scope sous .dash-command : .admin-layout sert aussi sur 4 autres
+           pages (rapports, fiche patient, ordonnances) ou l'etirement n'a
+           jamais pose ce probleme, pas de raison d'y toucher. */
+        .dash-command .admin-layout {
+            align-items: start;
+        }
 
         /* Libelles des tuiles KPI : --dc-text-muted ne tenait que sur la
            partie sombre du degrade (~6:1) et retombait a ~3.8-4.2:1 sur les
@@ -1675,13 +1697,32 @@
             padding: 0 24px 18px;
         }
 
+        /* .dc-row est un <a> (lien vers la fiche concernee, pas juste de
+           l'affichage) : reset des styles de lien par defaut, + un fond au
+           survol/focus pour signaler que la ligne est cliquable -- absent
+           jusqu'ici, ces lignes etaient de simples <div> sans action. */
         .dash-command .dc-row {
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 9px 0;
+            padding: 9px 12px;
+            margin: 0 -12px;
             border-top: 1px solid var(--dc-border);
+            border-radius: 8px;
             font-size: 13px;
+            text-decoration: none;
+            color: inherit;
+            transition: background 0.15s ease;
+        }
+
+        .dash-command .dc-row:hover,
+        .dash-command .dc-row:focus-visible {
+            background: var(--dc-hover);
+        }
+
+        .dash-command .dc-row:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 2px var(--primary-accent);
         }
 
         .dash-command .dc-row:first-child {
@@ -1973,7 +2014,7 @@
         @media (max-width: 980px) {
             .shell { display: block; }
 
-            aside {
+            #barre-laterale {
                 position: fixed;
                 inset: 0 auto 0 0;
                 width: 272px;
@@ -1985,7 +2026,7 @@
                 z-index: 1000;
             }
 
-            body.sidebar-ouverte aside {
+            body.sidebar-ouverte #barre-laterale {
                 transform: translateX(0);
             }
 

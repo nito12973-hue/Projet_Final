@@ -1547,7 +1547,7 @@ def modifier_utilisateur(request, pk):
         if form.is_valid():
             nouveau_role = form.cleaned_data["role"]
             if utilisateur.pk == request.user.pk and nouveau_role != request.user.role:
-                form.add_error("role", "Vous ne pouvez pas modifier votre propre role.")
+                form.add_error("role", "Vous ne pouvez pas modifier votre propre rôle.")
             else:
                 utilisateur_modifie = form.save()
                 lier_fiche_medecin(utilisateur_modifie)

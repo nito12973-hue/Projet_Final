@@ -138,13 +138,13 @@
         {% if derniers_patients %}
         <div class="dc-list">
             {% for patient in derniers_patients %}
-            <div class="dc-row">
+            <a class="dc-row" href="{% url 'modifier_patient' patient.pk %}">
                 <span class="dc-avatar" aria-hidden="true">{{ patient.prenom|slice:":1"|upper }}{{ patient.nom|slice:":1"|upper }}</span>
                 <span class="dc-meta">
                     <span class="dc-name">{{ patient.prenom }} {{ patient.nom }}</span>
                     <span class="dc-sub">{{ patient.get_type_beneficiaire_display }} · {{ patient.telephone|default:"-" }}</span>
                 </span>
-            </div>
+            </a>
             {% endfor %}
         </div>
         {% else %}
@@ -166,13 +166,13 @@
         {% if dernieres_prises_en_charge %}
         <div class="dc-list">
             {% for prise in dernieres_prises_en_charge %}
-            <div class="dc-row">
+            <a class="dc-row" href="{% url 'modifier_prise_en_charge' prise.pk %}">
                 <span class="dc-meta">
                     <span class="dc-name">{{ prise.patient }}</span>
                     <span class="dc-sub">{{ prise.date_demande|date:"d/m/Y" }}</span>
                 </span>
                 <span class="dash-pill {% if prise.statut == 'validee' or prise.statut == 'terminee' %}ok{% elif prise.statut == 'refusee' %}danger{% else %}attente{% endif %}">{{ prise.get_statut_display }}</span>
-            </div>
+            </a>
             {% endfor %}
         </div>
         {% else %}
@@ -194,13 +194,13 @@
         {% if derniers_comptes %}
         <div class="dc-list">
             {% for compte in derniers_comptes %}
-            <div class="dc-row">
+            <a class="dc-row" href="{% url 'modifier_utilisateur' compte.pk %}">
                 <span class="dc-avatar" aria-hidden="true">{{ compte.get_full_name|default:compte.email|slice:":2"|upper }}</span>
                 <span class="dc-meta">
                     <span class="dc-name">{{ compte.get_full_name|default:compte.email }}</span>
                     <span class="dc-sub">{{ compte.get_role_display }} · {{ compte.date_joined|date:"d/m/Y" }}</span>
                 </span>
-            </div>
+            </a>
             {% endfor %}
         </div>
         {% else %}
@@ -222,13 +222,13 @@
         {% if derniers_prestataires %}
         <div class="dc-list">
             {% for prestataire in derniers_prestataires %}
-            <div class="dc-row">
+            <a class="dc-row" href="{% url 'modifier_prestataire' prestataire.pk %}">
                 <span class="dc-avatar" aria-hidden="true">{{ prestataire.nom|slice:":2"|upper }}</span>
                 <span class="dc-meta">
                     <span class="dc-name">{{ prestataire.nom }}</span>
                     <span class="dc-sub">{{ prestataire.get_type_prestataire_display }} · {{ prestataire.ville|default:"-" }}</span>
                 </span>
-            </div>
+            </a>
             {% endfor %}
         </div>
         {% else %}
