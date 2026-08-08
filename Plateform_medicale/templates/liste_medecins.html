@@ -7,7 +7,7 @@
 <section class="page-title">
     <div>
         <h1>Medecins</h1>
-        <p class="subtitle">Liste des medecins disponibles.</p>
+        <p class="subtitle">Liste des médecins disponibles.</p>
     </div>
     <a class="button primary" href="{% url 'ajouter_medecin' %}">Ajouter</a>
 </section>
@@ -19,7 +19,7 @@
             <tr>
                 {% entete_tri request.GET "nom" "Nom complet" %}
                 {% entete_tri request.GET "specialite" "Specialite" %}
-                <th>Telephone</th>
+                <th>Téléphone</th>
                 {% entete_tri request.GET "email" "Email" %}
                 <th>Actions</th>
             </tr>
@@ -45,7 +45,7 @@
 {% if medecins.paginator.num_pages > 1 %}
 <nav class="pagination" aria-label="Pagination">
     {% if medecins.has_previous %}
-    <a href="?{% prefixe_pagination request.GET %}page={{ medecins.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Precedent</a>
+    <a href="?{% prefixe_pagination request.GET %}page={{ medecins.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Précédent</a>
     {% endif %}
     <span class="pagination-info">Page {{ medecins.number }} sur {{ medecins.paginator.num_pages }}</span>
     {% if medecins.has_next %}
@@ -56,7 +56,7 @@
 {% else %}
 <div class="etat-vide">
     {% illustration_vide "stethoscope" %}
-    <p>Aucun medecin enregistre.</p>
+    <p>Aucun médecin enregistré.</p>
 </div>
 {% endif %}
 {% endblock %}

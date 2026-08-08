@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% load formats icones %}
 
-{% block title %}Services medicaux{% endblock %}
+{% block title %}Services médicaux{% endblock %}
 
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>Services medicaux</h1>
+        <h1>Services médicaux</h1>
         <p class="subtitle">Catalogue des prestations disponibles.</p>
     </div>
     <a class="button primary" href="{% url 'ajouter_service' %}">Ajouter</a>
@@ -43,7 +43,7 @@
 {% if services.paginator.num_pages > 1 %}
 <nav class="pagination" aria-label="Pagination">
     {% if services.has_previous %}
-    <a href="?{% prefixe_pagination request.GET %}page={{ services.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Precedent</a>
+    <a href="?{% prefixe_pagination request.GET %}page={{ services.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Précédent</a>
     {% endif %}
     <span class="pagination-info">Page {{ services.number }} sur {{ services.paginator.num_pages }}</span>
     {% if services.has_next %}
@@ -54,7 +54,7 @@
 {% else %}
 <div class="etat-vide">
     {% illustration_vide "pill" %}
-    <p>Aucun service medical enregistre.</p>
+    <p>Aucun service médical enregistré.</p>
 </div>
 {% endif %}
 {% endblock %}

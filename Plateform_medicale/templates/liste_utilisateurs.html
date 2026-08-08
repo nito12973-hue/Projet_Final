@@ -7,20 +7,20 @@
 <section class="page-title">
     <div>
         <h1>Utilisateurs</h1>
-        <p class="subtitle">Comptes de la plateforme : creation, roles, activation et mots de passe.</p>
+        <p class="subtitle">Comptes de la plateforme : création, rôles, activation et mots de passe.</p>
     </div>
     <a class="button primary" href="{% url 'ajouter_utilisateur' %}">Ajouter un utilisateur</a>
 </section>
 
 <div class="actions" style="justify-content:flex-end;margin-bottom:16px;">
-    <a class="button btn" data-chargement="Generation..." href="{% url 'exporter_utilisateurs_excel' %}?{{ request.GET.urlencode }}">{% icone "download" %} Exporter en Excel</a>
-    <a class="button btn" data-chargement="Generation..." href="{% url 'exporter_utilisateurs_csv' %}?{{ request.GET.urlencode }}">{% icone "download" %} Exporter en CSV</a>
+    <a class="button btn" data-chargement="Génération..." href="{% url 'exporter_utilisateurs_excel' %}?{{ request.GET.urlencode }}">{% icone "download" %} Exporter en Excel</a>
+    <a class="button btn" data-chargement="Génération..." href="{% url 'exporter_utilisateurs_csv' %}?{{ request.GET.urlencode }}">{% icone "download" %} Exporter en CSV</a>
     <a class="button btn" href="{% url 'importer_utilisateurs_excel' %}">{% icone "upload" %} Importer depuis Excel</a>
 </div>
 
 <form method="get" class="filtres">
     <div style="min-width:180px;">
-        <label for="role">Role</label>
+        <label for="role">Rôle</label>
         <select id="role" name="role" style="margin-bottom:0;">
             <option value="">Tous</option>
             {% for value, label in roles %}
@@ -45,7 +45,7 @@
     </div>
     <button type="submit" class="button primary btn">Filtrer</button>
     {% if role_selectionne or statut_selectionne or recherche %}
-    <a href="{% url 'liste_utilisateurs' %}" class="button btn">Reinitialiser</a>
+    <a href="{% url 'liste_utilisateurs' %}" class="button btn">Réinitialiser</a>
     {% endif %}
 </form>
 
@@ -57,7 +57,7 @@
             <tr>
                 {% entete_tri request.GET "last_name" "Nom complet" %}
                 {% entete_tri request.GET "email" "Email" %}
-                {% entete_tri request.GET "role" "Role" %}
+                {% entete_tri request.GET "role" "Rôle" %}
                 {% entete_tri request.GET "is_active" "Statut" %}
                 <th scope="col">Actions</th>
             </tr>
@@ -78,13 +78,13 @@
                 <td>
                     <div class="actions" style="flex-wrap:nowrap;">
                         <a href="{% url 'modifier_utilisateur' utilisateur.pk %}" class="button primary btn btn-sm">{% icone "edit-2" %} Modifier</a>
-                        <a href="{% url 'reinitialiser_mot_de_passe' utilisateur.pk %}" class="button btn btn-sm">{% icone "key" %} Reinitialiser mdp</a>
+                        <a href="{% url 'reinitialiser_mot_de_passe' utilisateur.pk %}" class="button btn btn-sm">{% icone "key" %} Réinitialiser mdp</a>
                         {% if utilisateur.pk != request.user.pk %}
                         <form method="post" action="{% url 'activer_desactiver_utilisateur' utilisateur.pk %}" class="action-ligne"
-                              {% if utilisateur.is_active %}data-confirmation="Desactiver le compte de {{ utilisateur }} ? Il ne pourra plus se connecter tant qu'il n'est pas reactive."{% endif %}>
+                              {% if utilisateur.is_active %}data-confirmation="Désactiver le compte de {{ utilisateur }} ? Il ne pourra plus se connecter tant qu'il n'est pas réactivé."{% endif %}>
                             {% csrf_token %}
                             {% if utilisateur.is_active %}
-                            <button type="submit" class="button btn btn-sm">Desactiver</button>
+                            <button type="submit" class="button btn btn-sm">Désactiver</button>
                             {% else %}
                             <button type="submit" class="button btn btn-sm">Activer</button>
                             {% endif %}
@@ -103,7 +103,7 @@
 {% if utilisateurs.paginator.num_pages > 1 %}
 <nav class="pagination" aria-label="Pagination">
     {% if utilisateurs.has_previous %}
-    <a href="?{% prefixe_pagination request.GET %}page={{ utilisateurs.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Precedent</a>
+    <a href="?{% prefixe_pagination request.GET %}page={{ utilisateurs.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Précédent</a>
     {% endif %}
     <span class="pagination-info">Page {{ utilisateurs.number }} sur {{ utilisateurs.paginator.num_pages }}</span>
     {% if utilisateurs.has_next %}
@@ -114,7 +114,7 @@
 {% else %}
 <div class="etat-vide">
     {% illustration_vide "users" %}
-    <p>Aucun utilisateur ne correspond a ces criteres.</p>
+    <p>Aucun utilisateur ne correspond à ces critères.</p>
 </div>
 {% endif %}
 {% endblock %}

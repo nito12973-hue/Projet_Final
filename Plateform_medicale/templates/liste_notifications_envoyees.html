@@ -30,7 +30,7 @@
     </div>
     <button type="submit" class="button primary btn">Filtrer</button>
     {% if lue_choisie or recherche %}
-    <a href="{% url 'liste_notifications_envoyees' %}" class="button btn">Reinitialiser</a>
+    <a href="{% url 'liste_notifications_envoyees' %}" class="button btn">Réinitialiser</a>
     {% endif %}
 </form>
 
@@ -66,7 +66,7 @@
 {% if notifications.paginator.num_pages > 1 %}
 <nav class="pagination" aria-label="Pagination">
     {% if notifications.has_previous %}
-    <a href="?{% prefixe_pagination request.GET %}page={{ notifications.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Precedent</a>
+    <a href="?{% prefixe_pagination request.GET %}page={{ notifications.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Précédent</a>
     {% endif %}
     <span class="pagination-info">Page {{ notifications.number }} sur {{ notifications.paginator.num_pages }}</span>
     {% if notifications.has_next %}
@@ -78,7 +78,7 @@
 <div class="etat-vide">
     {% illustration_vide "bell" %}
     {% if lue_choisie or recherche %}
-    <p>Aucune notification ne correspond a ces criteres.</p>
+    <p>Aucune notification ne correspond à ces critères.</p>
     {% else %}
     <p>Aucune notification envoyee.</p>
     {% endif %}

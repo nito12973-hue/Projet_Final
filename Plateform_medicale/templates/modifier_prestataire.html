@@ -107,7 +107,7 @@
                         }
                         champLatitude.value = position[0].toFixed(6);
                         champLongitude.value = position[1].toFixed(6);
-                        statutRecherche.textContent = 'Lieu trouve : ' + (resultat.nom || requete) + '.';
+                        statutRecherche.textContent = 'Lieu trouvé : ' + (resultat.nom || requete) + '.';
                     })
                     .catch(function () {
                         statutRecherche.textContent = 'Recherche indisponible pour le moment. Placez le point manuellement.';
