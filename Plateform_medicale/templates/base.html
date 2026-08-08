@@ -1195,18 +1195,17 @@
             background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-strong) 100%);
             color: #ffffff;
             border-radius: 16px;
-            padding: 20px 22px;
+            padding: 26px 28px 22px;
             box-shadow: 0 10px 28px rgba(11, 32, 39, 0.22);
             animation: entree-carte 0.5s ease-out both;
         }
 
-        /* Le bandeau financier precede la grille KPI (.dash-grid, cascade a
-           partir de 0.04s) : ces 3 cartes doivent entrer en premier, pas
-           rester statiques pendant que des tuiles moins strategiques plus
-           bas s'animent. */
+        /* Le bandeau financier precede la grille KPI (.dash-grid) : cette
+           carte doit entrer en premier, pas rester statique pendant que des
+           tuiles moins strategiques plus bas s'animent. Un seul enfant direct
+           de .dash-hero desormais (carte fusionnee, ex-3 cartes separees) --
+           plus besoin de decaler nth-child(2)/(3). */
         .dash-hero .dash-hero-carte:nth-child(1) { animation-delay: 0s; }
-        .dash-hero .dash-hero-carte:nth-child(2) { animation-delay: 0.04s; }
-        .dash-hero .dash-hero-carte:nth-child(3) { animation-delay: 0.08s; }
 
         .dash-hero-carte::after {
             content: "";
@@ -1228,9 +1227,13 @@
             background: rgba(255, 255, 255, 0.14);
         }
 
+        /* Chiffres en IBM Plex Mono (police deja importee, jusqu'ici reservee
+           a .dc-status/.gouvernance-comptes) : lecture "instrument de bord",
+           coherente avec la fusion des 3 cartes hero en une seule ci-dessous. */
         .dash-hero-carte strong {
             position: relative;
             display: block;
+            font-family: 'IBM Plex Mono', 'Cascadia Code', Consolas, monospace;
             font-size: 25px;
             font-weight: 800;
             letter-spacing: -0.02em;
@@ -1244,6 +1247,60 @@
             color: rgba(239, 255, 247, 0.78);
             font-weight: 600;
             font-size: 13.5px;
+        }
+
+        /* Carte hero fusionnee (ex-3 cartes .dash-hero-carte separees,
+           "beaucoup de panneaux egaux" -- contraire au principe du plan
+           "un seul geste fort") : le montant principal (paiements regles)
+           domine a gauche, les 2 stats secondaires (en attente / taux) se
+           lisent en petit a droite, un seul cadre. */
+        .dash-hero-row {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 24px 32px;
+        }
+
+        .dash-hero-lien {
+            display: block;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .dash-hero-lien-principal {
+            flex: 1 1 220px;
+            min-width: 0;
+        }
+
+        .dash-hero-lien-principal strong {
+            font-size: 34px;
+        }
+
+        .dash-hero-secondaires {
+            display: flex;
+            gap: 26px;
+            flex-wrap: wrap;
+        }
+
+        .dash-hero-lien-secondaire {
+            flex-shrink: 0;
+        }
+
+        .dash-hero-lien-secondaire .dash-hero-icon {
+            width: 28px;
+            height: 28px;
+            margin-bottom: 10px;
+        }
+
+        .dash-hero-lien-secondaire strong {
+            font-size: 19px;
+        }
+
+        .dash-hero-lien:hover strong {
+            color: var(--primary-accent);
         }
 
         /* Tendance reelle (paiements regles ces 7 derniers jours), pas un
@@ -1282,17 +1339,6 @@
             color: var(--dc-success);
         }
 
-        .dash-hero-carte {
-            text-decoration: none;
-            display: block;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        a.dash-hero-carte:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 16px 36px rgba(11, 32, 39, 0.3);
-        }
-
         .dash-hero-sparkline-zone {
             position: relative;
             height: 40px;
@@ -1321,17 +1367,22 @@
             text-align: left;
         }
 
-        /* Trace de pouls decorative en haut a droite de la carte hero
-           principale, derriere l'icone/le montant -- pas au meme endroit
-           que le sparkline Chart.js reel (en bas de la carte), pour ne
-           jamais se superposer a une donnee reelle. */
+        /* Trace de pouls decorative en fond de la ligne de chiffres (ex-
+           filigrane discret en coin haut-droite, 220px) : geste plus fort,
+           sur toute la largeur de la carte fusionnee. preserveAspectRatio=
+           "none" sur le SVG (dashboard.html) etire le meme trace existant a
+           une largeur quelconque sans toucher au path. Hauteur bornee (pas
+           100% de la carte) pour rester dans la zone .dash-hero-row et ne
+           jamais recouvrir le sparkline Chart.js reel, plus bas dans
+           .dash-hero-sparkline-zone -- decoratif, jamais superpose a une
+           donnee reelle. */
         .dc-hero-trace {
             position: absolute;
-            top: 10px;
-            right: -6px;
-            width: 220px;
-            height: 70px;
-            opacity: 0.16;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 120px;
+            opacity: 0.22;
             pointer-events: none;
         }
 
@@ -1467,7 +1518,63 @@
 
         .dash-command .dash-stat strong {
             color: var(--dc-text);
+            font-family: 'IBM Plex Mono', 'Cascadia Code', Consolas, monospace;
         }
+
+        /* Grille KPI en une seule rangee de 6 (lecture "cadran d'instruments"),
+           plutot que l'auto-fit generique de .dash-grid (partage avec les 3
+           autres dashboards, dont les grilles ont un nombre de tuiles
+           different -- jamais touche a la regle de base). Repli 3 puis 2
+           colonnes sur les ecrans etroits : l'auto-fit d'origine gerait deja
+           le responsive, une rangee fixe doit le refaire elle-meme. */
+        .dash-command .dash-grid {
+            grid-template-columns: repeat(6, 1fr);
+        }
+
+        @media (max-width: 900px) {
+            .dash-command .dash-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 560px) {
+            .dash-command .dash-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Liseré de couleur en tete de chaque tuile KPI, un des signaux de
+           mouvement les moins visibles de la premiere passe A+ (retour
+           utilisateur du 07/08 : le rendu ne "ressemblait pas a A+", cf. le
+           mockup Direction A d'origine ou chaque tuile porte deja ce liensere
+           -- jamais implemente jusqu'ici). border-top-width/-color en
+           longhand pour ne modifier qu'un seul cote du border existant
+           (1px, pose par .dash-stat de base). Specificite .dash-command
+           .dash-grid .dash-stat:nth-child(N) = 0,4,0, bat largement
+           .dash-command .dash-stat (0,2,0) qui pose border-color sur les 4
+           cotes.
+           Teintes : --primary-accent partout sauf la tuile 3 en --accent
+           (terracotta, "ponctuel" -- voir CLAUDE.md -- une seule tuile sur
+           6, jamais en aplat large). Premiere version cyclait aussi
+           --primary et --primary-strong (essai visuel captures dans
+           dashboard_top.png/dashboard_digests.png, scratchpad) : mesure de
+           contraste WCAG 1.4.11 (non-texte, seuil 3:1) contre le
+           radial-gradient .dash-command donne --primary-accent 3.82-7.04:1
+           et --accent 3.25-5.98:1 (ok partout), mais --primary 1.84:1 et
+           --primary-strong jusqu'a 1:1 dans le coin haut-droit (ou le
+           degrade vaut litteralement --primary-strong) -- liserés
+           invisibles sur les tuiles 2/4/6, pas juste "discrets". */
+        .dash-command .dash-grid .dash-stat {
+            border-top-width: 2px;
+            border-top-style: solid;
+        }
+
+        .dash-command .dash-grid .dash-stat:nth-child(1) { border-top-color: var(--primary-accent); }
+        .dash-command .dash-grid .dash-stat:nth-child(2) { border-top-color: var(--primary-accent); }
+        .dash-command .dash-grid .dash-stat:nth-child(3) { border-top-color: var(--accent); }
+        .dash-command .dash-grid .dash-stat:nth-child(4) { border-top-color: var(--primary-accent); }
+        .dash-command .dash-grid .dash-stat:nth-child(5) { border-top-color: var(--primary-accent); }
+        .dash-command .dash-grid .dash-stat:nth-child(6) { border-top-color: var(--primary-accent); }
 
         /* Libelles des tuiles KPI : --dc-text-muted ne tenait que sur la
            partie sombre du degrade (~6:1) et retombait a ~3.8-4.2:1 sur les
@@ -1523,6 +1630,29 @@
         .dash-command .button:not(.primary):hover {
             background: rgba(255, 255, 255, 0.12);
             border-color: rgba(255, 255, 255, 0.22);
+        }
+
+        /* .button.primary (base.html) degrade --primary-dark -> --primary-strong :
+           exactement la meme famille de teintes que le fond de .dash-command
+           (le radial-gradient va de --primary-strong a --primary-dark), donc
+           les boutons "Ajouter un assure/medecin/prestataire" de la carte
+           "Actions rapides" disparaissaient dans le canevas (verifie sur
+           capture d'ecran, scratchpad dashboard_top.png -- pas juste discret,
+           illisible comme CTA). --primary-accent en aplat + texte
+           --primary-dark : 7.04:1 (texte) et 3.82-7.04:1 (bouton contre le
+           fond, WCAG 1.4.11) sur toute la largeur du degrade -- meme
+           combinaison que la mesure qui a guide le choix du liseré KPI
+           juste au-dessus. Ne change pas .button.primary de base (utilise
+           tel quel par les 3 autres dashboards et les pages claires). */
+        .dash-command .button.primary {
+            background: var(--primary-accent);
+            color: var(--primary-dark);
+            box-shadow: 0 6px 16px rgba(79, 184, 174, 0.35);
+        }
+
+        .dash-command .button.primary:hover {
+            background: var(--primary-accent);
+            box-shadow: 0 10px 22px rgba(79, 184, 174, 0.5);
         }
 
         .dash-command .dc-digests {
