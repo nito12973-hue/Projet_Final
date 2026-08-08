@@ -26,29 +26,35 @@
 </div>
 
 <section class="dash-hero">
-    <a class="dash-hero-carte" href="{% url 'liste_paiements' %}?statut=regle">
+    <div class="dash-hero-carte">
         <svg class="dc-hero-trace" viewBox="0 0 220 70" preserveAspectRatio="none" aria-hidden="true">
             <path d="M0,42 L30,42 L36,42 L41,18 L46,60 L51,30 L57,42 L95,42 L101,42 L106,18 L111,60 L117,30 L123,42 L160,42 L166,42 L171,18 L176,60 L182,30 L188,42 L220,42"/>
         </svg>
-        <span class="dash-hero-icon">{% icone "receipt" %}</span>
-        <strong class="code">{{ montant_regle|franc_cfa }}</strong>
-        {% if montant_regle_7j %}<span class="dc-hero-delta">&#9650; +{{ montant_regle_7j|franc_cfa }} ces 7 derniers jours</span>{% endif %}
-        <span>Paiements réglés</span>
+        <div class="dash-hero-row">
+            <a class="dash-hero-lien dash-hero-lien-principal" href="{% url 'liste_paiements' %}?statut=regle">
+                <span class="dash-hero-icon">{% icone "receipt" %}</span>
+                <strong class="code">{{ montant_regle|franc_cfa }}</strong>
+                {% if montant_regle_7j %}<span class="dc-hero-delta">&#9650; +{{ montant_regle_7j|franc_cfa }} ces 7 derniers jours</span>{% endif %}
+                <span>Paiements réglés</span>
+            </a>
+            <div class="dash-hero-secondaires">
+                <a class="dash-hero-lien dash-hero-lien-secondaire" href="{% url 'liste_paiements' %}?statut=non_regle">
+                    <span class="dash-hero-icon">{% icone "clock-history" %}</span>
+                    <strong class="code">{{ montant_non_regle|franc_cfa }}</strong>
+                    <span>En attente de règlement</span>
+                </a>
+                <a class="dash-hero-lien dash-hero-lien-secondaire" href="{% url 'rapports' %}">
+                    <span class="dash-hero-icon">{% icone "shield-check" %}</span>
+                    <strong class="code">{% if taux_reglement is not None %}{{ taux_reglement }}%{% else %}—{% endif %}</strong>
+                    <span>Taux de règlement</span>
+                </a>
+            </div>
+        </div>
         <div class="dash-hero-sparkline-zone">
             <canvas id="graphe-tendance-consultations" aria-label="Tendance des consultations, 30 derniers jours"></canvas>
         </div>
         <span class="dash-hero-sparkline-legende">Consultations · 30 j</span>
-    </a>
-    <a class="dash-hero-carte" href="{% url 'liste_paiements' %}?statut=non_regle">
-        <span class="dash-hero-icon">{% icone "clock-history" %}</span>
-        <strong class="code">{{ montant_non_regle|franc_cfa }}</strong>
-        <span>En attente de règlement</span>
-    </a>
-    <a class="dash-hero-carte" href="{% url 'rapports' %}">
-        <span class="dash-hero-icon">{% icone "shield-check" %}</span>
-        <strong class="code">{% if taux_reglement is not None %}{{ taux_reglement }}%{% else %}—{% endif %}</strong>
-        <span>Taux de règlement</span>
-    </a>
+    </div>
 </section>
 
 <section class="dash-grid" style="margin-top:20px;">
