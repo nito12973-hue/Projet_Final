@@ -94,7 +94,7 @@ class LoginForm(forms.Form):
             tentatives = cache.get(cle_cache, 0)
             if tentatives >= MAX_TENTATIVES_CONNEXION:
                 raise forms.ValidationError(
-                    'Trop de tentatives de connexion. Reessayez dans quelques minutes.'
+                    'Trop de tentatives de connexion. Réessayez dans quelques minutes.'
                 )
 
             self.user = authenticate(self.request, username=email, password=password)
@@ -228,7 +228,7 @@ class RendezVousForm(forms.ModelForm):
     def clean_date_heure(self):
         date_heure = self.cleaned_data['date_heure']
         if date_heure < timezone.now():
-            raise forms.ValidationError("La date et l'heure du rendez-vous ne peuvent pas etre dans le passe.")
+            raise forms.ValidationError("La date et l'heure du rendez-vous ne peuvent pas être dans le passé.")
         return date_heure
 
 
@@ -252,7 +252,7 @@ class ConsultationForm(forms.ModelForm):
         if patient and prise_en_charge and prise_en_charge.patient_id != patient.pk:
             self.add_error(
                 'prise_en_charge',
-                "Cette prise en charge ne correspond pas au patient selectionne.",
+                "Cette prise en charge ne correspond pas au patient sélectionné.",
             )
         return cleaned_data
 
@@ -309,14 +309,14 @@ class AyantDroitForm(forms.ModelForm):
 class RendezVousAssureForm(forms.ModelForm):
     """Demande de rendez-vous par l'assure, pour lui-meme ou un ayant droit."""
 
-    medecin = forms.ModelChoiceField(queryset=Medecin.objects.all(), label='Medecin')
+    medecin = forms.ModelChoiceField(queryset=Medecin.objects.all(), label='Médecin')
     prestataire = forms.ModelChoiceField(
         queryset=Prestataire.objects.filter(partenaire=True),
         required=False,
         label='Prestataire',
     )
     date_heure = forms.DateTimeField(
-        label='Date et heure souhaitees',
+        label='Date et heure souhaitées',
         widget=forms.DateTimeInput(attrs={'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M'),
         input_formats=['%Y-%m-%dT%H:%M'],
     )
@@ -334,7 +334,7 @@ class RendezVousAssureForm(forms.ModelForm):
     def clean_date_heure(self):
         date_heure = self.cleaned_data['date_heure']
         if date_heure < timezone.now():
-            raise forms.ValidationError("La date et l'heure du rendez-vous ne peuvent pas etre dans le passe.")
+            raise forms.ValidationError("La date et l'heure du rendez-vous ne peuvent pas être dans le passé.")
         return date_heure
 
 
@@ -392,16 +392,16 @@ class PatientForm(forms.ModelForm):
         assure_principal = cleaned_data.get('assure_principal')
 
         if assure_principal and self.instance.pk and assure_principal.pk == self.instance.pk:
-            self.add_error('assure_principal', "Un patient ne peut pas etre son propre assure principal.")
+            self.add_error('assure_principal', "Un patient ne peut pas être son propre assuré principal.")
         elif type_beneficiaire == Patient.TypeBeneficiaire.PRINCIPAL and assure_principal:
             self.add_error(
                 'assure_principal',
-                "Un assure principal ne doit pas avoir son propre assure principal renseigne.",
+                "Un assuré principal ne doit pas avoir son propre assuré principal renseigné.",
             )
         elif type_beneficiaire == Patient.TypeBeneficiaire.AYANT_DROIT and not assure_principal:
             self.add_error(
                 'assure_principal',
-                "Un ayant droit doit etre rattache a un assure principal.",
+                "Un ayant droit doit être rattaché à un assuré principal.",
             )
         return cleaned_data
 
@@ -420,7 +420,7 @@ class PatientCreationForm(PatientForm):
     email = forms.EmailField(
         required=False,
         label='Email',
-        help_text="Requis uniquement pour un assure principal : sert a creer son compte de connexion.",
+        help_text="Requis uniquement pour un assuré principal : sert à créer son compte de connexion.",
     )
 
     def clean(self):
@@ -430,9 +430,9 @@ class PatientCreationForm(PatientForm):
 
         if type_beneficiaire == Patient.TypeBeneficiaire.PRINCIPAL:
             if not email:
-                self.add_error('email', "L'email est requis pour un assure principal (creation du compte).")
+                self.add_error('email', "L'email est requis pour un assuré principal (création du compte).")
             elif User.objects.filter(email=email).exists():
-                self.add_error('email', "Cet email est deja utilise par un compte existant.")
+                self.add_error('email', "Cet email est déjà utilisé par un compte existant.")
         return cleaned_data
 
 
@@ -442,13 +442,13 @@ class EnvoyerNotificationForm(forms.Form):
     destinataire = forms.ModelChoiceField(
         queryset=User.objects.filter(is_active=True),
         required=False,
-        label='Utilisateur precis (optionnel)',
-        help_text="Laisser vide et choisir un role ci-dessous pour notifier tout un groupe.",
+        label='Utilisateur précis (optionnel)',
+        help_text="Laisser vide et choisir un rôle ci-dessous pour notifier tout un groupe.",
     )
     role = forms.ChoiceField(
         choices=[('', '---')] + list(User.Role.choices),
         required=False,
-        label='Ou : tous les utilisateurs de ce role',
+        label='Ou : tous les utilisateurs de ce rôle',
     )
     message = forms.CharField(widget=forms.Textarea(attrs={'rows': 4}), label='Message')
 
@@ -457,9 +457,9 @@ class EnvoyerNotificationForm(forms.Form):
         destinataire = cleaned_data.get('destinataire')
         role = cleaned_data.get('role')
         if not destinataire and not role:
-            raise forms.ValidationError('Choisissez soit un utilisateur precis, soit un role.')
+            raise forms.ValidationError('Choisissez soit un utilisateur précis, soit un rôle.')
         if destinataire and role:
-            raise forms.ValidationError('Choisissez un utilisateur precis OU un role, pas les deux.')
+            raise forms.ValidationError('Choisissez un utilisateur précis OU un rôle, pas les deux.')
         return cleaned_data
 
 
@@ -483,7 +483,7 @@ class MedecinForm(forms.ModelForm):
         if self.instance.pk and self.instance.user_id:
             comptes = comptes.exclude(pk=self.instance.user_id)
         if comptes.exists():
-            raise forms.ValidationError("Cet email est deja utilise par un compte existant.")
+            raise forms.ValidationError("Cet email est déjà utilisé par un compte existant.")
         return email
 
 
@@ -527,5 +527,5 @@ class PaiementReglementForm(forms.ModelForm):
     def clean_mode_reglement(self):
         mode_reglement = self.cleaned_data['mode_reglement']
         if not mode_reglement:
-            raise forms.ValidationError("Le mode de reglement est obligatoire.")
+            raise forms.ValidationError("Le mode de règlement est obligatoire.")
         return mode_reglement
