@@ -350,6 +350,17 @@ def dashboard(request):
     ).count()
     ordonnances_7j = Ordonnance.objects.filter(date_creation__gte=il_y_a_7_jours).count()
 
+    # Anciennete de la file d'attente : le compte seul
+    # (total_prises_en_charge_attente) ne dit pas si c'est urgent. Meme champ
+    # (date_demande, indexe via statut) que le tri de liste_prises_en_charge,
+    # aucune migration necessaire.
+    plus_ancienne_attente = (
+        PriseEnCharge.objects.filter(statut="en_attente").order_by("date_demande").first()
+    )
+    jours_attente_max = (
+        (maintenant - plus_ancienne_attente.date_demande).days if plus_ancienne_attente else None
+    )
+
     # Derniers comptes crees, hors assures (remplace "derniers assures" qui
     # ne montrait pas la croissance medecins/pharmaciens ; exclut desormais
     # les assures car "Derniers assures" plus bas les couvre deja, y
@@ -367,6 +378,7 @@ def dashboard(request):
         "total_pharmaciens": Pharmacien.objects.count(),
         "total_prestataires": Prestataire.objects.filter(partenaire=True).count(),
         "total_prises_en_charge_attente": PriseEnCharge.objects.filter(statut="en_attente").count(),
+        "jours_attente_max": jours_attente_max,
         "total_consultations": Consultation.objects.count(),
         "total_ordonnances": Ordonnance.objects.count(),
         "montant_regle": montant_regle,
