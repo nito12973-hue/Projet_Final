@@ -1152,12 +1152,12 @@ class FichePatientMedecinTests(TestCase):
         )
         response = self.client.get(reverse('fiche_patient_medecin', args=[self.patient.pk]))
         self.assertTrue(response.context['deja_vu'])
-        self.assertContains(response, 'Deja suivi')
+        self.assertContains(response, 'Déjà suivi')
 
     def test_pas_de_badge_deja_suivi_sans_relation(self):
         response = self.client.get(reverse('fiche_patient_medecin', args=[self.patient.pk]))
         self.assertFalse(response.context['deja_vu'])
-        self.assertNotContains(response, 'Deja suivi')
+        self.assertNotContains(response, 'Déjà suivi')
 
     def test_rendez_vous_termine_affiche_le_badge_ok(self):
         RendezVous.objects.create(
@@ -1265,7 +1265,7 @@ class EspacePharmacienTests(TestCase):
             'code_qr': 'RX-INEXISTANT',
         })
         self.assertIsNone(response.context['ordonnance'])
-        self.assertContains(response, 'Aucune ordonnance ne correspond a ce code.')
+        self.assertContains(response, 'Aucune ordonnance ne correspond à ce code.')
 
     def test_scan_camera_script_et_bouton_presents(self):
         """Plan de direction artistique, item 8 : scan QR par camera."""
@@ -2297,7 +2297,7 @@ class SuppressionCascadeTests(TestCase):
     def test_pas_davertissement_si_aucune_donnee_liee(self):
         patient = creer_patient()
         response = self.client.get(reverse('supprimer_patient', args=[patient.pk]))
-        self.assertNotContains(response, 'Seront aussi supprimes')
+        self.assertNotContains(response, 'Seront aussi supprimés')
 
 
 class PharmacienSuppressionCompteTests(TestCase):

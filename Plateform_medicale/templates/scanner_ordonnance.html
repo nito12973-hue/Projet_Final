@@ -7,7 +7,7 @@
 <section class="page-title">
     <div>
         <h1>Scanner un QR Code</h1>
-        <p class="subtitle">Saisissez ou scannez le code affiche sur l'ordonnance du patient.</p>
+        <p class="subtitle">Saisissez ou scannez le code affiché sur l'ordonnance du patient.</p>
     </div>
 </section>
 
@@ -16,17 +16,17 @@
         {% csrf_token %}
         <label for="code_qr">Code de l'ordonnance</label>
         <input id="code_qr" name="code_qr" type="text" placeholder="RX-XXXXXXXXXX" autofocus required>
-        <button class="button primary" type="submit">Verifier</button>
+        <button class="button primary" type="submit">Vérifier</button>
 
         <div style="margin-top:16px;">
-            <button type="button" id="bouton-scan-camera" class="button btn" hidden>{% icone "qr-scan" %} Scanner avec la camera</button>
+            <button type="button" id="bouton-scan-camera" class="button btn" hidden>{% icone "qr-scan" %} Scanner avec la caméra</button>
             <p id="statut-scan-camera" class="subtitle" style="margin:8px 0 0;" role="status" aria-live="polite"></p>
 
             <div id="panneau-scan-camera" hidden style="position:relative;max-width:360px;margin-top:12px;border-radius:12px;overflow:hidden;background:#000;">
                 <video id="video-scan-camera" autoplay muted playsinline aria-hidden="true" style="width:100%;display:block;"></video>
                 <canvas id="canvas-scan-camera" style="display:none;"></canvas>
                 <div aria-hidden="true" style="position:absolute;inset:15%;border:2px solid var(--primary-accent);border-radius:12px;pointer-events:none;"></div>
-                <button type="button" id="bouton-fermer-scan-camera" class="button btn" style="position:absolute;top:8px;right:8px;">Fermer la camera</button>
+                <button type="button" id="bouton-fermer-scan-camera" class="button btn" style="position:absolute;top:8px;right:8px;">Fermer la caméra</button>
             </div>
         </div>
     </form>
@@ -37,24 +37,24 @@
     <article class="panel" style="padding: 24px;">
         <h2 style="margin-top:0;color:var(--primary-dark);">Ordonnance {{ ordonnance.code_qr }}</h2>
         <p><strong>Patient :</strong> {{ ordonnance.consultation.patient }}</p>
-        <p><strong>Medecin :</strong> {{ ordonnance.consultation.medecin }}</p>
+        <p><strong>Médecin :</strong> {{ ordonnance.consultation.medecin }}</p>
         <p><strong>Date :</strong> {{ ordonnance.date_creation|date:"d/m/Y H:i" }}</p>
-        <p><strong>Medicaments :</strong></p>
+        <p><strong>Médicaments :</strong></p>
         <p style="white-space: pre-line;">{{ ordonnance.medicaments }}</p>
     </article>
 
     <aside class="panel governance-card">
         {% if ordonnance.delivrance %}
-        <h2>Deja delivree</h2>
+        <h2>Déjà délivrée</h2>
         <p class="subtitle">Le {{ ordonnance.delivrance.date_delivrance|date:"d/m/Y H:i" }} par {{ ordonnance.delivrance.pharmacien }}.</p>
-        <span class="badge terminee">Delivree</span>
+        <span class="badge terminee">Délivrée</span>
         {% else %}
-        <h2>Valider la delivrance</h2>
-        <p class="subtitle">Confirmez que les medicaments ont ete remis au patient.</p>
+        <h2>Valider la délivrance</h2>
+        <p class="subtitle">Confirmez que les médicaments ont été remis au patient.</p>
         <form method="post" action="{% url 'valider_delivrance' ordonnance.pk %}">
             {% csrf_token %}
             <input type="hidden" name="code_qr" value="{{ ordonnance.code_qr }}">
-            <button class="button primary" type="submit">Valider la delivrance</button>
+            <button class="button primary" type="submit">Valider la délivrance</button>
         </form>
         {% endif %}
     </aside>

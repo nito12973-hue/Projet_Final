@@ -187,7 +187,7 @@ def login_view(request):
 @require_POST
 def logout_view(request):
     logout(request)
-    messages.success(request, 'Vous avez ete deconnecte.')
+    messages.success(request, 'Vous avez été déconnecté.')
     return redirect('login')
 
 
@@ -205,7 +205,7 @@ def post_login_redirect(request):
         return redirect('dashboard_pharmacien')
 
     logout(request)
-    messages.error(request, "Role inconnu. Contactez l'administration.")
+    messages.error(request, "Rôle inconnu. Contactez l'administration.")
     return redirect('login')
 
 
@@ -225,7 +225,7 @@ def setup_wizard(request):
         login(request, user)
         messages.success(
             request,
-            'Bienvenue ! Votre compte Super Administrateur a ete cree.',
+            'Bienvenue ! Votre compte Super Administrateur a été créé.',
         )
         return redirect('post_login_redirect')
 
@@ -245,7 +245,7 @@ def changer_mot_de_passe(request):
         if form.is_valid():
             form.save()
             update_session_auth_hash(request, form.user)
-            messages.success(request, 'Mot de passe modifie avec succes.')
+            messages.success(request, 'Mot de passe modifié avec succès.')
             return redirect('post_login_redirect')
     else:
         form = PasswordChangeForm(user=request.user)
@@ -645,7 +645,7 @@ def ajouter_patient(request):
                     {"utilisateur": utilisateur, "mot_de_passe": mot_de_passe, "action": "creation"},
                 )
             patient.save()
-            messages.success(request, "Assure ajoute.")
+            messages.success(request, "Assuré ajouté.")
             return redirect("liste_patients")
     else:
         form = PatientCreationForm()
@@ -697,7 +697,7 @@ def ajouter_service(request):
         form = ServiceMedicalForm(request.POST)
         if form.is_valid():
             form.save()
-            messages.success(request, "Service ajoute.")
+            messages.success(request, "Service ajouté.")
             return redirect("liste_services")
     else:
         form = ServiceMedicalForm()
@@ -743,7 +743,7 @@ def ajouter_prise_en_charge(request):
             prise_en_charge = form.save(commit=False)
             prise_en_charge.statut = "en_attente"
             prise_en_charge.save()
-            messages.success(request, "Prise en charge ajoutee.")
+            messages.success(request, "Prise en charge ajoutée.")
             return redirect("liste_prises_en_charge")
     else:
         form = PriseEnChargeForm()
@@ -758,7 +758,7 @@ def modifier_prise_en_charge(request, pk):
         form = PriseEnChargeForm(request.POST, instance=prise_en_charge)
         if form.is_valid():
             form.save()
-            messages.success(request, "Prise en charge modifiee.")
+            messages.success(request, "Prise en charge modifiée.")
             return redirect("liste_prises_en_charge")
     else:
         form = PriseEnChargeForm(instance=prise_en_charge)
@@ -774,7 +774,7 @@ def supprimer_prise_en_charge(request, pk):
     prise_en_charge = get_object_or_404(PriseEnCharge, pk=pk)
     if request.method == "POST":
         prise_en_charge.delete()
-        messages.success(request, "Prise en charge supprimee.")
+        messages.success(request, "Prise en charge supprimée.")
         return redirect("liste_prises_en_charge")
     return render(request, "confirmer_suppression.html", {"objet": prise_en_charge, "type": "Prise en charge"})
 
@@ -868,7 +868,7 @@ def exporter_paiements_csv(request):
 def marquer_paiement_regle(request, pk):
     paiement = get_object_or_404(Paiement, pk=pk)
     if paiement.statut == Paiement.Statut.REGLE:
-        messages.info(request, "Ce paiement est deja regle.")
+        messages.info(request, "Ce paiement est déjà réglé.")
         return redirect("liste_paiements")
 
     if request.method == "POST":
@@ -878,7 +878,7 @@ def marquer_paiement_regle(request, pk):
             paiement.statut = Paiement.Statut.REGLE
             paiement.date_reglement = timezone.now()
             paiement.save()
-            messages.success(request, "Paiement marque comme regle.", extra_tags="succes-critique")
+            messages.success(request, "Paiement marqué comme réglé.", extra_tags="succes-critique")
             return redirect("liste_paiements")
     else:
         form = PaiementReglementForm(instance=paiement)
@@ -959,7 +959,7 @@ def ajouter_prestataire(request):
         form = PrestataireForm(request.POST)
         if form.is_valid():
             form.save()
-            messages.success(request, "Prestataire ajoute.")
+            messages.success(request, "Prestataire ajouté.")
             return redirect("liste_prestataires")
     else:
         form = PrestataireForm()
@@ -973,7 +973,7 @@ def modifier_prestataire(request, pk):
         form = PrestataireForm(request.POST, instance=prestataire)
         if form.is_valid():
             form.save()
-            messages.success(request, "Prestataire modifie.")
+            messages.success(request, "Prestataire modifié.")
             return redirect("liste_prestataires")
     else:
         form = PrestataireForm(instance=prestataire)
@@ -985,7 +985,7 @@ def supprimer_prestataire(request, pk):
     prestataire = get_object_or_404(Prestataire, pk=pk)
     if request.method == "POST":
         prestataire.delete()
-        messages.success(request, "Prestataire supprime.")
+        messages.success(request, "Prestataire supprimé.")
         return redirect("liste_prestataires")
     return render(request, "confirmer_suppression.html", {"objet": prestataire, "type": "Prestataire"})
 
@@ -1002,7 +1002,7 @@ def ajouter_plan_couverture(request):
         form = PlanCouvertureForm(request.POST)
         if form.is_valid():
             form.save()
-            messages.success(request, "Plan de couverture ajoute.")
+            messages.success(request, "Plan de couverture ajouté.")
             return redirect("liste_plans_couverture")
     else:
         form = PlanCouvertureForm()
@@ -1016,7 +1016,7 @@ def modifier_plan_couverture(request, pk):
         form = PlanCouvertureForm(request.POST, instance=plan)
         if form.is_valid():
             form.save()
-            messages.success(request, "Plan de couverture modifie.")
+            messages.success(request, "Plan de couverture modifié.")
             return redirect("liste_plans_couverture")
     else:
         form = PlanCouvertureForm(instance=plan)
@@ -1028,9 +1028,9 @@ def supprimer_plan_couverture(request, pk):
     plan = get_object_or_404(PlanCouverture, pk=pk)
     if request.method == "POST":
         plan.delete()
-        messages.success(request, "Plan de couverture supprime.")
+        messages.success(request, "Plan de couverture supprimé.")
         return redirect("liste_plans_couverture")
-    avertissement = _avertissement_cascade({"assure(s)/ayant(s) droit rattaches (plan retire, pas supprimes)": plan.beneficiaires.count()})
+    avertissement = _avertissement_cascade({"assuré(s)/ayant(s) droit rattachés (plan retiré, pas supprimés)": plan.beneficiaires.count()})
     return render(
         request,
         "confirmer_suppression.html",
@@ -1046,7 +1046,7 @@ def modifier_patient(request, pk):
         form = PatientForm(request.POST, instance=patient)
         if form.is_valid():
             form.save()
-            messages.success(request, "Assure modifie.")
+            messages.success(request, "Assuré modifié.")
             return redirect("liste_patients")
     else:
         form = PatientForm(instance=patient)
@@ -1060,7 +1060,7 @@ def modifier_medecin(request, pk):
         form = MedecinForm(request.POST, instance=medecin)
         if form.is_valid():
             form.save()
-            messages.success(request, "Medecin modifie.")
+            messages.success(request, "Médecin modifié.")
             return redirect("liste_medecins")
     else:
         form = MedecinForm(instance=medecin)
@@ -1074,7 +1074,7 @@ def modifier_service(request, pk):
         form = ServiceMedicalForm(request.POST, instance=service)
         if form.is_valid():
             form.save()
-            messages.success(request, "Service modifie.")
+            messages.success(request, "Service modifié.")
             return redirect("liste_services")
     else:
         form = ServiceMedicalForm(instance=service)
@@ -1086,7 +1086,7 @@ def _avertissement_cascade(compteurs):
     parties = [f"{total} {libelle}" for libelle, total in compteurs.items() if total]
     if not parties:
         return None
-    return "Seront aussi supprimes : " + ", ".join(parties) + "."
+    return "Seront aussi supprimés : " + ", ".join(parties) + "."
 
 
 # SUPPRIMER VUES
@@ -1102,7 +1102,7 @@ def supprimer_patient(request, pk):
             patient.user.is_active = False
             patient.user.save(update_fields=["is_active"])
         patient.delete()
-        messages.success(request, "Assure supprime.")
+        messages.success(request, "Assuré supprimé.")
         return redirect("liste_patients")
     avertissement = _avertissement_cascade({
         "ayant(s) droit": patient.ayants_droit.count(),
@@ -1128,7 +1128,7 @@ def supprimer_medecin(request, pk):
             medecin.user.is_active = False
             medecin.user.save(update_fields=["is_active"])
         medecin.delete()
-        messages.success(request, "Medecin supprime.")
+        messages.success(request, "Médecin supprimé.")
         return redirect("liste_medecins")
     avertissement = _avertissement_cascade({
         "consultation(s)": medecin.consultation_set.count(),
@@ -1159,7 +1159,7 @@ def modifier_pharmacien(request, pk):
         form = PharmacienAffectationForm(request.POST, instance=pharmacien)
         if form.is_valid():
             form.save()
-            messages.success(request, "Pharmacien modifie.")
+            messages.success(request, "Pharmacien modifié.")
             return redirect("liste_pharmaciens")
     else:
         form = PharmacienAffectationForm(instance=pharmacien)
@@ -1171,7 +1171,7 @@ def supprimer_service(request, pk):
     service = get_object_or_404(ServiceMedical, pk=pk)
     if request.method == "POST":
         service.delete()
-        messages.success(request, "Service supprime.")
+        messages.success(request, "Service supprimé.")
         return redirect("liste_services")
     return render(request, "confirmer_suppression.html", {"objet": service, "type": "Service"})
 
@@ -1552,7 +1552,7 @@ def modifier_utilisateur(request, pk):
                 utilisateur_modifie = form.save()
                 lier_fiche_medecin(utilisateur_modifie)
                 lier_fiche_pharmacien(utilisateur_modifie)
-                messages.success(request, "Utilisateur modifie avec succes.")
+                messages.success(request, "Utilisateur modifié avec succès.")
                 return redirect("liste_utilisateurs")
     else:
         form = UtilisateurModificationForm(instance=utilisateur)
@@ -1568,7 +1568,7 @@ def modifier_utilisateur(request, pk):
 def activer_desactiver_utilisateur(request, pk):
     utilisateur = get_object_or_404(User, pk=pk)
     if utilisateur.pk == request.user.pk:
-        messages.error(request, "Vous ne pouvez pas desactiver votre propre compte.")
+        messages.error(request, "Vous ne pouvez pas désactiver votre propre compte.")
         return redirect("liste_utilisateurs")
 
     # Un seul administrateur actif a la fois (comme dans un veritable SaaS) :
@@ -1584,17 +1584,17 @@ def activer_desactiver_utilisateur(request, pk):
     ):
         messages.error(
             request,
-            "Un seul administrateur peut etre actif a la fois. "
-            "Desactivez d'abord l'administrateur actuel.",
+            "Un seul administrateur peut être actif à la fois. "
+            "Désactivez d'abord l'administrateur actuel.",
         )
         return redirect("liste_utilisateurs")
 
     utilisateur.is_active = not utilisateur.is_active
     utilisateur.save(update_fields=["is_active"])
     if utilisateur.is_active:
-        messages.success(request, f"Compte de {utilisateur} active.")
+        messages.success(request, f"Compte de {utilisateur} activé.")
     else:
-        messages.success(request, f"Compte de {utilisateur} desactive.")
+        messages.success(request, f"Compte de {utilisateur} désactivé.")
     return redirect("liste_utilisateurs")
 
 
@@ -1626,7 +1626,7 @@ def supprimer_utilisateur(request, pk):
 
     if request.method == "POST":
         utilisateur.delete()
-        messages.success(request, "Utilisateur supprime.")
+        messages.success(request, "Utilisateur supprimé.")
         return redirect("liste_utilisateurs")
     return render(
         request,
@@ -1694,7 +1694,7 @@ def ajouter_rendez_vous(request):
             rendez_vous = form.save(commit=False)
             rendez_vous.medecin = medecin
             rendez_vous.save()
-            messages.success(request, "Rendez-vous cree.")
+            messages.success(request, "Rendez-vous créé.")
             return redirect("agenda_medecin")
     else:
         form = RendezVousForm()
@@ -1710,7 +1710,7 @@ def changer_statut_rendez_vous(request, pk):
     if nouveau_statut in RendezVous.Statut.values:
         rendez_vous.statut = nouveau_statut
         rendez_vous.save(update_fields=["statut"])
-        messages.success(request, "Statut du rendez-vous mis a jour.")
+        messages.success(request, "Statut du rendez-vous mis à jour.")
     return redirect("agenda_medecin")
 
 
@@ -1869,7 +1869,7 @@ def ajouter_consultation_medecin(request):
             consultation.medecin = medecin
             consultation.save()
             Paiement.calculer_pour(consultation).save()
-            messages.success(request, "Consultation enregistree.")
+            messages.success(request, "Consultation enregistrée.")
             return redirect("ajouter_ordonnance_medecin", consultation_pk=consultation.pk)
     else:
         patient_id = request.GET.get("patient", "")
@@ -1891,7 +1891,7 @@ def ajouter_ordonnance_medecin(request, consultation_pk):
             ordonnance = form.save(commit=False)
             ordonnance.consultation = consultation
             ordonnance.save()
-            messages.success(request, "Ordonnance creee.", extra_tags="succes-critique")
+            messages.success(request, "Ordonnance créée.", extra_tags="succes-critique")
             return redirect("voir_ordonnance_medecin", pk=ordonnance.pk)
     else:
         form = OrdonnanceForm()
@@ -1923,7 +1923,7 @@ def modifier_profil_medecin(request):
         form = MedecinProfilForm(request.POST, instance=medecin)
         if form.is_valid():
             form.save()
-            messages.success(request, "Profil mis a jour.")
+            messages.success(request, "Profil mis à jour.")
             return redirect("modifier_profil_medecin")
     else:
         form = MedecinProfilForm(instance=medecin)
@@ -1976,7 +1976,7 @@ def scanner_ordonnance(request):
                 "consultation__patient", "consultation__medecin"
             ).get(code_qr=code)
         except Ordonnance.DoesNotExist:
-            messages.error(request, "Aucune ordonnance ne correspond a ce code.")
+            messages.error(request, "Aucune ordonnance ne correspond à ce code.")
 
     return render(request, "scanner_ordonnance.html", {"ordonnance": ordonnance})
 
@@ -1990,10 +1990,10 @@ def valider_delivrance(request, pk):
     code_qr = request.POST.get("code_qr", "").strip().upper()
     ordonnance = get_object_or_404(Ordonnance, pk=pk, code_qr=code_qr)
     if hasattr(ordonnance, "delivrance"):
-        messages.error(request, "Cette ordonnance a deja ete delivree.")
+        messages.error(request, "Cette ordonnance a déjà été délivrée.")
     else:
         Delivrance.objects.create(ordonnance=ordonnance, pharmacien=pharmacien)
-        messages.success(request, "Delivrance validee.", extra_tags="succes-critique")
+        messages.success(request, "Délivrance validée.", extra_tags="succes-critique")
     return redirect("historique_delivrances")
 
 
@@ -2127,7 +2127,7 @@ def mon_profil_assure(request):
             profil.user = request.user
             profil.type_beneficiaire = Patient.TypeBeneficiaire.PRINCIPAL
             profil.save()
-            messages.success(request, "Profil enregistre.")
+            messages.success(request, "Profil enregistré.")
             return redirect("dashboard_assure")
     else:
         initial = {}
@@ -2163,7 +2163,7 @@ def ajouter_ayant_droit(request):
             ayant_droit.type_beneficiaire = Patient.TypeBeneficiaire.AYANT_DROIT
             ayant_droit.assure_principal = patient
             ayant_droit.save()
-            messages.success(request, "Ayant droit ajoute.")
+            messages.success(request, "Ayant droit ajouté.")
             return redirect("liste_ayants_droit")
     else:
         form = AyantDroitForm()
@@ -2181,7 +2181,7 @@ def modifier_ayant_droit(request, pk):
         form = AyantDroitForm(request.POST, instance=ayant_droit)
         if form.is_valid():
             form.save()
-            messages.success(request, "Ayant droit modifie.")
+            messages.success(request, "Ayant droit modifié.")
             return redirect("liste_ayants_droit")
     else:
         form = AyantDroitForm(instance=ayant_droit)
@@ -2197,7 +2197,7 @@ def supprimer_ayant_droit(request, pk):
 
     if request.method == "POST":
         ayant_droit.delete()
-        messages.success(request, "Ayant droit supprime.")
+        messages.success(request, "Ayant droit supprimé.")
         return redirect("liste_ayants_droit")
     return render(
         request,
@@ -2229,7 +2229,7 @@ def ajouter_rendez_vous_assure(request):
         form = RendezVousAssureForm(request.POST, beneficiaires=beneficiaires)
         if form.is_valid():
             form.save()
-            messages.success(request, "Demande de rendez-vous envoyee.")
+            messages.success(request, "Demande de rendez-vous envoyée.")
             return redirect("mes_rendez_vous_assure")
     else:
         initial = {}
@@ -2251,9 +2251,9 @@ def annuler_rendez_vous_assure(request, pk):
     if rendez_vous.statut in (RendezVous.Statut.DEMANDE, RendezVous.Statut.CONFIRME):
         rendez_vous.statut = RendezVous.Statut.ANNULE
         rendez_vous.save(update_fields=["statut"])
-        messages.success(request, "Rendez-vous annule.")
+        messages.success(request, "Rendez-vous annulé.")
     else:
-        messages.error(request, "Ce rendez-vous ne peut plus etre annule.")
+        messages.error(request, "Ce rendez-vous ne peut plus être annulé.")
     return redirect("mes_rendez_vous_assure")
 
 
@@ -2314,7 +2314,7 @@ def envoyer_notification(request):
             Notification.objects.bulk_create(
                 [Notification(destinataire=u, message=message) for u in destinataires]
             )
-            messages.success(request, f"Notification envoyee a {len(destinataires)} utilisateur(s).")
+            messages.success(request, f"Notification envoyée à {len(destinataires)} utilisateur(s).")
             return redirect("liste_notifications_envoyees")
     else:
         form = EnvoyerNotificationForm()

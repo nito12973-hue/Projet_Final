@@ -22,7 +22,7 @@
             <p class="carte-assure-label">Carte de prise en charge</p>
             <p class="carte-assure-numero code">
                 {{ patient.numero_carte }}
-                <button type="button" class="btn-copier-carte" data-copier="{{ patient.numero_carte }}" aria-label="Copier le numero de carte">{% icone "copy" %}</button>
+                <button type="button" class="btn-copier-carte" data-copier="{{ patient.numero_carte }}" aria-label="Copier le numéro de carte">{% icone "copy" %}</button>
             </p>
         </div>
         <div class="carte-assure-pied">
@@ -35,7 +35,7 @@
                 <strong>{{ patient.taux_couverture }}%</strong>
                 <span>{{ patient.titulaire.plan_couverture.nom }}</span>
                 {% else %}
-                <span>Aucun plan attribue</span>
+                <span>Aucun plan attribué</span>
                 {% endif %}
             </div>
         </div>
@@ -51,7 +51,7 @@
     <a class="dash-stat" href="{% url 'mes_rendez_vous_assure' %}">
         <span class="dash-stat-icon">{% icone "calendar" %}</span>
         <strong>{{ total_rendez_vous_a_venir }}</strong>
-        <span>Rendez-vous a venir</span>
+        <span>Rendez-vous à venir</span>
     </a>
     <a class="dash-stat" href="{% url 'mes_ordonnances_assure' %}">
         <span class="dash-stat-icon">{% icone "pill" %}</span>
@@ -70,8 +70,8 @@
         <thead>
             <tr>
                 <th>Date</th>
-                <th>Beneficiaire</th>
-                <th>Medecin</th>
+                <th>Bénéficiaire</th>
+                <th>Médecin</th>
                 <th>Statut</th>
             </tr>
         </thead>
@@ -91,7 +91,7 @@
     {% else %}
     <div class="etat-vide">
         {% illustration_vide "calendar" %}
-        <p>Aucun rendez-vous a venir.</p>
+        <p>Aucun rendez-vous à venir.</p>
     </div>
     {% endif %}
 </section>

@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% load icones %}
 
-{% block title %}Historique des delivrances{% endblock %}
+{% block title %}Historique des délivrances{% endblock %}
 
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>Historique des delivrances</h1>
-        <p class="subtitle">Ordonnances que vous avez validees.</p>
+        <h1>Historique des délivrances</h1>
+        <p class="subtitle">Ordonnances que vous avez validées.</p>
     </div>
     <a class="button primary" href="{% url 'scanner_ordonnance' %}">Scanner un QR Code</a>
 </section>
@@ -19,7 +19,7 @@
             <tr>
                 <th>Date</th>
                 <th>Patient</th>
-                <th>Medecin prescripteur</th>
+                <th>Médecin prescripteur</th>
                 <th>Code ordonnance</th>
             </tr>
         </thead>
@@ -38,7 +38,7 @@
 {% else %}
 <div class="etat-vide">
     {% illustration_vide "pill" %}
-    <p>Aucune delivrance validee pour le moment.</p>
+    <p>Aucune délivrance validée pour le moment.</p>
 </div>
 {% endif %}
 {% endblock %}

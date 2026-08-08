@@ -7,7 +7,7 @@
 <section class="page-title">
     <div>
         <h1>Espace Pharmacien</h1>
-        <p class="subtitle">Verification des ordonnances et suivi des delivrances.</p>
+        <p class="subtitle">Vérification des ordonnances et suivi des délivrances.</p>
     </div>
     <a class="button primary" href="{% url 'scanner_ordonnance' %}">Scanner un QR Code</a>
 </section>
@@ -16,7 +16,7 @@
     <a class="dash-stat" href="{% url 'historique_delivrances' %}">
         <span class="dash-stat-icon">{% icone "receipt" %}</span>
         <strong>{{ total_delivrances }}</strong>
-        <span>Delivrances validees</span>
+        <span>Délivrances validées</span>
     </a>
     <a class="dash-stat" href="{% url 'historique_delivrances' %}">
         <span class="dash-stat-icon">{% icone "zap" %}</span>
@@ -37,7 +37,7 @@
 
 <section class="panel" style="margin-top: 22px;">
     <div class="panel-header">
-        <h2>Dernieres delivrances</h2>
+        <h2>Dernières délivrances</h2>
         <a class="button" href="{% url 'historique_delivrances' %}">Voir l'historique</a>
     </div>
     {% if dernieres_delivrances %}
@@ -62,7 +62,7 @@
     {% else %}
     <div class="etat-vide">
         {% illustration_vide "pill" %}
-        <p>Aucune delivrance validee pour le moment.</p>
+        <p>Aucune délivrance validée pour le moment.</p>
     </div>
     {% endif %}
 </section>

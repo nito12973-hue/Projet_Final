@@ -15,7 +15,7 @@
     <label for="recherche-patients-champ">Recherche rapide</label>
     <div class="recherche-patients">
         <input type="search" id="recherche-patients-champ" name="q" autocomplete="off"
-               placeholder="Numero de carte, nom ou prenom..."
+               placeholder="Numéro de carte, nom ou prénom..."
                aria-expanded="false" aria-controls="recherche-patients-resultats"
                aria-haspopup="listbox" role="combobox" aria-autocomplete="list">
         <p id="recherche-patients-indice" class="subtitle" style="margin:6px 0 0;" hidden></p>
@@ -31,7 +31,7 @@
             <tr>
                 <th>Nom complet</th>
                 <th>Telephone</th>
-                <th>Numero de carte</th>
+                <th>Numéro de carte</th>
                 <th>Type</th>
             </tr>
         </thead>
@@ -98,7 +98,7 @@
                 var vide = document.createElement('li');
                 vide.className = 'recherche-patients-vide';
                 vide.setAttribute('role', 'presentation');
-                vide.textContent = 'Aucun patient trouve.';
+                vide.textContent = 'Aucun patient trouvé.';
                 conteneurResultats.appendChild(vide);
                 conteneurResultats.hidden = false;
                 champ.setAttribute('aria-expanded', 'true');
@@ -123,7 +123,7 @@
                 if (patient.deja_vu) {
                     var badge = document.createElement('span');
                     badge.className = 'badge';
-                    badge.textContent = 'Deja suivi';
+                    badge.textContent = 'Déjà suivi';
                     item.appendChild(badge);
                 }
 

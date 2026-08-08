@@ -7,7 +7,7 @@
 <section class="page-title">
     <div>
         <h1>Bonjour Dr {{ medecin.prenom }} {{ medecin.nom }}</h1>
-        <p class="subtitle">Votre activite en un coup d'oeil.</p>
+        <p class="subtitle">Votre activité en un coup d'œil.</p>
     </div>
     <a class="button primary" href="{% url 'ajouter_rendez_vous' %}">Nouveau rendez-vous</a>
 </section>
@@ -16,7 +16,7 @@
     <label for="recherche-patients-champ">Recherche rapide</label>
     <div class="recherche-patients">
         <input type="search" id="recherche-patients-champ" name="q" autocomplete="off"
-               placeholder="Numero de carte, nom ou prenom..."
+               placeholder="Numéro de carte, nom ou prénom..."
                aria-expanded="false" aria-controls="recherche-patients-resultats"
                aria-haspopup="listbox" role="combobox" aria-autocomplete="list">
         <p id="recherche-patients-indice" class="subtitle" style="margin:6px 0 0;" hidden></p>
@@ -29,7 +29,7 @@
     <a class="dash-stat" href="{% url 'agenda_medecin' %}">
         <span class="dash-stat-icon">{% icone "calendar" %}</span>
         <strong>{{ total_rendez_vous_a_venir }}</strong>
-        <span>Rendez-vous a venir</span>
+        <span>Rendez-vous à venir</span>
     </a>
     <a class="dash-stat" href="{% url 'mes_patients' %}">
         <span class="dash-stat-icon">{% icone "users" %}</span>
@@ -44,7 +44,7 @@
     <a class="dash-stat" href="{% url 'historique_consultations' %}">
         <span class="dash-stat-icon">{% icone "pill" %}</span>
         <strong>{{ total_ordonnances }}</strong>
-        <span>Ordonnances emises</span>
+        <span>Ordonnances émises</span>
     </a>
 </section>
 
@@ -90,7 +90,7 @@
     {% else %}
     <div class="etat-vide">
         {% illustration_vide "calendar" %}
-        <p>Aucun rendez-vous a venir.</p>
+        <p>Aucun rendez-vous à venir.</p>
     </div>
     {% endif %}
 </section>
@@ -139,7 +139,7 @@
                 var vide = document.createElement('li');
                 vide.className = 'recherche-patients-vide';
                 vide.setAttribute('role', 'presentation');
-                vide.textContent = 'Aucun patient trouve.';
+                vide.textContent = 'Aucun patient trouvé.';
                 conteneurResultats.appendChild(vide);
                 conteneurResultats.hidden = false;
                 champ.setAttribute('aria-expanded', 'true');
@@ -164,7 +164,7 @@
                 if (patient.deja_vu) {
                     var badge = document.createElement('span');
                     badge.className = 'badge';
-                    badge.textContent = 'Deja suivi';
+                    badge.textContent = 'Déjà suivi';
                     item.appendChild(badge);
                 }
 
@@ -267,7 +267,7 @@
         if (typeof Chart === 'undefined') {
             var message = document.createElement('p');
             message.className = 'empty';
-            message.textContent = 'Graphique indisponible (bibliotheque non chargee).';
+            message.textContent = 'Graphique indisponible (bibliothèque non chargée).';
             canevas.replaceWith(message);
             return;
         }

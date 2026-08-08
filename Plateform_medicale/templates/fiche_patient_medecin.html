@@ -10,7 +10,7 @@
         <p class="subtitle">
             {{ patient.numero_carte }}
             <button type="button" class="btn-copier-carte" style="background:rgba(11,32,39,0.08);" data-copier="{{ patient.numero_carte }}" aria-label="Copier le numero de carte">{% icone "copy" %}</button>
-            {% if deja_vu %}<span class="badge">Deja suivi</span>{% endif %}
+            {% if deja_vu %}<span class="badge">Déjà suivi</span>{% endif %}
         </p>
     </div>
     <div class="actions">
@@ -66,7 +66,7 @@
             <h2>Ayants droit</h2>
         </div>
         <table>
-            <thead><tr><th>Nom complet</th><th>Lien</th><th>Numero de carte</th></tr></thead>
+            <thead><tr><th>Nom complet</th><th>Lien</th><th>Numéro de carte</th></tr></thead>
             <tbody>
                 {% for ayant_droit in ayants_droit %}
                 <tr>
