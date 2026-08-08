@@ -9,7 +9,7 @@
         <h1>Pharmaciens</h1>
         <p class="subtitle">Les comptes sont crees depuis « Utilisateurs » (role Pharmacien) ; affectez-les ici a une pharmacie.</p>
     </div>
-    <a class="button" href="{% url 'ajouter_utilisateur' %}">Creer un compte pharmacien</a>
+    <a class="button" href="{% url 'ajouter_utilisateur' %}">Créer un compte pharmacien</a>
 </section>
 
 {% if pharmaciens %}
@@ -28,7 +28,7 @@
             <tr>
                 <td>{{ pharmacien.user.get_full_name|default:"-" }}</td>
                 <td>{{ pharmacien.user.email }}</td>
-                <td>{{ pharmacien.prestataire|default:"Non affecte" }}</td>
+                <td>{{ pharmacien.prestataire|default:"Non affecté" }}</td>
                 <td>
                     <a href="{% url 'modifier_pharmacien' pharmacien.pk %}" class="button primary btn btn-sm">{% icone "edit-2" %} Affecter une pharmacie</a>
                 </td>
@@ -40,7 +40,7 @@
 {% if pharmaciens.paginator.num_pages > 1 %}
 <nav class="pagination" aria-label="Pagination">
     {% if pharmaciens.has_previous %}
-    <a href="?{% prefixe_pagination request.GET %}page={{ pharmaciens.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Precedent</a>
+    <a href="?{% prefixe_pagination request.GET %}page={{ pharmaciens.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Précédent</a>
     {% endif %}
     <span class="pagination-info">Page {{ pharmaciens.number }} sur {{ pharmaciens.paginator.num_pages }}</span>
     {% if pharmaciens.has_next %}
@@ -51,7 +51,7 @@
 {% else %}
 <div class="etat-vide">
     {% illustration_vide "pill" %}
-    <p>Aucun pharmacien enregistre.</p>
+    <p>Aucun pharmacien enregistré.</p>
 </div>
 {% endif %}
 {% endblock %}

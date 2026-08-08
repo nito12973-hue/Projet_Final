@@ -27,7 +27,7 @@
     </div>
     <button type="submit" class="button primary btn">Filtrer</button>
     {% if type_selectionne %}
-    <a href="{% url 'liste_patients' %}" class="button btn">Reinitialiser</a>
+    <a href="{% url 'liste_patients' %}" class="button btn">Réinitialiser</a>
     {% endif %}
 </form>
 
@@ -41,7 +41,7 @@
                 {% entete_tri request.GET "assure_principal__nom" "Assuré principal" %}
                 {% entete_tri request.GET "numero_carte" "Numéro de carte" %}
                 {% entete_tri request.GET "plan_couverture__nom" "Plan de couverture" %}
-                <th>Telephone</th>
+                <th>Téléphone</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -68,7 +68,7 @@
 {% if patients.paginator.num_pages > 1 %}
 <nav class="pagination" aria-label="Pagination">
     {% if patients.has_previous %}
-    <a href="?{% prefixe_pagination request.GET %}page={{ patients.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Precedent</a>
+    <a href="?{% prefixe_pagination request.GET %}page={{ patients.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Précédent</a>
     {% endif %}
     <span class="pagination-info">Page {{ patients.number }} sur {{ patients.paginator.num_pages }}</span>
     {% if patients.has_next %}

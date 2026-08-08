@@ -28,7 +28,7 @@
     </div>
     <button type="submit" class="button primary btn">Filtrer</button>
     {% if patient_selectionne or date_selectionnee %}
-    <a href="{% url 'historique_consultations' %}" class="button btn">Reinitialiser</a>
+    <a href="{% url 'historique_consultations' %}" class="button btn">Réinitialiser</a>
     {% endif %}
 </form>
 
@@ -69,7 +69,7 @@
 <div class="etat-vide">
     {% illustration_vide "clipboard-list" %}
     {% if patient_selectionne or date_selectionnee %}
-    <p>Aucune consultation ne correspond a ces criteres.</p>
+    <p>Aucune consultation ne correspond à ces critères.</p>
     {% else %}
     <p>Aucune consultation enregistree.</p>
     {% endif %}

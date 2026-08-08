@@ -582,8 +582,8 @@ class GestionUtilisateursTests(TestCase):
         response = self.client.get(reverse('liste_utilisateurs'))
         self.assertNotContains(response, 'onsubmit="return confirm(')
         self.assertContains(response, 'id="modale-confirmation"')
-        self.assertContains(response, f'data-confirmation="Desactiver le compte de {actif} ?')
-        self.assertNotContains(response, f'data-confirmation="Desactiver le compte de {inactif} ?')
+        self.assertContains(response, f'data-confirmation="Désactiver le compte de {actif} ?')
+        self.assertNotContains(response, f'data-confirmation="Désactiver le compte de {inactif} ?')
 
     def test_creation_utilisateur_genere_un_mot_de_passe_fonctionnel(self):
         response = self.client.post(reverse('ajouter_utilisateur'), {
@@ -2206,7 +2206,7 @@ class PaiementTests(TestCase):
 
         response = self.client.get(reverse('liste_paiements'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Marquer regle')
+        self.assertContains(response, 'Marquer réglé')
 
     def test_marquer_paiement_regle(self):
         self.client.logout()

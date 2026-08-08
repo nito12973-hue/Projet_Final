@@ -7,7 +7,7 @@
 <section class="page-title">
     <div>
         <h1>Prestataires</h1>
-        <p class="subtitle">Reseau d'hopitaux, cliniques, pharmacies et cabinets partenaires.</p>
+        <p class="subtitle">Réseau d'hôpitaux, cliniques, pharmacies et cabinets partenaires.</p>
     </div>
     <a class="button primary" href="{% url 'ajouter_prestataire' %}">Ajouter un prestataire</a>
 </section>
@@ -23,7 +23,7 @@
     </div>
     <button type="submit" class="button primary btn">Filtrer</button>
     {% if localisation_choisie %}
-    <a href="{% url 'liste_prestataires' %}" class="button btn">Reinitialiser</a>
+    <a href="{% url 'liste_prestataires' %}" class="button btn">Réinitialiser</a>
     {% endif %}
 </form>
 
@@ -35,7 +35,7 @@
                 {% entete_tri request.GET "nom" "Nom" %}
                 {% entete_tri request.GET "type_prestataire" "Type" %}
                 {% entete_tri request.GET "ville" "Ville" %}
-                <th>Telephone</th>
+                <th>Téléphone</th>
                 {% entete_tri request.GET "partenaire" "Partenaire" %}
                 <th>Localisation</th>
                 <th>Actions</th>
@@ -57,7 +57,7 @@
                 </td>
                 <td>
                     {% if prestataire.latitude and prestataire.longitude %}
-                    <span class="badge validee">Localise</span>
+                    <span class="badge validee">Localisé</span>
                     {% else %}
                     <span class="badge en_attente">Sans localisation</span>
                     {% endif %}
@@ -76,7 +76,7 @@
 {% if prestataires.paginator.num_pages > 1 %}
 <nav class="pagination" aria-label="Pagination">
     {% if prestataires.has_previous %}
-    <a href="?{% prefixe_pagination request.GET %}page={{ prestataires.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Precedent</a>
+    <a href="?{% prefixe_pagination request.GET %}page={{ prestataires.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Précédent</a>
     {% endif %}
     <span class="pagination-info">Page {{ prestataires.number }} sur {{ prestataires.paginator.num_pages }}</span>
     {% if prestataires.has_next %}
@@ -87,12 +87,12 @@
 {% else %}
 <div class="etat-vide">
     {% illustration_vide "building" %}
-    <p>Aucun prestataire enregistre.</p>
+    <p>Aucun prestataire enregistré.</p>
 </div>
 {% endif %}
 
 <p class="subtitle" style="margin-top:18px;">
-    Le catalogue des services et tarifs de chaque prestataire se gere
+    Le catalogue des services et tarifs de chaque prestataire se gère
     <a href="{% url 'liste_services' %}">ici</a>.
 </p>
 {% endblock %}

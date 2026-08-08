@@ -6,7 +6,7 @@
 <section class="page-title">
     <div>
         <h1>Ajouter un utilisateur</h1>
-        <p class="subtitle">Un mot de passe temporaire sera genere automatiquement et affiche une seule fois.</p>
+        <p class="subtitle">Un mot de passe temporaire sera généré automatiquement et affiché une seule fois.</p>
     </div>
     <a class="button" href="{% url 'liste_utilisateurs' %}">Retour</a>
 </section>
@@ -23,7 +23,7 @@
         {{ field }}
         {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
         {% endfor %}
-        <button class="button primary" type="submit">Creer l'utilisateur</button>
+        <button class="button primary" type="submit">Créer l'utilisateur</button>
     </form>
 </section>
 {% endblock %}

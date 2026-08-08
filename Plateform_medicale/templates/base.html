@@ -2454,7 +2454,7 @@
                 var lien = evenement.target.closest('[data-chargement]');
                 if (!lien) { return; }
                 var libelleOriginal = lien.innerHTML;
-                var texte = lien.getAttribute('data-chargement') || 'Generation...';
+                var texte = lien.getAttribute('data-chargement') || 'Génération...';
                 lien.innerHTML = '<span class="tourniquet" aria-hidden="true"></span> ' + texte;
                 lien.setAttribute('aria-disabled', 'true');
                 window.setTimeout(function () {

@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% load formats %}
 
-{% block title %}Marquer un paiement regle{% endblock %}
+{% block title %}Marquer un paiement réglé{% endblock %}
 
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>Marquer le paiement comme regle</h1>
+        <h1>Marquer le paiement comme réglé</h1>
         <p class="subtitle">{{ paiement.consultation.patient }} - {{ paiement.montant_part_patient|franc_cfa }} a la charge du patient.</p>
     </div>
     <a class="button" href="{% url 'liste_paiements' %}">Retour</a>

@@ -9,7 +9,7 @@
         <h1>Paiements</h1>
         <p class="subtitle">Suivi du reglement des consultations.</p>
     </div>
-    <a class="button btn" data-chargement="Generation..." href="{% url 'exporter_paiements_csv' %}?{{ request.GET.urlencode }}">{% icone "download" %} Exporter en CSV</a>
+    <a class="button btn" data-chargement="Génération..." href="{% url 'exporter_paiements_csv' %}?{{ request.GET.urlencode }}">{% icone "download" %} Exporter en CSV</a>
 </section>
 
 <section class="dash-grid" style="margin-bottom: 18px;">
@@ -28,7 +28,7 @@
         <label for="q">Recherche</label>
         <div class="champ-recherche">
             {% icone "search" %}
-            <input id="q" type="text" name="q" placeholder="Nom ou prenom du patient" value="{{ recherche }}" style="margin-bottom:0;">
+            <input id="q" type="text" name="q" placeholder="Nom ou prénom du patient" value="{{ recherche }}" style="margin-bottom:0;">
         </div>
     </div>
     <div style="min-width:220px;">
@@ -42,7 +42,7 @@
     </div>
     <button type="submit" class="button primary btn">Filtrer</button>
     {% if statut_choisi or recherche %}
-    <a href="{% url 'liste_paiements' %}" class="button btn">Reinitialiser</a>
+    <a href="{% url 'liste_paiements' %}" class="button btn">Réinitialiser</a>
     {% endif %}
 </form>
 
@@ -72,7 +72,7 @@
                 <td>
                     <div class="actions">
                         {% if paiement.statut == 'non_regle' %}
-                        <a href="{% url 'marquer_paiement_regle' paiement.pk %}" class="button primary btn btn-sm">Marquer regle</a>
+                        <a href="{% url 'marquer_paiement_regle' paiement.pk %}" class="button primary btn btn-sm">Marquer réglé</a>
                         {% else %}
                         <span>{{ paiement.get_mode_reglement_display }} - {{ paiement.date_reglement|date:"d/m/Y" }}</span>
                         {% endif %}
@@ -86,7 +86,7 @@
 {% if paiements.paginator.num_pages > 1 %}
 <nav class="pagination" aria-label="Pagination">
     {% if paiements.has_previous %}
-    <a href="?{% prefixe_pagination request.GET %}page={{ paiements.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Precedent</a>
+    <a href="?{% prefixe_pagination request.GET %}page={{ paiements.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Précédent</a>
     {% endif %}
     <span class="pagination-info">Page {{ paiements.number }} sur {{ paiements.paginator.num_pages }}</span>
     {% if paiements.has_next %}
@@ -97,7 +97,7 @@
 {% else %}
 <div class="etat-vide">
     {% illustration_vide "receipt" %}
-    <p>{% if recherche or statut_choisi %}Aucun paiement ne correspond a ces criteres.{% else %}Aucun paiement enregistre.{% endif %}</p>
+    <p>{% if recherche or statut_choisi %}Aucun paiement ne correspond à ces critères.{% else %}Aucun paiement enregistré.{% endif %}</p>
 </div>
 {% endif %}
 {% endblock %}
