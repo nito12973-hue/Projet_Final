@@ -353,11 +353,10 @@ def dashboard(request):
         (maintenant - plus_ancienne_attente.date_demande).days if plus_ancienne_attente else None
     )
 
-    # Derniers comptes crees, hors assures (remplace "derniers assures" qui
-    # ne montrait pas la croissance medecins/pharmaciens ; exclut desormais
-    # les assures car "Derniers assures" plus bas les couvre deja, y
-    # compris les ayants droit qui n'ont jamais de User -- fusionner les
-    # deux aurait fait disparaitre ces derniers du dashboard). Les
+    # Derniers comptes crees, hors assures : les assures (y compris les
+    # ayants droit, qui n'ont jamais de User) sont deja couverts par
+    # liste_patients (triable par N, cf. la Huitieme passe dans
+    # FONCTIONNEMENT.txt) -- pas de raison de les dupliquer ici. Les
     # prestataires n'ont pas de compte utilisateur, liste separee.
     derniers_comptes = (
         User.objects.exclude(role=User.Role.ASSURE).order_by("-date_joined")[:5]

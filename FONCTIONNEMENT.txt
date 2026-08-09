@@ -958,8 +958,10 @@ Assure (role_required(ASSURE), prefixe /assure/ + /espace/assure/)
   couleurs semantiques (vert/ambre/rouge) pour les statuts.
 - Leaflet 1.9.4 + tuiles OpenStreetMap (CDN, integrite SRI, sans cle API) :
   utilise sur ajouter_prestataire.html / modifier_prestataire.html (admin
-  place un pin) et prestataires_proches.html (carte + tri par distance cote
-  Assure). Le bloc CSS/JS est duplique intentionnellement sur ces trois
+  place un pin), prestataires_proches.html (carte + tri par distance cote
+  Assure), et liste_prestataires.html (reseau de partenaires geolocalises,
+  deplace ici depuis le dashboard admin a la huitieme passe -- voir plus
+  bas). Le bloc CSS/JS est duplique intentionnellement sur ces quatre
   templates (pas de template partiel dans ce projet, voir CLAUDE.md) ; tout
   contenu construit dans un popup Leaflet a partir de donnees stockees doit
   passer par une construction DOM (textContent) et jamais par une
