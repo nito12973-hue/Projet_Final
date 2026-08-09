@@ -462,14 +462,19 @@ class DashboardAdminTests(TestCase):
         self.assertContains(response, 'aria-label="Assurés gérés : 1"')
         self.assertContains(response, 'aria-label="Consultations : 1, plus 1 sur les 7 derniers jours"')
 
-    def test_derniers_comptes_et_derniers_prestataires(self):
+    def test_derniers_comptes_crees(self):
         creer_medecin('nouveau.medecin@santesn.sn')
-        Prestataire.objects.create(nom='Nouvelle clinique', type_prestataire='CLINIQUE', partenaire=True)
 
         response = self.client.get(reverse('dashboard'))
         self.assertContains(response, 'Derniers comptes cr')
         self.assertContains(response, 'nouveau.medecin@santesn.sn')
-        self.assertContains(response, 'Nouvelle clinique')
+
+    def test_dashboard_n_affiche_plus_les_digests_assures_et_prestataires(self):
+        """Regression : ces 2 digests sont retires du dashboard (deplaces
+        vers liste_patients/liste_prestataires, cf. Taches 4 et 5)."""
+        response = self.client.get(reverse('dashboard'))
+        self.assertNotContains(response, 'Derniers assurés')
+        self.assertNotContains(response, 'Derniers prestataires ajoutés')
 
     def test_derniers_comptes_exclut_les_assures(self):
         creer_utilisateur(User.Role.ASSURE, 'assure@santesn.sn')
