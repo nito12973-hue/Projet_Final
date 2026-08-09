@@ -232,6 +232,25 @@
             display: none;
         }
 
+        /* Separateurs de section dans la nav admin (12 entrees a plat,
+           Etape 7 de la demande de decongestion : "navigation comprehensible
+           immediatement" sans rien renommer/fusionner). display:none en
+           sidebar reduite (icones seules) : un texte de section n'a aucun
+           sens sans les libelles a cote, et `nav { gap: 4px }` (regle de
+           base) ne laisse pas de trou visuel derriere un enfant absent. */
+        .nav-section {
+            padding: 14px 12px 4px;
+            font-size: 10.5px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--sb-text-faint);
+        }
+
+        body.sidebar-reduite .nav-section {
+            display: none;
+        }
+
         /* Info-bulle on-brand : sidebar reduite = icones seules, le
            libelle passe de title="" (bulle native du navigateur) a
            data-tooltip="" + ce pseudo-element, visible aussi au clavier
@@ -2241,6 +2260,7 @@
                 {% if current_role == "ADMIN" %}
                 {% with url_name=request.resolver_match.url_name %}
                 <a href="{% url 'dashboard' %}" aria-label="Tableau de bord" data-tooltip="Tableau de bord" class="{% if url_name == 'dashboard' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord</span></a>
+                <span class="nav-section">Gestion</span>
                 <a href="{% url 'liste_utilisateurs' %}" aria-label="Utilisateurs" data-tooltip="Utilisateurs" class="{% if url_name == 'liste_utilisateurs' or url_name == 'ajouter_utilisateur' or url_name == 'modifier_utilisateur' or url_name == 'importer_utilisateurs_excel' or url_name == 'reinitialiser_mot_de_passe' or url_name == 'supprimer_utilisateur' %}active{% endif %}">{% icone "users" %} <span class="nav-texte">Utilisateurs</span></a>
                 <a href="{% url 'liste_patients' %}" aria-label="Assurés" data-tooltip="Assurés" class="{% if url_name == 'liste_patients' or url_name == 'ajouter_patient' or url_name == 'modifier_patient' or url_name == 'supprimer_patient' %}active{% endif %}">{% icone "id-card" %} <span class="nav-texte">Assurés</span></a>
                 <a href="{% url 'liste_medecins' %}" aria-label="Médecins" data-tooltip="Médecins" class="{% if url_name == 'liste_medecins' or url_name == 'ajouter_medecin' or url_name == 'modifier_medecin' or url_name == 'supprimer_medecin' %}active{% endif %}">{% icone "stethoscope" %} <span class="nav-texte">Médecins</span></a>
@@ -2248,8 +2268,10 @@
                 <a href="{% url 'liste_prestataires' %}" aria-label="Prestataires" data-tooltip="Prestataires" class="{% if url_name == 'liste_prestataires' or url_name == 'ajouter_prestataire' or url_name == 'modifier_prestataire' or url_name == 'supprimer_prestataire' %}active{% endif %}">{% icone "building" %} <span class="nav-texte">Prestataires</span></a>
                 <a href="{% url 'liste_services' %}" aria-label="Services médicaux" data-tooltip="Services médicaux" class="{% if url_name == 'liste_services' or url_name == 'ajouter_service' or url_name == 'modifier_service' or url_name == 'supprimer_service' %}active{% endif %}">{% icone "credit-card" %} <span class="nav-texte">Services médicaux</span></a>
                 <a href="{% url 'liste_plans_couverture' %}" aria-label="Plans de couverture" data-tooltip="Plans de couverture" class="{% if url_name == 'liste_plans_couverture' or url_name == 'ajouter_plan_couverture' or url_name == 'modifier_plan_couverture' or url_name == 'supprimer_plan_couverture' %}active{% endif %}">{% icone "clipboard-list" %} <span class="nav-texte">Plans de couverture</span></a>
+                <span class="nav-section">Opérations</span>
                 <a href="{% url 'liste_prises_en_charge' %}" aria-label="Prises en charge" data-tooltip="Prises en charge" class="{% if url_name == 'liste_prises_en_charge' or url_name == 'ajouter_prise_en_charge' or url_name == 'modifier_prise_en_charge' or url_name == 'supprimer_prise_en_charge' %}active{% endif %}">{% icone "shield-check" %} <span class="nav-texte">Prises en charge</span></a>
                 <a href="{% url 'liste_paiements' %}" aria-label="Paiements" data-tooltip="Paiements" class="{% if url_name == 'liste_paiements' or url_name == 'marquer_paiement_regle' %}active{% endif %}">{% icone "receipt" %} <span class="nav-texte">Paiements</span></a>
+                <span class="nav-section">Système</span>
                 <a href="{% url 'rapports' %}" aria-label="Rapports" data-tooltip="Rapports" class="{% if url_name == 'rapports' %}active{% endif %}">{% icone "bar-chart" %} <span class="nav-texte">Rapports</span></a>
                 <a href="{% url 'envoyer_notification' %}" aria-label="Notifications" data-tooltip="Notifications" class="{% if url_name == 'envoyer_notification' or url_name == 'liste_notifications_envoyees' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span></a>
                 <a href="{% url 'changer_mot_de_passe' %}" aria-label="Mot de passe" data-tooltip="Mot de passe" class="{% if url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "lock" %} <span class="nav-texte">Mot de passe</span></a>
