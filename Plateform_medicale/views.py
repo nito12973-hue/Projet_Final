@@ -395,7 +395,6 @@ def dashboard(request):
         "derniers_patients": derniers_patients,
         "derniers_comptes": derniers_comptes,
         "derniers_prestataires": derniers_prestataires,
-        "tendance_consultations": _consultations_par_jour(),
         "prestataires_carte": prestataires_carte,
     }
     return render(request, "dashboard.html", contexte)
