@@ -1744,6 +1744,16 @@ class AdminPatientFormTests(TestCase):
         self.admin = creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
         self.client.login(username='admin@santesn.sn', password=PASSWORD)
 
+    def test_liste_patients_triable_par_numero(self):
+        ancien = creer_patient(nom='Ancien', prenom='A')
+        recent = creer_patient(nom='Recent', prenom='B')
+
+        response = self.client.get(reverse('liste_patients'), {'tri': '-id'})
+        patients = list(response.context['patients'])
+        self.assertEqual(patients[0].pk, recent.pk)
+        self.assertEqual(patients[1].pk, ancien.pk)
+        self.assertContains(response, '?tri=id')
+
     def test_admin_peut_attribuer_un_plan_de_couverture(self):
         patient = creer_patient()
         plan = PlanCouverture.objects.create(nom='Premium', taux_couverture=Decimal('90.00'))
