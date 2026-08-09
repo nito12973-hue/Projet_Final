@@ -101,12 +101,14 @@
             grid-template-columns: 84px minmax(0, 1fr);
         }
 
-        /* Selecteur d'ID (#barre-laterale), pas l'element aside seul : la page
-           dashboard.html (admin) a un second <aside> (.governance-card, carte
-           "Comptes et gouvernance") qui heritait sinon de tout le style et du
-           comportement du menu lateral (position fixed hors ecran sous
-           900px, cf. plus bas) -- la carte disparaissait purement et
-           simplement en dessous de ce seuil. */
+        /* Selecteur d'ID (#barre-laterale), pas l'element aside seul : 4
+           templates (dashboard.html, rapports.html, voir_ordonnance.html,
+           scanner_ordonnance.html) ont un second <aside class="governance-card">
+           qui heritait sinon de tout le style et du comportement du menu
+           lateral (position fixed hors ecran sous 980px, cf. plus bas) --
+           sous ce seuil, ces cartes disparaissaient purement et simplement,
+           y compris le bouton "Valider la delivrance" de
+           scanner_ordonnance.html. */
         #barre-laterale {
             display: flex;
             flex-direction: column;
@@ -565,6 +567,9 @@
         }
 
         .governance-card {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
             padding: 24px;
         }
 

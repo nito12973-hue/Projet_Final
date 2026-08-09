@@ -472,10 +472,11 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
                           4 corrections independantes sur le meme ecran,
                           aucune n'a touche modeles/routes/permissions.
                           jours_attente_max (PriseEnCharge.date_demande de
-                          la plus ancienne en_attente, meme champ indexe que
-                          le tri de liste_prises_en_charge) s'affiche entre
-                          parentheses dans le bandeau .dc-status des qu'il y
-                          a au moins une prise en charge en attente -- aucun
+                          la plus ancienne en_attente, meme champ que le
+                          tri de liste_prises_en_charge, mais pas indexe
+                          lui -- seul statut l'est) s'affiche entre
+                          parentheses dans le bandeau .dc-status des
+                          qu'elle attend depuis au moins un jour -- aucun
                           seuil d'urgence invente, le fait est affiche, pas
                           un jugement. Lisere terracotta des tuiles KPI
                           deplace des tuiles 5/6 (Consultations, Ordonnances
