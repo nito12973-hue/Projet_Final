@@ -288,17 +288,21 @@
             return valeur || repli;
         }
 
-        function demarrerGrapheTendance() {
-            var element = document.getElementById('donnees-tendance-consultations');
-            var donnees = element ? JSON.parse(element.textContent) : { labels: [], totaux: [] };
-            if (!donnees.totaux.some(function (total) { return total > 0; })) {
-                var vide = document.createElement('p');
-                vide.className = 'empty';
-                vide.textContent = 'Aucune consultation sur les 30 derniers jours.';
-                canevas.replaceWith(vide);
-                return;
-            }
+        var elementDonnees = document.getElementById('donnees-tendance-consultations');
+        var donnees = elementDonnees ? JSON.parse(elementDonnees.textContent) : { labels: [], totaux: [] };
 
+        // Verifie l'absence de donnees avant meme de charger Chart.js : pas
+        // la peine de telecharger la bibliotheque (~200 Ko) pour afficher un
+        // etat vide.
+        if (!donnees.totaux.some(function (total) { return total > 0; })) {
+            var vide = document.createElement('p');
+            vide.className = 'empty';
+            vide.textContent = 'Aucune consultation sur les 30 derniers jours.';
+            canevas.replaceWith(vide);
+            return;
+        }
+
+        function demarrerGrapheTendance() {
             // Trace "pouls" : segments anguleux (tension 0, pas de courbe
             // lissee) et couleur terracotta -- reprend l'usage deja
             // documente de --accent ("ligne de battement de coeur du logo

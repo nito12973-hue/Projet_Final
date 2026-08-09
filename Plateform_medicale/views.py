@@ -352,8 +352,8 @@ def dashboard(request):
 
     # Anciennete de la file d'attente : le compte seul
     # (total_prises_en_charge_attente) ne dit pas si c'est urgent. Meme champ
-    # (date_demande, indexe via statut) que le tri de liste_prises_en_charge,
-    # aucune migration necessaire.
+    # (filtre sur statut, qui est indexe ; date_demande ne l'est pas) que le
+    # tri de liste_prises_en_charge, aucune migration necessaire.
     plus_ancienne_attente = (
         PriseEnCharge.objects.filter(statut="en_attente").order_by("date_demande").first()
     )
