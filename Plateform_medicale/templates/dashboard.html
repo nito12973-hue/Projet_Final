@@ -50,6 +50,10 @@
                 </a>
             </div>
         </div>
+        <div class="dash-hero-sparkline-zone">
+            <canvas id="graphe-tendance-paiements" aria-label="Tendance des paiements réglés, 30 derniers jours"></canvas>
+        </div>
+        <span class="dash-hero-sparkline-legende">Paiements réglés · 30 j</span>
     </div>
 </section>
 
@@ -180,5 +184,102 @@
     </article>
 </section>
 </div>
+
+{{ tendance_paiements|json_script:"donnees-tendance-paiements" }}
+
+<script>
+    (function () {
+        // Mini-graphique de tendance : meme mecanique que l'ancien sparkline
+        // "consultations" (retire, redondant avec rapports.html et mal
+        // place thematiquement dans une carte financiere) mais cette fois
+        // la donnee (paiements regles) correspond au sujet de la carte qui
+        // la contient. Chart.js (~200 Ko) charge a la demande.
+        var canevas = document.getElementById('graphe-tendance-paiements');
+        if (!canevas) { return; }
+
+        function tokenCouleur(nom, repli) {
+            var valeur = getComputedStyle(document.documentElement).getPropertyValue(nom).trim();
+            return valeur || repli;
+        }
+
+        var elementDonnees = document.getElementById('donnees-tendance-paiements');
+        var donnees = elementDonnees ? JSON.parse(elementDonnees.textContent) : { labels: [], totaux: [] };
+
+        // Verifie l'absence de donnees avant meme de charger Chart.js.
+        if (!donnees.totaux.some(function (total) { return Number(total) > 0; })) {
+            var vide = document.createElement('p');
+            vide.className = 'empty';
+            vide.textContent = 'Aucun paiement regle sur les 30 derniers jours.';
+            canevas.replaceWith(vide);
+            return;
+        }
+
+        function demarrerGrapheTendance() {
+            // Trace "pouls" : meme langage visuel que le reste du canevas
+            // sombre (segments anguleux, couleur terracotta --accent), peu
+            // importe le sujet -- c'est le motif de marque etabli pour
+            // "ceci est une tendance", pas une couleur "argent".
+            var rayonsPoints = donnees.totaux.map(function (_, index) {
+                return index === donnees.totaux.length - 1 ? 4 : 0;
+            });
+
+            new Chart(canevas, {
+                type: 'line',
+                data: {
+                    labels: donnees.labels,
+                    datasets: [{
+                        data: donnees.totaux,
+                        borderColor: tokenCouleur('--accent', '#e0824f'),
+                        backgroundColor: 'rgba(255, 255, 255, 0.10)',
+                        fill: true,
+                        tension: 0,
+                        pointRadius: rayonsPoints,
+                        pointBackgroundColor: tokenCouleur('--accent', '#e0824f'),
+                        pointBorderWidth: 0,
+                        pointHoverRadius: 4,
+                        pointHoverBackgroundColor: tokenCouleur('--accent', '#e0824f'),
+                        borderWidth: 2,
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: function (items) { return items[0].label; },
+                                label: function (item) { return item.formattedValue + ' FCFA'; },
+                            },
+                        },
+                    },
+                    scales: {
+                        x: { display: false },
+                        y: {
+                            display: true,
+                            beginAtZero: true,
+                            ticks: { display: false, maxTicksLimit: 3 },
+                            grid: { color: 'rgba(255, 255, 255, 0.14)', drawTicks: false },
+                            border: { display: false, dash: [2, 4] },
+                        },
+                    },
+                },
+            });
+        }
+
+        var scriptChartJs = document.createElement('script');
+        scriptChartJs.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js';
+        scriptChartJs.integrity = 'sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC';
+        scriptChartJs.crossOrigin = 'anonymous';
+        scriptChartJs.onload = demarrerGrapheTendance;
+        scriptChartJs.onerror = function () {
+            var message = document.createElement('p');
+            message.className = 'empty';
+            message.textContent = 'Graphique indisponible (bibliothèque non chargée).';
+            canevas.replaceWith(message);
+        };
+        document.body.appendChild(scriptChartJs);
+    })();
+</script>
 
 {% endblock %}

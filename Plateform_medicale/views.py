@@ -362,6 +362,8 @@ def dashboard(request):
         User.objects.exclude(role=User.Role.ASSURE).order_by("-date_joined")[:5]
     )
 
+    tendance_paiements = _montants_regles_par_jour()
+
     contexte = {
         "total_patients": Patient.objects.count(),
         "total_medecins": Medecin.objects.count(),
@@ -375,6 +377,7 @@ def dashboard(request):
         "montant_regle_7j": montant_regle_7j,
         "montant_non_regle": montant_non_regle,
         "taux_reglement": taux_reglement,
+        "tendance_paiements": tendance_paiements,
         "consultations_7j": consultations_7j,
         "ordonnances_7j": ordonnances_7j,
         "total_comptes_actifs": User.objects.filter(is_active=True).count(),
@@ -430,6 +433,28 @@ def _consultations_par_jour(nombre_jours=30, queryset=None):
         .annotate(total=Count("id"))
     )
     totaux_par_cle = {c["jour"]: c["total"] for c in comptages if c["jour"]}
+
+    return {
+        "labels": [jour.strftime("%d/%m") for jour in jours_reference],
+        "totaux": [totaux_par_cle.get(jour, 0) for jour in jours_reference],
+    }
+
+
+def _montants_regles_par_jour(nombre_jours=30):
+    """Montant total regle (Paiement.montant_part_patient) par jour, sur les
+    `nombre_jours` derniers jours (jour courant inclus) -- meme forme que
+    _consultations_par_jour, sur Paiement.date_reglement plutot que
+    Consultation.date_consultation."""
+    aujourd_hui = timezone.now().date()
+    jours_reference = [aujourd_hui - datetime.timedelta(days=delta) for delta in range(nombre_jours - 1, -1, -1)]
+
+    montants = (
+        Paiement.objects.filter(statut=Paiement.Statut.REGLE)
+        .annotate(jour=TruncDate("date_reglement"))
+        .values("jour")
+        .annotate(total=Sum("montant_part_patient"))
+    )
+    totaux_par_cle = {m["jour"]: m["total"] for m in montants if m["jour"]}
 
     return {
         "labels": [jour.strftime("%d/%m") for jour in jours_reference],
