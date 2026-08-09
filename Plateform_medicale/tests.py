@@ -445,6 +445,23 @@ class DashboardAdminTests(TestCase):
         self.assertEqual(response.context['jours_attente_max'], 12)
         self.assertContains(response, 'la plus ancienne : 12 j')
 
+    def test_tuiles_hero_et_kpi_portent_un_aria_label_libelle_avant_valeur(self):
+        medecin = creer_medecin('medecin@santesn.sn')
+        patient = creer_patient()
+        service = ServiceMedical.objects.create(nom='Consultation', prix=Decimal('5000'))
+
+        consultation_non_reglee = Consultation.objects.create(
+            patient=patient, medecin=medecin, service=service,
+            date_consultation=timezone.now(), diagnostic='Test',
+        )
+        Paiement.calculer_pour(consultation_non_reglee).save()
+
+        response = self.client.get(reverse('dashboard'))
+        self.assertContains(response, 'aria-label="Paiements réglés : 0\xa0FCFA"')
+        self.assertContains(response, 'aria-label="En attente de règlement : 5\xa0000\xa0FCFA"')
+        self.assertContains(response, 'aria-label="Assurés gérés : 1"')
+        self.assertContains(response, 'aria-label="Consultations : 1, plus 1 sur les 7 derniers jours"')
+
     def test_derniers_comptes_et_derniers_prestataires(self):
         creer_medecin('nouveau.medecin@santesn.sn')
         Prestataire.objects.create(nom='Nouvelle clinique', type_prestataire='CLINIQUE', partenaire=True)

@@ -31,19 +31,19 @@
             <path d="M0,42 L30,42 L36,42 L41,18 L46,60 L51,30 L57,42 L95,42 L101,42 L106,18 L111,60 L117,30 L123,42 L160,42 L166,42 L171,18 L176,60 L182,30 L188,42 L220,42"/>
         </svg>
         <div class="dash-hero-row">
-            <a class="dash-hero-lien dash-hero-lien-principal" href="{% url 'liste_paiements' %}?statut=regle">
+            <a class="dash-hero-lien dash-hero-lien-principal" href="{% url 'liste_paiements' %}?statut=regle" aria-label="Paiements réglés : {{ montant_regle|franc_cfa }}{% if montant_regle_7j %}, plus {{ montant_regle_7j|franc_cfa }} ces 7 derniers jours{% endif %}">
                 <span class="dash-hero-icon">{% icone "receipt" %}</span>
                 <strong class="code">{{ montant_regle|franc_cfa }}</strong>
                 {% if montant_regle_7j %}<span class="dc-hero-delta">&#9650; +{{ montant_regle_7j|franc_cfa }} ces 7 derniers jours</span>{% endif %}
                 <span>Paiements réglés</span>
             </a>
             <div class="dash-hero-secondaires">
-                <a class="dash-hero-lien dash-hero-lien-secondaire" href="{% url 'liste_paiements' %}?statut=non_regle">
+                <a class="dash-hero-lien dash-hero-lien-secondaire" href="{% url 'liste_paiements' %}?statut=non_regle" aria-label="En attente de règlement : {{ montant_non_regle|franc_cfa }}">
                     <span class="dash-hero-icon">{% icone "clock-history" %}</span>
                     <strong class="code">{{ montant_non_regle|franc_cfa }}</strong>
                     <span>En attente de règlement</span>
                 </a>
-                <a class="dash-hero-lien dash-hero-lien-secondaire" href="{% url 'rapports' %}">
+                <a class="dash-hero-lien dash-hero-lien-secondaire" href="{% url 'rapports' %}" aria-label="Taux de règlement : {% if taux_reglement is not None %}{{ taux_reglement }}%{% else %}non disponible{% endif %}">
                     <span class="dash-hero-icon">{% icone "shield-check" %}</span>
                     <strong class="code">{% if taux_reglement is not None %}{{ taux_reglement }}%{% else %}—{% endif %}</strong>
                     <span>Taux de règlement</span>
@@ -58,33 +58,33 @@
 </section>
 
 <section class="dash-grid" style="margin-top:20px;">
-    <a class="dash-stat" href="{% url 'liste_patients' %}">
+    <a class="dash-stat" href="{% url 'liste_patients' %}" aria-label="Assurés gérés : {{ total_patients }}">
         <span class="dash-stat-icon">{% icone "id-card" %}</span>
         <strong class="code">{{ total_patients }}</strong>
         <span>Assurés gérés</span>
     </a>
-    <a class="dash-stat" href="{% url 'liste_medecins' %}">
+    <a class="dash-stat" href="{% url 'liste_medecins' %}" aria-label="Médecins actifs : {{ total_medecins }}">
         <span class="dash-stat-icon">{% icone "stethoscope" %}</span>
         <strong class="code">{{ total_medecins }}</strong>
         <span>Médecins actifs</span>
     </a>
-    <a class="dash-stat" href="{% url 'liste_pharmaciens' %}">
+    <a class="dash-stat" href="{% url 'liste_pharmaciens' %}" aria-label="Pharmaciens actifs : {{ total_pharmaciens }}">
         <span class="dash-stat-icon">{% icone "pill" %}</span>
         <strong class="code">{{ total_pharmaciens }}</strong>
         <span>Pharmaciens actifs</span>
     </a>
-    <a class="dash-stat" href="{% url 'liste_prestataires' %}">
+    <a class="dash-stat" href="{% url 'liste_prestataires' %}" aria-label="Prestataires partenaires : {{ total_prestataires }}">
         <span class="dash-stat-icon">{% icone "building" %}</span>
         <strong class="code">{{ total_prestataires }}</strong>
         <span>Prestataires partenaires</span>
     </a>
-    <a class="dash-stat" href="{% url 'rapports' %}">
+    <a class="dash-stat" href="{% url 'rapports' %}" aria-label="Consultations : {{ total_consultations }}{% if consultations_7j %}, plus {{ consultations_7j }} sur les 7 derniers jours{% endif %}">
         <span class="dash-stat-icon">{% icone "clipboard-list" %}</span>
         <strong class="code">{{ total_consultations }}</strong>
         <span>Consultations</span>
         {% if consultations_7j %}<span class="dc-kpi-delta">+{{ consultations_7j }} (7j)</span>{% endif %}
     </a>
-    <a class="dash-stat" href="{% url 'rapports' %}">
+    <a class="dash-stat" href="{% url 'rapports' %}" aria-label="Ordonnances émises : {{ total_ordonnances }}{% if ordonnances_7j %}, plus {{ ordonnances_7j }} sur les 7 derniers jours{% endif %}">
         <span class="dash-stat-icon">{% icone "qr-scan" %}</span>
         <strong class="code">{{ total_ordonnances }}</strong>
         <span>Ordonnances émises</span>
