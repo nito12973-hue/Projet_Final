@@ -1652,9 +1652,16 @@
             color: var(--primary-accent);
         }
 
+        /* Bordure renforcee (0.09 -> 0.16 d'opacite) : le contour des
+           cartes se distinguait mal du degrade de fond du canevas,
+           notamment visible sur "Actions rapides" a cote de "Comptes et
+           gouvernance" (mise en page correcte -- verifie via
+           getComputedStyle, hauteurs bien differentes -- mais limite de
+           carte peu perceptible a l'oeil). Touche toutes les cartes du
+           canevas de facon uniforme, pas un correctif cible. */
         .dash-command .panel {
             background: var(--dc-hover);
-            border-color: var(--dc-border);
+            border-color: rgba(255, 255, 255, 0.16);
             box-shadow: none;
             color: var(--dc-text);
         }
