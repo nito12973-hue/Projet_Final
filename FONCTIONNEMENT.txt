@@ -468,6 +468,32 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
                           n'a de champ de date de creation exploitable, en
                           ajouter un demanderait une migration, hors
                           perimetre d'une refonte visuelle.
+                          Septieme passe (audit cible post-A+, 2026-08-08) :
+                          4 corrections independantes sur le meme ecran,
+                          aucune n'a touche modeles/routes/permissions.
+                          jours_attente_max (PriseEnCharge.date_demande de
+                          la plus ancienne en_attente, meme champ indexe que
+                          le tri de liste_prises_en_charge) s'affiche entre
+                          parentheses dans le bandeau .dc-status des qu'il y
+                          a au moins une prise en charge en attente -- aucun
+                          seuil d'urgence invente, le fait est affiche, pas
+                          un jugement. Lisere terracotta des tuiles KPI
+                          deplace des tuiles 5/6 (Consultations, Ordonnances
+                          -- les 2 seules a porter un delta 7j reel) au lieu
+                          de la tuile 3 (Pharmaciens), qui n'avait aucun
+                          lien avec la donnee (choisie a l'origine pour la
+                          seule variete visuelle). Chart.js du sparkline
+                          charge desormais a la demande
+                          (document.createElement('script'), meme pattern
+                          que rapports.html) au lieu d'un <script src>
+                          statique. aria-label ajoute sur les 3 liens hero
+                          et les 6 tuiles KPI ("Libelle : valeur[, plus
+                          delta]") : la valeur precedait son libelle dans le
+                          DOM, un lecteur d'ecran l'annoncait avant de
+                          savoir ce qu'elle represente -- hierarchie
+                          visuelle inchangee, uniquement l'ordre percu par
+                          une technologie d'assistance. 2 nouveaux tests
+                          dans DashboardAdminTests.
   rapports / exporter_rapports_excel / exporter_rapports_pdf
                                       _donnees_rapports() est la SEULE
                                       source de donnees, partagee par la
