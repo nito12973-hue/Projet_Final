@@ -125,34 +125,6 @@
 <section class="dc-digests">
     <article class="panel">
         <div class="panel-header">
-            <h2>Derniers assurés</h2>
-            <a class="button" href="{% url 'liste_patients' %}">Voir tout</a>
-        </div>
-        {% if derniers_patients %}
-        <div class="dc-list">
-            {% for patient in derniers_patients %}
-            <a class="dc-row" href="{% url 'modifier_patient' patient.pk %}">
-                <span class="dc-avatar" aria-hidden="true">{{ patient.prenom|slice:":1"|upper }}{{ patient.nom|slice:":1"|upper }}</span>
-                <span class="dc-meta">
-                    <span class="dc-name">{{ patient.prenom }} {{ patient.nom }}</span>
-                    <span class="dc-sub">{{ patient.get_type_beneficiaire_display }} · {{ patient.telephone|default:"-" }}</span>
-                </span>
-            </a>
-            {% endfor %}
-        </div>
-        {% else %}
-        <div class="etat-vide">
-            {% illustration_vide "id-card" %}
-            <p>Aucun assuré enregistré.</p>
-            <div class="actions">
-                <a class="button primary" href="{% url 'ajouter_patient' %}">Ajouter un assuré</a>
-            </div>
-        </div>
-        {% endif %}
-    </article>
-
-    <article class="panel">
-        <div class="panel-header">
             <h2>Suivi des prises en charge</h2>
             <a class="button" href="{% url 'liste_prises_en_charge' %}">Voir tout</a>
         </div>
@@ -207,33 +179,6 @@
         {% endif %}
     </article>
 
-    <article class="panel">
-        <div class="panel-header">
-            <h2>Derniers prestataires ajoutés</h2>
-            <a class="button" href="{% url 'liste_prestataires' %}">Voir tout</a>
-        </div>
-        {% if derniers_prestataires %}
-        <div class="dc-list">
-            {% for prestataire in derniers_prestataires %}
-            <a class="dc-row" href="{% url 'modifier_prestataire' prestataire.pk %}">
-                <span class="dc-avatar" aria-hidden="true">{{ prestataire.nom|slice:":2"|upper }}</span>
-                <span class="dc-meta">
-                    <span class="dc-name">{{ prestataire.nom }}</span>
-                    <span class="dc-sub">{{ prestataire.get_type_prestataire_display }} · {{ prestataire.ville|default:"-" }}</span>
-                </span>
-            </a>
-            {% endfor %}
-        </div>
-        {% else %}
-        <div class="etat-vide">
-            {% illustration_vide "building" %}
-            <p>Aucun prestataire enregistré.</p>
-            <div class="actions">
-                <a class="button primary" href="{% url 'ajouter_prestataire' %}">Ajouter un prestataire</a>
-            </div>
-        </div>
-        {% endif %}
-    </article>
 </section>
 
 <section class="panel" style="margin-top:20px;padding:22px 24px;">

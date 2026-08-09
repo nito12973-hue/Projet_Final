@@ -291,7 +291,6 @@ def sitemap_xml(request):
 @admin_required
 def dashboard(request):
     dernieres_prises_en_charge = PriseEnCharge.objects.select_related("patient").order_by("-date_demande")[:5]
-    derniers_patients = Patient.objects.order_by("-id")[:5]
 
     # Bandeau financier : meme agregat que liste_paiements (Sum filtre par
     # statut), pour un signal de sante financiere absent jusqu'ici du
@@ -370,7 +369,6 @@ def dashboard(request):
     derniers_comptes = (
         User.objects.exclude(role=User.Role.ASSURE).order_by("-date_joined")[:5]
     )
-    derniers_prestataires = Prestataire.objects.order_by("-id")[:5]
 
     contexte = {
         "total_patients": Patient.objects.count(),
@@ -392,9 +390,7 @@ def dashboard(request):
         "total_rendez_vous_aujourd_hui": total_rendez_vous_aujourd_hui,
         "total_consultations_aujourd_hui": total_consultations_aujourd_hui,
         "dernieres_prises_en_charge": dernieres_prises_en_charge,
-        "derniers_patients": derniers_patients,
         "derniers_comptes": derniers_comptes,
-        "derniers_prestataires": derniers_prestataires,
         "prestataires_carte": prestataires_carte,
     }
     return render(request, "dashboard.html", contexte)
