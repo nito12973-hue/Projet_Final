@@ -548,7 +548,7 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
                           de carte peu perceptible). Sparkline de tendance
                           reintroduit dans le hero, cette fois cible sur les
                           paiements regles (meme mecanique qu'avant son
-                          retrait a la septieme passe, mais sujet aligne
+                          retrait a la huitieme passe, mais sujet aligne
                           avec la carte qui le contient au lieu d'un chiffre
                           clinique dans une carte financiere) --
                           _montants_regles_par_jour() calque sur
