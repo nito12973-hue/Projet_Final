@@ -568,6 +568,13 @@ class DashboardAdminTests(TestCase):
         self.assertEqual(response.context['consultations_7j'], 0)
         self.assertEqual(response.context['ordonnances_7j'], 0)
 
+    def test_nav_admin_a_des_separateurs_de_section(self):
+        response = self.client.get(reverse('dashboard'))
+        self.assertContains(response, 'class="nav-section"')
+        self.assertContains(response, '>Gestion<')
+        self.assertContains(response, '>Opérations<')
+        self.assertContains(response, '>Système<')
+
 
 class GestionUtilisateursTests(TestCase):
     def setUp(self):
