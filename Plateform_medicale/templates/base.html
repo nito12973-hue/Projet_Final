@@ -1657,8 +1657,11 @@
            notamment visible sur "Actions rapides" a cote de "Comptes et
            gouvernance" (mise en page correcte -- verifie via
            getComputedStyle, hauteurs bien differentes -- mais limite de
-           carte peu perceptible a l'oeil). Touche toutes les cartes du
-           canevas de facon uniforme, pas un correctif cible. */
+           carte peu perceptible a l'oeil). Touche toutes les cartes
+           .panel du canevas (Actions rapides, Comptes et gouvernance, les
+           2 digests) de facon uniforme -- les tuiles KPI (.dash-stat)
+           restent volontairement a l'ecart, deja ancrees par leur lisere
+           de couleur en tete (voir plus haut), pas un oubli. */
         .dash-command .panel {
             background: var(--dc-hover);
             border-color: rgba(255, 255, 255, 0.16);
