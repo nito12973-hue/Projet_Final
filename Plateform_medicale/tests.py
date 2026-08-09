@@ -389,21 +389,6 @@ class DashboardAdminTests(TestCase):
         self.assertContains(response, f'href="{reverse("liste_utilisateurs")}?statut=actif"')
         self.assertContains(response, f'href="{reverse("liste_utilisateurs")}?statut=inactif"')
 
-
-    def test_carte_reseau_ignore_les_prestataires_sans_coordonnees(self):
-        Prestataire.objects.create(nom='Sans coordonnees', type_prestataire='HOPITAL', partenaire=True)
-        Prestataire.objects.create(
-            nom='Avec coordonnees', type_prestataire='HOPITAL', partenaire=True,
-            latitude=Decimal('14.6928'), longitude=Decimal('-17.4467'),
-        )
-        response = self.client.get(reverse('dashboard'))
-        self.assertEqual(len(response.context['prestataires_carte']), 1)
-        self.assertContains(response, 'carte-reseau-admin')
-
-    def test_carte_reseau_etat_vide_sans_prestataire_geolocalise(self):
-        response = self.client.get(reverse('dashboard'))
-        self.assertContains(response, 'Aucun prestataire partenaire géolocalisé')
-
     def test_aujourd_hui_ne_compte_que_les_rendez_vous_et_consultations_du_jour(self):
         medecin = creer_medecin('medecin@santesn.sn')
         patient = creer_patient()
@@ -1631,6 +1616,30 @@ class AdminPrestatairesTests(TestCase):
         response = self.client.get(reverse('liste_prestataires'), {'localisation': 'avec'})
         noms = [prestataire.nom for prestataire in response.context['prestataires']]
         self.assertEqual(noms, ['Avec position'])
+
+    def test_carte_reseau_ignore_les_prestataires_sans_coordonnees(self):
+        Prestataire.objects.create(nom='Sans coordonnees', type_prestataire='HOPITAL', partenaire=True)
+        Prestataire.objects.create(
+            nom='Avec coordonnees', type_prestataire='HOPITAL', partenaire=True,
+            latitude=Decimal('14.6928'), longitude=Decimal('-17.4467'),
+        )
+        response = self.client.get(reverse('liste_prestataires'))
+        self.assertEqual(len(response.context['prestataires_carte']), 1)
+        self.assertContains(response, 'carte-reseau-admin')
+
+    def test_pas_de_carte_sans_prestataire_geolocalise(self):
+        response = self.client.get(reverse('liste_prestataires'))
+        self.assertNotContains(response, 'carte-reseau-admin')
+
+    def test_liste_prestataires_triable_par_numero(self):
+        ancien = Prestataire.objects.create(nom='Ancien', type_prestataire='HOPITAL')
+        recent = Prestataire.objects.create(nom='Recent', type_prestataire='HOPITAL')
+
+        response = self.client.get(reverse('liste_prestataires'), {'tri': '-id'})
+        prestataires = list(response.context['prestataires'])
+        self.assertEqual(prestataires[0].pk, recent.pk)
+        self.assertEqual(prestataires[1].pk, ancien.pk)
+        self.assertContains(response, '?tri=id')
 
 
 def _reponse_nominatim(payload):

@@ -305,13 +305,6 @@ def dashboard(request):
     montant_total_paiements = montant_regle + montant_non_regle
     taux_reglement = round((montant_regle / montant_total_paiements) * 100) if montant_total_paiements else None
 
-    # Reseau de partenaires geolocalises, pour la carte du dashboard : seuls
-    # les champs necessaires au rendu (pas d'instances completes).
-    prestataires_carte = list(
-        Prestataire.objects.filter(partenaire=True, latitude__isnull=False, longitude__isnull=False)
-        .values("nom", "type_prestataire", "ville", "latitude", "longitude")
-    )
-
     # Activite du jour, plateforme entiere (pas un seul medecin) : pouls de
     # l'activite absent jusqu'ici, seuls des totaux globaux sans notion de
     # temps etaient affiches.
@@ -391,7 +384,6 @@ def dashboard(request):
         "total_consultations_aujourd_hui": total_consultations_aujourd_hui,
         "dernieres_prises_en_charge": dernieres_prises_en_charge,
         "derniers_comptes": derniers_comptes,
-        "prestataires_carte": prestataires_carte,
     }
     return render(request, "dashboard.html", contexte)
 
@@ -907,12 +899,20 @@ def liste_prestataires(request):
         )
 
     prestataires = _trier(
-        request, prestataires, ["nom", "type_prestataire", "ville", "partenaire"], "nom",
+        request, prestataires, ["id", "nom", "type_prestataire", "ville", "partenaire"], "nom",
+    )
+
+    # Reseau de partenaires geolocalises, pour la carte (deplacee ici
+    # depuis le dashboard admin) : seuls les champs necessaires au rendu.
+    prestataires_carte = list(
+        Prestataire.objects.filter(partenaire=True, latitude__isnull=False, longitude__isnull=False)
+        .values("nom", "type_prestataire", "ville", "latitude", "longitude")
     )
 
     contexte = {
         "prestataires": _paginer(request, prestataires),
         "localisation_choisie": localisation,
+        "prestataires_carte": prestataires_carte,
     }
     return render(request, "liste_prestataires.html", contexte)
 
