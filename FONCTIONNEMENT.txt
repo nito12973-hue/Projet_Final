@@ -294,7 +294,9 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
                           construction des popups via textContent -- jamais
                           de concatenation de chaines HTML --,
                           scrollWheelZoom desactive car widget dans une
-                          page qui defile).
+                          page qui defile -- carte deplacee vers
+                          liste_prestataires.html a la huitieme passe
+                          ci-dessous, ne plus la chercher ici).
                           Deuxieme passe (meme module, audit approfondi) :
                           panel "Aujourd'hui" (rendez-vous + consultations
                           du jour, plateforme entiere -- pas un seul
@@ -389,7 +391,8 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
                           l'application (var(--accent-turquoise-wash) au
                           lieu d'un ancien #f3fbfa code en dur), pas
                           seulement le dashboard admin.
-                          Legende de la carte reseau (#carte-reseau-admin) :
+                          Legende de la carte reseau (#carte-reseau-admin,
+                          alors affichee sur le dashboard admin) :
                           composant dedie .legende-type/.legende-puce (pas
                           une reutilisation de .dash-pill -- premiere
                           version en revue reutilisait .dash-pill.ok/
@@ -398,8 +401,12 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
                           des 4 couleurs reelles des marqueurs Leaflet
                           [COULEURS_TYPE] et entraient en collision
                           semantique avec les memes classes deja utilisees
-                          pour les badges de statut des prises en charge
-                          sur le meme ecran -- corrige en revue de tache).
+                          pour les badges de statut des prises en charge,
+                          alors sur le meme ecran -- corrige en revue de
+                          tache. Carte et legende (meme id, memes classes)
+                          deplacees vers liste_prestataires.html a la
+                          huitieme passe ci-dessous ; ne plus les chercher
+                          sur le dashboard.
                           Barre laterale (branche ADMIN de base.html
                           uniquement) : 2 entrees ajoutees (Services
                           medicaux, Plans de couverture -- ecrans qui
@@ -495,6 +502,37 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
                           visuelle inchangee, uniquement l'ordre percu par
                           une technologie d'assistance. 2 nouveaux tests
                           dans DashboardAdminTests.
+                          Huitieme passe (decongestion "moins mais mieux",
+                          2026-08-09) : audit complet du dashboard admin,
+                          classement de chaque element (ESSENTIEL / UTILE
+                          MAIS SECONDAIRE / REDONDANT), rien retire sans
+                          deplacer la capacite si elle etait reelle et
+                          unique. Sparkline "Consultations 30j" du hero
+                          retire (redondant avec le graphique complet de
+                          rapports.html, melange thematique dans une carte
+                          financiere) -- dashboard.html ne charge plus
+                          Chart.js. Paragraphe de .governance-card
+                          raccourci a une phrase. Digests "Derniers
+                          assures"/"Derniers prestataires ajoutes" retires
+                          du dashboard (restent "Suivi des prises en
+                          charge" et "Derniers comptes crees", les deux
+                          seuls a porter une urgence ou un angle
+                          gouvernance) ; leur capacite ("voir les plus
+                          recents") deplacee vers liste_patients/
+                          liste_prestataires via une colonne "N" triable
+                          (_trier() accepte deja une liste blanche de
+                          champs, "id" ajoute aux deux) -- ni Patient ni
+                          Prestataire n'a de champ date de creation, "id"
+                          est le meme proxy de recence que le dashboard
+                          utilisait deja en interne. Carte reseau (Leaflet)
+                          deplacee de dashboard.html vers
+                          liste_prestataires.html (contexte plus naturel,
+                          a cote de la liste qu'elle illustre) --
+                          dashboard.html ne charge plus non plus Leaflet.
+                          Nav admin (12 entrees a plat) : 3 separateurs
+                          visuels .nav-section (Gestion/Operations/
+                          Systeme), masques en sidebar reduite -- aucune
+                          URL/libelle/route modifie.
   rapports / exporter_rapports_excel / exporter_rapports_pdf
                                       _donnees_rapports() est la SEULE
                                       source de donnees, partagee par la
