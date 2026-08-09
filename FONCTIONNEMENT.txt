@@ -533,6 +533,29 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
                           visuels .nav-section (Gestion/Operations/
                           Systeme), masques en sidebar reduite -- aucune
                           URL/libelle/route modifie.
+                          Neuvieme passe (graphique paiements + contraste
+                          cartes, 2026-08-09) : audit du dashboard une fois
+                          decongeste (huitieme passe) contre les principes
+                          generaux d'un dashboard SaaS dense-mais-lisible
+                          (reference Figma citee par l'utilisateur
+                          inaccessible -- 403 -- principes generaux utilises
+                          a la place, avec accord explicite). Deux ecarts
+                          reels trouves : aucune page de l'appli ne montrait
+                          l'evolution des paiements dans le temps (Rapports
+                          n'en a jamais couvert) ; contraste de bordure des
+                          cartes insuffisant sur le canevas sombre (mesure
+                          getComputedStyle : mise en page correcte, limite
+                          de carte peu perceptible). Sparkline de tendance
+                          reintroduit dans le hero, cette fois cible sur les
+                          paiements regles (meme mecanique qu'avant son
+                          retrait a la septieme passe, mais sujet aligne
+                          avec la carte qui le contient au lieu d'un chiffre
+                          clinique dans une carte financiere) --
+                          _montants_regles_par_jour() calque sur
+                          _consultations_par_jour(), aucune migration.
+                          .dash-command .panel : bordure 0.09 -> 0.16
+                          d'opacite, uniforme sur toutes les cartes du
+                          canevas.
   rapports / exporter_rapports_excel / exporter_rapports_pdf
                                       _donnees_rapports() est la SEULE
                                       source de donnees, partagee par la
