@@ -112,10 +112,12 @@
     </details>
 </section>
 
-{# Modele clone par signalerGraphiqueIndisponible() : meme composant .etat-vide
-   (icone + texte) que le reste de l'application, plutot qu'un <p class="empty">
-   texte seul -- illustration_vide est un tag serveur, un <template> est le
-   moyen le plus simple de mettre son rendu a disposition du JS. #}
+{% comment %}
+Modele clone par signalerGraphiqueIndisponible() : meme composant .etat-vide
+(icone + texte) que le reste de l'application, plutot qu'un <p class="empty">
+texte seul -- illustration_vide est un tag serveur, un <template> est le
+moyen le plus simple de mettre son rendu a disposition du JS.
+{% endcomment %}
 <template id="modele-graphique-indisponible">
     <div class="etat-vide">
         {% illustration_vide "bar-chart" %}
