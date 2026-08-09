@@ -616,7 +616,7 @@ def liste_patients(request):
 
     patients = _trier(
         request, patients,
-        ["nom", "type_beneficiaire", "assure_principal__nom", "numero_carte", "plan_couverture__nom"],
+        ["id", "nom", "type_beneficiaire", "assure_principal__nom", "numero_carte", "plan_couverture__nom"],
         ["nom", "prenom"],
     )
 
