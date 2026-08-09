@@ -271,92 +271,102 @@
 {{ tendance_consultations|json_script:"donnees-tendance-consultations" }}
 {{ prestataires_carte|json_script:"donnees-prestataires-carte" }}
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"
-        integrity="sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC"
-        crossorigin="anonymous"></script>
 <script>
     (function () {
         // Mini-graphique de tendance : version compacte du graphique de
         // rapports.html (memes tokens de couleur, meme repli si Chart.js
         // indisponible), sans axes ni legende pour rester lisible en petit.
+        // Chart.js (~200 Ko) charge a la demande via JS plutot qu'un
+        // <script src> statique : meme raisonnement que rapports.html
+        // (seule page a en avoir besoin, ne doit pas concurrencer le reste
+        // de la page pour la bande passante).
         var canevas = document.getElementById('graphe-tendance-consultations');
         if (!canevas) { return; }
-
-        if (typeof Chart === 'undefined') {
-            var message = document.createElement('p');
-            message.className = 'empty';
-            message.textContent = 'Graphique indisponible (bibliothèque non chargée).';
-            canevas.replaceWith(message);
-            return;
-        }
-
-        var element = document.getElementById('donnees-tendance-consultations');
-        var donnees = element ? JSON.parse(element.textContent) : { labels: [], totaux: [] };
-        if (!donnees.totaux.some(function (total) { return total > 0; })) {
-            var vide = document.createElement('p');
-            vide.className = 'empty';
-            vide.textContent = 'Aucune consultation sur les 30 derniers jours.';
-            canevas.replaceWith(vide);
-            return;
-        }
 
         function tokenCouleur(nom, repli) {
             var valeur = getComputedStyle(document.documentElement).getPropertyValue(nom).trim();
             return valeur || repli;
         }
 
-        // Trace "pouls" : segments anguleux (tension 0, pas de courbe lissee)
-        // et couleur terracotta -- reprend l'usage deja documente de --accent
-        // ("ligne de battement de coeur du logo sur fond sombre", CLAUDE.md),
-        // applique ici au graphique plutot qu'au logo. Dernier point mis en
-        // evidence (rayon fixe, pas seulement au survol) : c'est la valeur
-        // du jour, le repere le plus utile sur une tendance 30 jours.
-        var rayonsPoints = donnees.totaux.map(function (_, index) {
-            return index === donnees.totaux.length - 1 ? 4 : 0;
-        });
+        function demarrerGrapheTendance() {
+            var element = document.getElementById('donnees-tendance-consultations');
+            var donnees = element ? JSON.parse(element.textContent) : { labels: [], totaux: [] };
+            if (!donnees.totaux.some(function (total) { return total > 0; })) {
+                var vide = document.createElement('p');
+                vide.className = 'empty';
+                vide.textContent = 'Aucune consultation sur les 30 derniers jours.';
+                canevas.replaceWith(vide);
+                return;
+            }
 
-        new Chart(canevas, {
-            type: 'line',
-            data: {
-                labels: donnees.labels,
-                datasets: [{
-                    data: donnees.totaux,
-                    borderColor: tokenCouleur('--accent', '#e0824f'),
-                    backgroundColor: 'rgba(255, 255, 255, 0.10)',
-                    fill: true,
-                    tension: 0,
-                    pointRadius: rayonsPoints,
-                    pointBackgroundColor: tokenCouleur('--accent', '#e0824f'),
-                    pointBorderWidth: 0,
-                    pointHoverRadius: 4,
-                    pointHoverBackgroundColor: tokenCouleur('--accent', '#e0824f'),
-                    borderWidth: 2,
-                }],
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: { callbacks: { title: function (items) { return items[0].label; } } },
+            // Trace "pouls" : segments anguleux (tension 0, pas de courbe
+            // lissee) et couleur terracotta -- reprend l'usage deja
+            // documente de --accent ("ligne de battement de coeur du logo
+            // sur fond sombre", CLAUDE.md), applique ici au graphique
+            // plutot qu'au logo. Dernier point mis en evidence (rayon fixe,
+            // pas seulement au survol) : c'est la valeur du jour, le
+            // repere le plus utile sur une tendance 30 jours.
+            var rayonsPoints = donnees.totaux.map(function (_, index) {
+                return index === donnees.totaux.length - 1 ? 4 : 0;
+            });
+
+            new Chart(canevas, {
+                type: 'line',
+                data: {
+                    labels: donnees.labels,
+                    datasets: [{
+                        data: donnees.totaux,
+                        borderColor: tokenCouleur('--accent', '#e0824f'),
+                        backgroundColor: 'rgba(255, 255, 255, 0.10)',
+                        fill: true,
+                        tension: 0,
+                        pointRadius: rayonsPoints,
+                        pointBackgroundColor: tokenCouleur('--accent', '#e0824f'),
+                        pointBorderWidth: 0,
+                        pointHoverRadius: 4,
+                        pointHoverBackgroundColor: tokenCouleur('--accent', '#e0824f'),
+                        borderWidth: 2,
+                    }],
                 },
-                scales: {
-                    x: { display: false },
-                    y: {
-                        display: true,
-                        beginAtZero: true,
-                        ticks: { display: false, maxTicksLimit: 3 },
-                        // Chart.js 4 : le pointille des lignes de grille se
-                        // configure via scales.y.border.dash (pas
-                        // grid.borderDash, retire depuis la v4) -- s'applique
-                        // meme avec border.display:false (verifie sur la
-                        // doc/discussion officielle du projet).
-                        grid: { color: 'rgba(255, 255, 255, 0.14)', drawTicks: false },
-                        border: { display: false, dash: [2, 4] },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { title: function (items) { return items[0].label; } } },
+                    },
+                    scales: {
+                        x: { display: false },
+                        y: {
+                            display: true,
+                            beginAtZero: true,
+                            ticks: { display: false, maxTicksLimit: 3 },
+                            // Chart.js 4 : le pointille des lignes de grille
+                            // se configure via scales.y.border.dash (pas
+                            // grid.borderDash, retire depuis la v4) --
+                            // s'applique meme avec border.display:false
+                            // (verifie sur la doc/discussion officielle du
+                            // projet).
+                            grid: { color: 'rgba(255, 255, 255, 0.14)', drawTicks: false },
+                            border: { display: false, dash: [2, 4] },
+                        },
                     },
                 },
-            },
-        });
+            });
+        }
+
+        var scriptChartJs = document.createElement('script');
+        scriptChartJs.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js';
+        scriptChartJs.integrity = 'sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC';
+        scriptChartJs.crossOrigin = 'anonymous';
+        scriptChartJs.onload = demarrerGrapheTendance;
+        scriptChartJs.onerror = function () {
+            var message = document.createElement('p');
+            message.className = 'empty';
+            message.textContent = 'Graphique indisponible (bibliothèque non chargée).';
+            canevas.replaceWith(message);
+        };
+        document.body.appendChild(scriptChartJs);
     })();
 </script>
 
