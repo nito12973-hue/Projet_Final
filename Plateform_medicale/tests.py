@@ -503,6 +503,26 @@ class DashboardAdminTests(TestCase):
         self.assertEqual(response.context['montant_regle_7j'], Decimal('10000'))
         self.assertContains(response, 'class="dc-hero-delta"')
 
+    def test_dashboard_inclut_la_tendance_des_paiements_regles(self):
+        medecin = creer_medecin('medecin@santesn.sn')
+        patient = creer_patient()
+        service = ServiceMedical.objects.create(nom='Consultation', prix=Decimal('8000'))
+        consultation = Consultation.objects.create(
+            patient=patient, medecin=medecin, service=service,
+            date_consultation=timezone.now(), diagnostic='Test',
+        )
+        paiement = Paiement.calculer_pour(consultation)
+        paiement.statut = Paiement.Statut.REGLE
+        paiement.date_reglement = timezone.now()
+        paiement.save()
+
+        response = self.client.get(reverse('dashboard'))
+        donnees = response.context['tendance_paiements']
+        self.assertEqual(len(donnees['labels']), 30)
+        self.assertEqual(len(donnees['totaux']), 30)
+        self.assertEqual(donnees['totaux'][-1], Decimal('8000'))
+        self.assertContains(response, 'graphe-tendance-paiements')
+
     def test_hero_paiements_ignore_les_reglements_hors_7_jours(self):
         medecin = creer_medecin('medecin@santesn.sn')
         patient = creer_patient()
