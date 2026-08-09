@@ -510,8 +510,10 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
                           unique. Sparkline "Consultations 30j" du hero
                           retire (redondant avec le graphique complet de
                           rapports.html, melange thematique dans une carte
-                          financiere) -- dashboard.html ne charge plus
-                          Chart.js. Paragraphe de .governance-card
+                          financiere) -- dashboard.html ne chargeait alors
+                          plus Chart.js (de retour a la neuvieme passe
+                          ci-dessous, pour un graphique different).
+                          Paragraphe de .governance-card
                           raccourci a une phrase. Digests "Derniers
                           assures"/"Derniers prestataires ajoutes" retires
                           du dashboard (restent "Suivi des prises en
@@ -554,8 +556,9 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
                           _montants_regles_par_jour() calque sur
                           _consultations_par_jour(), aucune migration.
                           .dash-command .panel : bordure 0.09 -> 0.16
-                          d'opacite, uniforme sur toutes les cartes du
-                          canevas.
+                          d'opacite, uniforme sur les cartes .panel du
+                          canevas (tuiles KPI non concernees, deja
+                          ancrees par leur lisere de couleur).
   rapports / exporter_rapports_excel / exporter_rapports_pdf
                                       _donnees_rapports() est la SEULE
                                       source de donnees, partagee par la

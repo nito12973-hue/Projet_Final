@@ -218,7 +218,10 @@
             // Trace "pouls" : meme langage visuel que le reste du canevas
             // sombre (segments anguleux, couleur terracotta --accent), peu
             // importe le sujet -- c'est le motif de marque etabli pour
-            // "ceci est une tendance", pas une couleur "argent".
+            // "ceci est une tendance", pas une couleur "argent". Dernier
+            // point mis en evidence (rayon fixe, pas seulement au survol) :
+            // c'est la valeur du jour, le repere le plus utile sur une
+            // tendance 30 jours.
             var rayonsPoints = donnees.totaux.map(function (_, index) {
                 return index === donnees.totaux.length - 1 ? 4 : 0;
             });
@@ -259,6 +262,10 @@
                             display: true,
                             beginAtZero: true,
                             ticks: { display: false, maxTicksLimit: 3 },
+                            // Chart.js 4 : le pointille des lignes de
+                            // grille se configure via scales.y.border.dash
+                            // (pas grid.borderDash, retire depuis la v4) --
+                            // s'applique meme avec border.display:false.
                             grid: { color: 'rgba(255, 255, 255, 0.14)', drawTicks: false },
                             border: { display: false, dash: [2, 4] },
                         },

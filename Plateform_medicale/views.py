@@ -449,7 +449,7 @@ def _montants_regles_par_jour(nombre_jours=30):
     jours_reference = [aujourd_hui - datetime.timedelta(days=delta) for delta in range(nombre_jours - 1, -1, -1)]
 
     montants = (
-        Paiement.objects.filter(statut=Paiement.Statut.REGLE)
+        Paiement.objects.filter(statut=Paiement.Statut.REGLE, date_reglement__date__gte=jours_reference[0])
         .annotate(jour=TruncDate("date_reglement"))
         .values("jour")
         .annotate(total=Sum("montant_part_patient"))
@@ -458,7 +458,7 @@ def _montants_regles_par_jour(nombre_jours=30):
 
     return {
         "labels": [jour.strftime("%d/%m") for jour in jours_reference],
-        "totaux": [totaux_par_cle.get(jour, 0) for jour in jours_reference],
+        "totaux": [float(totaux_par_cle.get(jour, 0)) for jour in jours_reference],
     }
 
 
