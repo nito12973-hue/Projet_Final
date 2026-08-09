@@ -1987,6 +1987,17 @@ class RapportsTests(TestCase):
         self.assertContains(response, 'donnees-consultations-jour')
         self.assertContains(response, 'donnees-consultations-annee')
 
+    def test_rapports_ne_contient_pas_de_commentaire_django_non_analyse(self):
+        """Regression : {# ... #} ne supporte pas les commentaires multi-lignes
+        (contrairement a {% comment %}{% endcomment %}) -- s'il en reste un, le
+        texte brut (accolades comprises) fuit dans le HTML rendu, ce qui casse
+        ensuite le parsing HTML en aval (le <template> du repli graphique et le
+        <script> qui dessine les graphiques Chart.js finissent avales dans du
+        contenu inerte, aucun des 5 graphiques ne s'affiche)."""
+        response = self.client.get(reverse('rapports'))
+        self.assertNotContains(response, '{#')
+        self.assertNotContains(response, '#}')
+
     def test_export_rapports_excel_interdit_aux_non_admins(self):
         self.client.logout()
         creer_utilisateur(User.Role.MEDECIN, 'medecin@santesn.sn')
