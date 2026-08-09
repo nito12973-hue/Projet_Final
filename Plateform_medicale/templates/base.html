@@ -1341,8 +1341,7 @@
            de "+0"). Selecteur
            .dash-hero-carte span.dc-hero-delta (specificity 0,2,1) pour
            surmonter .dash-hero-carte span (0,1,1) qui forcerait la couleur
-           off-white, suivant le pattern de .dash-hero-carte span.dash-hero-sparkline-legende
-           deux regles plus bas. */
+           off-white. */
         .dash-hero-carte span.dc-hero-delta {
             position: relative;
             display: block;
@@ -1369,43 +1368,13 @@
             color: var(--dc-success);
         }
 
-        .dash-hero-sparkline-zone {
-            position: relative;
-            height: 40px;
-            margin-top: 10px;
-        }
-
-        .dash-hero-carte span.dash-hero-sparkline-legende {
-            position: relative;
-            display: block;
-            margin-top: 4px;
-            font-size: 10.5px;
-            font-weight: 600;
-            /* Meme opacite que .dash-hero-carte span (label principal) :
-               0.6 tombait sous 4.5:1 (WCAG AA, texte normal) cote --primary-strong
-               du degrade — 0.78 est deja verifie ailleurs sur cette carte. */
-            color: rgba(239, 255, 247, 0.78);
-        }
-
-        .dash-hero-sparkline-zone .empty {
-            background: none;
-            border: none;
-            padding: 6px 0 0;
-            margin: 0;
-            font-size: 11px;
-            color: rgba(239, 255, 247, 0.7);
-            text-align: left;
-        }
-
         /* Trace de pouls decorative en fond de la ligne de chiffres (ex-
            filigrane discret en coin haut-droite, 220px) : geste plus fort,
            sur toute la largeur de la carte fusionnee. preserveAspectRatio=
            "none" sur le SVG (dashboard.html) etire le meme trace existant a
            une largeur quelconque sans toucher au path. Hauteur bornee (pas
-           100% de la carte) pour rester dans la zone .dash-hero-row et ne
-           jamais recouvrir le sparkline Chart.js reel, plus bas dans
-           .dash-hero-sparkline-zone -- decoratif, jamais superpose a une
-           donnee reelle. */
+           100% de la carte) pour rester dans la zone .dash-hero-row --
+           decoratif, jamais superpose a une donnee reelle. */
         .dc-hero-trace {
             position: absolute;
             top: 0;
@@ -1826,10 +1795,6 @@
         .dash-command .dash-pill.ok { background: rgba(30, 122, 76, 0.22); color: var(--dc-success); }
         .dash-command .dash-pill.attente { background: rgba(138, 90, 0, 0.28); color: var(--dc-warning); }
         .dash-command .dash-pill.danger { background: rgba(179, 38, 30, 0.24); color: var(--dc-danger); }
-
-        .dash-command .legende-type {
-            color: var(--dc-text-muted);
-        }
 
         .legende-type {
             display: inline-flex;
