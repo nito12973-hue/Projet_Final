@@ -1461,6 +1461,22 @@
             100% { opacity: 0; transform: scale(1.6); }
         }
 
+        /* .contenu main plafonne toutes les pages a 1120px (formulaires,
+           tableaux -- une largeur volontairement etroite pour rester
+           lisible). Le poste de pilotage est le seul ecran concu pour
+           occuper tout l'espace disponible (verifie a 1920px : ~260px de
+           fond clair inutilise a droite du canevas sombre, sensible sur
+           un ecran large). :has() cible uniquement la page qui contient
+           .dash-command (enfant direct de <main>, cf. dashboard.html) --
+           aucune autre page/role n'est concerne, la regle de base reste
+           inchangee pour elles. Support :has() : Edge/Chrome 105+, Firefox
+           121+ -- deja le niveau minimal suppose par le reste du projet
+           (Chart.js/Leaflet sans polyfill, aucune contrainte de navigateur
+           ancien documentee). */
+        .contenu main:has(> .dash-command) {
+            width: calc(100% - 64px);
+        }
+
         /* Poste de pilotage (dashboard admin uniquement) : canevas sombre qui
            enveloppe tout le contenu sous le titre de page. Toutes les
            redefinitions sombres de composants partages (.panel, .dash-grid,
