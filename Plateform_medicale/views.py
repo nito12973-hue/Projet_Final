@@ -757,6 +757,48 @@ def liste_prises_en_charge(request):
 
 
 @admin_required
+def liste_rendez_vous(request):
+    """Liste administrateur des rendez-vous, en lecture seule.
+
+    L'administrateur suit le flux sans y intervenir : confirmer ou annuler un
+    rendez-vous reste l'affaire du medecin (changer_statut_rendez_vous) et de
+    l'assure (annuler_rendez_vous_assure). Aucune action d'ecriture n'est donc
+    exposee ici.
+    """
+    rendez_vous = RendezVous.objects.select_related("patient", "medecin", "prestataire")
+
+    recherche = request.GET.get("q", "").strip()
+    if recherche:
+        rendez_vous = rendez_vous.filter(
+            Q(patient__nom__icontains=recherche)
+            | Q(patient__prenom__icontains=recherche)
+            | Q(medecin__nom__icontains=recherche)
+            | Q(medecin__prenom__icontains=recherche)
+        )
+
+    statut = request.GET.get("statut", "")
+    if statut:
+        rendez_vous = rendez_vous.filter(statut=statut)
+
+    rendez_vous = _trier(
+        request,
+        rendez_vous,
+        ["date_heure", "patient__nom", "medecin__nom", "statut"],
+        "-date_heure",
+    )
+    return render(
+        request,
+        "liste_rendez_vous.html",
+        {
+            "rendez_vous": _paginer(request, rendez_vous),
+            "recherche": recherche,
+            "statut_choisi": statut,
+            "statuts": RendezVous.Statut.choices,
+        },
+    )
+
+
+@admin_required
 def ajouter_prise_en_charge(request):
     """A la creation, le statut est toujours 'en_attente' : le champ n'est pas propose."""
     if request.method == "POST":

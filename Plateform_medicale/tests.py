@@ -2798,3 +2798,51 @@ class PaginationListesAdminTests(TestCase):
         self.assertNotIn('pharmacien@santesn.sn', emails)
         self.assertEqual(response.context['utilisateurs'].number, 2)
         self.assertContains(response, f'role={User.Role.MEDECIN.value}')
+
+
+class ListeRendezVousAdminTests(TestCase):
+    def setUp(self):
+        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin-rdv@santesn.sn')
+        self.medecin = creer_medecin('medecin-rdv@santesn.sn')
+        self.patient = creer_patient(nom='Sarr', prenom='Mariama')
+        self.autre_patient = creer_patient(nom='Fall', prenom='Ousmane')
+        maintenant = timezone.now()
+        self.demande = RendezVous.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            date_heure=maintenant + datetime.timedelta(days=1),
+            statut=RendezVous.Statut.DEMANDE,
+        )
+        self.confirme = RendezVous.objects.create(
+            patient=self.autre_patient,
+            medecin=self.medecin,
+            date_heure=maintenant + datetime.timedelta(days=2),
+            statut=RendezVous.Statut.CONFIRME,
+        )
+        self.client.login(username='admin-rdv@santesn.sn', password=PASSWORD)
+
+    def test_liste_accessible_a_l_admin(self):
+        reponse = self.client.get(reverse('liste_rendez_vous'))
+        self.assertEqual(reponse.status_code, 200)
+        self.assertContains(reponse, 'Mariama')
+        self.assertContains(reponse, 'Ousmane')
+
+    def test_filtre_par_statut(self):
+        reponse = self.client.get(reverse('liste_rendez_vous'), {'statut': 'DEMANDE'})
+        self.assertEqual(list(reponse.context['rendez_vous']), [self.demande])
+
+    def test_recherche_par_nom_de_patient(self):
+        reponse = self.client.get(reverse('liste_rendez_vous'), {'q': 'Mariama'})
+        self.assertEqual(list(reponse.context['rendez_vous']), [self.demande])
+
+    def test_role_non_admin_refuse(self):
+        self.client.logout()
+        creer_utilisateur(User.Role.MEDECIN, 'autre-medecin@santesn.sn')
+        self.client.login(username='autre-medecin@santesn.sn', password=PASSWORD)
+        reponse = self.client.get(reverse('liste_rendez_vous'))
+        self.assertEqual(reponse.status_code, 403)
+
+    def test_anonyme_redirige_vers_connexion(self):
+        self.client.logout()
+        reponse = self.client.get(reverse('liste_rendez_vous'))
+        self.assertEqual(reponse.status_code, 302)
