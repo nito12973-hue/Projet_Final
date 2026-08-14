@@ -430,7 +430,11 @@ class DashboardAdminTests(TestCase):
         self.assertEqual(response.context['jours_attente_max'], 12)
         self.assertContains(response, 'la plus ancienne : 12 j')
 
-    def test_tuiles_hero_et_kpi_portent_un_aria_label_libelle_avant_valeur(self):
+    def test_tuiles_portent_un_aria_label_libelle_avant_valeur(self):
+        """Convention du projet : l'aria-label annonce le libelle puis la
+        valeur. Les elements testes ont change avec la direction "Clinique
+        claire" (le hero a 3 liens a laisse place au bandeau de files et aux
+        cartes KPI), la convention, elle, reste la meme."""
         medecin = creer_medecin('medecin@santesn.sn')
         patient = creer_patient()
         service = ServiceMedical.objects.create(nom='Consultation', prix=Decimal('5000'))
@@ -442,10 +446,12 @@ class DashboardAdminTests(TestCase):
         Paiement.calculer_pour(consultation_non_reglee).save()
 
         response = self.client.get(reverse('dashboard'))
-        self.assertContains(response, 'aria-label="Paiements réglés : 0\xa0FCFA"')
-        self.assertContains(response, 'aria-label="En attente de règlement : 5\xa0000\xa0FCFA"')
-        self.assertContains(response, 'aria-label="Assurés gérés : 1"')
-        self.assertContains(response, 'aria-label="Consultations : 1, plus 1 sur les 7 derniers jours"')
+        self.assertContains(response, 'aria-label="Consultations : 1"')
+        self.assertContains(response, 'aria-label="Médecins : 1"')
+        self.assertContains(
+            response, 'aria-label="Règlements en attente : 1, soit 5 000 FCFA"'
+        )
+        self.assertContains(response, 'aria-label="Prises en charge en attente : 0"')
 
     def test_derniers_comptes_crees(self):
         creer_medecin('nouveau.medecin@santesn.sn')
@@ -467,13 +473,14 @@ class DashboardAdminTests(TestCase):
         emails = [u.email for u in response.context['derniers_comptes']]
         self.assertNotIn('assure@santesn.sn', emails)
 
-    def test_dashboard_utilise_le_conteneur_sombre(self):
+    def test_dashboard_ouvre_sur_le_bandeau_des_files_d_attente(self):
         response = self.client.get(reverse('dashboard'))
-        self.assertContains(response, 'class="dash-command"')
+        self.assertContains(response, 'class="file-attente"')
 
-    def test_aujourd_hui_est_un_bandeau_compact(self):
+    def test_bandeau_file_attente_vide_quand_rien_a_traiter(self):
         response = self.client.get(reverse('dashboard'))
-        self.assertContains(response, 'class="dc-status"')
+        self.assertEqual(response.context['file_totale'], 0)
+        self.assertContains(response, 'class="file-vide"')
 
     def test_listes_du_dashboard_sont_en_grille_de_digests(self):
         patient = creer_patient()
@@ -481,10 +488,10 @@ class DashboardAdminTests(TestCase):
         PriseEnCharge.objects.create(patient=patient, motif='Test refusee', statut='refusee')
 
         response = self.client.get(reverse('dashboard'))
-        self.assertContains(response, 'class="dc-digests"')
-        self.assertContains(response, 'class="dc-row"')
-        self.assertContains(response, 'dash-pill ok')
-        self.assertContains(response, 'dash-pill danger')
+        self.assertContains(response, 'class="duo-listes"')
+        self.assertContains(response, 'class="liste-lignes"')
+        self.assertContains(response, 'badge validee')
+        self.assertContains(response, 'badge refusee')
 
     def test_hero_paiements_affiche_le_delta_7_jours(self):
         medecin = creer_medecin('medecin@santesn.sn')
@@ -501,7 +508,7 @@ class DashboardAdminTests(TestCase):
 
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.context['montant_regle_7j'], Decimal('10000'))
-        self.assertContains(response, 'class="dc-hero-delta"')
+        self.assertContains(response, 'class="finances-delta"')
 
     def test_dashboard_inclut_la_tendance_des_paiements_regles(self):
         medecin = creer_medecin('medecin@santesn.sn')
@@ -555,7 +562,7 @@ class DashboardAdminTests(TestCase):
 
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.context['montant_regle_7j'], Decimal('5000'))
-        self.assertContains(response, 'class="dc-hero-delta"')
+        self.assertContains(response, 'class="finances-delta"')
 
     def test_kpi_consultations_et_ordonnances_affichent_le_delta_7_jours(self):
         medecin = creer_medecin('medecin@santesn.sn')
@@ -570,7 +577,7 @@ class DashboardAdminTests(TestCase):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.context['consultations_7j'], 1)
         self.assertEqual(response.context['ordonnances_7j'], 1)
-        self.assertContains(response, 'class="dc-kpi-delta"')
+        self.assertContains(response, 'class="kpi-delta"')
 
     def test_kpi_ignore_les_consultations_et_ordonnances_hors_7_jours(self):
         medecin = creer_medecin('medecin@santesn.sn')
@@ -2929,3 +2936,83 @@ class ContexteShellTests(TestCase):
         from .templatetags.formats import libelle_page
         self.assertEqual(libelle_page('liste_ordonnances'), 'Ordonnances')
         self.assertEqual(libelle_page('route_qui_n_existe_pas'), '')
+
+
+class DashboardAdminContexteTests(TestCase):
+    def setUp(self):
+        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin-dash@santesn.sn')
+        self.medecin = creer_medecin('medecin-dash@santesn.sn')
+        self.principal = creer_patient(nom='Diallo', prenom='Abdoulaye')
+        Patient.objects.create(
+            nom='Diallo',
+            prenom='Fatou',
+            date_naissance=datetime.date(2015, 5, 5),
+            telephone='770000002',
+            type_beneficiaire=Patient.TypeBeneficiaire.AYANT_DROIT,
+            lien_parente=Patient.LienParente.ENFANT,
+            assure_principal=self.principal,
+        )
+        creer_ordonnance(self.principal, self.medecin)
+        RendezVous.objects.create(
+            patient=self.principal,
+            medecin=self.medecin,
+            date_heure=timezone.now() + datetime.timedelta(days=1),
+            statut=RendezVous.Statut.DEMANDE,
+        )
+        Prestataire.objects.create(
+            nom='Hopital Test', type_prestataire=Prestataire.Type.HOPITAL, ville='Dakar'
+        )
+        self.client.login(username='admin-dash@santesn.sn', password=PASSWORD)
+
+    def test_nouvelles_cles_de_contexte(self):
+        contexte = self.client.get(reverse('dashboard')).context
+        self.assertEqual(contexte['rdv_a_confirmer'], 1)
+        self.assertEqual(contexte['ordonnances_non_delivrees'], 1)
+        self.assertEqual(contexte['patients_principaux'], 1)
+        self.assertEqual(contexte['ayants_droit'], 1)
+        self.assertEqual(contexte['assures_sans_plan'], 1)
+        self.assertEqual(contexte['medecins_sans_prestataire'], 1)
+        self.assertEqual(contexte['prestataires_sans_coordonnees'], 1)
+        self.assertEqual(contexte['paiements_non_regles_nb'], 0)
+
+    def test_file_totale_agrege_les_quatre_files(self):
+        contexte = self.client.get(reverse('dashboard')).context
+        self.assertEqual(
+            contexte['file_totale'],
+            contexte['total_prises_en_charge_attente']
+            + contexte['rdv_a_confirmer']
+            + contexte['ordonnances_non_delivrees']
+            + contexte['paiements_non_regles_nb'],
+        )
+
+    def test_prises_en_charge_en_attente_remontent_en_premier(self):
+        ancienne_validee = PriseEnCharge.objects.create(
+            patient=self.principal, motif='Validee recente', statut='validee'
+        )
+        attente = PriseEnCharge.objects.create(
+            patient=self.principal, motif='En attente', statut='en_attente'
+        )
+        PriseEnCharge.objects.filter(pk=attente.pk).update(
+            date_demande=timezone.now() - datetime.timedelta(days=30)
+        )
+        contexte = self.client.get(reverse('dashboard')).context
+        premieres = list(contexte['dernieres_prises_en_charge'])
+        self.assertEqual(premieres[0].pk, attente.pk)
+        self.assertIn(ancienne_validee, premieres)
+
+    def test_base_vide_se_rend_sans_erreur(self):
+        Ordonnance.objects.all().delete()
+        Consultation.objects.all().delete()
+        RendezVous.objects.all().delete()
+        Patient.objects.all().delete()
+        Medecin.objects.all().delete()
+        Prestataire.objects.all().delete()
+        reponse = self.client.get(reverse('dashboard'))
+        self.assertEqual(reponse.status_code, 200)
+        self.assertEqual(reponse.context['file_totale'], 0)
+
+    def test_non_admin_refuse(self):
+        self.client.logout()
+        self.client.login(username='medecin-dash@santesn.sn', password=PASSWORD)
+        reponse = self.client.get(reverse('dashboard'))
+        self.assertEqual(reponse.status_code, 403)

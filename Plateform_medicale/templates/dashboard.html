@@ -6,144 +6,183 @@
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>Dashboard Administrateur</h1>
-        <p class="subtitle">Piloter la plateforme sans intervenir dans les actes médicaux.</p>
+        <h1>Tableau de bord</h1>
+        <p class="subtitle">Vue d'ensemble de la plateforme — {% now "l j F Y" %}</p>
     </div>
 </section>
 
-<div class="dash-command">
-<div class="dc-status">
-    <span class="pulse-dot" aria-hidden="true"></span>
-    <span>Aujourd'hui</span>
-    <span class="dc-status-sep" aria-hidden="true"></span>
-    <span><strong class="code">{{ total_rendez_vous_aujourd_hui }}</strong> rendez-vous</span>
-    <span class="dc-status-sep" aria-hidden="true"></span>
-    <span><strong class="code">{{ total_consultations_aujourd_hui }}</strong> consultations</span>
-    <span class="dc-status-sep" aria-hidden="true"></span>
-    <a class="dc-status-link{% if total_prises_en_charge_attente %} dc-status-urgent{% endif %}" href="{% url 'liste_prises_en_charge' %}?statut=en_attente">
-        <strong class="code">{{ total_prises_en_charge_attente }}</strong> prise(s) en charge en attente{% if jours_attente_max %} (la plus ancienne : {{ jours_attente_max }} j){% endif %}
-    </a>
-</div>
-
-<section class="dash-hero">
-    <div class="dash-hero-carte">
-        <svg class="dc-hero-trace" viewBox="0 0 220 70" preserveAspectRatio="none" aria-hidden="true">
-            <path d="M0,42 L30,42 L36,42 L41,18 L46,60 L51,30 L57,42 L95,42 L101,42 L106,18 L111,60 L117,30 L123,42 L160,42 L166,42 L171,18 L176,60 L182,30 L188,42 L220,42"/>
-        </svg>
-        <div class="dash-hero-row">
-            <a class="dash-hero-lien dash-hero-lien-principal" href="{% url 'liste_paiements' %}?statut=regle" aria-label="Paiements réglés : {{ montant_regle|franc_cfa }}{% if montant_regle_7j %}, plus {{ montant_regle_7j|franc_cfa }} ces 7 derniers jours{% endif %}">
-                <span class="dash-hero-icon">{% icone "receipt" %}</span>
-                <strong class="code">{{ montant_regle|franc_cfa }}</strong>
-                {% if montant_regle_7j %}<span class="dc-hero-delta">&#9650; +{{ montant_regle_7j|franc_cfa }} ces 7 derniers jours</span>{% endif %}
-                <span>Paiements réglés</span>
-            </a>
-            <div class="dash-hero-secondaires">
-                <a class="dash-hero-lien dash-hero-lien-secondaire" href="{% url 'liste_paiements' %}?statut=non_regle" aria-label="En attente de règlement : {{ montant_non_regle|franc_cfa }}">
-                    <span class="dash-hero-icon">{% icone "clock-history" %}</span>
-                    <strong class="code">{{ montant_non_regle|franc_cfa }}</strong>
-                    <span>En attente de règlement</span>
-                </a>
-                <a class="dash-hero-lien dash-hero-lien-secondaire" href="{% url 'rapports' %}" aria-label="Taux de règlement : {% if taux_reglement is not None %}{{ taux_reglement }}%{% else %}non disponible{% endif %}">
-                    <span class="dash-hero-icon">{% icone "shield-check" %}</span>
-                    <strong class="code">{% if taux_reglement is not None %}{{ taux_reglement }}%{% else %}—{% endif %}</strong>
-                    <span>Taux de règlement</span>
-                </a>
-            </div>
-        </div>
-        <div class="dash-hero-sparkline-zone">
-            <canvas id="graphe-tendance-paiements" aria-label="Tendance des paiements réglés, 30 derniers jours"></canvas>
-        </div>
-        <span class="dash-hero-sparkline-legende">Paiements réglés · 30 j</span>
+{% comment %}
+Bandeau "A traiter" : ouvre la page sur les files d'attente reelles plutot que
+sur les compteurs du jour, qui valent zero la plupart du temps. Chaque tuile
+mene a une liste filtree qui existe reellement.
+{% endcomment %}
+<section class="file-attente" aria-label="À traiter maintenant">
+    <h2 class="file-titre">{% icone "clock-history" %} À traiter maintenant</h2>
+    {% if file_totale %}
+    <div class="file-grille">
+        <a class="file-tuile{% if jours_attente_max and jours_attente_max > 7 %} urgent{% endif %}"
+           href="{% url 'liste_prises_en_charge' %}?statut=en_attente"
+           aria-label="Prises en charge en attente : {{ total_prises_en_charge_attente }}{% if jours_attente_max %}, la plus ancienne : {{ jours_attente_max }} j{% endif %}">
+            <span class="file-entete">{% icone "shield-check" %} Prises en charge</span>
+            <strong class="file-nombre code">{{ total_prises_en_charge_attente }}</strong>
+            <span class="file-libelle">En attente de décision</span>
+            {% if jours_attente_max %}<span class="file-note">la plus ancienne : {{ jours_attente_max }} j</span>{% endif %}
+        </a>
+        <a class="file-tuile" href="{% url 'liste_rendez_vous' %}?statut=DEMANDE"
+           aria-label="Rendez-vous à confirmer : {{ rdv_a_confirmer }}">
+            <span class="file-entete">{% icone "calendar" %} Rendez-vous</span>
+            <strong class="file-nombre code">{{ rdv_a_confirmer }}</strong>
+            <span class="file-libelle">Demandes à confirmer</span>
+        </a>
+        <a class="file-tuile" href="{% url 'liste_ordonnances' %}?delivrance=non"
+           aria-label="Ordonnances non délivrées : {{ ordonnances_non_delivrees }}">
+            <span class="file-entete">{% icone "qr-scan" %} Pharmacie</span>
+            <strong class="file-nombre code">{{ ordonnances_non_delivrees }}</strong>
+            <span class="file-libelle">Ordonnances non délivrées</span>
+            <span class="file-note">{{ total_delivrances }} délivrées sur {{ total_ordonnances }}</span>
+        </a>
+        <a class="file-tuile" href="{% url 'liste_paiements' %}?statut=non_regle"
+           aria-label="Règlements en attente : {{ paiements_non_regles_nb }}, soit {{ montant_non_regle|franc_cfa }}">
+            <span class="file-entete">{% icone "receipt" %} Paiements</span>
+            <strong class="file-nombre code">{{ paiements_non_regles_nb }}</strong>
+            <span class="file-libelle">Règlements en attente</span>
+            <span class="file-note">{{ montant_non_regle|franc_cfa }}</span>
+        </a>
     </div>
+    {% else %}
+    <p class="file-vide">{% icone "check" %} Rien en attente. Toutes les files sont traitées.</p>
+    {% endif %}
 </section>
 
-<section class="dash-grid" style="margin-top:20px;">
-    <a class="dash-stat" href="{% url 'liste_patients' %}" aria-label="Assurés gérés : {{ total_patients }}">
-        <span class="dash-stat-icon">{% icone "id-card" %}</span>
-        <strong class="code">{{ total_patients }}</strong>
-        <span>Assurés gérés</span>
-    </a>
-    <a class="dash-stat" href="{% url 'liste_medecins' %}" aria-label="Médecins actifs : {{ total_medecins }}">
-        <span class="dash-stat-icon">{% icone "stethoscope" %}</span>
-        <strong class="code">{{ total_medecins }}</strong>
-        <span>Médecins actifs</span>
-    </a>
-    <a class="dash-stat" href="{% url 'liste_pharmaciens' %}" aria-label="Pharmaciens actifs : {{ total_pharmaciens }}">
-        <span class="dash-stat-icon">{% icone "pill" %}</span>
-        <strong class="code">{{ total_pharmaciens }}</strong>
-        <span>Pharmaciens actifs</span>
-    </a>
-    <a class="dash-stat" href="{% url 'liste_prestataires' %}" aria-label="Prestataires partenaires : {{ total_prestataires }}">
-        <span class="dash-stat-icon">{% icone "building" %}</span>
-        <strong class="code">{{ total_prestataires }}</strong>
-        <span>Prestataires partenaires</span>
-    </a>
-    <a class="dash-stat" href="{% url 'rapports' %}" aria-label="Consultations : {{ total_consultations }}{% if consultations_7j %}, plus {{ consultations_7j }} sur les 7 derniers jours{% endif %}">
-        <span class="dash-stat-icon">{% icone "clipboard-list" %}</span>
-        <strong class="code">{{ total_consultations }}</strong>
-        <span>Consultations</span>
-        {% if consultations_7j %}<span class="dc-kpi-delta">+{{ consultations_7j }} (7j)</span>{% endif %}
-    </a>
-    <a class="dash-stat" href="{% url 'rapports' %}" aria-label="Ordonnances émises : {{ total_ordonnances }}{% if ordonnances_7j %}, plus {{ ordonnances_7j }} sur les 7 derniers jours{% endif %}">
-        <span class="dash-stat-icon">{% icone "qr-scan" %}</span>
-        <strong class="code">{{ total_ordonnances }}</strong>
-        <span>Ordonnances émises</span>
-        {% if ordonnances_7j %}<span class="dc-kpi-delta">+{{ ordonnances_7j }} (7j)</span>{% endif %}
-    </a>
-</section>
-
-<section class="admin-layout">
-    <article class="panel admin-card-large panel-discret">
+<h2 class="section-titre">Couverture &amp; finances</h2>
+<section class="bande-couverture">
+    <article class="panel carte-finances">
         <div class="panel-header">
             <div>
-                <h2>Actions rapides</h2>
-                <p class="subtitle">Actions autorisées pour administrer la plateforme.</p>
+                <h2>Paiements</h2>
+                <p class="subtitle">Part patient encaissée · 30 derniers jours</p>
+            </div>
+            <a class="lien-discret" href="{% url 'liste_paiements' %}">Détail</a>
+        </div>
+        <div class="finances-corps">
+            <div class="finances-principal">
+                <strong class="montant code">{{ montant_regle|franc_cfa }}</strong>
+                <span class="finances-libelle">Réglés</span>
+                {% if montant_regle_7j %}
+                <span class="finances-delta">&#9650; +{{ montant_regle_7j|franc_cfa }} sur 7 jours</span>
+                {% endif %}
+                {% if taux_reglement is not None %}
+                <span class="finances-taux">{{ taux_reglement }} % de taux de règlement</span>
+                {% endif %}
+            </div>
+            <div class="finances-secondaires">
+                <div>
+                    <strong class="code attente">{{ montant_non_regle|franc_cfa }}</strong>
+                    <span class="finances-libelle">En attente</span>
+                </div>
+                <div>
+                    <strong class="code">{{ montant_total_facture|franc_cfa }}</strong>
+                    <span class="finances-libelle">Facturé au total</span>
+                </div>
             </div>
         </div>
-        <div class="quick-actions">
-            <a class="button primary" href="{% url 'ajouter_patient' %}">Ajouter un assuré</a>
-            <a class="button primary" href="{% url 'ajouter_medecin' %}">Ajouter un médecin</a>
-            <a class="button primary" href="{% url 'ajouter_prestataire' %}">Ajouter un prestataire</a>
-            <a class="button" href="{% url 'liste_prises_en_charge' %}">Suivre les prises en charge</a>
+        <div class="finances-graphe">
+            <canvas id="graphe-tendance-paiements" aria-label="Tendance des paiements réglés, 30 derniers jours"></canvas>
         </div>
+        <p class="finances-legende">Paiements réglés, jour par jour</p>
     </article>
 
-    <aside class="panel governance-card panel-discret">
-        <span class="dash-stat-icon">{% icone "lock" %}</span>
-        <h2>Comptes et gouvernance</h2>
-        <p class="subtitle">Comptes, prestataires et suivi — pas d'actes médicaux.</p>
-        <div class="gouvernance-comptes">
-            <a href="{% url 'liste_utilisateurs' %}?statut=actif">
-                <strong class="code">{{ total_comptes_actifs }}</strong>
-                <span>Comptes actifs</span>
-            </a>
-            <a href="{% url 'liste_utilisateurs' %}?statut=inactif">
-                <strong class="code">{{ total_comptes_inactifs }}</strong>
-                <span>Comptes désactivés</span>
-            </a>
+    <article class="panel carte-assures">
+        <div class="panel-header">
+            <div>
+                <h2>Assurés couverts</h2>
+                <p class="subtitle">Principaux et ayants droit</p>
+            </div>
         </div>
-        <a class="button btn" href="{% url 'liste_utilisateurs' %}">Gérer les utilisateurs</a>
-    </aside>
+        <div class="assures-corps">
+            <p class="assures-total"><strong class="code">{{ total_patients }}</strong> <span>personnes couvertes</span></p>
+            {% if total_patients %}
+            <div class="assures-barre" role="img"
+                 aria-label="{{ patients_principaux }} assurés principaux et {{ ayants_droit }} ayants droit">
+                <span class="segment-principal" style="flex:{{ patients_principaux }}"></span>
+                <span class="segment-ayant-droit" style="flex:{{ ayants_droit }}"></span>
+            </div>
+            <ul class="assures-legende">
+                <li>
+                    <span class="pastille-principal" aria-hidden="true"></span>
+                    <a href="{% url 'liste_patients' %}?type=PRINCIPAL">Assurés principaux</a>
+                    <strong class="code">{{ patients_principaux }}</strong>
+                </li>
+                <li>
+                    <span class="pastille-ayant-droit" aria-hidden="true"></span>
+                    <a href="{% url 'liste_patients' %}?type=AYANT_DROIT">Ayants droit</a>
+                    <strong class="code">{{ ayants_droit }}</strong>
+                </li>
+            </ul>
+            {% endif %}
+            {% if assures_sans_plan %}
+            <a class="assures-alerte" href="{% url 'liste_patients' %}?type=PRINCIPAL">
+                {% icone "alert-triangle" %}
+                {{ assures_sans_plan }} assuré{{ assures_sans_plan|pluralize }} principa{{ assures_sans_plan|pluralize:"l,ux" }} sans plan de couverture
+            </a>
+            {% endif %}
+        </div>
+    </article>
 </section>
 
-<section class="dc-digests">
+<h2 class="section-titre">Activité</h2>
+<section class="kpi-grille">
+    <a class="kpi" href="{% url 'rapports' %}" aria-label="Consultations : {{ total_consultations }}">
+        <span class="kpi-entete">{% icone "clipboard-list" %} Consultations</span>
+        <strong class="code">{{ total_consultations }}</strong>
+        <span class="kpi-pied">{% if consultations_7j %}Total enregistré <span class="kpi-delta">+{{ consultations_7j }} (7 j)</span>{% else %}Total enregistré{% endif %}</span>
+    </a>
+    <a class="kpi" href="{% url 'liste_ordonnances' %}" aria-label="Ordonnances émises : {{ total_ordonnances }}, dont {{ total_delivrances }} délivrées">
+        <span class="kpi-entete">{% icone "qr-scan" %} Ordonnances</span>
+        <strong class="code">{{ total_ordonnances }}</strong>
+        <span class="kpi-pied{% if ordonnances_non_delivrees %} manque{% endif %}">{{ total_delivrances }} délivrées{% if ordonnances_7j %} <span class="kpi-delta">+{{ ordonnances_7j }} (7 j)</span>{% endif %}</span>
+    </a>
+    <a class="kpi" href="{% url 'liste_medecins' %}" aria-label="Médecins : {{ total_medecins }}">
+        <span class="kpi-entete">{% icone "stethoscope" %} Médecins actifs</span>
+        <strong class="code">{{ total_medecins }}</strong>
+        <span class="kpi-pied{% if medecins_sans_prestataire %} manque{% endif %}">{% if medecins_sans_prestataire %}{{ medecins_sans_prestataire }} sans prestataire{% else %}Tous rattachés{% endif %}</span>
+    </a>
+    <a class="kpi" href="{% url 'liste_pharmaciens' %}" aria-label="Pharmaciens : {{ total_pharmaciens }}">
+        <span class="kpi-entete">{% icone "pill" %} Pharmaciens actifs</span>
+        <strong class="code">{{ total_pharmaciens }}</strong>
+        <span class="kpi-pied{% if pharmaciens_sans_prestataire %} manque{% endif %}">{% if pharmaciens_sans_prestataire %}{{ pharmaciens_sans_prestataire }} sans pharmacie{% else %}Tous rattachés{% endif %}</span>
+    </a>
+    <a class="kpi" href="{% url 'liste_prestataires' %}" aria-label="Prestataires partenaires : {{ total_prestataires }}">
+        <span class="kpi-entete">{% icone "building" %} Prestataires</span>
+        <strong class="code">{{ total_prestataires }}</strong>
+        <span class="kpi-pied">{% for type in prestataires_par_type|slice:":2" %}{{ type.total }} {{ type.libelle }}{% if not forloop.last %} · {% endif %}{% empty %}Aucun partenaire{% endfor %}</span>
+    </a>
+</section>
+
+<section class="duo-listes">
     <article class="panel">
         <div class="panel-header">
-            <h2>Suivi des prises en charge</h2>
-            <a class="button" href="{% url 'liste_prises_en_charge' %}">Voir tout</a>
+            <div>
+                <h2>Prises en charge récentes</h2>
+                <p class="subtitle">Les demandes en attente remontent en premier</p>
+            </div>
+            <a class="lien-discret" href="{% url 'liste_prises_en_charge' %}">Voir tout</a>
         </div>
         {% if dernieres_prises_en_charge %}
-        <div class="dc-list">
+        <ul class="liste-lignes">
             {% for prise in dernieres_prises_en_charge %}
-            <a class="dc-row" href="{% url 'modifier_prise_en_charge' prise.pk %}">
-                <span class="dc-meta">
-                    <span class="dc-name">{{ prise.patient }}</span>
-                    <span class="dc-sub">{{ prise.date_demande|date:"d/m/Y" }}</span>
-                </span>
-                <span class="dash-pill {% if prise.statut == 'validee' or prise.statut == 'terminee' %}ok{% elif prise.statut == 'refusee' %}danger{% else %}attente{% endif %}">{{ prise.get_statut_display }}</span>
-            </a>
+            <li>
+                <a href="{% url 'modifier_prise_en_charge' prise.pk %}">
+                    <span class="ligne-avatar" aria-hidden="true">{{ prise.patient.prenom|slice:":1" }}{{ prise.patient.nom|slice:":1" }}</span>
+                    <span class="ligne-texte">
+                        <span class="ligne-nom">{{ prise.patient }}</span>
+                        <span class="ligne-sous">Demandée le {{ prise.date_demande|date:"d/m/Y" }}</span>
+                    </span>
+                    <span class="badge {{ prise.statut }}">{{ prise.get_statut_display }}</span>
+                </a>
+            </li>
             {% endfor %}
-        </div>
+        </ul>
         {% else %}
         <div class="etat-vide">
             {% illustration_vide "shield-check" %}
@@ -157,21 +196,27 @@
 
     <article class="panel">
         <div class="panel-header">
-            <h2>Derniers comptes créés</h2>
-            <a class="button" href="{% url 'liste_utilisateurs' %}">Voir tout</a>
+            <div>
+                <h2>Derniers comptes créés</h2>
+                <p class="subtitle">Hors assurés — <a href="{% url 'liste_utilisateurs' %}?statut=actif">{{ total_comptes_actifs }} actifs</a>, <a href="{% url 'liste_utilisateurs' %}?statut=inactif">{{ total_comptes_inactifs }} désactivés</a></p>
+            </div>
+            <a class="lien-discret" href="{% url 'liste_utilisateurs' %}">Voir tout</a>
         </div>
         {% if derniers_comptes %}
-        <div class="dc-list">
+        <ul class="liste-lignes">
             {% for compte in derniers_comptes %}
-            <a class="dc-row" href="{% url 'modifier_utilisateur' compte.pk %}">
-                <span class="dc-avatar" aria-hidden="true">{{ compte.get_full_name|default:compte.email|slice:":2"|upper }}</span>
-                <span class="dc-meta">
-                    <span class="dc-name">{{ compte.get_full_name|default:compte.email }}</span>
-                    <span class="dc-sub">{{ compte.get_role_display }} · {{ compte.date_joined|date:"d/m/Y" }}</span>
-                </span>
-            </a>
+            <li>
+                <a href="{% url 'modifier_utilisateur' compte.pk %}">
+                    <span class="ligne-avatar" aria-hidden="true">{{ compte.get_full_name|default:compte.email|slice:":2"|upper }}</span>
+                    <span class="ligne-texte">
+                        <span class="ligne-nom">{{ compte.get_full_name|default:compte.email }}</span>
+                        <span class="ligne-sous">{{ compte.date_joined|date:"d/m/Y" }}</span>
+                    </span>
+                    <span class="etiquette-role">{{ compte.get_role_display }}</span>
+                </a>
+            </li>
             {% endfor %}
-        </div>
+        </ul>
         {% else %}
         <div class="etat-vide">
             {% illustration_vide "users" %}
@@ -183,17 +228,66 @@
         {% endif %}
     </article>
 </section>
-</div>
+
+<section class="bande-bas">
+    {% if assures_sans_plan or medecins_sans_prestataire or pharmaciens_sans_prestataire or prestataires_sans_coordonnees %}
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <h2>Fiches à compléter</h2>
+                <p class="subtitle">Données manquantes qui gênent l'exploitation</p>
+            </div>
+        </div>
+        <div class="fiches-grille">
+            {% if prestataires_sans_coordonnees %}
+            <a class="fiche" href="{% url 'liste_prestataires' %}?localisation=sans">
+                {% icone "map-pin" %}
+                <span><strong class="code">{{ prestataires_sans_coordonnees }}</strong> Prestataire{{ prestataires_sans_coordonnees|pluralize }} sans coordonnées</span>
+            </a>
+            {% endif %}
+            {% if assures_sans_plan %}
+            <a class="fiche" href="{% url 'liste_patients' %}?type=PRINCIPAL">
+                {% icone "id-card" %}
+                <span><strong class="code">{{ assures_sans_plan }}</strong> Assuré{{ assures_sans_plan|pluralize }} sans plan</span>
+            </a>
+            {% endif %}
+            {% if medecins_sans_prestataire %}
+            <a class="fiche" href="{% url 'liste_medecins' %}">
+                {% icone "stethoscope" %}
+                <span><strong class="code">{{ medecins_sans_prestataire }}</strong> Médecin{{ medecins_sans_prestataire|pluralize }} sans prestataire</span>
+            </a>
+            {% endif %}
+            {% if pharmaciens_sans_prestataire %}
+            <a class="fiche" href="{% url 'liste_pharmaciens' %}">
+                {% icone "pill" %}
+                <span><strong class="code">{{ pharmaciens_sans_prestataire }}</strong> Pharmacien{{ pharmaciens_sans_prestataire|pluralize }} sans pharmacie</span>
+            </a>
+            {% endif %}
+        </div>
+    </article>
+    {% endif %}
+
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <h2>Actions rapides</h2>
+            </div>
+        </div>
+        <div class="actions-grille">
+            <a class="button primary" href="{% url 'ajouter_patient' %}">{% icone "id-card" %} Nouvel assuré</a>
+            <a class="button primary" href="{% url 'ajouter_medecin' %}">{% icone "stethoscope" %} Nouveau médecin</a>
+            <a class="button" href="{% url 'ajouter_prestataire' %}">{% icone "building" %} Prestataire</a>
+            <a class="button" href="{% url 'ajouter_prise_en_charge' %}">{% icone "shield-check" %} Prise en charge</a>
+            <a class="button" href="{% url 'rapports' %}">{% icone "bar-chart" %} Rapports</a>
+            <a class="button" href="{% url 'importer_utilisateurs_excel' %}">{% icone "upload" %} Importer</a>
+        </div>
+    </article>
+</section>
 
 {{ tendance_paiements|json_script:"donnees-tendance-paiements" }}
 
 <script>
     (function () {
-        // Mini-graphique de tendance : meme mecanique que l'ancien sparkline
-        // "consultations" (retire, redondant avec rapports.html et mal
-        // place thematiquement dans une carte financiere) mais cette fois
-        // la donnee (paiements regles) correspond au sujet de la carte qui
-        // la contient. Chart.js (~200 Ko) charge a la demande.
         var canevas = document.getElementById('graphe-tendance-paiements');
         if (!canevas) { return; }
 
@@ -205,26 +299,22 @@
         var elementDonnees = document.getElementById('donnees-tendance-paiements');
         var donnees = elementDonnees ? JSON.parse(elementDonnees.textContent) : { labels: [], totaux: [] };
 
-        // Verifie l'absence de donnees avant meme de charger Chart.js.
+        // Verifie l'absence de donnees avant meme de charger Chart.js (~200 Ko).
         if (!donnees.totaux.some(function (total) { return Number(total) > 0; })) {
             var vide = document.createElement('p');
             vide.className = 'empty';
-            vide.textContent = 'Aucun paiement regle sur les 30 derniers jours.';
+            vide.textContent = 'Aucun paiement réglé sur les 30 derniers jours.';
             canevas.replaceWith(vide);
             return;
         }
 
         function demarrerGrapheTendance() {
-            // Trace "pouls" : meme langage visuel que le reste du canevas
-            // sombre (segments anguleux, couleur terracotta --accent), peu
-            // importe le sujet -- c'est le motif de marque etabli pour
-            // "ceci est une tendance", pas une couleur "argent". Dernier
-            // point mis en evidence (rayon fixe, pas seulement au survol) :
-            // c'est la valeur du jour, le repere le plus utile sur une
-            // tendance 30 jours.
+            // Dernier point marque (rayon fixe, pas seulement au survol) : c'est
+            // la valeur du jour, le repere le plus utile sur une tendance 30 j.
             var rayonsPoints = donnees.totaux.map(function (_, index) {
                 return index === donnees.totaux.length - 1 ? 4 : 0;
             });
+            var couleur = tokenCouleur('--primary', '#0e7c86');
 
             new Chart(canevas, {
                 type: 'line',
@@ -232,15 +322,14 @@
                     labels: donnees.labels,
                     datasets: [{
                         data: donnees.totaux,
-                        borderColor: tokenCouleur('--accent', '#e0824f'),
-                        backgroundColor: 'rgba(255, 255, 255, 0.10)',
+                        borderColor: couleur,
+                        backgroundColor: 'rgba(14, 124, 134, 0.10)',
                         fill: true,
-                        tension: 0,
+                        tension: 0.25,
                         pointRadius: rayonsPoints,
-                        pointBackgroundColor: tokenCouleur('--accent', '#e0824f'),
+                        pointBackgroundColor: couleur,
                         pointBorderWidth: 0,
                         pointHoverRadius: 4,
-                        pointHoverBackgroundColor: tokenCouleur('--accent', '#e0824f'),
                         borderWidth: 2,
                     }],
                 },
@@ -262,11 +351,10 @@
                             display: true,
                             beginAtZero: true,
                             ticks: { display: false, maxTicksLimit: 3 },
-                            // Chart.js 4 : le pointille des lignes de
-                            // grille se configure via scales.y.border.dash
-                            // (pas grid.borderDash, retire depuis la v4) --
-                            // s'applique meme avec border.display:false.
-                            grid: { color: 'rgba(255, 255, 255, 0.14)', drawTicks: false },
+                            // Chart.js 4 : le pointille des lignes de grille se
+                            // configure via scales.y.border.dash (grid.borderDash
+                            // a ete retire depuis la v4).
+                            grid: { color: 'rgba(11, 32, 39, 0.08)', drawTicks: false },
                             border: { display: false, dash: [2, 4] },
                         },
                     },
@@ -288,5 +376,4 @@
         document.body.appendChild(scriptChartJs);
     })();
 </script>
-
 {% endblock %}
