@@ -136,15 +136,31 @@ def admin_required(view_func):
 
 
 def user_role(request):
-    """Context processor : expose le rôle et les notifications non lues de l'utilisateur connecté."""
+    """Context processor : role, notifications non lues, et compteurs de file
+    d'attente pour les pastilles du menu lateral administrateur.
+
+    Les deux compteurs admin portent sur des champs indexes (db_index sur
+    PriseEnCharge.statut et Paiement.statut) et ne sont calcules que pour le
+    role ADMIN : les autres roles n'ont pas ces ecrans. Un visiteur anonyme ne
+    declenche aucune requete (landing, connexion).
+    """
     user = getattr(request, 'user', None)
-    if user is not None and user.is_authenticated:
-        return {
-            'current_role': user.role,
-            'current_role_label': user.get_role_display(),
-            'notifications_non_lues': user.notifications.filter(lue=False).count(),
-        }
-    return {'current_role': None, 'current_role_label': None, 'notifications_non_lues': 0}
+    if user is None or not user.is_authenticated:
+        return {'current_role': None, 'current_role_label': None, 'notifications_non_lues': 0}
+
+    contexte = {
+        'current_role': user.role,
+        'current_role_label': user.get_role_display(),
+        'notifications_non_lues': user.notifications.filter(lue=False).count(),
+    }
+    if user.role == User.Role.ADMIN:
+        contexte['nb_prises_en_charge_attente'] = PriseEnCharge.objects.filter(
+            statut='en_attente'
+        ).count()
+        contexte['nb_paiements_non_regles'] = Paiement.objects.filter(
+            statut=Paiement.Statut.NON_REGLE
+        ).count()
+    return contexte
 
 
 # ---------------------------------------------------------------------------
