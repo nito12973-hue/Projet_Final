@@ -2887,3 +2887,45 @@ class ListeOrdonnancesAdminTests(TestCase):
         self.client.login(username='pharmacien-ord@santesn.sn', password=PASSWORD)
         reponse = self.client.get(reverse('liste_ordonnances'))
         self.assertEqual(reponse.status_code, 403)
+
+
+class ContexteShellTests(TestCase):
+    def test_admin_recoit_les_compteurs_de_file(self):
+        creer_utilisateur(User.Role.ADMIN, 'admin-shell@santesn.sn')
+        patient = creer_patient(nom='Ndour', prenom='Khady')
+        PriseEnCharge.objects.create(patient=patient, motif='Test', statut='en_attente')
+        self.client.login(username='admin-shell@santesn.sn', password=PASSWORD)
+        reponse = self.client.get(reverse('dashboard'))
+        self.assertEqual(reponse.context['nb_prises_en_charge_attente'], 1)
+        self.assertEqual(reponse.context['nb_paiements_non_regles'], 0)
+
+    def test_non_admin_n_a_pas_les_compteurs_admin(self):
+        creer_medecin('medecin-shell@santesn.sn')
+        self.client.login(username='medecin-shell@santesn.sn', password=PASSWORD)
+        reponse = self.client.get(reverse('dashboard_medecin'))
+        self.assertIsNone(reponse.context.get('nb_prises_en_charge_attente'))
+
+    def test_anonyme_ne_declenche_aucune_requete_de_compteur(self):
+        from .views import user_role
+        requete = MagicMock()
+        requete.user.is_authenticated = False
+        contexte = user_role(requete)
+        self.assertIsNone(contexte.get('nb_prises_en_charge_attente'))
+        self.assertEqual(contexte['notifications_non_lues'], 0)
+
+    def test_recherche_topbar_reservee_a_l_admin(self):
+        creer_utilisateur(User.Role.ADMIN, 'admin-rech@santesn.sn')
+        self.client.login(username='admin-rech@santesn.sn', password=PASSWORD)
+        self.assertContains(self.client.get(reverse('dashboard')), 'recherche-globale')
+
+        self.client.logout()
+        creer_medecin('medecin-rech@santesn.sn')
+        self.client.login(username='medecin-rech@santesn.sn', password=PASSWORD)
+        self.assertNotContains(
+            self.client.get(reverse('dashboard_medecin')), 'recherche-globale'
+        )
+
+    def test_fil_ariane_route_connue_et_inconnue(self):
+        from .templatetags.formats import libelle_page
+        self.assertEqual(libelle_page('liste_ordonnances'), 'Ordonnances')
+        self.assertEqual(libelle_page('route_qui_n_existe_pas'), '')

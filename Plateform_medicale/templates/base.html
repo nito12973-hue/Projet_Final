@@ -1,4 +1,4 @@
-{% load icones %}<!DOCTYPE html>
+{% load formats icones %}<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -2042,6 +2042,196 @@
             opacity: 1;
         }
 
+        /* ===== Barre superieure (topbar) =====
+           Presente pour les 4 roles. Collante en haut du contenu : sur une
+           liste longue (utilisateurs, rendez-vous), la recherche et le compte
+           restent atteignables sans remonter. */
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            /* main a padding: 32px 0 48px (aucun padding horizontal) : seule
+               la marge haute est annulee, la barre s'aligne sur le contenu. */
+            margin: -32px 0 20px;
+            padding: 11px 0;
+            background: rgba(239, 244, 243, 0.92);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .fil-ariane {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 11.5px;
+            font-weight: 600;
+            color: var(--muted);
+        }
+
+        .fil-ariane b {
+            color: var(--primary-dark);
+            font-weight: 700;
+        }
+
+        /* Le separateur appartient au libelle de section : une route absente
+           de la table _LIBELLES_PAGE rend un <b> vide, masque avec son "/". */
+        .fil-ariane b::before {
+            content: "/";
+            margin-right: 7px;
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        .fil-ariane b:empty {
+            display: none;
+        }
+
+        /* Neutralise le style global de <form> (carte blanche : padding 26px,
+           bordure, ombre) qui transformerait la recherche en panneau flottant. */
+        .topbar-recherche {
+            position: relative;
+            margin-left: auto;
+            width: min(300px, 32vw);
+            max-width: none;
+            padding: 0;
+            background: none;
+            border: 0;
+            border-radius: 0;
+            box-shadow: none;
+        }
+
+        .topbar-recherche .icone-nav {
+            position: absolute;
+            left: 11px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            color: var(--muted);
+            pointer-events: none;
+        }
+
+        .topbar-recherche input {
+            width: 100%;
+            margin-bottom: 0;
+            padding-left: 34px;
+            font-size: 13px;
+        }
+
+        .topbar-bouton {
+            position: relative;
+            display: grid;
+            place-items: center;
+            flex: 0 0 36px;
+            width: 36px;
+            height: 36px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--surface);
+            color: var(--muted);
+        }
+
+        .topbar-bouton:hover {
+            border-color: var(--primary);
+            color: var(--primary-strong);
+        }
+
+        /* Pastille de notification : --accent (terracotta) sur fond blanc,
+           usage ponctuel conforme au design system (jamais en aplat large). */
+        .topbar-pastille {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            min-width: 17px;
+            height: 17px;
+            padding: 0 4px;
+            border-radius: 9px;
+            border: 2px solid var(--bg);
+            background: var(--accent);
+            color: #ffffff;
+            font-size: 10px;
+            font-weight: 800;
+            line-height: 13px;
+            text-align: center;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .topbar-compte {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            text-decoration: none;
+        }
+
+        .topbar-avatar {
+            display: grid;
+            place-items: center;
+            flex: 0 0 36px;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: var(--primary-dark);
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .topbar-identite b {
+            display: block;
+            font-size: 12.5px;
+            font-weight: 700;
+            color: var(--primary-dark);
+            line-height: 1.3;
+        }
+
+        .topbar-identite > span {
+            font-size: 11px;
+            color: var(--muted);
+        }
+
+        /* Dans la topbar le bouton de tiroir est un element de rangee : la
+           marge basse prevue pour son ancienne position le desalignerait. */
+        .topbar .sidebar-toggle {
+            margin-bottom: 0;
+            width: 36px;
+            height: 36px;
+            flex: 0 0 36px;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip-path: inset(50%);
+            white-space: nowrap;
+        }
+
+        @media (max-width: 900px) {
+            .topbar {
+                margin: -32px 0 16px;
+                padding: 10px 0;
+                gap: 10px;
+            }
+
+            .fil-ariane,
+            .topbar-identite {
+                display: none;
+            }
+
+            .topbar-recherche {
+                margin-left: auto;
+                width: auto;
+                flex: 1;
+                min-width: 0;
+            }
+        }
+
         /* ===== Menu mobile (bouton + tiroir + fond) ===== */
         .sidebar-toggle {
             display: none;
@@ -2341,10 +2531,39 @@
         <section class="contenu">
             <main id="contenu-principal">
                 {% if user.is_authenticated %}
-                <button type="button" id="bouton-menu-mobile" class="sidebar-toggle"
-                        aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="barre-laterale">
-                    {% icone "menu" %}
-                </button>
+                {% comment %}
+                Barre superieure : le bouton du tiroir mobile y est deplace
+                (un seul bouton dans le DOM, meme gestionnaire JS).
+                {% endcomment %}
+                <header class="topbar">
+                    <button type="button" id="bouton-menu-mobile" class="sidebar-toggle"
+                            aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="barre-laterale">
+                        {% icone "menu" %}
+                    </button>
+                    <nav class="fil-ariane" aria-label="Fil d'ariane">
+                        <span>{{ current_role_label }}</span>
+                        <b>{{ request.resolver_match.url_name|libelle_page }}</b>
+                    </nav>
+                    {% if current_role == "ADMIN" %}
+                    <form class="topbar-recherche" method="get" action="{% url 'liste_utilisateurs' %}" role="search">
+                        <label class="sr-only" for="recherche-globale">Rechercher un utilisateur</label>
+                        {% icone "search" %}
+                        <input id="recherche-globale" type="search" name="q" placeholder="Rechercher un utilisateur">
+                    </form>
+                    {% endif %}
+                    <a class="topbar-bouton" href="{% url 'mes_notifications' %}"
+                       aria-label="Notifications{% if notifications_non_lues %} : {{ notifications_non_lues }} non lue(s){% endif %}">
+                        {% icone "bell" %}
+                        {% if notifications_non_lues %}<span class="topbar-pastille">{{ notifications_non_lues }}</span>{% endif %}
+                    </a>
+                    <a class="topbar-compte" href="{% url 'changer_mot_de_passe' %}">
+                        <span class="topbar-avatar" aria-hidden="true">{{ user.get_full_name|default:user.email|slice:":2"|upper }}</span>
+                        <span class="topbar-identite">
+                            <b>{{ user.get_full_name|default:user.email }}</b>
+                            <span>{{ current_role_label }}</span>
+                        </span>
+                    </a>
+                </header>
                 {% endif %}
                 {% if messages %}
                 <div class="toasts" id="toasts" aria-live="polite" aria-atomic="true">

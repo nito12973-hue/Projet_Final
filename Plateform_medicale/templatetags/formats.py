@@ -23,6 +23,60 @@ def franc_cfa(montant):
     return f"{signe}{groupes} FCFA"
 
 
+# Libelle affiche dans le fil d'ariane de la barre superieure, par nom de
+# route. Une seule table ici plutot qu'un {% block %} a redefinir dans chaque
+# template : les ecrans de formulaire (ajouter_/modifier_/supprimer_) sont
+# volontairement rattaches au libelle de leur liste, c'est la section que
+# l'utilisateur reconnait. Une route absente de la table n'affiche rien --
+# le fil d'ariane se limite alors au role, jamais un libelle faux.
+_LIBELLES_PAGE = {
+    "dashboard": "Tableau de bord",
+    "dashboard_assure": "Tableau de bord",
+    "dashboard_medecin": "Tableau de bord",
+    "dashboard_pharmacien": "Tableau de bord",
+    "liste_utilisateurs": "Utilisateurs",
+    "ajouter_utilisateur": "Utilisateurs",
+    "modifier_utilisateur": "Utilisateurs",
+    "importer_utilisateurs_excel": "Utilisateurs",
+    "liste_patients": "Assurés",
+    "ajouter_patient": "Assurés",
+    "modifier_patient": "Assurés",
+    "liste_medecins": "Médecins",
+    "ajouter_medecin": "Médecins",
+    "modifier_medecin": "Médecins",
+    "liste_pharmaciens": "Pharmaciens",
+    "modifier_pharmacien": "Pharmaciens",
+    "liste_prestataires": "Prestataires",
+    "ajouter_prestataire": "Prestataires",
+    "modifier_prestataire": "Prestataires",
+    "liste_services": "Services médicaux",
+    "ajouter_service": "Services médicaux",
+    "modifier_service": "Services médicaux",
+    "liste_plans_couverture": "Plans de couverture",
+    "ajouter_plan_couverture": "Plans de couverture",
+    "modifier_plan_couverture": "Plans de couverture",
+    "liste_prises_en_charge": "Prises en charge",
+    "ajouter_prise_en_charge": "Prises en charge",
+    "modifier_prise_en_charge": "Prises en charge",
+    "liste_rendez_vous": "Rendez-vous",
+    "liste_ordonnances": "Ordonnances",
+    "liste_paiements": "Paiements",
+    "rapports": "Rapports",
+    "envoyer_notification": "Notifications",
+    "liste_notifications_envoyees": "Notifications",
+    "mes_notifications": "Notifications",
+    "changer_mot_de_passe": "Mot de passe",
+}
+
+
+@register.filter
+def libelle_page(nom_route):
+    """Libelle de section affiche dans le fil d'ariane, depuis
+    request.resolver_match.url_name. Chaine vide si la route est inconnue :
+    le gabarit masque alors le separateur (regle CSS .fil-ariane b:empty)."""
+    return _LIBELLES_PAGE.get(nom_route, "")
+
+
 @register.simple_tag
 def prefixe_pagination(get_params):
     """Chaine de requete GET (filtres actifs, hors 'page') a placer devant
