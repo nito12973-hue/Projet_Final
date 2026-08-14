@@ -2846,3 +2846,44 @@ class ListeRendezVousAdminTests(TestCase):
         self.client.logout()
         reponse = self.client.get(reverse('liste_rendez_vous'))
         self.assertEqual(reponse.status_code, 302)
+
+
+class ListeOrdonnancesAdminTests(TestCase):
+    def setUp(self):
+        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin-ord@santesn.sn')
+        self.medecin = creer_medecin('medecin-ord@santesn.sn')
+        self.patient = creer_patient(nom='Ba', prenom='Aminata')
+        self.pharmacien = creer_pharmacien('pharmacien-ord@santesn.sn')
+        self.non_delivree = creer_ordonnance(self.patient, self.medecin)
+        self.delivree = creer_ordonnance(self.patient, self.medecin, medicaments='Ibuprofene')
+        Delivrance.objects.create(ordonnance=self.delivree, pharmacien=self.pharmacien)
+        self.client.login(username='admin-ord@santesn.sn', password=PASSWORD)
+
+    def test_liste_accessible_a_l_admin(self):
+        reponse = self.client.get(reverse('liste_ordonnances'))
+        self.assertEqual(reponse.status_code, 200)
+        self.assertEqual(len(reponse.context['ordonnances']), 2)
+
+    def test_filtre_non_delivrees(self):
+        reponse = self.client.get(reverse('liste_ordonnances'), {'delivrance': 'non'})
+        self.assertEqual(list(reponse.context['ordonnances']), [self.non_delivree])
+
+    def test_filtre_delivrees(self):
+        reponse = self.client.get(reverse('liste_ordonnances'), {'delivrance': 'oui'})
+        self.assertEqual(list(reponse.context['ordonnances']), [self.delivree])
+
+    def test_recherche_par_code_qr(self):
+        reponse = self.client.get(
+            reverse('liste_ordonnances'), {'q': self.non_delivree.code_qr}
+        )
+        self.assertEqual(list(reponse.context['ordonnances']), [self.non_delivree])
+
+    def test_recherche_par_nom_de_patient(self):
+        reponse = self.client.get(reverse('liste_ordonnances'), {'q': 'Aminata'})
+        self.assertEqual(len(reponse.context['ordonnances']), 2)
+
+    def test_role_non_admin_refuse(self):
+        self.client.logout()
+        self.client.login(username='pharmacien-ord@santesn.sn', password=PASSWORD)
+        reponse = self.client.get(reverse('liste_ordonnances'))
+        self.assertEqual(reponse.status_code, 403)

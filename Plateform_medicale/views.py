@@ -799,6 +799,50 @@ def liste_rendez_vous(request):
 
 
 @admin_required
+def liste_ordonnances(request):
+    """Liste administrateur des ordonnances, en lecture seule.
+
+    Le filtre "delivrance" repond a un angle mort : une ordonnance emise mais
+    jamais retiree en pharmacie n'apparaissait sur aucun ecran. Valider une
+    delivrance reste l'affaire du pharmacien (valider_delivrance). Le QR n'est
+    pas affiche ici : il n'a de sens qu'au comptoir.
+    """
+    ordonnances = Ordonnance.objects.select_related(
+        "consultation__patient", "consultation__medecin", "delivrance__pharmacien"
+    )
+
+    recherche = request.GET.get("q", "").strip()
+    if recherche:
+        ordonnances = ordonnances.filter(
+            Q(consultation__patient__nom__icontains=recherche)
+            | Q(consultation__patient__prenom__icontains=recherche)
+            | Q(code_qr__icontains=recherche)
+        )
+
+    delivrance = request.GET.get("delivrance", "")
+    if delivrance == "non":
+        ordonnances = ordonnances.filter(delivrance__isnull=True)
+    elif delivrance == "oui":
+        ordonnances = ordonnances.filter(delivrance__isnull=False)
+
+    ordonnances = _trier(
+        request,
+        ordonnances,
+        ["date_creation", "consultation__patient__nom", "code_qr"],
+        "-date_creation",
+    )
+    return render(
+        request,
+        "liste_ordonnances.html",
+        {
+            "ordonnances": _paginer(request, ordonnances),
+            "recherche": recherche,
+            "delivrance_choisie": delivrance,
+        },
+    )
+
+
+@admin_required
 def ajouter_prise_en_charge(request):
     """A la creation, le statut est toujours 'en_attente' : le champ n'est pas propose."""
     if request.method == "POST":
