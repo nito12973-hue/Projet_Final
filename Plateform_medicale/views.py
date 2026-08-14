@@ -306,7 +306,19 @@ def sitemap_xml(request):
 
 @admin_required
 def dashboard(request):
-    dernieres_prises_en_charge = PriseEnCharge.objects.select_related("patient").order_by("-date_demande")[:5]
+    # Les demandes en attente remontent en tete : triee par date seule, la
+    # liste noyait l'urgence sous des dossiers deja clos.
+    dernieres_prises_en_charge = (
+        PriseEnCharge.objects.select_related("patient")
+        .annotate(
+            priorite=Case(
+                When(statut="en_attente", then=Value(0)),
+                default=Value(1),
+                output_field=IntegerField(),
+            )
+        )
+        .order_by("priorite", "-date_demande")[:5]
+    )
 
     # Bandeau financier : meme agregat que liste_paiements (Sum filtre par
     # statut), pour un signal de sante financiere absent jusqu'ici du
@@ -380,12 +392,55 @@ def dashboard(request):
 
     tendance_paiements = _montants_regles_par_jour()
 
+    # Un seul aller-retour pour les trois comptages de Patient plutot que trois
+    # count() sur la meme table. La repartition principaux / ayants droit est
+    # le coeur du sujet du projet et n'etait affichee nulle part.
+    repartition_patients = Patient.objects.aggregate(
+        total=Count("id"),
+        principaux=Count("id", filter=Q(type_beneficiaire=Patient.TypeBeneficiaire.PRINCIPAL)),
+        sans_plan=Count(
+            "id",
+            filter=Q(
+                type_beneficiaire=Patient.TypeBeneficiaire.PRINCIPAL,
+                plan_couverture__isnull=True,
+            ),
+        ),
+    )
+    patients_principaux = repartition_patients["principaux"]
+    ayants_droit = repartition_patients["total"] - patients_principaux
+
+    # Les quatre files d'attente du bandeau "A traiter". Chacune mene a une
+    # liste filtree reellement existante (cf. liste_rendez_vous et
+    # liste_ordonnances, ajoutees pour cette refonte).
+    total_prises_en_charge_attente = PriseEnCharge.objects.filter(statut="en_attente").count()
+    rdv_a_confirmer = RendezVous.objects.filter(statut=RendezVous.Statut.DEMANDE).count()
+    ordonnances_non_delivrees = Ordonnance.objects.filter(delivrance__isnull=True).count()
+    paiements_non_regles_nb = Paiement.objects.filter(statut=Paiement.Statut.NON_REGLE).count()
+
+    # Libelles au pluriel : .values() ne rend que la valeur brute de l'enum
+    # ("HOPITAL"), et les pluriels francais concernes sont irreguliers.
+    pluriels_prestataire = {
+        Prestataire.Type.HOPITAL: "hôpitaux",
+        Prestataire.Type.CLINIQUE: "cliniques",
+        Prestataire.Type.PHARMACIE: "pharmacies",
+        Prestataire.Type.CABINET: "cabinets",
+    }
+    prestataires_par_type = [
+        {
+            "libelle": pluriels_prestataire.get(ligne["type_prestataire"], "autres"),
+            "total": ligne["total"],
+        }
+        for ligne in Prestataire.objects.values("type_prestataire")
+        .annotate(total=Count("id"))
+        .order_by("-total")
+    ]
+
     contexte = {
         "total_patients": Patient.objects.count(),
         "total_medecins": Medecin.objects.count(),
         "total_pharmaciens": Pharmacien.objects.count(),
         "total_prestataires": Prestataire.objects.filter(partenaire=True).count(),
-        "total_prises_en_charge_attente": PriseEnCharge.objects.filter(statut="en_attente").count(),
+        "total_prises_en_charge_attente": total_prises_en_charge_attente,
         "jours_attente_max": jours_attente_max,
         "total_consultations": Consultation.objects.count(),
         "total_ordonnances": Ordonnance.objects.count(),
@@ -402,6 +457,26 @@ def dashboard(request):
         "total_consultations_aujourd_hui": total_consultations_aujourd_hui,
         "dernieres_prises_en_charge": dernieres_prises_en_charge,
         "derniers_comptes": derniers_comptes,
+        "patients_principaux": patients_principaux,
+        "ayants_droit": ayants_droit,
+        "assures_sans_plan": repartition_patients["sans_plan"],
+        "rdv_a_confirmer": rdv_a_confirmer,
+        "ordonnances_non_delivrees": ordonnances_non_delivrees,
+        "total_delivrances": Delivrance.objects.count(),
+        "paiements_non_regles_nb": paiements_non_regles_nb,
+        "montant_total_facture": montant_total_paiements,
+        "medecins_sans_prestataire": Medecin.objects.filter(prestataire__isnull=True).count(),
+        "pharmaciens_sans_prestataire": Pharmacien.objects.filter(prestataire__isnull=True).count(),
+        "prestataires_sans_coordonnees": Prestataire.objects.filter(
+            Q(latitude__isnull=True) | Q(longitude__isnull=True)
+        ).count(),
+        "prestataires_par_type": prestataires_par_type,
+        "file_totale": (
+            total_prises_en_charge_attente
+            + rdv_a_confirmer
+            + ordonnances_non_delivrees
+            + paiements_non_regles_nb
+        ),
     }
     return render(request, "dashboard.html", contexte)
 

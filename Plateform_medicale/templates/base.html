@@ -2042,6 +2042,610 @@
             opacity: 1;
         }
 
+        /* ===== Dashboard administrateur : direction "Clinique claire" =====
+           Fond de page clair, menu lateral navy conserve, et un seul bloc
+           sombre : le bandeau "A traiter". Le contraste devient un geste
+           delibere au service de la hierarchie au lieu d'etre le fond par
+           defaut (l'ancien canevas .dash-command noircissait toute la page). */
+
+        .section-titre {
+            margin: 28px 0 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-family: 'Manrope', system-ui, sans-serif;
+            font-size: 11.5px;
+            font-weight: 800;
+            letter-spacing: 0.13em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .section-titre::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* --- Bandeau "A traiter" (le seul bloc sombre de la page) --- */
+        .file-attente {
+            margin-top: 20px;
+            padding: 18px 20px 20px;
+            border-radius: 16px;
+            background: var(--primary-dark);
+            box-shadow: 0 10px 28px rgba(11, 32, 39, 0.18);
+        }
+
+        .file-titre {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            margin: 0 0 14px;
+            font-size: 11.5px;
+            font-weight: 800;
+            letter-spacing: 0.13em;
+            text-transform: uppercase;
+            color: rgba(231, 236, 243, 0.72);
+        }
+
+        .file-titre .icone-nav {
+            width: 15px;
+            height: 15px;
+        }
+
+        .file-grille {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .file-tuile {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 15px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.13);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #ffffff;
+            text-decoration: none;
+            transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+        }
+
+        .file-tuile:hover,
+        .file-tuile:focus-visible {
+            background: rgba(255, 255, 255, 0.10);
+            border-color: rgba(255, 255, 255, 0.24);
+            transform: translateY(-2px);
+        }
+
+        .file-entete {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 11.5px;
+            font-weight: 700;
+            color: rgba(231, 236, 243, 0.72);
+        }
+
+        .file-entete .icone-nav {
+            width: 14px;
+            height: 14px;
+        }
+
+        .file-nombre {
+            font-size: 30px;
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: -0.03em;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .file-libelle {
+            font-size: 12.5px;
+            font-weight: 600;
+            color: rgba(231, 236, 243, 0.82);
+        }
+
+        .file-note {
+            font-size: 11.5px;
+            font-weight: 700;
+            color: var(--primary-light);
+        }
+
+        /* Terracotta reserve a l'urgence : une seule couleur d'alerte sur le
+           bandeau sombre, elle ressort donc immediatement. */
+        .file-tuile.urgent {
+            border-color: rgba(224, 130, 79, 0.5);
+            background: linear-gradient(135deg, rgba(224, 130, 79, 0.20), rgba(255, 255, 255, 0.05) 62%);
+        }
+
+        .file-tuile.urgent .file-entete,
+        .file-tuile.urgent .file-note {
+            color: var(--accent);
+        }
+
+        .file-vide {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            margin: 0;
+            font-size: 13.5px;
+            font-weight: 600;
+            color: rgba(231, 236, 243, 0.82);
+        }
+
+        .file-vide .icone-nav {
+            width: 17px;
+            height: 17px;
+            color: var(--primary-light);
+        }
+
+        /* --- Bande couverture & finances --- */
+        .bande-couverture {
+            display: grid;
+            grid-template-columns: 1.55fr 1fr;
+            gap: 16px;
+        }
+
+        .bande-couverture .panel,
+        .duo-listes .panel,
+        .bande-bas .panel {
+            margin: 0;
+        }
+
+        .lien-discret {
+            font-size: 11.5px;
+            font-weight: 700;
+            color: var(--primary-strong);
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .lien-discret:hover {
+            text-decoration: underline;
+        }
+
+        .finances-corps {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            padding: 0 24px;
+        }
+
+        .finances-principal .montant {
+            display: block;
+            font-size: 32px;
+            font-weight: 800;
+            line-height: 1.05;
+            letter-spacing: -0.03em;
+            color: var(--primary-dark);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .finances-libelle {
+            display: block;
+            margin-top: 4px;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--muted);
+        }
+
+        .finances-delta {
+            display: inline-block;
+            margin-top: 9px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            background: #e6f4ee;
+            color: #15683f;
+            font-size: 11.5px;
+            font-weight: 800;
+        }
+
+        .finances-taux {
+            display: block;
+            margin-top: 7px;
+            font-size: 11.5px;
+            font-weight: 700;
+            color: var(--muted);
+        }
+
+        /* Mouvement sur 7 jours : meme role que l'ancien .dc-kpi-delta, teinte
+           accent pour se distinguer du libelle qui le precede. */
+        .kpi-delta {
+            color: var(--primary-strong);
+            font-weight: 800;
+        }
+
+        .finances-secondaires {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            padding-left: 24px;
+            border-left: 1px solid var(--border);
+        }
+
+        .finances-secondaires strong {
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--primary-dark);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .finances-secondaires strong.attente {
+            color: #8a5a00;
+        }
+
+        .finances-graphe {
+            height: 96px;
+            margin: 18px 24px 0;
+        }
+
+        /* Legende SOUS le graphique : l'ancienne version la posait par-dessus
+           le trace, elle en devenait illisible. */
+        .finances-legende {
+            margin: 8px 24px 22px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--muted);
+        }
+
+        /* --- Carte assures couverts --- */
+        .assures-corps {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            padding: 0 24px 24px;
+        }
+
+        .assures-total {
+            display: flex;
+            align-items: baseline;
+            gap: 9px;
+            margin: 0;
+        }
+
+        .assures-total strong {
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            color: var(--primary-dark);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .assures-total span {
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--muted);
+        }
+
+        .assures-barre {
+            display: flex;
+            height: 10px;
+            border-radius: 20px;
+            overflow: hidden;
+            background: var(--primary-soft);
+        }
+
+        .assures-barre .segment-principal { background: var(--primary); }
+        .assures-barre .segment-ayant-droit { background: var(--accent); }
+
+        .assures-legende {
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .assures-legende li {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            font-size: 12.5px;
+        }
+
+        .assures-legende a {
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        .assures-legende a:hover { text-decoration: underline; }
+
+        .assures-legende strong {
+            margin-left: auto;
+            font-weight: 800;
+            color: var(--primary-dark);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .pastille-principal,
+        .pastille-ayant-droit {
+            flex: 0 0 9px;
+            width: 9px;
+            height: 9px;
+            border-radius: 3px;
+        }
+
+        .pastille-principal { background: var(--primary); }
+        .pastille-ayant-droit { background: var(--accent); }
+
+        .assures-alerte {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: #fdf3e0;
+            color: #8a5a00;
+            font-size: 12px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .assures-alerte .icone-nav {
+            width: 15px;
+            height: 15px;
+            flex: 0 0 15px;
+        }
+
+        /* --- Cartes KPI --- */
+        .kpi-grille {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .kpi {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 16px 17px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: var(--surface);
+            text-decoration: none;
+            box-shadow: 0 1px 2px rgba(11, 32, 39, 0.04);
+            transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .kpi:hover,
+        .kpi:focus-visible {
+            border-color: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 26px rgba(14, 124, 134, 0.13);
+        }
+
+        .kpi-entete {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 11.5px;
+            font-weight: 700;
+            color: var(--muted);
+        }
+
+        .kpi-entete .icone-nav {
+            width: 14px;
+            height: 14px;
+            flex: 0 0 14px;
+            color: var(--primary-strong);
+        }
+
+        .kpi strong {
+            font-size: 26px;
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: -0.03em;
+            color: var(--primary-dark);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .kpi-pied {
+            font-size: 11.5px;
+            font-weight: 700;
+            color: var(--muted);
+        }
+
+        /* Seule l'information secondaire vire a l'ambre quand elle signale un
+           manque : les cartes restent homogenes (l'ancien liseré terracotta
+           sur 2 cartes sur 6 n'etait explique par rien). */
+        .kpi-pied.manque { color: #8a5a00; }
+
+        /* --- Listes d'activite --- */
+        .duo-listes,
+        .bande-bas {
+            display: grid;
+            grid-template-columns: 1.55fr 1fr;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .duo-listes { grid-template-columns: 1fr 1fr; }
+
+        .liste-lignes {
+            margin: 0;
+            padding: 0 24px 20px;
+            list-style: none;
+        }
+
+        .liste-lignes li + li {
+            border-top: 1px solid var(--border);
+        }
+
+        .liste-lignes a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 11px 0;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .liste-lignes a:hover .ligne-nom {
+            color: var(--primary-strong);
+        }
+
+        .ligne-avatar {
+            display: grid;
+            place-items: center;
+            flex: 0 0 32px;
+            width: 32px;
+            height: 32px;
+            border-radius: 9px;
+            background: var(--primary-soft);
+            color: var(--primary-strong);
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .ligne-texte {
+            min-width: 0;
+        }
+
+        .ligne-nom {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+
+        .ligne-sous {
+            display: block;
+            font-size: 11.5px;
+            color: var(--muted);
+        }
+
+        .liste-lignes .badge,
+        .etiquette-role {
+            margin-left: auto;
+            white-space: nowrap;
+        }
+
+        .etiquette-role {
+            padding: 3px 9px;
+            border-radius: 20px;
+            background: #eef3f3;
+            color: var(--muted);
+            font-size: 10.5px;
+            font-weight: 800;
+        }
+
+        /* --- Fiches a completer + actions rapides --- */
+        .fiches-grille {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 11px;
+            padding: 0 24px 24px;
+        }
+
+        .fiche {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            padding: 12px 13px;
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            background: #f7fafa;
+            color: var(--text);
+            text-decoration: none;
+            font-size: 11.5px;
+            font-weight: 600;
+        }
+
+        .fiche:hover,
+        .fiche:focus-visible {
+            border-color: var(--primary-light);
+            background: var(--surface);
+        }
+
+        .fiche .icone-nav {
+            width: 16px;
+            height: 16px;
+            flex: 0 0 16px;
+            color: #8a5a00;
+        }
+
+        .fiche strong {
+            margin-right: 5px;
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--primary-dark);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .actions-grille {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            padding: 0 24px 24px;
+        }
+
+        .actions-grille .button {
+            justify-content: flex-start;
+            gap: 8px;
+            font-size: 12.5px;
+        }
+
+        .actions-grille .icone-nav {
+            width: 15px;
+            height: 15px;
+            flex: 0 0 15px;
+        }
+
+        @media (max-width: 1180px) {
+            .kpi-grille { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .file-grille { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .bande-couverture,
+            .bande-bas { grid-template-columns: minmax(0, 1fr); }
+        }
+
+        @media (max-width: 900px) {
+            .duo-listes { grid-template-columns: minmax(0, 1fr); }
+
+            /* Sans cela le titre du panneau se casse sur trois lignes a cote de
+               son bouton "Voir tout". */
+            .panel-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .kpi-grille,
+            .file-grille,
+            .fiches-grille,
+            .actions-grille { grid-template-columns: minmax(0, 1fr); }
+
+            .finances-secondaires {
+                padding-left: 0;
+                border-left: 0;
+                border-top: 1px solid var(--border);
+                padding-top: 14px;
+                width: 100%;
+            }
+
+            .file-attente { padding: 16px; }
+        }
+
+        /* Respecte le reglage systeme "reduire les animations" : le dashboard
+           se consulte plusieurs fois par jour. */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.001ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.001ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+
         /* ===== Barre superieure (topbar) =====
            Presente pour les 4 roles. Collante en haut du contenu : sur une
            liste longue (utilisateurs, rendez-vous), la recherche et le compte
