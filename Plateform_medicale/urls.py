@@ -54,6 +54,8 @@ urlpatterns = [
     path('prises-en-charge/<int:pk>/modifier/', views.modifier_prise_en_charge, name='modifier_prise_en_charge'),
     path('prises-en-charge/<int:pk>/supprimer/', views.supprimer_prise_en_charge, name='supprimer_prise_en_charge'),
 
+    path('rendez-vous/', views.liste_rendez_vous, name='liste_rendez_vous'),
+
     path('paiements/', views.liste_paiements, name='liste_paiements'),
     path('paiements/exporter/csv/', views.exporter_paiements_csv, name='exporter_paiements_csv'),
     path('paiements/<int:pk>/regler/', views.marquer_paiement_regle, name='marquer_paiement_regle'),
