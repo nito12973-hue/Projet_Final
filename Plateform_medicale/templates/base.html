@@ -203,7 +203,19 @@
            sous ce seuil, ces cartes disparaissaient purement et simplement,
            y compris le bouton "Valider la delivrance" de
            scanner_ordonnance.html. */
+        /* Collante : sans cela, la barre laterale est un element de grille
+           ordinaire et disparait au defilement, alors que la barre du haut
+           reste -- l'en-tete restait, la navigation partait.
+           align-self: start est indispensable : un element de grille etire
+           (comportement par defaut) ne peut pas coller. height + overflow
+           lui donnent son propre defilement si le menu depasse l'ecran.
+           Neutralise sous 981px par le position: fixed du tiroir mobile. */
         #barre-laterale {
+            position: sticky;
+            top: 0;
+            align-self: start;
+            height: 100vh;
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
             gap: 18px;
@@ -2976,6 +2988,110 @@
             font-variant-numeric: tabular-nums;
         }
 
+        /* Menu du compte : <details> natif -- ouverture au clavier et a la
+           souris, fermeture par Echap, sans une ligne de JavaScript. */
+        .menu-compte {
+            position: relative;
+        }
+
+        .menu-compte > summary {
+            list-style: none;
+            cursor: pointer;
+        }
+
+        .menu-compte > summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .menu-compte > summary .icone-nav {
+            width: 15px;
+            height: 15px;
+            color: var(--muted);
+            transition: transform 0.18s ease;
+        }
+
+        .menu-compte[open] > summary .icone-nav {
+            transform: rotate(180deg);
+        }
+
+        .menu-compte-panneau {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            z-index: 40;
+            min-width: 232px;
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: var(--surface);
+            box-shadow: 0 2px 6px rgba(11, 32, 39, 0.10), 0 18px 44px rgba(11, 32, 39, 0.16);
+        }
+
+        .menu-compte-entete {
+            margin: 0 0 6px;
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .menu-compte-entete b {
+            display: block;
+            font-size: 13px;
+            color: var(--titre);
+        }
+
+        .menu-compte-entete span {
+            font-size: 11.5px;
+            color: var(--muted);
+            word-break: break-all;
+        }
+
+        .menu-compte-panneau a,
+        .menu-compte-panneau button {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 9px 10px;
+            border: 0;
+            border-radius: 9px;
+            background: none;
+            color: var(--text);
+            font: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            text-align: left;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .menu-compte-panneau a:hover,
+        .menu-compte-panneau button:hover,
+        .menu-compte-panneau a:focus-visible,
+        .menu-compte-panneau button:focus-visible {
+            background: var(--neutre-bg);
+        }
+
+        .menu-compte-panneau button {
+            color: var(--danger);
+        }
+
+        .menu-compte-panneau .icone-nav {
+            width: 16px;
+            height: 16px;
+            flex: 0 0 16px;
+        }
+
+        /* Le formulaire de deconnexion ne doit pas heriter du style global
+           de <form> (carte blanche : padding, bordure, ombre). */
+        .menu-compte-panneau form {
+            max-width: none;
+            margin: 0;
+            padding: 0;
+            background: none;
+            border: 0;
+            box-shadow: none;
+        }
+
         .topbar-compte {
             display: flex;
             align-items: center;
@@ -3314,12 +3430,6 @@
                 {% endif %}
             </nav>
 
-            <form class="logout-form" method="post" action="{% url 'logout' %}">
-                {% csrf_token %}
-                <button class="logout-button" type="submit" aria-label="Déconnexion" data-tooltip="Déconnexion">
-                    {% icone "log-out" %} <span class="nav-texte">Déconnexion</span>
-                </button>
-            </form>
             {% endif %}
         </aside>
 
@@ -3351,13 +3461,28 @@
                         {% icone "bell" %}
                         {% if notifications_non_lues %}<span class="topbar-pastille">{{ notifications_non_lues }}</span>{% endif %}
                     </a>
-                    <a class="topbar-compte" href="{% url 'changer_mot_de_passe' %}">
-                        <span class="topbar-avatar" aria-hidden="true">{{ user.get_full_name|default:user.email|slice:":2"|upper }}</span>
-                        <span class="topbar-identite">
-                            <b>{{ user.get_full_name|default:user.email }}</b>
-                            <span>{{ current_role_label }}</span>
-                        </span>
-                    </a>
+                    <details class="menu-compte">
+                        <summary class="topbar-compte" aria-label="Menu du compte">
+                            <span class="topbar-avatar" aria-hidden="true">{{ user.get_full_name|default:user.email|slice:":2"|upper }}</span>
+                            <span class="topbar-identite">
+                                <b>{{ user.get_full_name|default:user.email }}</b>
+                                <span>{{ current_role_label }}</span>
+                            </span>
+                            {% icone "chevron-down" %}
+                        </summary>
+                        <div class="menu-compte-panneau">
+                            <p class="menu-compte-entete">
+                                <b>{{ user.get_full_name|default:user.email }}</b>
+                                <span>{{ user.email }}</span>
+                            </p>
+                            <a href="{% url 'parametres' %}">{% icone "user-circle" %} Mon compte</a>
+                            <a href="{% url 'changer_mot_de_passe' %}">{% icone "lock" %} Mot de passe</a>
+                            <form method="post" action="{% url 'logout' %}">
+                                {% csrf_token %}
+                                <button type="submit">{% icone "log-out" %} Déconnexion</button>
+                            </form>
+                        </div>
+                    </details>
                 </header>
                 {% endif %}
                 {% if messages %}

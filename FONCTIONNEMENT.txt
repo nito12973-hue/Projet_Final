@@ -820,6 +820,82 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
                           selecteur JS orphelin, aucun debordement
                           horizontal de page (.panel porte overflow-x: auto
                           et enveloppe chaque tableau).
+  importer_reglements_excel /         IMPORT DES REGLEMENTS, pas import de
+  telecharger_modele_import_reglements  paiements. La nuance est le coeur du
+                                      sujet : Paiement est en relation 1-1 avec
+                                      Consultation et TOUS ses montants sont
+                                      derives (calculer_pour : prix du service,
+                                      taux du plan si la prise en charge est
+                                      validee). Creer un paiement par import
+                                      supposerait d'inventer une consultation
+                                      ou d'ecraser les montants calcules --
+                                      exactement ce que le calcul automatique
+                                      existe pour empecher.
+                                      Ce que l'import fait : enregistrer en
+                                      masse le reglement de paiements
+                                      EXISTANTS (rapprochement de fin de mois).
+                                      C'est le pendant en masse de
+                                      marquer_paiement_regle.
+                                      Aller-retour : exporter_paiements_csv a
+                                      recu une colonne Reference (paiement.pk).
+                                      Sans elle, l'appariement se serait fait
+                                      sur patient + date a la minute pres.
+                                      Colonnes : Reference (seule identifiante),
+                                      Patient et Date de consultation
+                                      (relecture humaine, non utilisees),
+                                      Part patient (controle facultatif mais
+                                      verifie), Mode de reglement, Date de
+                                      reglement. Tout ou rien, comme l'import
+                                      des comptes : sur des ecritures
+                                      financieres, un import partiel laisserait
+                                      une caisse impossible a rapprocher.
+                                      La date conservee est celle du RELEVE,
+                                      pas celle de l'import : c'est elle qui
+                                      fait foi comptablement.
+
+  NAVIGATION -- dedoublonnage         Notifications etait a la fois un module
+                                      du menu ET une section de Parametres :
+                                      retire de Parametres (envoyer une
+                                      notification est une action metier
+                                      courante, pas un reglage).
+                                      L'import des utilisateurs etait propose a
+                                      QUATRE endroits : retire des actions
+                                      rapides du tableau de bord, conserve sur
+                                      la liste des utilisateurs (contexte) et
+                                      dans Parametres > Donnees (hub).
+                                      La deconnexion quitte le bas du menu pour
+                                      le menu du compte, avec Mon compte et Mot
+                                      de passe : ce qui est personnel appartient
+                                      au compte. Le menu est un <details> natif
+                                      -- accessible au clavier, aucun JS.
+                                      Corrige au passage : cliquer sur son nom
+                                      ouvrait "changer le mot de passe".
+
+  BARRE LATERALE COLLANTE             Elle n'avait AUCUN positionnement : simple
+                                      element de grille, elle defilait hors de
+                                      l'ecran alors que la barre du haut, elle,
+                                      etait sticky -- l'en-tete restait, la
+                                      navigation partait.
+                                      position: sticky + top: 0 + align-self:
+                                      start + height: 100vh + overflow-y: auto.
+                                      align-self: start est INDISPENSABLE : un
+                                      element de grille etire (defaut) ne peut
+                                      pas coller. height + overflow donnent a la
+                                      barre son defilement propre si le menu
+                                      depasse l'ecran. Aucun position: fixed sur
+                                      le bureau ; le tiroir mobile (<981px) le
+                                      neutralise deja avec son propre fixed.
+
+  LANGUE FR/EN                        Demandee, non faite, et c'est un choix
+                                      assume : aucune balise de traduction
+                                      n'existe dans les 72 gabarits. Basculer
+                                      en anglais donnerait une application mi
+                                      -francaise mi-anglaise, pire que pas
+                                      d'option du tout. A traiter comme une
+                                      phase dediee (balisage, extraction,
+                                      fichiers .po, LocaleMiddleware,
+                                      selecteur), pas comme un reglage.
+
   parametres / parametres_section     page Parametres decoupee en SECTIONS qui
                                       ont chacune leur URL : un clic dans le
                                       menu ouvre reellement la page (adresse

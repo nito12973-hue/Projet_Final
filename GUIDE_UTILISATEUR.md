@@ -134,6 +134,17 @@ Pharmacien qui s'en chargent.
   chaque consultation, filtrable par statut. *Marquer réglé* exige de
   préciser un mode de règlement.
 
+  Pour enregistrer plusieurs règlements d une traite (rapprochement de fin de
+  mois) : exportez les paiements en CSV, complétez les colonnes *Mode de
+  règlement* et *Date de règlement* d après votre relevé, puis utilisez
+  **Importer des règlements**. Ne modifiez pas la colonne *Référence*, c est
+  elle qui identifie chaque paiement.
+
+  Cet import n ajoute jamais de paiement : les montants restent calculés par
+  l application à partir du service et du plan de couverture. Comme pour les
+  comptes, l import est *tout ou rien* — une seule ligne en erreur annule
+  l ensemble, et les erreurs sont listées ligne par ligne.
+
 ### Rapports
 
 Graphiques (consultations — bascule jour / mois / année, répartitions par

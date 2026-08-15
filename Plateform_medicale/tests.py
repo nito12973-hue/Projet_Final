@@ -3080,8 +3080,7 @@ class ParametresEtMonCompteTests(TestCase):
         self.assertContains(reponse, 'Mon compte')
 
     def test_chaque_categorie_ouvre_sa_propre_page(self):
-        for slug in ('general', 'apparence', 'notifications',
-                     'securite', 'donnees', 'avance'):
+        for slug in ('general', 'apparence', 'securite', 'donnees', 'avance'):
             reponse = self.client.get(reverse('parametres_section', args=[slug]))
             self.assertEqual(reponse.status_code, 200, slug)
             self.assertEqual(reponse.context['section'], slug)
@@ -3093,16 +3092,13 @@ class ParametresEtMonCompteTests(TestCase):
 
     def test_sections_admin_inaccessibles_aux_autres_roles(self):
         self.assertEqual(
-            self.client.get(reverse('parametres_section', args=['notifications'])).status_code,
-            200)
+            self.client.get(reverse('parametres_section', args=['donnees'])).status_code, 200)
         self.client.logout()
         creer_medecin('medecin-param@santesn.sn')
         self.client.login(username='medecin-param@santesn.sn', password=PASSWORD)
         # Une section reservee n'est pas seulement masquee : elle est refusee.
-        for slug in ('notifications', 'donnees'):
-            self.assertEqual(
-                self.client.get(reverse('parametres_section', args=[slug])).status_code,
-                404, slug)
+        self.assertEqual(
+            self.client.get(reverse('parametres_section', args=['donnees'])).status_code, 404)
         menu = self.client.get(reverse('parametres'))
         self.assertNotContains(menu, reverse('parametres_section', args=['donnees']))
 
@@ -3222,13 +3218,6 @@ class ParametresContenuTests(TestCase):
         contexte = self.client.get(reverse('parametres')).context
         self.assertEqual(contexte['fuseau_horaire'], reglages.TIME_ZONE)
 
-    def test_compte_les_notifications_envoyees(self):
-        patient_user = creer_utilisateur(User.Role.ASSURE, 'assure-notif@santesn.sn')
-        Notification.objects.create(destinataire=patient_user, message='Test')
-        Notification.objects.create(destinataire=patient_user, message='Test 2')
-        contexte = self.client.get(
-            reverse('parametres_section', args=['notifications'])).context
-        self.assertEqual(contexte['total_notifications_envoyees'], 2)
 
     def test_sections_admin_absentes_pour_un_medecin(self):
         self.client.logout()
@@ -3523,3 +3512,228 @@ class PaginationHorsAdminTests(TestCase):
         reponse = self.client.get(reverse('mes_rendez_vous_assure'))
         self.assertEqual(reponse.context['rendez_vous'].paginator.num_pages, 1)
         self.assertNotContains(reponse, 'aria-label="Pagination"')
+
+
+ENTETES_IMPORT_REGLEMENTS = [
+    'Reference', 'Patient', 'Date de consultation', 'Part patient',
+    'Mode de reglement', 'Date de reglement',
+]
+
+
+def creer_fichier_import_reglements(lignes, entetes=None):
+    classeur = openpyxl.Workbook()
+    feuille = classeur.active
+    feuille.append(entetes or ENTETES_IMPORT_REGLEMENTS)
+    for ligne in lignes:
+        feuille.append(ligne)
+    tampon = io.BytesIO()
+    classeur.save(tampon)
+    tampon.seek(0)
+    return SimpleUploadedFile(
+        'reglements.xlsx', tampon.read(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+
+
+class ImportReglementsTests(TestCase):
+    """L'import n'ajoute pas de paiements (impossible : Paiement est en 1-1
+    avec Consultation et ses montants sont derives). Il enregistre le
+    reglement de paiements existants, en tout ou rien."""
+
+    def setUp(self):
+        creer_utilisateur(User.Role.ADMIN, 'admin-reglements@santesn.sn')
+        self.medecin = creer_medecin('medecin-reglements@santesn.sn')
+        self.patient = creer_patient(nom='Sow', prenom='Awa')
+        service = ServiceMedical.objects.create(nom='Consultation', prix=Decimal('10000'))
+        consultation = Consultation.objects.create(
+            patient=self.patient, medecin=self.medecin, service=service,
+            date_consultation=timezone.now(), diagnostic='Test',
+        )
+        self.paiement = Paiement.calculer_pour(consultation)
+        self.paiement.save()
+        self.client.login(username='admin-reglements@santesn.sn', password=PASSWORD)
+
+    def _importer(self, lignes, entetes=None):
+        return self.client.post(reverse('importer_reglements_excel'),
+                                {'fichier': creer_fichier_import_reglements(lignes, entetes)})
+
+    # --- cas nominal ---
+
+    def test_import_valide(self):
+        reponse = self._importer([[self.paiement.pk, 'Awa Sow', '', '', 'Especes', '10/08/2026']])
+        self.assertRedirects(reponse, reverse('liste_paiements'))
+        self.paiement.refresh_from_db()
+        self.assertEqual(self.paiement.statut, Paiement.Statut.REGLE)
+        self.assertEqual(self.paiement.mode_reglement, Paiement.ModeReglement.ESPECES)
+        self.assertEqual(self.paiement.date_reglement.date(), datetime.date(2026, 8, 10))
+
+    def test_libelle_accentue_du_mode_accepte(self):
+        self._importer([[self.paiement.pk, '', '', '', 'Espèces', '10/08/2026']])
+        self.paiement.refresh_from_db()
+        self.assertEqual(self.paiement.mode_reglement, Paiement.ModeReglement.ESPECES)
+
+    def test_montant_de_controle_correct_accepte(self):
+        self._importer([[self.paiement.pk, '', '', self.paiement.montant_part_patient,
+                         'Virement', '10/08/2026']])
+        self.paiement.refresh_from_db()
+        self.assertEqual(self.paiement.statut, Paiement.Statut.REGLE)
+
+    # --- cas d'erreur ---
+
+    def _erreurs(self, lignes, entetes=None):
+        reponse = self._importer(lignes, entetes)
+        self.assertEqual(reponse.status_code, 200)
+        self.paiement.refresh_from_db()
+        self.assertEqual(self.paiement.statut, Paiement.Statut.NON_REGLE,
+                         "aucun reglement ne doit passer si une ligne est invalide")
+        return reponse
+
+    def test_fichier_vide(self):
+        self.assertContains(self._erreurs([]), 'aucune ligne')
+
+    def test_colonne_manquante(self):
+        reponse = self._erreurs([[self.paiement.pk, '', '', '']],
+                                entetes=['Reference', 'Patient', 'Part patient', 'Mode'])
+        self.assertContains(reponse, 'En-t')
+
+    def test_reference_inexistante(self):
+        self.assertContains(self._erreurs([[999999, '', '', '', 'Especes', '10/08/2026']]),
+                            'aucun paiement ne porte la r')
+
+    def test_reference_invalide(self):
+        self.assertContains(self._erreurs([['abc', '', '', '', 'Especes', '10/08/2026']]),
+                            'invalide')
+
+    def test_mode_inconnu(self):
+        self.assertContains(self._erreurs([[self.paiement.pk, '', '', '', 'Bitcoin', '10/08/2026']]),
+                            'inconnu')
+
+    def test_mode_absent(self):
+        self.assertContains(self._erreurs([[self.paiement.pk, '', '', '', '', '10/08/2026']]),
+                            'mode de r')
+
+    def test_date_invalide(self):
+        self.assertContains(self._erreurs([[self.paiement.pk, '', '', '', 'Especes', '32/13/2026']]),
+                            'invalide')
+
+    def test_date_absente(self):
+        self.assertContains(self._erreurs([[self.paiement.pk, '', '', '', 'Especes', '']]),
+                            'obligatoire')
+
+    def test_date_future_refusee(self):
+        futur = (timezone.localdate() + datetime.timedelta(days=5)).strftime('%d/%m/%Y')
+        self.assertContains(self._erreurs([[self.paiement.pk, '', '', '', 'Especes', futur]]),
+                            'futur')
+
+    def test_montant_de_controle_incoherent(self):
+        self.assertContains(
+            self._erreurs([[self.paiement.pk, '', '', '999999', 'Especes', '10/08/2026']]),
+            'ne correspond pas')
+
+    def test_montant_invalide(self):
+        self.assertContains(
+            self._erreurs([[self.paiement.pk, '', '', 'beaucoup', 'Especes', '10/08/2026']]),
+            'invalide')
+
+    def test_doublon_dans_le_fichier(self):
+        self.assertContains(
+            self._erreurs([[self.paiement.pk, '', '', '', 'Especes', '10/08/2026'],
+                           [self.paiement.pk, '', '', '', 'Virement', '11/08/2026']]),
+            'appara')
+
+    def test_paiement_deja_regle(self):
+        self.paiement.statut = Paiement.Statut.REGLE
+        self.paiement.save()
+        reponse = self._importer([[self.paiement.pk, '', '', '', 'Especes', '10/08/2026']])
+        self.assertContains(reponse, 'est d')
+
+    def test_plusieurs_erreurs_signalees_ensemble(self):
+        reponse = self._erreurs([
+            [999999, '', '', '', 'Especes', '10/08/2026'],
+            [self.paiement.pk, '', '', '', 'Bitcoin', '10/08/2026'],
+        ])
+        self.assertContains(reponse, 'aucun paiement ne porte la r')
+        self.assertContains(reponse, 'inconnu')
+
+    def test_tout_ou_rien(self):
+        """Une ligne valide suivie d'une invalide : rien ne doit passer."""
+        autre = Consultation.objects.create(
+            patient=self.patient, medecin=self.medecin,
+            date_consultation=timezone.now(), diagnostic='Autre')
+        paiement2 = Paiement.calculer_pour(autre)
+        paiement2.save()
+        self._importer([[self.paiement.pk, '', '', '', 'Especes', '10/08/2026'],
+                        [paiement2.pk, '', '', '', 'Bitcoin', '10/08/2026']])
+        self.paiement.refresh_from_db()
+        paiement2.refresh_from_db()
+        self.assertEqual(self.paiement.statut, Paiement.Statut.NON_REGLE)
+        self.assertEqual(paiement2.statut, Paiement.Statut.NON_REGLE)
+
+    # --- permissions et aller-retour ---
+
+    def test_role_non_admin_refuse(self):
+        self.client.logout()
+        creer_medecin('autre-medecin-regl@santesn.sn')
+        self.client.login(username='autre-medecin-regl@santesn.sn', password=PASSWORD)
+        for nom in ('importer_reglements_excel', 'telecharger_modele_import_reglements'):
+            self.assertEqual(self.client.get(reverse(nom)).status_code, 403, nom)
+
+    def test_export_csv_contient_la_reference(self):
+        """Sans identifiant dans l'export, l'aller-retour serait impossible."""
+        reponse = self.client.get(reverse('exporter_paiements_csv'))
+        contenu = reponse.content.decode('utf-8-sig')
+        self.assertIn('Reference', contenu.splitlines()[0])
+        self.assertIn(str(self.paiement.pk), contenu)
+
+    def test_modele_telechargeable(self):
+        reponse = self.client.get(reverse('telecharger_modele_import_reglements'))
+        self.assertEqual(reponse.status_code, 200)
+        self.assertIn('spreadsheetml', reponse['Content-Type'])
+
+
+class NavigationCoherenteTests(TestCase):
+    """Chaque fonctionnalite a UN emplacement logique : on verifie qu'on n'a
+    pas reintroduit de doublon."""
+
+    def setUp(self):
+        creer_utilisateur(User.Role.ADMIN, 'admin-nav@santesn.sn')
+        self.client.login(username='admin-nav@santesn.sn', password=PASSWORD)
+
+    def test_notifications_ne_sont_plus_une_section_de_parametres(self):
+        reponse = self.client.get(reverse('parametres'))
+        slugs = [s['slug'] for s in reponse.context['sections']]
+        self.assertNotIn('notifications', slugs)
+        self.assertEqual(
+            self.client.get(reverse('parametres_section', args=['notifications'])).status_code,
+            404)
+
+    def test_notifications_restent_dans_le_menu(self):
+        self.assertContains(self.client.get(reverse('dashboard')),
+                            reverse('envoyer_notification'))
+
+    def test_import_utilisateurs_absent_des_actions_rapides(self):
+        reponse = self.client.get(reverse('dashboard'))
+        self.assertNotContains(reponse, reverse('importer_utilisateurs_excel'))
+
+    def test_import_utilisateurs_reste_sur_sa_liste_et_dans_parametres(self):
+        self.assertContains(self.client.get(reverse('liste_utilisateurs')),
+                            reverse('importer_utilisateurs_excel'))
+        self.assertContains(self.client.get(reverse('parametres_section', args=['donnees'])),
+                            reverse('importer_utilisateurs_excel'))
+
+    def test_import_reglements_sur_la_page_paiements_et_dans_parametres(self):
+        self.assertContains(self.client.get(reverse('liste_paiements')),
+                            reverse('importer_reglements_excel'))
+        self.assertContains(self.client.get(reverse('parametres_section', args=['donnees'])),
+                            reverse('importer_reglements_excel'))
+
+    def test_menu_du_compte_porte_la_deconnexion(self):
+        """La deconnexion appartient au compte, pas a la navigation metier."""
+        reponse = self.client.get(reverse('dashboard'))
+        self.assertContains(reponse, 'menu-compte-panneau')
+        self.assertContains(reponse, reverse('logout'))
+        self.assertNotContains(reponse, 'class="logout-button"')
+
+    def test_le_bloc_compte_ouvre_le_compte_pas_le_mot_de_passe(self):
+        reponse = self.client.get(reverse('dashboard'))
+        self.assertNotContains(reponse, f'class="topbar-compte" href="{reverse("changer_mot_de_passe")}"')

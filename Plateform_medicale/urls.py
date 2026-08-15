@@ -63,6 +63,8 @@ urlpatterns = [
 
     path('paiements/', views.liste_paiements, name='liste_paiements'),
     path('paiements/exporter/csv/', views.exporter_paiements_csv, name='exporter_paiements_csv'),
+    path('paiements/importer/', views.importer_reglements_excel, name='importer_reglements_excel'),
+    path('paiements/importer/modele/', views.telecharger_modele_import_reglements, name='telecharger_modele_import_reglements'),
     path('paiements/<int:pk>/regler/', views.marquer_paiement_regle, name='marquer_paiement_regle'),
 
     path('prestataires/', views.liste_prestataires, name='liste_prestataires'),
