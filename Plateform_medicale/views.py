@@ -135,6 +135,31 @@ def admin_required(view_func):
     return role_required(User.Role.ADMIN)(view_func)
 
 
+def compteurs_files_attente(request=None):
+    """Compteurs des files d'attente administrateur.
+
+    Source UNIQUE : les pastilles du menu lateral (via le context processor
+    user_role) et le bandeau "A traiter" du dashboard affichent les memes
+    nombres. Sans ce cache, la vue et le context processor lancaient chacun
+    les memes deux requetes au meme rendu -- et surtout, deux noms coexistaient
+    pour un meme chiffre, donc deux endroits a corriger le jour ou la regle
+    metier change.
+
+    Le cache est pose sur la requete : le context processor s'execute au rendu
+    du gabarit, donc apres la vue, et reutilise ce qu'elle a deja calcule.
+    """
+    if request is not None and hasattr(request, "_compteurs_files_attente"):
+        return request._compteurs_files_attente
+
+    compteurs = {
+        "prises_en_charge_attente": PriseEnCharge.objects.filter(statut="en_attente").count(),
+        "paiements_non_regles": Paiement.objects.filter(statut=Paiement.Statut.NON_REGLE).count(),
+    }
+    if request is not None:
+        request._compteurs_files_attente = compteurs
+    return compteurs
+
+
 def user_role(request):
     """Context processor : role, notifications non lues, et compteurs de file
     d'attente pour les pastilles du menu lateral administrateur.
@@ -154,12 +179,9 @@ def user_role(request):
         'notifications_non_lues': user.notifications.filter(lue=False).count(),
     }
     if user.role == User.Role.ADMIN:
-        contexte['nb_prises_en_charge_attente'] = PriseEnCharge.objects.filter(
-            statut='en_attente'
-        ).count()
-        contexte['nb_paiements_non_regles'] = Paiement.objects.filter(
-            statut=Paiement.Statut.NON_REGLE
-        ).count()
+        compteurs = compteurs_files_attente(request)
+        contexte['nb_prises_en_charge_attente'] = compteurs["prises_en_charge_attente"]
+        contexte['nb_paiements_non_regles'] = compteurs["paiements_non_regles"]
     return contexte
 
 
@@ -412,10 +434,13 @@ def dashboard(request):
     # Les quatre files d'attente du bandeau "A traiter". Chacune mene a une
     # liste filtree reellement existante (cf. liste_rendez_vous et
     # liste_ordonnances, ajoutees pour cette refonte).
-    total_prises_en_charge_attente = PriseEnCharge.objects.filter(statut="en_attente").count()
+    # Meme source que les pastilles du menu lateral : compteurs_files_attente()
+    # met son resultat en cache sur la requete, le context processor le relit.
+    compteurs = compteurs_files_attente(request)
+    total_prises_en_charge_attente = compteurs["prises_en_charge_attente"]
+    paiements_non_regles_nb = compteurs["paiements_non_regles"]
     rdv_a_confirmer = RendezVous.objects.filter(statut=RendezVous.Statut.DEMANDE).count()
     ordonnances_non_delivrees = Ordonnance.objects.filter(delivrance__isnull=True).count()
-    paiements_non_regles_nb = Paiement.objects.filter(statut=Paiement.Statut.NON_REGLE).count()
 
     # Libelles au pluriel : .values() ne rend que la valeur brute de l'enum
     # ("HOPITAL"), et les pluriels francais concernes sont irreguliers.
