@@ -545,7 +545,7 @@ class DashboardAdminTests(TestCase):
 
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.context['montant_regle_7j'], 0)
-        self.assertNotContains(response, 'class="dc-hero-delta"')
+        self.assertNotContains(response, 'class="finances-delta"')
 
     def test_hero_paiements_inclut_les_reglements_a_6_jours(self):
         medecin = creer_medecin('medecin@santesn.sn')

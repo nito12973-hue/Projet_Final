@@ -2203,6 +2203,19 @@
             white-space: nowrap;
         }
 
+        /* Chiffres cliquables dans un sous-titre de panneau (ex. "39 actifs,
+           5 desactives") : le bleu souligne du navigateur est hors charte. */
+        .panel-header .subtitle a {
+            color: var(--primary-strong);
+            font-weight: 700;
+            text-decoration: none;
+            border-bottom: 1px solid var(--primary-soft);
+        }
+
+        .panel-header .subtitle a:hover {
+            border-bottom-color: var(--primary);
+        }
+
         .lien-discret:hover {
             text-decoration: underline;
         }

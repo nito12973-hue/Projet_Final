@@ -52,14 +52,29 @@ votre rôle :
 
 ### Ce que vous voyez en arrivant
 
-Le tableau de bord Admin est le centre de pilotage de la plateforme : des
-compteurs cliquables (assurés, médecins, prestataires, services, prises en
-charge en attente) qui mènent directement à chaque liste, un bloc *Actions
-rapides* (ajouter un assuré, un médecin, un prestataire, suivre les prises
-en charge), et un rappel du principe de moindre privilège : l'administrateur
-gère comptes/prestataires/suivi, mais ne saisit jamais de diagnostic, ne
-crée pas d'ordonnance et ne valide pas de délivrance — ce sont les rôles
-Médecin et Pharmacien qui s'en chargent.
+Le tableau de bord Admin ouvre sur **ce qui attend une action**, pas sur des
+statistiques. Le bandeau sombre *À traiter maintenant* affiche quatre files :
+prises en charge à décider, rendez-vous à confirmer, ordonnances non
+délivrées, règlements en attente. Chaque tuile est cliquable et mène à la
+liste déjà filtrée. La tuile des prises en charge passe en orange dès que la
+plus ancienne demande dépasse sept jours. Quand plus rien n'attend, le
+bandeau affiche simplement *Rien en attente*.
+
+En dessous : les montants réglés et en attente avec leur tendance sur 30
+jours, la répartition entre assurés principaux et ayants droit, cinq
+indicateurs d'activité, les dernières prises en charge (celles en attente
+remontent en premier) et les derniers comptes créés. Le panneau *Fiches à
+compléter* signale les données manquantes qui gênent l'exploitation
+(prestataire sans coordonnées sur la carte, assuré sans plan de couverture,
+médecin ou pharmacien non rattaché) ; il disparaît quand tout est complet.
+
+En haut de chaque écran, une barre vous donne la recherche d'utilisateur, vos
+notifications et votre compte.
+
+Rappel du principe de moindre privilège : l'administrateur gère
+comptes/prestataires/suivi, mais ne saisit jamais de diagnostic, ne crée pas
+d'ordonnance et ne valide pas de délivrance — ce sont les rôles Médecin et
+Pharmacien qui s'en chargent.
 
 ### Gestion des utilisateurs
 
@@ -106,6 +121,15 @@ Médecin et Pharmacien qui s'en chargent.
   attente / validée / refusée / terminée*. Seule une prise en charge
   **validée** permet une couverture partielle par l'assurance lors d'une
   consultation ; sinon le patient règle 100 % du montant.
+- **Rendez-vous** : suivi de tous les rendez-vous de la plateforme, en
+  **lecture seule**, filtrable par statut et par nom (patient ou médecin).
+  Confirmer ou annuler un rendez-vous reste l'affaire du médecin et de
+  l'assuré : l'administrateur observe le flux sans y intervenir.
+- **Ordonnances** : suivi des ordonnances émises et de leur délivrance en
+  pharmacie, en **lecture seule**. Le filtre *Non délivrées* isole les
+  ordonnances qu'aucun patient n'est venu retirer — c'est le seul écran qui
+  le montre. La validation d'une délivrance reste l'affaire du pharmacien, et
+  le QR n'est pas affiché ici : il n'a de sens qu'au comptoir.
 - **Paiements** : liste de tous les paiements générés automatiquement à
   chaque consultation, filtrable par statut. *Marquer réglé* exige de
   préciser un mode de règlement.
