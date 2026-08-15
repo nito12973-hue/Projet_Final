@@ -853,6 +853,78 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
                                       pas celle de l'import : c'est elle qui
                                       fait foi comptablement.
 
+  TentativeConnexion (modele)         Compteur d'echecs et blocage temporaire,
+                                      par ADRESSE SAISIE. 5 echecs -> blocage
+                                      5 minutes, remise a zero a la connexion
+                                      reussie. Le delai repart a chaque nouvel
+                                      echec.
+                                      REMPLACE la cle de cache
+                                      'tentatives_connexion:{email}'. Ce n'est
+                                      pas un second systeme : c'est le meme,
+                                      deplace la ou il peut etre LU.
+                                      POURQUOI ce deplacement etait
+                                      indispensable -- trois limites du cache,
+                                      constatees avant de coder :
+                                      (1) l'API de cache de Django n'offre
+                                      aucun moyen d'ENUMERER ses cles : sans
+                                      liste, ni tableau, ni compteur, ni
+                                      recherche, ni filtre possibles ;
+                                      (2) aucune methode portable ne donne le
+                                      TEMPS RESTANT : "encore 12 min" etait
+                                      incalculable ;
+                                      (3) sans CACHES configure, le backend est
+                                      LocMemCache : en production
+                                      multi-processus, chaque worker avait son
+                                      propre compteur -- 5 tentatives PAR
+                                      worker, et deux administrateurs voyaient
+                                      deux etats differents. Defaut de securite
+                                      reel, corrige au passage.
+                                      La cle reste l'adresse SAISIE, pas un
+                                      compte : freiner aussi les adresses
+                                      inexistantes evite d'offrir un oracle
+                                      permettant de deviner quelles adresses
+                                      sont enregistrees. comptes_bloques()
+                                      n'expose que les lignes appariees a un
+                                      User reel.
+
+  Parametres > Securite               Section "Comptes temporairement bloques" :
+                                      resume (rassurant en vert quand personne
+                                      n'est bloque, alerte en rouge sinon),
+                                      recherche nom/email, filtre par role,
+                                      duree restante, deblocage individuel avec
+                                      confirmation (data-confirmation, meme
+                                      modale que le reste de l'application).
+                                      PAS de "debloquer tout" : un blocage
+                                      massif signale souvent une attaque en
+                                      cours, tout relacher d'un clic
+                                      annulerait la protection au pire moment.
+                                      Le deblocage manuel supprime simplement
+                                      la ligne -- exactement ce que fait une
+                                      connexion reussie. Le deblocage
+                                      automatique par expiration continue de
+                                      fonctionner en parallele, il ne depend
+                                      que de dernier_echec.
+
+  Alerte du tableau de bord           Bandeau affiche UNIQUEMENT s'il y a au
+                                      moins un compte bloque. Pas de carte vide
+                                      ni de compteur a zero : ils n'apprennent
+                                      rien et occupent une place visible.
+
+  A SAVOIR -- code mort constate      LoginForm contient une branche
+                                      "if not self.user.is_active" qui est
+                                      INATTEIGNABLE : le backend par defaut
+                                      (ModelBackend.user_can_authenticate)
+                                      rejette deja les comptes inactifs, donc
+                                      authenticate() a renvoye None plus haut.
+                                      Le message "Ce compte est desactive" n'a
+                                      donc jamais pu s'afficher -- et c'est le
+                                      comportement souhaitable : un message
+                                      generique ne confirme pas qu'une adresse
+                                      existe. La branche est conservee comme
+                                      filet si un backend autorisant les
+                                      comptes inactifs etait branche un jour,
+                                      avec un commentaire qui le dit.
+
   CONFIRMATIONS -- audit complet     Regle appliquee : une confirmation SEULEMENT
                                       sur ce qui est destructif ou irreversible.
                                       Trop de confirmations tue la confirmation.

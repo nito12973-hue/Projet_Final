@@ -66,6 +66,7 @@ _LIBELLES_PAGE = {
     "liste_notifications_envoyees": "Notifications",
     "mes_notifications": "Notifications",
     "parametres": "Paramètres",
+    "parametres_section": "Paramètres",
     "mon_compte": "Paramètres",
     "changer_mot_de_passe": "Paramètres",
 }

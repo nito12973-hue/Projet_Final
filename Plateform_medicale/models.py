@@ -1,3 +1,4 @@
+import datetime
 import io
 import uuid
 from math import atan2, cos, radians, sin, sqrt
@@ -545,3 +546,102 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"Notification pour {self.destinataire} ({self.date_creation:%d/%m/%Y})"
+
+
+class TentativeConnexion(models.Model):
+    """Compteur d'echecs de connexion et blocage temporaire, par adresse email.
+
+    REMPLACE la cle de cache 'tentatives_connexion:{email}' utilisee jusqu'ici.
+    Ce n'est pas un second systeme : c'est le meme, deplace la ou il peut etre
+    LU. Le cache de Django n'offre aucun moyen d'enumerer ses cles ni de
+    connaitre le temps restant, ce qui rendait impossible toute interface
+    d'administration. Et sans configuration CACHES, le backend par defaut est
+    LocMemCache : en production multi-processus, chaque worker avait son propre
+    compteur -- 5 tentatives par worker, et deux administrateurs voyaient deux
+    etats differents.
+
+    La cle reste l'EMAIL SAISI, pas un compte : une adresse inexistante doit
+    etre freinee elle aussi, sinon on offre un oracle permettant de deviner
+    quelles adresses sont enregistrees. L'interface d'administration, elle,
+    ne montre que les lignes correspondant a un compte reel.
+    """
+
+    MAX_TENTATIVES = 5
+    DUREE_BLOCAGE = datetime.timedelta(minutes=5)
+
+    email = models.EmailField("adresse saisie", unique=True, db_index=True)
+    tentatives = models.PositiveSmallIntegerField("échecs consécutifs", default=0)
+    dernier_echec = models.DateTimeField("dernier échec", auto_now=True)
+
+    class Meta:
+        verbose_name = "tentative de connexion"
+        verbose_name_plural = "tentatives de connexion"
+        ordering = ["-dernier_echec"]
+
+    def __str__(self):
+        return f"{self.email} ({self.tentatives} échec(s))"
+
+    # -- lecture ------------------------------------------------------------
+
+    @property
+    def fin_blocage(self):
+        return self.dernier_echec + self.DUREE_BLOCAGE
+
+    def est_bloque(self, maintenant=None):
+        """Bloque tant que le quota est atteint ET que le delai court encore.
+
+        Le delai repart a chaque nouvel echec (auto_now sur dernier_echec) :
+        c'est le comportement de l'ancien cache.set(), conserve tel quel.
+        """
+        maintenant = maintenant or timezone.now()
+        return self.tentatives >= self.MAX_TENTATIVES and maintenant < self.fin_blocage
+
+    def secondes_restantes(self, maintenant=None):
+        maintenant = maintenant or timezone.now()
+        return max(0, int((self.fin_blocage - maintenant).total_seconds()))
+
+    # -- ecriture -----------------------------------------------------------
+
+    @classmethod
+    def enregistrer_echec(cls, email):
+        """Incremente le compteur. Repart de 1 si le blocage precedent a
+        expire : sans cela, un compte reste bloque a vie apres 5 echecs
+        espaces dans le temps."""
+        ligne, _ = cls.objects.get_or_create(email=email.lower())
+        expire = timezone.now() >= ligne.fin_blocage
+        ligne.tentatives = 1 if expire else ligne.tentatives + 1
+        ligne.save()
+        return ligne
+
+    @classmethod
+    def reussite(cls, email):
+        """Connexion reussie : le compteur disparait."""
+        cls.objects.filter(email=email.lower()).delete()
+
+    @classmethod
+    def bloque(cls, email):
+        ligne = cls.objects.filter(email=email.lower()).first()
+        return ligne is not None and ligne.est_bloque()
+
+    @classmethod
+    def comptes_bloques(cls):
+        """Lignes actuellement bloquees, appariees a un compte REEL.
+
+        Les adresses inexistantes (fautes de frappe, sondages) sont comptees
+        pour le freinage mais n'ont pas a apparaitre dans une liste de comptes.
+        """
+        maintenant = timezone.now()
+        lignes = cls.objects.filter(
+            tentatives__gte=cls.MAX_TENTATIVES,
+            dernier_echec__gt=maintenant - cls.DUREE_BLOCAGE,
+        )
+        par_email = {ligne.email: ligne for ligne in lignes}
+        if not par_email:
+            return []
+        utilisateurs = User.objects.filter(email__in=par_email.keys())
+        apparies = []
+        for utilisateur in utilisateurs:
+            ligne = par_email.get(utilisateur.email.lower())
+            if ligne is not None:
+                apparies.append((utilisateur, ligne))
+        return apparies

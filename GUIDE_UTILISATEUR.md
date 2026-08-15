@@ -178,6 +178,15 @@ bouton Retour du navigateur fonctionne normalement).
   enregistrés sur votre compte.
 - **Données** (administrateur) : importer des utilisateurs depuis Excel,
   télécharger le modèle, exporter les utilisateurs et les rapports.
+- **Sécurité → Comptes temporairement bloqués** : après 5 échecs de connexion
+  consécutifs, un compte est bloqué 5 minutes, puis débloqué automatiquement.
+  Cette section liste les comptes actuellement bloqués avec le temps restant.
+  Vous pouvez filtrer par rôle, rechercher par nom ou e-mail, et débloquer un
+  compte immédiatement si la personne vous contacte — une confirmation vous est
+  alors demandée. Le déblocage se fait compte par compte, volontairement : un
+  grand nombre de blocages simultanés peut signaler une tentative d'intrusion,
+  et tout débloquer d'un coup annulerait la protection au pire moment. Quand
+  personne n'est bloqué, la section le dit simplement.
 - **Avancé** : section repliée qui ne règle rien. Elle indique quels services
   externes la plateforme utilise et signale que l'envoi d'e-mails n'est pas
   configuré — c'est la raison pour laquelle les mots de passe générés

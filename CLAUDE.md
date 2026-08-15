@@ -401,6 +401,33 @@ raison concrète. `DEMO_USERS.md` n'existe pas (voir phase 15, "Documentation
 / finalisation") — si une documentation utilisateur finale est un jour
 rédigée, ne pas la nommer ainsi sans vérifier qu'elle est à jour.
 
+## Blocage temporaire des comptes
+
+`TentativeConnexion` (models.py) est **la seule** source : 5 échecs → 5 minutes
+de blocage, remise à zéro à la connexion réussie. Il **remplace** l'ancienne clé
+de cache `tentatives_connexion:{email}` — ne pas réintroduire un compteur en
+cache à côté.
+
+**Pourquoi la base et pas le cache** : l'API de cache de Django ne permet ni
+d'énumérer les clés ni de lire le temps restant, donc aucune interface
+d'administration n'était possible. Et sans `CACHES` configuré, `LocMemCache`
+donnait un compteur **par processus** — 5 tentatives par worker en production.
+
+La clé est l'**adresse saisie**, pas un compte : freiner aussi les adresses
+inexistantes évite d'offrir un oracle révélant quelles adresses sont
+enregistrées. `comptes_bloques()` n'expose que les lignes appariées à un `User`.
+
+Gestion dans **Paramètres → Sécurité** (admin seul) : recherche, filtre par
+rôle, durée restante, déblocage **individuel** avec confirmation. Pas de
+« débloquer tout » : un blocage massif signale souvent une attaque, tout
+relâcher d'un clic annulerait la protection au pire moment.
+
+**Code mort constaté, conservé volontairement** : la branche
+`if not self.user.is_active` de `LoginForm` est inatteignable — `ModelBackend`
+rejette déjà les comptes inactifs, donc `authenticate()` a renvoyé `None`. Le
+message générique qui en résulte est le bon comportement : il ne confirme pas
+qu'une adresse existe.
+
 ## Confirmations
 
 **Une confirmation seulement sur ce qui est destructif ou irréversible.** Trop
