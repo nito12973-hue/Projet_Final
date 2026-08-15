@@ -626,22 +626,65 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
                           desactives. Les 4 ont ete corrigees, pas
                           contournees. Les 6 autres tests rouges portaient
                           sur les classes CSS de l'ancien design.
-                          Dette connue : le CSS des sixieme a neuvieme
-                          passes (.dash-command, .dash-hero*, .dc-*,
-                          .quick-actions, .gouvernance-comptes,
-                          .panel-discret, .admin-card-large ; ~50 regles)
-                          n'est plus atteignable par aucun template mais
-                          reste dans base.html. Une tentative de suppression
-                          automatique a casse le rendu (decoupage par
-                          accolades piege par les commentaires CSS) et a ete
-                          annulee. A refaire a la main, regle par regle,
-                          avec capture avant/apres -- ne pas rejouer un
-                          script de nettoyage global. NE PAS supprimer
-                          .toast-debug/.toast-info/.toast-warning au passage :
-                          ils ne figurent en toutes lettres dans aucun
-                          fichier (composes par class="toast toast-{{
-                          message.tags }}") mais sont bien atteints a
-                          l'execution.
+                          Onzieme passe (audit du module admin, 2026-08-15) :
+                          dette CSS de la dixieme passe SOLDEE -- 84 regles
+                          inatteignables retirees (.dash-command,
+                          .dash-hero*, .dc-*, .quick-actions,
+                          .gouvernance-comptes, .panel-discret,
+                          .admin-card-large, .pulse-dot), feuille de 95,0 a
+                          79,5 Ko. Elle est INLINE dans base.html, donc
+                          renvoyee entierement a chaque chargement sur ~67
+                          gabarits et 4 roles, sans cache navigateur : le
+                          gain est reel, pas cosmetique.
+                          DEUX PIEGES, rencontres tous les deux lors de
+                          tentatives annulees -- les relire avant tout
+                          nettoyage CSS futur :
+                          (1) un decoupage naif par accolades corrompt la
+                          feuille en silence (le navigateur abandonne le
+                          reste, un grep n'y voit rien, seule une capture
+                          revele la casse) ;
+                          (2) un selecteur peut s'etaler sur PLUSIEURS
+                          LIGNES : ne retirer que la ligne portant
+                          l'accolade laisse des fragments orphelins ".x,"
+                          sans corps, qui absorbent silencieusement la
+                          regle suivante dans leur liste de selecteurs.
+                          Methode qui a fonctionne : reperer les unites
+                          (commentaire | regle) en parcourant le TEXTE et
+                          non les lignes, supprimer les plages exactes en
+                          preservant le reste octet pour octet, puis
+                          comparer les captures avant/apres pixel a pixel.
+                          Toujours faire l'experience de controle : deux
+                          captures du MEME code donnent les memes ecarts de
+                          1-2 px sur le texte des champs de recherche, c'est
+                          du bruit de rendu et non une regression.
+                          CONSERVES volontairement : les selecteurs mixtes
+                          (moitie morte + moitie vivante, ex.
+                          ".admin-card-large, .governance-card") et
+                          .toast-debug/.toast-info/.toast-warning, qui ne
+                          figurent en toutes lettres dans aucun fichier
+                          (composes par class="toast toast-{{ message.tags
+                          }}") mais sont bien atteints a l'execution.
+                          Autres correctifs de cette passe : compteurs de
+                          files d'attente calcules deux fois par rendu
+                          (context processor + vue) -- compteurs_files_attente()
+                          devient la source unique, avec cache sur la
+                          requete ; garde-fou JS de l'animation des
+                          compteurs devenu inoperant (il testait .dash-hero,
+                          disparu avec la dixieme passe : le dashboard admin
+                          n'echappait plus a l'animation que par accident,
+                          en n'utilisant plus .dash-stat) -- le marqueur
+                          devient .file-attente ; definition en double de
+                          .sr-only supprimee.
+                          Verifie et SAIN, ne pas y revenir sans raison :
+                          permissions (81 vues reelles sur 81 protegees, les
+                          14 sans decorateur sont des helpers _ ou des pages
+                          publiques), aucune requete N+1 (les listes sans
+                          select_related n'accedent a aucune relation dans
+                          leur gabarit), 0 import Python inutilise, 11
+                          listes admin sur 11 avec un etat vide, aucun
+                          selecteur JS orphelin, aucun debordement
+                          horizontal de page (.panel porte overflow-x: auto
+                          et enveloppe chaque tableau).
   liste_rendez_vous                   liste admin des rendez-vous, LECTURE
                                       SEULE : confirmer/annuler reste
                                       l'affaire du medecin
