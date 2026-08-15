@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load icones %}
+{% load formats icones %}
 
 {% block title %}Mes patients{% endblock %}
 
@@ -47,6 +47,17 @@
         </tbody>
     </table>
 </section>
+{% if patients.paginator.num_pages > 1 %}
+<nav class="pagination" aria-label="Pagination">
+    {% if patients.has_previous %}
+    <a href="?{% prefixe_pagination request.GET %}page={{ patients.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Précédent</a>
+    {% endif %}
+    <span class="pagination-info">Page {{ patients.number }} sur {{ patients.paginator.num_pages }}</span>
+    {% if patients.has_next %}
+    <a href="?{% prefixe_pagination request.GET %}page={{ patients.next_page_number }}" class="button btn btn-sm">Suivant {% icone "chevron-right" %}</a>
+    {% endif %}
+</nav>
+{% endif %}
 {% else %}
 <div class="etat-vide">
     {% illustration_vide "users" %}

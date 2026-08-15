@@ -148,7 +148,10 @@ consulter l'historique des notifications envoyées.
 
 ### Paramètres
 
-L'entrée **Paramètres** du menu regroupe ce qui relève du réglage :
+L'entrée **Paramètres** du menu ouvre une page organisée en catégories. Chaque
+catégorie de la colonne de gauche est une **page à part entière** : cliquez
+dessus et elle s'ouvre directement (vous pouvez l'ajouter à vos favoris, et le
+bouton Retour du navigateur fonctionne normalement).
 
 - **Mon compte** : votre prénom, nom et téléphone. Vous pouvez aussi changer
   votre adresse e-mail, mais comme c'est elle qui vous sert à vous connecter,

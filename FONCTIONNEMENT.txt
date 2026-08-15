@@ -820,6 +820,48 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
                           selecteur JS orphelin, aucun debordement
                           horizontal de page (.panel porte overflow-x: auto
                           et enveloppe chaque tableau).
+  parametres / parametres_section     page Parametres decoupee en SECTIONS qui
+                                      ont chacune leur URL : un clic dans le
+                                      menu ouvre reellement la page (adresse
+                                      partageable, bouton Retour du navigateur
+                                      fonctionnel, ecrans courts).
+                                      SECTIONS_PARAMETRES (views.py) pilote a
+                                      la fois le menu ET le controle d acces :
+                                      ils ne peuvent pas diverger. Gain de
+                                      securite au passage : une section
+                                      reservee (notifications, donnees) renvoie
+                                      404 a un non-admin au lieu d etre
+                                      simplement masquee.
+                                      Section general : la configuration de la
+                                      plateforme (langue, fuseau, format de
+                                      date) est affichee en LECTURE SEULE, avec
+                                      des valeurs lues dans settings.py.
+                                      L application est monolingue (aucune
+                                      balise de traduction) et le format de
+                                      date est ecrit dans les gabarits : les
+                                      presenter comme modifiables serait un
+                                      mensonge, les cacher priverait l admin
+                                      d une information legitime.
+
+  PHASE 2 -- pagination hors admin    Les 13 listes admin paginaient, les 7
+                                      autres non : une carriere de
+                                      consultations tenait sur une seule page.
+                                      _paginer ajoute a mes_rendez_vous_assure,
+                                      mes_ordonnances_assure,
+                                      mon_historique_assure, agenda_medecin,
+                                      mes_patients, historique_consultations,
+                                      historique_delivrances.
+                                      DEUX order_by ont du etre AJOUTES
+                                      (mes_rendez_vous_assure, agenda_medecin) :
+                                      paginer un queryset non ordonne rend la
+                                      repartition entre pages instable -- un
+                                      element peut apparaitre deux fois ou
+                                      disparaitre. Un test le verifie
+                                      (test_ordre_stable_entre_les_pages).
+                                      liste_ayants_droit reste volontairement
+                                      NON paginee : un conjoint et des enfants,
+                                      ca ne pagine pas.
+
   scanner_ordonnance                  comptoir du pharmacien, DEUX chemins
                                       dissymetriques et c est volontaire :
                                       (1) le code (scanne ou saisi) fait une
