@@ -167,16 +167,19 @@ moyen le plus simple de mettre son rendu a disposition du JS.
 
         // Statuts : couleurs semantiques lues depuis les memes tokens que les
         // badges du reste de l'appli (.badge/.dash-pill), pour que "En attente"/
-        // "Validee" se lisent exactement pareil ici et sur les tableaux de bord.
+        // "Validée" se lisent exactement pareil ici et sur les tableaux de bord.
+        // NOTE : ces cles sont les LIBELLES affiches. Si un libelle change
+        // dans models.py, cette table doit suivre, sinon les graphiques
+        // repassent en gris sans erreur visible.
         var COULEURS_STATUT = {
-            'Confirme': tokenCouleur('--success', '#1e7a4c'),
-            'Termine': tokenCouleur('--success', '#1e7a4c'),
-            'Validee': tokenCouleur('--success', '#1e7a4c'),
-            'Terminee': tokenCouleur('--success', '#1e7a4c'),
+            'Confirmé': tokenCouleur('--success', '#1e7a4c'),
+            'Terminé': tokenCouleur('--success', '#1e7a4c'),
+            'Validée': tokenCouleur('--success', '#1e7a4c'),
+            'Terminée': tokenCouleur('--success', '#1e7a4c'),
             'Demande': tokenCouleur('--warning', '#8a5a00'),
             'En attente': tokenCouleur('--warning', '#8a5a00'),
-            'Annule': tokenCouleur('--danger', '#b3261e'),
-            'Refusee': tokenCouleur('--danger', '#b3261e'),
+            'Annulé': tokenCouleur('--danger', '#b3261e'),
+            'Refusée': tokenCouleur('--danger', '#b3261e'),
         };
 
         function lireDonnees(id) {

@@ -84,6 +84,11 @@ from .models import (
 
 TAILLE_PAGE_LISTE = 20
 
+# Recherche de repli du pharmacien (scanner_ordonnance) : longueur minimale
+# pour ne pas enumerer les patients, et plafond d'affichage au comptoir.
+RECHERCHE_ORDONNANCE_MIN = 3
+RECHERCHE_ORDONNANCE_MAX = 20
+
 
 def _paginer(request, queryset):
     """Pagine un queryset pour une liste admin (parametre GET 'page', taille
@@ -2283,21 +2288,94 @@ def dashboard_pharmacien(request):
 
 @role_required(User.Role.PHARMACIEN)
 def scanner_ordonnance(request):
+    """Comptoir du pharmacien : verification d'une ordonnance avant delivrance.
+
+    DEUX chemins, volontairement dissymetriques :
+
+    1. Le code (scanne ou saisi) fait une correspondance EXACTE. Un code
+       identifie une ordonnance et une seule : on peut donc l'ouvrir
+       directement. C'est le chemin normal, inchange.
+
+    2. La recherche manuelle (nom du patient ou fragment de code) est le
+       repli quand le QR est illisible, l'impression pale ou le code mal
+       recopie. Elle ne selectionne JAMAIS d'ordonnance, meme s'il n'y a
+       qu'un seul resultat : elle affiche une liste et le pharmacien
+       designe explicitement la bonne. Delivrer le mauvais traitement
+       parce qu'un logiciel a "devine" est un risque qu'on n'accepte pas.
+
+    Le bouton de selection d'un resultat renvoie simplement le code exact
+    dans le chemin 1 : une seule logique d'ouverture, donc une seule
+    surface a securiser.
+    """
     pharmacien = _pharmacien_courant(request)
     if pharmacien is None:
         return render(request, "pharmacien_fiche_manquante.html")
 
     ordonnance = None
+    resultats = None
+    recherche = ""
+    trop_de_resultats = False
+
     if request.method == "POST":
         code = request.POST.get("code_qr", "").strip().upper()
-        try:
-            ordonnance = Ordonnance.objects.select_related(
-                "consultation__patient", "consultation__medecin"
-            ).get(code_qr=code)
-        except Ordonnance.DoesNotExist:
-            messages.error(request, "Aucune ordonnance ne correspond à ce code.")
+        recherche = request.POST.get("recherche", "").strip()
 
-    return render(request, "scanner_ordonnance.html", {"ordonnance": ordonnance})
+        if code:
+            try:
+                ordonnance = Ordonnance.objects.select_related(
+                    "consultation__patient", "consultation__medecin", "delivrance"
+                ).get(code_qr=code)
+            except Ordonnance.DoesNotExist:
+                messages.error(request, "Aucune ordonnance ne correspond à ce code.")
+
+        elif recherche:
+            # Longueur minimale : une recherche d'un caractere listerait une
+            # bonne partie des patients de la plateforme. Ce sont des donnees
+            # medicales, on ne les enumere pas.
+            if len(recherche) < RECHERCHE_ORDONNANCE_MIN:
+                messages.error(
+                    request,
+                    f"Saisissez au moins {RECHERCHE_ORDONNANCE_MIN} caractères "
+                    "pour lancer une recherche.",
+                )
+            else:
+                trouvees = list(
+                    Ordonnance.objects.select_related(
+                        "consultation__patient", "consultation__medecin", "delivrance"
+                    )
+                    .filter(
+                        Q(consultation__patient__nom__icontains=recherche)
+                        | Q(consultation__patient__prenom__icontains=recherche)
+                        | Q(code_qr__icontains=recherche)
+                    )
+                    .order_by("-date_creation")[: RECHERCHE_ORDONNANCE_MAX + 1]
+                )
+                # On demande un element de plus que la limite : sa presence
+                # signale qu'il y en avait davantage, sans second COUNT.
+                trop_de_resultats = len(trouvees) > RECHERCHE_ORDONNANCE_MAX
+                resultats = trouvees[:RECHERCHE_ORDONNANCE_MAX]
+                if not resultats:
+                    messages.error(
+                        request,
+                        "Aucune ordonnance ne correspond à cette recherche.",
+                    )
+                elif trop_de_resultats:
+                    messages.warning(
+                        request,
+                        f"Plus de {RECHERCHE_ORDONNANCE_MAX} ordonnances correspondent. "
+                        "Précisez le nom du patient.",
+                    )
+
+    return render(
+        request,
+        "scanner_ordonnance.html",
+        {
+            "ordonnance": ordonnance,
+            "resultats": resultats,
+            "recherche": recherche,
+            "trop_de_resultats": trop_de_resultats,
+        },
+    )
 
 
 @role_required(User.Role.PHARMACIEN)

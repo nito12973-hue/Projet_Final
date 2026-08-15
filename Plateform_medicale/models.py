@@ -158,10 +158,10 @@ class Prestataire(models.Model):
     """Etablissement de sante partenaire (hopital, clinique, pharmacie, cabinet)."""
 
     class Type(models.TextChoices):
-        HOPITAL = "HOPITAL", "Hopital"
+        HOPITAL = "HOPITAL", "Hôpital"
         CLINIQUE = "CLINIQUE", "Clinique"
         PHARMACIE = "PHARMACIE", "Pharmacie"
-        CABINET = "CABINET", "Cabinet medical"
+        CABINET = "CABINET", "Cabinet médical"
 
     nom = models.CharField(max_length=150)
     type_prestataire = models.CharField(
@@ -191,7 +191,7 @@ class Prestataire(models.Model):
 
 class Patient(models.Model):
     class TypeBeneficiaire(models.TextChoices):
-        PRINCIPAL = "PRINCIPAL", "Assure principal"
+        PRINCIPAL = "PRINCIPAL", "Assuré principal"
         AYANT_DROIT = "AYANT_DROIT", "Ayant droit"
 
     class LienParente(models.TextChoices):
@@ -346,9 +346,9 @@ class ServiceMedical(models.Model):
 class PriseEnCharge(models.Model):
     STATUT_CHOICES = [
         ("en_attente", "En attente"),
-        ("validee", "Validee"),
-        ("refusee", "Refusee"),
-        ("terminee", "Terminee"),
+        ("validee", "Validée"),
+        ("refusee", "Refusée"),
+        ("terminee", "Terminée"),
     ]
 
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
@@ -392,11 +392,11 @@ class Paiement(models.Model):
     """
 
     class Statut(models.TextChoices):
-        NON_REGLE = "non_regle", "Non regle"
-        REGLE = "regle", "Regle"
+        NON_REGLE = "non_regle", "Non réglé"
+        REGLE = "regle", "Réglé"
 
     class ModeReglement(models.TextChoices):
-        ESPECES = "ESPECES", "Especes"
+        ESPECES = "ESPECES", "Espèces"
         MOBILE_MONEY = "MOBILE_MONEY", "Mobile money"
         CARTE = "CARTE", "Carte bancaire"
         VIREMENT = "VIREMENT", "Virement"
@@ -472,9 +472,9 @@ class RendezVous(models.Model):
 
     class Statut(models.TextChoices):
         DEMANDE = "DEMANDE", "Demande"
-        CONFIRME = "CONFIRME", "Confirme"
-        ANNULE = "ANNULE", "Annule"
-        TERMINE = "TERMINE", "Termine"
+        CONFIRME = "CONFIRME", "Confirmé"
+        ANNULE = "ANNULE", "Annulé"
+        TERMINE = "TERMINE", "Terminé"
 
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name="rendez_vous")
     medecin = models.ForeignKey(Medecin, on_delete=models.CASCADE, related_name="rendez_vous")

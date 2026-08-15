@@ -32,6 +32,80 @@
     </form>
 </section>
 
+{% comment %}
+Repli quand le code est inutilisable (QR froisse, impression pale, code mal
+recopie). Formulaire distinct du precedent : deux champs dans un meme
+formulaire laisseraient le pharmacien croire qu'il faut remplir les deux.
+{% endcomment %}
+<section class="panel" style="padding: 22px 24px; max-width: 480px; margin-top: 16px;">
+    <h2 style="margin:0 0 4px;font-size:15px;color:var(--titre);">Code illisible ?</h2>
+    <p class="subtitle" style="margin:0 0 14px;">
+        Recherchez par nom du patient ou par fragment du code. Vous choisirez
+        vous-même l'ordonnance dans la liste.
+    </p>
+    <form method="post">
+        {% csrf_token %}
+        <label for="recherche">Nom du patient ou fragment de code</label>
+        <div class="champ-recherche">
+            {% icone "search" %}
+            <input id="recherche" name="recherche" type="text" value="{{ recherche }}"
+                   placeholder="Ex. Diop, ou F68B" minlength="3" required style="margin-bottom:0;">
+        </div>
+        <button class="button btn" type="submit" style="margin-top:12px;">Rechercher</button>
+    </form>
+</section>
+
+{% if resultats %}
+<section class="panel" style="margin-top:16px;">
+    <div class="panel-header">
+        <div>
+            <h2>{{ resultats|length }} ordonnance{{ resultats|pluralize }} trouvée{{ resultats|pluralize }}</h2>
+            <p class="subtitle">Vérifiez le patient et la date avant de sélectionner.</p>
+        </div>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th scope="col">Patient</th>
+                <th scope="col">Médecin</th>
+                <th scope="col">Émise le</th>
+                <th scope="col">Code</th>
+                <th scope="col">État</th>
+                <th scope="col">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for resultat in resultats %}
+            <tr>
+                <td>{{ resultat.consultation.patient }}</td>
+                <td>{{ resultat.consultation.medecin }}</td>
+                <td>{{ resultat.date_creation|date:"d/m/Y" }}</td>
+                <td><span class="code">{{ resultat.code_qr }}</span></td>
+                <td>
+                    {% if resultat.delivrance %}
+                    <span class="badge validee">Déjà délivrée</span>
+                    {% else %}
+                    <span class="badge en_attente">À délivrer</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% comment %}
+                    La selection renvoie le code EXACT dans le chemin normal :
+                    aucune seconde logique d'ouverture a securiser.
+                    {% endcomment %}
+                    <form method="post" class="action-ligne">
+                        {% csrf_token %}
+                        <input type="hidden" name="code_qr" value="{{ resultat.code_qr }}">
+                        <button type="submit" class="button primary btn btn-sm">Sélectionner</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endif %}
+
 {% if ordonnance %}
 <section class="admin-layout" style="margin-top: 22px;">
     <article class="panel" style="padding: 24px;">

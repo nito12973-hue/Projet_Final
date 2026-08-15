@@ -3217,3 +3217,163 @@ class ParametresContenuTests(TestCase):
         reponse = self.client.get(reverse('parametres'))
         self.assertContains(reponse, 'Envoi d')
         self.assertContains(reponse, 'inactif')
+
+
+class RechercheOrdonnancePharmacienTests(TestCase):
+    """Repli quand le code QR est inutilisable. Regle de securite : la
+    recherche manuelle ne selectionne JAMAIS une ordonnance a la place du
+    pharmacien, meme s'il n'y a qu'un seul resultat."""
+
+    def setUp(self):
+        self.pharmacien = creer_pharmacien('pharma-recherche@santesn.sn')
+        self.medecin = creer_medecin('medecin-recherche@santesn.sn')
+        self.diop = creer_patient(nom='Diop', prenom='Awa')
+        self.diallo = creer_patient(nom='Diallo', prenom='Moussa')
+        self.ord_diop = creer_ordonnance(self.diop, self.medecin, medicaments='Paracetamol')
+        self.ord_diallo = creer_ordonnance(self.diallo, self.medecin, medicaments='Ibuprofene')
+        self.client.login(username='pharma-recherche@santesn.sn', password=PASSWORD)
+
+    # --- chemin normal : le code exact ouvre directement ---
+
+    def test_code_exact_ouvre_l_ordonnance(self):
+        reponse = self.client.post(reverse('scanner_ordonnance'),
+                                   {'code_qr': self.ord_diop.code_qr})
+        self.assertEqual(reponse.status_code, 200)
+        self.assertEqual(reponse.context['ordonnance'], self.ord_diop)
+        self.assertIsNone(reponse.context['resultats'])
+
+    def test_code_inexistant_n_ouvre_rien(self):
+        reponse = self.client.post(reverse('scanner_ordonnance'), {'code_qr': 'RX-INEXISTANT'})
+        self.assertEqual(reponse.status_code, 200)
+        self.assertIsNone(reponse.context['ordonnance'])
+        self.assertContains(reponse, 'Aucune ordonnance ne correspond')
+
+    # --- repli : recherche manuelle ---
+
+    def test_recherche_par_nom_liste_sans_selectionner(self):
+        reponse = self.client.post(reverse('scanner_ordonnance'), {'recherche': 'Diop'})
+        self.assertEqual(reponse.status_code, 200)
+        self.assertEqual(list(reponse.context['resultats']), [self.ord_diop])
+        # LE POINT CRITIQUE : un seul resultat, mais rien n'est ouvert.
+        self.assertIsNone(reponse.context['ordonnance'])
+
+    def test_recherche_ambigue_ne_selectionne_jamais(self):
+        autre_diop = creer_patient(nom='Diop', prenom='Fatou')
+        creer_ordonnance(autre_diop, self.medecin, medicaments='Amoxicilline')
+        reponse = self.client.post(reverse('scanner_ordonnance'), {'recherche': 'Diop'})
+        self.assertEqual(len(reponse.context['resultats']), 2)
+        self.assertIsNone(reponse.context['ordonnance'])
+
+    def test_recherche_par_fragment_de_code(self):
+        fragment = self.ord_diallo.code_qr[3:9]
+        reponse = self.client.post(reverse('scanner_ordonnance'), {'recherche': fragment})
+        self.assertIn(self.ord_diallo, reponse.context['resultats'])
+        self.assertIsNone(reponse.context['ordonnance'])
+
+    def test_recherche_trop_courte_refusee(self):
+        reponse = self.client.post(reverse('scanner_ordonnance'), {'recherche': 'Di'})
+        self.assertIsNone(reponse.context['resultats'])
+        self.assertContains(reponse, 'au moins 3 caract')
+
+    def test_recherche_sans_resultat(self):
+        reponse = self.client.post(reverse('scanner_ordonnance'), {'recherche': 'Zzzzz'})
+        self.assertIsNone(reponse.context['ordonnance'])
+        self.assertContains(reponse, 'Aucune ordonnance ne correspond')
+
+    def test_resultats_plafonnes_et_signales(self):
+        from .views import RECHERCHE_ORDONNANCE_MAX
+        patient = creer_patient(nom='Ndiayeprolifique', prenom='Test')
+        for _ in range(RECHERCHE_ORDONNANCE_MAX + 3):
+            creer_ordonnance(patient, self.medecin)
+        reponse = self.client.post(reverse('scanner_ordonnance'),
+                                   {'recherche': 'Ndiayeprolifique'})
+        self.assertEqual(len(reponse.context['resultats']), RECHERCHE_ORDONNANCE_MAX)
+        self.assertTrue(reponse.context['trop_de_resultats'])
+
+    # --- la selection d'un resultat repasse par le chemin exact ---
+
+    def test_selectionner_un_resultat_ouvre_la_bonne_ordonnance(self):
+        reponse = self.client.post(reverse('scanner_ordonnance'),
+                                   {'code_qr': self.ord_diallo.code_qr})
+        self.assertEqual(reponse.context['ordonnance'], self.ord_diallo)
+
+    # --- permissions ---
+
+    def test_role_non_pharmacien_refuse(self):
+        self.client.logout()
+        creer_utilisateur(User.Role.ADMIN, 'admin-recherche@santesn.sn')
+        self.client.login(username='admin-recherche@santesn.sn', password=PASSWORD)
+        self.assertEqual(
+            self.client.post(reverse('scanner_ordonnance'), {'recherche': 'Diop'}).status_code, 403)
+
+    def test_anonyme_redirige(self):
+        self.client.logout()
+        self.assertEqual(
+            self.client.post(reverse('scanner_ordonnance'), {'recherche': 'Diop'}).status_code, 302)
+
+    def test_workflow_complet_scan_puis_delivrance(self):
+        """Le parcours normal du pharmacien reste intact."""
+        self.client.post(reverse('scanner_ordonnance'), {'code_qr': self.ord_diop.code_qr})
+        # valider_delivrance exige le pk ET le code correspondant : on ne peut
+        # pas valider une delivrance en devinant un identifiant.
+        reponse = self.client.post(reverse('valider_delivrance', args=[self.ord_diop.pk]),
+                                   {'code_qr': self.ord_diop.code_qr})
+        self.assertEqual(reponse.status_code, 302)
+        self.assertTrue(Delivrance.objects.filter(ordonnance=self.ord_diop).exists())
+
+    def test_delivrance_refusee_si_le_code_ne_correspond_pas_au_pk(self):
+        """Garde-fou existant, couvert ici : le pk seul ne suffit pas."""
+        reponse = self.client.post(
+            reverse('valider_delivrance', args=[self.ord_diop.pk]),
+            {'code_qr': self.ord_diallo.code_qr},
+        )
+        self.assertEqual(reponse.status_code, 404)
+        self.assertFalse(Delivrance.objects.filter(ordonnance=self.ord_diop).exists())
+
+
+class LibellesAccentuesTests(TestCase):
+    """Les libelles affiches sont accentues, SANS toucher aux valeurs stockees
+    en base (qui servent de filtres et de constantes metier)."""
+
+    def test_valeurs_en_base_inchangees(self):
+        self.assertEqual(Prestataire.Type.HOPITAL.value, 'HOPITAL')
+        self.assertEqual(Patient.TypeBeneficiaire.PRINCIPAL.value, 'PRINCIPAL')
+        self.assertEqual(RendezVous.Statut.CONFIRME.value, 'CONFIRME')
+        self.assertEqual(Paiement.Statut.NON_REGLE.value, 'non_regle')
+        self.assertEqual(PriseEnCharge.STATUT_CHOICES[1][0], 'validee')
+
+    def test_libelles_affiches_accentues(self):
+        self.assertEqual(Prestataire.Type.HOPITAL.label, 'Hôpital')
+        self.assertEqual(Prestataire.Type.CABINET.label, 'Cabinet médical')
+        self.assertEqual(Patient.TypeBeneficiaire.PRINCIPAL.label, 'Assuré principal')
+        self.assertEqual(Paiement.ModeReglement.ESPECES.label, 'Espèces')
+        self.assertEqual(RendezVous.Statut.CONFIRME.label, 'Confirmé')
+        self.assertEqual(RendezVous.Statut.ANNULE.label, 'Annulé')
+        self.assertEqual(RendezVous.Statut.TERMINE.label, 'Terminé')
+        self.assertEqual(Paiement.Statut.NON_REGLE.label, 'Non réglé')
+        self.assertEqual(Paiement.Statut.REGLE.label, 'Réglé')
+        self.assertEqual(dict(PriseEnCharge.STATUT_CHOICES)['validee'], 'Validée')
+        self.assertEqual(dict(PriseEnCharge.STATUT_CHOICES)['refusee'], 'Refusée')
+        self.assertEqual(dict(PriseEnCharge.STATUT_CHOICES)['terminee'], 'Terminée')
+
+    def test_filtre_par_statut_fonctionne_toujours(self):
+        """Garde-fou : les filtres GET utilisent la VALEUR, pas le libelle."""
+        creer_utilisateur(User.Role.ADMIN, 'admin-libelles@santesn.sn')
+        patient = creer_patient(nom='Fall', prenom='Ndeye')
+        PriseEnCharge.objects.create(patient=patient, motif='A', statut='validee')
+        PriseEnCharge.objects.create(patient=patient, motif='B', statut='refusee')
+        self.client.login(username='admin-libelles@santesn.sn', password=PASSWORD)
+        reponse = self.client.get(reverse('liste_prises_en_charge'), {'statut': 'validee'})
+        self.assertEqual(len(reponse.context['prises_en_charge']), 1)
+        self.assertContains(reponse, 'Validée')
+
+    def test_table_de_couleurs_des_rapports_suit_les_libelles(self):
+        """rapports.html indexe ses couleurs par LIBELLE : la table doit
+        contenir les libelles accentues, sinon les graphiques repassent en
+        gris sans erreur visible."""
+        creer_utilisateur(User.Role.ADMIN, 'admin-couleurs@santesn.sn')
+        self.client.login(username='admin-couleurs@santesn.sn', password=PASSWORD)
+        reponse = self.client.get(reverse('rapports'))
+        for libelle in ('Confirmé', 'Terminé', 'Validée',
+                        'Terminée', 'Annulé', 'Refusée'):
+            self.assertContains(reponse, "'%s': tokenCouleur" % libelle)

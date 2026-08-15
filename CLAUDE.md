@@ -240,6 +240,24 @@ vue "par mois" (snapshot statique, pas de bascule de période dans un
 document exporté). Ne pas confondre avec `exporter_utilisateurs_excel` qui ne
 couvre que la liste des utilisateurs (Dashboard Admin → Utilisateurs).
 
+## Libellés affichés vs valeurs stockées
+
+Les `TextChoices` du projet séparent strictement **la valeur stockée** (1er
+élément, en base : `HOPITAL`, `validee`, `non_regle`…) et **le libellé
+affiché** (2e élément, accentué : « Hôpital », « Validée », « Non réglé »).
+Les filtres GET, les comparaisons et les requêtes utilisent **toujours la
+valeur** — jamais le libellé.
+
+**Piège vérifié** : `rapports.html` indexe ses couleurs de graphique **par
+libellé** (`COULEURS_STATUT`). Changer un libellé dans `models.py` sans
+mettre cette table à jour fait repasser les graphiques en gris, **sans aucune
+erreur visible**. Un test le couvre désormais
+(`test_table_de_couleurs_des_rapports_suit_les_libelles`). Même vigilance pour
+`prestataires_proches.html`, qui écrit ses options de type en dur.
+
+Modifier un libellé génère une migration `AlterField` **no-op** (Django suit
+`choices` sans que le schéma change) : la générer et l'appliquer, c'est normal.
+
 ## Design system
 
 Un seul shell de dashboard (sidebar + barre supérieure `.topbar`) dans

@@ -820,6 +820,34 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
                           selecteur JS orphelin, aucun debordement
                           horizontal de page (.panel porte overflow-x: auto
                           et enveloppe chaque tableau).
+  scanner_ordonnance                  comptoir du pharmacien, DEUX chemins
+                                      dissymetriques et c est volontaire :
+                                      (1) le code (scanne ou saisi) fait une
+                                      correspondance EXACTE et ouvre
+                                      directement -- un code identifie une
+                                      ordonnance et une seule ;
+                                      (2) la recherche manuelle (nom du patient
+                                      ou fragment de code) est le repli quand le
+                                      QR est illisible. Elle ne selectionne
+                                      JAMAIS, meme avec un seul resultat : elle
+                                      liste et le pharmacien designe. Delivrer
+                                      le mauvais traitement parce qu un logiciel
+                                      a devine est un risque refuse.
+                                      Le bouton Selectionner renvoie le code
+                                      exact dans le chemin (1) : une seule
+                                      logique d ouverture a securiser.
+                                      Garde-fous : 3 caracteres minimum (ne pas
+                                      enumerer des donnees medicales), 20
+                                      resultats maximum avec signalement du
+                                      depassement (un element de plus est
+                                      demande a la requete, pas de second
+                                      COUNT). Constantes
+                                      RECHERCHE_ORDONNANCE_MIN/MAX.
+                                      A NOTER : valider_delivrance exige le pk
+                                      ET le code correspondant -- on ne valide
+                                      pas une delivrance en devinant un
+                                      identifiant. Garde-fou preexistant,
+                                      desormais couvert par un test.
   liste_rendez_vous                   liste admin des rendez-vous, LECTURE
                                       SEULE : confirmer/annuler reste
                                       l'affaire du medecin
