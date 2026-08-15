@@ -45,6 +45,12 @@
             --sb-border: rgba(255, 255, 255, 0.09);
             --sb-text-muted: rgba(231, 236, 243, 0.66);
             --sb-text-faint: rgba(231, 236, 243, 0.42);
+            /* Texte pose SUR les tuiles de verre du bandeau sombre. Le verre
+               eclaircit le fond : --primary-light (4.44:1) et --accent (3.04:1)
+               y tombent sous le seuil WCAG AA. Ces deux variantes plus claires
+               remontent a 5.8 et 5.4:1. Ne pas les utiliser sur fond clair. */
+            --sur-verre-teal: #6fd0c6;
+            --sur-verre-accent: #f7c4a3;
             --accent-turquoise: #0e7c86;
             --accent-turquoise-wash: rgba(14, 124, 134, 0.16);
         }
@@ -53,11 +59,19 @@
             box-sizing: border-box;
         }
 
+        /* Halo ambiant : deux lueurs tres diffuses (turquoise en haut a droite,
+           terracotta en bas a gauche) qui donnent de la profondeur au fond sans
+           motif ni image. background-attachment: fixed pour qu'elles restent
+           ancrees a la fenetre et ne defilent pas avec le contenu. */
         body {
             margin: 0;
             font-family: 'Public Sans', 'Segoe UI', Arial, Helvetica, sans-serif;
             color: var(--text);
             background: var(--bg);
+            background-image:
+                radial-gradient(1000px 560px at 88% -10%, rgba(79, 184, 174, 0.26), transparent 64%),
+                radial-gradient(780px 480px at -4% 102%, rgba(224, 130, 79, 0.14), transparent 62%);
+            background-attachment: fixed;
             min-height: 100vh;
         }
 
@@ -115,9 +129,14 @@
             gap: 18px;
             padding: 24px 16px;
             color: #e7ecf3;
-            background: linear-gradient(180deg, var(--sb-bg) 0%, #0b1224 100%);
+            /* Degrade en diagonale (et non vertical) : la lumiere semble venir
+               du haut du menu, coherente avec le halo de la page. Le liseré
+               turquoise interieur detache le menu du fond clair. */
+            background: linear-gradient(168deg, #12303a 0%, var(--sb-bg) 46%, #081920 100%);
             border-radius: 0 22px 22px 0;
-            box-shadow: 8px 0 32px rgba(8, 15, 30, 0.28);
+            box-shadow:
+                8px 0 32px rgba(8, 15, 30, 0.28),
+                inset -1px 0 0 rgba(79, 184, 174, 0.18);
             transition: padding 0.25s ease;
         }
 
@@ -385,12 +404,17 @@
             color: var(--muted);
         }
 
+        /* Ombre en deux couches : un contact net et proche, puis une diffusion
+           large. C'est ce qui distingue une carte posee d'une carte simplement
+           encadree. */
         .panel,
         .empty {
             background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 14px;
-            box-shadow: 0 6px 24px rgba(11, 32, 39, 0.07);
+            border-radius: 18px;
+            box-shadow:
+                0 2px 5px rgba(11, 32, 39, 0.06),
+                0 14px 38px rgba(11, 32, 39, 0.07);
         }
 
         .panel {
@@ -1626,12 +1650,39 @@
         }
 
         /* --- Bandeau "A traiter" (le seul bloc sombre de la page) --- */
+        /* Le seul bloc sombre de la page, traite comme une piece sculptee :
+           degrade diagonal + lueur turquoise hors-cadre + liseré interieur
+           clair sur l'arete haute. L'ombre portee est plus profonde que celle
+           des cartes pour qu'il flotte au-dessus d'elles dans la hierarchie. */
         .file-attente {
+            position: relative;
+            overflow: hidden;
             margin-top: 20px;
-            padding: 18px 20px 20px;
-            border-radius: 16px;
-            background: var(--primary-dark);
-            box-shadow: 0 10px 28px rgba(11, 32, 39, 0.18);
+            padding: 22px;
+            border-radius: 22px;
+            background: linear-gradient(150deg, #123540 0%, var(--primary-dark) 52%, #071920 100%);
+            box-shadow:
+                0 20px 50px rgba(11, 32, 39, 0.28),
+                inset 0 1px 0 rgba(255, 255, 255, 0.07);
+        }
+
+        .file-attente::before {
+            content: "";
+            position: absolute;
+            top: -140px;
+            right: -90px;
+            width: 420px;
+            height: 420px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(79, 184, 174, 0.24), transparent 66%);
+            pointer-events: none;
+        }
+
+        /* Le contenu repasse au-dessus de la lueur (qui est en position absolue). */
+        .file-titre,
+        .file-grille,
+        .file-vide {
+            position: relative;
         }
 
         .file-titre {
@@ -1661,10 +1712,13 @@
             display: flex;
             flex-direction: column;
             gap: 6px;
-            padding: 15px 16px;
-            border: 1px solid rgba(255, 255, 255, 0.13);
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.05);
+            padding: 17px;
+            border: 1px solid rgba(255, 255, 255, 0.11);
+            border-radius: 15px;
+            /* Verre depoli : degrade tres leger + liseré interieur clair sur
+               l'arete haute, qui simule l'epaisseur de la tuile. */
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.028));
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09);
             color: #ffffff;
             text-decoration: none;
             transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
@@ -1672,9 +1726,9 @@
 
         .file-tuile:hover,
         .file-tuile:focus-visible {
-            background: rgba(255, 255, 255, 0.10);
-            border-color: rgba(255, 255, 255, 0.24);
-            transform: translateY(-2px);
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.05));
+            border-color: rgba(79, 184, 174, 0.42);
+            transform: translateY(-3px);
         }
 
         .file-entete {
@@ -1683,7 +1737,7 @@
             gap: 7px;
             font-size: 11.5px;
             font-weight: 700;
-            color: rgba(231, 236, 243, 0.72);
+            color: rgba(231, 236, 243, 0.82);
         }
 
         .file-entete .icone-nav {
@@ -1691,11 +1745,16 @@
             height: 14px;
         }
 
+        /* Echelle reprise de la direction "Editorial" : le chiffre de file est
+           traite comme un titre, pas comme une donnee. C'est lui qu'on doit
+           lire de loin en arrivant sur la page. */
         .file-nombre {
-            font-size: 30px;
+            font-family: 'Manrope', 'Segoe UI', Arial, sans-serif;
+            font-size: 42px;
             font-weight: 800;
-            line-height: 1;
-            letter-spacing: -0.03em;
+            line-height: 0.9;
+            letter-spacing: -0.045em;
+            margin: 4px 0 2px;
             font-variant-numeric: tabular-nums;
         }
 
@@ -1708,19 +1767,20 @@
         .file-note {
             font-size: 11.5px;
             font-weight: 700;
-            color: var(--primary-light);
+            color: var(--sur-verre-teal);
         }
 
         /* Terracotta reserve a l'urgence : une seule couleur d'alerte sur le
            bandeau sombre, elle ressort donc immediatement. */
         .file-tuile.urgent {
-            border-color: rgba(224, 130, 79, 0.5);
-            background: linear-gradient(135deg, rgba(224, 130, 79, 0.20), rgba(255, 255, 255, 0.05) 62%);
+            border-color: rgba(224, 130, 79, 0.55);
+            background: linear-gradient(150deg, rgba(224, 130, 79, 0.30), rgba(224, 130, 79, 0.07) 70%);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
         }
 
         .file-tuile.urgent .file-entete,
         .file-tuile.urgent .file-note {
-            color: var(--accent);
+            color: var(--sur-verre-accent);
         }
 
         .file-vide {
@@ -1750,6 +1810,21 @@
         .duo-listes .panel,
         .bande-bas .panel {
             margin: 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Reflet turquoise d'un pixel sur l'arete haute des cartes du tableau
+           de bord : la meme lumiere que le halo de la page. Reserve au
+           dashboard, les pages de liste restent sobres. */
+        .bande-couverture .panel::after,
+        .duo-listes .panel::after,
+        .bande-bas .panel::after {
+            content: "";
+            position: absolute;
+            inset: 0 0 auto 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(79, 184, 174, 0.5), transparent);
         }
 
         .lien-discret {
@@ -1786,12 +1861,26 @@
 
         .finances-principal .montant {
             display: block;
-            font-size: 32px;
+            font-family: 'Manrope', 'Segoe UI', Arial, sans-serif;
+            font-size: 38px;
             font-weight: 800;
             line-height: 1.05;
-            letter-spacing: -0.03em;
+            letter-spacing: -0.04em;
             color: var(--primary-dark);
             font-variant-numeric: tabular-nums;
+        }
+
+        /* Degrade navy -> turquoise sur le montant principal. La couleur pleine
+           ci-dessus reste la valeur par defaut : @supports garantit qu'un
+           navigateur sans background-clip:text affiche un chiffre lisible
+           plutot qu'un texte transparent, donc invisible. */
+        @supports ((-webkit-background-clip: text) or (background-clip: text)) {
+            .finances-principal .montant {
+                background: linear-gradient(150deg, var(--primary-dark) 10%, var(--primary) 90%);
+                -webkit-background-clip: text;
+                background-clip: text;
+                color: transparent;
+            }
         }
 
         .finances-libelle {
@@ -1807,7 +1896,7 @@
             margin-top: 9px;
             padding: 3px 10px;
             border-radius: 20px;
-            background: #e6f4ee;
+            background: linear-gradient(140deg, #e6f4ee, #d6ece1);
             color: #15683f;
             font-size: 11.5px;
             font-weight: 800;
@@ -1948,8 +2037,8 @@
             align-items: center;
             gap: 9px;
             padding: 10px 12px;
-            border-radius: 10px;
-            background: #fdf3e0;
+            border-radius: 11px;
+            background: linear-gradient(140deg, #fdf3e0, #f8e7c8);
             color: #8a5a00;
             font-size: 12px;
             font-weight: 700;
@@ -1975,18 +2064,22 @@
             gap: 8px;
             padding: 16px 17px;
             border: 1px solid var(--border);
-            border-radius: 14px;
+            border-radius: 15px;
             background: var(--surface);
             text-decoration: none;
-            box-shadow: 0 1px 2px rgba(11, 32, 39, 0.04);
+            box-shadow:
+                0 1px 2px rgba(11, 32, 39, 0.05),
+                0 4px 14px rgba(11, 32, 39, 0.045);
             transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
         }
 
         .kpi:hover,
         .kpi:focus-visible {
             border-color: var(--primary-light);
-            transform: translateY(-2px);
-            box-shadow: 0 10px 26px rgba(14, 124, 134, 0.13);
+            transform: translateY(-3px);
+            box-shadow:
+                0 2px 5px rgba(11, 32, 39, 0.06),
+                0 16px 40px rgba(14, 124, 134, 0.16);
         }
 
         .kpi-entete {
@@ -2065,8 +2158,8 @@
             flex: 0 0 32px;
             width: 32px;
             height: 32px;
-            border-radius: 9px;
-            background: var(--primary-soft);
+            border-radius: 11px;
+            background: linear-gradient(145deg, #e4f0ef, #d3e6e4);
             color: var(--primary-strong);
             font-size: 11px;
             font-weight: 800;
@@ -2119,8 +2212,8 @@
             gap: 11px;
             padding: 12px 13px;
             border: 1px solid var(--border);
-            border-radius: 11px;
-            background: #f7fafa;
+            border-radius: 12px;
+            background: linear-gradient(150deg, #f8fbfb, #eff5f5);
             color: var(--text);
             text-decoration: none;
             font-size: 11.5px;
