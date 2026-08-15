@@ -287,6 +287,19 @@ Saisissez (ou faites saisir par un lecteur de code) le code affiché sous le
 QR code de l'ordonnance du patient (format `RX-XXXXXXXXXX`). L'écran affiche
 alors le patient, le médecin, la date et la liste des médicaments prescrits.
 
+**Si le code est illisible.** Ordonnance froissée, impression pâle, code mal
+recopié : utilisez le bloc *Code illisible ?* pour rechercher par **nom du
+patient** ou par **fragment du code** (trois caractères minimum).
+
+L'application vous présente alors la liste des ordonnances correspondantes —
+patient, médecin, date, code et état — et **ne choisit jamais à votre place**,
+même s'il n'y a qu'un seul résultat. C'est volontaire : deux patients peuvent
+porter le même nom de famille. Vérifiez le patient et la date, puis cliquez sur
+*Sélectionner* ; vous retombez sur l'écran de vérification habituel.
+
+Si plus de vingt ordonnances correspondent, l'application vous le signale :
+précisez le nom pour réduire la liste.
+
 ### Valider la délivrance
 
 Une fois les médicaments remis au patient, confirmez la délivrance depuis le
