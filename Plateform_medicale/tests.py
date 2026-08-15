@@ -3737,3 +3737,66 @@ class NavigationCoherenteTests(TestCase):
     def test_le_bloc_compte_ouvre_le_compte_pas_le_mot_de_passe(self):
         reponse = self.client.get(reverse('dashboard'))
         self.assertNotContains(reponse, f'class="topbar-compte" href="{reverse("changer_mot_de_passe")}"')
+
+
+class ConfirmationsActionsSensiblesTests(TestCase):
+    """Audit des confirmations : seules les actions destructives en ont une.
+    Le mecanisme existe deja (data-confirmation intercepte par la modale) ;
+    ces tests verifient qu'il est pose la ou il faut, et NULLE PART ailleurs."""
+
+    def setUp(self):
+        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin-confirm@santesn.sn')
+        self.client.login(username='admin-confirm@santesn.sn', password=PASSWORD)
+
+    def test_deconnecter_partout_demande_confirmation(self):
+        reponse = self.client.get(reverse('parametres_section', args=['securite']))
+        self.assertContains(reponse, 'data-confirmation=')
+        self.assertContains(reponse, 'Oui, déconnecter partout')
+
+    def test_desactivation_confirmee_mais_pas_l_activation(self):
+        actif = creer_utilisateur(User.Role.MEDECIN, 'actif-confirm@santesn.sn')
+        inactif = creer_utilisateur(User.Role.MEDECIN, 'inactif-confirm@santesn.sn')
+        inactif.is_active = False
+        inactif.save()
+
+        html = self.client.get(reverse('liste_utilisateurs')).content.decode()
+        # La ligne du compte actif porte la confirmation (on va le desactiver),
+        # celle du compte inactif non (le reactiver n'a rien de destructif).
+        self.assertIn('Oui, désactiver le compte', html)
+        bloc_inactif = html[html.find('inactif-confirm@santesn.sn'):]
+        bloc_inactif = bloc_inactif[:bloc_inactif.find('</tr>')]
+        self.assertNotIn('data-confirmation', bloc_inactif)
+
+    def test_annulation_de_rendez_vous_confirmee(self):
+        self.client.logout()
+        assure = creer_utilisateur(User.Role.ASSURE, 'assure-confirm@santesn.sn')
+        patient = Patient.objects.create(
+            user=assure, nom='Ba', prenom='Oumar',
+            date_naissance=datetime.date(1990, 2, 2), telephone='770000020')
+        medecin = creer_medecin('medecin-confirm@santesn.sn')
+        RendezVous.objects.create(
+            patient=patient, medecin=medecin,
+            date_heure=timezone.now() + datetime.timedelta(days=3),
+            statut=RendezVous.Statut.CONFIRME)
+        self.client.login(username='assure-confirm@santesn.sn', password=PASSWORD)
+        reponse = self.client.get(reverse('mes_rendez_vous_assure'))
+        self.assertContains(reponse, 'Oui, annuler le rendez-vous')
+
+    def test_actions_de_lecture_sans_confirmation(self):
+        """Filtrer, exporter, consulter : aucune confirmation ne doit gener."""
+        for nom in ('liste_utilisateurs', 'liste_paiements', 'rapports', 'dashboard'):
+            html = self.client.get(reverse(nom)).content.decode()
+            debut = html.find('<form method="get"')
+            if debut != -1:
+                bloc = html[debut:html.find('</form>', debut)]
+                self.assertNotIn('data-confirmation', bloc, nom)
+
+    def test_icone_engrenage_pour_les_parametres(self):
+        """Le menu utilisait une cle (symbole de securite) pour les reglages."""
+        from .templatetags.icones import _ICONES
+        self.assertIn('settings', _ICONES)
+        html = self.client.get(reverse('dashboard')).content.decode()
+        debut = html.find('aria-label="Paramètres"')
+        self.assertNotEqual(debut, -1)
+        bloc = html[debut:debut + 400]
+        self.assertIn('circle', bloc)  # l'engrenage a un moyeu circulaire

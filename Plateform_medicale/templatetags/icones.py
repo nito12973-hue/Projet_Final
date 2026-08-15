@@ -83,6 +83,14 @@ _ICONES = {
         '<circle cx="12" cy="9.5" r="2.8"/>'
         '<path d="M6 18c1-3 3.2-4.5 6-4.5s5 1.5 6 4.5"/>'
     ),
+    # Engrenage a 8 dents, dessine par segments plutot qu'en etoile continue :
+    # a 18px, un polygone dente devient une bouillie. Meme trait fin que le
+    # reste du jeu (stroke, pas de remplissage).
+    "settings": (
+        '<circle cx="12" cy="12" r="3.2"/>'
+        '<path d="M12 2.6v3.1M12 18.3v3.1M21.4 12h-3.1M5.7 12H2.6"/>'
+        '<path d="M18.6 5.4l-2.2 2.2M7.6 16.4l-2.2 2.2M18.6 18.6l-2.2-2.2M7.6 7.6L5.4 5.4"/>'
+    ),
     "lock": (
         '<rect x="5" y="11" width="14" height="9" rx="2"/>'
         '<path d="M8 11V7a4 4 0 0 1 8 0v4"/>'

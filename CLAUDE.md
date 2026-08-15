@@ -401,7 +401,24 @@ raison concrète. `DEMO_USERS.md` n'existe pas (voir phase 15, "Documentation
 / finalisation") — si une documentation utilisateur finale est un jour
 rédigée, ne pas la nommer ainsi sans vérifier qu'elle est à jour.
 
+## Confirmations
+
+**Une confirmation seulement sur ce qui est destructif ou irréversible.** Trop
+de confirmations tue la confirmation : rechercher, filtrer, exporter, consulter
+et naviguer n'en portent aucune (un test le vérifie).
+
+Le mécanisme existe et ne doit pas être doublé : poser
+`data-confirmation="message"` sur un `<form>` suffit — la modale de marque
+(`#modale-confirmation`, `role="alertdialog"`, Échap, clic sur le fond,
+`requestSubmit`) l'intercepte. `data-confirmation-action="Oui, …"` nomme
+l'action sur le bouton ; sans lui le bouton affiche « Confirmer ».
+
+Les 8 suppressions passent par un écran dédié (`confirmer_suppression.html`).
+La désactivation d'un compte n'est confirmée que **dans le sens destructif** :
+réactiver n'a rien d'irréversible.
+
 ## Où placer une fonctionnalité
+
 
 Une fonctionnalité a **un** emplacement logique. Règles appliquées :
 

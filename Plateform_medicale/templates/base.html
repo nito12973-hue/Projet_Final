@@ -1093,6 +1093,22 @@
             to   { opacity: 1; transform: translateY(0) scale(1); }
         }
 
+        .modale-icone {
+            display: grid;
+            place-items: center;
+            width: 44px;
+            height: 44px;
+            margin: 0 0 14px;
+            border-radius: 50%;
+            background: var(--refus-bg);
+            color: var(--refus-fg);
+        }
+
+        .modale-icone .icone-nav {
+            width: 22px;
+            height: 22px;
+        }
+
         .modale-panel h3 {
             margin: 0 0 12px;
             color: var(--titre);
@@ -2884,7 +2900,7 @@
             /* main a padding: 32px 0 48px (aucun padding horizontal) : seule
                la marge haute est annulee, la barre s'aligne sur le contenu. */
             margin: -32px 0 20px;
-            padding: 11px 0;
+            padding: 7px 0;
             background: var(--topbar-bg);
             backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--border);
@@ -2994,9 +3010,25 @@
             position: relative;
         }
 
+        /* Le bloc compte se lit comme UN bouton : sans surface propre, le
+           vide entre le nom (deux lignes de longueurs inegales) et le chevron
+           passait pour un composant manquant. Le fond au survol et a
+           l'ouverture rend cet espace intentionnel. */
         .menu-compte > summary {
             list-style: none;
             cursor: pointer;
+            gap: 8px;
+            padding: 4px 8px 4px 4px;
+            border-radius: 12px;
+            border: 1px solid transparent;
+            transition: background 0.18s ease, border-color 0.18s ease;
+        }
+
+        .menu-compte > summary:hover,
+        .menu-compte > summary:focus-visible,
+        .menu-compte[open] > summary {
+            background: var(--surface);
+            border-color: var(--border);
         }
 
         .menu-compte > summary::-webkit-details-marker {
@@ -3399,7 +3431,7 @@
                 <span class="nav-section">Système</span>
                 <a href="{% url 'rapports' %}" aria-label="Rapports" data-tooltip="Rapports" class="{% if url_name == 'rapports' %}active{% endif %}">{% icone "bar-chart" %} <span class="nav-texte">Rapports</span></a>
                 <a href="{% url 'envoyer_notification' %}" aria-label="Notifications" data-tooltip="Notifications" class="{% if url_name == 'envoyer_notification' or url_name == 'liste_notifications_envoyees' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span></a>
-                <a href="{% url 'parametres' %}" aria-label="Paramètres" data-tooltip="Paramètres" class="{% if url_name == 'parametres' or url_name == 'mon_compte' or url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "key" %} <span class="nav-texte">Paramètres</span></a>
+                <a href="{% url 'parametres' %}" aria-label="Paramètres" data-tooltip="Paramètres" class="{% if url_name == 'parametres' or url_name == 'mon_compte' or url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "settings" %} <span class="nav-texte">Paramètres</span></a>
                 {% endwith %}
                 {% elif current_role == "MEDECIN" %}
                 <a href="{% url 'dashboard_medecin' %}" aria-label="Tableau de bord" data-tooltip="Tableau de bord" class="{% if request.resolver_match.url_name == 'dashboard_medecin' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord</span></a>
@@ -3425,7 +3457,7 @@
                 <a href="{% url 'mes_ordonnances_assure' %}" aria-label="Mes ordonnances" data-tooltip="Mes ordonnances" class="{% if url_name == 'mes_ordonnances_assure' or url_name == 'voir_ordonnance_assure' %}active{% endif %}">{% icone "pill" %} <span class="nav-texte">Mes ordonnances</span></a>
                 <a href="{% url 'mon_historique_assure' %}" aria-label="Mon historique" data-tooltip="Mon historique" class="{% if url_name == 'mon_historique_assure' %}active{% endif %}">{% icone "clock-history" %} <span class="nav-texte">Mon historique</span></a>
                 <a href="{% url 'mes_notifications' %}" aria-label="Notifications" data-tooltip="Notifications" class="{% if url_name == 'mes_notifications' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span>{% if notifications_non_lues %} <span class="badge-non-lues">{{ notifications_non_lues }}</span>{% endif %}</a>
-                <a href="{% url 'parametres' %}" aria-label="Paramètres" data-tooltip="Paramètres" class="{% if url_name == 'parametres' or url_name == 'mon_compte' or url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "key" %} <span class="nav-texte">Paramètres</span></a>
+                <a href="{% url 'parametres' %}" aria-label="Paramètres" data-tooltip="Paramètres" class="{% if url_name == 'parametres' or url_name == 'mon_compte' or url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "settings" %} <span class="nav-texte">Paramètres</span></a>
                 {% endwith %}
                 {% endif %}
             </nav>
@@ -3506,6 +3538,7 @@
     {% if user.is_authenticated %}
     <div id="modale-confirmation" class="modale-overlay" hidden>
         <div class="modale-panel" role="alertdialog" aria-modal="true" aria-labelledby="modale-titre" aria-describedby="modale-message">
+            <p class="modale-icone" aria-hidden="true">{% icone "alert-triangle" %}</p>
             <h3 id="modale-titre">Confirmer l'action</h3>
             <p id="modale-message"></p>
             <div class="modale-actions">
@@ -3611,6 +3644,10 @@
                 evenement.preventDefault();
                 evenement.stopImmediatePropagation();
                 messageEl.textContent = message;
+                // Un bouton doit nommer son action : "Oui, deconnecter partout"
+                // se relit sans avoir a remonter au message.
+                boutonConfirmer.textContent =
+                    formulaire.getAttribute('data-confirmation-action') || 'Confirmer';
                 formulaireEnAttente = formulaire;
                 overlay.hidden = false;
                 boutonConfirmer.focus();
