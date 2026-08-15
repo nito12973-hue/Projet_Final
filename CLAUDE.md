@@ -289,6 +289,23 @@ utilisé dans ce projet (tout le CSS/SVG est inline dans les templates).
 Logo secondaire (empilé), icône d'application et version monochrome existent
 dans la spec d'origine mais ne sont pas implémentés (aucun usage actif dans
 le projet à ce jour) — ne pas les recréer sans un besoin concret identifié.
+**Thème sombre.** Posé par `data-theme="sombre"` sur `<html>`, écrit par un
+script **inline dans le `<head>`** (avant la feuille, sinon la page clignote en
+clair) ; choix conservé dans `localStorage` (`theme-santesn` : `clair` /
+`sombre` / `systeme`). Seuls les jetons changent, aucune règle de mise en page
+n'est dupliquée. Portée : `base.html` (les 4 rôles connectés) ; `landing.html`
+et `base_auth.html` restent clairs.
+
+**Règle à ne jamais enfreindre : un jeton, un rôle.** `--primary-dark` est une
+couleur de **surface** (menu, bandeau, boutons pleins) et reste navy dans les
+deux thèmes ; `--titre` porte la couleur de **texte** des titres. Les avoir
+confondus a produit une traînée blanche en travers du bandeau et des boutons
+illisibles au premier essai. Même logique pour `--topbar-bg`, `--fiche-bg`,
+`--btn-a`/`--btn-b` et les paires `--ok-*` / `--attente-*` / `--refus-*` /
+`--neutre-*` (pastilles). Faire porter à un jeton un rôle de fond **et** un
+rôle de texte est indolore en thème unique, fatal dès qu'un second thème
+existe.
+
 **Direction « Relief » (dashboard admin).** La matière fait partie du design
 system : ombres en **deux couches** (contact proche + diffusion large) sur
 `.panel`/`.kpi`, halo ambiant sur `body` (deux `radial-gradient` fixes),

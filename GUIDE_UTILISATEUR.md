@@ -146,6 +146,22 @@ graphique). Deux exports disponibles : Excel (un onglet par tableau) et PDF
 Envoyer un message à un utilisateur précis ou à tout un rôle d'un coup ;
 consulter l'historique des notifications envoyées.
 
+### Paramètres
+
+L'entrée **Paramètres** du menu regroupe ce qui relève du réglage :
+
+- **Mon compte** : votre prénom, nom et téléphone. Vous pouvez aussi changer
+  votre adresse e-mail, mais comme c'est elle qui vous sert à vous connecter,
+  l'application vous demande votre mot de passe actuel pour confirmer. Votre
+  rôle, lui, est défini par l'administration et n'est pas modifiable.
+- **Sécurité** : changer votre mot de passe.
+- **Notifications** : envoyer un message aux utilisateurs et consulter
+  l'historique. Cette section reste également accessible directement depuis le
+  menu, car c'est une action courante.
+- **Apparence** : choisir le thème **clair**, **sombre**, ou **Système** pour
+  suivre le réglage de votre appareil. Ce choix ne concerne que l'appareil sur
+  lequel vous le faites — il n'est pas enregistré sur votre compte.
+
 ## Assuré
 
 ### Premier accès

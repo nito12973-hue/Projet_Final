@@ -626,6 +626,54 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
                           desactives. Les 4 ont ete corrigees, pas
                           contournees. Les 6 autres tests rouges portaient
                           sur les classes CSS de l'ancien design.
+                          Treizieme passe (Parametres + theme sombre,
+                          2026-08-15) : page Parametres regroupant ce qui
+                          releve du reglage (Mon compte, Securite,
+                          Notifications pour l'admin, Apparence). Les entrees
+                          restent AUSSI dans le menu lateral : envoyer une
+                          notification est une action courante pour un
+                          administrateur, l'enfouir rallongerait un chemin
+                          frequent (reserve exprimee et assumee, l'utilisateur
+                          a maintenu son choix).
+                          mon_compte : premiere vue permettant a un
+                          utilisateur de modifier ses propres informations.
+                          Le role n'y figure pas (regle metier). Changer
+                          l'email exige le mot de passe actuel : c'est
+                          l'identifiant de connexion (USERNAME_FIELD), pas un
+                          champ de profil ordinaire.
+                          THEME SOMBRE, et le piege qu'il a revele : le theme
+                          se pose par data-theme="sombre" sur <html>, ecrit
+                          par un script INLINE dans le <head> (avant la
+                          feuille, sinon la page clignote en clair), choix
+                          conserve dans localStorage. Seuls les jetons
+                          changent, aucune regle de mise en page dupliquee.
+                          Le premier essai a casse l'affichage : --primary-dark
+                          avait ete bascule vers une teinte claire, or ce jeton
+                          servait A LA FOIS de couleur de titre ET de fond
+                          sombre (bandeau, boutons pleins, avatar). Resultat :
+                          traînee blanche en travers du bandeau et boutons
+                          illisibles. Correction a la racine, UN JETON PAR
+                          ROLE : --primary-dark reste le navy dans les deux
+                          themes (couleur de SURFACE), et --titre porte la
+                          couleur de texte des titres. Ajoutes dans la meme
+                          logique : --topbar-bg, --fiche-bg, --btn-a/--btn-b,
+                          et les paires semantiques --ok-*/--attente-*/
+                          --refus-*/--neutre-* (les pastilles avaient leurs
+                          couleurs en dur, elles restaient claires en sombre).
+                          Ne jamais faire porter a un jeton un role de fond ET
+                          un role de texte : c'est indolore en theme unique,
+                          fatal des qu'un second theme existe.
+                          Les 15 couples de contraste du theme sombre ont ete
+                          mesures : le plus faible est a 4.68:1.
+                          Correctifs de la meme passe : .actions passe en
+                          flex-wrap: nowrap -- les boutons Modifier/Supprimer
+                          s'empilaient alors qu'il restait de la place a
+                          droite, doublant la hauteur de chaque ligne sur
+                          TOUTES les listes admin (page Services : 1327 ->
+                          1077 px). Retour a la ligne conserve sous 640px.
+                          La recherche de la barre superieure est centree
+                          (margin auto des deux cotes) : collee a droite, elle
+                          laissait un grand vide au milieu.
                           Douzieme passe (direction "Relief", 2026-08-15) :
                           demande d'un rendu plus beau. Deux directions
                           maquettees hors projet avec les vraies donnees et

@@ -19,6 +19,7 @@ from .models import (
     RendezVous,
     ServiceMedical,
     User,
+    valider_telephone,
 )
 
 MAX_TENTATIVES_CONNEXION = 5
@@ -529,3 +530,59 @@ class PaiementReglementForm(forms.ModelForm):
         if not mode_reglement:
             raise forms.ValidationError("Le mode de règlement est obligatoire.")
         return mode_reglement
+
+
+class MonCompteForm(forms.ModelForm):
+    """Modification par l'utilisateur de ses propres informations (tous roles).
+
+    Le role n'y figure pas : regle metier du projet, il est stocke en base et
+    n'est jamais choisi par l'utilisateur. L'email, lui, est l'identifiant de
+    connexion (USERNAME_FIELD) : le changer revient a changer sa facon de se
+    connecter, donc on exige le mot de passe actuel pour confirmer -- mais
+    seulement dans ce cas, pour ne pas alourdir une simple correction de nom.
+    """
+
+    mot_de_passe_actuel = forms.CharField(
+        label="Mot de passe actuel",
+        widget=forms.PasswordInput(attrs={"autocomplete": "current-password"}),
+        required=False,
+        help_text="Requis uniquement pour changer l'adresse email.",
+    )
+
+    class Meta:
+        model = User
+        fields = ["first_name", "last_name", "phone_number", "email"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.email_initial = self.instance.email
+
+    def clean_phone_number(self):
+        telephone = self.cleaned_data.get("phone_number", "").strip()
+        if telephone:
+            valider_telephone(telephone)
+        return telephone
+
+    def clean_email(self):
+        email = self.cleaned_data.get("email", "").strip()
+        if not email:
+            raise forms.ValidationError("L'adresse email est obligatoire.")
+        # iexact : deux comptes ne doivent pas differer que par la casse.
+        doublon = User.objects.filter(email__iexact=email).exclude(pk=self.instance.pk)
+        if doublon.exists():
+            raise forms.ValidationError("Cette adresse email est déjà utilisée.")
+        return email
+
+    def clean(self):
+        donnees = super().clean()
+        email = donnees.get("email")
+        if email and email.lower() != self.email_initial.lower():
+            mot_de_passe = donnees.get("mot_de_passe_actuel")
+            if not mot_de_passe:
+                self.add_error(
+                    "mot_de_passe_actuel",
+                    "Indiquez votre mot de passe actuel pour changer d'adresse email.",
+                )
+            elif not self.instance.check_password(mot_de_passe):
+                self.add_error("mot_de_passe_actuel", "Mot de passe incorrect.")
+        return donnees

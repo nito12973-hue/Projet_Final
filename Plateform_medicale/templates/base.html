@@ -5,7 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Plateforme medicale{% endblock %}</title>
     <meta name="theme-color" content="#0b2027">
-    <meta name="color-scheme" content="light">
+    <meta name="color-scheme" content="light dark">
+    <script>
+        // Applique le theme AVANT le premier rendu : pose l'attribut apres coup
+        // ferait clignoter la page en clair pendant un instant. Volontairement
+        // inline et sans dependance -- il doit s'executer avant la feuille.
+        (function () {
+            try {
+                var choix = localStorage.getItem('theme-santesn') || 'systeme';
+                var sombre = choix === 'sombre'
+                    || (choix === 'systeme'
+                        && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                if (sombre) {
+                    document.documentElement.setAttribute('data-theme', 'sombre');
+                }
+            } catch (e) { /* localStorage indisponible : on reste en clair */ }
+        })();
+    </script>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect x='18' y='6' width='12' height='36' rx='4' fill='%230e7c86'/%3E%3Crect x='6' y='18' width='36' height='12' rx='4' fill='%230e7c86'/%3E%3Cpath d='M6 24H14L17 16L21 32L25 19L27.5 24H42' fill='none' stroke='%23e0824f' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -53,6 +69,70 @@
             --sur-verre-accent: #f7c4a3;
             --accent-turquoise: #0e7c86;
             --accent-turquoise-wash: rgba(14, 124, 134, 0.16);
+
+            /* Jetons semantiques des pastilles et alertes. Extraits ici pour
+               qu'ils basculent avec le theme : en dur dans les regles, ils
+               restaient clairs sur fond sombre. */
+            --ok-bg: #dcfce7;
+            --ok-fg: #15683f;
+            --attente-bg: #fff1d6;
+            --attente-fg: #8a5a00;
+            --refus-bg: #fee4e2;
+            --refus-fg: #b3261e;
+            --neutre-bg: #eef3f3;
+            --neutre-fg: #5f6f7d;
+            /* Titres et libelles forts. Distinct de --primary-dark, qui est
+               une couleur de SURFACE (menu, bandeau, boutons pleins) et doit
+               rester sombre dans les deux themes. */
+            --titre: #0b2027;
+            --topbar-bg: rgba(239, 244, 243, 0.92);
+            --fiche-bg: linear-gradient(150deg, #f8fbfb, #eff5f5);
+            --btn-a: #0b2027;
+            --btn-b: #095059;
+        }
+
+        /* ===== Theme sombre =====
+           Pose par l'attribut data-theme="sombre" sur <html> (script du <head>,
+           choix conserve dans localStorage). Seuls les jetons changent : aucune
+           regle de mise en page n'est dupliquee.
+
+           Principe de profondeur INVERSE du theme clair : ici le fond de page
+           est la couche la PLUS sombre et les cartes remontent vers la lumiere.
+           Le menu lateral garde sa teinte : il reste le meme repere dans les
+           deux themes. */
+        :root[data-theme="sombre"] {
+            --bg: #08161b;
+            --surface: #10262d;
+            --primary: #2a9aa4;
+            /* Sur fond sombre, la variante "sure pour du texte" doit etre
+               CLAIRE : l'inverse exact du theme clair. */
+            --primary-strong: #6fd0c6;
+            /* Servait aux titres en navy ; en sombre, un titre doit etre clair. */
+            --primary-light: #4fb8ae;
+            --primary-accent: #4fb8ae;
+            --primary-soft: #133b43;
+            --accent: #e0824f;
+            --border: #21404a;
+            --text: #e2e9ea;
+            --muted: #9db2ba;
+            --danger: #e5675e;
+            --danger-strong: #f08a82;
+            --success: #4ec38a;
+            --warning: #e0b25f;
+            --sb-bg: #0B2027;
+            --ok-bg: #12362a;
+            --ok-fg: #79dba9;
+            --attente-bg: #3a2e15;
+            --attente-fg: #e8c37a;
+            --refus-bg: #3d1f1d;
+            --refus-fg: #f0a09a;
+            --neutre-bg: #17323a;
+            --neutre-fg: #a6bcc4;
+            --titre: #e9eff0;
+            --topbar-bg: rgba(8, 22, 27, 0.88);
+            --fiche-bg: linear-gradient(150deg, #14303a, #102830);
+            --btn-a: #0e7c86;
+            --btn-b: #14606b;
         }
 
         * {
@@ -385,7 +465,7 @@
 
         h1 {
             margin: 0 0 8px;
-            color: var(--primary-dark);
+            color: var(--titre);
             font-family: 'Manrope', 'Public Sans', 'Segoe UI', Arial, sans-serif;
             font-size: 28px;
             font-weight: 800;
@@ -435,7 +515,7 @@
         }
 
         th {
-            color: var(--primary-dark);
+            color: var(--titre);
             background: var(--primary-soft);
             font-size: 13px;
             text-transform: uppercase;
@@ -590,7 +670,7 @@
         .panel-header h2,
         .governance-card h2 {
             margin: 0;
-            color: var(--primary-dark);
+            color: var(--titre);
             font-size: 21px;
         }
 
@@ -632,19 +712,19 @@
         }
 
         .badge.en_attente {
-            background: #fff1d6;
+            background: var(--attente-bg);
             color: var(--warning);
         }
 
         .badge.validee,
         .badge.terminee,
         .badge.confirme {
-            background: #dcfce7;
+            background: var(--ok-bg);
             color: var(--success);
         }
 
         .badge.refusee {
-            background: #fee4e2;
+            background: var(--refus-bg);
             color: var(--danger);
         }
 
@@ -704,7 +784,7 @@
             min-height: 38px;
             padding: 9px 13px;
             border-radius: 9px;
-            color: var(--primary-dark);
+            color: var(--titre);
             text-decoration: none;
             font-weight: 600;
             font-size: 14px;
@@ -722,13 +802,13 @@
 
         .button.primary {
             border-color: transparent;
-            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-strong) 100%);
+            background: linear-gradient(135deg, var(--btn-a) 0%, var(--btn-b) 100%);
             color: #ffffff;
             box-shadow: 0 6px 16px rgba(14, 124, 134, 0.30);
         }
 
         .button.primary:hover {
-            background: linear-gradient(135deg, var(--primary-strong) 0%, var(--primary-dark) 100%);
+            background: linear-gradient(135deg, var(--btn-b) 0%, var(--btn-a) 100%);
             border-color: transparent;
             transform: translateY(-2px);
             box-shadow: 0 10px 22px rgba(14, 124, 134, 0.40);
@@ -761,8 +841,22 @@
 
         .actions {
             display: flex;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
             gap: 8px;
+        }
+
+        /* Les libelles ne se coupent pas : la colonne se dimensionne sur le
+           contenu, et .panel (overflow-x: auto) prend le relais si l'ecran est
+           vraiment trop etroit. Sous 640px on autorise le retour a la ligne :
+           deux boutons cote a cote ne tiennent plus sur un telephone. */
+        .actions .button {
+            white-space: nowrap;
+        }
+
+        @media (max-width: 640px) {
+            .actions {
+                flex-wrap: wrap;
+            }
         }
 
         /* Erreurs de formulaire : classe manquante jusqu'ici (chaque template
@@ -811,13 +905,13 @@
             flex-shrink: 0;
         }
 
-        .avis-danger { background: #fee4e2; border-color: #fecaca; }
+        .avis-danger { background: var(--refus-bg); border-color: var(--refus-bg); }
         .avis-danger .avis-titre { color: var(--danger); }
 
-        .avis-succes { background: #dcfce7; border-color: #bbf7d0; }
+        .avis-succes { background: var(--ok-bg); border-color: var(--ok-bg); }
         .avis-succes .avis-titre { color: var(--success); }
 
-        .avis-attente { background: #fff1d6; border-color: #ffe69c; }
+        .avis-attente { background: var(--attente-bg); border-color: var(--attente-bg); }
         .avis-attente .avis-titre { color: var(--warning); }
 
         /* Barre de filtres (formulaire GET en ligne, au-dessus d'une liste) et
@@ -989,7 +1083,7 @@
 
         .modale-panel h3 {
             margin: 0 0 12px;
-            color: var(--primary-dark);
+            color: var(--titre);
         }
 
         .modale-panel p {
@@ -1105,8 +1199,8 @@
             height: 16px;
         }
 
-        .toast-error { background: #fee4e2; color: var(--danger); border: 1px solid #fecdca; }
-        .toast-success { background: #dcfce7; color: #167a46; border: 1px solid #bbf7d0; }
+        .toast-error { background: var(--refus-bg); color: var(--danger); border: 1px solid #fecdca; }
+        .toast-success { background: var(--ok-bg); color: #167a46; border: 1px solid var(--ok-bg); }
         .toast-info, .toast-warning, .toast-debug { background: #eef2f6; color: #40515f; border: 1px solid #d9e2ea; }
 
         /* Contenu reserve aux lecteurs d'ecran (ex. legende de tableau) :
@@ -1218,9 +1312,9 @@
             background: currentColor;
         }
 
-        .dash-pill.ok { background: #dcfce7; color: var(--success); }
-        .dash-pill.attente { background: #fff1d6; color: var(--warning); }
-        .dash-pill.danger { background: #fee4e2; color: var(--danger); }
+        .dash-pill.ok { background: var(--ok-bg); color: var(--success); }
+        .dash-pill.attente { background: var(--attente-bg); color: var(--warning); }
+        .dash-pill.danger { background: var(--refus-bg); color: var(--danger); }
 
         /* Bandeau financier du dashboard admin : meme signature que
            .carte-assure/.button.primary (degrade --primary-dark ->
@@ -1506,7 +1600,7 @@
             border-radius: 18px;
             padding: 22px 24px;
             color: #ffffff;
-            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-strong) 100%);
+            background: linear-gradient(135deg, var(--btn-a) 0%, var(--btn-b) 100%);
             box-shadow: 0 14px 34px rgba(11, 32, 39, 0.28);
             display: flex;
             flex-direction: column;
@@ -1660,7 +1754,7 @@
             margin-top: 20px;
             padding: 22px;
             border-radius: 22px;
-            background: linear-gradient(150deg, #123540 0%, var(--primary-dark) 52%, #071920 100%);
+            background: linear-gradient(150deg, #123540 0%, #0b2027 52%, #071920 100%);
             box-shadow:
                 0 20px 50px rgba(11, 32, 39, 0.28),
                 inset 0 1px 0 rgba(255, 255, 255, 0.07);
@@ -1866,7 +1960,7 @@
             font-weight: 800;
             line-height: 1.05;
             letter-spacing: -0.04em;
-            color: var(--primary-dark);
+            color: var(--titre);
             font-variant-numeric: tabular-nums;
         }
 
@@ -1876,7 +1970,7 @@
            plutot qu'un texte transparent, donc invisible. */
         @supports ((-webkit-background-clip: text) or (background-clip: text)) {
             .finances-principal .montant {
-                background: linear-gradient(150deg, var(--primary-dark) 10%, var(--primary) 90%);
+                background: linear-gradient(150deg, var(--titre) 10%, var(--primary) 90%);
                 -webkit-background-clip: text;
                 background-clip: text;
                 color: transparent;
@@ -1896,8 +1990,8 @@
             margin-top: 9px;
             padding: 3px 10px;
             border-radius: 20px;
-            background: linear-gradient(140deg, #e6f4ee, #d6ece1);
-            color: #15683f;
+            background: linear-gradient(140deg, var(--ok-bg), var(--ok-bg));
+            color: var(--ok-fg);
             font-size: 11.5px;
             font-weight: 800;
         }
@@ -1929,12 +2023,12 @@
             font-size: 18px;
             font-weight: 800;
             letter-spacing: -0.02em;
-            color: var(--primary-dark);
+            color: var(--titre);
             font-variant-numeric: tabular-nums;
         }
 
         .finances-secondaires strong.attente {
-            color: #8a5a00;
+            color: var(--attente-fg);
         }
 
         .finances-graphe {
@@ -1970,7 +2064,7 @@
             font-size: 32px;
             font-weight: 800;
             letter-spacing: -0.03em;
-            color: var(--primary-dark);
+            color: var(--titre);
             font-variant-numeric: tabular-nums;
         }
 
@@ -2017,7 +2111,7 @@
         .assures-legende strong {
             margin-left: auto;
             font-weight: 800;
-            color: var(--primary-dark);
+            color: var(--titre);
             font-variant-numeric: tabular-nums;
         }
 
@@ -2038,8 +2132,8 @@
             gap: 9px;
             padding: 10px 12px;
             border-radius: 11px;
-            background: linear-gradient(140deg, #fdf3e0, #f8e7c8);
-            color: #8a5a00;
+            background: linear-gradient(140deg, var(--attente-bg), var(--attente-bg));
+            color: var(--attente-fg);
             font-size: 12px;
             font-weight: 700;
             text-decoration: none;
@@ -2103,7 +2197,7 @@
             font-weight: 800;
             line-height: 1;
             letter-spacing: -0.03em;
-            color: var(--primary-dark);
+            color: var(--titre);
             font-variant-numeric: tabular-nums;
         }
 
@@ -2116,7 +2210,7 @@
         /* Seule l'information secondaire vire a l'ambre quand elle signale un
            manque : les cartes restent homogenes (l'ancien liseré terracotta
            sur 2 cartes sur 6 n'etait explique par rien). */
-        .kpi-pied.manque { color: #8a5a00; }
+        .kpi-pied.manque { color: var(--attente-fg); }
 
         /* --- Listes d'activite --- */
         .duo-listes,
@@ -2174,7 +2268,7 @@
             display: block;
             font-size: 13px;
             font-weight: 700;
-            color: var(--primary-dark);
+            color: var(--titre);
         }
 
         .ligne-sous {
@@ -2192,7 +2286,7 @@
         .etiquette-role {
             padding: 3px 9px;
             border-radius: 20px;
-            background: #eef3f3;
+            background: var(--neutre-bg);
             color: var(--muted);
             font-size: 10.5px;
             font-weight: 800;
@@ -2213,7 +2307,7 @@
             padding: 12px 13px;
             border: 1px solid var(--border);
             border-radius: 12px;
-            background: linear-gradient(150deg, #f8fbfb, #eff5f5);
+            background: var(--fiche-bg);
             color: var(--text);
             text-decoration: none;
             font-size: 11.5px;
@@ -2230,14 +2324,14 @@
             width: 16px;
             height: 16px;
             flex: 0 0 16px;
-            color: #8a5a00;
+            color: var(--attente-fg);
         }
 
         .fiche strong {
             margin-right: 5px;
             font-size: 16px;
             font-weight: 800;
-            color: var(--primary-dark);
+            color: var(--titre);
             font-variant-numeric: tabular-nums;
         }
 
@@ -2309,6 +2403,159 @@
             }
         }
 
+        /* ===== Page Parametres ===== */
+        .reglages {
+            display: grid;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .reglage {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 18px;
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            background: var(--surface);
+            color: var(--text);
+            text-decoration: none;
+            box-shadow: 0 1px 2px rgba(11, 32, 39, 0.05), 0 4px 14px rgba(11, 32, 39, 0.045);
+            transition: border-color 0.18s ease, transform 0.18s ease;
+        }
+
+        .reglage:hover,
+        .reglage:focus-visible {
+            border-color: var(--primary-light);
+            transform: translateY(-2px);
+        }
+
+        .reglage-icone {
+            display: grid;
+            place-items: center;
+            flex: 0 0 40px;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: var(--primary-soft);
+            color: var(--primary-strong);
+        }
+
+        .reglage-texte {
+            min-width: 0;
+        }
+
+        .reglage-texte strong {
+            display: block;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--titre);
+        }
+
+        .reglage-texte span {
+            font-size: 12.5px;
+            color: var(--muted);
+        }
+
+        .reglage-valeur {
+            margin-left: auto;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--muted);
+            white-space: nowrap;
+        }
+
+        .reglage > .icone-nav:last-child {
+            flex: 0 0 18px;
+            width: 18px;
+            height: 18px;
+            color: var(--muted);
+        }
+
+        .panel-apparence {
+            margin-top: 22px;
+        }
+
+        .themes {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            padding: 0 24px 24px;
+        }
+
+        .theme {
+            display: block;
+            padding: 14px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: var(--surface);
+            color: var(--text);
+            text-align: left;
+            cursor: pointer;
+            font: inherit;
+        }
+
+        .theme:hover {
+            border-color: var(--primary-light);
+        }
+
+        .theme[aria-checked="true"] {
+            border-color: var(--primary);
+            box-shadow: inset 0 0 0 1px var(--primary);
+        }
+
+        .theme strong {
+            display: block;
+            margin-top: 11px;
+            font-size: 13.5px;
+            font-weight: 700;
+            color: var(--titre);
+        }
+
+        .theme span {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        /* Apercu miniature : deux barres qui evoquent une barre laterale et une
+           carte, dans les teintes du theme concerne. Volontairement fige (pas
+           de var()) : un apercu doit montrer le theme qu'il propose, pas celui
+           qui est actif. */
+        .theme-apercu {
+            display: flex;
+            gap: 5px;
+            height: 44px;
+            padding: 6px;
+            border-radius: 9px;
+            border: 1px solid var(--border);
+        }
+
+        .theme-apercu i {
+            display: block;
+            border-radius: 4px;
+        }
+
+        .theme-apercu i:first-child { flex: 0 0 22%; }
+        .theme-apercu i:last-child { flex: 1; }
+
+        .theme-apercu-clair { background: #eff4f3; }
+        .theme-apercu-clair i:first-child { background: #0b2027; }
+        .theme-apercu-clair i:last-child { background: #ffffff; }
+
+        .theme-apercu-sombre { background: #08161b; }
+        .theme-apercu-sombre i:first-child { background: #0b2027; }
+        .theme-apercu-sombre i:last-child { background: #10262d; }
+
+        .theme-apercu-systeme { background: linear-gradient(100deg, #eff4f3 50%, #08161b 50%); }
+        .theme-apercu-systeme i:first-child { background: #0b2027; }
+        .theme-apercu-systeme i:last-child { background: linear-gradient(100deg, #ffffff 45%, #10262d 55%); }
+
+        @media (max-width: 640px) {
+            .themes {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+
         /* ===== Barre superieure (topbar) =====
            Presente pour les 4 roles. Collante en haut du contenu : sur une
            liste longue (utilisateurs, rendez-vous), la recherche et le compte
@@ -2324,7 +2571,7 @@
                la marge haute est annulee, la barre s'aligne sur le contenu. */
             margin: -32px 0 20px;
             padding: 11px 0;
-            background: rgba(239, 244, 243, 0.92);
+            background: var(--topbar-bg);
             backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--border);
         }
@@ -2339,7 +2586,7 @@
         }
 
         .fil-ariane b {
-            color: var(--primary-dark);
+            color: var(--titre);
             font-weight: 700;
         }
 
@@ -2361,7 +2608,8 @@
         .topbar-recherche {
             position: relative;
             margin-left: auto;
-            width: min(300px, 32vw);
+            margin-right: auto;
+            width: min(380px, 36vw);
             max-width: none;
             padding: 0;
             background: none;
@@ -2440,7 +2688,7 @@
             width: 36px;
             height: 36px;
             border-radius: 10px;
-            background: var(--primary-dark);
+            background: #0b2027;
             color: #ffffff;
             font-size: 12px;
             font-weight: 800;
@@ -2450,7 +2698,7 @@
             display: block;
             font-size: 12.5px;
             font-weight: 700;
-            color: var(--primary-dark);
+            color: var(--titre);
             line-height: 1.3;
         }
 
@@ -2498,7 +2746,7 @@
             border-radius: 10px;
             border: 1px solid var(--border);
             background: var(--surface);
-            color: var(--primary-dark);
+            color: var(--titre);
             cursor: pointer;
             margin-bottom: 14px;
         }
@@ -2627,7 +2875,7 @@
             .libelle-mobile {
                 display: inline-block;
                 font-weight: 700;
-                color: var(--primary-dark);
+                color: var(--titre);
                 text-align: left;
                 flex-shrink: 0;
             }
@@ -2733,7 +2981,7 @@
                 <span class="nav-section">Système</span>
                 <a href="{% url 'rapports' %}" aria-label="Rapports" data-tooltip="Rapports" class="{% if url_name == 'rapports' %}active{% endif %}">{% icone "bar-chart" %} <span class="nav-texte">Rapports</span></a>
                 <a href="{% url 'envoyer_notification' %}" aria-label="Notifications" data-tooltip="Notifications" class="{% if url_name == 'envoyer_notification' or url_name == 'liste_notifications_envoyees' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span></a>
-                <a href="{% url 'changer_mot_de_passe' %}" aria-label="Mot de passe" data-tooltip="Mot de passe" class="{% if url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "lock" %} <span class="nav-texte">Mot de passe</span></a>
+                <a href="{% url 'parametres' %}" aria-label="Paramètres" data-tooltip="Paramètres" class="{% if url_name == 'parametres' or url_name == 'mon_compte' or url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "key" %} <span class="nav-texte">Paramètres</span></a>
                 {% endwith %}
                 {% elif current_role == "MEDECIN" %}
                 <a href="{% url 'dashboard_medecin' %}" aria-label="Tableau de bord" data-tooltip="Tableau de bord" class="{% if request.resolver_match.url_name == 'dashboard_medecin' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord</span></a>
@@ -2759,7 +3007,7 @@
                 <a href="{% url 'mes_ordonnances_assure' %}" aria-label="Mes ordonnances" data-tooltip="Mes ordonnances" class="{% if url_name == 'mes_ordonnances_assure' or url_name == 'voir_ordonnance_assure' %}active{% endif %}">{% icone "pill" %} <span class="nav-texte">Mes ordonnances</span></a>
                 <a href="{% url 'mon_historique_assure' %}" aria-label="Mon historique" data-tooltip="Mon historique" class="{% if url_name == 'mon_historique_assure' %}active{% endif %}">{% icone "clock-history" %} <span class="nav-texte">Mon historique</span></a>
                 <a href="{% url 'mes_notifications' %}" aria-label="Notifications" data-tooltip="Notifications" class="{% if url_name == 'mes_notifications' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span>{% if notifications_non_lues %} <span class="badge-non-lues">{{ notifications_non_lues }}</span>{% endif %}</a>
-                <a href="{% url 'changer_mot_de_passe' %}" aria-label="Mot de passe" data-tooltip="Mot de passe" class="{% if url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "lock" %} <span class="nav-texte">Mot de passe</span></a>
+                <a href="{% url 'parametres' %}" aria-label="Paramètres" data-tooltip="Paramètres" class="{% if url_name == 'parametres' or url_name == 'mon_compte' or url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "key" %} <span class="nav-texte">Paramètres</span></a>
                 {% endwith %}
                 {% endif %}
             </nav>
@@ -3051,6 +3299,39 @@
 
             document.addEventListener('submit', function () {
                 demarrerBarre();
+            });
+        })();
+
+        (function () {
+            // Selecteur de theme (page Parametres). Le theme lui-meme est
+            // applique par le script du <head> ; ici on ne gere que le choix.
+            var boutons = document.querySelectorAll('[data-theme-choix]');
+            if (!boutons.length) { return; }
+
+            function appliquer(choix) {
+                var sombre = choix === 'sombre'
+                    || (choix === 'systeme'
+                        && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                document.documentElement.toggleAttribute('data-theme', false);
+                if (sombre) {
+                    document.documentElement.setAttribute('data-theme', 'sombre');
+                }
+                boutons.forEach(function (b) {
+                    b.setAttribute('aria-checked',
+                        b.dataset.themeChoix === choix ? 'true' : 'false');
+                });
+            }
+
+            var actuel = 'systeme';
+            try { actuel = localStorage.getItem('theme-santesn') || 'systeme'; } catch (e) {}
+            appliquer(actuel);
+
+            boutons.forEach(function (bouton) {
+                bouton.addEventListener('click', function () {
+                    var choix = bouton.dataset.themeChoix;
+                    try { localStorage.setItem('theme-santesn', choix); } catch (e) {}
+                    appliquer(choix);
+                });
             });
         })();
 
