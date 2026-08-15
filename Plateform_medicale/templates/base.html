@@ -576,10 +576,7 @@
            ne sont pas des cartes-lien uniques, un survol qui souleve toute la
            carte serait trompeur). .panel seul, utilise partout ailleurs dans
            l'application, reste inchange. */
-        .panel-discret {
-            box-shadow: none;
-        }
-
+        
         .admin-card-large,
         .governance-card {
             padding: 0;
@@ -592,13 +589,7 @@
             padding: 24px;
         }
 
-        .quick-actions {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 12px;
-            padding: 0 24px 24px;
-        }
-
+        
         @keyframes entree-carte {
             from { opacity: 0; transform: translateY(16px); }
             to   { opacity: 1; transform: translateY(0); }
@@ -1212,127 +1203,27 @@
            --primary-strong + accent radial), pas une nouvelle couleur --
            sert a distinguer visuellement les 2-3 chiffres les plus
            strategiques (paiements) du reste de la grille KPI. */
-        .dash-hero {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 14px;
-            margin-top: 18px;
-        }
-
-        .dash-hero-carte {
-            position: relative;
-            overflow: hidden;
-            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-strong) 100%);
-            color: #ffffff;
-            border-radius: 16px;
-            padding: 26px 28px 22px;
-            box-shadow: 0 10px 28px rgba(11, 32, 39, 0.22);
-            animation: entree-carte 0.5s ease-out both;
-        }
-
+        
+        
         /* Le bandeau financier precede la grille KPI (.dash-grid) : cette
            carte doit entrer en premier, pas rester statique pendant que des
            tuiles moins strategiques plus bas s'animent. Un seul enfant direct
            de .dash-hero desormais (carte fusionnee, ex-3 cartes separees) --
            plus besoin de decaler nth-child(2)/(3). */
-        .dash-hero .dash-hero-carte:nth-child(1) { animation-delay: 0s; }
-
-        .dash-hero-carte::after {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(120% 100% at 100% 0%, rgba(79, 184, 174, 0.3), transparent 60%);
-            pointer-events: none;
-        }
-
-        .dash-hero-icon {
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 34px;
-            height: 34px;
-            margin-bottom: 14px;
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.14);
-        }
-
-        /* Chiffres en IBM Plex Mono (police deja importee, jusqu'ici reservee
-           a .dc-status/.gouvernance-comptes) : lecture "instrument de bord",
-           coherente avec la fusion des 3 cartes hero en une seule ci-dessous. */
-        .dash-hero-carte strong {
-            position: relative;
-            display: block;
-            font-family: 'IBM Plex Mono', 'Cascadia Code', Consolas, monospace;
-            font-size: 25px;
-            font-weight: 800;
-            letter-spacing: -0.02em;
-            margin-bottom: 4px;
-            font-variant-numeric: tabular-nums;
-        }
-
-        .dash-hero-carte span {
-            position: relative;
-            display: block;
-            color: rgba(239, 255, 247, 0.78);
-            font-weight: 600;
-            font-size: 13.5px;
-        }
-
-        /* Carte hero fusionnee (ex-3 cartes .dash-hero-carte separees,
-           "beaucoup de panneaux egaux" -- contraire au principe du plan
-           "un seul geste fort") : le montant principal (paiements regles)
-           domine a gauche, les 2 stats secondaires (en attente / taux) se
-           lisent en petit a droite, un seul cadre. */
-        .dash-hero-row {
-            position: relative;
-            z-index: 1;
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 24px 32px;
-        }
-
-        .dash-hero-lien {
-            display: block;
-            text-decoration: none;
-            color: inherit;
-        }
-
-        .dash-hero-lien-principal {
-            flex: 1 1 220px;
-            min-width: 0;
-        }
-
-        .dash-hero-lien-principal strong {
-            font-size: 34px;
-        }
-
-        .dash-hero-secondaires {
-            display: flex;
-            gap: 26px;
-            flex-wrap: wrap;
-        }
-
-        .dash-hero-lien-secondaire {
-            flex-shrink: 0;
-        }
-
-        .dash-hero-lien-secondaire .dash-hero-icon {
-            width: 28px;
-            height: 28px;
-            margin-bottom: 10px;
-        }
-
-        .dash-hero-lien-secondaire strong {
-            font-size: 19px;
-        }
-
-        .dash-hero-lien:hover strong {
-            color: var(--primary-accent);
-        }
-
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         /* Tendance reelle (paiements regles ces 7 derniers jours), pas un
            chiffre invente : meme teinte verte que .dash-pill.ok sur fond
            sombre (token --dc-success, defini sur .dash-command), reutilisee
@@ -1343,16 +1234,7 @@
            surmonter .dash-hero-carte span (0,1,1) qui forcerait la couleur
            off-white, suivant le pattern de .dash-hero-carte span.dash-hero-sparkline-legende
            deux regles plus bas. */
-        .dash-hero-carte span.dc-hero-delta {
-            position: relative;
-            display: block;
-            margin: 2px 0 6px;
-            font-size: 12px;
-            font-weight: 600;
-            font-variant-numeric: tabular-nums;
-            color: var(--dc-success);
-        }
-
+        
         /* Meme principe que .dc-hero-delta (Tache 8), variante compacte pour
            une tuile KPI : reutilise la meme teinte verte, pas de fond ni de
            padding pour rester discret sous le libelle de la tuile.
@@ -1360,43 +1242,10 @@
            specificite 0,3,1) pour gagner face a .dash-command .dash-stat
            span (0,2,1) -- meme piege de cascade que .dc-hero-delta en
            Tache 8, corrige ici des le depart plutot qu'en revue. */
-        .dash-command .dash-stat span.dc-kpi-delta {
-            display: block;
-            margin-top: 2px;
-            font-size: 10.5px;
-            font-weight: 700;
-            font-variant-numeric: tabular-nums;
-            color: var(--dc-success);
-        }
-
-        .dash-hero-sparkline-zone {
-            position: relative;
-            height: 40px;
-            margin-top: 10px;
-        }
-
-        .dash-hero-carte span.dash-hero-sparkline-legende {
-            position: relative;
-            display: block;
-            margin-top: 4px;
-            font-size: 10.5px;
-            font-weight: 600;
-            /* Meme opacite que .dash-hero-carte span (label principal) :
-               0.6 tombait sous 4.5:1 (WCAG AA, texte normal) cote --primary-strong
-               du degrade — 0.78 est deja verifie ailleurs sur cette carte. */
-            color: rgba(239, 255, 247, 0.78);
-        }
-
-        .dash-hero-sparkline-zone .empty {
-            background: none;
-            border: none;
-            padding: 6px 0 0;
-            margin: 0;
-            font-size: 11px;
-            color: rgba(239, 255, 247, 0.7);
-            text-align: left;
-        }
-
+        
+        
+        
+        
         /* Trace de pouls decorative en fond de la ligne de chiffres (ex-
            filigrane discret en coin haut-droite, 220px) : geste plus fort,
            sur toute la largeur de la carte fusionnee. preserveAspectRatio=
@@ -1406,27 +1255,8 @@
            jamais recouvrir le sparkline Chart.js reel, plus bas dans
            .dash-hero-sparkline-zone -- decoratif, jamais superpose a une
            donnee reelle. */
-        .dc-hero-trace {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 120px;
-            opacity: 0.22;
-            pointer-events: none;
-        }
-
-        .dc-hero-trace path {
-            fill: none;
-            stroke: var(--accent);
-            stroke-width: 2;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            stroke-dasharray: 200;
-            stroke-dashoffset: 200;
-            animation: dc-trace 3.2s ease-in-out infinite;
-        }
-
+        
+        
         @keyframes dc-trace {
             to { stroke-dashoffset: 0; }
         }
@@ -1436,25 +1266,8 @@
            Anneau anime capte par la regle globale prefers-reduced-motion
            (animation-duration forcee a 0.01ms) -- pas de media query dediee
            ici. */
-        .pulse-dot {
-            position: relative;
-            display: inline-block;
-            width: 7px;
-            height: 7px;
-            border-radius: 999px;
-            background: var(--accent);
-            flex-shrink: 0;
-        }
-
-        .pulse-dot::after {
-            content: "";
-            position: absolute;
-            inset: -5px;
-            border-radius: 999px;
-            border: 1.5px solid var(--accent);
-            animation: pulse-anneau 2.2s ease-out infinite;
-        }
-
+        
+        
         @keyframes pulse-anneau {
             0% { opacity: 0.65; transform: scale(0.6); }
             75% { opacity: 0; transform: scale(1.6); }
@@ -1473,10 +1286,7 @@
            121+ -- deja le niveau minimal suppose par le reste du projet
            (Chart.js/Leaflet sans polyfill, aucune contrainte de navigateur
            ancien documentee). */
-        .contenu main:has(> .dash-command) {
-            width: calc(100% - 64px);
-        }
-
+        
         /* Poste de pilotage (dashboard admin uniquement) : canevas sombre qui
            enveloppe tout le contenu sous le titre de page. Toutes les
            redefinitions sombres de composants partages (.panel, .dash-grid,
@@ -1484,89 +1294,17 @@
            vivent imbriquees sous .dash-command -- jamais dans la regle de
            base, qui reste utilisee telle quelle par les 3 autres dashboards
            et par d'autres pages admin (scanner_ordonnance.html, rapports.html). */
-        .dash-command {
-            margin-top: 24px;
-            padding: 28px 30px 34px;
-            border-radius: 24px;
-            background: radial-gradient(140% 160% at 100% 0%, var(--primary-strong) 0%, var(--primary-dark) 55%);
-            /* Texte clair sur fond sombre : reutilise les tokens deja concus
-               pour ce contexte (sidebar), plus un seul token local pour le
-               texte principal (meme valeur que la croix du logo sur fond
-               sombre, deja documentee dans CLAUDE.md -- pas une couleur
-               inventee). */
-            --dc-text: #EFF4F3;
-            --dc-text-muted: var(--sb-text-muted);
-            --dc-text-faint: var(--sb-text-faint);
-            --dc-border: var(--sb-border);
-            --dc-hover: var(--sb-hover);
-            /* Trio semantique (statuts, deltas de tendance) : variantes
-               eclaircies de --success/--warning/--danger, dont les versions
-               claires (vert/ambre/rouge fonces) sont illisibles sur ce fond.
-               Tokenisees ici parce qu'elles servent a la fois aux pastilles
-               .dash-pill et aux deltas .dc-hero-delta/.dc-kpi-delta -- une
-               seule definition, jamais de hex repete. */
-            --dc-success: #6fd39a;
-            --dc-warning: #f0c375;
-            --dc-danger: #ec8a83;
-            color: var(--dc-text);
-        }
-
-        .dash-command .subtitle {
-            color: var(--dc-text-muted);
-        }
-
-        .dash-command .dc-status {
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-            font-size: 13px;
-            color: var(--dc-text-muted);
-            margin-bottom: 20px;
-        }
-
-        .dash-command .dc-status strong {
-            color: var(--dc-text);
-            font-family: 'IBM Plex Mono', 'Cascadia Code', Consolas, monospace;
-            font-weight: 600;
-        }
-
-        .dash-command .dc-status-sep {
-            width: 1px;
-            height: 12px;
-            background: var(--dc-border);
-        }
-
-        .dash-command .dc-status-link {
-            color: inherit;
-            text-decoration: none;
-        }
-
-        .dash-command .dc-status-link:hover strong {
-            color: var(--primary-accent);
-        }
-
-        .dash-command .dc-status-urgent strong {
-            color: var(--accent);
-        }
-
-        .dash-command .dash-stat {
-            background: var(--dc-hover);
-            border-color: var(--dc-border);
-            box-shadow: none;
-            color: var(--dc-text);
-        }
-
-        .dash-command a.dash-stat:hover {
-            border-color: rgba(255, 255, 255, 0.22);
-            box-shadow: none;
-        }
-
-        .dash-command .dash-stat strong {
-            color: var(--dc-text);
-            font-family: 'IBM Plex Mono', 'Cascadia Code', Consolas, monospace;
-        }
-
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         /* Grille KPI en une seule rangee de 6 (lecture "cadran d'instruments"),
            plutot que l'auto-fit generique de .dash-grid (partage avec les 3
            autres dashboards, dont les grilles ont un nombre de tuiles
@@ -1577,22 +1315,9 @@
            pas encore le tiroir mobile) : a 900px, 6 colonnes debordaient
            deja du canevas sombre des ~1100px de large de fenetre -- les 6
            tuiles ne tiennent confortablement qu'a partir de ~1200px. */
-        .dash-command .dash-grid {
-            grid-template-columns: repeat(6, 1fr);
-        }
-
-        @media (max-width: 1180px) {
-            .dash-command .dash-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-        }
-
-        @media (max-width: 560px) {
-            .dash-command .dash-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
+        
+        
+        
         /* Liseré de couleur en tete de chaque tuile KPI, un des signaux de
            mouvement les moins visibles de la premiere passe A+ (retour
            utilisateur du 07/08 : le rendu ne "ressemblait pas a A+", cf. le
@@ -1619,18 +1344,8 @@
            --primary-strong jusqu'a 1:1 dans le coin haut-droit (ou le
            degrade vaut litteralement --primary-strong) -- liserés
            invisibles sur les tuiles 2/4/6, pas juste "discrets". */
-        .dash-command .dash-grid .dash-stat {
-            border-top-width: 2px;
-            border-top-style: solid;
-        }
-
-        .dash-command .dash-grid .dash-stat:nth-child(1) { border-top-color: var(--primary-accent); }
-        .dash-command .dash-grid .dash-stat:nth-child(2) { border-top-color: var(--primary-accent); }
-        .dash-command .dash-grid .dash-stat:nth-child(3) { border-top-color: var(--primary-accent); }
-        .dash-command .dash-grid .dash-stat:nth-child(4) { border-top-color: var(--primary-accent); }
-        .dash-command .dash-grid .dash-stat:nth-child(5) { border-top-color: var(--accent); }
-        .dash-command .dash-grid .dash-stat:nth-child(6) { border-top-color: var(--accent); }
-
+        
+                                                
         /* .admin-layout (base.html) est en display:grid sans align-items,
            donc stretch par defaut : "Actions rapides" (4 boutons, contenu
            court) etait etire a la meme hauteur que "Comptes et
@@ -1639,35 +1354,22 @@
            Scope sous .dash-command : .admin-layout sert aussi sur 4 autres
            pages (rapports, fiche patient, ordonnances) ou l'etirement n'a
            jamais pose ce probleme, pas de raison d'y toucher. */
-        .dash-command .admin-layout {
-            align-items: start;
-        }
-
+        
         /* Libelles des tuiles KPI : --dc-text-muted ne tenait que sur la
            partie sombre du degrade (~6:1) et retombait a ~3.8-4.2:1 sur les
            tuiles les plus proches du coin haut-droit, ou le radial-gradient
            vaut --primary-strong -- sous le seuil WCAG AA. --dc-text tient
            partout (>=7.9:1) ; la hierarchie avec le chiffre reste portee par
            la taille et la graisse (28px/800 contre 13.5px/600). */
-        .dash-command .dash-stat span {
-            color: var(--dc-text);
-        }
-
+        
         /* Regle non qualifiee : couvre aussi l'icone de .governance-card,
            qui n'est pas dans une .dash-stat. */
-        .dash-command .dash-stat-icon {
-            background: rgba(255, 255, 255, 0.08);
-            color: var(--primary-accent);
-        }
-
+        
         /* Selecteur qualifie (0,3,1) : dans une tuile KPI, l'icone est un
            <span>, donc .dash-command .dash-stat span (0,2,1) l'emportait sur
            la regle ci-dessus (0,2,0) et repeignait l'icone en couleur de
            texte. Meme piege de cascade que .dc-kpi-delta. */
-        .dash-command .dash-stat span.dash-stat-icon {
-            color: var(--primary-accent);
-        }
-
+        
         /* Bordure renforcee (0.09 -> 0.16 d'opacite) : le contour des
            cartes se distinguait mal du degrade de fond du canevas,
            notamment visible sur "Actions rapides" a cote de "Comptes et
@@ -1678,37 +1380,12 @@
            2 digests) de facon uniforme -- les tuiles KPI (.dash-stat)
            restent volontairement a l'ecart, deja ancrees par leur lisere
            de couleur en tete (voir plus haut), pas un oubli. */
-        .dash-command .panel {
-            background: var(--dc-hover);
-            border-color: rgba(255, 255, 255, 0.16);
-            box-shadow: none;
-            color: var(--dc-text);
-        }
-
-        .dash-command .panel-header h2,
-        .dash-command .governance-card h2 {
-            color: var(--dc-text);
-        }
-
-        .dash-command .gouvernance-comptes strong {
-            color: var(--dc-text);
-        }
-
-        .dash-command .gouvernance-comptes span {
-            color: var(--dc-text-muted);
-        }
-
-        .dash-command .button:not(.primary) {
-            background: var(--dc-hover);
-            border-color: var(--dc-border);
-            color: var(--dc-text);
-        }
-
-        .dash-command .button:not(.primary):hover {
-            background: rgba(255, 255, 255, 0.12);
-            border-color: rgba(255, 255, 255, 0.22);
-        }
-
+        
+        
+        
+        
+        
+        
         /* .button.primary (base.html) degrade --primary-dark -> --primary-strong :
            exactement la meme famille de teintes que le fond de .dash-command
            (le radial-gradient va de --primary-strong a --primary-dark), donc
@@ -1721,110 +1398,29 @@
            combinaison que la mesure qui a guide le choix du liseré KPI
            juste au-dessus. Ne change pas .button.primary de base (utilise
            tel quel par les 3 autres dashboards et les pages claires). */
-        .dash-command .button.primary {
-            background: var(--primary-accent);
-            color: var(--primary-dark);
-            box-shadow: 0 6px 16px rgba(79, 184, 174, 0.35);
-        }
-
-        .dash-command .button.primary:hover {
-            background: var(--primary-accent);
-            box-shadow: 0 10px 22px rgba(79, 184, 174, 0.5);
-        }
-
-        .dash-command .dc-digests {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin-top: 20px;
-        }
-
+        
+        
+        
         /* Meme palier que .admin-layout (section juste au-dessus, voir
            @media max-width 560px plus bas) : les deux grilles a deux colonnes
            de cette page basculent donc en une colonne au meme moment. */
-        @media (max-width: 560px) {
-            .dash-command .dc-digests {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .dash-command .dc-list {
-            padding: 0 24px 18px;
-        }
-
-        /* .dc-row est un <a> (lien vers la fiche concernee, pas juste de
-           l'affichage) : reset des styles de lien par defaut, + un fond au
-           survol/focus pour signaler que la ligne est cliquable -- absent
-           jusqu'ici, ces lignes etaient de simples <div> sans action. */
-        .dash-command .dc-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 9px 12px;
-            margin: 0 -12px;
-            border-top: 1px solid var(--dc-border);
-            border-radius: 8px;
-            font-size: 13px;
-            text-decoration: none;
-            color: inherit;
-            transition: background 0.15s ease;
-        }
-
-        .dash-command .dc-row:hover,
-        .dash-command .dc-row:focus-visible {
-            background: var(--dc-hover);
-        }
-
-        .dash-command .dc-row:focus-visible {
-            outline: none;
-            box-shadow: 0 0 0 2px var(--primary-accent);
-        }
-
-        .dash-command .dc-row:first-child {
-            border-top: none;
-        }
-
-        .dash-command .dc-avatar {
-            flex-shrink: 0;
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10.5px;
-            font-weight: 700;
-            font-family: 'IBM Plex Mono', 'Cascadia Code', Consolas, monospace;
-            background: rgba(79, 184, 174, 0.18);
-            color: var(--primary-accent);
-        }
-
-        .dash-command .dc-meta {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .dash-command .dc-name {
-            display: block;
-            color: var(--dc-text);
-        }
-
+        
+        
+        
+        
+        
+        
+        
+        
+        
         /* --dc-text-faint (alias de --sb-text-faint, alpha 0.42) tombait a
            ~3.0-3.3:1 sur ce fond, sous le seuil WCAG AA texte normal, alors
            que cette ligne porte une vraie information (role, telephone,
            ville). --dc-text-muted remonte a ~5.1-6.0:1 selon l'endroit du
            degrade. Le token --dc-text-faint lui-meme est conserve : il reste
            utilisable a plus grande taille. */
-        .dash-command .dc-sub {
-            display: block;
-            font-size: 11.5px;
-            color: var(--dc-text-muted);
-        }
-
-        .dash-command .etat-vide p {
-            color: var(--dc-text-muted);
-        }
-
+        
+        
         /* Le tag illustration_vide (templatetags/icones.py) code ses couleurs
            en attributs de presentation SVG (cercle #d9e2ea, glyphe #0e7c86) :
            concu pour un fond clair, illisible sur le canevas sombre (glyphe
@@ -1834,25 +1430,13 @@
            Meme traitement que .dash-command .dash-stat-icon : glyphe en
            --primary-accent (partie informative), anneau ramene a --dc-border
            (purement decoratif, sinon plus visible que le glyphe). */
-        .dash-command .etat-vide svg g {
-            stroke: var(--primary-accent);
-        }
-
+        
         /* Enfant DIRECT du <svg> : c'est l'anneau decoratif. Sans le ">",
            le selecteur attraperait aussi les <circle> qui font partie du
            glyphe lui-meme (la tete du bonhomme de "id-card", par exemple),
            et les effacerait. */
-        .dash-command .etat-vide svg > circle {
-            stroke: var(--dc-border);
-        }
-
-        /* Fonds = rgb exact de --success/--warning/--danger en transparence,
-           textes = les tokens eclaircis --dc-success/--dc-warning/--dc-danger
-           definis sur .dash-command. */
-        .dash-command .dash-pill.ok { background: rgba(30, 122, 76, 0.22); color: var(--dc-success); }
-        .dash-command .dash-pill.attente { background: rgba(138, 90, 0, 0.28); color: var(--dc-warning); }
-        .dash-command .dash-pill.danger { background: rgba(179, 38, 30, 0.24); color: var(--dc-danger); }
-
+        
+                        
         .legende-type {
             display: inline-flex;
             align-items: center;
@@ -1872,38 +1456,11 @@
 
         /* Mini-chiffres de l'encart gouvernance (comptes actifs/desactives) :
            simple paire cote a cote, pas une nouvelle grille a part. */
-        .gouvernance-comptes {
-            display: flex;
-            gap: 20px;
-            margin: 16px 0;
-        }
-
-        .gouvernance-comptes strong {
-            display: block;
-            font-size: 22px;
-            font-weight: 800;
-            color: var(--primary-dark);
-            font-variant-numeric: tabular-nums;
-        }
-
-        .gouvernance-comptes span {
-            color: var(--muted);
-            font-weight: 600;
-            font-size: 12.5px;
-        }
-
-        .gouvernance-comptes a {
-            text-decoration: none;
-            color: inherit;
-            display: block;
-            border-radius: 8px;
-            transition: opacity 0.18s ease;
-        }
-
-        .gouvernance-comptes a:hover {
-            opacity: 0.75;
-        }
-
+        
+        
+        
+        
+        
         /* Identifiants/codes (numero de carte, code QR, mot de passe genere) :
            IBM Plex Mono deja chargee mais jamais utilisee jusqu'ici, chiffres
            tabulaires pour un alignement propre. */
@@ -3015,18 +2572,7 @@
             box-shadow: 0 0 0 4px rgba(14, 124, 134, 0.35);
         }
 
-        /* Exception du poste de pilotage (dashboard admin) : sur son canevas
-           sombre l'anneau ci-dessus (turquoise a 0.35) se confond avec le
-           fond (~1.4:1), donc moins visible que le contour par defaut du
-           navigateur qu'il remplace. Meme anneau, teinte --primary-accent
-           opaque -- deja la couleur des icones de ce canevas -- qui passe le
-           seuil 3:1 de WCAG 1.4.11 sur tout le degrade. Regle scopee a
-           .dash-command : les 3 autres dashboards gardent l'anneau standard. */
-        .dash-command .dash-stat:focus-visible,
-        .dash-command .dc-status-link:focus-visible {
-            box-shadow: 0 0 0 3px var(--primary-accent);
-        }
-
+        
         /* Lien d'evitement clavier : invisible jusqu'a recevoir le focus,
            permet de sauter la sidebar pour aller droit au contenu. */
         .lien-evitement {
@@ -3430,16 +2976,19 @@
             // Compteur anime sur les chiffres cles des dashboards (.dash-stat
             // strong) : meme principe que la landing (Phase 1), sans le
             // suffixe "+" car ce sont des totaux exacts, pas des objectifs.
-            // Desactive sur le dashboard admin (.dash-hero, present
-            // uniquement sur dashboard.html) : ecran consulte plusieurs fois
-            // par jour par la meme personne, la choregraphie 0->N repetee a
-            // chaque visite gene plus qu'elle ne confirme quoi que ce soit.
-            // L'entree en fondu/glissement des cartes (entree-carte, CSS)
-            // reste inchangee. Les 3 autres dashboards (Assure/Medecin/
-            // Pharmacien) ne sont pas concernes.
+            // Volontairement desactive sur le dashboard admin : ecran consulte
+            // plusieurs fois par jour par la meme personne, la choregraphie
+            // 0->N repetee a chaque visite gene plus qu'elle ne confirme quoi
+            // que ce soit. Le marqueur est .file-attente, propre a
+            // dashboard.html : l'ancien .dash-hero a disparu avec la refonte
+            // "Clinique claire", le garde-fou ne se declenchait donc plus et
+            // le dashboard admin n'echappait a l'animation que par accident,
+            // en n'utilisant plus .dash-stat. L'entree en fondu/glissement des
+            // cartes (entree-carte, CSS) reste inchangee. Les 3 autres
+            // dashboards (Assure/Medecin/Pharmacien) ne sont pas concernes.
             var reductionMouvement = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
             if (reductionMouvement) { return; }
-            if (document.querySelector('.dash-hero')) { return; }
+            if (document.querySelector('.file-attente')) { return; }
 
             document.querySelectorAll('.dash-stat strong').forEach(function (element) {
                 var cible = parseInt(element.textContent.replace(/\s/g, ''), 10);
