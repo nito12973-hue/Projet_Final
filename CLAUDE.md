@@ -289,6 +289,18 @@ utilisé dans ce projet (tout le CSS/SVG est inline dans les templates).
 Logo secondaire (empilé), icône d'application et version monochrome existent
 dans la spec d'origine mais ne sont pas implémentés (aucun usage actif dans
 le projet à ce jour) — ne pas les recréer sans un besoin concret identifié.
+**Direction « Relief » (dashboard admin).** La matière fait partie du design
+system : ombres en **deux couches** (contact proche + diffusion large) sur
+`.panel`/`.kpi`, halo ambiant sur `body` (deux `radial-gradient` fixes),
+bandeau `.file-attente` en pièce sculptée (dégradé + lueur `::before`), tuiles
+en verre dépoli, montant principal en dégradé navy→turquoise sous `@supports
+(background-clip: text)` — sans cette garde le texte serait invisible.
+Deux jetons sont réservés au texte posé **sur** les tuiles de verre :
+`--sur-verre-teal` (#6fd0c6) et `--sur-verre-accent` (#f7c4a3). Le verre
+éclaircit le fond, où `--primary-light` (4.44:1) et `--accent` (3.04:1)
+tombent sous WCAG AA ; ces variantes remontent à 5.8 et 5.4:1. **Ne jamais
+les utiliser sur fond clair.**
+
 Classes CSS existantes à réutiliser (ne pas dupliquer) : `.page-title`,
 `.panel`, `.grid`/`.stat` (obsolètes sur les 4 pages d'accueil par rôle,
 remplacées par `.dash-grid`/`.dash-stat`/`.dash-pill`), `.badge` (+

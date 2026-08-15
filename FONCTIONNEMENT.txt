@@ -626,6 +626,50 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
                           desactives. Les 4 ont ete corrigees, pas
                           contournees. Les 6 autres tests rouges portaient
                           sur les classes CSS de l'ancien design.
+                          Douzieme passe (direction "Relief", 2026-08-15) :
+                          demande d'un rendu plus beau. Deux directions
+                          maquettees hors projet avec les vraies donnees et
+                          soumises au choix : "Editorial" (aucune carte, des
+                          filets, chiffres traites comme des titres, menu
+                          clair) et "Relief" (matiere, profondeur, verre
+                          depoli, menu navy conserve). Retenu : Relief comme
+                          base, PLUS l'echelle typographique d'Editorial --
+                          l'argument decisif n'etait pas esthetique mais de
+                          rayon d'impact : base.html est partage par les 4
+                          roles, le menu clair d'Editorial aurait oblige a
+                          refaire les 3 autres tableaux de bord sous peine
+                          d'application a deux visages.
+                          Ce qui change : halo ambiant sur body (deux
+                          radial-gradient fixes, turquoise et terracotta) ;
+                          menu en degrade diagonal + liseré turquoise
+                          interieur ; bandeau "A traiter" traite en piece
+                          sculptee (degrade + lueur hors-cadre en ::before +
+                          liseré clair sur l'arete haute, ombre plus profonde
+                          que celle des cartes pour qu'il flotte au-dessus) ;
+                          tuiles en verre depoli ; .file-nombre de 30 a 42px
+                          en Manrope ; .panel a 18px de rayon avec une ombre
+                          en DEUX couches (contact proche + diffusion large,
+                          c'est ce qui distingue une carte posee d'une carte
+                          encadree) ; reflet turquoise d'1px sur l'arete des
+                          cartes du dashboard uniquement ; montant principal
+                          en degrade navy->turquoise.
+                          POINT D'ACCESSIBILITE, a ne pas defaire : le verre
+                          eclaircit le fond des tuiles, ce qui a fait tomber
+                          --primary-light a 4.44:1 et --accent a 3.04:1,
+                          sous le seuil WCAG AA. Deux jetons dedies ont ete
+                          ajoutes pour le texte pose SUR ces tuiles :
+                          --sur-verre-teal (#6fd0c6) et --sur-verre-accent
+                          (#f7c4a3), qui remontent a 5.8 et 5.4:1. Ils ne
+                          valent QUE sur fond sombre, ne pas les employer sur
+                          fond clair. L'opacite du verre a aussi ete ramenee
+                          de 10% a 7% (12% au survol) et .file-entete de 72%
+                          a 82%. Tous les couples ont ete recalcules, survol
+                          compris : le plus faible est a 4.75:1.
+                          Le degrade sur le montant principal est encadre par
+                          @supports (background-clip: text) : sans cette
+                          garde, un navigateur sans support afficherait un
+                          texte transparent, donc invisible. La couleur pleine
+                          reste la valeur par defaut.
                           Onzieme passe (audit du module admin, 2026-08-15) :
                           dette CSS de la dixieme passe SOLDEE -- 84 regles
                           inatteignables retirees (.dash-command,
