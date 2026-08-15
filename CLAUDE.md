@@ -289,6 +289,25 @@ utilisé dans ce projet (tout le CSS/SVG est inline dans les templates).
 Logo secondaire (empilé), icône d'application et version monochrome existent
 dans la spec d'origine mais ne sont pas implémentés (aucun usage actif dans
 le projet à ce jour) — ne pas les recréer sans un besoin concret identifié.
+**Page Paramètres (`parametres`).** Six sections : Mon compte, Apparence,
+Notifications (admin), Sécurité, Données (admin), Avancé (repliable).
+**Règle de contenu : n afficher que des réglages adossés à du code réel.** Ont
+été écartés pour cette raison — ne pas les réintroduire sans les implémenter :
+2FA, sessions actives, journal de sécurité, sauvegardes, intégrations
+configurables, couleur principale, densité d interface, et les interrupteurs de
+notification par type d événement (aucun modèle de préférences n existe ; les
+notifications sont des messages rédigés par un admin, pas des événements).
+Trois valeurs sont volontairement en lecture seule plutôt que masquées (rôle,
+durée de session lue dans `SESSION_COOKIE_AGE`, limitation des tentatives) :
+l administrateur doit savoir que ces protections existent. La section Avancé ne
+règle rien, elle rend compte des services externes réels et signale l absence
+de backend e-mail.
+
+`deconnecter_partout` ferme toutes les sessions du compte, celle en cours
+comprise. Django n a pas de primitive : on parcourt les sessions non expirées et
+on supprime celles dont `_auth_user_id` correspond — cela suppose le backend de
+sessions **en base** (celui par défaut).
+
 **Thème sombre.** Posé par `data-theme="sombre"` sur `<html>`, écrit par un
 script **inline dans le `<head>`** (avant la feuille, sinon la page clignote en
 clair) ; choix conservé dans `localStorage` (`theme-santesn` : `clair` /

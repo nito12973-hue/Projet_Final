@@ -18,12 +18,14 @@ from django.contrib import messages
 from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.sessions.models import Session
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Case, Count, IntegerField, Q, Sum, Value, When
 from django.db.models.functions import TruncDate, TruncMonth, TruncYear
 from django.http import HttpResponse, JsonResponse
+from django.conf import settings
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -281,8 +283,52 @@ def parametres(request):
     Les entrees restent AUSSI accessibles depuis le menu lateral : envoyer une
     notification est une action courante pour un administrateur, l'enfouir
     derriere Parametres rallongerait un chemin frequent.
+
+    Regle de contenu : la page n'affiche QUE des reglages adosses a du code
+    reel. Les valeurs en lecture seule (duree de session, limitation des
+    tentatives) sont montrees quand meme : l'administrateur doit savoir que ces
+    protections existent, meme s'il ne les regle pas ici.
     """
-    return render(request, "parametres.html")
+    contexte = {
+        # Duree reelle, lue dans la configuration -- pas une valeur recopiee
+        # a la main qui se perimerait au premier changement de settings.py.
+        "duree_session_heures": settings.SESSION_COOKIE_AGE // 3600,
+    }
+    if request.user.role == User.Role.ADMIN:
+        # Toutes les notifications du projet sont emises par un administrateur
+        # (le modele n'a pas d'expediteur : c'est la regle metier).
+        contexte["total_notifications_envoyees"] = Notification.objects.count()
+    return render(request, "parametres.html", contexte)
+
+
+@login_required
+@require_POST
+def deconnecter_partout(request):
+    """Ferme toutes les sessions de l'utilisateur, y compris la courante.
+
+    Django n'offre pas de primitive pour cela sans changer le mot de passe :
+    on parcourt les sessions NON EXPIREES et on supprime celles dont
+    _auth_user_id correspond. Suppose le backend de sessions en base (celui par
+    defaut ; ce projet n'en change pas). Le filtre sur expire_date evite de
+    decoder des sessions deja mortes.
+
+    Le message est pose APRES logout() : logout() vide la session courante, un
+    message ajoute avant serait perdu.
+    """
+    identifiant = str(request.user.pk)
+    fermees = 0
+    for session in Session.objects.filter(expire_date__gte=timezone.now()):
+        if session.get_decoded().get("_auth_user_id") == identifiant:
+            session.delete()
+            fermees += 1
+
+    logout(request)
+    messages.success(
+        request,
+        f"{fermees} session(s) fermée(s) sur l'ensemble de vos appareils. "
+        "Reconnectez-vous pour continuer.",
+    )
+    return redirect("login")
 
 
 @login_required

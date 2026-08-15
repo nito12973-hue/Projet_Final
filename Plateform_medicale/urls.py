@@ -16,6 +16,7 @@ urlpatterns = [
     path('installation/', views.setup_wizard, name='setup_wizard'),
     path('parametres/', views.parametres, name='parametres'),
     path('mon-compte/', views.mon_compte, name='mon_compte'),
+    path('mon-compte/deconnecter-partout/', views.deconnecter_partout, name='deconnecter_partout'),
     path('mon-compte/mot-de-passe/', views.changer_mot_de_passe, name='changer_mot_de_passe'),
 
     path('espace/assure/', views.dashboard_assure, name='dashboard_assure'),

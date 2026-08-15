@@ -626,6 +626,49 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
                           desactives. Les 4 ont ete corrigees, pas
                           contournees. Les 6 autres tests rouges portaient
                           sur les classes CSS de l'ancien design.
+                          Quatorzieme passe (Parametres, version complete,
+                          2026-08-15) : la page Parametres passe d une liste de
+                          liens a une vraie page de reglages, en 6 sections
+                          (Mon compte, Apparence, Notifications, Securite,
+                          Donnees, Avance repliable) avec une navigation
+                          interne par ancres.
+                          REGLE DE CONTENU, la plus importante de cette passe :
+                          la page n affiche QUE des reglages adosses a du code
+                          reel. Ont ete ECARTES faute d implementation, malgre
+                          la demande initiale : 2FA, sessions actives, journal
+                          de securite, sauvegardes, integrations configurables,
+                          couleur principale, densite d interface, et surtout
+                          les interrupteurs de notification par type
+                          d evenement (il n existe aucun modele de preferences ;
+                          les notifications SanteSN sont des messages rediges
+                          par un admin, pas des evenements automatiques).
+                          Trois valeurs sont montrees en LECTURE SEULE plutot
+                          que masquees -- l administrateur doit savoir que ces
+                          protections existent : le role, la duree de session
+                          (lue dans settings.SESSION_COOKIE_AGE, pas recopiee)
+                          et la limitation des tentatives.
+                          La section Avance ne propose rien a regler : elle rend
+                          compte des trois services externes reellement
+                          utilises (Nominatim, Leaflet, Chart.js) et signale que
+                          l envoi d emails n est pas configure -- c est la seule
+                          page qui explique pourquoi les mots de passe generes
+                          s affichent a l ecran.
+                          deconnecter_partout : Django n offre aucune primitive
+                          pour fermer toutes les sessions sans changer le mot de
+                          passe. On parcourt les sessions NON EXPIREES (filtre
+                          sur expire_date, pour ne pas decoder des sessions
+                          mortes) et on supprime celles dont _auth_user_id
+                          correspond. Suppose le backend de sessions en base
+                          (celui par defaut ; ce projet n en change pas). Le
+                          message de confirmation est pose APRES logout(), qui
+                          vide la session courante -- un message ajoute avant
+                          serait perdu. Trois tests le couvrent, dont le plus
+                          important : les sessions des AUTRES comptes ne sont
+                          pas touchees.
+                          La bascule Menu reduit de la page n a aucune logique
+                          propre : elle actionne le bouton chevron du menu, qui
+                          reste la source unique (classe body + localStorage +
+                          icone).
                           Treizieme passe (Parametres + theme sombre,
                           2026-08-15) : page Parametres regroupant ce qui
                           releve du reglage (Mon compte, Securite,

@@ -9,7 +9,7 @@ import openpyxl
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import connection
-from django.test import TestCase
+from django.test import Client, TestCase
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
@@ -3146,3 +3146,74 @@ class ParametresEtMonCompteTests(TestCase):
         reponse = self.client.get(reverse('parametres'))
         for choix in ('clair', 'sombre', 'systeme'):
             self.assertContains(reponse, f'data-theme-choix="{choix}"')
+
+
+class DeconnecterPartoutTests(TestCase):
+    def setUp(self):
+        creer_utilisateur(User.Role.ADMIN, 'admin-sessions@santesn.sn')
+        self.client.login(username='admin-sessions@santesn.sn', password=PASSWORD)
+
+    def test_ferme_la_session_courante(self):
+        from django.contrib.sessions.models import Session
+        self.assertTrue(Session.objects.exists())
+        reponse = self.client.post(reverse('deconnecter_partout'))
+        self.assertRedirects(reponse, reverse('login'))
+        # La page suivante doit renvoyer un anonyme vers la connexion.
+        self.assertEqual(self.client.get(reverse('parametres')).status_code, 302)
+
+    def test_ferme_les_autres_sessions_du_meme_compte(self):
+        from django.contrib.sessions.models import Session
+        autre = Client()
+        autre.login(username='admin-sessions@santesn.sn', password=PASSWORD)
+        self.assertEqual(autre.get(reverse('parametres')).status_code, 200)
+
+        self.client.post(reverse('deconnecter_partout'))
+        self.assertEqual(autre.get(reverse('parametres')).status_code, 302)
+
+    def test_ne_touche_pas_aux_sessions_des_autres_comptes(self):
+        creer_medecin('medecin-sessions@santesn.sn')
+        voisin = Client()
+        voisin.login(username='medecin-sessions@santesn.sn', password=PASSWORD)
+        self.assertEqual(voisin.get(reverse('parametres')).status_code, 200)
+
+        self.client.post(reverse('deconnecter_partout'))
+        self.assertEqual(voisin.get(reverse('parametres')).status_code, 200)
+
+    def test_get_refuse(self):
+        self.assertEqual(self.client.get(reverse('deconnecter_partout')).status_code, 405)
+
+    def test_anonyme_redirige(self):
+        self.client.logout()
+        self.assertEqual(self.client.post(reverse('deconnecter_partout')).status_code, 302)
+
+
+class ParametresContenuTests(TestCase):
+    def setUp(self):
+        creer_utilisateur(User.Role.ADMIN, 'admin-contenu@santesn.sn')
+        self.client.login(username='admin-contenu@santesn.sn', password=PASSWORD)
+
+    def test_duree_de_session_vient_de_la_configuration(self):
+        from django.conf import settings as reglages
+        contexte = self.client.get(reverse('parametres')).context
+        self.assertEqual(contexte['duree_session_heures'], reglages.SESSION_COOKIE_AGE // 3600)
+
+    def test_compte_les_notifications_envoyees(self):
+        patient_user = creer_utilisateur(User.Role.ASSURE, 'assure-notif@santesn.sn')
+        Notification.objects.create(destinataire=patient_user, message='Test')
+        Notification.objects.create(destinataire=patient_user, message='Test 2')
+        contexte = self.client.get(reverse('parametres')).context
+        self.assertEqual(contexte['total_notifications_envoyees'], 2)
+
+    def test_sections_admin_absentes_pour_un_medecin(self):
+        self.client.logout()
+        creer_medecin('medecin-contenu@santesn.sn')
+        self.client.login(username='medecin-contenu@santesn.sn', password=PASSWORD)
+        reponse = self.client.get(reverse('parametres'))
+        self.assertEqual(reponse.status_code, 200)
+        self.assertNotContains(reponse, reverse('exporter_utilisateurs_excel'))
+        self.assertIsNone(reponse.context.get('total_notifications_envoyees'))
+
+    def test_section_avancee_signale_l_absence_de_backend_email(self):
+        reponse = self.client.get(reverse('parametres'))
+        self.assertContains(reponse, 'Envoi d')
+        self.assertContains(reponse, 'inactif')

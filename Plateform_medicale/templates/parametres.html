@@ -7,71 +7,302 @@
 <section class="page-title">
     <div>
         <h1>Paramètres</h1>
-        <p class="subtitle">Votre compte, votre sécurité et l'apparence de l'application.</p>
+        <p class="subtitle">Votre compte, la sécurité de la plateforme et l'apparence de l'interface.</p>
     </div>
 </section>
 
-<section class="reglages">
-    <a class="reglage" href="{% url 'mon_compte' %}">
-        <span class="reglage-icone">{% icone "user-circle" %}</span>
-        <span class="reglage-texte">
-            <strong>Mon compte</strong>
-            <span>Nom, prénom, téléphone et adresse de connexion.</span>
-        </span>
-        <span class="reglage-valeur">{{ user.get_full_name|default:user.email }}</span>
-        {% icone "chevron-right" %}
-    </a>
+<div class="param-layout">
+    {% comment %}
+    Navigation interne : de simples ancres vers les sections de la meme page.
+    Pas de pages separees -- la page entiere se lit en un ecran et demi, la
+    decouper obligerait a un aller-retour serveur pour chaque reglage.
+    {% endcomment %}
+    <nav class="param-onglets" aria-label="Sections des paramètres">
+        <a href="#compte">{% icone "user-circle" %} Mon compte</a>
+        <a href="#apparence">{% icone "eye" %} Apparence</a>
+        {% if current_role == "ADMIN" %}<a href="#notifications">{% icone "bell" %} Notifications</a>{% endif %}
+        <a href="#securite">{% icone "lock" %} Sécurité</a>
+        {% if current_role == "ADMIN" %}<a href="#donnees">{% icone "download" %} Données</a>{% endif %}
+        <span class="param-sep" aria-hidden="true"></span>
+        <a href="#avance">{% icone "filter" %} Avancé</a>
+    </nav>
 
-    <a class="reglage" href="{% url 'changer_mot_de_passe' %}">
-        <span class="reglage-icone">{% icone "lock" %}</span>
-        <span class="reglage-texte">
-            <strong>Sécurité</strong>
-            <span>Changer votre mot de passe.</span>
-        </span>
-        <span class="reglage-valeur">{{ current_role_label }}</span>
-        {% icone "chevron-right" %}
-    </a>
+    <div class="param-pile">
 
-    {% if current_role == "ADMIN" %}
-    <a class="reglage" href="{% url 'envoyer_notification' %}">
-        <span class="reglage-icone">{% icone "bell" %}</span>
-        <span class="reglage-texte">
-            <strong>Notifications</strong>
-            <span>Envoyer un message aux utilisateurs et consulter l'historique.</span>
-        </span>
-        <span class="reglage-valeur">{{ notifications_non_lues }} non lue{{ notifications_non_lues|pluralize }}</span>
-        {% icone "chevron-right" %}
-    </a>
-    {% endif %}
-</section>
+        <section class="panel param-carte" id="compte">
+            <div class="panel-header">
+                <div>
+                    <h2>Mon compte</h2>
+                    <p class="subtitle">Ces informations identifient votre compte sur la plateforme.</p>
+                </div>
+            </div>
+            <div class="param-corps">
+                <div class="param-ligne">
+                    <span class="param-txt">
+                        <strong>Nom et prénom</strong>
+                        <span>Affiché dans le menu et sur les notifications que vous envoyez.</span>
+                    </span>
+                    <span class="param-fin">
+                        <span class="param-val">{{ user.get_full_name|default:"—" }}</span>
+                        <a class="button btn" href="{% url 'mon_compte' %}">Modifier</a>
+                    </span>
+                </div>
+                <div class="param-ligne">
+                    <span class="param-txt">
+                        <strong>Adresse email</strong>
+                        <span>C'est votre identifiant de connexion. Le changer demande votre mot de passe actuel.</span>
+                    </span>
+                    <span class="param-fin">
+                        <span class="param-val">{{ user.email }}</span>
+                        <a class="button btn" href="{% url 'mon_compte' %}">Modifier</a>
+                    </span>
+                </div>
+                <div class="param-ligne">
+                    <span class="param-txt">
+                        <strong>Téléphone</strong>
+                        <span>Facultatif. Sert uniquement à vous joindre en interne.</span>
+                    </span>
+                    <span class="param-fin">
+                        <span class="param-val">{{ user.phone_number|default:"—" }}</span>
+                        <a class="button btn" href="{% url 'mon_compte' %}">Modifier</a>
+                    </span>
+                </div>
+                <div class="param-ligne">
+                    <span class="param-txt">
+                        <strong>Rôle</strong>
+                        <span>Défini par l'administration. Un utilisateur ne choisit jamais son propre rôle.</span>
+                    </span>
+                    <span class="param-fin">
+                        <span class="param-fige">{{ current_role_label }} · non modifiable</span>
+                    </span>
+                </div>
+            </div>
+        </section>
 
-{% comment %}
-Apparence : reglage purement local (aucune donnee serveur, aucune requete).
-Le choix est conserve dans localStorage, comme l'etat du menu reduit.
-{% endcomment %}
-<section class="panel panel-apparence">
-    <div class="panel-header">
-        <div>
-            <h2>Apparence</h2>
-            <p class="subtitle">Ce réglage ne concerne que cet appareil.</p>
-        </div>
+        <section class="panel param-carte" id="apparence">
+            <div class="panel-header">
+                <div>
+                    <h2>Apparence</h2>
+                    <p class="subtitle">Ces réglages ne concernent que cet appareil — ils ne sont pas enregistrés sur votre compte.</p>
+                </div>
+            </div>
+            <div class="param-corps">
+                <div class="themes" role="radiogroup" aria-label="Thème de l'interface">
+                    <button type="button" class="theme" data-theme-choix="clair" role="radio" aria-checked="false">
+                        <span class="theme-apercu theme-apercu-clair" aria-hidden="true"><i></i><i></i></span>
+                        <strong>Clair</strong>
+                        <span>Le thème par défaut.</span>
+                    </button>
+                    <button type="button" class="theme" data-theme-choix="sombre" role="radio" aria-checked="false">
+                        <span class="theme-apercu theme-apercu-sombre" aria-hidden="true"><i></i><i></i></span>
+                        <strong>Sombre</strong>
+                        <span>Confortable en faible luminosité.</span>
+                    </button>
+                    <button type="button" class="theme" data-theme-choix="systeme" role="radio" aria-checked="false">
+                        <span class="theme-apercu theme-apercu-systeme" aria-hidden="true"><i></i><i></i></span>
+                        <strong>Système</strong>
+                        <span>Suit le réglage de votre appareil.</span>
+                    </button>
+                </div>
+                <div class="param-ligne">
+                    <span class="param-txt">
+                        <strong>Menu latéral réduit</strong>
+                        <span>Affiche les icônes seules pour gagner de la largeur sur les tableaux. Se règle aussi depuis le chevron du menu.</span>
+                    </span>
+                    <span class="param-fin">
+                        <button type="button" class="bascule" data-bascule-menu aria-pressed="false">
+                            <span class="bascule-piste" aria-hidden="true"><i></i></span>
+                            <span class="sr-only">Réduire le menu latéral</span>
+                        </button>
+                    </span>
+                </div>
+                <div class="param-ligne">
+                    <span class="param-txt">
+                        <strong>Animations</strong>
+                        <span>L'interface suit le réglage d'accessibilité de votre système d'exploitation.</span>
+                    </span>
+                    <span class="param-fin">
+                        <span class="param-fige">Réglage système</span>
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        {% if current_role == "ADMIN" %}
+        <section class="panel param-carte" id="notifications">
+            <div class="panel-header">
+                <div>
+                    <h2>Notifications</h2>
+                    <p class="subtitle">SantéSN notifie à l'intérieur de l'application. Aucun email n'est envoyé.</p>
+                </div>
+            </div>
+            <div class="param-corps">
+                <div class="param-ligne">
+                    <span class="param-txt">
+                        <strong>Envoyer une notification</strong>
+                        <span>À un utilisateur précis, ou à tous les comptes d'un rôle.</span>
+                    </span>
+                    <span class="param-fin">
+                        <a class="button primary btn" href="{% url 'envoyer_notification' %}">Rédiger</a>
+                    </span>
+                </div>
+                <div class="param-ligne">
+                    <span class="param-txt">
+                        <strong>Historique des envois</strong>
+                        <span>Messages envoyés, destinataire et statut de lecture.</span>
+                    </span>
+                    <span class="param-fin">
+                        <span class="param-val">{{ total_notifications_envoyees }} envoyée{{ total_notifications_envoyees|pluralize }}</span>
+                        <a class="button btn" href="{% url 'liste_notifications_envoyees' %}">Consulter</a>
+                    </span>
+                </div>
+                <div class="param-ligne">
+                    <span class="param-txt">
+                        <strong>Mes notifications</strong>
+                        <span>Les messages qui vous sont adressés.</span>
+                    </span>
+                    <span class="param-fin">
+                        <span class="param-val">{{ notifications_non_lues }} non lue{{ notifications_non_lues|pluralize }}</span>
+                        <a class="button btn" href="{% url 'mes_notifications' %}">Ouvrir</a>
+                    </span>
+                </div>
+            </div>
+        </section>
+        {% endif %}
+
+        <section class="panel param-carte param-sensible" id="securite">
+            <div class="panel-header">
+                <div>
+                    <h2>Sécurité</h2>
+                    <p class="subtitle">Protection de votre compte et de la session de travail.</p>
+                </div>
+            </div>
+            <div class="param-corps">
+                <div class="param-ligne">
+                    <span class="param-txt">
+                        <strong>Mot de passe</strong>
+                        <span>Vous resterez connecté après la modification.</span>
+                    </span>
+                    <span class="param-fin">
+                        <a class="button btn" href="{% url 'changer_mot_de_passe' %}">Changer</a>
+                    </span>
+                </div>
+                <div class="param-ligne">
+                    <span class="param-txt">
+                        <strong>Expiration de session</strong>
+                        <span>Durée avant déconnexion automatique. Réglage serveur, commun à tous les comptes.</span>
+                    </span>
+                    <span class="param-fin">
+                        <span class="param-fige">{{ duree_session_heures }} heures · réglage serveur</span>
+                    </span>
+                </div>
+                <div class="param-ligne">
+                    <span class="param-txt">
+                        <strong>Limitation des tentatives de connexion</strong>
+                        <span>Un compte est temporairement bloqué après plusieurs échecs consécutifs.</span>
+                    </span>
+                    <span class="param-fin">
+                        <span class="param-fige">Actif</span>
+                    </span>
+                </div>
+                <div class="param-ligne param-ligne-bloc">
+                    <div class="param-avert">
+                        {% icone "alert-triangle" %}
+                        <p><strong>Déconnexion de tous les appareils.</strong> Vous serez déconnecté partout, y compris ici. À utiliser si vous pensez que votre compte est compromis.</p>
+                    </div>
+                    <form method="post" action="{% url 'deconnecter_partout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="button btn btn-danger">Déconnecter partout</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        {% if current_role == "ADMIN" %}
+        <section class="panel param-carte" id="donnees">
+            <div class="panel-header">
+                <div>
+                    <h2>Données</h2>
+                    <p class="subtitle">Import et export des données de la plateforme.</p>
+                </div>
+            </div>
+            <div class="param-corps">
+                <div class="param-ligne">
+                    <span class="param-txt">
+                        <strong>Importer des utilisateurs</strong>
+                        <span>Fichier Excel, une ligne par compte. L'import est tout ou rien : une seule ligne en erreur annule l'ensemble.</span>
+                    </span>
+                    <span class="param-fin">
+                        <a class="button btn" href="{% url 'telecharger_modele_import_utilisateurs' %}">Modèle</a>
+                        <a class="button primary btn" href="{% url 'importer_utilisateurs_excel' %}">Importer</a>
+                    </span>
+                </div>
+                <div class="param-ligne">
+                    <span class="param-txt">
+                        <strong>Exporter les utilisateurs</strong>
+                        <span>Respecte les filtres appliqués sur la liste.</span>
+                    </span>
+                    <span class="param-fin">
+                        <a class="button btn" href="{% url 'exporter_utilisateurs_excel' %}">Excel</a>
+                        <a class="button btn" href="{% url 'exporter_utilisateurs_csv' %}">CSV</a>
+                    </span>
+                </div>
+                <div class="param-ligne">
+                    <span class="param-txt">
+                        <strong>Exporter les rapports</strong>
+                        <span>Synthèse d'activité, vue mensuelle.</span>
+                    </span>
+                    <span class="param-fin">
+                        <a class="button btn" href="{% url 'exporter_rapports_excel' %}">Excel</a>
+                        <a class="button btn" href="{% url 'exporter_rapports_pdf' %}">PDF</a>
+                    </span>
+                </div>
+            </div>
+        </section>
+        {% endif %}
+
+        {% comment %}
+        Avance : ne propose rien a regler, rend compte. Les trois services
+        externes ne sont pas configurables, et l'absence de backend email
+        explique pourquoi les mots de passe s'affichent a l'ecran a la creation
+        d'un compte -- c'est la seule page qui le dit.
+        {% endcomment %}
+        <details class="panel param-carte" id="avance">
+            <summary class="param-resume">
+                <span>
+                    <strong>Avancé</strong>
+                    <span class="subtitle">Services externes et informations techniques. Rien à régler au quotidien.</span>
+                </span>
+                {% icone "chevron-down" %}
+            </summary>
+            <div class="param-corps">
+                <div class="param-tech">
+                    <span class="param-puce" aria-hidden="true"></span>
+                    <strong>OpenStreetMap · Nominatim</strong>
+                    <span>recherche d'adresse des prestataires</span>
+                    <span class="param-etat">opérationnel</span>
+                </div>
+                <div class="param-tech">
+                    <span class="param-puce" aria-hidden="true"></span>
+                    <strong>Leaflet</strong>
+                    <span>carte du réseau de prestataires</span>
+                    <span class="param-etat">CDN</span>
+                </div>
+                <div class="param-tech">
+                    <span class="param-puce" aria-hidden="true"></span>
+                    <strong>Chart.js</strong>
+                    <span>graphiques des rapports</span>
+                    <span class="param-etat">CDN · v4.4.7</span>
+                </div>
+                <div class="param-tech">
+                    <span class="param-puce param-puce-off" aria-hidden="true"></span>
+                    <strong>Envoi d'emails</strong>
+                    <span>non configuré : les mots de passe générés sont affichés à l'écran</span>
+                    <span class="param-etat">inactif</span>
+                </div>
+            </div>
+        </details>
+
     </div>
-    <div class="themes" role="radiogroup" aria-label="Thème de l'interface">
-        <button type="button" class="theme" data-theme-choix="clair" role="radio" aria-checked="false">
-            <span class="theme-apercu theme-apercu-clair" aria-hidden="true"><i></i><i></i></span>
-            <strong>Clair</strong>
-            <span>Le thème par défaut.</span>
-        </button>
-        <button type="button" class="theme" data-theme-choix="sombre" role="radio" aria-checked="false">
-            <span class="theme-apercu theme-apercu-sombre" aria-hidden="true"><i></i><i></i></span>
-            <strong>Sombre</strong>
-            <span>Confortable en faible luminosité.</span>
-        </button>
-        <button type="button" class="theme" data-theme-choix="systeme" role="radio" aria-checked="false">
-            <span class="theme-apercu theme-apercu-systeme" aria-hidden="true"><i></i><i></i></span>
-            <strong>Système</strong>
-            <span>Suit le réglage de votre appareil.</span>
-        </button>
-    </div>
-</section>
+</div>
 {% endblock %}
