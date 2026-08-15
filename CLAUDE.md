@@ -307,7 +307,13 @@ utilisé dans ce projet (tout le CSS/SVG est inline dans les templates).
 Logo secondaire (empilé), icône d'application et version monochrome existent
 dans la spec d'origine mais ne sont pas implémentés (aucun usage actif dans
 le projet à ce jour) — ne pas les recréer sans un besoin concret identifié.
-**Page Paramètres (`parametres`).** Six sections : Mon compte, Apparence,
+**Page Paramètres (`parametres` / `parametres_section`).** Découpée en
+sections ayant chacune leur URL : cliquer dans le menu **ouvre la page**, pas un
+ancrage. `SECTIONS_PARAMETRES` (views.py) pilote à la fois le menu et le
+contrôle d accès — une section réservée renvoie **404** à un non-admin, elle
+n est pas seulement masquée. La section « Général » affiche la configuration
+plateforme (langue, fuseau, format de date) en **lecture seule**, lue dans
+`settings.py`. Six sections : Mon compte, Apparence,
 Notifications (admin), Sécurité, Données (admin), Avancé (repliable).
 **Règle de contenu : n afficher que des réglages adossés à du code réel.** Ont
 été écartés pour cette raison — ne pas les réintroduire sans les implémenter :
@@ -394,6 +400,17 @@ et sans utilité une fois les comptes réels en place — ne pas la recréer san
 raison concrète. `DEMO_USERS.md` n'existe pas (voir phase 15, "Documentation
 / finalisation") — si une documentation utilisateur finale est un jour
 rédigée, ne pas la nommer ainsi sans vérifier qu'elle est à jour.
+
+## Pagination
+
+Toutes les listes paginent via `_paginer` (`TAILLE_PAGE_LISTE = 20`), y compris
+dans les espaces Assuré, Médecin et Pharmacien. Seule exception assumée :
+`liste_ayants_droit` (un conjoint et des enfants ne paginent pas).
+
+**Un queryset paginé doit être ordonné.** Sans `order_by`, la répartition entre
+pages est instable — un élément peut apparaître deux fois ou disparaître. Deux
+vues en manquaient (`mes_rendez_vous_assure`, `agenda_medecin`) ; un test le
+couvre désormais.
 
 ## Tests
 

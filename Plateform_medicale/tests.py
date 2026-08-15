@@ -3076,22 +3076,42 @@ class ParametresEtMonCompteTests(TestCase):
     def test_page_parametres_accessible(self):
         reponse = self.client.get(reverse('parametres'))
         self.assertEqual(reponse.status_code, 200)
+        self.assertEqual(reponse.context['section'], 'general')
         self.assertContains(reponse, 'Mon compte')
-        self.assertContains(reponse, 'Apparence')
 
-    def test_section_notifications_reservee_a_l_admin(self):
-        self.assertContains(self.client.get(reverse('parametres')), 'envoyer')
+    def test_chaque_categorie_ouvre_sa_propre_page(self):
+        for slug in ('general', 'apparence', 'notifications',
+                     'securite', 'donnees', 'avance'):
+            reponse = self.client.get(reverse('parametres_section', args=[slug]))
+            self.assertEqual(reponse.status_code, 200, slug)
+            self.assertEqual(reponse.context['section'], slug)
+
+    def test_section_inconnue_renvoie_404(self):
+        self.assertEqual(
+            self.client.get(reverse('parametres_section', args=['inexistante'])).status_code,
+            404)
+
+    def test_sections_admin_inaccessibles_aux_autres_roles(self):
+        self.assertEqual(
+            self.client.get(reverse('parametres_section', args=['notifications'])).status_code,
+            200)
         self.client.logout()
         creer_medecin('medecin-param@santesn.sn')
         self.client.login(username='medecin-param@santesn.sn', password=PASSWORD)
-        reponse = self.client.get(reverse('parametres'))
-        self.assertEqual(reponse.status_code, 200)
-        self.assertNotContains(reponse, reverse('envoyer_notification'))
+        # Une section reservee n'est pas seulement masquee : elle est refusee.
+        for slug in ('notifications', 'donnees'):
+            self.assertEqual(
+                self.client.get(reverse('parametres_section', args=[slug])).status_code,
+                404, slug)
+        menu = self.client.get(reverse('parametres'))
+        self.assertNotContains(menu, reverse('parametres_section', args=['donnees']))
 
     def test_anonyme_redirige(self):
         self.client.logout()
         self.assertEqual(self.client.get(reverse('parametres')).status_code, 302)
         self.assertEqual(self.client.get(reverse('mon_compte')).status_code, 302)
+        self.assertEqual(
+            self.client.get(reverse('parametres_section', args=['securite'])).status_code, 302)
 
     def test_modifier_son_nom_sans_mot_de_passe(self):
         reponse = self.client.post(reverse('mon_compte'), {
@@ -3143,7 +3163,7 @@ class ParametresEtMonCompteTests(TestCase):
         self.assertEqual(self.admin.role, User.Role.ADMIN)
 
     def test_selecteur_de_theme_present(self):
-        reponse = self.client.get(reverse('parametres'))
+        reponse = self.client.get(reverse('parametres_section', args=['apparence']))
         for choix in ('clair', 'sombre', 'systeme'):
             self.assertContains(reponse, f'data-theme-choix="{choix}"')
 
@@ -3194,14 +3214,20 @@ class ParametresContenuTests(TestCase):
 
     def test_duree_de_session_vient_de_la_configuration(self):
         from django.conf import settings as reglages
-        contexte = self.client.get(reverse('parametres')).context
+        contexte = self.client.get(reverse('parametres_section', args=['securite'])).context
         self.assertEqual(contexte['duree_session_heures'], reglages.SESSION_COOKIE_AGE // 3600)
+
+    def test_configuration_plateforme_vient_de_settings(self):
+        from django.conf import settings as reglages
+        contexte = self.client.get(reverse('parametres')).context
+        self.assertEqual(contexte['fuseau_horaire'], reglages.TIME_ZONE)
 
     def test_compte_les_notifications_envoyees(self):
         patient_user = creer_utilisateur(User.Role.ASSURE, 'assure-notif@santesn.sn')
         Notification.objects.create(destinataire=patient_user, message='Test')
         Notification.objects.create(destinataire=patient_user, message='Test 2')
-        contexte = self.client.get(reverse('parametres')).context
+        contexte = self.client.get(
+            reverse('parametres_section', args=['notifications'])).context
         self.assertEqual(contexte['total_notifications_envoyees'], 2)
 
     def test_sections_admin_absentes_pour_un_medecin(self):
@@ -3210,11 +3236,12 @@ class ParametresContenuTests(TestCase):
         self.client.login(username='medecin-contenu@santesn.sn', password=PASSWORD)
         reponse = self.client.get(reverse('parametres'))
         self.assertEqual(reponse.status_code, 200)
-        self.assertNotContains(reponse, reverse('exporter_utilisateurs_excel'))
-        self.assertIsNone(reponse.context.get('total_notifications_envoyees'))
+        slugs = [s['slug'] for s in reponse.context['sections']]
+        self.assertNotIn('notifications', slugs)
+        self.assertNotIn('donnees', slugs)
 
     def test_section_avancee_signale_l_absence_de_backend_email(self):
-        reponse = self.client.get(reverse('parametres'))
+        reponse = self.client.get(reverse('parametres_section', args=['avance']))
         self.assertContains(reponse, 'Envoi d')
         self.assertContains(reponse, 'inactif')
 
@@ -3377,3 +3404,122 @@ class LibellesAccentuesTests(TestCase):
         for libelle in ('Confirmé', 'Terminé', 'Validée',
                         'Terminée', 'Annulé', 'Refusée'):
             self.assertContains(reponse, "'%s': tokenCouleur" % libelle)
+
+
+class PaginationHorsAdminTests(TestCase):
+    """Phase 2 : les 7 listes des espaces Assure / Medecin / Pharmacien
+    paginaient pas, contrairement aux 13 listes admin. Une carriere de
+    consultations sur une seule page finit par rendre l'ecran inutilisable."""
+
+    def setUp(self):
+        self.medecin = creer_medecin('medecin-pagination@santesn.sn')
+        self.pharmacien = creer_pharmacien('pharma-pagination@santesn.sn')
+
+        self.assure_user = creer_utilisateur(User.Role.ASSURE, 'assure-pagination@santesn.sn')
+        self.principal = Patient.objects.create(
+            user=self.assure_user, nom='Sarr', prenom='Ousmane',
+            date_naissance=datetime.date(1985, 3, 3), telephone='770000010',
+        )
+
+    def _remplir(self, combien):
+        """Cree assez d'elements pour depasser une page."""
+        for i in range(combien):
+            consultation = Consultation.objects.create(
+                patient=self.principal, medecin=self.medecin,
+                date_consultation=timezone.now() - datetime.timedelta(hours=i),
+                diagnostic=f'Diagnostic {i}',
+            )
+            ordonnance = Ordonnance.objects.create(
+                consultation=consultation, medicaments=f'Medicament {i}')
+            RendezVous.objects.create(
+                patient=self.principal, medecin=self.medecin,
+                date_heure=timezone.now() + datetime.timedelta(days=i + 1),
+                statut=RendezVous.Statut.CONFIRME,
+            )
+            Delivrance.objects.create(ordonnance=ordonnance, pharmacien=self.pharmacien)
+
+    # --- Espace Assure ---
+
+    def test_listes_assure_paginees(self):
+        self._remplir(TAILLE_PAGE_LISTE + 4)
+        self.client.login(username='assure-pagination@santesn.sn', password=PASSWORD)
+        for nom_url, cle in [('mes_rendez_vous_assure', 'rendez_vous'),
+                             ('mes_ordonnances_assure', 'ordonnances'),
+                             ('mon_historique_assure', 'consultations')]:
+            reponse = self.client.get(reverse(nom_url))
+            page = reponse.context[cle]
+            self.assertEqual(len(page), TAILLE_PAGE_LISTE, nom_url)
+            self.assertEqual(page.paginator.count, TAILLE_PAGE_LISTE + 4, nom_url)
+            self.assertTrue(page.has_next(), nom_url)
+
+    def test_seconde_page_assure_accessible(self):
+        self._remplir(TAILLE_PAGE_LISTE + 4)
+        self.client.login(username='assure-pagination@santesn.sn', password=PASSWORD)
+        reponse = self.client.get(reverse('mon_historique_assure'), {'page': 2})
+        self.assertEqual(reponse.context['consultations'].number, 2)
+        self.assertEqual(len(reponse.context['consultations']), 4)
+
+    # --- Espace Medecin ---
+
+    def test_listes_medecin_paginees(self):
+        self._remplir(TAILLE_PAGE_LISTE + 4)
+        self.client.login(username='medecin-pagination@santesn.sn', password=PASSWORD)
+        for nom_url, cle in [('agenda_medecin', 'rendez_vous'),
+                             ('historique_consultations', 'consultations')]:
+            page = self.client.get(reverse(nom_url)).context[cle]
+            self.assertEqual(len(page), TAILLE_PAGE_LISTE, nom_url)
+            self.assertTrue(page.has_next(), nom_url)
+
+    def test_mes_patients_pagine(self):
+        for i in range(TAILLE_PAGE_LISTE + 3):
+            patient = creer_patient(nom=f'Patient{i:02d}', prenom='Test')
+            Consultation.objects.create(
+                patient=patient, medecin=self.medecin,
+                date_consultation=timezone.now(), diagnostic='X')
+        self.client.login(username='medecin-pagination@santesn.sn', password=PASSWORD)
+        page = self.client.get(reverse('mes_patients')).context['patients']
+        self.assertEqual(len(page), TAILLE_PAGE_LISTE)
+        self.assertEqual(page.paginator.count, TAILLE_PAGE_LISTE + 3)
+
+    def test_filtres_du_medecin_survivent_au_changement_de_page(self):
+        """Le filtre par patient doit rester actif page 2 (prefixe_pagination)."""
+        self._remplir(TAILLE_PAGE_LISTE + 4)
+        self.client.login(username='medecin-pagination@santesn.sn', password=PASSWORD)
+        reponse = self.client.get(reverse('historique_consultations'),
+                                  {'patient': self.principal.pk, 'page': 2})
+        self.assertEqual(reponse.context['consultations'].number, 2)
+        self.assertEqual(reponse.context['patient_selectionne'], str(self.principal.pk))
+        self.assertContains(reponse, f'patient={self.principal.pk}')
+
+    # --- Espace Pharmacien ---
+
+    def test_historique_delivrances_pagine(self):
+        self._remplir(TAILLE_PAGE_LISTE + 4)
+        self.client.login(username='pharma-pagination@santesn.sn', password=PASSWORD)
+        page = self.client.get(reverse('historique_delivrances')).context['delivrances']
+        self.assertEqual(len(page), TAILLE_PAGE_LISTE)
+        self.assertTrue(page.has_next())
+
+    # --- Ordre deterministe ---
+
+    def test_ordre_stable_entre_les_pages(self):
+        """Sans order_by, la repartition entre pages serait instable : un meme
+        element pourrait apparaitre deux fois ou disparaitre."""
+        self._remplir(TAILLE_PAGE_LISTE + 4)
+        self.client.login(username='assure-pagination@santesn.sn', password=PASSWORD)
+        page1 = self.client.get(reverse('mes_rendez_vous_assure')).context['rendez_vous']
+        page2 = self.client.get(reverse('mes_rendez_vous_assure'),
+                                {'page': 2}).context['rendez_vous']
+        ids1 = [r.pk for r in page1]
+        ids2 = [r.pk for r in page2]
+        self.assertEqual(len(set(ids1) & set(ids2)), 0, "chevauchement entre les pages")
+        self.assertEqual(len(set(ids1) | set(ids2)), TAILLE_PAGE_LISTE + 4)
+
+    # --- Pas de regression sur les petites listes ---
+
+    def test_petite_liste_sans_barre_de_pagination(self):
+        self._remplir(3)
+        self.client.login(username='assure-pagination@santesn.sn', password=PASSWORD)
+        reponse = self.client.get(reverse('mes_rendez_vous_assure'))
+        self.assertEqual(reponse.context['rendez_vous'].paginator.num_pages, 1)
+        self.assertNotContains(reponse, 'aria-label="Pagination"')

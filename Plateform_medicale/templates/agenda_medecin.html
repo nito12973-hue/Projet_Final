@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load icones %}
+{% load formats icones %}
 
 {% block title %}Mon agenda{% endblock %}
 
@@ -64,6 +64,17 @@
         </tbody>
     </table>
 </section>
+{% if rendez_vous.paginator.num_pages > 1 %}
+<nav class="pagination" aria-label="Pagination">
+    {% if rendez_vous.has_previous %}
+    <a href="?{% prefixe_pagination request.GET %}page={{ rendez_vous.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Précédent</a>
+    {% endif %}
+    <span class="pagination-info">Page {{ rendez_vous.number }} sur {{ rendez_vous.paginator.num_pages }}</span>
+    {% if rendez_vous.has_next %}
+    <a href="?{% prefixe_pagination request.GET %}page={{ rendez_vous.next_page_number }}" class="button btn btn-sm">Suivant {% icone "chevron-right" %}</a>
+    {% endif %}
+</nav>
+{% endif %}
 {% else %}
 <div class="etat-vide">
     {% illustration_vide "calendar" %}
