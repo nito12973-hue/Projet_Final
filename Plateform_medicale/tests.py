@@ -8,7 +8,9 @@ from unittest.mock import MagicMock, patch
 import openpyxl
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import connection
 from django.test import TestCase
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
 
@@ -3016,3 +3018,48 @@ class DashboardAdminContexteTests(TestCase):
         self.client.login(username='medecin-dash@santesn.sn', password=PASSWORD)
         reponse = self.client.get(reverse('dashboard'))
         self.assertEqual(reponse.status_code, 403)
+
+
+class CompteursFilesAttenteTests(TestCase):
+    """Les pastilles du menu (context processor user_role) et le bandeau du
+    dashboard affichent les memes compteurs : ils ne doivent etre calcules
+    qu'une seule fois par rendu, et rester coherents entre les deux."""
+
+    def setUp(self):
+        creer_utilisateur(User.Role.ADMIN, 'admin-files@santesn.sn')
+        self.patient = creer_patient(nom='Sow', prenom='Awa')
+        PriseEnCharge.objects.create(patient=self.patient, motif='A', statut='en_attente')
+        PriseEnCharge.objects.create(patient=self.patient, motif='B', statut='en_attente')
+        PriseEnCharge.objects.create(patient=self.patient, motif='C', statut='validee')
+        self.client.login(username='admin-files@santesn.sn', password=PASSWORD)
+
+    def test_le_compteur_n_est_pas_calcule_deux_fois(self):
+        with CaptureQueriesContext(connection) as contexte:
+            self.client.get(reverse('dashboard'))
+        requetes_attente = [
+            q['sql'] for q in contexte.captured_queries
+            if 'COUNT' in q['sql'].upper()
+            and 'priseencharge' in q['sql'].lower()
+            and 'en_attente' in q['sql'].lower()
+        ]
+        self.assertEqual(
+            len(requetes_attente), 1,
+            f"le comptage des prises en charge en attente est execute "
+            f"{len(requetes_attente)} fois : {requetes_attente}",
+        )
+
+    def test_menu_et_bandeau_affichent_le_meme_nombre(self):
+        contexte = self.client.get(reverse('dashboard')).context
+        self.assertEqual(
+            contexte['nb_prises_en_charge_attente'],
+            contexte['total_prises_en_charge_attente'],
+        )
+        self.assertEqual(contexte['nb_paiements_non_regles'], contexte['paiements_non_regles_nb'])
+        self.assertEqual(contexte['nb_prises_en_charge_attente'], 2)
+
+    def test_compteurs_toujours_disponibles_hors_dashboard(self):
+        """Les pastilles du menu vivent sur toutes les pages admin, pas
+        seulement sur le dashboard qui, lui, alimente le cache de requete."""
+        contexte = self.client.get(reverse('liste_utilisateurs')).context
+        self.assertEqual(contexte['nb_prises_en_charge_attente'], 2)
+        self.assertEqual(contexte['nb_paiements_non_regles'], 0)
