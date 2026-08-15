@@ -28,6 +28,7 @@ from .models import (
     PriseEnCharge,
     RendezVous,
     ServiceMedical,
+    TentativeConnexion,
     User,
     distance_km,
 )
@@ -3800,3 +3801,262 @@ class ConfirmationsActionsSensiblesTests(TestCase):
         self.assertNotEqual(debut, -1)
         bloc = html[debut:debut + 400]
         self.assertIn('circle', bloc)  # l'engrenage a un moyeu circulaire
+
+
+class BlocageMecanismeTests(TestCase):
+    """Le mecanisme lui-meme : compteur, seuil, expiration, remise a zero.
+    Il a ete DEPLACE du cache vers la base, sa regle est inchangee."""
+
+    def setUp(self):
+        # Indispensable : login_view redirige vers l'assistant d'installation
+        # tant qu'aucun administrateur n'existe.
+        creer_utilisateur(User.Role.ADMIN, 'admin-meca@santesn.sn')
+        self.utilisateur = creer_utilisateur(User.Role.ASSURE, 'bloc-meca@santesn.sn')
+
+    def _echouer(self, fois, email='bloc-meca@santesn.sn'):
+        for _ in range(fois):
+            self.client.post(reverse('login'), {'email': email, 'password': 'faux'})
+
+    def test_compte_non_bloque_avant_le_seuil(self):
+        self._echouer(TentativeConnexion.MAX_TENTATIVES - 1)
+        self.assertFalse(TentativeConnexion.bloque('bloc-meca@santesn.sn'))
+        self.assertEqual(TentativeConnexion.comptes_bloques(), [])
+
+    def test_compte_bloque_au_seuil(self):
+        self._echouer(TentativeConnexion.MAX_TENTATIVES)
+        self.assertTrue(TentativeConnexion.bloque('bloc-meca@santesn.sn'))
+        self.assertEqual(len(TentativeConnexion.comptes_bloques()), 1)
+
+    def test_bon_mot_de_passe_refuse_pendant_le_blocage(self):
+        self._echouer(TentativeConnexion.MAX_TENTATIVES)
+        reponse = self.client.post(reverse('login'),
+                                   {'email': 'bloc-meca@santesn.sn', 'password': PASSWORD})
+        self.assertContains(reponse, 'Trop de tentatives')
+        self.assertFalse(reponse.wsgi_request.user.is_authenticated)
+
+    def test_expiration_automatique(self):
+        self._echouer(TentativeConnexion.MAX_TENTATIVES)
+        ligne = TentativeConnexion.objects.get(email='bloc-meca@santesn.sn')
+        # On recule le dernier echec au-dela de la duree de blocage.
+        TentativeConnexion.objects.filter(pk=ligne.pk).update(
+            dernier_echec=timezone.now() - TentativeConnexion.DUREE_BLOCAGE
+            - datetime.timedelta(seconds=1))
+        self.assertFalse(TentativeConnexion.bloque('bloc-meca@santesn.sn'))
+        self.assertEqual(TentativeConnexion.comptes_bloques(), [])
+
+    def test_reconnexion_possible_apres_expiration(self):
+        self._echouer(TentativeConnexion.MAX_TENTATIVES)
+        TentativeConnexion.objects.filter(email='bloc-meca@santesn.sn').update(
+            dernier_echec=timezone.now() - TentativeConnexion.DUREE_BLOCAGE
+            - datetime.timedelta(seconds=1))
+        reponse = self.client.post(reverse('login'),
+                                   {'email': 'bloc-meca@santesn.sn', 'password': PASSWORD})
+        self.assertEqual(reponse.status_code, 302)
+
+    def test_connexion_reussie_efface_le_compteur(self):
+        self._echouer(2)
+        self.client.post(reverse('login'),
+                         {'email': 'bloc-meca@santesn.sn', 'password': PASSWORD})
+        self.assertFalse(
+            TentativeConnexion.objects.filter(email='bloc-meca@santesn.sn').exists())
+
+    def test_compteur_repart_de_un_apres_expiration(self):
+        """Sans cela, 5 echecs espaces dans le temps bloqueraient a vie."""
+        self._echouer(TentativeConnexion.MAX_TENTATIVES - 1)
+        TentativeConnexion.objects.filter(email='bloc-meca@santesn.sn').update(
+            dernier_echec=timezone.now() - TentativeConnexion.DUREE_BLOCAGE
+            - datetime.timedelta(seconds=1))
+        self._echouer(1)
+        ligne = TentativeConnexion.objects.get(email='bloc-meca@santesn.sn')
+        self.assertEqual(ligne.tentatives, 1)
+
+    def test_adresse_inexistante_freinee_mais_absente_de_la_liste(self):
+        """Ne pas freiner les adresses inconnues offrirait un oracle
+        permettant de deviner quels comptes existent. Mais elles n'ont rien
+        a faire dans une liste de COMPTES bloques."""
+        self._echouer(TentativeConnexion.MAX_TENTATIVES, email='inconnu@santesn.sn')
+        self.assertTrue(TentativeConnexion.bloque('inconnu@santesn.sn'))
+        self.assertEqual(TentativeConnexion.comptes_bloques(), [])
+
+    def test_compte_desactive_indiscernable_d_identifiants_faux(self):
+        """Le backend par defaut rejette les comptes inactifs AVANT que le
+        formulaire ne puisse les distinguer : l'utilisateur voit le message
+        generique et la tentative est comptee. C'est le comportement voulu --
+        annoncer "ce compte est desactive" confirmerait qu'une adresse existe."""
+        self.utilisateur.is_active = False
+        self.utilisateur.save()
+        reponse = self.client.post(reverse('login'),
+                                   {'email': 'bloc-meca@santesn.sn', 'password': PASSWORD})
+        self.assertContains(reponse, 'incorrect')
+        self.assertNotContains(reponse, 'désactivé')
+        self.assertTrue(
+            TentativeConnexion.objects.filter(email='bloc-meca@santesn.sn').exists())
+
+
+class ComptesBloquesAdminTests(TestCase):
+    """Interface d'administration : liste, compteur, filtre, recherche,
+    deblocage, permissions."""
+
+    def setUp(self):
+        creer_utilisateur(User.Role.ADMIN, 'admin-bloc@santesn.sn')
+        self.assure = creer_utilisateur(User.Role.ASSURE, 'awa.diallo@santesn.sn')
+        self.assure.first_name, self.assure.last_name = 'Awa', 'Diallo'
+        self.assure.save()
+        self.medecin_user = creer_utilisateur(User.Role.MEDECIN, 'moussa.sow@santesn.sn')
+        self.medecin_user.first_name, self.medecin_user.last_name = 'Moussa', 'Sow'
+        self.medecin_user.save()
+        self.client.login(username='admin-bloc@santesn.sn', password=PASSWORD)
+
+    def _bloquer(self, email):
+        for _ in range(TentativeConnexion.MAX_TENTATIVES):
+            TentativeConnexion.enregistrer_echec(email)
+
+    def _page(self, **params):
+        return self.client.get(reverse('parametres_section', args=['securite']), params)
+
+    # --- liste et compteur ---
+
+    def test_aucun_compte_bloque(self):
+        reponse = self._page()
+        self.assertEqual(reponse.context['comptes_bloques'], [])
+        self.assertContains(reponse, 'Aucun compte temporairement bloqué')
+
+    def test_compte_normal_absent_de_la_liste(self):
+        self._bloquer('awa.diallo@santesn.sn')
+        emails = [c['utilisateur'].email for c in self._page().context['comptes_bloques']]
+        self.assertNotIn('moussa.sow@santesn.sn', emails)
+
+    def test_compte_bloque_present_avec_ses_informations(self):
+        self._bloquer('awa.diallo@santesn.sn')
+        reponse = self._page()
+        comptes = reponse.context['comptes_bloques']
+        self.assertEqual(len(comptes), 1)
+        self.assertEqual(comptes[0]['utilisateur'], self.assure)
+        self.assertEqual(comptes[0]['tentatives'], TentativeConnexion.MAX_TENTATIVES)
+        self.assertGreater(comptes[0]['minutes_restantes'], 0)
+        self.assertContains(reponse, 'Awa Diallo')
+        self.assertContains(reponse, 'Bloqué')
+
+    def test_compteur_reflete_le_nombre_reel(self):
+        self._bloquer('awa.diallo@santesn.sn')
+        self._bloquer('moussa.sow@santesn.sn')
+        page = self._page()
+        self.assertEqual(len(page.context['comptes_bloques']), 2)
+        self.assertContains(page, '2 comptes')
+
+    # --- filtre par role ---
+
+    def test_filtre_par_role(self):
+        self._bloquer('awa.diallo@santesn.sn')
+        self._bloquer('moussa.sow@santesn.sn')
+        for role, attendu in ((User.Role.ASSURE, 'awa.diallo@santesn.sn'),
+                              (User.Role.MEDECIN, 'moussa.sow@santesn.sn')):
+            comptes = self._page(role=role).context['comptes_bloques']
+            self.assertEqual([c['utilisateur'].email for c in comptes], [attendu], role)
+
+    def test_filtre_sur_un_role_sans_compte_bloque(self):
+        self._bloquer('awa.diallo@santesn.sn')
+        self.assertEqual(self._page(role=User.Role.PHARMACIEN).context['comptes_bloques'], [])
+
+    # --- recherche ---
+
+    def test_recherche_par_nom(self):
+        self._bloquer('awa.diallo@santesn.sn')
+        self._bloquer('moussa.sow@santesn.sn')
+        comptes = self._page(q='Diallo').context['comptes_bloques']
+        self.assertEqual([c['utilisateur'].email for c in comptes], ['awa.diallo@santesn.sn'])
+
+    def test_recherche_par_email(self):
+        self._bloquer('awa.diallo@santesn.sn')
+        comptes = self._page(q='awa.diallo').context['comptes_bloques']
+        self.assertEqual(len(comptes), 1)
+
+    def test_recherche_et_role_combines(self):
+        self._bloquer('awa.diallo@santesn.sn')
+        self._bloquer('moussa.sow@santesn.sn')
+        self.assertEqual(self._page(q='Diallo', role=User.Role.MEDECIN)
+                         .context['comptes_bloques'], [])
+        self.assertEqual(len(self._page(q='Sow', role=User.Role.MEDECIN)
+                             .context['comptes_bloques']), 1)
+
+    # --- deblocage ---
+
+    def test_deblocage_retire_le_compte_et_autorise_la_connexion(self):
+        self._bloquer('awa.diallo@santesn.sn')
+        reponse = self.client.post(reverse('debloquer_compte', args=[self.assure.pk]))
+        self.assertEqual(reponse.status_code, 302)
+        self.assertFalse(TentativeConnexion.bloque('awa.diallo@santesn.sn'))
+        self.assertEqual(self._page().context['comptes_bloques'], [])
+
+        autre = Client()
+        self.assertEqual(
+            autre.post(reverse('login'),
+                       {'email': 'awa.diallo@santesn.sn', 'password': PASSWORD}).status_code,
+            302)
+
+    def test_deblocage_demande_confirmation(self):
+        self._bloquer('awa.diallo@santesn.sn')
+        reponse = self._page()
+        self.assertContains(reponse, 'data-confirmation=')
+        self.assertContains(reponse, 'Oui, débloquer le compte')
+
+    def test_deblocage_en_get_refuse(self):
+        self._bloquer('awa.diallo@santesn.sn')
+        self.assertEqual(
+            self.client.get(reverse('debloquer_compte', args=[self.assure.pk])).status_code, 405)
+        self.assertTrue(TentativeConnexion.bloque('awa.diallo@santesn.sn'))
+
+    def test_deblocage_d_un_compte_deja_libre_ne_casse_rien(self):
+        reponse = self.client.post(reverse('debloquer_compte', args=[self.assure.pk]))
+        self.assertEqual(reponse.status_code, 302)
+
+    def test_pas_de_deblocage_groupe(self):
+        """Choix assume : un blocage massif signale souvent une attaque."""
+        self._bloquer('awa.diallo@santesn.sn')
+        self.assertNotContains(self._page(), 'Débloquer tous')
+
+    # --- permissions et donnees sensibles ---
+
+    def test_roles_non_admin_refuses(self):
+        self._bloquer('awa.diallo@santesn.sn')
+        self.client.logout()
+        creer_medecin('medecin-bloc@santesn.sn')
+        self.client.login(username='medecin-bloc@santesn.sn', password=PASSWORD)
+        self.assertEqual(
+            self.client.get(reverse('parametres_section', args=['securite'])).status_code, 200)
+        self.assertIsNone(self._page().context.get('comptes_bloques'))
+        self.assertEqual(
+            self.client.post(reverse('debloquer_compte', args=[self.assure.pk])).status_code, 403)
+        self.assertTrue(TentativeConnexion.bloque('awa.diallo@santesn.sn'))
+
+    def test_anonyme_refuse(self):
+        self.client.logout()
+        self.assertEqual(
+            self.client.post(reverse('debloquer_compte', args=[self.assure.pk])).status_code, 302)
+
+    def test_aucune_donnee_sensible_exposee(self):
+        self._bloquer('awa.diallo@santesn.sn')
+        html = self._page().content.decode()
+        self.assertNotIn(self.assure.password, html)
+        self.assertNotIn('pbkdf2', html)
+        self.assertNotIn('csrftoken', html.replace('csrfmiddlewaretoken', ''))
+
+    # --- tableau de bord ---
+
+    def test_alerte_dashboard_seulement_si_compte_bloque(self):
+        reponse = self.client.get(reverse('dashboard'))
+        self.assertEqual(reponse.context['nb_comptes_bloques'], 0)
+        self.assertNotContains(reponse, 'class="alerte-securite"')
+
+        self._bloquer('awa.diallo@santesn.sn')
+        reponse = self.client.get(reverse('dashboard'))
+        self.assertEqual(reponse.context['nb_comptes_bloques'], 1)
+        self.assertContains(reponse, 'class="alerte-securite"')
+        self.assertContains(reponse, 'Voir les comptes')
+
+    def test_alerte_dashboard_disparait_apres_deblocage(self):
+        self._bloquer('awa.diallo@santesn.sn')
+        self.client.post(reverse('debloquer_compte', args=[self.assure.pk]))
+        reponse = self.client.get(reverse('dashboard'))
+        self.assertEqual(reponse.context['nb_comptes_bloques'], 0)
+        self.assertNotContains(reponse, 'class="alerte-securite"')

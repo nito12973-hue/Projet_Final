@@ -18,6 +18,7 @@ urlpatterns = [
     path('parametres/<slug:section>/', views.parametres, name='parametres_section'),
     path('mon-compte/', views.mon_compte, name='mon_compte'),
     path('mon-compte/deconnecter-partout/', views.deconnecter_partout, name='deconnecter_partout'),
+    path('utilisateurs/<int:pk>/debloquer/', views.debloquer_compte, name='debloquer_compte'),
     path('mon-compte/mot-de-passe/', views.changer_mot_de_passe, name='changer_mot_de_passe'),
 
     path('espace/assure/', views.dashboard_assure, name='dashboard_assure'),

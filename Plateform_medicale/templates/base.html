@@ -2539,6 +2539,205 @@
             line-height: 1.45;
         }
 
+        /* Comptes temporairement bloques. L'alerte reste maitrisee : seule la
+           pastille "Bloque" porte la couleur de refus, le reste du bloc garde
+           les surfaces neutres du reste de l'application. */
+        /* Alerte de securite du tableau de bord : visible mais discrete, et
+           affichee UNIQUEMENT si au moins un compte est bloque (cf. la vue).
+           Une carte vide ou un compteur a zero n'apprend rien. */
+        .alerte-securite {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            margin-top: 18px;
+            padding: 13px 16px;
+            border: 1px solid rgba(240, 160, 154, 0.42);
+            border-radius: 14px;
+            background: var(--refus-bg);
+            color: var(--refus-fg);
+            text-decoration: none;
+        }
+
+        .alerte-securite > .icone-nav {
+            width: 19px;
+            height: 19px;
+            flex: 0 0 19px;
+        }
+
+        .alerte-securite strong {
+            display: block;
+            font-size: 13.5px;
+        }
+
+        .alerte-securite span span {
+            font-size: 12px;
+            opacity: 0.85;
+        }
+
+        .alerte-securite-action {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12.5px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .alerte-securite-action .icone-nav {
+            width: 15px;
+            height: 15px;
+        }
+
+        @media (max-width: 640px) {
+            .alerte-securite {
+                flex-wrap: wrap;
+            }
+
+            .alerte-securite-action {
+                margin-left: 0;
+            }
+        }
+
+        .bloques-resume {
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr);
+            gap: 2px 12px;
+            align-items: center;
+            margin: 0 0 16px;
+            padding: 14px 16px;
+            border-radius: 12px;
+            background: var(--refus-bg);
+        }
+
+        .bloques-resume .icone-nav {
+            grid-row: span 2;
+            width: 20px;
+            height: 20px;
+            color: var(--refus-fg);
+        }
+
+        .bloques-resume strong {
+            font-size: 13.5px;
+            color: var(--refus-fg);
+        }
+
+        .bloques-resume > span {
+            font-size: 12px;
+            color: var(--refus-fg);
+            opacity: 0.85;
+        }
+
+        /* Aucun compte bloque : le message doit RASSURER, pas alerter. */
+        .bloques-resume-vide {
+            background: var(--ok-bg);
+        }
+
+        .bloques-resume-vide .icone-nav,
+        .bloques-resume-vide strong,
+        .bloques-resume-vide > span {
+            color: var(--ok-fg);
+        }
+
+        .bloques-filtres {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            max-width: none;
+            margin: 0 0 6px;
+            padding: 0;
+            background: none;
+            border: 0;
+            box-shadow: none;
+        }
+
+        .bloques-filtres .champ-recherche {
+            flex: 1 1 220px;
+            min-width: 0;
+        }
+
+        .bloques-filtres input,
+        .bloques-filtres select {
+            margin-bottom: 0;
+        }
+
+        .bloques-filtres select {
+            flex: 0 1 190px;
+        }
+
+        .bloque {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 13px 0;
+            border-top: 1px solid var(--border);
+        }
+
+        .bloque-avatar {
+            display: grid;
+            place-items: center;
+            flex: 0 0 34px;
+            width: 34px;
+            height: 34px;
+            border-radius: 11px;
+            background: var(--refus-bg);
+            color: var(--refus-fg);
+        }
+
+        .bloque-avatar .icone-nav {
+            width: 16px;
+            height: 16px;
+        }
+
+        .bloque-identite {
+            min-width: 0;
+        }
+
+        .bloque-identite strong {
+            display: block;
+            font-size: 13.5px;
+            font-weight: 700;
+            color: var(--titre);
+        }
+
+        .bloque-identite span {
+            display: block;
+            font-size: 11.5px;
+            color: var(--muted);
+            word-break: break-all;
+        }
+
+        .bloque-detail {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .bloque-detail > span:last-child {
+            font-size: 11.5px;
+            color: var(--muted);
+            white-space: nowrap;
+        }
+
+        @media (max-width: 760px) {
+            .bloque {
+                flex-wrap: wrap;
+            }
+
+            .bloque-detail {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .bloques-filtres select,
+            .bloques-filtres .champ-recherche {
+                flex: 1 1 100%;
+            }
+        }
+
         .param-form-nu {
             max-width: none;
             margin-top: 14px;

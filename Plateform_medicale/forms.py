@@ -3,7 +3,6 @@ import string
 
 from django import forms
 from django.contrib.auth import authenticate, password_validation
-from django.core.cache import cache
 from django.utils import timezone
 
 from .models import (
@@ -18,12 +17,15 @@ from .models import (
     PriseEnCharge,
     RendezVous,
     ServiceMedical,
+    TentativeConnexion,
     User,
     valider_telephone,
 )
 
-MAX_TENTATIVES_CONNEXION = 5
-DUREE_BLOCAGE_SECONDES = 5 * 60
+# Les seuils vivent sur TentativeConnexion (modele) : une seule source.
+# Alias conserves pour ne pas casser d'eventuels imports existants.
+MAX_TENTATIVES_CONNEXION = TentativeConnexion.MAX_TENTATIVES
+DUREE_BLOCAGE_SECONDES = int(TentativeConnexion.DUREE_BLOCAGE.total_seconds())
 
 
 def generer_mot_de_passe():
@@ -91,24 +93,33 @@ class LoginForm(forms.Form):
         password = cleaned_data.get('password')
 
         if email and password:
-            cle_cache = f'tentatives_connexion:{email.lower()}'
-            tentatives = cache.get(cle_cache, 0)
-            if tentatives >= MAX_TENTATIVES_CONNEXION:
+            # Etat de blocage lu en base (TentativeConnexion) et non plus
+            # dans le cache : meme regle, meme duree, mais consultable par
+            # l'administrateur et coherent entre processus.
+            if TentativeConnexion.bloque(email):
                 raise forms.ValidationError(
                     'Trop de tentatives de connexion. Réessayez dans quelques minutes.'
                 )
 
             self.user = authenticate(self.request, username=email, password=password)
             if self.user is None:
-                cache.set(cle_cache, tentatives + 1, DUREE_BLOCAGE_SECONDES)
+                TentativeConnexion.enregistrer_echec(email)
                 raise forms.ValidationError(
                     'Email ou mot de passe incorrect.'
                 )
             if not self.user.is_active:
+                # Filet de securite, aujourd'hui INATTEIGNABLE : le backend par
+                # defaut (ModelBackend.user_can_authenticate) rejette deja les
+                # comptes inactifs, donc authenticate() a renvoye None plus haut
+                # et l'utilisateur a vu le message generique. C'est le
+                # comportement souhaitable -- annoncer "ce compte est desactive"
+                # confirmerait a un inconnu que l'adresse existe. Conserve au
+                # cas ou un backend autorisant les comptes inactifs serait
+                # branche un jour.
                 raise forms.ValidationError(
                     "Ce compte est désactivé. Contactez l'administration."
                 )
-            cache.delete(cle_cache)
+            TentativeConnexion.reussite(email)
         return cleaned_data
 
 

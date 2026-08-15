@@ -28,6 +28,7 @@ from django.db.models.functions import TruncDate, TruncMonth, TruncYear
 from django.http import Http404, HttpResponse, JsonResponse
 from django.conf import settings
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
@@ -73,6 +74,7 @@ from .models import (
     PriseEnCharge,
     RendezVous,
     ServiceMedical,
+    TentativeConnexion,
     User,
     distance_km,
     valider_telephone,
@@ -328,8 +330,76 @@ def parametres(request, section="general"):
         })
     elif section == "securite":
         contexte["duree_session_heures"] = settings.SESSION_COOKIE_AGE // 3600
+        if request.user.role == User.Role.ADMIN:
+            comptes, role_choisi, recherche = _comptes_bloques(request)
+            contexte.update({
+                "comptes_bloques": comptes,
+                "role_choisi": role_choisi,
+                "recherche_bloques": recherche,
+                "roles_disponibles": User.Role.choices,
+                "minutes_blocage": int(TentativeConnexion.DUREE_BLOCAGE.total_seconds() // 60),
+                "max_tentatives": TentativeConnexion.MAX_TENTATIVES,
+            })
 
     return render(request, "parametres.html", contexte)
+
+
+def _comptes_bloques(request):
+    """Comptes reellement bloques, filtres par role et par recherche.
+
+    Renvoie (liste, role_choisi, recherche). Chaque element est un dict pret
+    a afficher : on ne passe au gabarit que ce qui est necessaire a l'ecran
+    (identite, role, echecs, temps restant) -- rien d'authentification.
+    """
+    role_choisi = request.GET.get("role", "")
+    recherche = request.GET.get("q", "").strip()
+    maintenant = timezone.now()
+
+    comptes = []
+    for utilisateur, ligne in TentativeConnexion.comptes_bloques():
+        if role_choisi and utilisateur.role != role_choisi:
+            continue
+        if recherche:
+            cible = f"{utilisateur.first_name} {utilisateur.last_name} {utilisateur.email}".lower()
+            if recherche.lower() not in cible:
+                continue
+        restant = ligne.secondes_restantes(maintenant)
+        comptes.append({
+            "utilisateur": utilisateur,
+            "tentatives": ligne.tentatives,
+            "minutes_restantes": max(1, -(-restant // 60)),  # arrondi au superieur
+        })
+    comptes.sort(key=lambda c: c["minutes_restantes"], reverse=True)
+    return comptes, role_choisi, recherche
+
+
+@admin_required
+@require_POST
+def debloquer_compte(request, pk):
+    """Deblocage manuel par un administrateur.
+
+    Supprime la ligne de comptage, ce qui est exactement ce que fait une
+    connexion reussie : le compte peut se reconnecter immediatement. Le
+    deblocage automatique par expiration continue de fonctionner en parallele
+    -- il ne depend que de dernier_echec.
+
+    Deblocage INDIVIDUEL uniquement : pas de "tout debloquer". Un blocage
+    massif est souvent le signe d'une attaque en cours ; tout relacher d'un
+    clic annulerait la protection au pire moment.
+    """
+    utilisateur = get_object_or_404(User, pk=pk)
+    supprimees = TentativeConnexion.objects.filter(email=utilisateur.email.lower()).delete()[0]
+    if supprimees:
+        messages.success(
+            request,
+            f"Le compte de {utilisateur} peut de nouveau se connecter.",
+            extra_tags="succes-critique",
+        )
+    else:
+        # Expiration survenue entre l'affichage et le clic : ce n'est pas une
+        # erreur, le resultat voulu est deja atteint.
+        messages.info(request, f"Le compte de {utilisateur} n'était plus bloqué.")
+    return redirect(f"{reverse('parametres_section', args=['securite'])}#comptes-bloques")
 
 
 @login_required
@@ -567,6 +637,10 @@ def dashboard(request):
         Prestataire.Type.PHARMACIE: "pharmacies",
         Prestataire.Type.CABINET: "cabinets",
     }
+    # Alerte du tableau de bord : uniquement s'il y a matiere. Un compteur a
+    # zero n'apprend rien et occupe une place visible pour rien.
+    nb_comptes_bloques = len(TentativeConnexion.comptes_bloques())
+
     prestataires_par_type = [
         {
             "libelle": pluriels_prestataire.get(ligne["type_prestataire"], "autres"),
@@ -613,6 +687,7 @@ def dashboard(request):
             Q(latitude__isnull=True) | Q(longitude__isnull=True)
         ).count(),
         "prestataires_par_type": prestataires_par_type,
+        "nb_comptes_bloques": nb_comptes_bloques,
         "file_totale": (
             total_prises_en_charge_attente
             + rdv_a_confirmer

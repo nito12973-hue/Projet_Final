@@ -11,6 +11,17 @@
     </div>
 </section>
 
+{% if nb_comptes_bloques %}
+<a class="alerte-securite" href="{% url 'parametres_section' 'securite' %}#comptes-bloques">
+    {% icone "lock" %}
+    <span>
+        <strong>{{ nb_comptes_bloques }} compte{{ nb_comptes_bloques|pluralize }} temporairement bloqué{{ nb_comptes_bloques|pluralize }}</strong>
+        <span>Des comptes ne peuvent pas se connecter et attendent votre attention.</span>
+    </span>
+    <span class="alerte-securite-action">Voir les comptes {% icone "chevron-right" %}</span>
+</a>
+{% endif %}
+
 {% comment %}
 Bandeau "A traiter" : ouvre la page sur les files d'attente reelles plutot que
 sur les compteurs du jour, qui valent zero la plupart du temps. Chaque tuile

@@ -178,6 +178,91 @@
             </div>
         </section>
 
+        {% if current_role == "ADMIN" %}
+        {% comment %}
+        Comptes temporairement bloques. La liste vient du meme mecanisme que la
+        connexion (TentativeConnexion) : aucune donnee dupliquee, aucun second
+        systeme. Un compte disparait d'ici soit par expiration automatique,
+        soit par deblocage manuel.
+        {% endcomment %}
+        <section class="panel param-carte" id="comptes-bloques">
+            <div class="panel-header">
+                <div>
+                    <h2>Comptes temporairement bloqués</h2>
+                    <p class="subtitle">
+                        Un compte est bloqué {{ minutes_blocage }} minutes après
+                        {{ max_tentatives }} échecs de connexion consécutifs, puis débloqué
+                        automatiquement.
+                    </p>
+                </div>
+            </div>
+            <div class="param-corps">
+                {% if comptes_bloques %}
+                <p class="bloques-resume">
+                    {% icone "lock" %}
+                    <strong>{{ comptes_bloques|length }} compte{{ comptes_bloques|length|pluralize }}
+                        temporairement bloqué{{ comptes_bloques|length|pluralize }}</strong>
+                    <span>{% if comptes_bloques|length > 1 %}Plusieurs comptes nécessitent actuellement votre attention.{% else %}Ce compte ne peut pas se connecter pour le moment.{% endif %}</span>
+                </p>
+                {% elif recherche_bloques or role_choisi %}
+                <p class="bloques-resume bloques-resume-vide">
+                    {% icone "search" %}
+                    <strong>Aucun compte bloqué ne correspond</strong>
+                    <span>Modifiez la recherche ou le rôle pour élargir.</span>
+                </p>
+                {% else %}
+                <p class="bloques-resume bloques-resume-vide">
+                    {% icone "check" %}
+                    <strong>Aucun compte temporairement bloqué</strong>
+                    <span>Tous les comptes peuvent actuellement accéder à la plateforme.</span>
+                </p>
+                {% endif %}
+
+                {% if comptes_bloques or recherche_bloques or role_choisi %}
+                <form method="get" class="bloques-filtres">
+                    <div class="champ-recherche">
+                        {% icone "search" %}
+                        <input type="text" name="q" value="{{ recherche_bloques }}"
+                               placeholder="Rechercher un nom ou un email" aria-label="Rechercher un compte bloqué">
+                    </div>
+                    <select name="role" aria-label="Filtrer par rôle">
+                        <option value="">Tous les rôles</option>
+                        {% for valeur, libelle in roles_disponibles %}
+                        <option value="{{ valeur }}" {% if valeur == role_choisi %}selected{% endif %}>{{ libelle }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="button btn">Filtrer</button>
+                    {% if recherche_bloques or role_choisi %}
+                    <a class="button btn" href="{% url 'parametres_section' 'securite' %}#comptes-bloques">Réinitialiser</a>
+                    {% endif %}
+                </form>
+                {% endif %}
+
+                {% for compte in comptes_bloques %}
+                <div class="bloque">
+                    <span class="bloque-avatar" aria-hidden="true">{% icone "lock" %}</span>
+                    <span class="bloque-identite">
+                        <strong>{{ compte.utilisateur.get_full_name|default:compte.utilisateur.email }}</strong>
+                        <span>{{ compte.utilisateur.email }}</span>
+                    </span>
+                    <span class="etiquette-role">{{ compte.utilisateur.get_role_display }}</span>
+                    <span class="bloque-detail">
+                        <span class="badge refusee">Bloqué</span>
+                        <span>{{ compte.tentatives }} échecs · encore {{ compte.minutes_restantes }} min</span>
+                    </span>
+                    <form method="post" action="{% url 'debloquer_compte' compte.utilisateur.pk %}"
+                          class="action-ligne"
+                          data-confirmation="Ce compte est temporairement bloqué après plusieurs tentatives de connexion échouées. Voulez-vous autoriser immédiatement une nouvelle connexion ?"
+                          data-confirmation-action="Oui, débloquer le compte">
+                        {% csrf_token %}
+                        <button type="submit" class="button btn btn-sm">Débloquer</button>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
         <section class="panel param-carte param-sensible">
             <div class="panel-header">
                 <div>
