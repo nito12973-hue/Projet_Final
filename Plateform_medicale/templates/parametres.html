@@ -151,40 +151,6 @@
         </section>
         {% endif %}
 
-        {% if section == "notifications" %}
-        <section class="panel param-carte">
-            <div class="panel-header">
-                <div>
-                    <h2>Notifications</h2>
-                    <p class="subtitle">SantéSN notifie à l'intérieur de l'application. Aucun email n'est envoyé.</p>
-                </div>
-            </div>
-            <div class="param-corps">
-                <div class="param-ligne">
-                    <span class="param-txt"><strong>Envoyer une notification</strong>
-                        <span>À un utilisateur précis, ou à tous les comptes d'un rôle.</span></span>
-                    <span class="param-fin"><a class="button primary btn" href="{% url 'envoyer_notification' %}">Rédiger</a></span>
-                </div>
-                <div class="param-ligne">
-                    <span class="param-txt"><strong>Historique des envois</strong>
-                        <span>Messages envoyés, destinataire et statut de lecture.</span></span>
-                    <span class="param-fin">
-                        <span class="param-val">{{ total_notifications_envoyees }} envoyée{{ total_notifications_envoyees|pluralize }}</span>
-                        <a class="button btn" href="{% url 'liste_notifications_envoyees' %}">Consulter</a>
-                    </span>
-                </div>
-                <div class="param-ligne">
-                    <span class="param-txt"><strong>Mes notifications</strong>
-                        <span>Les messages qui vous sont adressés.</span></span>
-                    <span class="param-fin">
-                        <span class="param-val">{{ notifications_non_lues }} non lue{{ notifications_non_lues|pluralize }}</span>
-                        <a class="button btn" href="{% url 'mes_notifications' %}">Ouvrir</a>
-                    </span>
-                </div>
-            </div>
-        </section>
-        {% endif %}
-
         {% if section == "securite" %}
         <section class="panel param-carte">
             <div class="panel-header">
@@ -241,6 +207,14 @@
                 </div>
             </div>
             <div class="param-corps">
+                <div class="param-ligne">
+                    <span class="param-txt"><strong>Importer des règlements</strong>
+                        <span>Enregistre en masse le règlement de paiements existants, d'après un relevé. N'ajoute aucun paiement : les montants restent calculés par l'application.</span></span>
+                    <span class="param-fin">
+                        <a class="button btn" href="{% url 'telecharger_modele_import_reglements' %}">Modèle</a>
+                        <a class="button primary btn" href="{% url 'importer_reglements_excel' %}">Importer</a>
+                    </span>
+                </div>
                 <div class="param-ligne">
                     <span class="param-txt"><strong>Importer des utilisateurs</strong>
                         <span>Une ligne par compte. L'import est tout ou rien : une seule ligne en erreur annule l'ensemble.</span></span>

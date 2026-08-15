@@ -401,7 +401,39 @@ raison concrète. `DEMO_USERS.md` n'existe pas (voir phase 15, "Documentation
 / finalisation") — si une documentation utilisateur finale est un jour
 rédigée, ne pas la nommer ainsi sans vérifier qu'elle est à jour.
 
+## Où placer une fonctionnalité
+
+Une fonctionnalité a **un** emplacement logique. Règles appliquées :
+
+- **Menu latéral** = modules métier. Une action métier fréquente y reste
+  (Notifications : envoyer un message est une action, pas un réglage).
+- **Paramètres** = réglages + hub transversal Données (imports/exports).
+- **Menu du compte** (barre du haut, `<details>` natif, sans JS) = ce qui est
+  personnel : Mon compte, Mot de passe, Déconnexion. La déconnexion n'est plus
+  dans le menu latéral.
+- **Un import vit à deux endroits au plus** : sa page métier (le contexte où
+  l'on y pense) et Paramètres → Données. Jamais dans les actions rapides du
+  tableau de bord — une opération en masse ponctuelle n'y a pas sa place.
+
+**Paiements : on n'importe pas des paiements, on importe des règlements.**
+`Paiement` est en 1-1 avec `Consultation` et tous ses montants sont dérivés de
+`calculer_pour`. L'import met à jour `statut`, `mode_reglement` et
+`date_reglement` de paiements existants, identifiés par la colonne
+**Référence** (= `paiement.pk`, ajoutée à l'export CSV pour l'aller-retour).
+Tout ou rien : sur des écritures financières, un import partiel laisserait une
+caisse impossible à rapprocher. La date conservée est celle du **relevé**, pas
+celle de l'import.
+
+## Barre latérale
+
+`position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto`.
+**`align-self: start` est indispensable** : un élément de grille étiré (le
+défaut) ne peut pas coller. Sans cela la barre défilait hors de l'écran alors
+que la barre du haut restait. Pas de `position: fixed` sur desktop — le tiroir
+mobile (< 981 px) applique déjà le sien.
+
 ## Pagination
+
 
 Toutes les listes paginent via `_paginer` (`TAILLE_PAGE_LISTE = 20`), y compris
 dans les espaces Assuré, Médecin et Pharmacien. Seule exception assumée :

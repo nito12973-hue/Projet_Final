@@ -2,6 +2,7 @@ import csv
 import datetime
 import json
 import unicodedata
+from decimal import Decimal, InvalidOperation
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -284,7 +285,6 @@ def setup_wizard(request):
 SECTIONS_PARAMETRES = [
     ("general", "Général", "user-circle", None),
     ("apparence", "Apparence", "eye", None),
-    ("notifications", "Notifications", "bell", "ADMIN"),
     ("securite", "Sécurité", "lock", None),
     ("donnees", "Données", "download", "ADMIN"),
     ("avance", "Avancé", "filter", None),
@@ -326,8 +326,6 @@ def parametres(request, section="general"):
             "langue_plateforme": "Français",
             "fuseau_horaire": settings.TIME_ZONE,
         })
-    elif section == "notifications":
-        contexte["total_notifications_envoyees"] = Notification.objects.count()
     elif section == "securite":
         contexte["duree_session_heures"] = settings.SESSION_COOKIE_AGE // 3600
 
@@ -1191,11 +1189,13 @@ def exporter_paiements_csv(request):
     reponse.write("﻿")  # BOM : Excel (FR) detecte l'UTF-8 sans le confondre avec l'encodage local.
     ecrivain = csv.writer(reponse, delimiter=";")
     ecrivain.writerow([
-        "Patient", "Date de consultation", "Montant total", "Part assurance",
-        "Part patient", "Statut", "Mode de reglement", "Date de reglement",
+        "Reference", "Patient", "Date de consultation", "Montant total",
+        "Part assurance", "Part patient", "Statut", "Mode de reglement",
+        "Date de reglement",
     ])
     for paiement in paiements:
         ecrivain.writerow([_cellule_csv(v) for v in [
+            paiement.pk,
             str(paiement.consultation.patient),
             paiement.consultation.date_consultation.strftime("%d/%m/%Y %H:%M"),
             paiement.montant_total,
@@ -2813,3 +2813,232 @@ def marquer_notification_lue(request, pk):
     notification.lue = True
     notification.save(update_fields=["lue"])
     return redirect("mes_notifications")
+
+
+# ---------------------------------------------------------------------------
+# Import des reglements de paiement
+# ---------------------------------------------------------------------------
+
+# Un Paiement ne peut PAS etre cree par import : il est en relation 1-1 avec
+# une Consultation et tous ses montants sont derives (Paiement.calculer_pour --
+# prix du service, taux du plan si la prise en charge est validee). Importer
+# des montants reviendrait a ecraser cette regle metier.
+# Ce que l'import fait, et c'est le besoin reel : enregistrer EN MASSE le
+# reglement de paiements existants (rapprochement de fin de mois). C'est le
+# pendant en masse de marquer_paiement_regle.
+COLONNES_IMPORT_REGLEMENTS = [
+    "Reference", "Patient", "Date de consultation", "Part patient",
+    "Mode de reglement", "Date de reglement",
+]
+
+_MODES_PAR_LIBELLE_IMPORT = {}
+for _valeur_mode, _label_mode in Paiement.ModeReglement.choices:
+    _MODES_PAR_LIBELLE_IMPORT[_normaliser_texte_import(_valeur_mode)] = _valeur_mode
+    _MODES_PAR_LIBELLE_IMPORT[_normaliser_texte_import(_label_mode)] = _valeur_mode
+
+
+def _lire_date_import(valeur):
+    """Accepte une date Excel native ou un texte JJ/MM/AAAA. Renvoie None si
+    la valeur est inexploitable -- l'appelant produit alors l'erreur de ligne."""
+    if valeur in (None, ""):
+        return None
+    if isinstance(valeur, datetime.datetime):
+        return valeur.date()
+    if isinstance(valeur, datetime.date):
+        return valeur
+    texte = str(valeur).strip()
+    for format_date in ("%d/%m/%Y", "%Y-%m-%d", "%d-%m-%Y"):
+        try:
+            return datetime.datetime.strptime(texte, format_date).date()
+        except ValueError:
+            continue
+    return None
+
+
+def _analyser_ligne_import_reglement(numero, valeurs, references_vues):
+    """Valide une ligne du fichier de reglements.
+
+    Renvoie (donnees, erreurs). `donnees` vaut None des qu'une erreur est
+    trouvee : on ne construit jamais un reglement a moitie valide.
+    """
+    erreurs = []
+    reference, _patient, _date_consultation, part_patient, mode, date_reglement = (
+        list(valeurs) + [None] * 6
+    )[:6]
+
+    # --- Reference : seule colonne qui identifie le paiement ---
+    texte_reference = "" if reference is None else str(reference).strip()
+    if not texte_reference:
+        erreurs.append(f"Ligne {numero} : la référence est obligatoire.")
+        return None, erreurs
+    try:
+        identifiant = int(float(texte_reference))
+    except (TypeError, ValueError):
+        erreurs.append(f"Ligne {numero} : référence « {texte_reference} » invalide.")
+        return None, erreurs
+
+    if identifiant in references_vues:
+        erreurs.append(
+            f"Ligne {numero} : la référence {identifiant} apparaît déjà "
+            f"ligne {references_vues[identifiant]}."
+        )
+        return None, erreurs
+
+    paiement = Paiement.objects.filter(pk=identifiant).select_related(
+        "consultation__patient"
+    ).first()
+    if paiement is None:
+        erreurs.append(f"Ligne {numero} : aucun paiement ne porte la référence {identifiant}.")
+        return None, erreurs
+    if paiement.statut == Paiement.Statut.REGLE:
+        erreurs.append(
+            f"Ligne {numero} : le paiement {identifiant} "
+            f"({paiement.consultation.patient}) est déjà réglé."
+        )
+        return None, erreurs
+
+    # --- Part patient : colonne de CONTROLE, facultative mais verifiee ---
+    if part_patient not in (None, ""):
+        texte_montant = str(part_patient).strip().replace(" ", "").replace(",", ".")
+        try:
+            montant = Decimal(texte_montant)
+        except (InvalidOperation, ValueError):
+            erreurs.append(f"Ligne {numero} : montant « {part_patient} » invalide.")
+        else:
+            if montant != paiement.montant_part_patient:
+                erreurs.append(
+                    f"Ligne {numero} : la part patient indiquée ({montant}) ne correspond "
+                    f"pas au paiement {identifiant} ({paiement.montant_part_patient})."
+                )
+
+    # --- Mode de reglement : obligatoire, comme dans la saisie manuelle ---
+    cle_mode = _normaliser_texte_import(mode)
+    if not cle_mode:
+        erreurs.append(f"Ligne {numero} : le mode de règlement est obligatoire.")
+        mode_valide = None
+    else:
+        mode_valide = _MODES_PAR_LIBELLE_IMPORT.get(cle_mode)
+        if mode_valide is None:
+            attendus = ", ".join(label for _, label in Paiement.ModeReglement.choices)
+            erreurs.append(
+                f"Ligne {numero} : mode de règlement « {mode} » inconnu. Attendu : {attendus}."
+            )
+
+    # --- Date de reglement : obligatoire, jamais dans le futur ---
+    date_valide = _lire_date_import(date_reglement)
+    if date_reglement in (None, ""):
+        erreurs.append(f"Ligne {numero} : la date de règlement est obligatoire.")
+    elif date_valide is None:
+        erreurs.append(
+            f"Ligne {numero} : date de règlement « {date_reglement} » invalide (JJ/MM/AAAA)."
+        )
+    elif date_valide > timezone.localdate():
+        erreurs.append(f"Ligne {numero} : la date de règlement ne peut pas être dans le futur.")
+
+    if erreurs:
+        return None, erreurs
+
+    references_vues[identifiant] = numero
+    return {"paiement": paiement, "mode": mode_valide, "date": date_valide}, []
+
+
+@admin_required
+def telecharger_modele_import_reglements(request):
+    classeur = openpyxl.Workbook()
+    feuille = classeur.active
+    feuille.title = "Import reglements"
+    feuille.append(COLONNES_IMPORT_REGLEMENTS)
+    feuille.append([
+        "Reference du paiement (colonne de l'export CSV)",
+        "Nom du patient (indicatif, non utilise)",
+        "Date de la consultation (indicatif, non utilise)",
+        "Part patient attendue (controle, optionnel)",
+        " / ".join(label for _, label in Paiement.ModeReglement.choices),
+        "JJ/MM/AAAA",
+    ])
+    for index, nom_colonne in enumerate(COLONNES_IMPORT_REGLEMENTS, start=1):
+        feuille.column_dimensions[get_column_letter(index)].width = max(len(nom_colonne), 22)
+
+    reponse = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    reponse["Content-Disposition"] = 'attachment; filename="modele_import_reglements.xlsx"'
+    classeur.save(reponse)
+    return reponse
+
+
+@admin_required
+def importer_reglements_excel(request):
+    """Enregistrement en masse du reglement de paiements existants.
+
+    Meme regle "tout ou rien" que l'import des comptes : une seule ligne
+    invalide annule l'ensemble. Sur des ecritures financieres, un import
+    partiel laisserait une caisse impossible a rapprocher.
+    """
+    erreurs = []
+    if request.method == "POST":
+        fichier = request.FILES.get("fichier")
+        if not fichier:
+            erreurs.append("Choisissez un fichier Excel (.xlsx) à importer.")
+        else:
+            try:
+                classeur = openpyxl.load_workbook(fichier, data_only=True)
+            except Exception:
+                erreurs.append(
+                    "Fichier illisible : vérifiez qu'il s'agit bien d'un fichier Excel (.xlsx) valide."
+                )
+            else:
+                feuille = classeur.active
+                entetes = next(feuille.iter_rows(min_row=1, max_row=1, values_only=True), ())
+                entetes_normalisees = [_normaliser_texte_import(e) for e in entetes]
+                attendues = [_normaliser_texte_import(c) for c in COLONNES_IMPORT_REGLEMENTS]
+
+                if entetes_normalisees[: len(attendues)] != attendues:
+                    erreurs.append(
+                        "En-têtes de colonnes invalides : utilisez le modèle téléchargeable ci-dessous."
+                    )
+                else:
+                    lignes = [
+                        (numero, valeurs)
+                        for numero, valeurs in enumerate(
+                            feuille.iter_rows(min_row=2, values_only=True), start=2
+                        )
+                        if valeurs and not all(v in (None, "") for v in valeurs)
+                    ]
+                    if not lignes:
+                        erreurs.append("Le fichier ne contient aucune ligne à importer.")
+                    else:
+                        references_vues = {}
+                        a_regler = []
+                        for numero, valeurs in lignes:
+                            donnees, erreurs_ligne = _analyser_ligne_import_reglement(
+                                numero, valeurs, references_vues
+                            )
+                            erreurs.extend(erreurs_ligne)
+                            if donnees is not None:
+                                a_regler.append(donnees)
+
+                        if not erreurs:
+                            with transaction.atomic():
+                                for donnees in a_regler:
+                                    paiement = donnees["paiement"]
+                                    paiement.statut = Paiement.Statut.REGLE
+                                    paiement.mode_reglement = donnees["mode"]
+                                    # On conserve la date du releve, pas celle
+                                    # de l'import : c'est elle qui fait foi.
+                                    paiement.date_reglement = timezone.make_aware(
+                                        datetime.datetime.combine(
+                                            donnees["date"], datetime.time()
+                                        )
+                                    )
+                                    paiement.save(update_fields=[
+                                        "statut", "mode_reglement", "date_reglement",
+                                    ])
+                            messages.success(
+                                request,
+                                f"{len(a_regler)} règlement(s) enregistré(s).",
+                                extra_tags="succes-critique",
+                            )
+                            return redirect("liste_paiements")
+
+    return render(request, "importer_reglements.html", {"erreurs": erreurs})
