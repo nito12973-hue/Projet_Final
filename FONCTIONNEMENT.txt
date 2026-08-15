@@ -187,7 +187,12 @@ Relations cle a retenir :
 ----------------------------------------------------------------
 - role_required(*roles) : decorateur, exige un des roles donnes (403 sinon).
 - admin_required : raccourci = role_required(User.Role.ADMIN).
-- user_role(request) / _admin_exists() : helpers internes.
+- user_role(request) / _admin_exists() : helpers internes. user_role est le
+  SEUL context processor du projet (enregistre dans config/settings.py) : il
+  expose current_role, current_role_label, notifications_non_lues et, pour le
+  seul role ADMIN, nb_prises_en_charge_attente + nb_paiements_non_regles. Un
+  visiteur anonyme ne declenche aucune requete. Ne pas creer un second
+  context processor pour y ajouter une donnee de shell : etendre celui-ci.
 - post_login_redirect : redirige chaque role vers son tableau de bord
   (dashboard / dashboard_assure / dashboard_medecin / dashboard_pharmacien).
 - setup_wizard : creation du tout premier admin, accessible seulement si
@@ -559,6 +564,105 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
                           d'opacite, uniforme sur les cartes .panel du
                           canevas (tuiles KPI non concernees, deja
                           ancrees par leur lisere de couleur).
+                          Dixieme passe (refonte "Clinique claire",
+                          2026-08-15) : audit sur rendu reel (captures
+                          headless 1440 et 390 px, pas lecture de code).
+                          Constat de fond : la page ouvrait sur "Aujourd'hui
+                          : 0 rendez-vous, 0 consultations" alors que 3
+                          prises en charge attendaient depuis 26 jours, 5
+                          rendez-vous une confirmation et 6 ordonnances leur
+                          delivrance -- le premier ecran montrait des zeros
+                          pendant que les files reelles restaient invisibles.
+                          Trois defauts visuels mesures sur capture : le
+                          trace decoratif .dc-hero-trace traversait
+                          "43 500 FCFA" et "69 %" ; la legende du sparkline
+                          etait posee PAR-DESSUS le trace ; "Actions
+                          rapides" faisait le double de la hauteur de son
+                          contenu.
+                          ATTENTION : les paragraphes des sixieme a
+                          neuvieme passes ci-dessus decrivent le canevas
+                          sombre .dash-command, le hero a 3 liens et les
+                          digests .dc-row -- tout cela a ete REMPLACE par
+                          cette dixieme passe. Ils sont conserves pour
+                          l'historique des decisions, pas comme description
+                          de l'ecran actuel.
+                          Direction retenue : fond de page clair, menu
+                          lateral navy conserve, et UN SEUL bloc sombre (le
+                          bandeau "A traiter") au lieu du canevas qui
+                          noircissait toute la page -- le contraste devient
+                          un geste au service de la hierarchie. Structure de
+                          haut en bas : bandeau des 4 files d'attente (4
+                          tuiles cliquables vers des listes filtrees, tuile
+                          prises en charge en terracotta si le delai depasse
+                          7 jours, etat vide "Rien en attente" si file_totale
+                          vaut 0), bande "Couverture & finances" (carte
+                          Paiements + carte Assures couverts avec la
+                          repartition principaux / ayants droit, coeur du
+                          sujet du projet et affichee nulle part jusqu'ici),
+                          5 cartes KPI portant chacune une information
+                          secondaire vraie (les anciennes etaient inertes),
+                          les 2 listes, puis "Fiches a completer" (4 compteurs
+                          de donnees manquantes, chaque entree masquee si son
+                          compteur est nul) et "Actions rapides".
+                          dernieres_prises_en_charge : annotate(Case/When)
+                          qui fait remonter statut="en_attente" avant le tri
+                          par date -- triee par date seule, la liste noyait
+                          l'urgence sous des dossiers deja clos.
+                          Deux vues admin ajoutees, sans lesquelles deux
+                          tuiles du bandeau ne menaient nulle part :
+                          liste_rendez_vous et liste_ordonnances (voir leur
+                          entree plus bas dans ce fichier).
+                          Barre superieure (.topbar) ajoutee au shell pour
+                          les 4 roles : fil d'ariane, recherche (admin
+                          seulement), notifications, compte. Le bouton du
+                          tiroir mobile y a ete DEPLACE (un seul bouton dans
+                          le DOM, meme gestionnaire JS qu'avant).
+                          Regression rattrapee par la suite de tests, a
+                          retenir : la refonte avait fait disparaitre de
+                          l'affichage montant_regle_7j et ordonnances_7j
+                          (toujours calcules par la vue), inverse la
+                          convention d'aria-label "libelle avant valeur" et
+                          perdu les liens vers les comptes actifs /
+                          desactives. Les 4 ont ete corrigees, pas
+                          contournees. Les 6 autres tests rouges portaient
+                          sur les classes CSS de l'ancien design.
+                          Dette connue : le CSS des sixieme a neuvieme
+                          passes (.dash-command, .dash-hero*, .dc-*,
+                          .quick-actions, .gouvernance-comptes,
+                          .panel-discret, .admin-card-large ; ~50 regles)
+                          n'est plus atteignable par aucun template mais
+                          reste dans base.html. Une tentative de suppression
+                          automatique a casse le rendu (decoupage par
+                          accolades piege par les commentaires CSS) et a ete
+                          annulee. A refaire a la main, regle par regle,
+                          avec capture avant/apres -- ne pas rejouer un
+                          script de nettoyage global. NE PAS supprimer
+                          .toast-debug/.toast-info/.toast-warning au passage :
+                          ils ne figurent en toutes lettres dans aucun
+                          fichier (composes par class="toast toast-{{
+                          message.tags }}") mais sont bien atteints a
+                          l'execution.
+  liste_rendez_vous                   liste admin des rendez-vous, LECTURE
+                                      SEULE : confirmer/annuler reste
+                                      l'affaire du medecin
+                                      (changer_statut_rendez_vous) et de
+                                      l'assure (annuler_rendez_vous_assure).
+                                      Filtres GET 'statut' (RendezVous.Statut)
+                                      et 'q' (nom/prenom du patient ou du
+                                      medecin). Cible de la tuile
+                                      "Rendez-vous" du dashboard
+                                      (?statut=DEMANDE).
+  liste_ordonnances                   liste admin des ordonnances, LECTURE
+                                      SEULE : valider une delivrance reste
+                                      l'affaire du pharmacien
+                                      (valider_delivrance). Le QR n'y est pas
+                                      affiche, il n'a de sens qu'au comptoir.
+                                      Filtres GET 'delivrance' (oui/non) et
+                                      'q' (patient ou code_qr). Comble un
+                                      angle mort : une ordonnance emise mais
+                                      jamais retiree n'apparaissait sur aucun
+                                      ecran. Cible de la tuile "Pharmacie"
+                                      du dashboard (?delivrance=non).
   rapports / exporter_rapports_excel / exporter_rapports_pdf
                                       _donnees_rapports() est la SEULE
                                       source de donnees, partagee par la

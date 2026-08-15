@@ -75,7 +75,13 @@ Statut : ✅ fait · ⏳ partiel/à compléter · 🔄 continu.
 5. ✅ Dashboard Administrateur — Gestion des utilisateurs (CRUD, rôles,
    activation, réinitialisation mot de passe, export Excel), CRUD
    patients/médecins/services/prestataires/prises en charge/plans de
-   couverture, notifications.
+   couverture, notifications. Deux écrans **en lecture seule** complètent le
+   suivi : `liste_rendez_vous` (filtres `statut`/`q`) et `liste_ordonnances`
+   (filtre `delivrance` oui/non — une ordonnance jamais retirée en pharmacie
+   n'apparaissait sur aucun écran). L'admin n'y écrit rien : confirmer un
+   rendez-vous reste au médecin/assuré, valider une délivrance au pharmacien.
+   Le tableau de bord lui-même ouvre sur les **files d'attente** (refonte
+   « Clinique claire », 2026-08-15) et non sur les compteurs du jour.
 6. ✅ Dashboard Assuré — profil, ayants droit, rendez-vous, ordonnances et
    historique.
 7. ✅ Dashboard Médecin — agenda, patients, consultations, ordonnances QR.
@@ -236,8 +242,15 @@ couvre que la liste des utilisateurs (Dashboard Admin → Utilisateurs).
 
 ## Design system
 
-Un seul shell de dashboard (sidebar) dans `base.html`, réutilisé par les 4
-rôles (nav conditionnelle selon `current_role`). Identité "Territoire A +
+Un seul shell de dashboard (sidebar + barre supérieure `.topbar`) dans
+`base.html`, réutilisé par les 4 rôles (nav conditionnelle selon
+`current_role`). La `.topbar` porte le fil d'ariane (dérivé du nom de route
+par le filtre `libelle_page` de `templatetags/formats.py` — une seule table à
+maintenir, pas un bloc à redéfinir dans chaque template ; une route inconnue
+n'affiche rien plutôt qu'un libellé faux), la recherche (admin uniquement,
+vers `liste_utilisateurs?q=` : c'est la seule liste qui accepte `q`), les
+notifications et le compte. Le bouton du tiroir mobile vit **dans** la
+`.topbar` — un seul bouton dans le DOM, ne pas en ajouter un second. Identité "Territoire A +
 Croix-Pouls" : palette teal/navy/terracotta SantéSN (`--primary: #0e7c86`
 teal vif — bordures/décoratif seulement, `--primary-strong: #095059` teal
 foncé — seule variante sûre pour texte/icône blancs en aplat,
