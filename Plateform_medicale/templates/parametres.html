@@ -190,7 +190,9 @@
                     {% icone "alert-triangle" %}
                     <p><strong>Déconnexion de tous les appareils.</strong> Vous serez déconnecté partout, y compris ici. À utiliser si vous pensez que votre compte est compromis.</p>
                 </div>
-                <form method="post" action="{% url 'deconnecter_partout' %}" class="param-form-nu">
+                <form method="post" action="{% url 'deconnecter_partout' %}" class="param-form-nu"
+                      data-confirmation="Toutes vos sessions vont être fermées, y compris celle-ci. Vous devrez vous reconnecter."
+                      data-confirmation-action="Oui, déconnecter partout">
                     {% csrf_token %}
                     <button type="submit" class="button btn btn-danger">Déconnecter partout</button>
                 </form>

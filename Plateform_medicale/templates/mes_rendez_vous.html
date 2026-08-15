@@ -41,7 +41,9 @@
                 <td>
                     <span class="libelle-mobile">Actions</span>
                     {% if rdv.statut == 'DEMANDE' or rdv.statut == 'CONFIRME' %}
-                    <form method="post" action="{% url 'annuler_rendez_vous_assure' rdv.pk %}" class="action-ligne">
+                    <form method="post" action="{% url 'annuler_rendez_vous_assure' rdv.pk %}" class="action-ligne"
+                          data-confirmation="Annuler le rendez-vous du {{ rdv.date_heure|date:'d/m/Y à H:i' }} ? Le créneau sera libéré et devra être redemandé."
+                          data-confirmation-action="Oui, annuler le rendez-vous">
                         {% csrf_token %}
                         <button type="submit" class="button btn btn-danger btn-sm">Annuler</button>
                     </form>

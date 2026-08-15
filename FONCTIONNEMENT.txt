@@ -853,6 +853,63 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
                                       pas celle de l'import : c'est elle qui
                                       fait foi comptablement.
 
+  CONFIRMATIONS -- audit complet     Regle appliquee : une confirmation SEULEMENT
+                                      sur ce qui est destructif ou irreversible.
+                                      Trop de confirmations tue la confirmation.
+                                      Etat trouve, en grande partie deja bon :
+                                      - 8 suppressions sur 8 passent par un
+                                        ecran dedie (confirmer_suppression.html),
+                                        systeme partage laisse tel quel ;
+                                      - la desactivation d'un compte avait deja
+                                        sa modale, et UNIQUEMENT dans le sens
+                                        destructif ({% if utilisateur.is_active %}) --
+                                        reactiver n'a rien d'irreversible ;
+                                      - la modale de marque existait deja
+                                        (#modale-confirmation, role=alertdialog,
+                                        Echap, clic sur le fond, requestSubmit).
+                                      DEUX lacunes reelles comblees, en
+                                      reutilisant ce mecanisme (aucun second
+                                      systeme cree) :
+                                      - deconnecter_partout : ferme toutes les
+                                        sessions, y compris la courante ;
+                                      - annuler_rendez_vous_assure : un creneau
+                                        annule ne se recupere pas.
+                                      Ajout au mecanisme : data-confirmation-action
+                                      permet de NOMMER l'action sur le bouton
+                                      ("Oui, deconnecter partout") au lieu du
+                                      generique "Confirmer", qui oblige a
+                                      remonter au message pour savoir ce qu'on
+                                      valide. Repli sur "Confirmer" si absent.
+                                      Une icone d'alerte a ete ajoutee au
+                                      panneau.
+                                      NON AJOUTE volontairement : aucune
+                                      confirmation sur rechercher, filtrer,
+                                      exporter, consulter, naviguer. Un test
+                                      verifie que les formulaires de filtre
+                                      n'en portent pas.
+
+  ICONE DES PARAMETRES              Le menu utilisait "key" (une cle) pour les
+                                      reglages : symbole de securite, pas de
+                                      configuration. Icone "settings" ajoutee au
+                                      jeu existant (_ICONES), meme trait fin
+                                      24x24 stroke que les 40 autres -- pas une
+                                      nouvelle famille d'icones. Engrenage
+                                      dessine par segments plutot qu'en polygone
+                                      dente : a 18px, un polygone devient une
+                                      bouillie.
+
+  BLOC COMPTE DE LA BARRE DU HAUT   L'espace signale pres de "Administrateur"
+                                      venait du bloc d'identite sur deux lignes
+                                      de longueurs inegales, avec le chevron
+                                      centre verticalement : le vide passait
+                                      pour un composant manquant. Corrige non
+                                      pas en supprimant l'espace mais en le
+                                      rendant INTENTIONNEL -- le bloc recoit une
+                                      surface de bouton (padding, rayon, fond au
+                                      survol et a l'ouverture). Le padding
+                                      vertical de la topbar passe de 11 a 7px
+                                      pour compenser et garder la meme hauteur.
+
   NAVIGATION -- dedoublonnage         Notifications etait a la fois un module
                                       du menu ET une section de Parametres :
                                       retire de Parametres (envoyer une
