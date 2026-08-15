@@ -24,7 +24,7 @@ from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Case, Count, IntegerField, Q, Sum, Value, When
 from django.db.models.functions import TruncDate, TruncMonth, TruncYear
-from django.http import HttpResponse, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.conf import settings
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -278,31 +278,59 @@ def setup_wizard(request):
     return render(request, 'setup_wizard.html', {'form': form})
 
 
+# Sections de la page Parametres : (slug, libelle, icone, role requis).
+# Une seule table pilote a la fois le menu de gauche ET le controle d'acces,
+# pour qu'ils ne puissent pas diverger.
+SECTIONS_PARAMETRES = [
+    ("general", "Général", "user-circle", None),
+    ("apparence", "Apparence", "eye", None),
+    ("notifications", "Notifications", "bell", "ADMIN"),
+    ("securite", "Sécurité", "lock", None),
+    ("donnees", "Données", "download", "ADMIN"),
+    ("avance", "Avancé", "filter", None),
+]
+
+
 @login_required
-def parametres(request):
-    """Page Parametres : regroupe ce qui releve du reglage et non de l'activite
-    quotidienne. Ouverte aux 4 roles (chacun a un compte, un mot de passe et
-    une preference d'affichage) ; la section Notifications, elle, n'a de sens
-    que pour l'administrateur, seul a pouvoir en envoyer.
+def parametres(request, section="general"):
+    """Page Parametres, decoupee en sections qui ont chacune leur URL.
 
-    Les entrees restent AUSSI accessibles depuis le menu lateral : envoyer une
-    notification est une action courante pour un administrateur, l'enfouir
-    derriere Parametres rallongerait un chemin frequent.
+    Un clic dans le menu de gauche ouvre reellement la page correspondante
+    (et non un simple defilement) : l'adresse est partageable, le bouton
+    Retour du navigateur fonctionne, et chaque ecran reste court.
 
-    Regle de contenu : la page n'affiche QUE des reglages adosses a du code
-    reel. Les valeurs en lecture seule (duree de session, limitation des
-    tentatives) sont montrees quand meme : l'administrateur doit savoir que ces
-    protections existent, meme s'il ne les regle pas ici.
+    Regle de contenu inchangee : la page n'affiche QUE des reglages adosses a
+    du code reel. La section "general" montre la configuration de la
+    plateforme en LECTURE SEULE (langue, fuseau, format de date) : ce sont de
+    vraies valeurs, lues dans settings.py, qui repondent a une question
+    legitime -- les presenter comme modifiables serait un mensonge, les
+    cacher priverait l'administrateur d'une information utile.
     """
+    autorisees = [s for s in SECTIONS_PARAMETRES
+                  if s[3] is None or request.user.role == s[3]]
+    slugs = {s[0] for s in autorisees}
+    if section not in slugs:
+        raise Http404("Section de paramètres inconnue.")
+
     contexte = {
-        # Duree reelle, lue dans la configuration -- pas une valeur recopiee
-        # a la main qui se perimerait au premier changement de settings.py.
-        "duree_session_heures": settings.SESSION_COOKIE_AGE // 3600,
+        "sections": [
+            {"slug": slug, "libelle": libelle, "icone": icone}
+            for slug, libelle, icone, _ in autorisees
+        ],
+        "section": section,
+        "section_libelle": next(s[1] for s in autorisees if s[0] == section),
     }
-    if request.user.role == User.Role.ADMIN:
-        # Toutes les notifications du projet sont emises par un administrateur
-        # (le modele n'a pas d'expediteur : c'est la regle metier).
+
+    if section == "general":
+        contexte.update({
+            "langue_plateforme": "Français",
+            "fuseau_horaire": settings.TIME_ZONE,
+        })
+    elif section == "notifications":
         contexte["total_notifications_envoyees"] = Notification.objects.count()
+    elif section == "securite":
+        contexte["duree_session_heures"] = settings.SESSION_COOKIE_AGE // 3600
+
     return render(request, "parametres.html", contexte)
 
 
@@ -2002,8 +2030,12 @@ def agenda_medecin(request):
     if medecin is None:
         return render(request, "medecin_fiche_manquante.html")
 
-    rendez_vous = RendezVous.objects.filter(medecin=medecin).select_related("patient", "prestataire")
-    return render(request, "agenda_medecin.html", {"rendez_vous": rendez_vous})
+    # order_by explicite : voir mes_rendez_vous_assure.
+    rendez_vous = RendezVous.objects.filter(medecin=medecin).select_related(
+        "patient", "prestataire"
+    ).order_by("-date_heure")
+    return render(request, "agenda_medecin.html",
+                  {"rendez_vous": _paginer(request, rendez_vous)})
 
 
 @role_required(User.Role.MEDECIN)
@@ -2043,7 +2075,8 @@ def mes_patients(request):
     medecin = _medecin_courant(request)
     if medecin is None:
         return render(request, "medecin_fiche_manquante.html")
-    return render(request, "mes_patients.html", {"patients": _patients_du_medecin(medecin)})
+    return render(request, "mes_patients.html",
+                  {"patients": _paginer(request, _patients_du_medecin(medecin))})
 
 
 @role_required(User.Role.MEDECIN)
@@ -2172,7 +2205,7 @@ def historique_consultations(request):
             consultations = consultations.filter(date_consultation__date=date_valide)
 
     contexte = {
-        "consultations": consultations,
+        "consultations": _paginer(request, consultations),
         "patients_du_medecin": _patients_du_medecin(medecin),
         "patient_selectionne": patient_id,
         "date_selectionnee": date_filtre,
@@ -2403,7 +2436,8 @@ def historique_delivrances(request):
     delivrances = Delivrance.objects.filter(pharmacien=pharmacien).select_related(
         "ordonnance__consultation__patient", "ordonnance__consultation__medecin"
     ).order_by("-date_delivrance")
-    return render(request, "historique_delivrances.html", {"delivrances": delivrances})
+    return render(request, "historique_delivrances.html",
+                  {"delivrances": _paginer(request, delivrances)})
 
 
 # ---------------------------------------------------------------------------
@@ -2609,10 +2643,13 @@ def mes_rendez_vous_assure(request):
     if patient is None:
         return redirect("mon_profil_assure")
     beneficiaires = _beneficiaires(patient)
+    # order_by explicite : paginer un queryset non ordonne rend l'ordre des
+    # pages instable (et Django emet UnorderedObjectListWarning).
     rendez_vous = RendezVous.objects.filter(patient__in=beneficiaires).select_related(
         "patient", "medecin", "prestataire"
-    )
-    return render(request, "mes_rendez_vous.html", {"rendez_vous": rendez_vous})
+    ).order_by("-date_heure")
+    return render(request, "mes_rendez_vous.html",
+                  {"rendez_vous": _paginer(request, rendez_vous)})
 
 
 @role_required(User.Role.ASSURE)
@@ -2663,7 +2700,8 @@ def mes_ordonnances_assure(request):
     ordonnances = Ordonnance.objects.filter(
         consultation__patient__in=beneficiaires
     ).select_related("consultation__patient", "consultation__medecin").order_by("-date_creation")
-    return render(request, "mes_ordonnances.html", {"ordonnances": ordonnances})
+    return render(request, "mes_ordonnances.html",
+                  {"ordonnances": _paginer(request, ordonnances)})
 
 
 @role_required(User.Role.ASSURE)
@@ -2687,7 +2725,8 @@ def mon_historique_assure(request):
     consultations = Consultation.objects.filter(patient__in=beneficiaires).select_related(
         "patient", "medecin", "service", "paiement"
     ).order_by("-date_consultation")
-    return render(request, "mon_historique.html", {"consultations": consultations})
+    return render(request, "mon_historique.html",
+                  {"consultations": _paginer(request, consultations)})
 
 
 # ---------------------------------------------------------------------------

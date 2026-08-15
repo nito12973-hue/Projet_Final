@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load icones %}
 
-{% block title %}Paramètres{% endblock %}
+{% block title %}Paramètres — {{ section_libelle }}{% endblock %}
 
 {% block content %}
 <section class="page-title">
@@ -13,102 +13,128 @@
 
 <div class="param-layout">
     {% comment %}
-    Navigation interne : de simples ancres vers les sections de la meme page.
-    Pas de pages separees -- la page entiere se lit en un ecran et demi, la
-    decouper obligerait a un aller-retour serveur pour chaque reglage.
+    Menu de gauche : chaque entree ouvre REELLEMENT sa page (URL propre,
+    bouton Retour fonctionnel, adresse partageable). La table SECTIONS_PARAMETRES
+    pilote a la fois ce menu et le controle d'acces cote vue.
     {% endcomment %}
-    <nav class="param-onglets" aria-label="Sections des paramètres">
-        <a href="#compte">{% icone "user-circle" %} Mon compte</a>
-        <a href="#apparence">{% icone "eye" %} Apparence</a>
-        {% if current_role == "ADMIN" %}<a href="#notifications">{% icone "bell" %} Notifications</a>{% endif %}
-        <a href="#securite">{% icone "lock" %} Sécurité</a>
-        {% if current_role == "ADMIN" %}<a href="#donnees">{% icone "download" %} Données</a>{% endif %}
-        <span class="param-sep" aria-hidden="true"></span>
-        <a href="#avance">{% icone "filter" %} Avancé</a>
+    <nav class="param-categories" aria-label="Catégories de paramètres">
+        <p class="param-categories-titre">Catégories</p>
+        {% for s in sections %}
+        <a href="{% url 'parametres_section' s.slug %}"
+           class="{% if s.slug == section %}active{% endif %}"
+           {% if s.slug == section %}aria-current="page"{% endif %}>
+            {% icone s.icone %} {{ s.libelle }}
+        </a>
+        {% endfor %}
     </nav>
 
     <div class="param-pile">
 
-        <section class="panel param-carte" id="compte">
+        {% if section == "general" %}
+        <section class="panel param-carte">
             <div class="panel-header">
                 <div>
                     <h2>Mon compte</h2>
                     <p class="subtitle">Ces informations identifient votre compte sur la plateforme.</p>
                 </div>
+                <a class="button primary btn" href="{% url 'mon_compte' %}">Modifier</a>
             </div>
             <div class="param-corps">
                 <div class="param-ligne">
-                    <span class="param-txt">
-                        <strong>Nom et prénom</strong>
-                        <span>Affiché dans le menu et sur les notifications que vous envoyez.</span>
-                    </span>
-                    <span class="param-fin">
-                        <span class="param-val">{{ user.get_full_name|default:"—" }}</span>
-                        <a class="button btn" href="{% url 'mon_compte' %}">Modifier</a>
-                    </span>
+                    <span class="param-txt"><strong>Nom et prénom</strong>
+                        <span>Affiché dans le menu et sur les notifications que vous envoyez.</span></span>
+                    <span class="param-fin"><span class="param-val">{{ user.get_full_name|default:"—" }}</span></span>
                 </div>
                 <div class="param-ligne">
-                    <span class="param-txt">
-                        <strong>Adresse email</strong>
-                        <span>C'est votre identifiant de connexion. Le changer demande votre mot de passe actuel.</span>
-                    </span>
-                    <span class="param-fin">
-                        <span class="param-val">{{ user.email }}</span>
-                        <a class="button btn" href="{% url 'mon_compte' %}">Modifier</a>
-                    </span>
+                    <span class="param-txt"><strong>Adresse email</strong>
+                        <span>Votre identifiant de connexion. Le changer demande votre mot de passe actuel.</span></span>
+                    <span class="param-fin"><span class="param-val">{{ user.email }}</span></span>
                 </div>
                 <div class="param-ligne">
-                    <span class="param-txt">
-                        <strong>Téléphone</strong>
-                        <span>Facultatif. Sert uniquement à vous joindre en interne.</span>
-                    </span>
-                    <span class="param-fin">
-                        <span class="param-val">{{ user.phone_number|default:"—" }}</span>
-                        <a class="button btn" href="{% url 'mon_compte' %}">Modifier</a>
-                    </span>
+                    <span class="param-txt"><strong>Téléphone</strong>
+                        <span>Facultatif. Sert uniquement à vous joindre en interne.</span></span>
+                    <span class="param-fin"><span class="param-val">{{ user.phone_number|default:"—" }}</span></span>
                 </div>
                 <div class="param-ligne">
-                    <span class="param-txt">
-                        <strong>Rôle</strong>
-                        <span>Défini par l'administration. Un utilisateur ne choisit jamais son propre rôle.</span>
-                    </span>
-                    <span class="param-fin">
-                        <span class="param-fige">{{ current_role_label }} · non modifiable</span>
-                    </span>
+                    <span class="param-txt"><strong>Rôle</strong>
+                        <span>Défini par l'administration. Un utilisateur ne choisit jamais son propre rôle.</span></span>
+                    <span class="param-fin"><span class="param-fige">{{ current_role_label }} · non modifiable</span></span>
                 </div>
             </div>
         </section>
 
-        <section class="panel param-carte" id="apparence">
+        {% comment %}
+        Configuration de la plateforme : valeurs REELLES lues dans settings.py,
+        affichees en lecture seule. Les rendre modifiables demanderait un
+        systeme de traduction (inexistant) et des formats de date parametrables
+        (aujourd'hui ecrits dans les gabarits).
+        {% endcomment %}
+        <section class="panel param-carte">
             <div class="panel-header">
                 <div>
-                    <h2>Apparence</h2>
-                    <p class="subtitle">Ces réglages ne concernent que cet appareil — ils ne sont pas enregistrés sur votre compte.</p>
+                    <h2>Configuration de la plateforme</h2>
+                    <p class="subtitle">Réglages serveur, communs à tous les comptes.</p>
+                </div>
+            </div>
+            <div class="param-corps">
+                <div class="param-grille">
+                    <div class="param-champ">
+                        <span class="param-champ-label">Langue</span>
+                        <span class="param-champ-valeur">{{ langue_plateforme }}</span>
+                        <span class="param-champ-note">SantéSN est monolingue : aucune traduction n'est installée.</span>
+                    </div>
+                    <div class="param-champ">
+                        <span class="param-champ-label">Fuseau horaire</span>
+                        <span class="param-champ-valeur">{{ fuseau_horaire }}</span>
+                        <span class="param-champ-note">Toutes les dates et heures affichées suivent ce fuseau.</span>
+                    </div>
+                    <div class="param-champ">
+                        <span class="param-champ-label">Format de date</span>
+                        <span class="param-champ-valeur">JJ/MM/AAAA</span>
+                        <span class="param-champ-note">Format unique dans toute l'application.</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+        {% endif %}
+
+        {% if section == "apparence" %}
+        <section class="panel param-carte">
+            <div class="panel-header">
+                <div>
+                    <h2>Thème</h2>
+                    <p class="subtitle">Ce réglage ne concerne que cet appareil — il n'est pas enregistré sur votre compte.</p>
                 </div>
             </div>
             <div class="param-corps">
                 <div class="themes" role="radiogroup" aria-label="Thème de l'interface">
                     <button type="button" class="theme" data-theme-choix="clair" role="radio" aria-checked="false">
                         <span class="theme-apercu theme-apercu-clair" aria-hidden="true"><i></i><i></i></span>
-                        <strong>Clair</strong>
-                        <span>Le thème par défaut.</span>
+                        <strong>Clair</strong><span>Le thème par défaut.</span>
                     </button>
                     <button type="button" class="theme" data-theme-choix="sombre" role="radio" aria-checked="false">
                         <span class="theme-apercu theme-apercu-sombre" aria-hidden="true"><i></i><i></i></span>
-                        <strong>Sombre</strong>
-                        <span>Confortable en faible luminosité.</span>
+                        <strong>Sombre</strong><span>Confortable en faible luminosité.</span>
                     </button>
                     <button type="button" class="theme" data-theme-choix="systeme" role="radio" aria-checked="false">
                         <span class="theme-apercu theme-apercu-systeme" aria-hidden="true"><i></i><i></i></span>
-                        <strong>Système</strong>
-                        <span>Suit le réglage de votre appareil.</span>
+                        <strong>Système</strong><span>Suit le réglage de votre appareil.</span>
                     </button>
                 </div>
+            </div>
+        </section>
+
+        <section class="panel param-carte">
+            <div class="panel-header">
+                <div>
+                    <h2>Affichage</h2>
+                    <p class="subtitle">Confort de lecture, propre à cet appareil.</p>
+                </div>
+            </div>
+            <div class="param-corps">
                 <div class="param-ligne">
-                    <span class="param-txt">
-                        <strong>Menu latéral réduit</strong>
-                        <span>Affiche les icônes seules pour gagner de la largeur sur les tableaux. Se règle aussi depuis le chevron du menu.</span>
-                    </span>
+                    <span class="param-txt"><strong>Menu latéral réduit</strong>
+                        <span>Affiche les icônes seules pour gagner de la largeur sur les tableaux. Se règle aussi depuis le chevron du menu.</span></span>
                     <span class="param-fin">
                         <button type="button" class="bascule" data-bascule-menu aria-pressed="false">
                             <span class="bascule-piste" aria-hidden="true"><i></i></span>
@@ -117,19 +143,16 @@
                     </span>
                 </div>
                 <div class="param-ligne">
-                    <span class="param-txt">
-                        <strong>Animations</strong>
-                        <span>L'interface suit le réglage d'accessibilité de votre système d'exploitation.</span>
-                    </span>
-                    <span class="param-fin">
-                        <span class="param-fige">Réglage système</span>
-                    </span>
+                    <span class="param-txt"><strong>Animations</strong>
+                        <span>L'interface suit le réglage d'accessibilité de votre système d'exploitation.</span></span>
+                    <span class="param-fin"><span class="param-fige">Réglage système</span></span>
                 </div>
             </div>
         </section>
+        {% endif %}
 
-        {% if current_role == "ADMIN" %}
-        <section class="panel param-carte" id="notifications">
+        {% if section == "notifications" %}
+        <section class="panel param-carte">
             <div class="panel-header">
                 <div>
                     <h2>Notifications</h2>
@@ -138,29 +161,21 @@
             </div>
             <div class="param-corps">
                 <div class="param-ligne">
-                    <span class="param-txt">
-                        <strong>Envoyer une notification</strong>
-                        <span>À un utilisateur précis, ou à tous les comptes d'un rôle.</span>
-                    </span>
-                    <span class="param-fin">
-                        <a class="button primary btn" href="{% url 'envoyer_notification' %}">Rédiger</a>
-                    </span>
+                    <span class="param-txt"><strong>Envoyer une notification</strong>
+                        <span>À un utilisateur précis, ou à tous les comptes d'un rôle.</span></span>
+                    <span class="param-fin"><a class="button primary btn" href="{% url 'envoyer_notification' %}">Rédiger</a></span>
                 </div>
                 <div class="param-ligne">
-                    <span class="param-txt">
-                        <strong>Historique des envois</strong>
-                        <span>Messages envoyés, destinataire et statut de lecture.</span>
-                    </span>
+                    <span class="param-txt"><strong>Historique des envois</strong>
+                        <span>Messages envoyés, destinataire et statut de lecture.</span></span>
                     <span class="param-fin">
                         <span class="param-val">{{ total_notifications_envoyees }} envoyée{{ total_notifications_envoyees|pluralize }}</span>
                         <a class="button btn" href="{% url 'liste_notifications_envoyees' %}">Consulter</a>
                     </span>
                 </div>
                 <div class="param-ligne">
-                    <span class="param-txt">
-                        <strong>Mes notifications</strong>
-                        <span>Les messages qui vous sont adressés.</span>
-                    </span>
+                    <span class="param-txt"><strong>Mes notifications</strong>
+                        <span>Les messages qui vous sont adressés.</span></span>
                     <span class="param-fin">
                         <span class="param-val">{{ notifications_non_lues }} non lue{{ notifications_non_lues|pluralize }}</span>
                         <a class="button btn" href="{% url 'mes_notifications' %}">Ouvrir</a>
@@ -170,111 +185,116 @@
         </section>
         {% endif %}
 
-        <section class="panel param-carte param-sensible" id="securite">
+        {% if section == "securite" %}
+        <section class="panel param-carte">
             <div class="panel-header">
                 <div>
-                    <h2>Sécurité</h2>
+                    <h2>Accès à votre compte</h2>
                     <p class="subtitle">Protection de votre compte et de la session de travail.</p>
                 </div>
             </div>
             <div class="param-corps">
                 <div class="param-ligne">
-                    <span class="param-txt">
-                        <strong>Mot de passe</strong>
-                        <span>Vous resterez connecté après la modification.</span>
-                    </span>
-                    <span class="param-fin">
-                        <a class="button btn" href="{% url 'changer_mot_de_passe' %}">Changer</a>
-                    </span>
+                    <span class="param-txt"><strong>Mot de passe</strong>
+                        <span>Vous resterez connecté après la modification.</span></span>
+                    <span class="param-fin"><a class="button btn" href="{% url 'changer_mot_de_passe' %}">Changer</a></span>
                 </div>
                 <div class="param-ligne">
-                    <span class="param-txt">
-                        <strong>Expiration de session</strong>
-                        <span>Durée avant déconnexion automatique. Réglage serveur, commun à tous les comptes.</span>
-                    </span>
-                    <span class="param-fin">
-                        <span class="param-fige">{{ duree_session_heures }} heures · réglage serveur</span>
-                    </span>
+                    <span class="param-txt"><strong>Expiration de session</strong>
+                        <span>Durée avant déconnexion automatique. Réglage serveur, commun à tous les comptes.</span></span>
+                    <span class="param-fin"><span class="param-fige">{{ duree_session_heures }} heures · réglage serveur</span></span>
                 </div>
                 <div class="param-ligne">
-                    <span class="param-txt">
-                        <strong>Limitation des tentatives de connexion</strong>
-                        <span>Un compte est temporairement bloqué après plusieurs échecs consécutifs.</span>
-                    </span>
-                    <span class="param-fin">
-                        <span class="param-fige">Actif</span>
-                    </span>
-                </div>
-                <div class="param-ligne param-ligne-bloc">
-                    <div class="param-avert">
-                        {% icone "alert-triangle" %}
-                        <p><strong>Déconnexion de tous les appareils.</strong> Vous serez déconnecté partout, y compris ici. À utiliser si vous pensez que votre compte est compromis.</p>
-                    </div>
-                    <form method="post" action="{% url 'deconnecter_partout' %}">
-                        {% csrf_token %}
-                        <button type="submit" class="button btn btn-danger">Déconnecter partout</button>
-                    </form>
+                    <span class="param-txt"><strong>Limitation des tentatives de connexion</strong>
+                        <span>Un compte est temporairement bloqué après plusieurs échecs consécutifs.</span></span>
+                    <span class="param-fin"><span class="param-fige">Actif</span></span>
                 </div>
             </div>
         </section>
 
-        {% if current_role == "ADMIN" %}
-        <section class="panel param-carte" id="donnees">
+        <section class="panel param-carte param-sensible">
             <div class="panel-header">
                 <div>
-                    <h2>Données</h2>
-                    <p class="subtitle">Import et export des données de la plateforme.</p>
+                    <h2>Zone sensible</h2>
+                    <p class="subtitle">Action immédiate et irréversible sur vos sessions.</p>
+                </div>
+            </div>
+            <div class="param-corps">
+                <div class="param-avert">
+                    {% icone "alert-triangle" %}
+                    <p><strong>Déconnexion de tous les appareils.</strong> Vous serez déconnecté partout, y compris ici. À utiliser si vous pensez que votre compte est compromis.</p>
+                </div>
+                <form method="post" action="{% url 'deconnecter_partout' %}" class="param-form-nu">
+                    {% csrf_token %}
+                    <button type="submit" class="button btn btn-danger">Déconnecter partout</button>
+                </form>
+            </div>
+        </section>
+        {% endif %}
+
+        {% if section == "donnees" %}
+        <section class="panel param-carte">
+            <div class="panel-header">
+                <div>
+                    <h2>Import</h2>
+                    <p class="subtitle">Création de comptes en masse depuis un fichier Excel.</p>
                 </div>
             </div>
             <div class="param-corps">
                 <div class="param-ligne">
-                    <span class="param-txt">
-                        <strong>Importer des utilisateurs</strong>
-                        <span>Fichier Excel, une ligne par compte. L'import est tout ou rien : une seule ligne en erreur annule l'ensemble.</span>
-                    </span>
+                    <span class="param-txt"><strong>Importer des utilisateurs</strong>
+                        <span>Une ligne par compte. L'import est tout ou rien : une seule ligne en erreur annule l'ensemble.</span></span>
                     <span class="param-fin">
                         <a class="button btn" href="{% url 'telecharger_modele_import_utilisateurs' %}">Modèle</a>
                         <a class="button primary btn" href="{% url 'importer_utilisateurs_excel' %}">Importer</a>
                     </span>
                 </div>
+            </div>
+        </section>
+
+        <section class="panel param-carte">
+            <div class="panel-header">
+                <div>
+                    <h2>Exports</h2>
+                    <p class="subtitle">Les exports d'utilisateurs respectent les filtres appliqués sur la liste.</p>
+                </div>
+            </div>
+            <div class="param-corps">
                 <div class="param-ligne">
-                    <span class="param-txt">
-                        <strong>Exporter les utilisateurs</strong>
-                        <span>Respecte les filtres appliqués sur la liste.</span>
-                    </span>
+                    <span class="param-txt"><strong>Utilisateurs</strong>
+                        <span>Comptes de la plateforme, tous rôles confondus.</span></span>
                     <span class="param-fin">
                         <a class="button btn" href="{% url 'exporter_utilisateurs_excel' %}">Excel</a>
                         <a class="button btn" href="{% url 'exporter_utilisateurs_csv' %}">CSV</a>
                     </span>
                 </div>
                 <div class="param-ligne">
-                    <span class="param-txt">
-                        <strong>Exporter les rapports</strong>
-                        <span>Synthèse d'activité, vue mensuelle.</span>
-                    </span>
+                    <span class="param-txt"><strong>Rapports</strong>
+                        <span>Synthèse d'activité, vue mensuelle.</span></span>
                     <span class="param-fin">
                         <a class="button btn" href="{% url 'exporter_rapports_excel' %}">Excel</a>
                         <a class="button btn" href="{% url 'exporter_rapports_pdf' %}">PDF</a>
+                    </span>
+                </div>
+                <div class="param-ligne">
+                    <span class="param-txt"><strong>Paiements</strong>
+                        <span>Montants, parts et statuts de règlement.</span></span>
+                    <span class="param-fin">
+                        <a class="button btn" href="{% url 'exporter_paiements_csv' %}">CSV</a>
                     </span>
                 </div>
             </div>
         </section>
         {% endif %}
 
-        {% comment %}
-        Avance : ne propose rien a regler, rend compte. Les trois services
-        externes ne sont pas configurables, et l'absence de backend email
-        explique pourquoi les mots de passe s'affichent a l'ecran a la creation
-        d'un compte -- c'est la seule page qui le dit.
-        {% endcomment %}
-        <details class="panel param-carte" id="avance">
-            <summary class="param-resume">
-                <span>
-                    <strong>Avancé</strong>
-                    <span class="subtitle">Services externes et informations techniques. Rien à régler au quotidien.</span>
-                </span>
-                {% icone "chevron-down" %}
-            </summary>
+        {% if section == "avance" %}
+        <section class="panel param-carte">
+            <div class="panel-header">
+                <div>
+                    <h2>Services externes</h2>
+                    <p class="subtitle">Cette page ne règle rien : elle rend compte de ce dont la plateforme dépend.</p>
+                </div>
+            </div>
             <div class="param-corps">
                 <div class="param-tech">
                     <span class="param-puce" aria-hidden="true"></span>
@@ -301,7 +321,8 @@
                     <span class="param-etat">inactif</span>
                 </div>
             </div>
-        </details>
+        </section>
+        {% endif %}
 
     </div>
 </div>

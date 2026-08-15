@@ -2416,18 +2416,34 @@
             align-items: start;
         }
 
-        .param-onglets {
+        /* Menu de categories : une carte, pas une simple liste d'ancres.
+           Chaque entree ouvre sa propre page (cf. SECTIONS_PARAMETRES). */
+        .param-categories {
             position: sticky;
             top: 72px;
             display: grid;
-            gap: 3px;
+            gap: 2px;
+            padding: 14px 12px;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            background: var(--surface);
+            box-shadow: 0 1px 2px rgba(11, 32, 39, 0.05), 0 4px 14px rgba(11, 32, 39, 0.045);
         }
 
-        .param-onglets a {
+        .param-categories-titre {
+            margin: 2px 10px 8px;
+            font-size: 10.5px;
+            font-weight: 800;
+            letter-spacing: 0.13em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .param-categories a {
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 9px 12px;
+            padding: 9px 11px;
             border-radius: 10px;
             text-decoration: none;
             color: var(--muted);
@@ -2435,22 +2451,73 @@
             font-weight: 600;
         }
 
-        .param-onglets a:hover,
-        .param-onglets a:focus-visible {
-            background: var(--surface);
+        .param-categories a:hover,
+        .param-categories a:focus-visible {
+            background: var(--neutre-bg);
             color: var(--titre);
         }
 
-        .param-onglets .icone-nav {
+        .param-categories a.active {
+            background: var(--primary-soft);
+            color: var(--primary-strong);
+            font-weight: 700;
+        }
+
+        .param-categories .icone-nav {
             width: 15px;
             height: 15px;
             flex: 0 0 15px;
         }
 
-        .param-sep {
-            height: 1px;
-            background: var(--border);
-            margin: 8px 12px;
+        /* Valeurs de configuration en lecture seule : forme de fiche, pas de
+           champ de saisie -- l'oeil ne doit pas y chercher un controle. */
+        .param-grille {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 14px;
+            padding-top: 12px;
+        }
+
+        .param-champ {
+            padding: 13px 14px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--fiche-bg);
+        }
+
+        .param-champ-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .param-champ-valeur {
+            display: block;
+            margin-top: 6px;
+            font-family: 'IBM Plex Mono', Consolas, monospace;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--titre);
+        }
+
+        .param-champ-note {
+            display: block;
+            margin-top: 7px;
+            font-size: 11.5px;
+            color: var(--muted);
+            line-height: 1.45;
+        }
+
+        .param-form-nu {
+            max-width: none;
+            margin-top: 14px;
+            padding: 0;
+            background: none;
+            border: 0;
+            box-shadow: none;
         }
 
         .param-pile {
@@ -2538,10 +2605,6 @@
             white-space: nowrap;
         }
 
-        .param-ligne-bloc {
-            display: block;
-        }
-
         .param-avert {
             display: flex;
             gap: 11px;
@@ -2564,17 +2627,6 @@
             font-size: 12px;
             color: var(--refus-fg);
             line-height: 1.5;
-        }
-
-        /* Le formulaire ne doit pas heriter du style global de <form>
-           (carte blanche : padding, bordure, ombre). */
-        .param-ligne-bloc form {
-            max-width: none;
-            margin-top: 12px;
-            padding: 0;
-            background: none;
-            border: 0;
-            box-shadow: none;
         }
 
         /* Bascule (menu reduit) : meme role qu'une case a cocher, dessinee. */
@@ -2703,15 +2755,14 @@
                 grid-template-columns: minmax(0, 1fr);
             }
 
-            .param-onglets {
+            .param-categories {
                 position: static;
                 grid-auto-flow: column;
                 grid-auto-columns: max-content;
                 overflow-x: auto;
-                padding-bottom: 4px;
             }
 
-            .param-sep {
+            .param-categories-titre {
                 display: none;
             }
 
