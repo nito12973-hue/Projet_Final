@@ -15,6 +15,7 @@ urlpatterns = [
     path('redirection/', views.post_login_redirect, name='post_login_redirect'),
     path('installation/', views.setup_wizard, name='setup_wizard'),
     path('parametres/', views.parametres, name='parametres'),
+    path('parametres/<slug:section>/', views.parametres, name='parametres_section'),
     path('mon-compte/', views.mon_compte, name='mon_compte'),
     path('mon-compte/deconnecter-partout/', views.deconnecter_partout, name='deconnecter_partout'),
     path('mon-compte/mot-de-passe/', views.changer_mot_de_passe, name='changer_mot_de_passe'),
