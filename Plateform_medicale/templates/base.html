@@ -2403,78 +2403,329 @@
             }
         }
 
-        /* ===== Page Parametres ===== */
-        .reglages {
+        /* ===== Page Parametres =====
+           Deux colonnes : une navigation interne collante (ancres vers les
+           sections de la meme page) et la pile de cartes. Sous 900px la
+           navigation passe en rangee horizontale defilante plutot que de
+           disparaitre : c'est le seul reperage de la page. */
+        .param-layout {
             display: grid;
-            gap: 12px;
-            margin-top: 20px;
+            grid-template-columns: 212px minmax(0, 1fr);
+            gap: 26px;
+            margin-top: 22px;
+            align-items: start;
         }
 
-        .reglage {
+        .param-onglets {
+            position: sticky;
+            top: 72px;
+            display: grid;
+            gap: 3px;
+        }
+
+        .param-onglets a {
             display: flex;
             align-items: center;
-            gap: 14px;
-            padding: 16px 18px;
-            border: 1px solid var(--border);
-            border-radius: 15px;
-            background: var(--surface);
-            color: var(--text);
+            gap: 10px;
+            padding: 9px 12px;
+            border-radius: 10px;
             text-decoration: none;
-            box-shadow: 0 1px 2px rgba(11, 32, 39, 0.05), 0 4px 14px rgba(11, 32, 39, 0.045);
-            transition: border-color 0.18s ease, transform 0.18s ease;
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 600;
         }
 
-        .reglage:hover,
-        .reglage:focus-visible {
-            border-color: var(--primary-light);
-            transform: translateY(-2px);
+        .param-onglets a:hover,
+        .param-onglets a:focus-visible {
+            background: var(--surface);
+            color: var(--titre);
         }
 
-        .reglage-icone {
+        .param-onglets .icone-nav {
+            width: 15px;
+            height: 15px;
+            flex: 0 0 15px;
+        }
+
+        .param-sep {
+            height: 1px;
+            background: var(--border);
+            margin: 8px 12px;
+        }
+
+        .param-pile {
             display: grid;
-            place-items: center;
-            flex: 0 0 40px;
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
-            background: var(--primary-soft);
-            color: var(--primary-strong);
-        }
-
-        .reglage-texte {
+            gap: 16px;
             min-width: 0;
         }
 
-        .reglage-texte strong {
+        .param-carte {
+            margin: 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .param-carte::after {
+            content: "";
+            position: absolute;
+            inset: 0 0 auto 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(79, 184, 174, 0.45), transparent);
+        }
+
+        .param-corps {
+            padding: 4px 24px 22px;
+        }
+
+        .param-ligne {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 15px 0;
+            border-top: 1px solid var(--border);
+        }
+
+        .param-ligne:first-child {
+            border-top: 0;
+        }
+
+        .param-txt {
+            min-width: 0;
+        }
+
+        .param-txt strong {
             display: block;
-            font-size: 14px;
+            font-size: 13.5px;
             font-weight: 700;
             color: var(--titre);
         }
 
-        .reglage-texte span {
+        .param-txt > span {
+            display: block;
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 3px;
+            line-height: 1.45;
+        }
+
+        .param-fin {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .param-val {
+            font-family: 'IBM Plex Mono', Consolas, monospace;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--primary-strong);
+            white-space: nowrap;
+        }
+
+        /* Valeur non modifiable ici : le libelle le dit, la forme aussi
+           (aucun bouton, fond neutre). */
+        .param-fige {
+            font-size: 10.5px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--neutre-fg);
+            background: var(--neutre-bg);
+            border-radius: 20px;
+            padding: 5px 11px;
+            white-space: nowrap;
+        }
+
+        .param-ligne-bloc {
+            display: block;
+        }
+
+        .param-avert {
+            display: flex;
+            gap: 11px;
+            align-items: flex-start;
+            background: var(--refus-bg);
+            border-radius: 11px;
+            padding: 12px 14px;
+        }
+
+        .param-avert .icone-nav {
+            width: 16px;
+            height: 16px;
+            flex: 0 0 16px;
+            color: var(--refus-fg);
+            margin-top: 1px;
+        }
+
+        .param-avert p {
+            margin: 0;
+            font-size: 12px;
+            color: var(--refus-fg);
+            line-height: 1.5;
+        }
+
+        /* Le formulaire ne doit pas heriter du style global de <form>
+           (carte blanche : padding, bordure, ombre). */
+        .param-ligne-bloc form {
+            max-width: none;
+            margin-top: 12px;
+            padding: 0;
+            background: none;
+            border: 0;
+            box-shadow: none;
+        }
+
+        /* Bascule (menu reduit) : meme role qu'une case a cocher, dessinee. */
+        .bascule {
+            border: 0;
+            background: none;
+            padding: 0;
+            cursor: pointer;
+            line-height: 0;
+        }
+
+        .bascule-piste {
+            display: block;
+            position: relative;
+            width: 42px;
+            height: 24px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: var(--neutre-bg);
+            transition: background 0.18s ease;
+        }
+
+        .bascule-piste i {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--muted);
+            transition: left 0.18s ease, background 0.18s ease;
+        }
+
+        .bascule[aria-pressed="true"] .bascule-piste {
+            background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+            border-color: transparent;
+        }
+
+        .bascule[aria-pressed="true"] .bascule-piste i {
+            left: 21px;
+            background: #ffffff;
+        }
+
+        /* Avance : repliable via <details> natif, aucun JS. */
+        .param-resume {
+            list-style: none;
+            cursor: pointer;
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .param-resume::-webkit-details-marker {
+            display: none;
+        }
+
+        .param-resume strong {
+            display: block;
+            font-family: 'Manrope', system-ui, sans-serif;
+            font-size: 16.5px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--titre);
+        }
+
+        .param-resume .subtitle {
+            margin-top: 3px;
+        }
+
+        .param-resume .icone-nav {
+            margin-left: auto;
+            flex: 0 0 18px;
+            color: var(--muted);
+            transition: transform 0.2s ease;
+        }
+
+        details[open] .param-resume .icone-nav {
+            transform: rotate(180deg);
+        }
+
+        details.param-carte .param-corps {
+            padding-top: 0;
+        }
+
+        .param-tech {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 13px 0;
+            border-top: 1px solid var(--border);
             font-size: 12.5px;
             color: var(--muted);
         }
 
-        .reglage-valeur {
-            margin-left: auto;
-            font-size: 12px;
+        .param-tech:first-child {
+            border-top: 0;
+        }
+
+        .param-tech strong {
+            color: var(--titre);
             font-weight: 700;
-            color: var(--muted);
+        }
+
+        .param-etat {
+            margin-left: auto;
+            font-family: 'IBM Plex Mono', Consolas, monospace;
+            font-size: 11.5px;
             white-space: nowrap;
         }
 
-        .reglage > .icone-nav:last-child {
-            flex: 0 0 18px;
-            width: 18px;
-            height: 18px;
-            color: var(--muted);
+        .param-puce {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--success);
+            flex: 0 0 7px;
         }
 
-        .panel-apparence {
-            margin-top: 22px;
+        .param-puce-off {
+            background: var(--muted);
         }
+
+        @media (max-width: 900px) {
+            .param-layout {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .param-onglets {
+                position: static;
+                grid-auto-flow: column;
+                grid-auto-columns: max-content;
+                overflow-x: auto;
+                padding-bottom: 4px;
+            }
+
+            .param-sep {
+                display: none;
+            }
+
+            .param-ligne {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 11px;
+            }
+
+            .param-fin {
+                margin-left: 0;
+            }
+        }
+
 
         .themes {
             display: grid;
@@ -3299,6 +3550,26 @@
 
             document.addEventListener('submit', function () {
                 demarrerBarre();
+            });
+        })();
+
+        (function () {
+            // Bascule 'menu reduit' de la page Parametres. Elle ne duplique
+            // aucune logique : elle actionne le bouton chevron du menu, qui
+            // reste la source unique (classe sur body + localStorage + icone).
+            var bascule = document.querySelector('[data-bascule-menu]');
+            var boutonMenu = document.getElementById('btn-reduire-menu');
+            if (!bascule || !boutonMenu) { return; }
+
+            function refleter() {
+                bascule.setAttribute('aria-pressed',
+                    document.body.classList.contains('sidebar-reduite') ? 'true' : 'false');
+            }
+
+            refleter();
+            bascule.addEventListener('click', function () {
+                boutonMenu.click();
+                refleter();
             });
         })();
 

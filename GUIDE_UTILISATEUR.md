@@ -159,8 +159,20 @@ L'entrée **Paramètres** du menu regroupe ce qui relève du réglage :
   l'historique. Cette section reste également accessible directement depuis le
   menu, car c'est une action courante.
 - **Apparence** : choisir le thème **clair**, **sombre**, ou **Système** pour
-  suivre le réglage de votre appareil. Ce choix ne concerne que l'appareil sur
-  lequel vous le faites — il n'est pas enregistré sur votre compte.
+  suivre le réglage de votre appareil, et réduire le menu latéral. Ces choix ne
+  concernent que l'appareil sur lequel vous les faites — ils ne sont pas
+  enregistrés sur votre compte.
+- **Données** (administrateur) : importer des utilisateurs depuis Excel,
+  télécharger le modèle, exporter les utilisateurs et les rapports.
+- **Avancé** : section repliée qui ne règle rien. Elle indique quels services
+  externes la plateforme utilise et signale que l'envoi d'e-mails n'est pas
+  configuré — c'est la raison pour laquelle les mots de passe générés
+  s'affichent à l'écran au lieu d'être envoyés.
+
+Dans la section Sécurité, le bouton **Déconnecter partout** ferme toutes vos
+sessions, y compris celle en cours : vous devrez vous reconnecter. Utilisez-le
+si vous pensez que votre compte est compromis, ou si vous avez oublié de vous
+déconnecter sur un poste partagé. Il n'affecte que **votre** compte.
 
 ## Assuré
 
