@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load icones %}
+
+{% block title %}Paramètres{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Paramètres</h1>
+        <p class="subtitle">Votre compte, votre sécurité et l'apparence de l'application.</p>
+    </div>
+</section>
+
+<section class="reglages">
+    <a class="reglage" href="{% url 'mon_compte' %}">
+        <span class="reglage-icone">{% icone "user-circle" %}</span>
+        <span class="reglage-texte">
+            <strong>Mon compte</strong>
+            <span>Nom, prénom, téléphone et adresse de connexion.</span>
+        </span>
+        <span class="reglage-valeur">{{ user.get_full_name|default:user.email }}</span>
+        {% icone "chevron-right" %}
+    </a>
+
+    <a class="reglage" href="{% url 'changer_mot_de_passe' %}">
+        <span class="reglage-icone">{% icone "lock" %}</span>
+        <span class="reglage-texte">
+            <strong>Sécurité</strong>
+            <span>Changer votre mot de passe.</span>
+        </span>
+        <span class="reglage-valeur">{{ current_role_label }}</span>
+        {% icone "chevron-right" %}
+    </a>
+
+    {% if current_role == "ADMIN" %}
+    <a class="reglage" href="{% url 'envoyer_notification' %}">
+        <span class="reglage-icone">{% icone "bell" %}</span>
+        <span class="reglage-texte">
+            <strong>Notifications</strong>
+            <span>Envoyer un message aux utilisateurs et consulter l'historique.</span>
+        </span>
+        <span class="reglage-valeur">{{ notifications_non_lues }} non lue{{ notifications_non_lues|pluralize }}</span>
+        {% icone "chevron-right" %}
+    </a>
+    {% endif %}
+</section>
+
+{% comment %}
+Apparence : reglage purement local (aucune donnee serveur, aucune requete).
+Le choix est conserve dans localStorage, comme l'etat du menu reduit.
+{% endcomment %}
+<section class="panel panel-apparence">
+    <div class="panel-header">
+        <div>
+            <h2>Apparence</h2>
+            <p class="subtitle">Ce réglage ne concerne que cet appareil.</p>
+        </div>
+    </div>
+    <div class="themes" role="radiogroup" aria-label="Thème de l'interface">
+        <button type="button" class="theme" data-theme-choix="clair" role="radio" aria-checked="false">
+            <span class="theme-apercu theme-apercu-clair" aria-hidden="true"><i></i><i></i></span>
+            <strong>Clair</strong>
+            <span>Le thème par défaut.</span>
+        </button>
+        <button type="button" class="theme" data-theme-choix="sombre" role="radio" aria-checked="false">
+            <span class="theme-apercu theme-apercu-sombre" aria-hidden="true"><i></i><i></i></span>
+            <strong>Sombre</strong>
+            <span>Confortable en faible luminosité.</span>
+        </button>
+        <button type="button" class="theme" data-theme-choix="systeme" role="radio" aria-checked="false">
+            <span class="theme-apercu theme-apercu-systeme" aria-hidden="true"><i></i><i></i></span>
+            <strong>Système</strong>
+            <span>Suit le réglage de votre appareil.</span>
+        </button>
+    </div>
+</section>
+{% endblock %}

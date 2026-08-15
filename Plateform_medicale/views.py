@@ -36,6 +36,7 @@ from .forms import (
     LoginForm,
     MedecinForm,
     MedecinProfilForm,
+    MonCompteForm,
     OrdonnanceForm,
     PaiementReglementForm,
     PatientCreationForm,
@@ -268,6 +269,45 @@ def setup_wizard(request):
         return redirect('post_login_redirect')
 
     return render(request, 'setup_wizard.html', {'form': form})
+
+
+@login_required
+def parametres(request):
+    """Page Parametres : regroupe ce qui releve du reglage et non de l'activite
+    quotidienne. Ouverte aux 4 roles (chacun a un compte, un mot de passe et
+    une preference d'affichage) ; la section Notifications, elle, n'a de sens
+    que pour l'administrateur, seul a pouvoir en envoyer.
+
+    Les entrees restent AUSSI accessibles depuis le menu lateral : envoyer une
+    notification est une action courante pour un administrateur, l'enfouir
+    derriere Parametres rallongerait un chemin frequent.
+    """
+    return render(request, "parametres.html")
+
+
+@login_required
+def mon_compte(request):
+    """Modification par l'utilisateur de ses propres informations.
+
+    Ne permet pas de changer son role (regle metier : le role est stocke en
+    base, jamais choisi par l'utilisateur). Changer l'email exige le mot de
+    passe actuel, cf. MonCompteForm.
+    """
+    form = MonCompteForm(request.POST or None, instance=request.user)
+    if request.method == "POST" and form.is_valid():
+        ancien_email = request.user.email
+        form.save()
+        if form.cleaned_data["email"].lower() != ancien_email.lower():
+            messages.success(
+                request,
+                "Informations enregistrées. Votre adresse de connexion est "
+                f"désormais {form.cleaned_data['email']}.",
+            )
+        else:
+            messages.success(request, "Informations enregistrées.")
+        return redirect("mon_compte")
+
+    return render(request, "mon_compte.html", {"form": form})
 
 
 @login_required

@@ -3063,3 +3063,86 @@ class CompteursFilesAttenteTests(TestCase):
         contexte = self.client.get(reverse('liste_utilisateurs')).context
         self.assertEqual(contexte['nb_prises_en_charge_attente'], 2)
         self.assertEqual(contexte['nb_paiements_non_regles'], 0)
+
+
+class ParametresEtMonCompteTests(TestCase):
+    def setUp(self):
+        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin-param@santesn.sn')
+        self.admin.first_name = 'Awa'
+        self.admin.last_name = 'Ndiaye'
+        self.admin.save()
+        self.client.login(username='admin-param@santesn.sn', password=PASSWORD)
+
+    def test_page_parametres_accessible(self):
+        reponse = self.client.get(reverse('parametres'))
+        self.assertEqual(reponse.status_code, 200)
+        self.assertContains(reponse, 'Mon compte')
+        self.assertContains(reponse, 'Apparence')
+
+    def test_section_notifications_reservee_a_l_admin(self):
+        self.assertContains(self.client.get(reverse('parametres')), 'envoyer')
+        self.client.logout()
+        creer_medecin('medecin-param@santesn.sn')
+        self.client.login(username='medecin-param@santesn.sn', password=PASSWORD)
+        reponse = self.client.get(reverse('parametres'))
+        self.assertEqual(reponse.status_code, 200)
+        self.assertNotContains(reponse, reverse('envoyer_notification'))
+
+    def test_anonyme_redirige(self):
+        self.client.logout()
+        self.assertEqual(self.client.get(reverse('parametres')).status_code, 302)
+        self.assertEqual(self.client.get(reverse('mon_compte')).status_code, 302)
+
+    def test_modifier_son_nom_sans_mot_de_passe(self):
+        reponse = self.client.post(reverse('mon_compte'), {
+            'first_name': 'Awa', 'last_name': 'Sarr',
+            'phone_number': '770000009', 'email': self.admin.email,
+            'mot_de_passe_actuel': '',
+        })
+        self.assertEqual(reponse.status_code, 302)
+        self.admin.refresh_from_db()
+        self.assertEqual(self.admin.last_name, 'Sarr')
+
+    def test_changer_email_exige_le_mot_de_passe(self):
+        reponse = self.client.post(reverse('mon_compte'), {
+            'first_name': 'Awa', 'last_name': 'Ndiaye',
+            'phone_number': '', 'email': 'nouvelle@santesn.sn',
+            'mot_de_passe_actuel': '',
+        })
+        self.assertEqual(reponse.status_code, 200)
+        self.admin.refresh_from_db()
+        self.assertEqual(self.admin.email, 'admin-param@santesn.sn')
+
+    def test_changer_email_avec_le_bon_mot_de_passe(self):
+        reponse = self.client.post(reverse('mon_compte'), {
+            'first_name': 'Awa', 'last_name': 'Ndiaye',
+            'phone_number': '', 'email': 'nouvelle@santesn.sn',
+            'mot_de_passe_actuel': PASSWORD,
+        })
+        self.assertEqual(reponse.status_code, 302)
+        self.admin.refresh_from_db()
+        self.assertEqual(self.admin.email, 'nouvelle@santesn.sn')
+
+    def test_email_deja_pris_refuse(self):
+        creer_utilisateur(User.Role.MEDECIN, 'occupe@santesn.sn')
+        reponse = self.client.post(reverse('mon_compte'), {
+            'first_name': 'Awa', 'last_name': 'Ndiaye',
+            'phone_number': '', 'email': 'occupe@santesn.sn',
+            'mot_de_passe_actuel': PASSWORD,
+        })
+        self.assertEqual(reponse.status_code, 200)
+        self.admin.refresh_from_db()
+        self.assertEqual(self.admin.email, 'admin-param@santesn.sn')
+
+    def test_on_ne_peut_pas_changer_son_role(self):
+        self.client.post(reverse('mon_compte'), {
+            'first_name': 'Awa', 'last_name': 'Ndiaye', 'phone_number': '',
+            'email': self.admin.email, 'role': User.Role.MEDECIN,
+        })
+        self.admin.refresh_from_db()
+        self.assertEqual(self.admin.role, User.Role.ADMIN)
+
+    def test_selecteur_de_theme_present(self):
+        reponse = self.client.get(reverse('parametres'))
+        for choix in ('clair', 'sombre', 'systeme'):
+            self.assertContains(reponse, f'data-theme-choix="{choix}"')
