@@ -158,6 +158,32 @@ Pharmacien qui s'en chargent.
   comptes, l import est *tout ou rien* — une seule ligne en erreur annule
   l ensemble, et les erreurs sont listées ligne par ligne.
 
+### Journal d'activité
+
+Qui a fait quoi, et quand. Le journal enregistre les **décisions
+administratives** et les **suppressions** : création, modification,
+activation, désactivation et suppression de comptes, réinitialisation de mot
+de passe, déblocage manuel, suppressions métier (assuré, médecin, service,
+prestataire, plan, prise en charge), décision sur une prise en charge,
+règlement d'un paiement et imports en masse.
+
+Trois filtres : recherche (auteur, objet concerné ou détail), type d'action et
+date.
+
+**Le journal n'est modifiable par personne**, pas même par un administrateur —
+un journal qu'on peut retoucher ne prouve plus rien. Les entrées survivent à
+la suppression de ce qu'elles décrivent : c'est justement l'intérêt. Si le
+compte de l'auteur est supprimé, son nom reste affiché, avec la mention
+*compte supprimé*.
+
+**Ce que le journal n'enregistre pas**, et pourquoi : les connexions et la
+navigation (ce serait du bruit, et les blocages ont déjà leur écran), les
+consultations, ordonnances et délivrances (chacune garde déjà son médecin ou
+son pharmacien et sa date), les changements de statut de rendez-vous (le
+travail quotidien du médecin noierait le reste), et la création de fiches
+métier ordinaires (la fiche créée est elle-même la trace). Créer un **compte**
+fait exception : cela accorde un accès, donc c'est enregistré.
+
 ### Rapports
 
 Graphiques (consultations — bascule jour / mois / année, répartitions par

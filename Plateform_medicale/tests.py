@@ -18,6 +18,7 @@ from django.utils import timezone
 from .models import (
     Consultation,
     Delivrance,
+    JournalActivite,
     Medecin,
     Notification,
     Ordonnance,
@@ -4607,3 +4608,228 @@ class FiltresListesNonAdminTests(TestCase):
         reponse = self.client.get(reverse('mes_patients'))
         self.assertNotContains(reponse, 'class="filtres"')
         self.assertContains(reponse, 'recherche-patients-champ')
+
+
+class JournalActiviteTests(TestCase):
+    """Journal des DECISIONS administratives et des DESTRUCTIONS.
+
+    Un journal incomplet est pire qu'aucun journal : il donne l'illusion
+    d'une trace exhaustive. Ces tests couvrent donc les deux sens -- ce qui
+    DOIT etre journalise, et ce qui ne doit PAS l'etre."""
+
+    def setUp(self):
+        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin-journal@santesn.sn')
+        self.admin.first_name = 'Awa'
+        self.admin.last_name = 'Ndiaye'
+        self.admin.save()
+        self.client.login(username='admin-journal@santesn.sn', password=PASSWORD)
+
+    def _entrees(self, **filtres):
+        return list(JournalActivite.objects.filter(**filtres))
+
+    # --- Ce qui doit etre journalise -------------------------------------
+
+    def test_suppression_dutilisateur(self):
+        cible = creer_utilisateur(User.Role.ASSURE, 'a-supprimer@santesn.sn')
+        self.client.post(reverse('supprimer_utilisateur', args=[cible.pk]))
+        entree = JournalActivite.objects.get(action=JournalActivite.Action.SUPPRESSION)
+        self.assertIn('a-supprimer@santesn.sn', entree.objet)
+        self.assertEqual(entree.auteur_libelle, 'Awa Ndiaye')
+
+    def test_lentree_survit_a_la_suppression_de_son_objet(self):
+        # Le coeur du modele : du texte fige, pas de cle etrangere. Une cle
+        # en CASCADE aurait efface l'entree en meme temps que l'objet -- or
+        # c'est precisement la suppression qu'on veut garder.
+        cible = creer_utilisateur(User.Role.ASSURE, 'efface@santesn.sn')
+        self.client.post(reverse('supprimer_utilisateur', args=[cible.pk]))
+        self.assertFalse(User.objects.filter(pk=cible.pk).exists())
+        self.assertTrue(JournalActivite.objects.filter(objet__contains='efface@santesn.sn').exists())
+
+    def test_lentree_survit_a_la_suppression_de_son_auteur(self):
+        # Supprimer le compte d'un administrateur ne doit pas effacer la
+        # trace de ce qu'il a fait : la cle passe a NULL, le libelle reste.
+        cible = creer_utilisateur(User.Role.ASSURE, 'cible@santesn.sn')
+        self.client.post(reverse('supprimer_utilisateur', args=[cible.pk]))
+        self.admin.delete()
+        entree = JournalActivite.objects.get(objet__contains='cible@santesn.sn')
+        self.assertIsNone(entree.auteur)
+        self.assertEqual(entree.auteur_libelle, 'Awa Ndiaye')
+
+    def test_desactivation_puis_activation(self):
+        cible = creer_utilisateur(User.Role.MEDECIN, 'bascule@santesn.sn')
+        self.client.post(reverse('activer_desactiver_utilisateur', args=[cible.pk]))
+        self.client.post(reverse('activer_desactiver_utilisateur', args=[cible.pk]))
+        actions = list(JournalActivite.objects.order_by('pk').values_list('action', flat=True))
+        self.assertEqual(actions, [JournalActivite.Action.DESACTIVATION,
+                                   JournalActivite.Action.ACTIVATION])
+
+    def test_reinitialisation_de_mot_de_passe(self):
+        cible = creer_utilisateur(User.Role.ASSURE, 'oubli@santesn.sn')
+        self.client.post(reverse('reinitialiser_mot_de_passe', args=[cible.pk]))
+        self.assertEqual(len(self._entrees(action=JournalActivite.Action.MOT_DE_PASSE)), 1)
+
+    def test_deblocage_manuel(self):
+        cible = creer_utilisateur(User.Role.ASSURE, 'bloque@santesn.sn')
+        TentativeConnexion.objects.create(
+            email='bloque@santesn.sn', tentatives=TentativeConnexion.MAX_TENTATIVES)
+        self.client.post(reverse('debloquer_compte', args=[cible.pk]))
+        entree = JournalActivite.objects.get(action=JournalActivite.Action.DEBLOCAGE)
+        self.assertIn('bloque@santesn.sn', entree.objet)
+
+    def test_deblocage_sans_effet_nest_pas_journalise(self):
+        # Le compte n'etait deja plus bloque : rien ne s'est passe, donc rien
+        # a tracer. Une entree ici ferait croire a une intervention.
+        cible = creer_utilisateur(User.Role.ASSURE, 'jamais-bloque@santesn.sn')
+        self.client.post(reverse('debloquer_compte', args=[cible.pk]))
+        self.assertEqual(self._entrees(action=JournalActivite.Action.DEBLOCAGE), [])
+
+    def test_decision_sur_une_prise_en_charge(self):
+        # C'est ce statut qui decide si le patient paie 10% ou 100% :
+        # l'auteur de la decision doit rester connu.
+        patient = creer_patient(nom='Ba', prenom='Fatou')
+        prise = PriseEnCharge.objects.create(patient=patient, motif='Suivi')
+        self.client.post(reverse('modifier_prise_en_charge', args=[prise.pk]),
+                         {'patient': patient.pk, 'motif': 'Suivi', 'statut': 'validee'})
+        entree = JournalActivite.objects.get(action=JournalActivite.Action.DECISION)
+        self.assertIn('En attente', entree.details)
+        self.assertIn('Validée', entree.details)
+
+    def test_modification_sans_changement_de_statut_nest_pas_une_decision(self):
+        patient = creer_patient(nom='Sy', prenom='Modou')
+        prise = PriseEnCharge.objects.create(patient=patient, motif='Avant')
+        self.client.post(reverse('modifier_prise_en_charge', args=[prise.pk]),
+                         {'patient': patient.pk, 'motif': 'Après', 'statut': 'en_attente'})
+        self.assertEqual(self._entrees(action=JournalActivite.Action.DECISION), [])
+        self.assertEqual(len(self._entrees(action=JournalActivite.Action.MODIFICATION)), 1)
+
+    def test_reglement_dun_paiement(self):
+        # Paiement porte date_reglement et mode_reglement, mais PAS qui l'a
+        # marque regle : le journal est la seule trace de l'auteur.
+        patient = creer_patient(nom='Fall', prenom='Ndeye')
+        medecin = creer_medecin('medecin-journal@santesn.sn')
+        service = ServiceMedical.objects.create(nom='Consultation', prix=Decimal('10000'))
+        consultation = Consultation.objects.create(
+            patient=patient, medecin=medecin, service=service,
+            date_consultation=timezone.now(), diagnostic='Test')
+        paiement = Paiement.calculer_pour(consultation)
+        paiement.save()
+        self.client.post(reverse('marquer_paiement_regle', args=[paiement.pk]),
+                         {'mode_reglement': Paiement.ModeReglement.ESPECES})
+        entree = JournalActivite.objects.get(action=JournalActivite.Action.REGLEMENT)
+        self.assertIn('Espèces', entree.details)
+
+    def test_toutes_les_suppressions_metier_sont_journalisees(self):
+        """Couverture : un journal partiel donnerait l'illusion d'une trace
+        exhaustive. Chaque ecran de suppression doit laisser une entree."""
+        patient = creer_patient(nom='Kane', prenom='Awa')
+        medecin = creer_medecin('medecin-suppr@santesn.sn')
+        cas = [
+            ('supprimer_prise_en_charge',
+             PriseEnCharge.objects.create(patient=patient, motif='X').pk),
+            ('supprimer_prestataire',
+             Prestataire.objects.create(nom='Hopital X',
+                                        type_prestataire=Prestataire.Type.HOPITAL).pk),
+            ('supprimer_plan_couverture',
+             PlanCouverture.objects.create(nom='Plan X',
+                                           taux_couverture=Decimal('50')).pk),
+            ('supprimer_service',
+             ServiceMedical.objects.create(nom='Service X', prix=Decimal('1')).pk),
+            ('supprimer_medecin', medecin.pk),
+            ('supprimer_patient', patient.pk),
+        ]
+        for nom_vue, pk in cas:
+            JournalActivite.objects.all().delete()
+            self.client.post(reverse(nom_vue, args=[pk]))
+            self.assertEqual(
+                len(self._entrees(action=JournalActivite.Action.SUPPRESSION)), 1, nom_vue)
+
+    # --- Ce qui ne doit PAS etre journalise -------------------------------
+
+    def test_la_consultation_decrans_ne_laisse_aucune_trace(self):
+        for nom in ('dashboard', 'liste_utilisateurs', 'rapports', 'journal_activite'):
+            self.client.get(reverse(nom))
+        self.assertEqual(JournalActivite.objects.count(), 0)
+
+    def test_les_actes_de_soin_ne_sont_pas_journalises(self):
+        """Une Consultation porte deja son medecin et sa date, une Delivrance
+        son pharmacien : les reecrire ici les dupliquerait sans rien
+        apprendre, et noierait les entrees qui comptent."""
+        patient = creer_patient(nom='Diop', prenom='Alioune')
+        medecin = creer_medecin('medecin-actes@santesn.sn')
+        ordonnance = creer_ordonnance(patient, medecin)
+        pharmacien = creer_pharmacien('pharma-actes@santesn.sn')
+        self.client.logout()
+        self.client.login(username='pharma-actes@santesn.sn', password=PASSWORD)
+        self.client.post(reverse('valider_delivrance', args=[ordonnance.pk]),
+                         {'code_qr': ordonnance.code_qr})
+        self.assertEqual(JournalActivite.objects.count(), 0)
+
+    # --- L'ecran ----------------------------------------------------------
+
+    def test_ecran_reserve_a_l_administrateur(self):
+        for role, email in (
+            (User.Role.MEDECIN, 'med-journal@santesn.sn'),
+            (User.Role.ASSURE, 'assure-journal@santesn.sn'),
+            (User.Role.PHARMACIEN, 'pharma-journal@santesn.sn'),
+        ):
+            self.client.logout()
+            creer_utilisateur(role, email)
+            self.client.login(username=email, password=PASSWORD)
+            self.assertEqual(
+                self.client.get(reverse('journal_activite')).status_code, 403, role)
+
+    def test_ecran_en_lecture_seule(self):
+        cible = creer_utilisateur(User.Role.ASSURE, 'trace@santesn.sn')
+        self.client.post(reverse('activer_desactiver_utilisateur', args=[cible.pk]))
+        contenu = self.client.get(reverse('journal_activite')).content.decode()
+        self.assertNotIn('class="action-ligne"', contenu)
+        self.assertNotIn('confirmer_suppression', contenu)
+
+    def test_filtres_action_recherche_et_date(self):
+        cible = creer_utilisateur(User.Role.ASSURE, 'filtrable@santesn.sn')
+        self.client.post(reverse('activer_desactiver_utilisateur', args=[cible.pk]))
+        self.client.post(reverse('reinitialiser_mot_de_passe', args=[cible.pk]))
+
+        def lignes(**params):
+            return list(self.client.get(reverse('journal_activite'), params).context['entrees'])
+
+        self.assertEqual(len(lignes()), 2)
+        self.assertEqual(len(lignes(action=JournalActivite.Action.MOT_DE_PASSE)), 1)
+        self.assertEqual(len(lignes(action='PAS_UNE_ACTION')), 2)
+        self.assertEqual(len(lignes(q='filtrable')), 2)
+        self.assertEqual(len(lignes(q='introuvable')), 0)
+        aujourdhui = timezone.localtime(timezone.now()).date()
+        self.assertEqual(len(lignes(date=aujourdhui.isoformat())), 2)
+        veille = (aujourdhui - datetime.timedelta(days=1)).isoformat()
+        self.assertEqual(len(lignes(date=veille)), 0)
+        self.assertEqual(len(lignes(date='pas-une-date')), 2)
+
+    def test_admin_django_refuse_toute_ecriture_sur_le_journal(self):
+        """Un journal d'audit qu'un administrateur peut retoucher ne vaut
+        rien : /admin/ enregistre le modele en lecture seule stricte."""
+        from django.contrib import admin as django_admin
+        from .models import JournalActivite as Modele
+        options = django_admin.site._registry[Modele]
+        requete = type('R', (), {'user': self.admin})()
+        self.assertFalse(options.has_add_permission(requete))
+        self.assertFalse(options.has_change_permission(requete))
+        self.assertFalse(options.has_delete_permission(requete))
+
+    def test_raccourci_depuis_les_comptes_bloques(self):
+        # Un lien vers le journal DEJA FILTRE : il ne debloque rien et ne
+        # duplique aucune fonctionnalite.
+        reponse = self.client.get(reverse('parametres_section', args=['securite']))
+        self.assertContains(reponse, f"{reverse('journal_activite')}?action=DEBLOCAGE")
+
+    def test_entree_de_menu_presente(self):
+        self.assertContains(self.client.get(reverse('dashboard')),
+                            reverse('journal_activite'))
+
+    def test_pagination(self):
+        for i in range(TAILLE_PAGE_LISTE + 2):
+            JournalActivite.objects.create(
+                auteur=self.admin, auteur_libelle='Awa Ndiaye',
+                action=JournalActivite.Action.MODIFICATION, objet=f'Objet {i}')
+        page = self.client.get(reverse('journal_activite')).context['entrees']
+        self.assertEqual(len(page), TAILLE_PAGE_LISTE)
+        self.assertTrue(page.has_next())

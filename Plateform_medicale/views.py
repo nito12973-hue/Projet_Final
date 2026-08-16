@@ -63,6 +63,7 @@ from .forms import (
 from .models import (
     Consultation,
     Delivrance,
+    JournalActivite,
     Medecin,
     Notification,
     Ordonnance,
@@ -113,6 +114,29 @@ def _trier(request, queryset, champs_autorises, defaut):
     if isinstance(defaut, (list, tuple)):
         return queryset.order_by(*defaut)
     return queryset.order_by(defaut)
+
+
+def journaliser(request, action, objet, details=""):
+    """Enregistre une entree du journal d'activite.
+
+    A appeler APRES que l'action a reussi, jamais avant : une entree qui
+    decrit une action qui a echoue serait pire que pas d'entree du tout.
+
+    L'auteur est fige en texte en meme temps qu'il est reference : supprimer
+    le compte d'un administrateur ne doit pas effacer la trace de ce qu'il a
+    fait (la cle passe a NULL, le libelle reste).
+    """
+    utilisateur = request.user if request.user.is_authenticated else None
+    JournalActivite.objects.create(
+        auteur=utilisateur,
+        auteur_libelle=(
+            (utilisateur.get_full_name() or utilisateur.email)[:254]
+            if utilisateur else "—"
+        ),
+        action=action,
+        objet=objet[:200],
+        details=details[:300],
+    )
 
 
 def _filtrer_rendez_vous(request, rendez_vous):
@@ -433,6 +457,7 @@ def debloquer_compte(request, pk):
     utilisateur = get_object_or_404(User, pk=pk)
     supprimees = TentativeConnexion.objects.filter(email=utilisateur.email.lower()).delete()[0]
     if supprimees:
+        journaliser(request, JournalActivite.Action.DEBLOCAGE, f"Utilisateur {utilisateur.email}")
         messages.success(
             request,
             f"Le compte de {utilisateur} peut de nouveau se connecter.",
@@ -1261,6 +1286,58 @@ def liste_consultations(request):
 
 
 @admin_required
+def journal_activite(request):
+    """Journal d'activite : qui a fait quoi, et quand. Lecture seule.
+
+    Il ne vit PAS dans Parametres : Parametres = reglages, et un journal ne
+    se regle pas, il se consulte. Il n'y a d'ailleurs rien a y modifier --
+    un journal d'audit qu'un administrateur pourrait retoucher ne vaudrait
+    rien. Aucune action d'ecriture ici, et l'enregistrement dans /admin/ est
+    en lecture seule lui aussi (ni ajout, ni modification, ni suppression).
+
+    Ce qui n'y figure pas est aussi important que ce qui y figure : voir le
+    perimetre documente sur JournalActivite (models.py).
+    """
+    entrees = JournalActivite.objects.select_related("auteur")
+
+    recherche = request.GET.get("q", "").strip()
+    if recherche:
+        entrees = entrees.filter(
+            Q(auteur_libelle__icontains=recherche)
+            | Q(objet__icontains=recherche)
+            | Q(details__icontains=recherche)
+        )
+
+    action = request.GET.get("action", "")
+    if action in JournalActivite.Action.values:
+        entrees = entrees.filter(action=action)
+    else:
+        action = ""
+
+    date_filtre = request.GET.get("date", "")
+    if date_filtre:
+        try:
+            date_valide = datetime.date.fromisoformat(date_filtre)
+        except ValueError:
+            date_filtre = ""
+        else:
+            entrees = entrees.filter(date__date=date_valide)
+
+    entrees = _trier(request, entrees, ["date", "auteur_libelle", "action"], "-date")
+    return render(
+        request,
+        "journal_activite.html",
+        {
+            "entrees": _paginer(request, entrees),
+            "recherche": recherche,
+            "action_choisie": action,
+            "date_choisie": date_filtre,
+            "actions": JournalActivite.Action.choices,
+        },
+    )
+
+
+@admin_required
 def ajouter_prise_en_charge(request):
     """A la creation, le statut est toujours 'en_attente' : le champ n'est pas propose."""
     if request.method == "POST":
@@ -1282,9 +1359,18 @@ def ajouter_prise_en_charge(request):
 def modifier_prise_en_charge(request, pk):
     prise_en_charge = get_object_or_404(PriseEnCharge, pk=pk)
     if request.method == "POST":
+        ancien_statut = prise_en_charge.get_statut_display()
         form = PriseEnChargeForm(request.POST, instance=prise_en_charge)
         if form.is_valid():
-            form.save()
+            prise_en_charge = form.save()
+            nouveau_statut = prise_en_charge.get_statut_display()
+            journaliser(
+                request,
+                JournalActivite.Action.DECISION if nouveau_statut != ancien_statut else JournalActivite.Action.MODIFICATION,
+                f"Prise en charge : {prise_en_charge}",
+                "" if nouveau_statut == ancien_statut
+                else f"statut : {ancien_statut} -> {nouveau_statut}",
+            )
             messages.success(request, "Prise en charge modifiée.")
             return redirect("liste_prises_en_charge")
     else:
@@ -1300,6 +1386,7 @@ def modifier_prise_en_charge(request, pk):
 def supprimer_prise_en_charge(request, pk):
     prise_en_charge = get_object_or_404(PriseEnCharge, pk=pk)
     if request.method == "POST":
+        journaliser(request, JournalActivite.Action.SUPPRESSION, f"Prise en charge : {prise_en_charge}")
         prise_en_charge.delete()
         messages.success(request, "Prise en charge supprimée.")
         return redirect("liste_prises_en_charge")
@@ -1407,6 +1494,11 @@ def marquer_paiement_regle(request, pk):
             paiement.statut = Paiement.Statut.REGLE
             paiement.date_reglement = timezone.now()
             paiement.save()
+            journaliser(
+                request, JournalActivite.Action.REGLEMENT,
+                f"Paiement #{paiement.pk} · {paiement.consultation.patient}",
+                f"{paiement.montant_part_patient} F CFA · {paiement.get_mode_reglement_display()}",
+            )
             messages.success(request, "Paiement marqué comme réglé.", extra_tags="succes-critique")
             return redirect("liste_paiements")
     else:
@@ -1521,6 +1613,7 @@ def modifier_prestataire(request, pk):
 def supprimer_prestataire(request, pk):
     prestataire = get_object_or_404(Prestataire, pk=pk)
     if request.method == "POST":
+        journaliser(request, JournalActivite.Action.SUPPRESSION, f"Prestataire : {prestataire}")
         prestataire.delete()
         messages.success(request, "Prestataire supprimé.")
         return redirect("liste_prestataires")
@@ -1564,6 +1657,8 @@ def modifier_plan_couverture(request, pk):
 def supprimer_plan_couverture(request, pk):
     plan = get_object_or_404(PlanCouverture, pk=pk)
     if request.method == "POST":
+        journaliser(request, JournalActivite.Action.SUPPRESSION, f"Plan de couverture : {plan}",
+                    f"{plan.beneficiaires.count()} bénéficiaire(s) perdent ce plan")
         plan.delete()
         messages.success(request, "Plan de couverture supprimé.")
         return redirect("liste_plans_couverture")
@@ -1638,6 +1733,10 @@ def supprimer_patient(request, pk):
         if patient.user:
             patient.user.is_active = False
             patient.user.save(update_fields=["is_active"])
+        journaliser(
+            request, JournalActivite.Action.SUPPRESSION, f"Assuré : {patient}",
+            "compte de connexion désactivé" if patient.user else "sans compte de connexion",
+        )
         patient.delete()
         messages.success(request, "Assuré supprimé.")
         return redirect("liste_patients")
@@ -1664,6 +1763,10 @@ def supprimer_medecin(request, pk):
         if medecin.user:
             medecin.user.is_active = False
             medecin.user.save(update_fields=["is_active"])
+        journaliser(
+            request, JournalActivite.Action.SUPPRESSION, f"Médecin : {medecin}",
+            "compte de connexion désactivé" if medecin.user else "sans compte de connexion",
+        )
         medecin.delete()
         messages.success(request, "Médecin supprimé.")
         return redirect("liste_medecins")
@@ -1707,6 +1810,7 @@ def modifier_pharmacien(request, pk):
 def supprimer_service(request, pk):
     service = get_object_or_404(ServiceMedical, pk=pk)
     if request.method == "POST":
+        journaliser(request, JournalActivite.Action.SUPPRESSION, f"Service : {service}")
         service.delete()
         messages.success(request, "Service supprimé.")
         return redirect("liste_services")
@@ -2023,6 +2127,14 @@ def importer_utilisateurs_excel(request):
 
                         if not erreurs:
                             resultats = _creer_comptes_import_utilisateurs(donnees_valides)
+                            # Une seule entree pour l'operation, pas une par
+                            # compte : l'import est tout ou rien, c'est le
+                            # geste qu'on trace, pas chacun de ses effets.
+                            journaliser(
+                                request, JournalActivite.Action.IMPORT,
+                                "Import d'utilisateurs",
+                                f"{len(resultats)} compte(s) créé(s)",
+                            )
                             return render(
                                 request, "resultat_import_utilisateurs.html", {"resultats": resultats}
                             )
@@ -2062,6 +2174,10 @@ def ajouter_utilisateur(request):
         form = UtilisateurCreationForm(request.POST)
         if form.is_valid():
             utilisateur = form.save()
+            # Creer un compte accorde un acces : c'est une decision de
+            # securite, pas une creation metier ordinaire.
+            journaliser(request, JournalActivite.Action.CREATION, f"Utilisateur {utilisateur.email}",
+                        f"role : {utilisateur.get_role_display()}")
             return render(
                 request,
                 "mot_de_passe_genere.html",
@@ -2086,9 +2202,16 @@ def modifier_utilisateur(request, pk):
             if utilisateur.pk == request.user.pk and nouveau_role != request.user.role:
                 form.add_error("role", "Vous ne pouvez pas modifier votre propre rôle.")
             else:
+                ancien_role = utilisateur.get_role_display()
                 utilisateur_modifie = form.save()
                 lier_fiche_medecin(utilisateur_modifie)
                 lier_fiche_pharmacien(utilisateur_modifie)
+                nouveau = utilisateur_modifie.get_role_display()
+                journaliser(
+                    request, JournalActivite.Action.MODIFICATION,
+                    f"Utilisateur {utilisateur_modifie.email}",
+                    "" if nouveau == ancien_role else f"role : {ancien_role} -> {nouveau}",
+                )
                 messages.success(request, "Utilisateur modifié avec succès.")
                 return redirect("liste_utilisateurs")
     else:
@@ -2128,6 +2251,11 @@ def activer_desactiver_utilisateur(request, pk):
 
     utilisateur.is_active = not utilisateur.is_active
     utilisateur.save(update_fields=["is_active"])
+    journaliser(
+        request,
+        JournalActivite.Action.ACTIVATION if utilisateur.is_active else JournalActivite.Action.DESACTIVATION,
+        f"Utilisateur {utilisateur.email}",
+    )
     if utilisateur.is_active:
         messages.success(request, f"Compte de {utilisateur} activé.")
     else:
@@ -2142,6 +2270,7 @@ def reinitialiser_mot_de_passe(request, pk):
         nouveau_mot_de_passe = generer_mot_de_passe()
         utilisateur.set_password(nouveau_mot_de_passe)
         utilisateur.save(update_fields=["password"])
+        journaliser(request, JournalActivite.Action.MOT_DE_PASSE, f"Utilisateur {utilisateur.email}")
         return render(
             request,
             "mot_de_passe_genere.html",
@@ -2162,6 +2291,10 @@ def supprimer_utilisateur(request, pk):
         return redirect("liste_utilisateurs")
 
     if request.method == "POST":
+        # Journalise AVANT delete() : apres, l'objet n'a plus d'email a citer.
+        # L'entree, elle, survit -- elle ne porte que du texte fige.
+        journaliser(request, JournalActivite.Action.SUPPRESSION, f"Utilisateur {utilisateur.email}",
+                    f"role : {utilisateur.get_role_display()}")
         utilisateur.delete()
         messages.success(request, "Utilisateur supprimé.")
         return redirect("liste_utilisateurs")
@@ -2846,6 +2979,8 @@ def supprimer_ayant_droit(request, pk):
     ayant_droit = get_object_or_404(Patient, pk=pk, assure_principal=patient)
 
     if request.method == "POST":
+        journaliser(request, JournalActivite.Action.SUPPRESSION, f"Ayant droit : {ayant_droit}",
+                    f"rattaché à {patient}")
         ayant_droit.delete()
         messages.success(request, "Ayant droit supprimé.")
         return redirect("liste_ayants_droit")
@@ -3339,6 +3474,11 @@ def importer_reglements_excel(request):
                                     paiement.save(update_fields=[
                                         "statut", "mode_reglement", "date_reglement",
                                     ])
+                            journaliser(
+                                request, JournalActivite.Action.IMPORT,
+                                "Import de règlements",
+                                f"{len(a_regler)} paiement(s) marqué(s) réglé(s)",
+                            )
                             messages.success(
                                 request,
                                 f"{len(a_regler)} règlement(s) enregistré(s).",

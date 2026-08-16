@@ -154,6 +154,48 @@ Fonctionnalités livrées après les 15 phases initiales, hors numérotation :
   grandes villes/communes). Si le lieu est introuvable ou le service indisponible,
   message inline sous le bouton (pas d'alerte navigateur).
 
+## Journal d'activité (livré)
+
+`JournalActivite` (models.py) + écran admin `journal_activite`. Trace **les
+décisions administratives et les destructions** — 17 points d'appel, posés
+via le helper `journaliser(request, action, objet, details)`.
+
+**Ce qui n'y figure pas est aussi réfléchi que ce qui y figure.** Ne pas
+ajouter sans relire cette liste :
+
+- **connexions / navigation** — bruit ; le blocage temporaire a déjà son
+  écran (`TentativeConnexion`) ;
+- **actes de soin** (consultation, ordonnance, délivrance) — une
+  `Consultation` porte déjà son médecin et sa date, une `Delivrance` son
+  pharmacien : les réécrire ici les dupliquerait sans rien apprendre ;
+- **changement de statut d'un rendez-vous** — travail quotidien du médecin,
+  son volume noierait les entrées qui comptent ;
+- **créations métier courantes** (service, prestataire…) — la fiche créée
+  *est* la trace. On journalise la disparition d'un objet, pas sa naissance.
+  **Exception : créer un compte**, qui accorde un accès — décision de
+  sécurité, donc journalisée.
+
+**Texte figé, jamais de clé étrangère vers l'objet concerné.** Une FK en
+CASCADE effacerait l'entrée en même temps que l'objet supprimé — or c'est
+précisément la suppression qu'on veut garder. Même raison pour
+`auteur_libelle`, figé à côté de la clé `auteur` (`SET_NULL`) : supprimer le
+compte d'un admin ne doit pas effacer la trace de ce qu'il a fait. Deux tests
+couvrent ces deux survies.
+
+**Lecture seule partout**, y compris `/admin/` où les trois permissions
+(`add`/`change`/`delete`) sont refusées : un journal d'audit qu'un
+administrateur peut retoucher ne prouve plus rien. Ne pas y ajouter d'action
+d'écriture.
+
+**Journaliser APRÈS le succès, jamais avant** — sauf pour une suppression, où
+l'appel précède `delete()` parce qu'après, l'objet n'a plus de libellé à
+citer. Un déblocage sans effet (compte déjà débloqué) n'écrit rien : une
+entrée ferait croire à une intervention.
+
+Un test vérifie la **couverture** des 6 écrans de suppression : un journal
+partiel donnerait l'illusion d'une trace exhaustive, ce qui est pire que pas
+de journal du tout.
+
 ## Documents de travail (specs / plans)
 
 Les specs et plans d'implémentation générés pendant le développement d'une

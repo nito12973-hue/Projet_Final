@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load formats icones %}
+
+{% block title %}Journal d'activité{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Journal d'activité</h1>
+        <p class="subtitle">Qui a fait quoi, et quand. Lecture seule, non modifiable.</p>
+    </div>
+</section>
+
+<form method="get" class="filtres">
+    <div style="min-width:220px;flex:1;">
+        <label for="q">Recherche</label>
+        <div class="champ-recherche">
+            {% icone "search" %}
+            <input id="q" type="text" name="q" placeholder="Auteur, objet concerné ou détail" value="{{ recherche }}" style="margin-bottom:0;">
+        </div>
+    </div>
+    <div style="min-width:220px;">
+        <label for="action">Action</label>
+        <select id="action" name="action" style="margin-bottom:0;">
+            <option value="">Toutes</option>
+            {% for value, label in actions %}
+            <option value="{{ value }}" {% if value == action_choisie %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div style="min-width:180px;">
+        <label for="date">Date</label>
+        <input id="date" type="date" name="date" value="{{ date_choisie }}" style="margin-bottom:0;">
+    </div>
+    <button type="submit" class="button primary btn">Filtrer</button>
+    {% if recherche or action_choisie or date_choisie %}
+    <a href="{% url 'journal_activite' %}" class="button btn">Réinitialiser</a>
+    {% endif %}
+</form>
+
+{% if entrees %}
+<section class="panel">
+    <table>
+        <thead>
+            <tr>
+                {% entete_tri request.GET "date" "Quand" %}
+                {% entete_tri request.GET "auteur_libelle" "Qui" %}
+                {% entete_tri request.GET "action" "Quoi" %}
+                <th scope="col">Sur quoi</th>
+                <th scope="col">Détail</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entree in entrees %}
+            <tr>
+                <td>{{ entree.date|date:"d/m/Y H:i" }}</td>
+                <td>
+                    {{ entree.auteur_libelle }}
+                    {% comment %}
+                    Le libelle est fige : il survit a la suppression du compte
+                    de son auteur, contrairement a la cle etrangere qui passe
+                    alors a NULL. On le signale plutot que de laisser croire
+                    que le compte existe encore.
+                    {% endcomment %}
+                    {% if not entree.auteur %}<span class="subtitle">· compte supprimé</span>{% endif %}
+                </td>
+                <td><span class="badge {% if entree.action == 'SUPPRESSION' %}refusee{% elif entree.action == 'DESACTIVATION' %}en_attente{% else %}validee{% endif %}">{{ entree.get_action_display }}</span></td>
+                <td>{{ entree.objet }}</td>
+                <td class="subtitle">{{ entree.details|default:"—" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% if entrees.paginator.num_pages > 1 %}
+<nav class="pagination" aria-label="Pagination">
+    {% if entrees.has_previous %}
+    <a href="?{% prefixe_pagination request.GET %}page={{ entrees.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Précédent</a>
+    {% endif %}
+    <span class="pagination-info">Page {{ entrees.number }} sur {{ entrees.paginator.num_pages }}</span>
+    {% if entrees.has_next %}
+    <a href="?{% prefixe_pagination request.GET %}page={{ entrees.next_page_number }}" class="button btn btn-sm">Suivant {% icone "chevron-right" %}</a>
+    {% endif %}
+</nav>
+{% endif %}
+{% else %}
+<div class="etat-vide">
+    {% illustration_vide "file-text" %}
+    <p>{% if recherche or action_choisie or date_choisie %}Aucune entrée ne correspond à ces critères.{% else %}Aucune activité enregistrée pour l'instant.{% endif %}</p>
+</div>
+{% endif %}
+{% endblock %}
