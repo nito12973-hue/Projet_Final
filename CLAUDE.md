@@ -432,15 +432,20 @@ substitué, même si **aucune section n est réservée aujourd hui**). La sectio
 « Général » n affiche plus que la configuration plateforme (langue, fuseau,
 format de date) en **lecture seule**, lue dans `settings.py`.
 
-**Quatre sections : Général, Apparence, Sécurité, Avancé.** Deux ont été
-supprimées et ne doivent pas revenir sans un contenu qui soit vraiment un
-réglage :
+**Trois sections : Général, Apparence, Sécurité.** Trois autres ont disparu et
+ne doivent pas revenir sans un contenu qui soit vraiment un réglage :
 
 - *Notifications* — aucun modèle de préférences n existe.
 - *Données* — ses 6 entrées (2 imports, 3 exports) étaient toutes des actions
   métier **déjà présentes sur leur propre page**. Pire, ses exports ignoraient
   les filtres alors que son sous-titre affirmait le contraire. Vidée de ses
   doublons, la section n avait plus de contenu.
+- *Avancé* — **fusionnée dans Général**, pas supprimée : son panneau
+  « Services externes » y vit désormais. Les deux sections ne portaient plus
+  qu'un seul panneau chacune et disaient la même chose — ce que la plateforme
+  est et ce dont elle dépend, en lecture seule. Une section de plus pour un
+  seul panneau n ajoutait qu un clic, et laissait un grand vide sous
+  « Général ».
 
 La carte « Mon compte » a également quitté « Général » : elle est personnelle,
 donc elle vit dans le menu du compte, où son écran d édition se trouvait déjà.
@@ -662,6 +667,11 @@ Côté non-admin, seuls quatre écrans portent un filtre, chacun répondant à u
 question réelle : `agenda_medecin` et `mes_rendez_vous_assure` (statut +
 période), `mes_ordonnances_assure` (à retirer / déjà retirées),
 `historique_delivrances` (recherche + date).
+
+Côté admin, `liste_medecins` a reçu une recherche (nom, spécialité, email) :
+c'est le seul référentiel qui grandit. `liste_pharmaciens` et
+`liste_plans_couverture` n'en ont **volontairement pas** — quelques lignes
+chacun, un filtre y serait de la quantité. Un test verrouille ces absences.
 
 `_filtrer_rendez_vous` est **partagée** par les deux écrans de rendez-vous.
 **Le tri suit la période** : « à venir » ordonne du plus **proche** au plus
