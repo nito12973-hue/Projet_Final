@@ -41,9 +41,9 @@
             <tr>
                 {% entete_tri request.GET "date_heure" "Date et heure" %}
                 {% entete_tri request.GET "patient__nom" "Patient" %}
-                {% entete_tri request.GET "medecin__nom" "Médecin" %}
-                <th scope="col">Prestataire</th>
-                <th scope="col">Motif</th>
+                {% entete_tri request.GET "medecin__nom" "Médecin" "col-optionnelle" %}
+                <th scope="col" class="col-optionnelle">Prestataire</th>
+                <th scope="col" class="col-optionnelle">Motif</th>
                 {% entete_tri request.GET "statut" "Statut" %}
             </tr>
         </thead>
@@ -52,9 +52,9 @@
             <tr>
                 <td>{{ rdv.date_heure|date:"d/m/Y H:i" }}</td>
                 <td>{{ rdv.patient }}</td>
-                <td>{{ rdv.medecin }}</td>
-                <td>{{ rdv.prestataire|default:"—" }}</td>
-                <td>{{ rdv.motif|default:"—" }}</td>
+                <td class="col-optionnelle">{{ rdv.medecin }}</td>
+                <td class="col-optionnelle">{{ rdv.prestataire|default:"—" }}</td>
+                <td class="col-optionnelle">{{ rdv.motif|default:"—" }}</td>
                 <td><span class="badge {% if rdv.statut == 'CONFIRME' %}validee{% elif rdv.statut == 'ANNULE' %}refusee{% elif rdv.statut == 'DEMANDE' %}en_attente{% endif %}">{{ rdv.get_statut_display }}</span></td>
             </tr>
             {% endfor %}

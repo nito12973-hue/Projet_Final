@@ -48,7 +48,7 @@
                 {% entete_tri request.GET "auteur_libelle" "Qui" %}
                 {% entete_tri request.GET "action" "Quoi" %}
                 <th scope="col">Sur quoi</th>
-                <th scope="col">Détail</th>
+                <th scope="col" class="col-optionnelle">Détail</th>
             </tr>
         </thead>
         <tbody>
@@ -67,7 +67,7 @@
                 </td>
                 <td><span class="badge {% if entree.action == 'SUPPRESSION' %}refusee{% elif entree.action == 'DESACTIVATION' %}en_attente{% else %}validee{% endif %}">{{ entree.get_action_display }}</span></td>
                 <td>{{ entree.objet }}</td>
-                <td class="subtitle">{{ entree.details|default:"—" }}</td>
+                <td class="subtitle col-optionnelle">{{ entree.details|default:"—" }}</td>
             </tr>
             {% endfor %}
         </tbody>

@@ -50,24 +50,24 @@
     <table>
         <thead>
             <tr>
-                {% entete_tri request.GET "id" "N°" %}
+                {% entete_tri request.GET "id" "N°" "col-optionnelle" %}
                 {% entete_tri request.GET "nom" "Nom" %}
-                {% entete_tri request.GET "type_prestataire" "Type" %}
-                {% entete_tri request.GET "ville" "Ville" %}
-                <th>Téléphone</th>
+                {% entete_tri request.GET "type_prestataire" "Type" "col-optionnelle" %}
+                {% entete_tri request.GET "ville" "Ville" "col-optionnelle" %}
+                <th class="col-optionnelle">Téléphone</th>
                 {% entete_tri request.GET "partenaire" "Partenaire" %}
-                <th>Localisation</th>
+                <th class="col-optionnelle">Localisation</th>
                 <th>Actions</th>
             </tr>
         </thead>
         <tbody>
             {% for prestataire in prestataires %}
             <tr>
-                <td>{{ prestataire.id }}</td>
+                <td class="col-optionnelle">{{ prestataire.id }}</td>
                 <td>{{ prestataire.nom }}</td>
-                <td>{{ prestataire.get_type_prestataire_display }}</td>
-                <td>{{ prestataire.ville|default:"-" }}</td>
-                <td>{{ prestataire.telephone|default:"-" }}</td>
+                <td class="col-optionnelle">{{ prestataire.get_type_prestataire_display }}</td>
+                <td class="col-optionnelle">{{ prestataire.ville|default:"-" }}</td>
+                <td class="col-optionnelle">{{ prestataire.telephone|default:"-" }}</td>
                 <td>
                     {% if prestataire.partenaire %}
                     <span class="badge validee">Actif</span>
@@ -75,7 +75,7 @@
                     <span class="badge refusee">Inactif</span>
                     {% endif %}
                 </td>
-                <td>
+                <td class="col-optionnelle">
                     {% if prestataire.latitude and prestataire.longitude %}
                     <span class="badge validee">Localisé</span>
                     {% else %}

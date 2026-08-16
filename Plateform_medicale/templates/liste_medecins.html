@@ -19,8 +19,8 @@
             <tr>
                 {% entete_tri request.GET "nom" "Nom complet" %}
                 {% entete_tri request.GET "specialite" "Specialite" %}
-                <th>Téléphone</th>
-                {% entete_tri request.GET "email" "Email" %}
+                <th class="col-optionnelle">Téléphone</th>
+                {% entete_tri request.GET "email" "Email" "col-optionnelle" %}
                 <th>Actions</th>
             </tr>
         </thead>
@@ -29,8 +29,8 @@
             <tr>
                 <td>Dr {{ medecin.prenom }} {{ medecin.nom }}</td>
                 <td>{{ medecin.specialite }}</td>
-                <td>{{ medecin.telephone }}</td>
-                <td>{{ medecin.email }}</td>
+                <td class="col-optionnelle">{{ medecin.telephone }}</td>
+                <td class="col-optionnelle">{{ medecin.email }}</td>
                 <td>
                     <div class="actions">
                         <a href="{% url 'modifier_medecin' medecin.pk %}" class="button primary btn btn-sm">{% icone "edit-2" %} Modifier</a>

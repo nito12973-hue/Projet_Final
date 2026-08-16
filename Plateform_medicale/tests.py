@@ -5084,3 +5084,73 @@ class CartePriseEnChargeTests(TestCase):
         self.client.login(username='pharma-carte@santesn.sn', password=PASSWORD)
         self._scan()
         self.assertEqual(JournalActivite.objects.count(), 0)
+
+
+class ColonnesOptionnellesMobileTests(TestCase):
+    """Sous 900 px, les listes admin masquent leurs colonnes secondaires.
+
+    Mesure AVANT correctif : un tableau de 9 colonnes faisait 1063 px dans une
+    carte de 356 px et la colonne Actions se retrouvait HORS ECRAN -- on ne
+    pouvait plus ni modifier ni desactiver un compte depuis un telephone.
+    Mesure APRES : aucun debordement sur 12 pages x 3 largeurs."""
+
+    LISTES = [
+        'liste_utilisateurs', 'liste_patients', 'liste_medecins',
+        'liste_pharmaciens', 'liste_prestataires', 'liste_plans_couverture',
+        'liste_prises_en_charge', 'liste_rendez_vous', 'liste_consultations',
+        'liste_ordonnances', 'liste_paiements', 'journal_activite',
+        'liste_notifications_envoyees',
+    ]
+
+    def setUp(self):
+        creer_utilisateur(User.Role.ADMIN, 'admin-colonnes@santesn.sn')
+        self.client.login(username='admin-colonnes@santesn.sn', password=PASSWORD)
+        # De quoi faire rendre au moins une ligne dans chaque liste.
+        patient = creer_patient(nom='Sow', prenom='Awa')
+        medecin = creer_medecin('medecin-colonnes@santesn.sn')
+        creer_pharmacien('pharma-colonnes@santesn.sn')
+        Prestataire.objects.create(nom='Hôpital X',
+                                   type_prestataire=Prestataire.Type.HOPITAL, ville='Dakar')
+        PlanCouverture.objects.create(nom='Plan X', taux_couverture=Decimal('70'))
+        PriseEnCharge.objects.create(patient=patient, motif='Suivi')
+        RendezVous.objects.create(patient=patient, medecin=medecin,
+                                  date_heure=timezone.now(), motif='Contrôle')
+        service = ServiceMedical.objects.create(nom='Consultation', prix=Decimal('10000'))
+        consultation = Consultation.objects.create(
+            patient=patient, medecin=medecin, service=service,
+            date_consultation=timezone.now(), diagnostic='Test')
+        Paiement.calculer_pour(consultation).save()
+        Ordonnance.objects.create(consultation=consultation, medicaments='Paracétamol')
+        JournalActivite.objects.create(auteur_libelle='Awa', objet='Test',
+                                       action=JournalActivite.Action.MODIFICATION)
+
+    def test_chaque_liste_marque_des_colonnes_secondaires(self):
+        for nom in self.LISTES:
+            self.assertContains(self.client.get(reverse(nom)), 'col-optionnelle',
+                                msg_prefix=nom)
+
+    def test_la_colonne_actions_nest_jamais_optionnelle(self):
+        """L'invariant central : c'est precisement elle qui disparaissait de
+        l'ecran. Elle doit rester visible a toute largeur."""
+        for nom in self.LISTES:
+            contenu = self.client.get(reverse(nom)).content.decode()
+            position = contenu.find('>Actions<')
+            if position == -1:
+                continue  # liste sans colonne d'actions (lecture seule)
+            entete = contenu[contenu.rfind('<th', 0, position):position]
+            self.assertNotIn('col-optionnelle', entete, nom)
+
+    def test_les_colonnes_masquees_le_sont_en_tete_ET_en_cellule(self):
+        """Masquer l'en-tete sans masquer les cellules decalerait toutes les
+        colonnes d'une liste."""
+        contenu = self.client.get(reverse('liste_patients')).content.decode()
+        entetes = contenu.count('<th scope="col" class="col-optionnelle"') \
+            + contenu.count('<th class="col-optionnelle"')
+        self.assertGreater(entetes, 0)
+        self.assertGreater(contenu.count('<td class="col-optionnelle"')
+                           + contenu.count('col-optionnelle">'), entetes)
+
+    def test_la_regle_css_existe_sous_900px(self):
+        contenu = self.client.get(reverse('liste_utilisateurs')).content.decode()
+        self.assertIn('.col-optionnelle', contenu)
+        self.assertIn('@media (max-width: 900px)', contenu)

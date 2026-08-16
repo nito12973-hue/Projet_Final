@@ -19,7 +19,7 @@
             <tr>
                 {% entete_tri request.GET "nom" "Nom" %}
                 {% entete_tri request.GET "taux_couverture" "Taux de couverture" %}
-                {% entete_tri request.GET "plafond_annuel" "Plafond annuel" %}
+                {% entete_tri request.GET "plafond_annuel" "Plafond annuel" "col-optionnelle" %}
                 <th>Actions</th>
             </tr>
         </thead>
@@ -28,7 +28,7 @@
             <tr>
                 <td>{{ plan.nom }}</td>
                 <td>{{ plan.taux_couverture }}%</td>
-                <td>{{ plan.plafond_annuel|franc_cfa|default:"Illimité" }}</td>
+                <td class="col-optionnelle">{{ plan.plafond_annuel|franc_cfa|default:"Illimité" }}</td>
                 <td>
                     <div class="actions">
                         <a href="{% url 'modifier_plan_couverture' plan.pk %}" class="button primary btn btn-sm">{% icone "edit-2" %} Modifier</a>

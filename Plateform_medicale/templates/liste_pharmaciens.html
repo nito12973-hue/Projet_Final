@@ -18,7 +18,7 @@
         <thead>
             <tr>
                 {% entete_tri request.GET "user__last_name" "Nom complet" %}
-                {% entete_tri request.GET "user__email" "Email" %}
+                {% entete_tri request.GET "user__email" "Email" "col-optionnelle" %}
                 {% entete_tri request.GET "prestataire__nom" "Pharmacie affectee" %}
                 <th>Actions</th>
             </tr>
@@ -27,7 +27,7 @@
             {% for pharmacien in pharmaciens %}
             <tr>
                 <td>{{ pharmacien.user.get_full_name|default:"-" }}</td>
-                <td>{{ pharmacien.user.email }}</td>
+                <td class="col-optionnelle">{{ pharmacien.user.email }}</td>
                 <td>{{ pharmacien.prestataire|default:"Non affecté" }}</td>
                 <td>
                     <a href="{% url 'modifier_pharmacien' pharmacien.pk %}" class="button primary btn btn-sm">{% icone "edit-2" %} Affecter une pharmacie</a>

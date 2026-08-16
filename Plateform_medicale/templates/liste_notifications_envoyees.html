@@ -39,7 +39,7 @@
     <table>
         <thead>
             <tr>
-                <th>Date</th>
+                <th class="col-optionnelle">Date</th>
                 <th>Destinataire</th>
                 <th>Message</th>
                 <th>Lue</th>
@@ -48,7 +48,7 @@
         <tbody>
             {% for notification in notifications %}
             <tr>
-                <td>{{ notification.date_creation|date:"d/m/Y H:i" }}</td>
+                <td class="col-optionnelle">{{ notification.date_creation|date:"d/m/Y H:i" }}</td>
                 <td>{{ notification.destinataire }}</td>
                 <td>{{ notification.message }}</td>
                 <td>

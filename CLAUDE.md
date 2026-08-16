@@ -673,6 +673,27 @@ en tête — l'inverse de ce qu'on vient chercher.
 déjà une recherche (combobox JS sur `rechercher_patients_medecin`) qui ouvre
 la fiche du patient. Un second champ serait un doublon. Un test le verrouille.
 
+## Tableaux sur petit écran
+
+**Sous 900 px, les listes admin masquent leurs colonnes secondaires**
+(`.col-optionnelle`, posée sur le `<th>` *et* sur les `<td>` correspondants ;
+`entete_tri` accepte un 4ᵉ argument pour ça).
+
+**La colonne Actions n'est jamais optionnelle** — c'est précisément elle qui
+disparaissait. Mesure avant correctif : un tableau de 9 colonnes faisait
+**1063 px dans une carte de 356 px**, et on ne pouvait plus ni modifier ni
+désactiver un compte depuis un téléphone. À 820 px, 5 listes débordaient déjà.
+Mesure après : **aucun débordement sur 12 pages × 3 largeurs**.
+
+Les listes gardent leur **forme tabulaire** — c'est ce qu'on vient y chercher,
+comparer des lignes. Le mode carte (`.tableau-carte`) reste réservé aux écrans
+Assuré : sur un référentiel de 9 colonnes il produirait des cartes
+interminables. Trois tests verrouillent l'invariant.
+
+S'ajoutent sous 900 px : `.actions` en colonne (trois boutons côte à côte
+suffisaient à repousser la colonne hors écran) et `table-layout: fixed` (une
+cellule longue retendait le tableau malgré les colonnes masquées).
+
 ## Pagination
 
 

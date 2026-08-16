@@ -56,8 +56,8 @@
         <thead>
             <tr>
                 {% entete_tri request.GET "last_name" "Nom complet" %}
-                {% entete_tri request.GET "email" "Email" %}
-                {% entete_tri request.GET "role" "Rôle" %}
+                {% entete_tri request.GET "email" "Email" "col-optionnelle" %}
+                {% entete_tri request.GET "role" "Rôle" "col-optionnelle" %}
                 {% entete_tri request.GET "is_active" "Statut" %}
                 <th scope="col">Actions</th>
             </tr>
@@ -66,8 +66,8 @@
             {% for utilisateur in utilisateurs %}
             <tr>
                 <td>{{ utilisateur.get_full_name|default:"-" }}</td>
-                <td>{{ utilisateur.email }}</td>
-                <td>{{ utilisateur.get_role_display }}</td>
+                <td class="col-optionnelle">{{ utilisateur.email }}</td>
+                <td class="col-optionnelle">{{ utilisateur.get_role_display }}</td>
                 <td>
                     {% if utilisateur.is_active %}
                     <span class="badge validee">Actif</span>
