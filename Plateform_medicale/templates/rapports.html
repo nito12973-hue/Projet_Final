@@ -35,81 +35,71 @@
 </section>
 
 <section class="admin-layout">
-    <article class="panel panel-bloc">
-        <div class="panel-header" style="padding:0 0 16px;">
-            <h2>Utilisateurs par role</h2>
+    <article class="panel">
+        <div class="panel-header">
+            <div><h2>Utilisateurs par rôle</h2></div>
         </div>
-        <canvas id="graphe-utilisateurs-role" style="max-height:220px;"></canvas>
-        <details class="details-tableau">
-            <summary>Voir le tableau</summary>
-            <table>
-                <thead><tr><th>Role</th><th>Total</th></tr></thead>
-                <tbody>
-                    {% for ligne in utilisateurs_par_role %}
-                    <tr><td>{{ ligne.label }}</td><td>{{ ligne.total }}</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </details>
+        <table>
+            <thead><tr><th scope="col">Rôle</th><th scope="col">Total</th></tr></thead>
+            <tbody>
+                {% for ligne in utilisateurs_par_role %}
+                <tr><td>{{ ligne.label }}</td><td>{{ ligne.total }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </article>
 
     <aside class="panel governance-card">
-        <h2>Chiffres cles</h2>
+        <h2>Chiffres clés</h2>
         <p class="subtitle">Consultations : <strong>{{ total_consultations }}</strong></p>
         <p class="subtitle">Ordonnances : <strong>{{ total_ordonnances }}</strong></p>
-        <p class="subtitle">Delivrances : <strong>{{ total_delivrances }}</strong></p>
+        <p class="subtitle">Délivrances : <strong>{{ total_delivrances }}</strong></p>
         <p class="subtitle">Prestataires partenaires : <strong>{{ total_prestataires_partenaires }}</strong></p>
     </aside>
 </section>
 
 <section class="admin-layout" style="margin-top:18px;">
-    <article class="panel panel-bloc">
-        <div class="panel-header" style="padding:0 0 16px;"><h2>Assures par type</h2></div>
-        <canvas id="graphe-patients-type" style="max-height:220px;"></canvas>
-        <details class="details-tableau">
-            <summary>Voir le tableau</summary>
-            <table>
-                <thead><tr><th>Type</th><th>Total</th></tr></thead>
-                <tbody>
-                    {% for ligne in patients_par_type %}
-                    <tr><td>{{ ligne.label }}</td><td>{{ ligne.total }}</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </details>
-    </article>
-
-    <article class="panel panel-bloc">
-        <div class="panel-header" style="padding:0 0 16px;"><h2>Rendez-vous par statut</h2></div>
-        <canvas id="graphe-rendez-vous-statut" style="max-height:220px;"></canvas>
-        <details class="details-tableau">
-            <summary>Voir le tableau</summary>
-            <table>
-                <thead><tr><th>Statut</th><th>Total</th></tr></thead>
-                <tbody>
-                    {% for ligne in rendez_vous_par_statut %}
-                    <tr><td>{{ ligne.label }}</td><td>{{ ligne.total }}</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </details>
-    </article>
-</section>
-
-<section class="panel" style="margin-top:18px;padding:22px 24px;">
-    <div class="panel-header" style="padding:0 0 16px;"><h2>Prises en charge par statut</h2></div>
-    <canvas id="graphe-prises-en-charge-statut" style="max-height:220px;"></canvas>
-    <details class="details-tableau">
-        <summary>Voir le tableau</summary>
+    <article class="panel">
+        <div class="panel-header">
+            <div><h2>Assurés par type</h2></div>
+        </div>
         <table>
-            <thead><tr><th>Statut</th><th>Total</th></tr></thead>
+            <thead><tr><th scope="col">Type</th><th scope="col">Total</th></tr></thead>
             <tbody>
-                {% for ligne in prises_en_charge_par_statut %}
+                {% for ligne in patients_par_type %}
                 <tr><td>{{ ligne.label }}</td><td>{{ ligne.total }}</td></tr>
                 {% endfor %}
             </tbody>
         </table>
-    </details>
+    </article>
+
+    <article class="panel">
+        <div class="panel-header">
+            <div><h2>Rendez-vous par statut</h2></div>
+        </div>
+        <table>
+            <thead><tr><th scope="col">Statut</th><th scope="col">Total</th></tr></thead>
+            <tbody>
+                {% for ligne in rendez_vous_par_statut %}
+                <tr><td>{{ ligne.label }}</td><td>{{ ligne.total }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </article>
+</section>
+
+<section class="panel" style="margin-top:18px;">
+    <div class="panel-header">
+        <div><h2>Prises en charge par statut</h2></div>
+    </div>
+    <table>
+        <thead><tr><th scope="col">Statut</th><th scope="col">Total</th></tr></thead>
+        <tbody>
+            {% for ligne in prises_en_charge_par_statut %}
+            <tr><td>{{ ligne.label }}</td><td>{{ ligne.total }}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </section>
 
 {% comment %}
@@ -128,10 +118,6 @@ moyen le plus simple de mettre son rendu a disposition du JS.
 {{ consultations_par_jour|json_script:"donnees-consultations-jour" }}
 {{ consultations_par_mois|json_script:"donnees-consultations-mois" }}
 {{ consultations_par_annee|json_script:"donnees-consultations-annee" }}
-{{ utilisateurs_par_role|json_script:"donnees-utilisateurs-role" }}
-{{ patients_par_type|json_script:"donnees-patients-type" }}
-{{ rendez_vous_par_statut|json_script:"donnees-rendez-vous-statut" }}
-{{ prises_en_charge_par_statut|json_script:"donnees-prises-en-charge-statut" }}
 
 <script>
     (function () {
@@ -159,37 +145,11 @@ moyen le plus simple de mettre son rendu a disposition du JS.
             return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + opacite + ')';
         }
 
-        // Palette categorielle (validee CVD/contraste — voir dataviz skill) pour
-        // les repartitions "identite" (role, type de beneficiaire) : volontairement
-        // distincte des tokens de marque (des teintes toutes teal seraient trop
-        // proches pour rester distinguables entre categories).
-        var PALETTE_CATEGORIELLE = ['#0d9488', '#2a78d6', '#e87ba4', '#eda100'];
-
-        // Statuts : couleurs semantiques lues depuis les memes tokens que les
-        // badges du reste de l'appli (.badge/.dash-pill), pour que "En attente"/
-        // "Validée" se lisent exactement pareil ici et sur les tableaux de bord.
-        // NOTE : ces cles sont les LIBELLES affiches. Si un libelle change
-        // dans models.py, cette table doit suivre, sinon les graphiques
-        // repassent en gris sans erreur visible.
-        var COULEURS_STATUT = {
-            'Confirmé': tokenCouleur('--success', '#1e7a4c'),
-            'Terminé': tokenCouleur('--success', '#1e7a4c'),
-            'Validée': tokenCouleur('--success', '#1e7a4c'),
-            'Terminée': tokenCouleur('--success', '#1e7a4c'),
-            'Demande': tokenCouleur('--warning', '#8a5a00'),
-            'En attente': tokenCouleur('--warning', '#8a5a00'),
-            'Annulé': tokenCouleur('--danger', '#b3261e'),
-            'Refusée': tokenCouleur('--danger', '#b3261e'),
-        };
-
         function lireDonnees(id) {
             var element = document.getElementById(id);
             return element ? JSON.parse(element.textContent) : [];
         }
 
-        function couleursStatuts(labels) {
-            return labels.map(function (label) { return COULEURS_STATUT[label] || tokenCouleur('--muted', '#5f6f7d'); });
-        }
 
         // Affiche un etat vide illustre a la place d'un canevas vide (donnees
         // absentes ou Chart.js indisponible), meme composant que le reste de
@@ -206,72 +166,12 @@ moyen le plus simple de mettre son rendu a disposition du JS.
             canevas.replaceWith(noeud);
         }
 
-        var IDS_CANEVAS = ['graphe-consultations', 'graphe-utilisateurs-role', 'graphe-patients-type',
-            'graphe-rendez-vous-statut', 'graphe-prises-en-charge-statut'];
+        var IDS_CANEVAS = ['graphe-consultations'];
 
         // Tout ce qui suit suppose Chart.js deja charge -- n'est appele
         // qu'une fois le <script> injecte plus bas resolu avec succes.
         function demarrerGraphiques() {
 
-        function traceBarres(idCanevas, idDonnees) {
-            var lignes = lireDonnees(idDonnees);
-            var canevas = document.getElementById(idCanevas);
-            if (!canevas) { return; }
-            if (!lignes.length) { signalerGraphiqueIndisponible(idCanevas, 'Aucune donnee pour le moment.'); return; }
-            var labels = lignes.map(function (l) { return l.label; });
-            new Chart(canevas, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: lignes.map(function (l) { return l.total; }),
-                        backgroundColor: couleursStatuts(labels),
-                        borderRadius: 4,
-                    }],
-                },
-                options: {
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
-                },
-            });
-        }
-
-        function traceDonut(idCanevas, idDonnees) {
-            var lignes = lireDonnees(idDonnees);
-            var canevas = document.getElementById(idCanevas);
-            if (!canevas) { return; }
-            if (!lignes.length) { signalerGraphiqueIndisponible(idCanevas, 'Aucune donnee pour le moment.'); return; }
-            var couleurs = PALETTE_CATEGORIELLE.slice(0, lignes.length);
-            new Chart(canevas, {
-                type: 'doughnut',
-                data: {
-                    labels: lignes.map(function (l) { return l.label; }),
-                    datasets: [{ data: lignes.map(function (l) { return l.total; }), backgroundColor: couleurs }],
-                },
-                options: {
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                // Affiche "Label : total" directement dans la legende,
-                                // pour lire les chiffres sans ouvrir le tableau.
-                                generateLabels: function (chart) {
-                                    var data = chart.data;
-                                    return data.labels.map(function (label, i) {
-                                        return {
-                                            text: label + ' : ' + data.datasets[0].data[i],
-                                            fillStyle: data.datasets[0].backgroundColor[i],
-                                            strokeStyle: data.datasets[0].backgroundColor[i],
-                                            index: i,
-                                        };
-                                    });
-                                },
-                            },
-                        },
-                    },
-                },
-            });
-        }
 
         // Graphique "Consultations" avec bascule de periode (jour/mois/annee) :
         // un seul Chart.js reutilise (data remplacee + update()), plutot que
@@ -354,10 +254,6 @@ moyen le plus simple de mettre son rendu a disposition du JS.
 
         afficherPeriodeConsultations('mois');
 
-        traceDonut('graphe-utilisateurs-role', 'donnees-utilisateurs-role');
-        traceDonut('graphe-patients-type', 'donnees-patients-type');
-        traceBarres('graphe-rendez-vous-statut', 'donnees-rendez-vous-statut');
-        traceBarres('graphe-prises-en-charge-statut', 'donnees-prises-en-charge-statut');
         } // fin demarrerGraphiques
 
         var scriptChartJs = document.createElement('script');

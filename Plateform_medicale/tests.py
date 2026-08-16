@@ -3416,16 +3416,32 @@ class LibellesAccentuesTests(TestCase):
         self.assertEqual(len(reponse.context['prises_en_charge']), 1)
         self.assertContains(reponse, 'Validée')
 
-    def test_table_de_couleurs_des_rapports_suit_les_libelles(self):
-        """rapports.html indexe ses couleurs par LIBELLE : la table doit
-        contenir les libelles accentues, sinon les graphiques repassent en
-        gris sans erreur visible."""
+    def test_rapports_ne_porte_plus_quune_seule_visualisation(self):
+        """Remplace test_table_de_couleurs_des_rapports_suit_les_libelles.
+
+        Quatre repartitions etaient tracees en plus de la courbe : 2 a 4
+        valeurs chacune, posees AU-DESSUS d'un tableau replie qui portait les
+        memes chiffres. Elles ont ete remplacees par ce tableau, desormais
+        visible sans rien deplier.
+
+        La table COULEURS_STATUT, indexee par LIBELLE, ne servait qu'a elles :
+        elle disparait, et avec elle le piege qu'elle imposait de maintenir
+        (changer un libelle dans models.py repassait les graphiques en gris,
+        sans aucune erreur visible). Ce test verrouille les deux absences.
+        """
         creer_utilisateur(User.Role.ADMIN, 'admin-couleurs@santesn.sn')
         self.client.login(username='admin-couleurs@santesn.sn', password=PASSWORD)
-        reponse = self.client.get(reverse('rapports'))
-        for libelle in ('Confirmé', 'Terminé', 'Validée',
-                        'Terminée', 'Annulé', 'Refusée'):
-            self.assertContains(reponse, "'%s': tokenCouleur" % libelle)
+        contenu = self.client.get(reverse('rapports')).content.decode()
+        self.assertEqual(contenu.count('<canvas'), 1)
+        self.assertIn('graphe-consultations', contenu)
+        self.assertNotIn('COULEURS_STATUT', contenu)
+        # Un seul "Voir le tableau" subsiste : celui de la courbe, ou le
+        # tableau accompagne un graphique reel au lieu de le remplacer.
+        self.assertEqual(contenu.count('Voir le tableau'), 1)
+        # Les repartitions restent lisibles, en tableau plein.
+        for titre in ('Utilisateurs par rôle', 'Assurés par type',
+                      'Rendez-vous par statut', 'Prises en charge par statut'):
+            self.assertIn(titre, contenu)
 
 
 class PaginationHorsAdminTests(TestCase):

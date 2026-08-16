@@ -28,7 +28,8 @@ def franc_cfa(montant):
 # template : les ecrans de formulaire (ajouter_/modifier_/supprimer_) sont
 # volontairement rattaches au libelle de leur liste, c'est la section que
 # l'utilisateur reconnait. Une route absente de la table n'affiche rien --
-# le fil d'ariane se limite alors au role, jamais un libelle faux.
+# le fil d'ariane reste alors vide, jamais un libelle faux (le role n'y
+# figure plus : il etait deja affiche deux fois ailleurs a l'ecran).
 _LIBELLES_PAGE = {
     "dashboard": "Tableau de bord",
     "dashboard_assure": "Tableau de bord",
