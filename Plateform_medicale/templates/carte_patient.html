@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load formats icones %}
+
+{% block title %}Carte de {{ patient }}{% endblock %}
+
+{% block content %}
+<section class="page-title carte-sans-impression">
+    <div>
+        <h1>Carte de prise en charge</h1>
+        <p class="subtitle">{{ patient }} — aperçu avant impression, recto et verso.</p>
+    </div>
+    <div class="actions">
+        <a class="button btn" href="{% url 'liste_patients' %}">{% icone "chevron-left" %} Assurés</a>
+        <button type="button" class="button primary" id="bouton-imprimer-carte">{% icone "id-card" %} Imprimer la carte</button>
+    </div>
+</section>
+
+{% comment %}
+Seuls des champs REELS figurent sur la carte : logo, numero, nom, type de
+beneficiaire, taux et plan. Le modele Patient ne porte ni photo ni date
+d'expiration -- les inventer reviendrait a imprimer du faux sur une piece
+que l'assure presentera au guichet.
+
+Le composant .carte-assure est celui de l'espace assure, deja au format
+ISO 7810 ID-1 (ratio 1.586), et non une seconde carte a maintenir.
+{% endcomment %}
+<div class="carte-planche">
+    <figure class="carte-face">
+        <div class="carte-assure">
+            <div class="carte-assure-entete">
+                <span class="carte-assure-puce" aria-hidden="true"></span>
+                {% logo_marque taille=26 fond="sombre" %}
+            </div>
+            <div>
+                <p class="carte-assure-label">Carte de prise en charge</p>
+                <p class="carte-assure-numero code">{{ patient.numero_carte }}</p>
+            </div>
+            <div class="carte-assure-pied">
+                <div>
+                    <span class="carte-assure-nom">{{ patient.prenom }} {{ patient.nom }}</span>
+                    <span class="carte-assure-type">{{ patient.get_type_beneficiaire_display }}{% if patient.est_ayant_droit and patient.lien_parente %} · {{ patient.get_lien_parente_display }}{% endif %}</span>
+                </div>
+                <div class="carte-assure-couverture">
+                    {% if patient.taux_couverture is not None %}
+                    <strong>{{ patient.taux_couverture }}%</strong>
+                    <span>{{ patient.titulaire.plan_couverture.nom }}</span>
+                    {% else %}
+                    <span>Aucun plan attribué</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <figcaption class="carte-sans-impression">Recto</figcaption>
+    </figure>
+
+    <figure class="carte-face">
+        <div class="carte-assure carte-verso">
+            <div class="carte-verso-qr">{{ qr_svg|safe }}</div>
+            <div class="carte-verso-texte">
+                <p class="carte-verso-titre">{% logo_marque taille=20 fond="sombre" %} SantéSN</p>
+                <p>À présenter chez un prestataire partenaire. Le professionnel
+                   scanne ce code, se connecte à SantéSN et accède alors
+                   uniquement aux informations que son rôle autorise.</p>
+                <p class="carte-verso-mention">Ce code ne contient aucune donnée
+                   médicale. Carte strictement personnelle.</p>
+            </div>
+        </div>
+        <figcaption class="carte-sans-impression">Verso</figcaption>
+    </figure>
+</div>
+
+<section class="panel panel-bloc carte-sans-impression" style="margin-top:18px;">
+    <h2 style="margin-top:0;font-size:15px;color:var(--titre);">Ce que fait ce QR code</h2>
+    <p class="subtitle" style="margin:0 0 10px;">
+        Il ouvre <span class="code">{{ url_scan }}</span>. Cette adresse ne
+        donne <strong>aucun droit</strong> par elle-même : elle exige une
+        connexion et un rôle autorisé.
+    </p>
+    <ul class="subtitle" style="margin:0;padding-left:20px;line-height:1.9;">
+        <li><strong>Pharmacien</strong> — voit les ordonnances restant à délivrer, rien d'autre.</li>
+        <li><strong>Médecin</strong> — voit les ordonnances issues de ses propres consultations.</li>
+        <li><strong>Toute autre personne</strong> — accès refusé, y compris connectée.</li>
+    </ul>
+</section>
+
+<script>
+    (function () {
+        var bouton = document.getElementById('bouton-imprimer-carte');
+        if (bouton) { bouton.addEventListener('click', function () { window.print(); }); }
+    })();
+</script>
+{% endblock %}

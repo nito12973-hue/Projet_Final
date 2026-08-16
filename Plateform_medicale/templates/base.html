@@ -1658,6 +1658,149 @@
             overflow: hidden;
         }
 
+        /* --- Planche d'impression de la carte (recto / verso) ------------
+           La carte elle-meme reste .carte-assure, deja au format ISO 7810
+           ID-1 (ratio 1.586) et deja utilisee dans l'espace assure : on
+           n'entretient pas deux cartes. Seules la mise en planche et les
+           regles d'impression sont ajoutees ici. */
+        .carte-planche {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+        }
+
+        /* Largeur FIXE, pas "100% dans un flex" : sans elle le recto se
+           contractait a 227 px, l'aspect-ratio imposait 143 px de haut et le
+           pied de carte ("Assuré principal", le taux) sortait sous
+           overflow:hidden -- tronque a l'ecran comme a l'impression. Le verso,
+           dont le texte force la hauteur, ne se contractait pas de la meme
+           facon : les deux faces n'avaient donc meme pas la meme taille.
+           Constate au rendu. */
+        .carte-face {
+            margin: 0;
+            flex: 0 0 auto;
+            width: 340px;
+        }
+
+        .carte-face .carte-assure {
+            max-width: none;
+        }
+
+        .carte-face figcaption {
+            margin-top: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        .carte-verso {
+            flex-direction: row;
+            align-items: center;
+            gap: 16px;
+        }
+
+        /* Le QR garde sa taille INTRINSEQUE (~23 mm, reglee a la generation).
+           Ne pas lui imposer de largeur en CSS : le SVG produit par qrcode
+           n'a pas de viewBox, une largeur imposee vide le code -- il sort
+           blanc. Meme recette que le QR des ordonnances, qui fonctionne. */
+        .carte-verso-qr {
+            flex: 0 0 auto;
+            padding: 5px;
+            border-radius: 6px;
+            background: #ffffff;
+            line-height: 0;
+        }
+
+        .carte-verso-qr svg {
+            display: block;
+        }
+
+        .carte-verso-texte {
+            font-size: 9.5px;
+            line-height: 1.5;
+        }
+
+        .carte-verso-texte p {
+            margin: 0 0 6px;
+        }
+
+        .carte-verso-titre {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'Manrope', sans-serif;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .carte-verso-mention {
+            opacity: 0.78;
+            font-size: 8.5px;
+        }
+
+        @media print {
+            /* On imprime UNE CARTE, pas la page. Tout le decor applicatif
+               disparait : menu, barre du haut, boutons, explications. */
+            /* #barre-laterale est un ID, pas une classe : le selecteur de
+               classe ne masquait rien et le menu sortait sur la feuille.
+               Constate au rendu d'impression, pas devine. */
+            #barre-laterale,
+            #barre-chargement,
+            #modale-confirmation,
+            .topbar,
+            .toasts,
+            .carte-sans-impression {
+                display: none !important;
+            }
+
+            body,
+            .contenu,
+            .contenu main {
+                background: #ffffff;
+                margin: 0;
+                padding: 0;
+                width: auto;
+                display: block;
+                animation: none;
+            }
+
+            /* Dimensions reelles ISO 7810 ID-1 : 85,6 x 54 mm. La largeur en
+               millimetres remplace le ratio, pour que la carte sorte a la
+               taille d'une carte bancaire quelle que soit l'imprimante. */
+            .carte-planche {
+                display: block;
+            }
+
+            .carte-face {
+                page-break-after: always;
+                break-after: page;
+            }
+
+            .carte-face:last-child {
+                page-break-after: auto;
+                break-after: auto;
+            }
+
+            .carte-assure {
+                width: 85.6mm;
+                height: 54mm;
+                max-width: none;
+                aspect-ratio: auto;
+                border-radius: 3mm;
+                box-shadow: none;
+                /* Les fonds sont supprimes par defaut a l'impression : sans
+                   cette regle la carte sortirait blanche, texte blanc
+                   compris, donc illisible. */
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            @page {
+                margin: 10mm;
+            }
+        }
+
         .carte-assure::after {
             content: "";
             position: absolute;
@@ -3772,9 +3915,13 @@
                 <a href="{% url 'liste_paiements' %}" aria-label="Paiements" data-tooltip="Paiements" class="{% if url_name == 'liste_paiements' or url_name == 'marquer_paiement_regle' %}active{% endif %}">{% icone "receipt" %} <span class="nav-texte">Paiements</span></a>
                 <span class="nav-section">Système</span>
                 <a href="{% url 'rapports' %}" aria-label="Rapports" data-tooltip="Rapports" class="{% if url_name == 'rapports' %}active{% endif %}">{% icone "bar-chart" %} <span class="nav-texte">Rapports</span></a>
-                <a href="{% url 'journal_activite' %}" aria-label="Journal d'activité" data-tooltip="Journal d'activité" class="{% if url_name == 'journal_activite' %}active{% endif %}">{% icone "file-text" %} <span class="nav-texte">Journal d'activité</span></a>
                 <a href="{% url 'envoyer_notification' %}" aria-label="Notifications" data-tooltip="Notifications" class="{% if url_name == 'envoyer_notification' or url_name == 'liste_notifications_envoyees' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span></a>
-                <a href="{% url 'parametres' %}" aria-label="Paramètres" data-tooltip="Paramètres" class="{% if url_name == 'parametres' or url_name == 'mon_compte' or url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "settings" %} <span class="nav-texte">Paramètres</span></a>
+                {% comment %}
+                Le journal n'a plus d'entree propre dans le menu : il vit dans
+                Parametres > Securite, dont il est une fonction d'administration.
+                L'entree Parametres reste donc active pendant sa consultation.
+                {% endcomment %}
+                <a href="{% url 'parametres' %}" aria-label="Paramètres" data-tooltip="Paramètres" class="{% if url_name == 'parametres' or url_name == 'parametres_section' or url_name == 'journal_activite' or url_name == 'mon_compte' or url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "settings" %} <span class="nav-texte">Paramètres</span></a>
                 {% endwith %}
                 {% elif current_role == "MEDECIN" %}
                 <a href="{% url 'dashboard_medecin' %}" aria-label="Tableau de bord" data-tooltip="Tableau de bord" class="{% if request.resolver_match.url_name == 'dashboard_medecin' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord</span></a>

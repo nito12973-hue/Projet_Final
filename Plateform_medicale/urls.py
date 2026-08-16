@@ -56,6 +56,10 @@ urlpatterns = [
     path('services/<int:pk>/supprimer/', views.supprimer_service, name='supprimer_service'),
 
     path('consultations/', views.liste_consultations, name='liste_consultations'),
+    path('patients/<int:pk>/carte/', views.carte_patient, name='carte_patient'),
+    # Cible du QR imprime sur la carte. Ouverte a tous les visiteurs au sens
+    # du routage : c'est la vue qui exige une connexion et un role autorise.
+    path('carte/<str:numero>/', views.carte_scan, name='carte_scan'),
     path('prises-en-charge/', views.liste_prises_en_charge, name='liste_prises_en_charge'),
     path('prises-en-charge/ajouter/', views.ajouter_prise_en_charge, name='ajouter_prise_en_charge'),
     path('prises-en-charge/<int:pk>/modifier/', views.modifier_prise_en_charge, name='modifier_prise_en_charge'),

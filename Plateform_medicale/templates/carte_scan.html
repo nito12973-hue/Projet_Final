@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% load formats icones %}
+
+{% block title %}Carte {{ patient.numero_carte }}{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>{{ patient.prenom }} {{ patient.nom }}</h1>
+        <p class="subtitle">
+            Carte <span class="code">{{ patient.numero_carte }}</span> ·
+            {{ patient.get_type_beneficiaire_display }}
+            {% if patient.est_ayant_droit and patient.assure_principal %}
+            · ayant droit de {{ patient.assure_principal }}
+            {% endif %}
+        </p>
+    </div>
+</section>
+
+<section class="panel panel-bloc" style="margin-bottom:18px;">
+    <div class="param-grille">
+        <div class="param-champ">
+            <span class="param-champ-label">Couverture</span>
+            <span class="param-champ-valeur">
+                {% if patient.taux_couverture is not None %}{{ patient.taux_couverture }}%{% else %}Aucun plan{% endif %}
+            </span>
+            <span class="param-champ-note">
+                {% if patient.taux_couverture is not None %}{{ patient.titulaire.plan_couverture.nom }}{% else %}Les soins restent à la charge du patient.{% endif %}
+            </span>
+        </div>
+        <div class="param-champ">
+            <span class="param-champ-label">Date de naissance</span>
+            <span class="param-champ-valeur">{{ patient.date_naissance|date:"d/m/Y" }}</span>
+            <span class="param-champ-note">Sert à vérifier l'identité du porteur.</span>
+        </div>
+        <div class="param-champ">
+            <span class="param-champ-label">Téléphone</span>
+            <span class="param-champ-valeur">{{ patient.telephone|default:"—" }}</span>
+            <span class="param-champ-note">Donnée administrative, pas médicale.</span>
+        </div>
+    </div>
+</section>
+
+{% comment %}
+La portee depend du role et se lit a l'ecran : le pharmacien ne voit que ce
+qu'il peut servir, le medecin que ce qu'il a lui-meme prescrit. Le QR n'ouvre
+donc pas l'historique medical du patient.
+{% endcomment %}
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <h2>{{ portee }}</h2>
+            <p class="subtitle">Le scan d'une carte n'ouvre pas l'historique complet du patient.</p>
+        </div>
+    </div>
+    {% if ordonnances %}
+    <table>
+        <thead>
+            <tr>
+                <th scope="col">Émise le</th>
+                <th scope="col">Médecin</th>
+                <th scope="col">Médicaments</th>
+                <th scope="col">État</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ordonnance in ordonnances %}
+            <tr>
+                <td>{{ ordonnance.date_creation|date:"d/m/Y" }}</td>
+                <td>{{ ordonnance.consultation.medecin }}</td>
+                <td style="white-space:pre-line;">{{ ordonnance.medicaments }}</td>
+                <td>
+                    {% if ordonnance.delivrance %}
+                    <span class="badge validee">Délivrée le {{ ordonnance.delivrance.date_delivrance|date:"d/m/Y" }}</span>
+                    {% else %}
+                    <span class="badge en_attente">À délivrer</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</section>
+
+{% if not ordonnances %}
+<div class="etat-vide">
+    {% illustration_vide "qr-scan" %}
+    <p>Aucune ordonnance à afficher pour cette carte.</p>
+</div>
+{% endif %}
+
+{% if ordonnances.paginator.num_pages > 1 %}
+<nav class="pagination" aria-label="Pagination">
+    {% if ordonnances.has_previous %}
+    <a href="?{% prefixe_pagination request.GET %}page={{ ordonnances.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Précédent</a>
+    {% endif %}
+    <span class="pagination-info">Page {{ ordonnances.number }} sur {{ ordonnances.paginator.num_pages }}</span>
+    {% if ordonnances.has_next %}
+    <a href="?{% prefixe_pagination request.GET %}page={{ ordonnances.next_page_number }}" class="button btn btn-sm">Suivant {% icone "chevron-right" %}</a>
+    {% endif %}
+</nav>
+{% endif %}
+{% endblock %}
