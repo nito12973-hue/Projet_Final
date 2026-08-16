@@ -128,6 +128,8 @@ PriseEnCharge
   Demande de couverture d'un Patient : motif, statut (en_attente / validee
   / refusee / terminee — valeurs en minuscules, utilisees telles quelles
   comme classes CSS de badge).
+  clean() interdit de CHANGER DE PATIENT des qu'une consultation est
+  rattachee (voir l'invariant sous Consultation).
 
 Consultation
   patient, medecin, service (optionnel), prise_en_charge (optionnelle),
@@ -136,6 +138,31 @@ Consultation
   au moment de l'enregistrement par le medecin (ajouter_consultation_medecin
   dans views.py) — les Consultations creees directement en base (fixtures,
   tests via l'ORM) n'ont pas de Paiement associe.
+
+  INVARIANT : consultation.prise_en_charge.patient == consultation.patient.
+  Porte par Consultation.clean() ET PriseEnCharge.clean(), pas par les
+  formulaires. Il etait auparavant verifie dans ConsultationForm.clean(),
+  donc uniquement a la CREATION et uniquement par l'app ; deux chemins le
+  cassaient ensuite :
+    (1) PriseEnChargeForm expose patient AUSSI en modification — reattribuer
+        une prise en charge deja pourvue de consultations donnait ces soins
+        a quelqu'un d'autre, et l'ecran assure "Mes prises en charge", qui
+        affiche consultation_set (medecin, date, montants), les exposait ;
+    (2) /admin/ enregistre Consultation par admin.site.register() SANS
+        ModelAdmin dedie : le formulaire de l'app y etait purement contourne
+        (meme classe de probleme que SuppressionGereeParLAppMixin).
+  Place dans les modeles, la regle est rencontree par TOUT ModelForm — ceux
+  de l'app comme ceux de /admin/ — puisque _post_clean appelle full_clean().
+  La ValidationError est indexee par champ pour que le message s'affiche
+  sous prise_en_charge (resp. patient) et non en erreur globale.
+  ConsultationForm.clean() a ete supprime : c'etait la meme regle ecrite
+  deux fois.
+  Reattribuer reste PERMIS tant qu'aucune consultation n'est rattachee :
+  corriger un patient choisi par erreur est legitime, deplacer des soins
+  deja enregistres ne l'est pas.
+  objects.create() ne declenche pas clean() (Django ne l'appelle que via
+  les formulaires) : les fixtures et les tests ORM peuvent toujours
+  construire l'etat incoherent volontairement.
 
 Paiement (OneToOne avec Consultation)
   montant_total (= service.prix, 0 si aucun service), taux_applique (taux

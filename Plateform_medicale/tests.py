@@ -9,6 +9,7 @@ import openpyxl
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import connection
+from django.forms import modelform_factory
 from django.test import Client, TestCase
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
@@ -4185,3 +4186,89 @@ class MesPrisesEnChargeAssureTests(TestCase):
         PriseEnCharge.objects.filter(patient__in=[self.principal, self.enfant]).delete()
         self.assertContains(self._page(), 'Aucune prise en charge enregistrée')
         self.assertContains(self._page(statut='validee'), 'Aucune prise en charge avec ce statut')
+
+
+class CoherencePatientPriseEnChargeTests(TestCase):
+    """Invariant : consultation.prise_en_charge.patient == consultation.patient.
+
+    Il etait verifie a la CREATION par ConsultationForm, mais restait cassable
+    apres coup par deux chemins : reattribuer la prise en charge a un autre
+    patient (le champ est editable en modification), et /admin/, qui enregistre
+    Consultation sans ModelAdmin dedie et n'utilise donc aucun formulaire de
+    l'app. La regle vit desormais dans les modeles, ou tout ModelForm la
+    rencontre."""
+
+    def setUp(self):
+        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin-coherence@santesn.sn')
+        self.client.login(username='admin-coherence@santesn.sn', password=PASSWORD)
+        self.patient = creer_patient(nom='Ba', prenom='Cheikh')
+        self.autre = creer_patient(nom='Fall', prenom='Astou')
+        self.medecin = creer_medecin('medecin-coherence@santesn.sn')
+        self.prise = PriseEnCharge.objects.create(patient=self.patient, motif='Suivi')
+
+    def _consultation(self, prise=None):
+        return Consultation.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            prise_en_charge=self.prise if prise is None else prise,
+            date_consultation=timezone.now(),
+            diagnostic='Controle',
+        )
+
+    def _modifier(self, patient):
+        return self.client.post(
+            reverse('modifier_prise_en_charge', args=[self.prise.pk]),
+            {'patient': patient.pk, 'motif': 'Suivi', 'statut': 'en_attente'},
+        )
+
+    def test_reattribution_refusee_quand_des_consultations_existent(self):
+        self._consultation()
+        reponse = self._modifier(self.autre)
+        self.assertEqual(reponse.status_code, 200)
+        self.prise.refresh_from_db()
+        self.assertEqual(self.prise.patient_id, self.patient.pk)
+        self.assertContains(reponse, 'Des consultations sont déjà rattachées')
+
+    def test_reattribution_permise_tant_quaucune_consultation_nexiste(self):
+        # Corriger une erreur de saisie doit rester possible : c'est le seul
+        # cas legitime de changement de patient.
+        reponse = self._modifier(self.autre)
+        self.assertRedirects(reponse, reverse('liste_prises_en_charge'))
+        self.prise.refresh_from_db()
+        self.assertEqual(self.prise.patient_id, self.autre.pk)
+
+    def test_modification_sans_changer_de_patient_reste_possible(self):
+        self._consultation()
+        reponse = self.client.post(
+            reverse('modifier_prise_en_charge', args=[self.prise.pk]),
+            {'patient': self.patient.pk, 'motif': 'Suivi', 'statut': 'validee'},
+        )
+        self.assertRedirects(reponse, reverse('liste_prises_en_charge'))
+        self.prise.refresh_from_db()
+        self.assertEqual(self.prise.statut, 'validee')
+
+    def test_regle_consultation_atteint_tout_modelform_donc_admin(self):
+        # /admin/ construit un ModelForm nu (admin.site.register(Consultation)
+        # sans ModelAdmin) : c'est ce formulaire-la qu'on reproduit ici.
+        prise_etrangere = PriseEnCharge.objects.create(patient=self.autre, motif='Autre')
+        Formulaire = modelform_factory(Consultation, fields='__all__')
+        form = Formulaire(data={
+            'patient': self.patient.pk,
+            'medecin': self.medecin.pk,
+            'prise_en_charge': prise_etrangere.pk,
+            'date_consultation': '2026-08-01 10:00:00',
+            'diagnostic': 'Test',
+            'traitement': '',
+        })
+        self.assertFalse(form.is_valid())
+        self.assertIn('prise_en_charge', form.errors)
+
+    def test_regle_prise_en_charge_atteint_tout_modelform_donc_admin(self):
+        self._consultation()
+        Formulaire = modelform_factory(PriseEnCharge, fields='__all__')
+        form = Formulaire(
+            data={'patient': self.autre.pk, 'motif': 'Suivi', 'statut': 'en_attente'},
+            instance=self.prise,
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn('patient', form.errors)

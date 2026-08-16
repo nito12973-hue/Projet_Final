@@ -224,6 +224,30 @@ règlement pour chaque consultation. Les consultations créées directement en
 base (fixtures/tests via l'ORM, hors vue) n'ont pas de `Paiement` associé :
 les templates gèrent ce cas (`{% if consultation.paiement %}`).
 
+## Cohérence patient ↔ prise en charge
+
+Invariant : `consultation.prise_en_charge.patient == consultation.patient`.
+Il vit dans `Consultation.clean()` et `PriseEnCharge.clean()`, **pas dans les
+formulaires**. Il était auparavant dans `ConsultationForm.clean()`, donc vérifié
+seulement à la **création** et seulement côté app ; deux chemins le cassaient :
+
+- `PriseEnChargeForm` expose `patient` **aussi en modification** — réattribuer
+  une prise en charge déjà pourvue de consultations donnait ces soins à
+  quelqu'un d'autre, et l'écran assuré « Mes prises en charge » les affichait ;
+- `/admin/` enregistre `Consultation` par `admin.site.register()` **sans
+  `ModelAdmin` dédié** : le formulaire de l'app y était purement contourné (même
+  classe de problème que `SuppressionGereeParLAppMixin`).
+
+Dans les modèles, la règle est rencontrée par **tout** `ModelForm` — app comme
+`/admin/` — puisque `_post_clean` appelle `full_clean()`. La `ValidationError`
+est indexée par champ pour s'afficher sous `prise_en_charge` (resp. `patient`).
+`ConsultationForm.clean()` a été supprimé : la même règle écrite deux fois.
+
+Réattribuer reste **permis tant qu'aucune consultation n'est rattachée** :
+corriger un patient choisi par erreur est légitime, déplacer des soins déjà
+enregistrés ne l'est pas. `objects.create()` ne déclenche pas `clean()` — les
+fixtures et tests ORM peuvent toujours construire l'état incohérent exprès.
+
 ## Rapports (livré)
 
 Vue `rapports` (Dashboard Admin) : comptages (utilisateurs par rôle, assurés
