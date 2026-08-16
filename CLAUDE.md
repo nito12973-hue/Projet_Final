@@ -82,8 +82,14 @@ Statut : ✅ fait · ⏳ partiel/à compléter · 🔄 continu.
    rendez-vous reste au médecin/assuré, valider une délivrance au pharmacien.
    Le tableau de bord lui-même ouvre sur les **files d'attente** (refonte
    « Clinique claire », 2026-08-15) et non sur les compteurs du jour.
-6. ✅ Dashboard Assuré — profil, ayants droit, rendez-vous, ordonnances et
-   historique.
+6. ✅ Dashboard Assuré — profil, ayants droit, rendez-vous, ordonnances,
+   historique et **suivi des prises en charge** (`mes_prises_en_charge_assure`).
+   L'assuré voyait la conséquence (sa part à payer) sans jamais voir la cause :
+   l'état de sa demande, qui décide pourtant s'il paie 10% ou 100%. L'écran
+   n'affiche que ce que porte le modèle (patient, date, motif, statut) ; les
+   montants viennent des consultations rattachées, jamais de la prise en
+   charge — **ne pas y ajouter prestataire, montant ou motif de refus** : ces
+   champs n'existent pas.
 7. ✅ Dashboard Médecin — agenda, patients, consultations, ordonnances QR.
 8. ✅ Dashboard Pharmacien — scan d'ordonnance, validation de délivrance,
    historique.

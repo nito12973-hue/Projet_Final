@@ -249,6 +249,24 @@ rendez-vous à venir depuis la même page.
 Consultez les ordonnances délivrées par vos médecins, chacune avec son QR
 code (et son code textuel affiché en dessous) à présenter en pharmacie.
 
+### Mes prises en charge
+
+Suivez l'état de vos demandes de couverture et de celles de vos ayants
+droit : *En attente*, *Validée*, *Refusée* ou *Terminée*. **C'est ce statut
+qui détermine ce que vous payez** : tant qu'une demande n'est pas validée,
+les soins concernés restent intégralement à votre charge — le taux de votre
+plan de couverture ne s'applique qu'aux demandes validées.
+
+Chaque demande affiche les consultations qui s'y rattachent, avec la part
+prise en charge par l'assurance, la part restant à votre charge et son
+statut de règlement, puis les totaux. Une demande à laquelle aucune
+consultation n'est encore rattachée n'affiche aucun montant : il n'y a rien
+à facturer pour l'instant.
+
+Le filtre en haut de page limite l'affichage à un statut. Si une demande a
+été refusée, contactez l'administration : le motif du refus n'est pas
+enregistré dans l'application.
+
 ### Mon historique
 
 Retrouvez toutes vos consultations passées (et celles de vos ayants droit),

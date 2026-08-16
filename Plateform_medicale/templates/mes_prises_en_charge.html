@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% load formats icones %}
+
+{% block title %}Mes prises en charge{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Mes prises en charge</h1>
+        <p class="subtitle">Vos demandes de couverture et celles de vos ayants droit.</p>
+    </div>
+</section>
+
+<form method="get" class="filtres">
+    <div style="min-width:220px;">
+        <label for="statut">Statut</label>
+        <select id="statut" name="statut" style="margin-bottom:0;">
+            <option value="">Tous</option>
+            {% for value, label in statuts %}
+            <option value="{{ value }}" {% if value == statut_choisi %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit" class="button primary btn">Filtrer</button>
+    {% if statut_choisi %}
+    <a href="{% url 'mes_prises_en_charge_assure' %}" class="button btn">Réinitialiser</a>
+    {% endif %}
+</form>
+
+{% if lignes %}
+{% comment %}
+Une carte par demande. Les montants ne figurent PAS sur la prise en charge :
+ils viennent des consultations qui s'y rattachent et de leur paiement. Une
+demande sans consultation n'affiche donc aucun montant -- c'est la realite,
+pas un oubli.
+{% endcomment %}
+{% for ligne in lignes %}
+<section class="panel pec">
+    <div class="pec-entete">
+        <span class="pec-titre">
+            <strong>{{ ligne.prise.motif }}</strong>
+            <span>{{ ligne.prise.patient }} · demandée le {{ ligne.prise.date_demande|date:"d/m/Y" }}</span>
+        </span>
+        <span class="badge {{ ligne.prise.statut }}">{{ ligne.prise.get_statut_display }}</span>
+    </div>
+
+    <div class="pec-corps">
+        {% if ligne.prise.statut == "en_attente" %}
+        <p class="pec-message">
+            {% icone "clock-history" %}
+            Votre demande est en cours d'examen par l'administration. Tant qu'elle
+            n'est pas validée, les consultations liées restent à votre charge.
+        </p>
+        {% elif ligne.prise.statut == "refusee" %}
+        <p class="pec-message pec-message-refus">
+            {% icone "alert-triangle" %}
+            Cette demande a été refusée : les soins concernés restent à votre
+            charge. Contactez l'administration pour en connaître la raison.
+        </p>
+        {% endif %}
+
+        {% if ligne.consultations %}
+        <table class="pec-table">
+            <thead>
+                <tr>
+                    <th scope="col">Consultation</th>
+                    <th scope="col">Médecin</th>
+                    <th scope="col">Pris en charge</th>
+                    <th scope="col">À votre charge</th>
+                    <th scope="col">Règlement</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for consultation in ligne.consultations %}
+                <tr>
+                    <td>
+                        {{ consultation.date_consultation|date:"d/m/Y" }}
+                        {% if consultation.service %}<span class="pec-service">{{ consultation.service.nom }}</span>{% endif %}
+                    </td>
+                    <td>{{ consultation.medecin }}</td>
+                    {% if consultation.paiement %}
+                    <td class="code">{{ consultation.paiement.montant_part_assurance|franc_cfa }}</td>
+                    <td class="code">{{ consultation.paiement.montant_part_patient|franc_cfa }}</td>
+                    <td>
+                        <span class="badge {% if consultation.paiement.statut == 'regle' %}validee{% else %}en_attente{% endif %}">
+                            {{ consultation.paiement.get_statut_display }}
+                        </span>
+                    </td>
+                    {% else %}
+                    <td colspan="3" class="pec-sans-paiement">Aucun montant enregistré</td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <p class="pec-total">
+            <span>Total pris en charge <strong class="code">{{ ligne.montant_couvert|franc_cfa }}</strong></span>
+            <span>Reste à votre charge <strong class="code attente">{{ ligne.montant_a_charge|franc_cfa }}</strong></span>
+        </p>
+        {% else %}
+        <p class="pec-vide">Aucune consultation n'est encore rattachée à cette demande.</p>
+        {% endif %}
+    </div>
+</section>
+{% endfor %}
+
+{% if page.paginator.num_pages > 1 %}
+<nav class="pagination" aria-label="Pagination">
+    {% if page.has_previous %}
+    <a href="?{% prefixe_pagination request.GET %}page={{ page.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Précédent</a>
+    {% endif %}
+    <span class="pagination-info">Page {{ page.number }} sur {{ page.paginator.num_pages }}</span>
+    {% if page.has_next %}
+    <a href="?{% prefixe_pagination request.GET %}page={{ page.next_page_number }}" class="button btn btn-sm">Suivant {% icone "chevron-right" %}</a>
+    {% endif %}
+</nav>
+{% endif %}
+{% else %}
+<div class="etat-vide">
+    {% illustration_vide "shield-check" %}
+    <p>{% if statut_choisi %}Aucune prise en charge avec ce statut.{% else %}Aucune prise en charge enregistrée pour vous ou vos ayants droit.{% endif %}</p>
+</div>
+{% endif %}
+{% endblock %}

@@ -4062,3 +4062,126 @@ class ComptesBloquesAdminTests(TestCase):
         reponse = self.client.get(reverse('dashboard'))
         self.assertEqual(reponse.context['nb_comptes_bloques'], 0)
         self.assertNotContains(reponse, 'class="alerte-securite"')
+
+
+class MesPrisesEnChargeAssureTests(TestCase):
+    """L'assure voyait la CONSEQUENCE (sa part a payer) sans jamais voir la
+    CAUSE : l'etat de sa prise en charge. Ces tests verrouillent le perimetre
+    (ses beneficiaires seulement) et le fait que les montants proviennent des
+    consultations rattachees -- PriseEnCharge n'en porte aucun."""
+
+    def setUp(self):
+        self.assure_user = creer_utilisateur(User.Role.ASSURE, 'assure-pec@santesn.sn')
+        self.principal = Patient.objects.create(
+            user=self.assure_user,
+            nom='Sow',
+            prenom='Ousmane',
+            date_naissance=datetime.date(1980, 1, 1),
+            telephone='770000030',
+        )
+        self.enfant = Patient.objects.create(
+            nom='Sow',
+            prenom='Awa',
+            date_naissance=datetime.date(2015, 1, 1),
+            telephone='770000031',
+            type_beneficiaire=Patient.TypeBeneficiaire.AYANT_DROIT,
+            lien_parente=Patient.LienParente.ENFANT,
+            assure_principal=self.principal,
+        )
+        self.etranger = creer_patient(nom='Ndiaye', prenom='Fatou')
+        self.medecin = creer_medecin('medecin-pec@santesn.sn')
+
+        self.pec = PriseEnCharge.objects.create(
+            patient=self.principal, motif='Suivi cardiaque', statut='validee')
+        self.pec_enfant = PriseEnCharge.objects.create(
+            patient=self.enfant, motif='Vaccination', statut='en_attente')
+        self.pec_etrangere = PriseEnCharge.objects.create(
+            patient=self.etranger, motif='Ne me regarde pas', statut='validee')
+
+        self.client.login(username='assure-pec@santesn.sn', password=PASSWORD)
+
+    def _page(self, **params):
+        return self.client.get(reverse('mes_prises_en_charge_assure'), params)
+
+    def _ligne(self, prise, reponse=None):
+        reponse = reponse or self._page()
+        return next(l for l in reponse.context['lignes'] if l['prise'] == prise)
+
+    def test_voit_les_siennes_et_celles_de_ses_ayants_droit(self):
+        motifs = [l['prise'].motif for l in self._page().context['lignes']]
+        self.assertIn('Suivi cardiaque', motifs)
+        self.assertIn('Vaccination', motifs)
+
+    def test_ne_voit_pas_celles_des_autres_assures(self):
+        reponse = self._page()
+        motifs = [l['prise'].motif for l in reponse.context['lignes']]
+        self.assertNotIn('Ne me regarde pas', motifs)
+        self.assertNotContains(reponse, 'Ne me regarde pas')
+
+    def test_filtre_par_statut(self):
+        lignes = self._page(statut='en_attente').context['lignes']
+        self.assertEqual([l['prise'].motif for l in lignes], ['Vaccination'])
+
+    def test_montants_issus_des_consultations_rattachees(self):
+        service = ServiceMedical.objects.create(nom='Cardiologie', prix=Decimal('20000'))
+        # Le taux n'est pas un champ de Patient : c'est une propriete lue sur le
+        # plan de couverture du titulaire.
+        self.principal.plan_couverture = PlanCouverture.objects.create(
+            nom='Standard', taux_couverture=Decimal('80'), plafond_annuel=Decimal('1000000'))
+        self.principal.save()
+        consultation = Consultation.objects.create(
+            patient=self.principal,
+            medecin=self.medecin,
+            service=service,
+            prise_en_charge=self.pec,
+            date_consultation=timezone.now(),
+            diagnostic='Controle',
+        )
+        Paiement.calculer_pour(consultation).save()
+
+        ligne = self._ligne(self.pec)
+        self.assertEqual(ligne['montant_couvert'], Decimal('16000'))
+        self.assertEqual(ligne['montant_a_charge'], Decimal('4000'))
+
+    def test_demande_sans_consultation_n_affiche_aucun_montant(self):
+        reponse = self._page()
+        ligne = self._ligne(self.pec_enfant, reponse)
+        self.assertEqual(ligne['consultations'], [])
+        self.assertEqual(ligne['montant_a_charge'], Decimal('0'))
+        self.assertContains(reponse, 'Aucune consultation')
+
+    def test_message_specifique_selon_le_statut(self):
+        self.assertContains(self._page(statut='en_attente'), "en cours d'examen")
+        PriseEnCharge.objects.filter(pk=self.pec.pk).update(statut='refusee')
+        self.assertContains(self._page(statut='refusee'), 'restent à votre')
+
+    def test_pagination(self):
+        for i in range(TAILLE_PAGE_LISTE + 3):
+            PriseEnCharge.objects.create(patient=self.principal, motif=f'Demande {i}')
+        page = self._page().context['page']
+        self.assertEqual(len(page), TAILLE_PAGE_LISTE)
+        self.assertTrue(page.has_next())
+
+    def test_role_non_assure_refuse(self):
+        self.client.logout()
+        creer_utilisateur(User.Role.ADMIN, 'admin-pec@santesn.sn')
+        self.client.login(username='admin-pec@santesn.sn', password=PASSWORD)
+        self.assertEqual(self._page().status_code, 403)
+
+    def test_anonyme_redirige(self):
+        self.client.logout()
+        self.assertEqual(self._page().status_code, 302)
+
+    def test_assure_sans_fiche_redirige_vers_son_profil(self):
+        self.client.logout()
+        creer_utilisateur(User.Role.ASSURE, 'assure-sans-fiche@santesn.sn')
+        self.client.login(username='assure-sans-fiche@santesn.sn', password=PASSWORD)
+        self.assertRedirects(self._page(), reverse('mon_profil_assure'))
+
+    def test_entree_de_menu_presente(self):
+        self.assertContains(self._page(), reverse('mes_prises_en_charge_assure'))
+
+    def test_etat_vide_distingue_aucune_demande_et_filtre_trop_strict(self):
+        PriseEnCharge.objects.filter(patient__in=[self.principal, self.enfant]).delete()
+        self.assertContains(self._page(), 'Aucune prise en charge enregistrée')
+        self.assertContains(self._page(statut='validee'), 'Aucune prise en charge avec ce statut')
