@@ -86,10 +86,25 @@ _ICONES = {
     # Engrenage a 8 dents, dessine par segments plutot qu'en etoile continue :
     # a 18px, un polygone dente devient une bouillie. Meme trait fin que le
     # reste du jeu (stroke, pas de remplissage).
+    # Vraie roue dentee (engrenage). La version precedente etait un cercle
+    # entoure de 8 rayons droits et diagonaux : dessinee comme "un engrenage
+    # en segments", elle se lisait a l'ecran comme un SOLEIL, pas comme des
+    # reglages. Le contour dente ci-dessous est le pictogramme standard, dans
+    # le meme style trait fin 24x24 que le reste du jeu d'icones.
     "settings": (
-        '<circle cx="12" cy="12" r="3.2"/>'
-        '<path d="M12 2.6v3.1M12 18.3v3.1M21.4 12h-3.1M5.7 12H2.6"/>'
-        '<path d="M18.6 5.4l-2.2 2.2M7.6 16.4l-2.2 2.2M18.6 18.6l-2.2-2.2M7.6 7.6L5.4 5.4"/>'
+        '<circle cx="12" cy="12" r="3"/>'
+        '<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 '
+        '2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 '
+        '0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 '
+        '19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 '
+        '0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 '
+        '2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 '
+        '0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 '
+        '1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 '
+        '0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 '
+        '2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 '
+        '1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 '
+        '2h-.09a1.65 1.65 0 0 0-1.51 1z"/>'
     ),
     "lock": (
         '<rect x="5" y="11" width="14" height="9" rx="2"/>'

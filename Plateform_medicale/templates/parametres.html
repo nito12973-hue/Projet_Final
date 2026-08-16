@@ -31,38 +31,6 @@
     <div class="param-pile">
 
         {% if section == "general" %}
-        <section class="panel param-carte">
-            <div class="panel-header">
-                <div>
-                    <h2>Mon compte</h2>
-                    <p class="subtitle">Ces informations identifient votre compte sur la plateforme.</p>
-                </div>
-                <a class="button primary btn" href="{% url 'mon_compte' %}">Modifier</a>
-            </div>
-            <div class="param-corps">
-                <div class="param-ligne">
-                    <span class="param-txt"><strong>Nom et prénom</strong>
-                        <span>Affiché dans le menu et sur les notifications que vous envoyez.</span></span>
-                    <span class="param-fin"><span class="param-val">{{ user.get_full_name|default:"—" }}</span></span>
-                </div>
-                <div class="param-ligne">
-                    <span class="param-txt"><strong>Adresse email</strong>
-                        <span>Votre identifiant de connexion. Le changer demande votre mot de passe actuel.</span></span>
-                    <span class="param-fin"><span class="param-val">{{ user.email }}</span></span>
-                </div>
-                <div class="param-ligne">
-                    <span class="param-txt"><strong>Téléphone</strong>
-                        <span>Facultatif. Sert uniquement à vous joindre en interne.</span></span>
-                    <span class="param-fin"><span class="param-val">{{ user.phone_number|default:"—" }}</span></span>
-                </div>
-                <div class="param-ligne">
-                    <span class="param-txt"><strong>Rôle</strong>
-                        <span>Défini par l'administration. Un utilisateur ne choisit jamais son propre rôle.</span></span>
-                    <span class="param-fin"><span class="param-fige">{{ current_role_label }} · non modifiable</span></span>
-                </div>
-            </div>
-        </section>
-
         {% comment %}
         Configuration de la plateforme : valeurs REELLES lues dans settings.py,
         affichees en lecture seule. Les rendre modifiables demanderait un
@@ -281,69 +249,6 @@
                     {% csrf_token %}
                     <button type="submit" class="button btn btn-danger">Déconnecter partout</button>
                 </form>
-            </div>
-        </section>
-        {% endif %}
-
-        {% if section == "donnees" %}
-        <section class="panel param-carte">
-            <div class="panel-header">
-                <div>
-                    <h2>Import</h2>
-                    <p class="subtitle">Création de comptes en masse depuis un fichier Excel.</p>
-                </div>
-            </div>
-            <div class="param-corps">
-                <div class="param-ligne">
-                    <span class="param-txt"><strong>Importer des règlements</strong>
-                        <span>Enregistre en masse le règlement de paiements existants, d'après un relevé. N'ajoute aucun paiement : les montants restent calculés par l'application.</span></span>
-                    <span class="param-fin">
-                        <a class="button btn" href="{% url 'telecharger_modele_import_reglements' %}">Modèle</a>
-                        <a class="button primary btn" href="{% url 'importer_reglements_excel' %}">Importer</a>
-                    </span>
-                </div>
-                <div class="param-ligne">
-                    <span class="param-txt"><strong>Importer des utilisateurs</strong>
-                        <span>Une ligne par compte. L'import est tout ou rien : une seule ligne en erreur annule l'ensemble.</span></span>
-                    <span class="param-fin">
-                        <a class="button btn" href="{% url 'telecharger_modele_import_utilisateurs' %}">Modèle</a>
-                        <a class="button primary btn" href="{% url 'importer_utilisateurs_excel' %}">Importer</a>
-                    </span>
-                </div>
-            </div>
-        </section>
-
-        <section class="panel param-carte">
-            <div class="panel-header">
-                <div>
-                    <h2>Exports</h2>
-                    <p class="subtitle">Les exports d'utilisateurs respectent les filtres appliqués sur la liste.</p>
-                </div>
-            </div>
-            <div class="param-corps">
-                <div class="param-ligne">
-                    <span class="param-txt"><strong>Utilisateurs</strong>
-                        <span>Comptes de la plateforme, tous rôles confondus.</span></span>
-                    <span class="param-fin">
-                        <a class="button btn" href="{% url 'exporter_utilisateurs_excel' %}">Excel</a>
-                        <a class="button btn" href="{% url 'exporter_utilisateurs_csv' %}">CSV</a>
-                    </span>
-                </div>
-                <div class="param-ligne">
-                    <span class="param-txt"><strong>Rapports</strong>
-                        <span>Synthèse d'activité, vue mensuelle.</span></span>
-                    <span class="param-fin">
-                        <a class="button btn" href="{% url 'exporter_rapports_excel' %}">Excel</a>
-                        <a class="button btn" href="{% url 'exporter_rapports_pdf' %}">PDF</a>
-                    </span>
-                </div>
-                <div class="param-ligne">
-                    <span class="param-txt"><strong>Paiements</strong>
-                        <span>Montants, parts et statuts de règlement.</span></span>
-                    <span class="param-fin">
-                        <a class="button btn" href="{% url 'exporter_paiements_csv' %}">CSV</a>
-                    </span>
-                </div>
             </div>
         </section>
         {% endif %}

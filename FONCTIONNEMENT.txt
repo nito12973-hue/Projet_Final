@@ -658,7 +658,10 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
                           liens a une vraie page de reglages, en 6 sections
                           (Mon compte, Apparence, Notifications, Securite,
                           Donnees, Avance repliable) avec une navigation
-                          interne par ancres.
+                          interne par ancres. ETAT ACTUEL : 4 sections
+                          (General, Apparence, Securite, Avance), chacune avec
+                          sa propre URL -- Notifications puis Donnees ont ete
+                          supprimees, voir plus bas.
                           REGLE DE CONTENU, la plus importante de cette passe :
                           la page n affiche QUE des reglages adosses a du code
                           reel. Ont ete ECARTES faute d implementation, malgre
@@ -1046,9 +1049,11 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
                                       courante, pas un reglage).
                                       L'import des utilisateurs etait propose a
                                       QUATRE endroits : retire des actions
-                                      rapides du tableau de bord, conserve sur
-                                      la liste des utilisateurs (contexte) et
-                                      dans Parametres > Donnees (hub).
+                                      rapides du tableau de bord, puis (passe
+                                      suivante) de Parametres > Donnees. Il ne
+                                      vit plus QUE sur la liste des
+                                      utilisateurs -- voir "PARAMETRES : LA
+                                      SECTION DONNEES SUPPRIMEE" ci-dessous.
                                       La deconnexion quitte le bas du menu pour
                                       le menu du compte, avec Mon compte et Mot
                                       de passe : ce qui est personnel appartient
@@ -1091,9 +1096,61 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
                                       la fois le menu ET le controle d acces :
                                       ils ne peuvent pas diverger. Gain de
                                       securite au passage : une section
-                                      reservee (notifications, donnees) renvoie
-                                      404 a un non-admin au lieu d etre
-                                      simplement masquee.
+                                      reservee renvoie 404 a un non-admin au
+                                      lieu d etre simplement masquee.
+
+  PARAMETRES : LA SECTION DONNEES SUPPRIMEE (2026-08-16)
+                                      Audit de coherence Parametres / pages
+                                      metier. Constat : la section "Donnees"
+                                      contenait SIX entrees -- 2 imports
+                                      (utilisateurs, reglements) et 3 exports
+                                      (utilisateurs, rapports, paiements) --
+                                      et les six existaient DEJA sur leur page
+                                      metier. Aucune n'etait un reglage : ce
+                                      sont des actions qu'on fait dans son
+                                      travail, pas une configuration.
+                                      Pire : les exports de Parametres
+                                      appelaient l'URL SANS query string, donc
+                                      sans les filtres, alors que le
+                                      sous-titre de la section affirmait "Les
+                                      exports d'utilisateurs respectent les
+                                      filtres appliques sur la liste". Deux
+                                      chemins pour la meme donnee, dont un qui
+                                      mentait a l'ecran.
+                                      Videe de ses doublons la section n'avait
+                                      plus de contenu : supprimee. Parametres
+                                      passe de 5 a 4 sections. La regle est
+                                      desormais UN IMPORT/EXPORT = UN SEUL
+                                      ENDROIT, sa page metier. Trois tests
+                                      verrouillent l'absence dans les quatre
+                                      sections restantes.
+                                      La carte "Mon compte" quitte aussi la
+                                      section General : elle est personnelle,
+                                      et son ecran d'edition (mon_compte)
+                                      vivait deja dans le menu du compte.
+                                      General ne porte plus que la
+                                      configuration plateforme -- d'ou son
+                                      icone qui passe de user-circle
+                                      ("compte") a building.
+                                      CONSEQUENCE SUR LE MECANISME DE ROLE :
+                                      "donnees" etait la SEULE section
+                                      reservee. Le mecanisme (s[3]) est
+                                      conserve -- il porte la regle "reservee
+                                      => 404, pas seulement masquee" -- mais
+                                      il ne garde plus rien aujourd'hui. Il
+                                      reste teste sur un registre SUBSTITUE
+                                      (patch de SECTIONS_PARAMETRES) plutot
+                                      qu'en inventant une section fictive dans
+                                      l'interface reelle. Un second test
+                                      constate qu'aucune section n'est
+                                      reservee : si une le redevient, il tombe
+                                      et rappelle de couvrir son acces.
+                                      NON TOUCHE, car deja correct : la
+                                      gestion des comptes bloques reste
+                                      entierement dans Parametres > Securite,
+                                      et l'alerte du tableau de bord n'est
+                                      qu'un LIEN vers cette section (elle n'y
+                                      debloque rien).
                                       Section general : la configuration de la
                                       plateforme (langue, fuseau, format de
                                       date) est affichee en LECTURE SEULE, avec

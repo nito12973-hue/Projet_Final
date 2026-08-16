@@ -349,10 +349,23 @@ le projet à ce jour) — ne pas les recréer sans un besoin concret identifié.
 sections ayant chacune leur URL : cliquer dans le menu **ouvre la page**, pas un
 ancrage. `SECTIONS_PARAMETRES` (views.py) pilote à la fois le menu et le
 contrôle d accès — une section réservée renvoie **404** à un non-admin, elle
-n est pas seulement masquée. La section « Général » affiche la configuration
-plateforme (langue, fuseau, format de date) en **lecture seule**, lue dans
-`settings.py`. Six sections : Mon compte, Apparence,
-Notifications (admin), Sécurité, Données (admin), Avancé (repliable).
+n est pas seulement masquée (mécanisme conservé et testé sur un registre
+substitué, même si **aucune section n est réservée aujourd hui**). La section
+« Général » n affiche plus que la configuration plateforme (langue, fuseau,
+format de date) en **lecture seule**, lue dans `settings.py`.
+
+**Quatre sections : Général, Apparence, Sécurité, Avancé.** Deux ont été
+supprimées et ne doivent pas revenir sans un contenu qui soit vraiment un
+réglage :
+
+- *Notifications* — aucun modèle de préférences n existe.
+- *Données* — ses 6 entrées (2 imports, 3 exports) étaient toutes des actions
+  métier **déjà présentes sur leur propre page**. Pire, ses exports ignoraient
+  les filtres alors que son sous-titre affirmait le contraire. Vidée de ses
+  doublons, la section n avait plus de contenu.
+
+La carte « Mon compte » a également quitté « Général » : elle est personnelle,
+donc elle vit dans le menu du compte, où son écran d édition se trouvait déjà.
 **Règle de contenu : n afficher que des réglages adossés à du code réel.** Ont
 été écartés pour cette raison — ne pas les réintroduire sans les implémenter :
 2FA, sessions actives, journal de sécurité, sauvegardes, intégrations
@@ -425,6 +438,20 @@ connexion) : toutes les icônes viennent de `templatetags/icones.py`
 `stroke="currentColor"` — hérite automatiquement la couleur du conteneur).
 Toujours réutiliser une icône existante du dict `_ICONES` avant d'en ajouter
 une nouvelle.
+
+**Une icône doit être reconnue, pas seulement décrite.** `settings` a d'abord
+été dessinée comme « un engrenage en segments » : un cercle entouré de huit
+rayons droits et diagonaux. Sur le papier, un engrenage stylisé ; à l'écran,
+**un soleil**. Elle a été remplacée par une vraie roue dentée (contour fermé).
+Le test qui la couvrait cherchait un `<circle>` — que le soleil possédait
+aussi : il ne pouvait pas voir l'erreur. Il teste désormais ce qui **sépare**
+les deux formes (un contour qui se referme, `z`). Vérifier une icône au rendu,
+pas à l'intention.
+
+**Un nom d'icône erroné ne lève rien.** `_ICONES.get(nom, "")` rend un SVG
+**vide** : pas d'erreur, pas de dessin, rien à l'écran qui le signale (même
+famille que la table de couleurs de `rapports.html` indexée par libellé). Un
+test vérifie que chaque icône de `SECTIONS_PARAMETRES` existe.
 
 ## Comptes de démonstration
 
@@ -512,13 +539,22 @@ Une fonctionnalité a **un** emplacement logique. Règles appliquées :
 
 - **Menu latéral** = modules métier. Une action métier fréquente y reste
   (Notifications : envoyer un message est une action, pas un réglage).
-- **Paramètres** = réglages + hub transversal Données (imports/exports).
+- **Paramètres** = réglages **uniquement**. Pas un hub, pas un fourre-tout. Si
+  une entrée est une *action* qu'on fait dans son travail, elle n'y a pas sa
+  place. Test : « est-ce que je règle quelque chose, ou est-ce que je fais
+  quelque chose ? »
 - **Menu du compte** (barre du haut, `<details>` natif, sans JS) = ce qui est
   personnel : Mon compte, Mot de passe, Déconnexion. La déconnexion n'est plus
   dans le menu latéral.
-- **Un import vit à deux endroits au plus** : sa page métier (le contexte où
-  l'on y pense) et Paramètres → Données. Jamais dans les actions rapides du
-  tableau de bord — une opération en masse ponctuelle n'y a pas sa place.
+- **Un import ou un export vit à UN seul endroit : sa page métier.** Importer
+  des utilisateurs → Utilisateurs. Importer des règlements → Paiements.
+  Exporter → la liste qu'on regarde, filtres compris. Jamais dans Paramètres
+  (la section Données a été supprimée pour cette raison), jamais dans les
+  actions rapides du tableau de bord — une opération en masse ponctuelle n'y a
+  pas sa place. Trois tests verrouillent ces absences.
+- **Un raccourci n'est légitime que s'il ne duplique pas la fonctionnalité.**
+  L'alerte « N comptes bloqués » du tableau de bord est un simple lien vers
+  Paramètres → Sécurité : elle n'y débloque rien. C'est le bon modèle.
 
 **Paiements : on n'importe pas des paiements, on importe des règlements.**
 `Paiement` est en 1-1 avec `Consultation` et tous ses montants sont dérivés de
