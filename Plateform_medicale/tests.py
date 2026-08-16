@@ -4274,6 +4274,132 @@ class CoherencePatientPriseEnChargeTests(TestCase):
         self.assertIn('patient', form.errors)
 
 
+class ListeConsultationsAdminTests(TestCase):
+    """Dernier angle mort du suivi admin : apres les rendez-vous et les
+    ordonnances, l'acte de soin lui-meme n'apparaissait sur aucun ecran.
+
+    Ecran en LECTURE SEULE et SANS donnees medicales : diagnostic et
+    traitement restent au medecin qui les a saisis (meme regle que
+    fiche_patient_medecin)."""
+
+    def setUp(self):
+        creer_utilisateur(User.Role.ADMIN, 'admin-consult@santesn.sn')
+        self.client.login(username='admin-consult@santesn.sn', password=PASSWORD)
+
+        self.patient = creer_patient(nom='Diallo', prenom='Mariama')
+        self.medecin = creer_medecin('medecin-consult@santesn.sn')
+        self.service = ServiceMedical.objects.create(nom='Radiologie', prix=Decimal('30000'))
+
+        self.couverte = Consultation.objects.create(
+            patient=self.patient, medecin=self.medecin, service=self.service,
+            prise_en_charge=PriseEnCharge.objects.create(
+                patient=self.patient, motif='Couverte', statut='validee'),
+            date_consultation=timezone.now(),
+            diagnostic='Fracture du poignet', traitement='Immobilisation 6 semaines',
+        )
+        self.en_attente = Consultation.objects.create(
+            patient=self.patient, medecin=self.medecin,
+            prise_en_charge=PriseEnCharge.objects.create(
+                patient=self.patient, motif='Demandee', statut='en_attente'),
+            date_consultation=timezone.now(), diagnostic='Suivi',
+        )
+        self.sans_prise_en_charge = Consultation.objects.create(
+            patient=self.patient, medecin=self.medecin,
+            date_consultation=timezone.now(), diagnostic='Hors couverture',
+        )
+
+    def _page(self, **params):
+        return self.client.get(reverse('liste_consultations'), params)
+
+    def _lignes(self, **params):
+        return list(self._page(**params).context['consultations'])
+
+    def test_liste_toutes_les_consultations(self):
+        self.assertEqual(len(self._lignes()), 3)
+
+    def test_aucune_donnee_medicale_affichee(self):
+        # La regle centrale de cet ecran : l'admin voit l'acte et sa
+        # facturation, jamais son contenu.
+        reponse = self._page()
+        self.assertNotContains(reponse, 'Fracture du poignet')
+        self.assertNotContains(reponse, 'Immobilisation')
+        self.assertNotContains(reponse, 'Diagnostic')
+        self.assertNotContains(reponse, 'Traitement')
+
+    def test_filtre_couverture_oui_ne_garde_que_les_prises_en_charge_validees(self):
+        self.assertEqual(self._lignes(couverture='oui'), [self.couverte])
+
+    def test_filtre_couverture_non_inclut_les_consultations_sans_prise_en_charge(self):
+        # Point verifie explicitement : exclude() sur une FK nullable doit
+        # RETENIR les lignes sans prise en charge (LEFT OUTER JOIN + le
+        # IS NOT NULL que Django ajoute dans le NOT). Ce sont justement les
+        # soins restes a 100% a la charge du patient.
+        lignes = self._lignes(couverture='non')
+        self.assertIn(self.sans_prise_en_charge, lignes)
+        self.assertIn(self.en_attente, lignes)
+        self.assertNotIn(self.couverte, lignes)
+
+    def test_recherche_par_patient_et_par_medecin(self):
+        self.assertEqual(len(self._lignes(q='Diallo')), 3)
+        self.assertEqual(len(self._lignes(q='Ndiaye')), 3)
+        self.assertEqual(len(self._lignes(q='Introuvable')), 0)
+
+    def test_filtre_par_date(self):
+        hier = (timezone.now() - datetime.timedelta(days=1)).date()
+        self.assertEqual(len(self._lignes(date=hier.isoformat())), 0)
+        aujourdhui = timezone.localtime(self.couverte.date_consultation).date()
+        self.assertEqual(len(self._lignes(date=aujourdhui.isoformat())), 3)
+
+    def test_date_invalide_ignoree_sans_erreur(self):
+        reponse = self._page(date='pas-une-date')
+        self.assertEqual(reponse.status_code, 200)
+        self.assertEqual(len(reponse.context['consultations']), 3)
+
+    def test_tri_restreint_aux_champs_autorises(self):
+        self.assertEqual(self._page(tri='diagnostic').status_code, 200)
+        self.assertEqual(len(self._lignes(tri='diagnostic')), 3)
+
+    def test_ecran_en_lecture_seule(self):
+        # Aucune action d'ecriture propre a l'ecran : ni .action-ligne (le
+        # formulaire POST en ligne de tableau du projet), ni lien de
+        # suppression. On ne teste pas method="post" en brut : base.html en
+        # contient pour la deconnexion et les notifications.
+        # On assertionne sur le BALISAGE (class="...") : le nom de classe nu
+        # apparait aussi dans la feuille de style inline de base.html.
+        contenu = self._page().content.decode()
+        self.assertNotIn('class="action-ligne"', contenu)
+        self.assertNotIn('confirmer_suppression', contenu)
+        self.assertNotIn('>Modifier<', contenu)
+
+    def test_reserve_a_l_administrateur(self):
+        for role, email in [
+            (User.Role.MEDECIN, 'med-refuse@santesn.sn'),
+            (User.Role.ASSURE, 'assure-refuse@santesn.sn'),
+            (User.Role.PHARMACIEN, 'pharma-refuse@santesn.sn'),
+        ]:
+            self.client.logout()
+            creer_utilisateur(role, email)
+            self.client.login(username=email, password=PASSWORD)
+            self.assertEqual(self._page().status_code, 403, role)
+
+    def test_anonyme_redirige(self):
+        self.client.logout()
+        self.assertEqual(self._page().status_code, 302)
+
+    def test_pagination(self):
+        for _ in range(TAILLE_PAGE_LISTE):
+            Consultation.objects.create(
+                patient=self.patient, medecin=self.medecin,
+                date_consultation=timezone.now(), diagnostic='En masse',
+            )
+        page = self._page().context['consultations']
+        self.assertEqual(len(page), TAILLE_PAGE_LISTE)
+        self.assertTrue(page.has_next())
+
+    def test_entree_de_menu_presente(self):
+        self.assertContains(self._page(), reverse('liste_consultations'))
+
+
 class FiltresListesNonAdminTests(TestCase):
     """Le tri par colonne (_trier) et les filtres GET servaient les 11 listes
     admin et aucune liste non-admin. Les 4 ecrans ou un filtre repond a une

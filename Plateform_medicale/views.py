@@ -1182,6 +1182,73 @@ def liste_ordonnances(request):
 
 
 @admin_required
+def liste_consultations(request):
+    """Liste administrateur des consultations, en lecture seule et SANS donnees medicales.
+
+    Dernier angle mort du suivi administrateur : apres les rendez-vous et les
+    ordonnances, l'acte de soin lui-meme n'apparaissait sur aucun ecran --
+    l'admin ne le voyait qu'indirectement, par le Paiement qu'il genere.
+
+    Diagnostic et traitement ne sont PAS affiches ici. Ce sont des donnees
+    medicales, et le projet a deja tranche ce point : fiche_patient_medecin
+    limite l'historique medical au medecin connecte (choix de confidentialite
+    delibere), et l'administrateur gere les comptes et le suivi sans jamais
+    saisir ni consulter de diagnostic. Il voit donc l'acte et sa facturation,
+    pas son contenu.
+
+    Le filtre "couverture" reprend telle quelle la regle de
+    Paiement.calculer_pour : le taux du plan ne s'applique que si la prise en
+    charge liee est "validee", sinon le patient regle 100%. Il repond donc a
+    une question qu'aucun autre ecran ne pose : quels soins sont restes
+    integralement a la charge du patient ?
+    """
+    consultations = Consultation.objects.select_related(
+        "patient", "medecin", "service", "prise_en_charge", "paiement"
+    )
+
+    recherche = request.GET.get("q", "").strip()
+    if recherche:
+        consultations = consultations.filter(
+            Q(patient__nom__icontains=recherche)
+            | Q(patient__prenom__icontains=recherche)
+            | Q(medecin__nom__icontains=recherche)
+            | Q(medecin__prenom__icontains=recherche)
+        )
+
+    couverture = request.GET.get("couverture", "")
+    if couverture == "oui":
+        consultations = consultations.filter(prise_en_charge__statut="validee")
+    elif couverture == "non":
+        consultations = consultations.exclude(prise_en_charge__statut="validee")
+
+    date_filtre = request.GET.get("date", "")
+    if date_filtre:
+        try:
+            date_valide = datetime.date.fromisoformat(date_filtre)
+        except ValueError:
+            date_filtre = ""
+        else:
+            consultations = consultations.filter(date_consultation__date=date_valide)
+
+    consultations = _trier(
+        request,
+        consultations,
+        ["date_consultation", "patient__nom", "medecin__nom"],
+        "-date_consultation",
+    )
+    return render(
+        request,
+        "liste_consultations.html",
+        {
+            "consultations": _paginer(request, consultations),
+            "recherche": recherche,
+            "couverture_choisie": couverture,
+            "date_choisie": date_filtre,
+        },
+    )
+
+
+@admin_required
 def ajouter_prise_en_charge(request):
     """A la creation, le statut est toujours 'en_attente' : le champ n'est pas propose."""
     if request.method == "POST":

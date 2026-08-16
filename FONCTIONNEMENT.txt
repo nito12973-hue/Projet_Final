@@ -1173,6 +1173,45 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
                                       jamais retiree n'apparaissait sur aucun
                                       ecran. Cible de la tuile "Pharmacie"
                                       du dashboard (?delivrance=non).
+  liste_consultations                 liste admin des consultations, LECTURE
+                                      SEULE. Dernier angle mort du suivi
+                                      admin : apres les rendez-vous et les
+                                      ordonnances, l'acte de soin lui-meme
+                                      n'apparaissait nulle part -- l'admin ne
+                                      le voyait qu'indirectement, par le
+                                      Paiement qu'il genere.
+                                      NI DIAGNOSTIC NI TRAITEMENT ne sont
+                                      affiches : donnees medicales, reservees
+                                      au medecin qui les a saisies (meme
+                                      regle que fiche_patient_medecin, choix
+                                      de confidentialite deja tranche par le
+                                      projet). L'admin voit l'acte et sa
+                                      facturation, pas son contenu. Un test
+                                      le verrouille.
+                                      Filtres GET : 'q' (patient ou medecin),
+                                      'date' (meme idiome que
+                                      historique_consultations : date
+                                      invalide ignoree, pas d'erreur), et
+                                      'couverture' (oui/non) qui reprend
+                                      telle quelle la regle de
+                                      Paiement.calculer_pour -- couvert
+                                      seulement si la prise en charge liee
+                                      est "validee". couverture=non repond a
+                                      une question qu'aucun autre ecran ne
+                                      pose : quels soins sont restes a 100%
+                                      a la charge du patient.
+                                      ATTENTION : ce filtre repose sur
+                                      exclude(prise_en_charge__statut=
+                                      "validee") sur une FK NULLABLE. Django
+                                      genere un LEFT OUTER JOIN et ajoute
+                                      "AND statut IS NOT NULL" DANS le NOT,
+                                      donc les consultations SANS prise en
+                                      charge sont bien retenues -- ce sont
+                                      justement les plus interessantes ici.
+                                      Verifie sur le SQL genere et couvert
+                                      par un test dedie.
+                                      Tri via _trier (date_consultation,
+                                      patient__nom, medecin__nom).
   rapports / exporter_rapports_excel / exporter_rapports_pdf
                                       _donnees_rapports() est la SEULE
                                       source de donnees, partagee par la

@@ -78,8 +78,16 @@ Statut : ✅ fait · ⏳ partiel/à compléter · 🔄 continu.
    couverture, notifications. Deux écrans **en lecture seule** complètent le
    suivi : `liste_rendez_vous` (filtres `statut`/`q`) et `liste_ordonnances`
    (filtre `delivrance` oui/non — une ordonnance jamais retirée en pharmacie
-   n'apparaissait sur aucun écran). L'admin n'y écrit rien : confirmer un
+   n'apparaissait sur aucun écran) et `liste_consultations` (recherche,
+   date, filtre `couverture`). L'admin n'y écrit rien : confirmer un
    rendez-vous reste au médecin/assuré, valider une délivrance au pharmacien.
+   **`liste_consultations` n'affiche ni diagnostic ni traitement** : données
+   médicales, réservées au médecin qui les a saisies (même règle que
+   `fiche_patient_medecin`). L'admin voit l'acte et sa facturation, pas son
+   contenu — ne pas y ajouter ces colonnes. Son filtre `couverture` reprend
+   la règle de `Paiement.calculer_pour` (couvert seulement si la prise en
+   charge est `validee`) et répond à une question qu'aucun autre écran ne
+   pose : quels soins sont restés à 100% à la charge du patient.
    Le tableau de bord lui-même ouvre sur les **files d'attente** (refonte
    « Clinique claire », 2026-08-15) et non sur les compteurs du jour.
 6. ✅ Dashboard Assuré — profil, ayants droit, rendez-vous, ordonnances,
