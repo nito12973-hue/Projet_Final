@@ -5202,3 +5202,120 @@ class RechercheMedecinsAdminTests(TestCase):
         """Quelques lignes chacun : un filtre y serait de la quantite."""
         for nom in ('liste_pharmaciens', 'liste_plans_couverture'):
             self.assertNotContains(self.client.get(reverse(nom)), 'class="filtres"', msg_prefix=nom)
+
+
+class CloisonnementParUrlTests(TestCase):
+    """Audit de securite : changer un identifiant dans l'URL ne doit jamais
+    donner acces aux donnees d'un autre assure.
+
+    Toutes ces vues filtrent le proprietaire DANS la requete
+    (get_object_or_404(..., patient__in=beneficiaires)) plutot qu'apres
+    coup : la reponse est un 404, qui ne revele meme pas que l'objet
+    existe. Ces tests verrouillent ce choix -- c'est le genre de garde-fou
+    qu'un refactor casse sans s'en apercevoir."""
+
+    def setUp(self):
+        self.user_a = creer_utilisateur(User.Role.ASSURE, 'assure-a@santesn.sn')
+        self.a = Patient.objects.create(
+            user=self.user_a, nom='Diop', prenom='Awa',
+            date_naissance=datetime.date(1980, 1, 1), telephone='770000060')
+        self.enfant_a = Patient.objects.create(
+            nom='Diop', prenom='Fatou', date_naissance=datetime.date(2015, 1, 1),
+            type_beneficiaire=Patient.TypeBeneficiaire.AYANT_DROIT,
+            lien_parente=Patient.LienParente.ENFANT, assure_principal=self.a)
+
+        self.user_b = creer_utilisateur(User.Role.ASSURE, 'assure-b@santesn.sn')
+        self.b = Patient.objects.create(
+            user=self.user_b, nom='Sarr', prenom='Modou',
+            date_naissance=datetime.date(1985, 1, 1), telephone='770000061')
+
+        self.medecin = creer_medecin('medecin-idor@santesn.sn')
+
+        # Donnees appartenant a B, que A ne doit jamais atteindre.
+        self.consultation_b = Consultation.objects.create(
+            patient=self.b, medecin=self.medecin,
+            date_consultation=timezone.now(), diagnostic='Confidentiel B')
+        self.ordonnance_b = Ordonnance.objects.create(
+            consultation=self.consultation_b, medicaments='Traitement de B')
+        self.rdv_b = RendezVous.objects.create(
+            patient=self.b, medecin=self.medecin,
+            date_heure=timezone.now() + datetime.timedelta(days=3), motif='RDV de B')
+        self.pec_b = PriseEnCharge.objects.create(patient=self.b, motif='Demande de B')
+        self.notification_b = Notification.objects.create(
+            destinataire=self.user_b, message='Message pour B')
+
+        self.client.login(username='assure-a@santesn.sn', password=PASSWORD)
+
+    # --- Lecture ---------------------------------------------------------
+
+    def test_ordonnance_dun_autre_assure_inaccessible(self):
+        reponse = self.client.get(reverse('voir_ordonnance_assure', args=[self.ordonnance_b.pk]))
+        self.assertEqual(reponse.status_code, 404)
+
+    def test_ses_propres_ordonnances_restent_accessibles(self):
+        """Contre-epreuve : le cloisonnement ne doit pas tout fermer."""
+        consultation = Consultation.objects.create(
+            patient=self.enfant_a, medecin=self.medecin,
+            date_consultation=timezone.now(), diagnostic='Suivi')
+        ordonnance = Ordonnance.objects.create(consultation=consultation,
+                                               medicaments='Traitement de A')
+        self.assertEqual(
+            self.client.get(reverse('voir_ordonnance_assure', args=[ordonnance.pk])).status_code,
+            200)
+
+    def test_listes_de_lassure_ne_montrent_que_ses_beneficiaires(self):
+        for nom, cle in (('mes_ordonnances_assure', 'ordonnances'),
+                         ('mes_rendez_vous_assure', 'rendez_vous'),
+                         ('mes_prises_en_charge_assure', 'lignes')):
+            contenu = self.client.get(reverse(nom)).content.decode()
+            self.assertNotIn('Traitement de B', contenu, nom)
+            self.assertNotIn('RDV de B', contenu, nom)
+            self.assertNotIn('Demande de B', contenu, nom)
+
+    # --- Ecriture --------------------------------------------------------
+
+    def test_annuler_le_rendez_vous_dun_autre_assure_refuse(self):
+        reponse = self.client.post(reverse('annuler_rendez_vous_assure', args=[self.rdv_b.pk]))
+        self.assertEqual(reponse.status_code, 404)
+        self.rdv_b.refresh_from_db()
+        self.assertNotEqual(self.rdv_b.statut, RendezVous.Statut.ANNULE)
+
+    def test_modifier_layant_droit_dun_autre_assure_refuse(self):
+        # B n'a pas d'ayant droit : on tente sur le patient B lui-meme, qui
+        # n'est rattache a personne.
+        for nom in ('modifier_ayant_droit', 'supprimer_ayant_droit'):
+            self.assertEqual(
+                self.client.get(reverse(nom, args=[self.b.pk])).status_code, 404, nom)
+
+    def test_marquer_lue_la_notification_dun_autre_refuse(self):
+        reponse = self.client.post(
+            reverse('marquer_notification_lue', args=[self.notification_b.pk]))
+        self.assertEqual(reponse.status_code, 404)
+        self.notification_b.refresh_from_db()
+        self.assertFalse(self.notification_b.lue)
+
+    # --- Escalade de role ------------------------------------------------
+
+    def test_un_assure_natteint_aucun_ecran_admin(self):
+        for nom in ('dashboard', 'liste_utilisateurs', 'liste_patients',
+                    'liste_paiements', 'rapports', 'journal_activite'):
+            self.assertEqual(self.client.get(reverse(nom)).status_code, 403, nom)
+
+    def test_un_assure_natteint_ni_lespace_medecin_ni_pharmacien(self):
+        for nom in ('agenda_medecin', 'mes_patients', 'historique_consultations',
+                    'scanner_ordonnance', 'historique_delivrances'):
+            self.assertEqual(self.client.get(reverse(nom)).status_code, 403, nom)
+
+    def test_un_medecin_natteint_pas_la_carte_dun_patient(self):
+        """Editer une carte est une delivrance de piece : admin seulement."""
+        self.client.logout()
+        self.client.login(username='medecin-idor@santesn.sn', password=PASSWORD)
+        self.assertEqual(
+            self.client.get(reverse('carte_patient', args=[self.b.pk])).status_code, 403)
+
+    def test_une_url_admin_forgee_ne_modifie_rien(self):
+        """POST direct sur une action d'ecriture admin, sans passer par l'ecran."""
+        reponse = self.client.post(reverse('activer_desactiver_utilisateur', args=[self.user_b.pk]))
+        self.assertEqual(reponse.status_code, 403)
+        self.user_b.refresh_from_db()
+        self.assertTrue(self.user_b.is_active)
