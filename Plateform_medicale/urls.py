@@ -106,6 +106,7 @@ urlpatterns = [
     path('assure/rendez-vous/<int:pk>/annuler/', views.annuler_rendez_vous_assure, name='annuler_rendez_vous_assure'),
     path('assure/ordonnances/', views.mes_ordonnances_assure, name='mes_ordonnances_assure'),
     path('assure/ordonnances/<int:pk>/', views.voir_ordonnance_assure, name='voir_ordonnance_assure'),
+    path('assure/prises-en-charge/', views.mes_prises_en_charge_assure, name='mes_prises_en_charge_assure'),
     path('assure/historique/', views.mon_historique_assure, name='mon_historique_assure'),
 
     path('notifications/envoyer/', views.envoyer_notification, name='envoyer_notification'),

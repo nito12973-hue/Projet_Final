@@ -2561,6 +2561,131 @@
             line-height: 1.45;
         }
 
+        /* Mes prises en charge (espace Assure) : une carte par demande, avec
+           les consultations rattachees. Les montants viennent des paiements de
+           ces consultations -- la prise en charge n'en porte aucun. */
+        .pec {
+            margin-bottom: 16px;
+        }
+
+        .pec-entete {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .pec-titre strong {
+            display: block;
+            font-size: 14.5px;
+            font-weight: 700;
+            color: var(--titre);
+        }
+
+        .pec-titre span {
+            display: block;
+            margin-top: 3px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .pec-entete .badge {
+            margin-left: auto;
+            flex-shrink: 0;
+        }
+
+        .pec-corps {
+            padding: 16px 24px 20px;
+        }
+
+        .pec-message {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            margin: 0 0 14px;
+            padding: 11px 13px;
+            border-radius: 11px;
+            background: var(--attente-bg);
+            color: var(--attente-fg);
+            font-size: 12.5px;
+            line-height: 1.5;
+        }
+
+        .pec-message .icone-nav {
+            width: 16px;
+            height: 16px;
+            flex: 0 0 16px;
+            margin-top: 1px;
+        }
+
+        .pec-message-refus {
+            background: var(--refus-bg);
+            color: var(--refus-fg);
+        }
+
+        .pec-table {
+            width: 100%;
+        }
+
+        .pec-table th,
+        .pec-table td {
+            padding: 10px 12px 10px 0;
+        }
+
+        .pec-table th:first-child,
+        .pec-table td:first-child {
+            padding-left: 0;
+        }
+
+        .pec-service {
+            display: block;
+            font-size: 11.5px;
+            color: var(--muted);
+        }
+
+        .pec-sans-paiement {
+            color: var(--muted);
+            font-size: 12.5px;
+        }
+
+        .pec-total {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 28px;
+            margin: 14px 0 0;
+            padding-top: 14px;
+            border-top: 1px solid var(--border);
+            font-size: 12.5px;
+            color: var(--muted);
+        }
+
+        .pec-total strong {
+            margin-left: 7px;
+            font-size: 14px;
+            color: var(--titre);
+        }
+
+        .pec-total strong.attente {
+            color: var(--attente-fg);
+        }
+
+        .pec-vide {
+            margin: 0;
+            font-size: 12.5px;
+            color: var(--muted);
+        }
+
+        @media (max-width: 640px) {
+            .pec-entete {
+                flex-direction: column;
+            }
+
+            .pec-entete .badge {
+                margin-left: 0;
+            }
+        }
+
         /* Comptes temporairement bloques. L'alerte reste maitrisee : seule la
            pastille "Bloque" porte la couleur de refus, le reste du bloc garde
            les surfaces neutres du reste de l'application. */
@@ -3676,6 +3801,7 @@
                 <a href="{% url 'prestataires_proches' %}" aria-label="Prestataires proches" data-tooltip="Prestataires proches" class="{% if url_name == 'prestataires_proches' %}active{% endif %}">{% icone "map-pin" %} <span class="nav-texte">Prestataires proches</span></a>
                 <a href="{% url 'mes_rendez_vous_assure' %}" aria-label="Mes rendez-vous" data-tooltip="Mes rendez-vous" class="{% if url_name == 'mes_rendez_vous_assure' or url_name == 'ajouter_rendez_vous_assure' %}active{% endif %}">{% icone "calendar" %} <span class="nav-texte">Mes rendez-vous</span></a>
                 <a href="{% url 'mes_ordonnances_assure' %}" aria-label="Mes ordonnances" data-tooltip="Mes ordonnances" class="{% if url_name == 'mes_ordonnances_assure' or url_name == 'voir_ordonnance_assure' %}active{% endif %}">{% icone "pill" %} <span class="nav-texte">Mes ordonnances</span></a>
+                <a href="{% url 'mes_prises_en_charge_assure' %}" aria-label="Mes prises en charge" data-tooltip="Mes prises en charge" class="{% if url_name == 'mes_prises_en_charge_assure' %}active{% endif %}">{% icone "shield-check" %} <span class="nav-texte">Mes prises en charge</span></a>
                 <a href="{% url 'mon_historique_assure' %}" aria-label="Mon historique" data-tooltip="Mon historique" class="{% if url_name == 'mon_historique_assure' %}active{% endif %}">{% icone "clock-history" %} <span class="nav-texte">Mon historique</span></a>
                 <a href="{% url 'mes_notifications' %}" aria-label="Notifications" data-tooltip="Notifications" class="{% if url_name == 'mes_notifications' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span>{% if notifications_non_lues %} <span class="badge-non-lues">{{ notifications_non_lues }}</span>{% endif %}</a>
                 <a href="{% url 'parametres' %}" aria-label="Paramètres" data-tooltip="Paramètres" class="{% if url_name == 'parametres' or url_name == 'mon_compte' or url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "settings" %} <span class="nav-texte">Paramètres</span></a>

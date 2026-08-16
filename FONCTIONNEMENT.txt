@@ -1309,6 +1309,29 @@ Assure (role_required(ASSURE), prefixe /assure/ + /espace/assure/)
                                       le prestataire dans le formulaire
   mes_ordonnances_assure / voir_ordonnance_assure
   mon_historique_assure               consultations + statut de paiement
+  mes_prises_en_charge_assure         suivi des demandes de couverture de
+                                      l'assure et de ses ayants droit
+                                      (filtre ?statut=, pagination).
+                                      L'assure voyait la CONSEQUENCE (sa
+                                      part a payer, dans mon_historique)
+                                      sans jamais voir la CAUSE : l'etat
+                                      de sa prise en charge, qui determine
+                                      pourtant s'il paie 10% ou 100%
+                                      (Paiement.calculer_pour n'applique le
+                                      taux que si statut == "validee").
+                                      PriseEnCharge ne porte QUE patient,
+                                      date_demande, motif et statut : ni
+                                      prestataire, ni montant, ni motif de
+                                      refus — l'ecran n'en invente aucun.
+                                      Les montants affiches viennent des
+                                      consultations rattachees
+                                      (Consultation.prise_en_charge) et de
+                                      leur Paiement, agreges par ligne ;
+                                      une demande sans consultation
+                                      n'affiche donc aucun montant.
+                                      Prefetch(consultation_set) + totaux
+                                      calcules APRES pagination : seules
+                                      les lignes affichees sont parcourues.
   _patient_principal / _beneficiaires          helpers prives
 
 

@@ -23,7 +23,7 @@ from django.contrib.sessions.models import Session
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import Case, Count, IntegerField, Q, Sum, Value, When
+from django.db.models import Case, Count, IntegerField, Prefetch, Q, Sum, Value, When
 from django.db.models.functions import TruncDate, TruncMonth, TruncYear
 from django.http import Http404, HttpResponse, JsonResponse
 from django.conf import settings
@@ -2789,6 +2789,71 @@ def voir_ordonnance_assure(request, pk):
         "voir_ordonnance.html",
         {"ordonnance": ordonnance, "retour_url": "mes_ordonnances_assure"},
     )
+
+
+@role_required(User.Role.ASSURE)
+def mes_prises_en_charge_assure(request):
+    """Suivi par l'assure de ses prises en charge et de celles de ses ayants droit.
+
+    Jusqu'ici l'assure voyait la CONSEQUENCE (sa part a payer, dans son
+    historique) sans jamais voir la CAUSE : la demande existe-t-elle, ou en
+    est-elle ? C'est pourtant ce statut qui determine s'il paie 10% ou 100%.
+
+    Ce qui est affiche vient uniquement du modele : PriseEnCharge ne porte que
+    patient, date, motif et statut. Les montants ne sont pas sur la prise en
+    charge -- ils sont atteints par les consultations qui s'y rattachent
+    (Consultation.prise_en_charge) et leur Paiement. Rien n'est invente :
+    ni prestataire ni motif de refus n'existent dans le modele.
+    """
+    patient = _patient_principal(request)
+    if patient is None:
+        return redirect("mon_profil_assure")
+
+    beneficiaires = _beneficiaires(patient)
+    consultations = Consultation.objects.select_related(
+        "medecin", "service", "paiement"
+    ).order_by("-date_consultation")
+
+    prises = (
+        PriseEnCharge.objects
+        .filter(patient__in=beneficiaires)
+        .select_related("patient")
+        .prefetch_related(Prefetch("consultation_set", queryset=consultations))
+        .order_by("-date_demande")
+    )
+
+    statut = request.GET.get("statut", "")
+    if statut:
+        prises = prises.filter(statut=statut)
+
+    page = _paginer(request, prises)
+
+    # Totaux calcules apres pagination : seules les lignes affichees sont
+    # parcourues, et les consultations sont deja prechargees.
+    lignes = []
+    for prise in page:
+        rattachees = list(prise.consultation_set.all())
+        a_charge = sum(
+            (c.paiement.montant_part_patient for c in rattachees if hasattr(c, "paiement")),
+            Decimal("0"),
+        )
+        couvert = sum(
+            (c.paiement.montant_part_assurance for c in rattachees if hasattr(c, "paiement")),
+            Decimal("0"),
+        )
+        lignes.append({
+            "prise": prise,
+            "consultations": rattachees,
+            "montant_a_charge": a_charge,
+            "montant_couvert": couvert,
+        })
+
+    return render(request, "mes_prises_en_charge.html", {
+        "page": page,
+        "lignes": lignes,
+        "statut_choisi": statut,
+        "statuts": PriseEnCharge.STATUT_CHOICES,
+    })
 
 
 @role_required(User.Role.ASSURE)

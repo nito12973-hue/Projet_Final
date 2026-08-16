@@ -64,6 +64,7 @@ _LIBELLES_PAGE = {
     "rapports": "Rapports",
     "envoyer_notification": "Notifications",
     "liste_notifications_envoyees": "Notifications",
+    "mes_prises_en_charge_assure": "Mes prises en charge",
     "mes_notifications": "Notifications",
     "parametres": "Paramètres",
     "parametres_section": "Paramètres",
