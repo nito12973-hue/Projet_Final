@@ -130,6 +130,19 @@ Pharmacien qui s'en chargent.
   ordonnances qu'aucun patient n'est venu retirer — c'est le seul écran qui
   le montre. La validation d'une délivrance reste l'affaire du pharmacien, et
   le QR n'est pas affiché ici : il n'a de sens qu'au comptoir.
+- **Consultations** : suivi des actes réalisés, en **lecture seule**. Pour
+  chacun : la date, le patient, le médecin, le service, la prise en charge
+  rattachée et la part restant au patient.
+
+  **Le diagnostic et le traitement n'y figurent pas.** Ce sont des données
+  médicales, réservées au médecin qui les a saisies. Vous voyez l'acte et sa
+  facturation, pas son contenu.
+
+  Le filtre *Couverture* est le plus utile : *À la charge du patient* isole
+  les consultations sans prise en charge validée — donc réglées à 100 % par
+  le patient. C'est le seul écran qui montre ce cas, souvent le signe qu'une
+  demande de prise en charge n'a jamais été déposée ou validée à temps.
+
 - **Paiements** : liste de tous les paiements générés automatiquement à
   chaque consultation, filtrable par statut. *Marquer réglé* exige de
   préciser un mode de règlement.

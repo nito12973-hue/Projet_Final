@@ -54,6 +54,7 @@ urlpatterns = [
     path('services/<int:pk>/modifier/', views.modifier_service, name='modifier_service'),
     path('services/<int:pk>/supprimer/', views.supprimer_service, name='supprimer_service'),
 
+    path('consultations/', views.liste_consultations, name='liste_consultations'),
     path('prises-en-charge/', views.liste_prises_en_charge, name='liste_prises_en_charge'),
     path('prises-en-charge/ajouter/', views.ajouter_prise_en_charge, name='ajouter_prise_en_charge'),
     path('prises-en-charge/<int:pk>/modifier/', views.modifier_prise_en_charge, name='modifier_prise_en_charge'),

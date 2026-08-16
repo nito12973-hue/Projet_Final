@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% load formats icones %}
+
+{% block title %}Consultations{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Consultations</h1>
+        <p class="subtitle">Suivi des actes réalisés et de leur couverture. Lecture seule.</p>
+    </div>
+</section>
+
+{% comment %}
+Ni diagnostic ni traitement : ce sont des donnees medicales, reservees au
+medecin qui les a saisies (meme regle que fiche_patient_medecin). L'admin
+voit l'acte et sa facturation, pas son contenu.
+{% endcomment %}
+<form method="get" class="filtres">
+    <div style="min-width:220px;flex:1;">
+        <label for="q">Recherche</label>
+        <div class="champ-recherche">
+            {% icone "search" %}
+            <input id="q" type="text" name="q" placeholder="Nom du patient ou du médecin" value="{{ recherche }}" style="margin-bottom:0;">
+        </div>
+    </div>
+    <div style="min-width:220px;">
+        <label for="couverture">Couverture</label>
+        <select id="couverture" name="couverture" style="margin-bottom:0;">
+            <option value="">Toutes</option>
+            <option value="oui" {% if couverture_choisie == "oui" %}selected{% endif %}>Prise en charge validée</option>
+            <option value="non" {% if couverture_choisie == "non" %}selected{% endif %}>À la charge du patient</option>
+        </select>
+    </div>
+    <div style="min-width:180px;">
+        <label for="date">Date</label>
+        <input id="date" type="date" name="date" value="{{ date_choisie }}" style="margin-bottom:0;">
+    </div>
+    <button type="submit" class="button primary btn">Filtrer</button>
+    {% if recherche or couverture_choisie or date_choisie %}
+    <a href="{% url 'liste_consultations' %}" class="button btn">Réinitialiser</a>
+    {% endif %}
+</form>
+
+{% if consultations %}
+<section class="panel">
+    <table>
+        <thead>
+            <tr>
+                {% entete_tri request.GET "date_consultation" "Date" %}
+                {% entete_tri request.GET "patient__nom" "Patient" %}
+                {% entete_tri request.GET "medecin__nom" "Médecin" %}
+                <th scope="col">Service</th>
+                <th scope="col">Prise en charge</th>
+                <th scope="col">Part patient</th>
+                <th scope="col">Règlement</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for consultation in consultations %}
+            <tr>
+                <td>{{ consultation.date_consultation|date:"d/m/Y" }}</td>
+                <td>{{ consultation.patient }}</td>
+                <td>{{ consultation.medecin }}</td>
+                <td>{{ consultation.service.nom|default:"—" }}</td>
+                <td>
+                    {% if consultation.prise_en_charge %}
+                    <span class="badge {{ consultation.prise_en_charge.statut }}">{{ consultation.prise_en_charge.get_statut_display }}</span>
+                    {% else %}
+                    <span class="subtitle">Aucune</span>
+                    {% endif %}
+                </td>
+                {% if consultation.paiement %}
+                <td class="code">{{ consultation.paiement.montant_part_patient|franc_cfa }}</td>
+                <td>
+                    <span class="badge {% if consultation.paiement.statut == 'regle' %}validee{% else %}en_attente{% endif %}">
+                        {{ consultation.paiement.get_statut_display }}
+                    </span>
+                </td>
+                {% else %}
+                {# Consultations creees directement en base (fixtures, tests ORM) : pas de Paiement. #}
+                <td colspan="2" class="subtitle">Aucun montant enregistré</td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% if consultations.paginator.num_pages > 1 %}
+<nav class="pagination" aria-label="Pagination">
+    {% if consultations.has_previous %}
+    <a href="?{% prefixe_pagination request.GET %}page={{ consultations.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Précédent</a>
+    {% endif %}
+    <span class="pagination-info">Page {{ consultations.number }} sur {{ consultations.paginator.num_pages }}</span>
+    {% if consultations.has_next %}
+    <a href="?{% prefixe_pagination request.GET %}page={{ consultations.next_page_number }}" class="button btn btn-sm">Suivant {% icone "chevron-right" %}</a>
+    {% endif %}
+</nav>
+{% endif %}
+{% else %}
+<div class="etat-vide">
+    {% illustration_vide "stethoscope" %}
+    <p>{% if recherche or couverture_choisie or date_choisie %}Aucune consultation ne correspond à ces critères.{% else %}Aucune consultation enregistrée.{% endif %}</p>
+</div>
+{% endif %}
+{% endblock %}
