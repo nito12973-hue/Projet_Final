@@ -36,26 +36,26 @@
     <table>
         <thead>
             <tr>
-                {% entete_tri request.GET "id" "N°" %}
+                {% entete_tri request.GET "id" "N°" "col-optionnelle" %}
                 {% entete_tri request.GET "nom" "Nom complet" %}
                 {% entete_tri request.GET "type_beneficiaire" "Type" %}
-                {% entete_tri request.GET "assure_principal__nom" "Assuré principal" %}
-                {% entete_tri request.GET "numero_carte" "Numéro de carte" %}
-                {% entete_tri request.GET "plan_couverture__nom" "Plan de couverture" %}
-                <th>Téléphone</th>
+                {% entete_tri request.GET "assure_principal__nom" "Assuré principal" "col-optionnelle" %}
+                {% entete_tri request.GET "numero_carte" "Numéro de carte" "col-optionnelle" %}
+                {% entete_tri request.GET "plan_couverture__nom" "Plan de couverture" "col-optionnelle" %}
+                <th class="col-optionnelle">Téléphone</th>
                 <th>Actions</th>
             </tr>
         </thead>
         <tbody>
             {% for patient in patients %}
             <tr>
-                <td>{{ patient.id }}</td>
+                <td class="col-optionnelle">{{ patient.id }}</td>
                 <td>{{ patient.prenom }} {{ patient.nom }}</td>
                 <td>{{ patient.get_type_beneficiaire_display }}</td>
-                <td>{{ patient.assure_principal|default:"-" }}</td>
-                <td class="code">{{ patient.numero_carte }}</td>
-                <td>{{ patient.plan_couverture|default:"Non attribue" }}</td>
-                <td>{{ patient.telephone|default:"-" }}</td>
+                <td class="col-optionnelle">{{ patient.assure_principal|default:"-" }}</td>
+                <td class="code col-optionnelle">{{ patient.numero_carte }}</td>
+                <td class="col-optionnelle">{{ patient.plan_couverture|default:"Non attribue" }}</td>
+                <td class="col-optionnelle">{{ patient.telephone|default:"-" }}</td>
                 <td>
                     <div class="actions">
                         {% comment %}

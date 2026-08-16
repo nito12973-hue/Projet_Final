@@ -98,13 +98,18 @@ def prefixe_pagination(get_params):
 
 
 @register.simple_tag
-def entete_tri(get_params, champ, libelle):
+def entete_tri(get_params, champ, libelle, classe=""):
     """En-tete <th> cliquable pour trier une liste admin (parametre GET
     'tri', ex. 'nom' ou '-nom' pour l'ordre inverse). Meme chevron dans les
     trois etats : au repos (discret, sens neutre), actif ascendant (tourne
     vers le haut) et actif descendant (vers le bas) -- une rotation CSS,
     pas trois icones a maintenir. Conserve les autres filtres actifs, mais
-    pas 'page' : changer le tri revient a la premiere page."""
+    pas 'page' : changer le tri revient a la premiere page.
+
+    `classe` marque une colonne SECONDAIRE ("col-optionnelle") : masquee sous
+    900 px, ou une liste admin de 8 colonnes devient illisible et rejette la
+    colonne Actions hors de l'ecran. La meme classe doit alors etre posee sur
+    les <td> correspondants."""
     tri_actuel = get_params.get("tri", "")
     actif = tri_actuel.lstrip("-") == champ
     descendant = actif and tri_actuel.startswith("-")
@@ -117,15 +122,17 @@ def entete_tri(get_params, champ, libelle):
     texte = escape(libelle)
     chevron = _icone_svg("chevron-down")
 
+    classe_th = f' class="{escape(classe)}"' if classe else ""
+
     if not actif:
         return mark_safe(
-            f'<th scope="col"><a href="{href}" class="lien-tri">{texte} '
+            f'<th scope="col"{classe_th}><a href="{href}" class="lien-tri">{texte} '
             f'<span class="icone-tri">{chevron}</span></a></th>'
         )
 
-    classe = "lien-tri lien-tri-actif lien-tri-desc" if descendant else "lien-tri lien-tri-actif lien-tri-asc"
+    classe_lien = "lien-tri lien-tri-actif lien-tri-desc" if descendant else "lien-tri lien-tri-actif lien-tri-asc"
     aria = "descending" if descendant else "ascending"
     return mark_safe(
-        f'<th scope="col" aria-sort="{aria}"><a href="{href}" class="{classe}">{texte} '
+        f'<th scope="col" aria-sort="{aria}"{classe_th}><a href="{href}" class="{classe_lien}">{texte} '
         f'<span class="icone-tri">{chevron}</span></a></th>'
     )

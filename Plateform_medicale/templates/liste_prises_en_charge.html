@@ -41,8 +41,8 @@
         <thead>
             <tr>
                 {% entete_tri request.GET "patient__nom" "Patient" %}
-                {% entete_tri request.GET "date_demande" "Date demande" %}
-                <th>Motif</th>
+                {% entete_tri request.GET "date_demande" "Date demande" "col-optionnelle" %}
+                <th class="col-optionnelle">Motif</th>
                 {% entete_tri request.GET "statut" "Statut" %}
                 <th>Actions</th>
             </tr>
@@ -51,8 +51,8 @@
             {% for prise in prises_en_charge %}
             <tr>
                 <td>{{ prise.patient }}</td>
-                <td>{{ prise.date_demande|date:"d/m/Y H:i" }}</td>
-                <td>{{ prise.motif }}</td>
+                <td class="col-optionnelle">{{ prise.date_demande|date:"d/m/Y H:i" }}</td>
+                <td class="col-optionnelle">{{ prise.motif }}</td>
                 <td><span class="badge {{ prise.statut }}">{{ prise.get_statut_display }}</span></td>
                 <td>
                     <div class="actions">

@@ -873,9 +873,12 @@
             border-color: transparent;
         }
 
+        /* wrap plutot que nowrap : depuis l'ajout du bouton "Carte", trois
+           actions cote a cote retendaient la liste des assures au-dela de sa
+           carte, meme en grand ecran (1102 px mesures dans 1076). */
         .actions {
             display: flex;
-            flex-wrap: nowrap;
+            flex-wrap: wrap;
             gap: 8px;
         }
 
@@ -3651,6 +3654,43 @@
         }
 
         @media (max-width: 900px) {
+            /* Colonnes secondaires des listes ADMIN. Mesure AVANT correctif :
+               un tableau de 9 colonnes faisait 1063 px dans une carte de
+               356 px, et la colonne Actions se retrouvait HORS ECRAN -- on ne
+               pouvait plus ni modifier ni desactiver un compte depuis un
+               telephone. A 820 px (tablette), 5 listes debordaient deja.
+               Les listes gardent leur forme tabulaire -- c'est ce qu'on vient
+               y chercher, comparer des lignes -- et perdent seulement ce qui
+               n'aide ni a identifier ni a agir. La colonne Actions n'est
+               JAMAIS optionnelle. Le mode carte (.tableau-carte) reste
+               reserve aux ecrans Assure : sur un referentiel de 9 colonnes il
+               produirait des cartes interminables. */
+            .col-optionnelle {
+                display: none;
+            }
+
+            /* Les boutons d'action s'empilent : trois boutons cote a cote
+               suffisaient a repousser la colonne hors de l'ecran. */
+            .actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            /* Le tableau ne doit plus imposer sa largeur naturelle : sans
+               cela, une cellule longue (un motif, un objet de journal) le
+               retend au-dela de la carte malgre les colonnes masquees. */
+            .panel table {
+                table-layout: fixed;
+            }
+
+            .panel td {
+                overflow-wrap: anywhere;
+            }
+
+            th, td {
+                padding: 12px 10px;
+            }
+
             .topbar {
                 margin: -32px 0 16px;
                 padding: 10px 0;

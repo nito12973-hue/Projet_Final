@@ -55,10 +55,10 @@
         <thead>
             <tr>
                 {% entete_tri request.GET "consultation__patient__nom" "Patient" %}
-                <th>Consultation</th>
-                {% entete_tri request.GET "montant_total" "Montant total" %}
-                {% entete_tri request.GET "montant_part_assurance" "Part assurance" %}
-                {% entete_tri request.GET "montant_part_patient" "Part patient" %}
+                <th class="col-optionnelle">Consultation</th>
+                {% entete_tri request.GET "montant_total" "Montant total" "col-optionnelle" %}
+                {% entete_tri request.GET "montant_part_assurance" "Part assurance" "col-optionnelle" %}
+                {% entete_tri request.GET "montant_part_patient" "Part patient" "col-optionnelle" %}
                 {% entete_tri request.GET "statut" "Statut" %}
                 <th>Actions</th>
             </tr>
@@ -67,10 +67,10 @@
             {% for paiement in paiements %}
             <tr>
                 <td>{{ paiement.consultation.patient }}</td>
-                <td>{{ paiement.consultation.date_consultation|date:"d/m/Y H:i" }}</td>
-                <td>{{ paiement.montant_total|franc_cfa }}</td>
-                <td>{{ paiement.montant_part_assurance|franc_cfa }}</td>
-                <td>{{ paiement.montant_part_patient|franc_cfa }}</td>
+                <td class="col-optionnelle">{{ paiement.consultation.date_consultation|date:"d/m/Y H:i" }}</td>
+                <td class="col-optionnelle">{{ paiement.montant_total|franc_cfa }}</td>
+                <td class="col-optionnelle">{{ paiement.montant_part_assurance|franc_cfa }}</td>
+                <td class="col-optionnelle">{{ paiement.montant_part_patient|franc_cfa }}</td>
                 <td><span class="badge {% if paiement.statut == 'regle' %}validee{% else %}en_attente{% endif %}">{{ paiement.get_statut_display }}</span></td>
                 <td>
                     <div class="actions">

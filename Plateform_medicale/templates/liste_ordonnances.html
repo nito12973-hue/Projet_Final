@@ -40,8 +40,8 @@
             <tr>
                 {% entete_tri request.GET "date_creation" "Émise le" %}
                 {% entete_tri request.GET "consultation__patient__nom" "Patient" %}
-                <th scope="col">Médecin</th>
-                {% entete_tri request.GET "code_qr" "Code" %}
+                <th scope="col" class="col-optionnelle">Médecin</th>
+                {% entete_tri request.GET "code_qr" "Code" "col-optionnelle" %}
                 <th scope="col">Délivrance</th>
             </tr>
         </thead>
@@ -50,8 +50,8 @@
             <tr>
                 <td>{{ ordonnance.date_creation|date:"d/m/Y" }}</td>
                 <td>{{ ordonnance.consultation.patient }}</td>
-                <td>{{ ordonnance.consultation.medecin }}</td>
-                <td><span class="code">{{ ordonnance.code_qr }}</span></td>
+                <td class="col-optionnelle">{{ ordonnance.consultation.medecin }}</td>
+                <td class="col-optionnelle"><span class="code">{{ ordonnance.code_qr }}</span></td>
                 <td>
                     {% if ordonnance.delivrance %}
                     <span class="badge validee">Délivrée le {{ ordonnance.delivrance.date_delivrance|date:"d/m/Y" }}</span>
