@@ -37,7 +37,7 @@ from .models import (
 from .views import SECTIONS_PARAMETRES as SECTIONS_PARAMETRES_REELLES
 from .views import TAILLE_PAGE_LISTE
 
-SECTIONS_TOUTES = ('general', 'apparence', 'securite', 'avance')
+SECTIONS_TOUTES = ('general', 'apparence', 'securite')
 
 PASSWORD = 'MotDePasseSolide2026!'
 
@@ -3088,7 +3088,7 @@ class ParametresEtMonCompteTests(TestCase):
         self.assertContains(reponse, 'Configuration de la plateforme')
 
     def test_chaque_categorie_ouvre_sa_propre_page(self):
-        for slug in ('general', 'apparence', 'securite', 'avance'):
+        for slug in ('general', 'apparence', 'securite'):
             reponse = self.client.get(reverse('parametres_section', args=[slug]))
             self.assertEqual(reponse.status_code, 200, slug)
             self.assertEqual(reponse.context['section'], slug)
@@ -3251,7 +3251,7 @@ class ParametresContenuTests(TestCase):
         slugs = [s['slug'] for s in reponse.context['sections']]
         self.assertNotIn('notifications', slugs)
         self.assertNotIn('donnees', slugs)
-        self.assertEqual(slugs, ['general', 'apparence', 'securite', 'avance'])
+        self.assertEqual(slugs, ['general', 'apparence', 'securite'])
 
     def test_chaque_section_pointe_une_icone_qui_existe(self):
         """Panne silencieuse : _ICONES.get(nom, "") renvoie une chaine VIDE
@@ -3262,10 +3262,20 @@ class ParametresContenuTests(TestCase):
         for slug, _libelle, icone, _role in SECTIONS_PARAMETRES_REELLES:
             self.assertIn(icone, _ICONES, slug)
 
-    def test_section_avancee_signale_l_absence_de_backend_email(self):
-        reponse = self.client.get(reverse('parametres_section', args=['avance']))
+    def test_general_signale_l_absence_de_backend_email(self):
+        """La section 'Avancé' a ete fusionnee dans 'Général' : elle ne
+        portait qu'un panneau, et 'Général' n'en portait qu'un depuis que la
+        carte du compte l'a quittee. Une section de plus pour un seul panneau
+        n'ajoutait qu'un clic."""
+        reponse = self.client.get(reverse('parametres_section', args=['general']))
         self.assertContains(reponse, 'Envoi d')
         self.assertContains(reponse, 'inactif')
+        self.assertContains(reponse, 'Configuration de la plateforme')
+
+    def test_section_avancee_nexiste_plus(self):
+        self.assertEqual(
+            self.client.get(reverse('parametres_section', args=['avance'])).status_code,
+            404)
 
 
 class RechercheOrdonnancePharmacienTests(TestCase):
@@ -5154,3 +5164,41 @@ class ColonnesOptionnellesMobileTests(TestCase):
         contenu = self.client.get(reverse('liste_utilisateurs')).content.decode()
         self.assertIn('.col-optionnelle', contenu)
         self.assertIn('@media (max-width: 900px)', contenu)
+
+
+class RechercheMedecinsAdminTests(TestCase):
+    """Seul referentiel admin qui grandit sans filtre : au-dela d'une page,
+    retrouver un medecin obligeait a feuilleter. Pharmaciens et plans de
+    couverture n'en ont volontairement pas -- quelques lignes chacun."""
+
+    def setUp(self):
+        creer_utilisateur(User.Role.ADMIN, 'admin-med@santesn.sn')
+        self.client.login(username='admin-med@santesn.sn', password=PASSWORD)
+        self.cardiologue = creer_medecin('cardio@santesn.sn', specialite='Cardiologie')
+        self.pediatre = creer_medecin('pediatre@santesn.sn', specialite='Pédiatrie')
+        Medecin.objects.filter(pk=self.pediatre.pk).update(nom='Sarr', prenom='Ousmane')
+        self.pediatre.refresh_from_db()
+
+    def _lignes(self, **params):
+        return list(self.client.get(reverse('liste_medecins'), params).context['medecins'])
+
+    def test_recherche_par_nom(self):
+        self.assertEqual(self._lignes(q='Sarr'), [self.pediatre])
+
+    def test_recherche_par_specialite(self):
+        self.assertEqual(self._lignes(q='Cardio'), [self.cardiologue])
+
+    def test_recherche_par_email(self):
+        self.assertEqual(self._lignes(q='pediatre@'), [self.pediatre])
+
+    def test_sans_recherche_tout_est_liste(self):
+        self.assertEqual(len(self._lignes()), 2)
+
+    def test_etat_vide_distingue_la_recherche(self):
+        self.assertContains(self.client.get(reverse('liste_medecins'), {'q': 'introuvable'}),
+                            'Aucun médecin ne correspond')
+
+    def test_pharmaciens_et_plans_nont_pas_de_barre_de_filtres(self):
+        """Quelques lignes chacun : un filtre y serait de la quantite."""
+        for nom in ('liste_pharmaciens', 'liste_plans_couverture'):
+            self.assertNotContains(self.client.get(reverse(nom)), 'class="filtres"', msg_prefix=nom)

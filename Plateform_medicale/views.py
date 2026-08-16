@@ -348,15 +348,19 @@ def setup_wizard(request):
 # exports proposes ici ignoraient les filtres alors que le sous-titre affirmait
 # le contraire. Videe de ses doublons, la section n'avait plus de contenu.
 #
-# L'icone de "Général" n'est plus user-circle : la carte "Mon compte" a quitte
-# cette section (elle vit dans le menu du compte), il n'y reste que la
-# configuration de la plateforme. Celle d'"Avancé" n'est plus filter : un
-# entonnoir veut dire "filtrer".
+# La section "Avancé" a ete FUSIONNEE dans "Général" : depuis que la carte
+# "Mon compte" a rejoint le menu du compte, General ne portait plus qu'un seul
+# panneau de trois valeurs et laissait un grand vide sous lui, tandis
+# qu'"Avancé" ne portait qu'un panneau lui aussi. Les deux disent la meme
+# chose -- ce que la plateforme est et ce dont elle depend, en lecture seule.
+# Une section de plus pour un seul panneau n'ajoutait qu'un clic.
+#
+# L'icone de "Général" n'est plus user-circle : cette section ne porte plus le
+# compte de l'utilisateur.
 SECTIONS_PARAMETRES = [
     ("general", "Général", "building", None),
     ("apparence", "Apparence", "eye", None),
     ("securite", "Sécurité", "lock", None),
-    ("avance", "Avancé", "zap", None),
 ]
 
 
@@ -1054,8 +1058,25 @@ def ajouter_patient(request):
 
 @admin_required
 def liste_medecins(request):
-    medecins = _trier(request, Medecin.objects.all(), ["nom", "specialite", "email"], ["nom", "prenom"])
-    return render(request, "liste_medecins.html", {"medecins": _paginer(request, medecins)})
+    medecins = Medecin.objects.select_related("prestataire")
+
+    # Seul referentiel admin qui grandit sans filtre : au-dela d'une page,
+    # retrouver un medecin obligeait a feuilleter. Pharmaciens et plans de
+    # couverture n'en ont volontairement pas -- quelques lignes chacun.
+    recherche = request.GET.get("q", "").strip()
+    if recherche:
+        medecins = medecins.filter(
+            Q(nom__icontains=recherche)
+            | Q(prenom__icontains=recherche)
+            | Q(specialite__icontains=recherche)
+            | Q(email__icontains=recherche)
+        )
+
+    medecins = _trier(request, medecins, ["nom", "specialite", "email"], ["nom", "prenom"])
+    return render(request, "liste_medecins.html", {
+        "medecins": _paginer(request, medecins),
+        "recherche": recherche,
+    })
 
 
 @admin_required

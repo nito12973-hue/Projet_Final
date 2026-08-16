@@ -1,16 +1,30 @@
 {% extends "base.html" %}
 {% load formats icones %}
 
-{% block title %}Medecins{% endblock %}
+{% block title %}Médecins{% endblock %}
 
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>Medecins</h1>
-        <p class="subtitle">Liste des médecins disponibles.</p>
+        <h1>Médecins</h1>
+        <p class="subtitle">Praticiens rattachés au réseau : spécialité, contact et prestataire.</p>
     </div>
     <a class="button primary" href="{% url 'ajouter_medecin' %}">Ajouter</a>
 </section>
+
+<form method="get" class="filtres">
+    <div style="min-width:220px;flex:1;">
+        <label for="q">Recherche</label>
+        <div class="champ-recherche">
+            {% icone "search" %}
+            <input id="q" type="text" name="q" placeholder="Nom, spécialité ou email" value="{{ recherche }}" style="margin-bottom:0;">
+        </div>
+    </div>
+    <button type="submit" class="button primary btn">Filtrer</button>
+    {% if recherche %}
+    <a href="{% url 'liste_medecins' %}" class="button btn">Réinitialiser</a>
+    {% endif %}
+</form>
 
 {% if medecins %}
 <section class="panel">
@@ -56,7 +70,7 @@
 {% else %}
 <div class="etat-vide">
     {% illustration_vide "stethoscope" %}
-    <p>Aucun médecin enregistré.</p>
+    <p>{% if recherche %}Aucun médecin ne correspond à cette recherche.{% else %}Aucun médecin enregistré.{% endif %}</p>
 </div>
 {% endif %}
 {% endblock %}

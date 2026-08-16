@@ -64,6 +64,40 @@
                 </div>
             </div>
         </section>
+        <section class="panel param-carte">
+            <div class="panel-header">
+                <div>
+                    <h2>Services externes</h2>
+                    <p class="subtitle">Cette page ne règle rien : elle rend compte de ce dont la plateforme dépend.</p>
+                </div>
+            </div>
+            <div class="param-corps">
+                <div class="param-tech">
+                    <span class="param-puce" aria-hidden="true"></span>
+                    <strong>OpenStreetMap · Nominatim</strong>
+                    <span>recherche d'adresse des prestataires</span>
+                    <span class="param-etat">opérationnel</span>
+                </div>
+                <div class="param-tech">
+                    <span class="param-puce" aria-hidden="true"></span>
+                    <strong>Leaflet</strong>
+                    <span>carte du réseau de prestataires</span>
+                    <span class="param-etat">CDN</span>
+                </div>
+                <div class="param-tech">
+                    <span class="param-puce" aria-hidden="true"></span>
+                    <strong>Chart.js</strong>
+                    <span>graphiques des rapports</span>
+                    <span class="param-etat">CDN · v4.4.7</span>
+                </div>
+                <div class="param-tech">
+                    <span class="param-puce param-puce-off" aria-hidden="true"></span>
+                    <strong>Envoi d'emails</strong>
+                    <span>non configuré : les mots de passe générés sont affichés à l'écran</span>
+                    <span class="param-etat">inactif</span>
+                </div>
+            </div>
+        </section>
         {% endif %}
 
         {% if section == "apparence" %}
@@ -295,42 +329,6 @@
         </section>
         {% endif %}
 
-        {% if section == "avance" %}
-        <section class="panel param-carte">
-            <div class="panel-header">
-                <div>
-                    <h2>Services externes</h2>
-                    <p class="subtitle">Cette page ne règle rien : elle rend compte de ce dont la plateforme dépend.</p>
-                </div>
-            </div>
-            <div class="param-corps">
-                <div class="param-tech">
-                    <span class="param-puce" aria-hidden="true"></span>
-                    <strong>OpenStreetMap · Nominatim</strong>
-                    <span>recherche d'adresse des prestataires</span>
-                    <span class="param-etat">opérationnel</span>
-                </div>
-                <div class="param-tech">
-                    <span class="param-puce" aria-hidden="true"></span>
-                    <strong>Leaflet</strong>
-                    <span>carte du réseau de prestataires</span>
-                    <span class="param-etat">CDN</span>
-                </div>
-                <div class="param-tech">
-                    <span class="param-puce" aria-hidden="true"></span>
-                    <strong>Chart.js</strong>
-                    <span>graphiques des rapports</span>
-                    <span class="param-etat">CDN · v4.4.7</span>
-                </div>
-                <div class="param-tech">
-                    <span class="param-puce param-puce-off" aria-hidden="true"></span>
-                    <strong>Envoi d'emails</strong>
-                    <span>non configuré : les mots de passe générés sont affichés à l'écran</span>
-                    <span class="param-etat">inactif</span>
-                </div>
-            </div>
-        </section>
-        {% endif %}
 
     </div>
 </div>
