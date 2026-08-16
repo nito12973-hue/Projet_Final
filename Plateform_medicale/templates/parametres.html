@@ -239,6 +239,40 @@
         </section>
         {% endif %}
 
+        {% if current_role == "ADMIN" %}
+        {% comment %}
+        Le journal garde son propre ecran : il porte des filtres et une
+        pagination, l'embarquer ici alourdirait la section Securite sans rien
+        y gagner. Cette carte en est le point d'entree -- comme l'alerte du
+        tableau de bord pour les comptes bloques, un lien et rien d'autre.
+        {% endcomment %}
+        <section class="panel param-carte">
+            <div class="panel-header">
+                <div>
+                    <h2>Journal d'activité</h2>
+                    <p class="subtitle">
+                        Qui a fait quoi, et quand : décisions administratives et
+                        suppressions. Seules les actions <strong>abouties</strong>
+                        y figurent — une tentative refusée ne laisse pas d'entrée.
+                    </p>
+                </div>
+                <a class="button primary btn" href="{% url 'journal_activite' %}">
+                    {% icone "file-text" %} Ouvrir le journal
+                </a>
+            </div>
+            <div class="param-corps">
+                <div class="param-ligne">
+                    <span class="param-txt"><strong>{{ total_journal }} entrée{{ total_journal|pluralize }}</strong>
+                        <span>Non modifiable, ni ici ni ailleurs : un journal qu'on peut retoucher ne prouve rien.</span></span>
+                    <span class="param-fin">
+                        <a class="button btn" href="{% url 'journal_activite' %}?action=DEBLOCAGE">Déblocages</a>
+                        <a class="button btn" href="{% url 'journal_activite' %}?action=SUPPRESSION">Suppressions</a>
+                    </span>
+                </div>
+            </div>
+        </section>
+        {% endif %}
+
         <section class="panel param-carte param-sensible">
             <div class="panel-header">
                 <div>

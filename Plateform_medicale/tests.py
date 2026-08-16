@@ -4837,9 +4837,23 @@ class JournalActiviteTests(TestCase):
         reponse = self.client.get(reverse('parametres_section', args=['securite']))
         self.assertContains(reponse, f"{reverse('journal_activite')}?action=DEBLOCAGE")
 
-    def test_entree_de_menu_presente(self):
-        self.assertContains(self.client.get(reverse('dashboard')),
-                            reverse('journal_activite'))
+    def test_entree_depuis_parametres_securite_et_pas_dans_le_menu(self):
+        """Le journal est une fonction d'ADMINISTRATION, pas un module metier :
+        il n'a pas d'entree propre dans le menu lateral, on y entre par
+        Parametres > Securite."""
+        self.assertNotContains(self.client.get(reverse('dashboard')),
+                               'data-tooltip="Journal d\'activité"')
+        securite = self.client.get(reverse('parametres_section', args=['securite']))
+        self.assertContains(securite, reverse('journal_activite'))
+        self.assertContains(securite, "Journal d'activité")
+
+    def test_journal_invisible_dans_parametres_pour_un_non_admin(self):
+        self.client.logout()
+        creer_medecin('medecin-journal-param@santesn.sn')
+        self.client.login(username='medecin-journal-param@santesn.sn', password=PASSWORD)
+        self.assertNotContains(
+            self.client.get(reverse('parametres_section', args=['securite'])),
+            reverse('journal_activite'))
 
     def test_pagination(self):
         for i in range(TAILLE_PAGE_LISTE + 2):
@@ -4849,3 +4863,224 @@ class JournalActiviteTests(TestCase):
         page = self.client.get(reverse('journal_activite')).context['entrees']
         self.assertEqual(len(page), TAILLE_PAGE_LISTE)
         self.assertTrue(page.has_next())
+
+
+class CartePriseEnChargeTests(TestCase):
+    """Carte de prise en charge : edition, impression, QR et scan.
+
+    La carte appartient a un BENEFICIAIRE (numero_carte est porte par
+    Patient), jamais a un compte : un ayant droit a une carte sans avoir de
+    compte, un medecin a un compte sans avoir de carte."""
+
+    def setUp(self):
+        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin-carte@santesn.sn')
+        self.admin.first_name = 'Awa'
+        self.admin.last_name = 'Ndiaye'
+        self.admin.save()
+
+        self.plan = PlanCouverture.objects.create(
+            nom='Famille 80%', taux_couverture=Decimal('80'), plafond_annuel=Decimal('1000000'))
+        self.assure_user = creer_utilisateur(User.Role.ASSURE, 'assure-carte@santesn.sn')
+        self.principal = Patient.objects.create(
+            user=self.assure_user, nom='Diop', prenom='Moussa',
+            date_naissance=datetime.date(1980, 4, 12), telephone='770000050',
+            plan_couverture=self.plan)
+        self.enfant = Patient.objects.create(
+            nom='Diop', prenom='Awa', date_naissance=datetime.date(2014, 2, 2),
+            type_beneficiaire=Patient.TypeBeneficiaire.AYANT_DROIT,
+            lien_parente=Patient.LienParente.ENFANT, assure_principal=self.principal)
+
+        self.medecin = creer_medecin('medecin-carte@santesn.sn')
+        self.autre_medecin = creer_medecin('autre-medecin-carte@santesn.sn')
+        self.pharmacien = creer_pharmacien('pharma-carte@santesn.sn')
+
+    def _carte(self, patient=None):
+        return self.client.get(reverse('carte_patient', args=[(patient or self.principal).pk]))
+
+    def _scan(self, patient=None):
+        return self.client.get(reverse('carte_scan', args=[(patient or self.principal).numero_carte]))
+
+    # --- 1 a 5 : generation, informations, recto, verso -------------------
+
+    def test_carte_generee_pour_un_assure_principal(self):
+        self.client.login(username='admin-carte@santesn.sn', password=PASSWORD)
+        reponse = self._carte()
+        self.assertEqual(reponse.status_code, 200)
+        self.assertContains(reponse, self.principal.numero_carte)
+
+    def test_carte_generee_pour_un_ayant_droit_qui_na_pas_de_compte(self):
+        # Le cas qui interdisait de placer la carte dans "Utilisateurs".
+        self.assertIsNone(self.enfant.user)
+        self.client.login(username='admin-carte@santesn.sn', password=PASSWORD)
+        reponse = self._carte(self.enfant)
+        self.assertEqual(reponse.status_code, 200)
+        self.assertContains(reponse, self.enfant.numero_carte)
+        self.assertContains(reponse, 'Enfant')
+
+    def test_recto_porte_les_informations_reelles(self):
+        self.client.login(username='admin-carte@santesn.sn', password=PASSWORD)
+        reponse = self._carte()
+        self.assertContains(reponse, 'Carte de prise en charge')
+        self.assertContains(reponse, 'Moussa')
+        self.assertContains(reponse, 'Diop')
+        self.assertContains(reponse, 'Assuré principal')
+        self.assertContains(reponse, 'Famille 80%')
+
+    def test_recto_ninvente_ni_photo_ni_expiration(self):
+        """Patient ne porte ni photo ni date d'expiration : les afficher
+        reviendrait a imprimer du faux sur une piece presentee au guichet."""
+        self.client.login(username='admin-carte@santesn.sn', password=PASSWORD)
+        contenu = self._carte().content.decode()
+        self.assertNotIn("Date d'expiration", contenu)
+        self.assertNotIn('Expire le', contenu)
+        self.assertNotIn('<img', contenu)
+
+    def test_numero_de_carte_correct_et_unique(self):
+        self.assertTrue(self.principal.numero_carte.startswith('SN-'))
+        self.assertNotEqual(self.principal.numero_carte, self.enfant.numero_carte)
+
+    # --- 6 a 7 : un VRAI QR ----------------------------------------------
+
+    def test_verso_porte_un_vrai_qr_svg(self):
+        """Pas une image decorative : un SVG genere par la meme fabrique que
+        celui des ordonnances, comportant de vrais modules."""
+        self.client.login(username='admin-carte@santesn.sn', password=PASSWORD)
+        contenu = self._carte().content.decode()
+        self.assertIn('<svg', contenu)
+        self.assertGreater(contenu.count('<path'), 10)
+
+    def test_le_qr_encode_ladresse_de_scan_et_aucune_donnee_medicale(self):
+        service = ServiceMedical.objects.create(nom='Cardiologie', prix=Decimal('20000'))
+        consultation = Consultation.objects.create(
+            patient=self.principal, medecin=self.medecin, service=service,
+            date_consultation=timezone.now(), diagnostic='Hypertension',
+            traitement='Amlodipine 5 mg')
+        Ordonnance.objects.create(consultation=consultation,
+                                  medicaments='Amlodipine 5 mg - 1x/jour')
+
+        self.client.login(username='admin-carte@santesn.sn', password=PASSWORD)
+        reponse = self._carte()
+        self.assertContains(
+            reponse, reverse('carte_scan', args=[self.principal.numero_carte]))
+        contenu = reponse.content.decode()
+        for secret in ('Hypertension', 'Amlodipine'):
+            self.assertNotIn(secret, contenu)
+
+    # --- 8 a 10 : scan, autorisations ------------------------------------
+
+    def test_scan_anonyme_renvoie_vers_la_connexion(self):
+        reponse = self._scan()
+        self.assertEqual(reponse.status_code, 302)
+        self.assertIn(reverse('login'), reponse.url)
+
+    def test_scan_par_un_pharmacien_autorise(self):
+        self.client.login(username='pharma-carte@santesn.sn', password=PASSWORD)
+        reponse = self._scan()
+        self.assertEqual(reponse.status_code, 200)
+        self.assertContains(reponse, self.principal.numero_carte)
+
+    def test_scan_refuse_a_lassure_et_a_ladministrateur(self):
+        # Un QR ne doit jamais contourner les permissions : meme connecte,
+        # qui n'a pas a soigner ni a delivrer n'entre pas.
+        for email in ('assure-carte@santesn.sn', 'admin-carte@santesn.sn'):
+            self.client.logout()
+            self.client.login(username=email, password=PASSWORD)
+            self.assertEqual(self._scan().status_code, 403, email)
+
+    def test_scan_dun_numero_inconnu_donne_404(self):
+        self.client.login(username='pharma-carte@santesn.sn', password=PASSWORD)
+        self.assertEqual(
+            self.client.get(reverse('carte_scan', args=['SN-INEXISTANT'])).status_code, 404)
+
+    # --- 11 a 12 : portee des ordonnances --------------------------------
+
+    def _ordonnance(self, medecin, delivree=False, medicament='Paracétamol 500 mg'):
+        consultation = Consultation.objects.create(
+            patient=self.principal, medecin=medecin,
+            date_consultation=timezone.now(), diagnostic='Bilan')
+        ordonnance = Ordonnance.objects.create(consultation=consultation,
+                                               medicaments=medicament)
+        if delivree:
+            Delivrance.objects.create(ordonnance=ordonnance, pharmacien=self.pharmacien)
+        return ordonnance
+
+    def test_pharmacien_ne_voit_que_les_ordonnances_non_delivrees(self):
+        a_servir = self._ordonnance(self.medecin, medicament='Ibuprofène 400 mg')
+        self._ordonnance(self.medecin, delivree=True, medicament='Aspirine 100 mg')
+
+        self.client.login(username='pharma-carte@santesn.sn', password=PASSWORD)
+        reponse = self._scan()
+        self.assertEqual(list(reponse.context['ordonnances']), [a_servir])
+        self.assertNotContains(reponse, 'Aspirine')
+
+    def test_medecin_ne_voit_que_ses_propres_prescriptions(self):
+        sienne = self._ordonnance(self.medecin, medicament='Ibuprofène 400 mg')
+        self._ordonnance(self.autre_medecin, medicament='Tramadol 50 mg')
+
+        self.client.login(username='medecin-carte@santesn.sn', password=PASSWORD)
+        reponse = self._scan()
+        self.assertEqual(list(reponse.context['ordonnances']), [sienne])
+        self.assertNotContains(reponse, 'Tramadol')
+
+    def test_le_scan_nouvre_pas_le_diagnostic(self):
+        consultation = Consultation.objects.create(
+            patient=self.principal, medecin=self.medecin,
+            date_consultation=timezone.now(), diagnostic='Diabète de type 2',
+            traitement='Metformine')
+        Ordonnance.objects.create(consultation=consultation, medicaments='Metformine 850 mg')
+        self.client.login(username='pharma-carte@santesn.sn', password=PASSWORD)
+        self.assertNotContains(self._scan(), 'Diabète de type 2')
+
+    # --- 13 a 14 : impression, apercu ------------------------------------
+
+    def test_la_page_prevoit_une_impression_dediee(self):
+        """On imprime une carte, pas la page : le decor applicatif est masque
+        et la carte sort au format ISO 7810 ID-1 (85,6 x 54 mm)."""
+        self.client.login(username='admin-carte@santesn.sn', password=PASSWORD)
+        contenu = self._carte().content.decode()
+        self.assertIn('@media print', contenu)
+        self.assertIn('85.6mm', contenu)
+        self.assertIn('54mm', contenu)
+        self.assertIn('carte-sans-impression', contenu)
+
+    def test_apercu_recto_et_verso(self):
+        self.client.login(username='admin-carte@santesn.sn', password=PASSWORD)
+        reponse = self._carte()
+        self.assertContains(reponse, 'Recto')
+        self.assertContains(reponse, 'Verso')
+
+    # --- 15 : permissions sur l'edition ----------------------------------
+
+    def test_edition_de_carte_reservee_a_ladministrateur(self):
+        for role, email in ((User.Role.MEDECIN, 'medecin-carte@santesn.sn'),
+                            (User.Role.PHARMACIEN, 'pharma-carte@santesn.sn'),
+                            (User.Role.ASSURE, 'assure-carte@santesn.sn')):
+            self.client.logout()
+            self.client.login(username=email, password=PASSWORD)
+            self.assertEqual(self._carte().status_code, 403, role)
+
+    def test_action_carte_presente_sur_la_liste_des_assures(self):
+        self.client.login(username='admin-carte@santesn.sn', password=PASSWORD)
+        self.assertContains(self.client.get(reverse('liste_patients')),
+                            reverse('carte_patient', args=[self.principal.pk]))
+
+    # --- 16 : journalisation ---------------------------------------------
+
+    def test_edition_de_carte_journalisee(self):
+        """Editer une carte, c'est delivrer une piece : on trace qui et pour
+        qui. Le serveur ne voit pas la boite d'impression du navigateur --
+        c'est donc l'edition qui est enregistree, pas l'impression."""
+        self.client.login(username='admin-carte@santesn.sn', password=PASSWORD)
+        self._carte()
+        entree = JournalActivite.objects.get(action=JournalActivite.Action.CARTE)
+        self.assertIn('Moussa Diop', entree.objet)
+        self.assertIn(self.principal.numero_carte, entree.details)
+        self.assertEqual(entree.auteur_libelle, 'Awa Ndiaye')
+
+    def test_le_scan_nest_pas_journalise(self):
+        """Consulter une carte au comptoir est un acte de soin courant, pas
+        une decision administrative : le journaliser noierait les entrees qui
+        comptent (meme regle que les delivrances)."""
+        self.client.login(username='pharma-carte@santesn.sn', password=PASSWORD)
+        self._scan()
+        self.assertEqual(JournalActivite.objects.count(), 0)

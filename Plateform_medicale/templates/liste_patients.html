@@ -58,6 +58,13 @@
                 <td>{{ patient.telephone|default:"-" }}</td>
                 <td>
                     <div class="actions">
+                        {% comment %}
+                        La carte vit ici, avec les beneficiaires : numero_carte
+                        est porte par Patient, jamais par User. Un ayant droit a
+                        une carte sans avoir de compte -- la placer dans
+                        Utilisateurs l'aurait exclu.
+                        {% endcomment %}
+                        <a href="{% url 'carte_patient' patient.pk %}" class="button btn btn-sm">{% icone "id-card" %} Carte</a>
                         <a href="{% url 'modifier_patient' patient.pk %}" class="button primary btn btn-sm">{% icone "edit-2" %} Modifier</a>
                         <a href="{% url 'supprimer_patient' patient.pk %}" class="button btn btn-danger btn-sm">{% icone "trash-2" %} Supprimer</a>
                     </div>

@@ -398,6 +398,7 @@ def parametres(request, section="general"):
     elif section == "securite":
         contexte["duree_session_heures"] = settings.SESSION_COOKIE_AGE // 3600
         if request.user.role == User.Role.ADMIN:
+            contexte["total_journal"] = JournalActivite.objects.count()
             comptes, role_choisi, recherche = _comptes_bloques(request)
             contexte.update({
                 "comptes_bloques": comptes,
@@ -1286,14 +1287,109 @@ def liste_consultations(request):
 
 
 @admin_required
+def carte_patient(request, pk):
+    """Carte de prise en charge, recto/verso, prete a imprimer.
+
+    La carte appartient a un BENEFICIAIRE, pas a un compte : numero_carte est
+    porte par Patient, jamais par User. Un ayant droit a donc une carte sans
+    avoir de compte, et un medecin a un compte sans avoir de carte -- d'ou
+    l'ecran rattache au module Assures et non a Utilisateurs.
+
+    Elle n'affiche QUE des champs existants : logo, numero, nom, type de
+    beneficiaire, taux et plan. Ni photo ni date d'expiration -- ces champs
+    n'existent pas dans le modele, les inventer serait afficher du faux sur
+    une piece que l'assure presentera au guichet.
+
+    Le verso porte un VRAI QR, genere par la meme fabrique que celui des
+    ordonnances. Il encode l'ADRESSE de carte_scan, pas des donnees : voir
+    Patient.qr_svg et carte_scan pour la chaine complete.
+    """
+    patient = get_object_or_404(
+        Patient.objects.select_related("assure_principal", "plan_couverture"), pk=pk)
+
+    url_scan = request.build_absolute_uri(
+        reverse("carte_scan", args=[patient.numero_carte]))
+
+    # Editer une carte, c'est delivrer une piece : on trace qui et pour qui.
+    # Le serveur ne voit pas la boite d'impression du navigateur, donc ce
+    # qu'on enregistre est l'edition, pas l'impression elle-meme.
+    journaliser(request, JournalActivite.Action.CARTE, f"Carte de {patient}",
+                f"n° {patient.numero_carte}")
+
+    return render(request, "carte_patient.html", {
+        "patient": patient,
+        "qr_svg": patient.qr_svg(url_scan),
+        "url_scan": url_scan,
+    })
+
+
+@role_required(User.Role.MEDECIN, User.Role.PHARMACIEN)
+def carte_scan(request, numero):
+    """Page ouverte en scannant le QR d'une carte de prise en charge.
+
+    LE QR NE DONNE AUCUN DROIT. Il ouvre une adresse ; c'est le decorateur
+    ci-dessus qui protege : un visiteur non connecte est renvoye vers la
+    connexion, un assure ou un administrateur recoit un 403. Le numero de
+    carte n'est pas un secret (il est imprime sur la carte elle-meme), il ne
+    pouvait donc pas servir de cle.
+
+    Ce que chaque role voit est volontairement different :
+
+      PHARMACIEN : uniquement les ordonnances NON DELIVREES. C'est ce qu'il
+      peut servir maintenant -- le cas reel etant le patient qui se presente
+      sans son ordonnance papier. Lui ouvrir l'historique complet elargirait
+      son acces aux donnees medicales bien au-dela du besoin.
+
+      MEDECIN : uniquement les ordonnances issues de SES PROPRES
+      consultations, exactement la regle deja appliquee par
+      fiche_patient_medecin. Le scan ne cree pas une porte derobee vers
+      l'historique d'un confrere.
+    """
+    patient = get_object_or_404(
+        Patient.objects.select_related("assure_principal", "plan_couverture"),
+        numero_carte=numero)
+
+    ordonnances = (
+        Ordonnance.objects
+        .filter(consultation__patient=patient)
+        .select_related("consultation__medecin", "consultation__service", "delivrance")
+        .order_by("-date_creation")
+    )
+
+    if request.user.role == User.Role.PHARMACIEN:
+        ordonnances = ordonnances.filter(delivrance__isnull=True)
+        portee = "Ordonnances en attente de délivrance"
+    else:
+        medecin = _medecin_courant(request)
+        if medecin is None:
+            return render(request, "medecin_fiche_manquante.html")
+        ordonnances = ordonnances.filter(consultation__medecin=medecin)
+        portee = "Ordonnances issues de vos consultations"
+
+    return render(request, "carte_scan.html", {
+        "patient": patient,
+        "ordonnances": _paginer(request, ordonnances),
+        "portee": portee,
+    })
+
+
+@admin_required
 def journal_activite(request):
     """Journal d'activite : qui a fait quoi, et quand. Lecture seule.
 
-    Il ne vit PAS dans Parametres : Parametres = reglages, et un journal ne
-    se regle pas, il se consulte. Il n'y a d'ailleurs rien a y modifier --
-    un journal d'audit qu'un administrateur pourrait retoucher ne vaudrait
-    rien. Aucune action d'ecriture ici, et l'enregistrement dans /admin/ est
-    en lecture seule lui aussi (ni ajout, ni modification, ni suppression).
+    Rattache a Parametres > Securite, dont il est une fonction
+    d'administration : c'est de la que l'on y entre, et l'entree Parametres du
+    menu reste active pendant sa consultation. Il garde neanmoins son propre
+    ecran, car il porte des filtres et une pagination -- l'embarquer dans la
+    section alourdirait celle-ci sans rien y gagner.
+
+    Il n'y a rien a y modifier : un journal d'audit qu'un administrateur
+    pourrait retoucher ne vaudrait rien. Aucune action d'ecriture ici, et
+    l'enregistrement dans /admin/ est en lecture seule lui aussi (ni ajout,
+    ni modification, ni suppression).
+
+    Seules les actions ABOUTIES sont enregistrees : une colonne "resultat"
+    afficherait la meme valeur sur toutes les lignes, elle n'existe donc pas.
 
     Ce qui n'y figure pas est aussi important que ce qui y figure : voir le
     perimetre documente sur JournalActivite (models.py).

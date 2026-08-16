@@ -19,6 +19,32 @@ valider_telephone = RegexValidator(
 )
 
 
+def _qr_svg(donnee, box_size=10, border=4):
+    """Genere un QR code SVG destine a etre INLINE dans une page HTML.
+
+    Pourquoi ce nettoyage : qrcode ecrit ses modules en <svg:rect ...> avec un
+    prefixe de namespace. Colle tel quel dans du HTML, c'est invisible -- un
+    analyseur HTML ne resout pas les prefixes, il voit un element inconnu
+    nomme "svg:rect" et ne dessine rien. Le SVG s'affichait donc comme un
+    CARRE BLANC. Constate au rendu navigateur, pas devine.
+
+    On retire donc le prefixe et sa declaration pour obtenir du SVG que le
+    parseur HTML comprend. Le SVG n'ayant pas de viewBox, sa taille se regle
+    a la generation (box_size / border), jamais en CSS : imposer une largeur
+    redimensionne la zone d'affichage sans redimensionner les modules.
+    """
+    code = qrcode.QRCode(box_size=box_size, border=border,
+                         image_factory=qrcode.image.svg.SvgImage)
+    code.add_data(donnee)
+    code.make(fit=True)
+    buffer = io.BytesIO()
+    code.make_image().save(buffer)
+    svg = buffer.getvalue().decode("utf-8")
+    return (svg.replace('xmlns:svg="http://www.w3.org/2000/svg"', "")
+               .replace("<svg:", "<")
+               .replace("</svg:", "</"))
+
+
 def distance_km(lat1, lon1, lat2, lon2):
     """Distance a vol d'oiseau entre deux points, en kilometres (formule de haversine)."""
     rayon_terre_km = 6371.0
@@ -262,6 +288,27 @@ class Patient(models.Model):
     @staticmethod
     def _generer_numero_carte():
         return f"SN-{uuid.uuid4().hex[:10].upper()}"
+
+    def qr_svg(self, url):
+        """QR (SVG) de la carte de prise en charge, encodant `url`.
+
+        Meme fabrique que Ordonnance.qr_svg -- pas un second systeme.
+
+        Le QR encode une ADRESSE, pas des donnees : scanne, il ouvre une page
+        de SantéSN qui exige une connexion et un role autorise. Il ne contient
+        aucune donnee medicale, et le numero de carte qu'il porte n'est pas un
+        secret (il est deja affiche sur la carte, dans l'espace assure et dans
+        les listes) : ce n'est pas lui qui protege, c'est l'authentification.
+
+        L'URL est passee par la vue plutot que construite ici : un modele n'a
+        pas de requete, donc pas de nom d'hote.
+
+        TAILLE : elle se regle A LA GENERATION, pas en CSS (voir _qr_svg).
+        box_size=7 donne 0,7 mm par module et border=2 reduit la marge : le
+        code fait environ 23 mm de cote, lisible par un telephone et compatible
+        avec une carte de 85,6 x 54 mm.
+        """
+        return _qr_svg(url, box_size=7, border=2)
 
     @property
     def est_ayant_droit(self):
@@ -513,11 +560,13 @@ class Ordonnance(models.Model):
 
     @property
     def qr_svg(self):
-        """QR code (SVG) encodant le code de verification, scanne par la pharmacie."""
-        image = qrcode.make(self.code_qr, image_factory=qrcode.image.svg.SvgImage)
-        buffer = io.BytesIO()
-        image.save(buffer)
-        return buffer.getvalue().decode("utf-8")
+        """QR code (SVG) encodant le code de verification, scanne par la pharmacie.
+
+        Passe par _qr_svg depuis la correction du prefixe de namespace : le
+        code sortait jusqu'ici en CARRE BLANC dans le navigateur, les modules
+        n'etant pas dessines. Voir _qr_svg pour le detail.
+        """
+        return _qr_svg(self.code_qr)
 
 
 class RendezVous(models.Model):
@@ -734,6 +783,11 @@ class JournalActivite(models.Model):
         DECISION = "DECISION", "Décision"
         REGLEMENT = "REGLEMENT", "Règlement"
         IMPORT = "IMPORT", "Import en masse"
+        # Editer une carte, c'est delivrer une piece d'identite de couverture :
+        # on trace QUI l'a editee et POUR QUI. Le serveur ne peut pas observer
+        # la boite de dialogue d'impression du navigateur -- ce qu'on
+        # enregistre est donc l'edition, pas l'impression elle-meme.
+        CARTE = "CARTE", "Carte éditée"
 
     auteur = models.ForeignKey(
         settings.AUTH_USER_MODEL,

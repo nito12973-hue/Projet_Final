@@ -156,6 +156,12 @@ Fonctionnalités livrées après les 15 phases initiales, hors numérotation :
 
 ## Journal d'activité (livré)
 
+**Emplacement : Paramètres → Sécurité**, pas le menu latéral — c'est une
+fonction d'administration et de sécurité, pas un module métier. Il garde
+néanmoins son propre écran (filtres + pagination) ; la section Sécurité en est
+le point d'entrée. L'entrée « Paramètres » du menu reste active pendant sa
+consultation.
+
 `JournalActivite` (models.py) + écran admin `journal_activite`. Trace **les
 décisions administratives et les destructions** — 17 points d'appel, posés
 via le helper `journaliser(request, action, objet, details)`.
@@ -195,6 +201,36 @@ entrée ferait croire à une intervention.
 Un test vérifie la **couverture** des 6 écrans de suppression : un journal
 partiel donnerait l'illusion d'une trace exhaustive, ce qui est pire que pas
 de journal du tout.
+
+## Carte de prise en charge (livrée)
+
+Écran admin `carte_patient` (recto/verso, imprimable) + `carte_scan` (cible du
+QR). **La carte appartient à un bénéficiaire, pas à un compte** :
+`numero_carte` est porté par `Patient`, jamais par `User`. Un ayant droit a
+une carte sans avoir de compte, un médecin a un compte sans avoir de carte —
+d'où l'action rattachée au module **Assurés** et non à Utilisateurs.
+
+Elle n'affiche **que des champs existants** (logo, numéro, nom, type, taux,
+plan). **Ni photo ni date d'expiration : ces champs n'existent pas.** Ne pas
+les ajouter à la carte sans les ajouter d'abord au modèle.
+
+Le composant réutilisé est `.carte-assure` (espace assuré), déjà au format
+ISO 7810 ID-1 — il n'y a **pas** de seconde carte à maintenir.
+
+**Le QR n'accorde aucun droit.** Il encode l'URL de `carte_scan` ; c'est
+`role_required(MEDECIN, PHARMACIEN)` qui protège. `numero_carte` n'est pas un
+secret (il est imprimé sur la carte). Portée volontairement différente selon
+le rôle : le **pharmacien** ne voit que les ordonnances **non délivrées** (ce
+qu'il peut servir), le **médecin** que celles de **ses propres** consultations
+(même règle que `fiche_patient_medecin`). Le diagnostic n'est jamais exposé.
+
+**Piège corrigé, à ne pas réintroduire** : `qrcode` écrit ses modules en
+`<svg:rect>` **préfixés**. Inliné dans du HTML, un analyseur HTML ne résout pas
+les préfixes — le QR sortait en **carré blanc**. Cela touchait aussi les QR
+d'**ordonnances**, invisibles depuis toujours. Le helper `_qr_svg` (models.py)
+retire le préfixe ; les deux modèles passent par lui. Corollaire : le SVG n'a
+**pas de viewBox**, donc sa taille se règle **à la génération** (`box_size` /
+`border`) — jamais en CSS, une largeur imposée revide le code.
 
 ## Documents de travail (specs / plans)
 
