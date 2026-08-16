@@ -143,6 +143,10 @@
            terracotta en bas a gauche) qui donnent de la profondeur au fond sans
            motif ni image. background-attachment: fixed pour qu'elles restent
            ancrees a la fenetre et ne defilent pas avec le contenu. */
+        html {
+            scrollbar-gutter: stable;
+        }
+
         body {
             margin: 0;
             font-family: 'Public Sans', 'Segoe UI', Arial, Helvetica, sans-serif;
@@ -499,6 +503,24 @@
         /* Ombre en deux couches : un contact net et proche, puis une diffusion
            large. C'est ce qui distingue une carte posee d'une carte simplement
            encadree. */
+        /* Panneaux de CONTENU (formulaires, blocs de texte). Les listes
+           gardent un padding nul : leur tableau touche les bords de la carte.
+           Ces trois classes remplacent 40+ styles en ligne qui avaient
+           diverge en 13 valeurs differentes -- d'ou des espacements
+           irreguliers d'une page a l'autre. */
+        .panel-form,
+        .panel-bloc {
+            padding: 22px 24px;
+        }
+
+        .panel-form {
+            max-width: 720px;
+        }
+
+        .panel-form-etroit {
+            max-width: 480px;
+        }
+
         .panel,
         .empty {
             background: var(--surface);

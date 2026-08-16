@@ -12,7 +12,7 @@
     <a class="button" href="{% url 'liste_utilisateurs' %}">Retour</a>
 </section>
 
-<section class="panel" style="padding:20px;margin-bottom:18px;">
+<section class="panel panel-bloc" style="margin-bottom:18px;">
     <h2 style="margin-top:0;">Comment proceder</h2>
     <p class="subtitle">
         Telechargez le modele, remplissez une ligne par compte a creer, puis
@@ -39,7 +39,7 @@
 </div>
 {% endif %}
 
-<section class="panel" style="padding:20px;">
+<section class="panel panel-bloc">
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <label for="fichier">Fichier Excel (.xlsx)</label>
