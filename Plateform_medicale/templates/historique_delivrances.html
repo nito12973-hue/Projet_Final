@@ -12,6 +12,24 @@
     <a class="button primary" href="{% url 'scanner_ordonnance' %}">Scanner un QR Code</a>
 </section>
 
+<form method="get" class="filtres">
+    <div style="min-width:220px;flex:1;">
+        <label for="q">Recherche</label>
+        <div class="champ-recherche">
+            {% icone "search" %}
+            <input id="q" type="text" name="q" placeholder="Nom du patient ou code d'ordonnance" value="{{ recherche }}" style="margin-bottom:0;">
+        </div>
+    </div>
+    <div style="min-width:180px;">
+        <label for="date">Date</label>
+        <input id="date" type="date" name="date" value="{{ date_choisie }}" style="margin-bottom:0;">
+    </div>
+    <button type="submit" class="button primary btn">Filtrer</button>
+    {% if recherche or date_choisie %}
+    <a href="{% url 'historique_delivrances' %}" class="button btn">Réinitialiser</a>
+    {% endif %}
+</form>
+
 {% if delivrances %}
 <section class="panel">
     <table>
@@ -49,7 +67,7 @@
 {% else %}
 <div class="etat-vide">
     {% illustration_vide "pill" %}
-    <p>Aucune délivrance validée pour le moment.</p>
+    <p>{% if recherche or date_choisie %}Aucune délivrance ne correspond à ces critères.{% else %}Aucune délivrance validée pour le moment.{% endif %}</p>
 </div>
 {% endif %}
 {% endblock %}

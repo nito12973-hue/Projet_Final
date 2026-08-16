@@ -115,6 +115,37 @@ def _trier(request, queryset, champs_autorises, defaut):
     return queryset.order_by(defaut)
 
 
+def _filtrer_rendez_vous(request, rendez_vous):
+    """Filtres 'statut' et 'periode', partages par l'agenda du medecin et les
+    rendez-vous de l'assure : les deux ecrans posent la meme question.
+
+    Le tri suit la periode. Un agenda melange passe et futur ; en tri unique
+    "-date_heure", demander "a venir" affichait le rendez-vous le plus LOINTAIN
+    en tete, alors que c'est le prochain qu'on vient consulter. Le statut est
+    valide contre RendezVous.Statut.values (la VALEUR stockee, jamais le
+    libelle) pour ne jamais passer une chaine arbitraire a filter().
+
+    Renvoie (queryset, statut_retenu, periode_retenue) : une valeur hors liste
+    est ramenee a "" pour que le formulaire ne reaffiche pas un choix ignore.
+    """
+    statut = request.GET.get("statut", "")
+    if statut in RendezVous.Statut.values:
+        rendez_vous = rendez_vous.filter(statut=statut)
+    else:
+        statut = ""
+
+    periode = request.GET.get("periode", "")
+    if periode == "a_venir":
+        rendez_vous = rendez_vous.filter(date_heure__gte=timezone.now()).order_by("date_heure")
+    elif periode == "passes":
+        rendez_vous = rendez_vous.filter(date_heure__lt=timezone.now()).order_by("-date_heure")
+    else:
+        periode = ""
+        rendez_vous = rendez_vous.order_by("-date_heure")
+
+    return rendez_vous, statut, periode
+
+
 # ---------------------------------------------------------------------------
 # Permissions par rôle
 # ---------------------------------------------------------------------------
@@ -2105,12 +2136,18 @@ def agenda_medecin(request):
     if medecin is None:
         return render(request, "medecin_fiche_manquante.html")
 
-    # order_by explicite : voir mes_rendez_vous_assure.
+    # L'ordre est pose par _filtrer_rendez_vous (il depend de la periode
+    # demandee) : un queryset pagine doit toujours etre ordonne.
     rendez_vous = RendezVous.objects.filter(medecin=medecin).select_related(
         "patient", "prestataire"
-    ).order_by("-date_heure")
-    return render(request, "agenda_medecin.html",
-                  {"rendez_vous": _paginer(request, rendez_vous)})
+    )
+    rendez_vous, statut, periode = _filtrer_rendez_vous(request, rendez_vous)
+    return render(request, "agenda_medecin.html", {
+        "rendez_vous": _paginer(request, rendez_vous),
+        "statut_choisi": statut,
+        "periode_choisie": periode,
+        "statuts": RendezVous.Statut.choices,
+    })
 
 
 @role_required(User.Role.MEDECIN)
@@ -2150,6 +2187,10 @@ def mes_patients(request):
     medecin = _medecin_courant(request)
     if medecin is None:
         return render(request, "medecin_fiche_manquante.html")
+    # Pas de barre de filtres ici : la page porte deja une recherche
+    # ("Recherche rapide", combobox JS sur rechercher_patients_medecin) qui
+    # ouvre directement la fiche du patient. Un second champ de recherche sur
+    # le meme ecran serait un doublon, pas une fonctionnalite.
     return render(request, "mes_patients.html",
                   {"patients": _paginer(request, _patients_du_medecin(medecin))})
 
@@ -2511,8 +2552,32 @@ def historique_delivrances(request):
     delivrances = Delivrance.objects.filter(pharmacien=pharmacien).select_related(
         "ordonnance__consultation__patient", "ordonnance__consultation__medecin"
     ).order_by("-date_delivrance")
-    return render(request, "historique_delivrances.html",
-                  {"delivrances": _paginer(request, delivrances)})
+
+    # Le pharmacien revient sur une delivrance passee pour une raison : un
+    # patient conteste, ou il faut retrouver le jour d'une remise. D'ou une
+    # recherche (patient ou code) et un filtre par date, rien de plus.
+    recherche = request.GET.get("q", "").strip()
+    if recherche:
+        delivrances = delivrances.filter(
+            Q(ordonnance__consultation__patient__nom__icontains=recherche)
+            | Q(ordonnance__consultation__patient__prenom__icontains=recherche)
+            | Q(ordonnance__code_qr__icontains=recherche)
+        )
+
+    date_filtre = request.GET.get("date", "")
+    if date_filtre:
+        try:
+            date_valide = datetime.date.fromisoformat(date_filtre)
+        except ValueError:
+            date_filtre = ""
+        else:
+            delivrances = delivrances.filter(date_delivrance__date=date_valide)
+
+    return render(request, "historique_delivrances.html", {
+        "delivrances": _paginer(request, delivrances),
+        "recherche": recherche,
+        "date_choisie": date_filtre,
+    })
 
 
 # ---------------------------------------------------------------------------
@@ -2718,13 +2783,19 @@ def mes_rendez_vous_assure(request):
     if patient is None:
         return redirect("mon_profil_assure")
     beneficiaires = _beneficiaires(patient)
-    # order_by explicite : paginer un queryset non ordonne rend l'ordre des
-    # pages instable (et Django emet UnorderedObjectListWarning).
+    # L'ordre est pose par _filtrer_rendez_vous : paginer un queryset non
+    # ordonne rend l'ordre des pages instable (et Django emet
+    # UnorderedObjectListWarning).
     rendez_vous = RendezVous.objects.filter(patient__in=beneficiaires).select_related(
         "patient", "medecin", "prestataire"
-    ).order_by("-date_heure")
-    return render(request, "mes_rendez_vous.html",
-                  {"rendez_vous": _paginer(request, rendez_vous)})
+    )
+    rendez_vous, statut, periode = _filtrer_rendez_vous(request, rendez_vous)
+    return render(request, "mes_rendez_vous.html", {
+        "rendez_vous": _paginer(request, rendez_vous),
+        "statut_choisi": statut,
+        "periode_choisie": periode,
+        "statuts": RendezVous.Statut.choices,
+    })
 
 
 @role_required(User.Role.ASSURE)
@@ -2774,9 +2845,24 @@ def mes_ordonnances_assure(request):
     beneficiaires = _beneficiaires(patient)
     ordonnances = Ordonnance.objects.filter(
         consultation__patient__in=beneficiaires
-    ).select_related("consultation__patient", "consultation__medecin").order_by("-date_creation")
-    return render(request, "mes_ordonnances.html",
-                  {"ordonnances": _paginer(request, ordonnances)})
+    ).select_related(
+        "consultation__patient", "consultation__medecin", "delivrance"
+    ).order_by("-date_creation")
+
+    # Meme filtre que la liste admin, pour la question inverse : l'assure
+    # cherche ce qu'il PEUT ENCORE retirer, pas ce qu'on a oublie de retirer.
+    delivrance = request.GET.get("delivrance", "")
+    if delivrance == "non":
+        ordonnances = ordonnances.filter(delivrance__isnull=True)
+    elif delivrance == "oui":
+        ordonnances = ordonnances.filter(delivrance__isnull=False)
+    else:
+        delivrance = ""
+
+    return render(request, "mes_ordonnances.html", {
+        "ordonnances": _paginer(request, ordonnances),
+        "delivrance_choisie": delivrance,
+    })
 
 
 @role_required(User.Role.ASSURE)

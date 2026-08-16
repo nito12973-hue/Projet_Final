@@ -1361,6 +1361,40 @@ Assure (role_required(ASSURE), prefixe /assure/ + /espace/assure/)
                                       les lignes affichees sont parcourues.
   _patient_principal / _beneficiaires          helpers prives
 
+  FILTRES DES LISTES NON-ADMIN
+                                      _trier (tri par colonne) sert les 11
+                                      listes ADMIN et aucune autre : un
+                                      referentiel se classe, un agenda est
+                                      chronologique et un assure a trois
+                                      ordonnances. Pas d'en-tete triable sur
+                                      les ecrans Medecin/Assure/Pharmacien.
+                                      Quatre ecrans portent un filtre GET :
+                                      agenda_medecin et mes_rendez_vous_assure
+                                      (statut + periode), via la fonction
+                                      PARTAGEE _filtrer_rendez_vous ;
+                                      mes_ordonnances_assure (delivrance
+                                      oui/non) ; historique_delivrances
+                                      (q + date).
+                                      _filtrer_rendez_vous : LE TRI SUIT LA
+                                      PERIODE. "a venir" ordonne du plus
+                                      PROCHE au plus lointain, tout le reste
+                                      du plus recent au plus ancien. En tri
+                                      unique "-date_heure", demander "a venir"
+                                      mettait le rendez-vous le plus LOINTAIN
+                                      en tete -- l'inverse de ce qu'on vient
+                                      consulter. Le statut est valide contre
+                                      RendezVous.Statut.values (la VALEUR,
+                                      jamais le libelle) et une valeur hors
+                                      liste est ramenee a "" pour que le
+                                      formulaire ne reaffiche pas un choix
+                                      ignore.
+                                      mes_patients n'a PAS de barre de
+                                      filtres : la page porte deja une
+                                      recherche (combobox JS sur
+                                      rechercher_patients_medecin) qui ouvre
+                                      la fiche du patient. Un second champ
+                                      serait un doublon. Un test le verrouille.
+
 
 5. TEMPLATES ET DESIGN SYSTEM
 --------------------------------
