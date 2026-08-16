@@ -8,6 +8,7 @@ import qrcode.image.svg
 from django.conf import settings
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
 from django.utils import timezone
@@ -365,6 +366,38 @@ class PriseEnCharge(models.Model):
     def __str__(self):
         return f"Prise en charge de {self.patient} - {self.statut}"
 
+    def clean(self):
+        """Interdit de changer de patient une fois des consultations rattachees.
+
+        Les consultations restent liees a la prise en charge : les reattribuer
+        par ce biais donnerait a un assure les soins d'une autre personne
+        (l'ecran "Mes prises en charge" affiche consultation_set, medecin et
+        montants compris). Corriger une erreur de saisie reste possible tant
+        qu'aucune consultation n'existe -- c'est le seul cas legitime.
+
+        La regle vit ici et non dans le formulaire : /admin/ expose lui aussi
+        ce champ, et les ModelForm des deux cotes appellent full_clean().
+        """
+        if not self.pk or self.patient_id is None:
+            return
+        patient_enregistre = (
+            type(self).objects.filter(pk=self.pk)
+            .values_list("patient_id", flat=True)
+            .first()
+        )
+        if (
+            patient_enregistre is not None
+            and patient_enregistre != self.patient_id
+            and self.consultation_set.exists()
+        ):
+            raise ValidationError({
+                "patient": (
+                    "Des consultations sont déjà rattachées à cette prise en "
+                    "charge : la réattribuer donnerait ces soins à une autre "
+                    "personne. Créez une nouvelle prise en charge."
+                ),
+            })
+
 
 class Consultation(models.Model):
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
@@ -382,6 +415,25 @@ class Consultation(models.Model):
 
     def __str__(self):
         return f"Consultation de {self.patient} avec {self.medecin}"
+
+    def clean(self):
+        """La prise en charge liee doit appartenir au patient consulte.
+
+        Regle deplacee de ConsultationForm vers le modele : /admin/ enregistre
+        Consultation sans ModelAdmin dedie, donc le formulaire de l'app y etait
+        purement et simplement contourne. La ValidationError est indexee par
+        champ pour que le message s'affiche sous prise_en_charge, comme avant.
+        """
+        if (
+            self.patient_id
+            and self.prise_en_charge_id
+            and self.prise_en_charge.patient_id != self.patient_id
+        ):
+            raise ValidationError({
+                "prise_en_charge": (
+                    "Cette prise en charge ne correspond pas au patient sélectionné."
+                ),
+            })
 
 
 class Paiement(models.Model):

@@ -257,16 +257,9 @@ class ConsultationForm(forms.ModelForm):
         model = Consultation
         fields = ['patient', 'service', 'prise_en_charge', 'date_consultation', 'diagnostic', 'traitement']
 
-    def clean(self):
-        cleaned_data = super().clean()
-        patient = cleaned_data.get('patient')
-        prise_en_charge = cleaned_data.get('prise_en_charge')
-        if patient and prise_en_charge and prise_en_charge.patient_id != patient.pk:
-            self.add_error(
-                'prise_en_charge',
-                "Cette prise en charge ne correspond pas au patient sélectionné.",
-            )
-        return cleaned_data
+    # La coherence patient <-> prise en charge est verifiee par
+    # Consultation.clean() : la regle vaut aussi pour /admin/, qui n'utilise
+    # pas ce formulaire.
 
 
 class OrdonnanceForm(forms.ModelForm):
