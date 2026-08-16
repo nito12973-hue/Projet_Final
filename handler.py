@@ -8,8 +8,6 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 
 # Initialize Django
 from django.core.wsgi import get_wsgi_application
-django_app = get_wsgi_application()
 
-# Vercel serverless handler
-def handler(event, context):
-    return django_app(event, context)
+# Vercel expects the WSGI app to be named 'app' or 'application'
+app = get_wsgi_application()
