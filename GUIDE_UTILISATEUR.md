@@ -239,6 +239,10 @@ explicite propose d'actualiser ou de réinitialiser les filtres.
 
 ### Mes rendez-vous
 
+Deux filtres en haut de page : la **période** (*À venir* / *Passés*) et le
+**statut**. *À venir* affiche le rendez-vous le plus **proche en premier**,
+c'est celui que vous venez vérifier.
+
 Prenez rendez-vous pour vous-même ou pour un de vos ayants droit : choisissez
 le médecin, éventuellement un prestataire (pré-rempli si vous arrivez depuis
 *Prestataires proches*), la date/heure et le motif. Vous pouvez annuler un
@@ -248,6 +252,9 @@ rendez-vous à venir depuis la même page.
 
 Consultez les ordonnances délivrées par vos médecins, chacune avec son QR
 code (et son code textuel affiché en dessous) à présenter en pharmacie.
+
+Le filtre *À retirer en pharmacie* ne garde que celles que vous n'avez pas
+encore récupérées.
 
 ### Mes prises en charge
 
@@ -284,9 +291,13 @@ patients ou à l'historique des consultations d'un clic.
 
 ### Agenda
 
-Vue de vos rendez-vous à venir ; changez leur statut (confirmé, terminé,
-annulé) au fil de la journée. Vous pouvez aussi ajouter un rendez-vous
-vous-même pour un patient.
+Vue de vos rendez-vous ; changez leur statut (confirmé, terminé, annulé) au
+fil de la journée. Vous pouvez aussi ajouter un rendez-vous vous-même pour un
+patient.
+
+Deux filtres : la **période** (*À venir* / *Passés*) et le **statut**.
+*À venir* affiche le rendez-vous le plus **proche en premier** — c'est celui
+que vous préparez.
 
 ### Patients
 
@@ -350,7 +361,9 @@ même écran. Une ordonnance déjà délivrée ne peut pas l'être une seconde f
 ### Historique
 
 Retrouvez toutes les délivrances que vous avez validées, les plus récentes
-en premier.
+en premier. Deux filtres pour retrouver une remise précise : une **recherche**
+(nom du patient ou code d'ordonnance) et une **date** — utile quand un patient
+conteste une délivrance ou qu'il faut retrouver le jour d'une remise.
 
 ## Questions fréquentes
 

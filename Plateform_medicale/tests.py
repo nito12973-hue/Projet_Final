@@ -4272,3 +4272,151 @@ class CoherencePatientPriseEnChargeTests(TestCase):
         )
         self.assertFalse(form.is_valid())
         self.assertIn('patient', form.errors)
+
+
+class FiltresListesNonAdminTests(TestCase):
+    """Le tri par colonne (_trier) et les filtres GET servaient les 11 listes
+    admin et aucune liste non-admin. Les 4 ecrans ou un filtre repond a une
+    vraie question en ont un desormais.
+
+    mes_patients en est volontairement exclu : la page porte deja une
+    recherche (combobox JS rechercher_patients_medecin), un second champ
+    serait un doublon."""
+
+    def setUp(self):
+        self.medecin = creer_medecin('medecin-filtres@santesn.sn')
+        self.assure_user = creer_utilisateur(User.Role.ASSURE, 'assure-filtres@santesn.sn')
+        self.patient = Patient.objects.create(
+            user=self.assure_user, nom='Kane', prenom='Ibrahima',
+            date_naissance=datetime.date(1985, 5, 5), telephone='770000040',
+        )
+        maintenant = timezone.now()
+        self.futur = RendezVous.objects.create(
+            patient=self.patient, medecin=self.medecin,
+            date_heure=maintenant + datetime.timedelta(days=7),
+            motif='Controle', statut=RendezVous.Statut.DEMANDE,
+        )
+        self.tres_futur = RendezVous.objects.create(
+            patient=self.patient, medecin=self.medecin,
+            date_heure=maintenant + datetime.timedelta(days=30),
+            motif='Bilan', statut=RendezVous.Statut.CONFIRME,
+        )
+        self.passe = RendezVous.objects.create(
+            patient=self.patient, medecin=self.medecin,
+            date_heure=maintenant - datetime.timedelta(days=7),
+            motif='Ancien', statut=RendezVous.Statut.TERMINE,
+        )
+
+    # --- Agenda du medecin ------------------------------------------------
+
+    def _agenda(self, **params):
+        self.client.login(username='medecin-filtres@santesn.sn', password=PASSWORD)
+        return self.client.get(reverse('agenda_medecin'), params)
+
+    def test_agenda_filtre_a_venir(self):
+        lignes = list(self._agenda(periode='a_venir').context['rendez_vous'])
+        self.assertEqual(lignes, [self.futur, self.tres_futur])
+
+    def test_agenda_a_venir_affiche_le_plus_proche_en_premier(self):
+        # Le coeur du changement : en tri unique "-date_heure", demander
+        # "a venir" mettait le rendez-vous le plus LOINTAIN en tete.
+        lignes = list(self._agenda(periode='a_venir').context['rendez_vous'])
+        self.assertEqual(lignes[0], self.futur)
+
+    def test_agenda_filtre_passes(self):
+        lignes = list(self._agenda(periode='passes').context['rendez_vous'])
+        self.assertEqual(lignes, [self.passe])
+
+    def test_agenda_filtre_statut(self):
+        lignes = list(self._agenda(statut=RendezVous.Statut.CONFIRME).context['rendez_vous'])
+        self.assertEqual(lignes, [self.tres_futur])
+
+    def test_agenda_sans_filtre_reste_du_plus_recent_au_plus_ancien(self):
+        lignes = list(self._agenda().context['rendez_vous'])
+        self.assertEqual(lignes, [self.tres_futur, self.futur, self.passe])
+
+    def test_agenda_statut_inconnu_ignore_et_non_reaffiche(self):
+        reponse = self._agenda(statut='PAS_UN_STATUT')
+        self.assertEqual(len(reponse.context['rendez_vous']), 3)
+        self.assertEqual(reponse.context['statut_choisi'], '')
+
+    def test_agenda_libelle_jamais_accepte_comme_valeur(self):
+        # Les TextChoices separent valeur stockee et libelle affiche : filtrer
+        # sur le libelle ne doit rien retenir, et surtout pas planter.
+        reponse = self._agenda(statut='Confirmé')
+        self.assertEqual(len(reponse.context['rendez_vous']), 3)
+
+    def test_agenda_etat_vide_distingue_le_filtre(self):
+        self.assertContains(
+            self._agenda(statut=RendezVous.Statut.ANNULE),
+            'Aucun rendez-vous ne correspond',
+        )
+
+    # --- Rendez-vous de l'assure ------------------------------------------
+
+    def _mes_rdv(self, **params):
+        self.client.login(username='assure-filtres@santesn.sn', password=PASSWORD)
+        return self.client.get(reverse('mes_rendez_vous_assure'), params)
+
+    def test_assure_filtre_a_venir_le_plus_proche_en_premier(self):
+        lignes = list(self._mes_rdv(periode='a_venir').context['rendez_vous'])
+        self.assertEqual(lignes, [self.futur, self.tres_futur])
+
+    def test_assure_filtre_statut(self):
+        lignes = list(self._mes_rdv(statut=RendezVous.Statut.TERMINE).context['rendez_vous'])
+        self.assertEqual(lignes, [self.passe])
+
+    # --- Ordonnances de l'assure ------------------------------------------
+
+    def _mes_ordonnances(self, **params):
+        self.client.login(username='assure-filtres@santesn.sn', password=PASSWORD)
+        return self.client.get(reverse('mes_ordonnances_assure'), params)
+
+    def test_assure_filtre_ordonnances_a_retirer(self):
+        a_retirer = creer_ordonnance(self.patient, self.medecin)
+        retiree = creer_ordonnance(self.patient, self.medecin)
+        pharmacien = creer_pharmacien('pharma-filtres@santesn.sn')
+        Delivrance.objects.create(ordonnance=retiree, pharmacien=pharmacien)
+
+        self.assertEqual(list(self._mes_ordonnances(delivrance='non').context['ordonnances']),
+                         [a_retirer])
+        self.assertEqual(list(self._mes_ordonnances(delivrance='oui').context['ordonnances']),
+                         [retiree])
+        self.assertEqual(len(self._mes_ordonnances().context['ordonnances']), 2)
+
+    # --- Historique du pharmacien -----------------------------------------
+
+    def _historique(self, **params):
+        self.client.login(username='pharma-histo@santesn.sn', password=PASSWORD)
+        return self.client.get(reverse('historique_delivrances'), params)
+
+    def test_pharmacien_recherche_et_date(self):
+        pharmacien = creer_pharmacien('pharma-histo@santesn.sn')
+        ordonnance = creer_ordonnance(self.patient, self.medecin)
+        delivrance = Delivrance.objects.create(ordonnance=ordonnance, pharmacien=pharmacien)
+
+        self.assertEqual(len(self._historique(q='Kane').context['delivrances']), 1)
+        self.assertEqual(len(self._historique(q=ordonnance.code_qr[:6]).context['delivrances']), 1)
+        self.assertEqual(len(self._historique(q='Introuvable').context['delivrances']), 0)
+
+        jour = timezone.localtime(delivrance.date_delivrance).date()
+        self.assertEqual(len(self._historique(date=jour.isoformat()).context['delivrances']), 1)
+        veille = (jour - datetime.timedelta(days=1)).isoformat()
+        self.assertEqual(len(self._historique(date=veille).context['delivrances']), 0)
+
+    def test_pharmacien_date_invalide_ignoree(self):
+        creer_pharmacien('pharma-histo@santesn.sn')
+        reponse = self._historique(date='pas-une-date')
+        self.assertEqual(reponse.status_code, 200)
+        self.assertEqual(reponse.context['date_choisie'], '')
+
+    # --- Non-regression ---------------------------------------------------
+
+    def test_mes_patients_na_pas_de_seconde_barre_de_recherche(self):
+        # La recherche de cette page est le combobox JS deja en place : un
+        # formulaire GET .filtres en plus ferait deux champs pour une seule
+        # question.
+        self.client.login(username='medecin-filtres@santesn.sn', password=PASSWORD)
+        reponse = self.client.get(reverse('mes_patients'))
+        self.assertNotContains(reponse, 'class="filtres"')
+        self.assertContains(reponse, 'recherche-patients-champ')

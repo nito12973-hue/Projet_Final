@@ -11,6 +11,21 @@
     </div>
 </section>
 
+<form method="get" class="filtres">
+    <div style="min-width:240px;">
+        <label for="delivrance">Délivrance</label>
+        <select id="delivrance" name="delivrance" style="margin-bottom:0;">
+            <option value="">Toutes</option>
+            <option value="non" {% if delivrance_choisie == "non" %}selected{% endif %}>À retirer en pharmacie</option>
+            <option value="oui" {% if delivrance_choisie == "oui" %}selected{% endif %}>Déjà retirées</option>
+        </select>
+    </div>
+    <button type="submit" class="button primary btn">Filtrer</button>
+    {% if delivrance_choisie %}
+    <a href="{% url 'mes_ordonnances_assure' %}" class="button btn">Réinitialiser</a>
+    {% endif %}
+</form>
+
 {% if ordonnances %}
 <section class="panel">
     <table class="tableau-carte">
@@ -51,7 +66,7 @@
 {% else %}
 <div class="etat-vide">
     {% illustration_vide "pill" %}
-    <p>Aucune ordonnance disponible.</p>
+    <p>{% if delivrance_choisie %}Aucune ordonnance ne correspond à ce filtre.{% else %}Aucune ordonnance disponible.{% endif %}</p>
 </div>
 {% endif %}
 {% endblock %}

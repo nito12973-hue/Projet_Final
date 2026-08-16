@@ -529,6 +529,28 @@ défaut) ne peut pas coller. Sans cela la barre défilait hors de l'écran alors
 que la barre du haut restait. Pas de `position: fixed` sur desktop — le tiroir
 mobile (< 981 px) applique déjà le sien.
 
+## Filtres des listes
+
+Le tri par colonne (`_trier`) sert les **listes admin uniquement** — un
+référentiel de plusieurs centaines de lignes se classe ; un agenda est
+chronologique et un assuré a trois ordonnances. Ne pas ajouter d'en-têtes
+triables aux écrans Médecin/Assuré/Pharmacien.
+
+Côté non-admin, seuls quatre écrans portent un filtre, chacun répondant à une
+question réelle : `agenda_medecin` et `mes_rendez_vous_assure` (statut +
+période), `mes_ordonnances_assure` (à retirer / déjà retirées),
+`historique_delivrances` (recherche + date).
+
+`_filtrer_rendez_vous` est **partagée** par les deux écrans de rendez-vous.
+**Le tri suit la période** : « à venir » ordonne du plus **proche** au plus
+lointain, tout le reste du plus récent au plus ancien. En tri unique
+`-date_heure`, demander « à venir » affichait le rendez-vous le plus lointain
+en tête — l'inverse de ce qu'on vient chercher.
+
+**`mes_patients` n'a volontairement aucune barre de filtres** : la page porte
+déjà une recherche (combobox JS sur `rechercher_patients_medecin`) qui ouvre
+la fiche du patient. Un second champ serait un doublon. Un test le verrouille.
+
 ## Pagination
 
 

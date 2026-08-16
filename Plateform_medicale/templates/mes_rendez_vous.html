@@ -12,6 +12,30 @@
     <a class="button primary" href="{% url 'ajouter_rendez_vous_assure' %}">Nouveau rendez-vous</a>
 </section>
 
+<form method="get" class="filtres">
+    <div style="min-width:200px;">
+        <label for="periode">Période</label>
+        <select id="periode" name="periode" style="margin-bottom:0;">
+            <option value="">Tous</option>
+            <option value="a_venir" {% if periode_choisie == "a_venir" %}selected{% endif %}>À venir</option>
+            <option value="passes" {% if periode_choisie == "passes" %}selected{% endif %}>Passés</option>
+        </select>
+    </div>
+    <div style="min-width:200px;">
+        <label for="statut">Statut</label>
+        <select id="statut" name="statut" style="margin-bottom:0;">
+            <option value="">Tous</option>
+            {% for value, label in statuts %}
+            <option value="{{ value }}" {% if value == statut_choisi %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit" class="button primary btn">Filtrer</button>
+    {% if statut_choisi or periode_choisie %}
+    <a href="{% url 'mes_rendez_vous_assure' %}" class="button btn">Réinitialiser</a>
+    {% endif %}
+</form>
+
 {% if rendez_vous %}
 <section class="panel">
     <table class="tableau-carte">
@@ -70,7 +94,7 @@
 {% else %}
 <div class="etat-vide">
     {% illustration_vide "calendar" %}
-    <p>Aucun rendez-vous enregistre.</p>
+    <p>{% if statut_choisi or periode_choisie %}Aucun rendez-vous ne correspond à ces critères.{% else %}Aucun rendez-vous enregistré.{% endif %}</p>
     <div class="actions">
         <a class="button primary" href="{% url 'ajouter_rendez_vous_assure' %}">Nouveau rendez-vous</a>
     </div>
