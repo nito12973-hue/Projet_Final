@@ -515,6 +515,17 @@ de variable propre à chaque fichier). `theme-color` + `color-scheme: light`
 dans les 3 `<head>` ; balises Open Graph/Twitter Card en plus sur
 `landing.html` (seule page destinée à être partagée).
 
+**La feuille Google Fonts est chargée sans bloquer le rendu** (`media="print"`
+puis `onload="this.media='all'"`, plus un `<noscript>`), dans les trois
+feuilles autonomes. Mesuré : premier rendu du tableau de bord à **2452 ms en
+cache froid** (dont 1342 ms d'attente sur cette feuille) → **1040 ms**. En
+cache chaud c'était déjà ~150 ms : le défaut ne frappait que la première
+visite — celle qui compte, et qui dure plus longtemps sur une connexion
+mobile. Les piles de polices ont un repli correct, la bascule est discrète.
+
+Le reste du délai (830 ms de DOM) vient du **poids de la page** : ~4000 lignes
+de CSS inline dans `base.html`. C'est le principal frein technique restant.
+
 Aucun émoji nulle part dans l'application (sidebar, landing, écrans de
 connexion) : toutes les icônes viennent de `templatetags/icones.py`
 (`{% load icones %}` + `{% icone "nom" %}`, SVG trait fin 24×24,
