@@ -177,20 +177,34 @@ catégorie de la colonne de gauche est une **page à part entière** : cliquez
 dessus et elle s'ouvre directement (vous pouvez l'ajouter à vos favoris, et le
 bouton Retour du navigateur fonctionne normalement).
 
-- **Mon compte** : votre prénom, nom et téléphone. Vous pouvez aussi changer
-  votre adresse e-mail, mais comme c'est elle qui vous sert à vous connecter,
-  l'application vous demande votre mot de passe actuel pour confirmer. Votre
-  rôle, lui, est défini par l'administration et n'est pas modifiable.
-- **Sécurité** : changer votre mot de passe.
-- **Notifications** : envoyer un message aux utilisateurs et consulter
-  l'historique. Cette section reste également accessible directement depuis le
-  menu, car c'est une action courante.
+Paramètres contient **uniquement des réglages**. Ce que vous *faites* au
+quotidien — importer, exporter, envoyer une notification — vit sur la page
+métier concernée, jamais ici. Quatre catégories :
+
+- **Général** : la configuration de la plateforme (langue, fuseau horaire,
+  format de date), en lecture seule. Vos informations personnelles ne sont pas
+  ici : elles sont dans le **menu de votre compte**, en haut à droite.
 - **Apparence** : choisir le thème **clair**, **sombre**, ou **Système** pour
   suivre le réglage de votre appareil, et réduire le menu latéral. Ces choix ne
   concernent que l'appareil sur lequel vous les faites — ils ne sont pas
   enregistrés sur votre compte.
-- **Données** (administrateur) : importer des utilisateurs depuis Excel,
-  télécharger le modèle, exporter les utilisateurs et les rapports.
+- **Sécurité** : changer votre mot de passe, voir la durée de session et la
+  protection contre les tentatives de connexion, gérer les comptes
+  temporairement bloqués (voir ci-dessous), et vous déconnecter de tous vos
+  appareils.
+- **Avancé** : les services externes réellement utilisés par l'application
+  (fond de carte, graphiques) et l'état de l'envoi d'e-mails.
+
+**Où trouver les imports et les exports ?** Sur leur page :
+
+| Ce que vous cherchez | Où c'est |
+|---|---|
+| Importer / exporter des utilisateurs | **Utilisateurs** |
+| Importer des règlements, exporter les paiements | **Paiements** |
+| Exporter les rapports | **Rapports** |
+
+Les exports proposés sur ces pages **respectent les filtres que vous venez
+d'appliquer** : vous exportez ce que vous avez sous les yeux.
 - **Sécurité → Comptes temporairement bloqués** : après 5 échecs de connexion
   consécutifs, un compte est bloqué 5 minutes, puis débloqué automatiquement.
   Cette section liste les comptes actuellement bloqués avec le temps restant.

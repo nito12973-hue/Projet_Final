@@ -315,12 +315,24 @@ def setup_wizard(request):
 # Sections de la page Parametres : (slug, libelle, icone, role requis).
 # Une seule table pilote a la fois le menu de gauche ET le controle d'acces,
 # pour qu'ils ne puissent pas diverger.
+# (slug, libelle, icone, role_requis). role_requis=None : ouverte a tous.
+#
+# La section "Données" a ete SUPPRIMEE : ses six entrees (2 imports, 3 exports)
+# etaient toutes des actions metier deja presentes sur leur propre page. Un
+# import d'utilisateurs se fait depuis Utilisateurs, un import de reglements
+# depuis Paiements -- c'est la que l'administrateur les cherche. Pire, les
+# exports proposes ici ignoraient les filtres alors que le sous-titre affirmait
+# le contraire. Videe de ses doublons, la section n'avait plus de contenu.
+#
+# L'icone de "Général" n'est plus user-circle : la carte "Mon compte" a quitte
+# cette section (elle vit dans le menu du compte), il n'y reste que la
+# configuration de la plateforme. Celle d'"Avancé" n'est plus filter : un
+# entonnoir veut dire "filtrer".
 SECTIONS_PARAMETRES = [
-    ("general", "Général", "user-circle", None),
+    ("general", "Général", "building", None),
     ("apparence", "Apparence", "eye", None),
     ("securite", "Sécurité", "lock", None),
-    ("donnees", "Données", "download", "ADMIN"),
-    ("avance", "Avancé", "filter", None),
+    ("avance", "Avancé", "zap", None),
 ]
 
 

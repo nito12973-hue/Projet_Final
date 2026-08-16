@@ -33,7 +33,10 @@ from .models import (
     User,
     distance_km,
 )
+from .views import SECTIONS_PARAMETRES as SECTIONS_PARAMETRES_REELLES
 from .views import TAILLE_PAGE_LISTE
+
+SECTIONS_TOUTES = ('general', 'apparence', 'securite', 'avance')
 
 PASSWORD = 'MotDePasseSolide2026!'
 
@@ -3081,10 +3084,10 @@ class ParametresEtMonCompteTests(TestCase):
         reponse = self.client.get(reverse('parametres'))
         self.assertEqual(reponse.status_code, 200)
         self.assertEqual(reponse.context['section'], 'general')
-        self.assertContains(reponse, 'Mon compte')
+        self.assertContains(reponse, 'Configuration de la plateforme')
 
     def test_chaque_categorie_ouvre_sa_propre_page(self):
-        for slug in ('general', 'apparence', 'securite', 'donnees', 'avance'):
+        for slug in ('general', 'apparence', 'securite', 'avance'):
             reponse = self.client.get(reverse('parametres_section', args=[slug]))
             self.assertEqual(reponse.status_code, 200, slug)
             self.assertEqual(reponse.context['section'], slug)
@@ -3094,17 +3097,32 @@ class ParametresEtMonCompteTests(TestCase):
             self.client.get(reverse('parametres_section', args=['inexistante'])).status_code,
             404)
 
-    def test_sections_admin_inaccessibles_aux_autres_roles(self):
+    def test_aucune_section_nest_reservee_aujourdhui(self):
+        # Constat, pas un souhait : depuis le retrait de "Donnees", les quatre
+        # sections restantes sont ouvertes a tous les roles. Si une section
+        # reservee reapparait, ce test tombe et rappelle de couvrir son acces.
         self.assertEqual(
-            self.client.get(reverse('parametres_section', args=['donnees'])).status_code, 200)
-        self.client.logout()
-        creer_medecin('medecin-param@santesn.sn')
-        self.client.login(username='medecin-param@santesn.sn', password=PASSWORD)
-        # Une section reservee n'est pas seulement masquee : elle est refusee.
-        self.assertEqual(
-            self.client.get(reverse('parametres_section', args=['donnees'])).status_code, 404)
-        menu = self.client.get(reverse('parametres'))
-        self.assertNotContains(menu, reverse('parametres_section', args=['donnees']))
+            [s[0] for s in SECTIONS_PARAMETRES_REELLES if s[3] is not None], [])
+
+    def test_une_section_reservee_renvoie_404_et_nest_pas_seulement_masquee(self):
+        # Le mecanisme de restriction par role est teste sur un registre
+        # SUBSTITUE : inventer une section reservee dans l'interface reelle
+        # pour le seul besoin du test reviendrait a afficher une chose qui
+        # n'existe pas.
+        registre = SECTIONS_PARAMETRES_REELLES + [
+            ("reservee", "Reservee", "lock", "ADMIN")]
+        with patch('Plateform_medicale.views.SECTIONS_PARAMETRES', registre):
+            self.assertEqual(
+                self.client.get(reverse('parametres_section', args=['reservee'])).status_code,
+                200)
+            self.client.logout()
+            creer_medecin('medecin-param@santesn.sn')
+            self.client.login(username='medecin-param@santesn.sn', password=PASSWORD)
+            self.assertEqual(
+                self.client.get(reverse('parametres_section', args=['reservee'])).status_code,
+                404)
+            menu = self.client.get(reverse('parametres'))
+            self.assertNotContains(menu, reverse('parametres_section', args=['reservee']))
 
     def test_anonyme_redirige(self):
         self.client.logout()
@@ -3232,6 +3250,16 @@ class ParametresContenuTests(TestCase):
         slugs = [s['slug'] for s in reponse.context['sections']]
         self.assertNotIn('notifications', slugs)
         self.assertNotIn('donnees', slugs)
+        self.assertEqual(slugs, ['general', 'apparence', 'securite', 'avance'])
+
+    def test_chaque_section_pointe_une_icone_qui_existe(self):
+        """Panne silencieuse : _ICONES.get(nom, "") renvoie une chaine VIDE
+        pour un nom errone. Le SVG se rend, sans dessin et sans erreur -- rien
+        ne le signale a l'ecran. Meme famille que la table de couleurs des
+        rapports indexee par libelle."""
+        from .templatetags.icones import _ICONES
+        for slug, _libelle, icone, _role in SECTIONS_PARAMETRES_REELLES:
+            self.assertIn(icone, _ICONES, slug)
 
     def test_section_avancee_signale_l_absence_de_backend_email(self):
         reponse = self.client.get(reverse('parametres_section', args=['avance']))
@@ -3719,17 +3747,38 @@ class NavigationCoherenteTests(TestCase):
         reponse = self.client.get(reverse('dashboard'))
         self.assertNotContains(reponse, reverse('importer_utilisateurs_excel'))
 
-    def test_import_utilisateurs_reste_sur_sa_liste_et_dans_parametres(self):
+    def test_import_utilisateurs_uniquement_sur_sa_page_metier(self):
+        # UNE fonctionnalite = UN emplacement principal. L'import vivait aussi
+        # dans Parametres -> Donnees : le meme bouton, a deux endroits.
         self.assertContains(self.client.get(reverse('liste_utilisateurs')),
                             reverse('importer_utilisateurs_excel'))
-        self.assertContains(self.client.get(reverse('parametres_section', args=['donnees'])),
-                            reverse('importer_utilisateurs_excel'))
+        for section in SECTIONS_TOUTES:
+            self.assertNotContains(
+                self.client.get(reverse('parametres_section', args=[section])),
+                reverse('importer_utilisateurs_excel'))
 
-    def test_import_reglements_sur_la_page_paiements_et_dans_parametres(self):
+    def test_import_reglements_uniquement_sur_la_page_paiements(self):
         self.assertContains(self.client.get(reverse('liste_paiements')),
                             reverse('importer_reglements_excel'))
-        self.assertContains(self.client.get(reverse('parametres_section', args=['donnees'])),
-                            reverse('importer_reglements_excel'))
+        for section in SECTIONS_TOUTES:
+            self.assertNotContains(
+                self.client.get(reverse('parametres_section', args=[section])),
+                reverse('importer_reglements_excel'))
+
+    def test_exports_uniquement_sur_leur_page_metier(self):
+        # Les exports proposes dans Parametres ignoraient les filtres alors
+        # que le sous-titre affirmait le contraire : deux chemins, dont un
+        # qui mentait.
+        for nom, page in (
+            ('exporter_utilisateurs_excel', 'liste_utilisateurs'),
+            ('exporter_rapports_excel', 'rapports'),
+            ('exporter_paiements_csv', 'liste_paiements'),
+        ):
+            self.assertContains(self.client.get(reverse(page)), reverse(nom))
+            for section in SECTIONS_TOUTES:
+                self.assertNotContains(
+                    self.client.get(reverse('parametres_section', args=[section])),
+                    reverse(nom))
 
     def test_menu_du_compte_porte_la_deconnexion(self):
         """La deconnexion appartient au compte, pas a la navigation metier."""
@@ -3796,14 +3845,26 @@ class ConfirmationsActionsSensiblesTests(TestCase):
                 self.assertNotIn('data-confirmation', bloc, nom)
 
     def test_icone_engrenage_pour_les_parametres(self):
-        """Le menu utilisait une cle (symbole de securite) pour les reglages."""
+        """Une roue dentee, pas un soleil.
+
+        Le menu a d'abord utilise une cle (symbole de securite), puis un
+        cercle entoure de 8 rayons droits et diagonaux -- dessine comme "un
+        engrenage en segments", mais qui se lisait a l'ecran comme un SOLEIL.
+        L'ancien test se contentait de chercher un "circle", que le soleil
+        possedait aussi : il ne pouvait pas voir l'erreur.
+
+        On teste desormais ce qui SEPARE les deux formes : une roue dentee a
+        un contour ferme (z), un soleil n'a que des rayons ouverts.
+        """
         from .templatetags.icones import _ICONES
-        self.assertIn('settings', _ICONES)
+        svg = _ICONES['settings']
+        self.assertIn('<circle', svg)          # le moyeu
+        self.assertIn('z"', svg)               # le contour dente se referme
+        self.assertNotIn('M12 2.6v3.1', svg)   # plus aucun rayon droit
         html = self.client.get(reverse('dashboard')).content.decode()
         debut = html.find('aria-label="Paramètres"')
         self.assertNotEqual(debut, -1)
-        bloc = html[debut:debut + 400]
-        self.assertIn('circle', bloc)  # l'engrenage a un moyeu circulaire
+        self.assertIn('<circle', html[debut:debut + 1400])
 
 
 class BlocageMecanismeTests(TestCase):
