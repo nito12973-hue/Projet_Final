@@ -4,6 +4,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import (
     Consultation,
     Delivrance,
+    JournalActivite,
     Medecin,
     Notification,
     Ordonnance,
@@ -123,6 +124,32 @@ class PriseEnChargeAdmin(SuppressionGereeParLAppMixin, admin.ModelAdmin):
     list_display = ["patient", "date_demande", "statut"]
     list_filter = ["statut"]
     search_fields = ["patient__nom", "patient__prenom"]
+
+
+@admin.register(JournalActivite)
+class JournalActiviteAdmin(admin.ModelAdmin):
+    """Strictement en lecture seule, ici comme dans l'application.
+
+    Un journal d'audit qu'un administrateur peut retoucher ne vaut rien : il
+    ne prouve plus que ce que son dernier lecteur a bien voulu y laisser. Les
+    trois permissions sont donc refusees -- pas seulement la suppression,
+    contrairement a SuppressionGereeParLAppMixin (qui, lui, redirige vers une
+    logique metier existante ; ici il n'y a rien vers quoi rediriger).
+    Les entrees sont creees exclusivement par journaliser() (views.py).
+    """
+
+    list_display = ["date", "auteur_libelle", "action", "objet", "details"]
+    list_filter = ["action"]
+    search_fields = ["auteur_libelle", "objet", "details"]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 admin.site.register(Consultation)

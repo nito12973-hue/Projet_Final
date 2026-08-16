@@ -62,6 +62,7 @@ _LIBELLES_PAGE = {
     "liste_ordonnances": "Ordonnances",
     "liste_paiements": "Paiements",
     "rapports": "Rapports",
+    "journal_activite": "Journal d'activité",
     "envoyer_notification": "Notifications",
     "liste_notifications_envoyees": "Notifications",
     "liste_consultations": "Consultations",

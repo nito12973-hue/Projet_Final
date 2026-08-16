@@ -697,3 +697,62 @@ class TentativeConnexion(models.Model):
             if ligne is not None:
                 apparies.append((utilisateur, ligne))
         return apparies
+
+
+class JournalActivite(models.Model):
+    """Trace des DECISIONS administratives et des DESTRUCTIONS.
+
+    Perimetre volontairement etroit. Ne sont PAS journalises :
+      - les connexions et la navigation (bruit ; le blocage temporaire a deja
+        son propre ecran, cf. TentativeConnexion) ;
+      - les actes de soin (une Consultation porte deja son medecin et sa date,
+        une Delivrance son pharmacien) -- les reecrire ici les dupliquerait
+        sans rien apprendre ;
+      - le changement de statut d'un rendez-vous : c'est le travail quotidien
+        du medecin, son volume noierait les entrees qui comptent ;
+      - les creations metier courantes (service, prestataire...) : la fiche
+        creee EST la trace. On journalise la disparition d'un objet, pas sa
+        naissance -- sauf pour un compte, car creer un compte accorde un
+        acces, ce qui est une decision de securite.
+
+    POINT CENTRAL : l'objet concerne est decrit par du TEXTE FIGE, jamais par
+    une cle etrangere. Une cle etrangere en CASCADE effacerait l'entree en
+    meme temps que l'objet supprime -- or c'est precisement la suppression
+    qu'on veut garder. Meme raison pour auteur_libelle, fige a cote de la cle
+    auteur : supprimer le compte d'un administrateur ne doit pas effacer la
+    trace de ce qu'il a fait.
+    """
+
+    class Action(models.TextChoices):
+        CREATION = "CREATION", "Création"
+        MODIFICATION = "MODIFICATION", "Modification"
+        SUPPRESSION = "SUPPRESSION", "Suppression"
+        ACTIVATION = "ACTIVATION", "Activation"
+        DESACTIVATION = "DESACTIVATION", "Désactivation"
+        DEBLOCAGE = "DEBLOCAGE", "Déblocage"
+        MOT_DE_PASSE = "MOT_DE_PASSE", "Mot de passe réinitialisé"
+        DECISION = "DECISION", "Décision"
+        REGLEMENT = "REGLEMENT", "Règlement"
+        IMPORT = "IMPORT", "Import en masse"
+
+    auteur = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="actions_journalisees",
+    )
+    auteur_libelle = models.CharField("auteur (figé)", max_length=254)
+    action = models.CharField(max_length=20, choices=Action.choices, db_index=True)
+    objet = models.CharField("objet concerné", max_length=200)
+    details = models.CharField("détail", max_length=300, blank=True)
+    date = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        verbose_name = "entrée du journal"
+        verbose_name_plural = "journal d'activité"
+        ordering = ["-date"]
+
+    def __str__(self):
+        return (f"{self.date:%d/%m/%Y %H:%M} · {self.auteur_libelle} · "
+                f"{self.get_action_display()} · {self.objet}")

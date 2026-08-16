@@ -163,6 +163,14 @@
                         automatiquement.
                     </p>
                 </div>
+                {% comment %}
+                Raccourci legitime : il ouvre le journal DEJA FILTRE sur les
+                deblocages. Il ne debloque rien et ne duplique aucune
+                fonctionnalite -- meme modele que l'alerte du tableau de bord.
+                {% endcomment %}
+                <a class="button btn" href="{% url 'journal_activite' %}?action=DEBLOCAGE">
+                    {% icone "file-text" %} Historique des déblocages
+                </a>
             </div>
             <div class="param-corps">
                 {% if comptes_bloques %}

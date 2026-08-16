@@ -200,6 +200,47 @@ Notification
   plusieurs personnes, l'administrateur declenche un fan-out a la creation
   (une Notification par destinataire) plutot qu'un modele de groupe.
 
+JournalActivite
+  auteur (FK User, SET_NULL), auteur_libelle (texte FIGE), action
+  (TextChoices : CREATION / MODIFICATION / SUPPRESSION / ACTIVATION /
+  DESACTIVATION / DEBLOCAGE / MOT_DE_PASSE / DECISION / REGLEMENT / IMPORT),
+  objet (texte FIGE), details, date.
+
+  POURQUOI DU TEXTE FIGE ET PAS DES CLES ETRANGERES : une FK en CASCADE vers
+  l'objet concerne effacerait l'entree en meme temps que l'objet supprime --
+  or c'est precisement la suppression qu'on veut garder. Meme raison pour
+  auteur_libelle, fige a cote de la cle auteur : supprimer le compte d'un
+  administrateur ne doit pas effacer la trace de ce qu'il a fait (la cle
+  passe a NULL, le libelle reste, et l'ecran affiche "compte supprime").
+  Deux tests couvrent ces deux survies.
+
+  PERIMETRE -- sont journalises : le cycle de vie des comptes (creation,
+  modification, activation/desactivation, reinitialisation de mot de passe,
+  suppression, deblocage manuel), les 6 suppressions metier, la decision sur
+  une prise en charge (ce statut decide si le patient paie 10% ou 100%), le
+  reglement d'un paiement (Paiement porte date_reglement et mode_reglement
+  mais PAS son auteur), et les 2 imports en masse (UNE entree par operation,
+  pas par ligne : l'import est tout ou rien, c'est le geste qu'on trace).
+
+  NE SONT PAS journalises, volontairement : les connexions et la navigation
+  (bruit ; le blocage a deja son ecran) ; les actes de soin -- une
+  Consultation porte deja son medecin et sa date, une Delivrance son
+  pharmacien ; le changement de statut d'un rendez-vous (travail quotidien du
+  medecin, son volume noierait le reste) ; les creations metier courantes
+  (service, prestataire...) car la fiche creee EST la trace. Exception :
+  creer un COMPTE accorde un acces, c'est une decision de securite.
+
+  LECTURE SEULE PARTOUT. Aucune action d'ecriture sur l'ecran, et
+  JournalActiviteAdmin refuse les TROIS permissions (add/change/delete) --
+  pas seulement la suppression, contrairement a SuppressionGereeParLAppMixin
+  qui redirige vers une logique metier existante ; ici il n'y a rien vers
+  quoi rediriger. Un journal d'audit qu'un administrateur peut retoucher ne
+  prouve plus que ce que son dernier lecteur a bien voulu y laisser.
+
+  Un test verifie la COUVERTURE des 6 ecrans de suppression : un journal
+  partiel donnerait l'illusion d'une trace exhaustive, ce qui est pire que
+  pas de journal du tout.
+
 Relations cle a retenir :
   User 1—1 Patient (assure principal uniquement)
   User 1—1 Medecin / Pharmacien
@@ -1230,6 +1271,26 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
                                       jamais retiree n'apparaissait sur aucun
                                       ecran. Cible de la tuile "Pharmacie"
                                       du dashboard (?delivrance=non).
+  journal_activite                    journal d'activite admin, LECTURE SEULE.
+                                      Filtres GET : q (auteur/objet/detail),
+                                      action, date. Tri via _trier.
+                                      Il ne vit PAS dans Parametres :
+                                      Parametres = reglages, et un journal ne
+                                      se regle pas, il se consulte. Un
+                                      raccourci depuis Parametres > Securite
+                                      ouvre le journal DEJA FILTRE sur les
+                                      deblocages (?action=DEBLOCAGE) -- un
+                                      lien, pas un doublon.
+                                      Ecrit exclusivement par le helper
+                                      journaliser(request, action, objet,
+                                      details) : 17 points d'appel.
+                                      APPELER APRES LE SUCCES, jamais avant.
+                                      Seule exception : les suppressions, ou
+                                      l'appel precede delete() -- apres,
+                                      l'objet n'a plus de libelle a citer.
+                                      Un deblocage sans effet (compte deja
+                                      debloque) n'ecrit rien : une entree
+                                      ferait croire a une intervention.
   liste_consultations                 liste admin des consultations, LECTURE
                                       SEULE. Dernier angle mort du suivi
                                       admin : apres les rendez-vous et les

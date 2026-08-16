@@ -7,6 +7,7 @@ urlpatterns = [
     path('sitemap.xml', views.sitemap_xml, name='sitemap_xml'),
     path('tableau-de-bord/', views.dashboard, name='dashboard'),
     path('rapports/', views.rapports, name='rapports'),
+    path('journal/', views.journal_activite, name='journal_activite'),
     path('rapports/exporter/excel/', views.exporter_rapports_excel, name='exporter_rapports_excel'),
     path('rapports/exporter/pdf/', views.exporter_rapports_pdf, name='exporter_rapports_pdf'),
 
