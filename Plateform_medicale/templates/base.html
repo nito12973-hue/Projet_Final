@@ -3266,15 +3266,10 @@
             font-weight: 700;
         }
 
-        /* Le separateur appartient au libelle de section : une route absente
-           de la table _LIBELLES_PAGE rend un <b> vide, masque avec son "/". */
-        .fil-ariane b::before {
-            content: "/";
-            margin-right: 7px;
-            color: var(--muted);
-            font-weight: 600;
-        }
-
+        /* Plus de separateur : le fil ne compte qu'un seul niveau depuis que le
+           role en a ete retire. Un "/" en tete de ligne, sans rien avant, se
+           lirait comme une coquille. Une route absente de _LIBELLES_PAGE rend
+           toujours un <b> vide, masque par la regle suivante. */
         .fil-ariane b:empty {
             display: none;
         }
@@ -3826,8 +3821,14 @@
                             aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="barre-laterale">
                         {% icone "menu" %}
                     </button>
+                    {% comment %}
+                    Le role a ete retire d'ici : il etait affiche TROIS fois sur
+                    le meme ecran (carte utilisateur du menu, fil d'ariane, bloc
+                    identite de la barre du haut). Il reste aux deux endroits ou
+                    il designe QUI est connecte ; le fil d'ariane, lui, doit dire
+                    OU l'on est.
+                    {% endcomment %}
                     <nav class="fil-ariane" aria-label="Fil d'ariane">
-                        <span>{{ current_role_label }}</span>
                         <b>{{ request.resolver_match.url_name|libelle_page }}</b>
                     </nav>
                     {% if current_role == "ADMIN" %}
@@ -3856,7 +3857,13 @@
                                 <b>{{ user.get_full_name|default:user.email }}</b>
                                 <span>{{ user.email }}</span>
                             </p>
-                            <a href="{% url 'parametres' %}">{% icone "user-circle" %} Mon compte</a>
+                            {% comment %}
+                            Vers mon_compte, PAS vers parametres : depuis que la
+                            carte du compte a quitte la section "General", ce
+                            lien y ouvrait une page qui ne contenait plus ce que
+                            son libelle promet.
+                            {% endcomment %}
+                            <a href="{% url 'mon_compte' %}">{% icone "user-circle" %} Mon compte</a>
                             <a href="{% url 'changer_mot_de_passe' %}">{% icone "lock" %} Mot de passe</a>
                             <form method="post" action="{% url 'logout' %}">
                                 {% csrf_token %}

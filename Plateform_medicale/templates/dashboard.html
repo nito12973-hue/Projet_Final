@@ -284,12 +284,16 @@ mene a une liste filtree qui existe reellement.
                 <h2>Actions rapides</h2>
             </div>
         </div>
+        {% comment %}
+        Uniquement des CREATIONS. "Rapports" a ete retire : c'est une page, pas
+        une action, et elle est dans le menu. "Prestataire" aussi : on en cree
+        quelques-uns par an, pas depuis le tableau de bord. Un raccourci n'a de
+        valeur que s'il epargne un detour reel.
+        {% endcomment %}
         <div class="actions-grille">
             <a class="button primary" href="{% url 'ajouter_patient' %}">{% icone "id-card" %} Nouvel assuré</a>
             <a class="button primary" href="{% url 'ajouter_medecin' %}">{% icone "stethoscope" %} Nouveau médecin</a>
-            <a class="button" href="{% url 'ajouter_prestataire' %}">{% icone "building" %} Prestataire</a>
             <a class="button" href="{% url 'ajouter_prise_en_charge' %}">{% icone "shield-check" %} Prise en charge</a>
-            <a class="button" href="{% url 'rapports' %}">{% icone "bar-chart" %} Rapports</a>
         </div>
     </article>
 </section>
