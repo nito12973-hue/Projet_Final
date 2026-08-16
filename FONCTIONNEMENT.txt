@@ -853,6 +853,36 @@ Administrateur (admin_required, prefixes /utilisateurs/, /patients/,
                                       pas celle de l'import : c'est elle qui
                                       fait foi comptablement.
 
+  ESPACEMENTS -- normalisation        Constat par MESURE (getBoundingClientRect
+                                      sur 20 pages admin), pas a l'oeil : un
+                                      decalage de 10px se voit a la navigation
+                                      mais pas sur une capture isolee.
+                                      DEUX defauts trouves :
+                                      (1) le bord droit de main valait 1398 sur
+                                      les pages longues et 1408 sur les pages
+                                      courtes -- la barre de defilement
+                                      verticale apparait ou non selon la
+                                      hauteur, donc TOUT le contenu se decalait
+                                      lateralement en changeant de page.
+                                      Corrige par scrollbar-gutter: stable sur
+                                      html : la gouttiere est toujours
+                                      reservee. Mesure apres : 1398 partout.
+                                      (2) 56 declarations style="padding" sur
+                                      40 gabarits, ayant derive en 13 VALEURS
+                                      DISTINCTES (20px, 22/24, 24, 18/22,
+                                      20/24...). Les pages d'import etaient a
+                                      20px la ou tout le reste etait a 22/24.
+                                      Remplacees par 3 classes : .panel-form
+                                      (contenu + largeur 720), .panel-bloc
+                                      (contenu), .panel-form-etroit (largeur
+                                      480). 45 styles en ligne retires dans 37
+                                      gabarits. Les panneaux de LISTE gardent
+                                      un padding nul, leur tableau devant
+                                      toucher les bords de la carte.
+                                      Verifie apres correction : bords gauches
+                                      320 partout, hauts de titre 81 partout,
+                                      aucun debordement horizontal.
+
   TentativeConnexion (modele)         Compteur d'echecs et blocage temporaire,
                                       par ADRESSE SAISIE. 5 echecs -> blocage
                                       5 minutes, remise a zero a la connexion

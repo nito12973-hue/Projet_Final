@@ -1271,8 +1271,10 @@ class HistoriqueConsultationsTests(TestCase):
         )
 
     def test_formulaire_de_creation_dans_un_panel(self):
+        # .panel-form porte le padding canonique des panneaux de contenu
+        # (remplace les styles en ligne qui avaient derive en 13 valeurs).
         response = self.client.get(reverse('ajouter_consultation_medecin'))
-        self.assertContains(response, 'class="panel"')
+        self.assertContains(response, 'class="panel panel-form"')
 
     def test_filtre_par_patient(self):
         response = self.client.get(reverse('historique_consultations'), {'patient': self.patient_a.pk})

@@ -401,6 +401,29 @@ raison concrète. `DEMO_USERS.md` n'existe pas (voir phase 15, "Documentation
 / finalisation") — si une documentation utilisateur finale est un jour
 rédigée, ne pas la nommer ainsi sans vérifier qu'elle est à jour.
 
+## Espacements
+
+**Trois classes, pas de padding en ligne.** Les panneaux de contenu utilisent
+`.panel-form` (padding 22/24 + largeur 720), `.panel-bloc` (padding 22/24) ou
+`.panel-form-etroit` (largeur 480). Les panneaux de **liste** gardent un padding
+nul : leur tableau touche les bords de la carte.
+
+Avant cette règle, 56 déclarations `style="padding…"` réparties sur 40 gabarits
+avaient dérivé en **13 valeurs distinctes** (20px, 22/24, 24, 18/22, 20/24…),
+d'où des espacements irréguliers d'une page à l'autre. Ne pas réintroduire de
+padding en ligne sur un `.panel`.
+
+**`scrollbar-gutter: stable` sur `html`.** Sans cette règle, une page courte
+(sans barre de défilement) et une page longue (avec barre) n'ont pas la même
+largeur utile : tout le contenu se décale d'environ 10 px d'une page à l'autre.
+Mesuré sur 20 pages admin — bord droit à 1398 ou 1408 selon la page ; désormais
+1398 partout.
+
+**Vérifier par la mesure, pas à l'œil.** Un décalage de 10 px se voit à la
+navigation mais pas sur une capture isolée. Relever `getBoundingClientRect()`
+de `main`, `.page-title` et du premier bloc sur plusieurs pages est le moyen
+fiable de détecter ces écarts.
+
 ## Blocage temporaire des comptes
 
 `TentativeConnexion` (models.py) est **la seule** source : 5 échecs → 5 minutes

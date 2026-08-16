@@ -11,7 +11,7 @@
     </div>
 </section>
 
-<section class="panel" style="padding: 22px 24px; max-width: 480px;">
+<section class="panel panel-form panel-form-etroit">
     <form method="post">
         {% csrf_token %}
         <label for="code_qr">Code de l'ordonnance</label>
@@ -37,7 +37,7 @@ Repli quand le code est inutilisable (QR froisse, impression pale, code mal
 recopie). Formulaire distinct du precedent : deux champs dans un meme
 formulaire laisseraient le pharmacien croire qu'il faut remplir les deux.
 {% endcomment %}
-<section class="panel" style="padding: 22px 24px; max-width: 480px; margin-top: 16px;">
+<section class="panel panel-form panel-form-etroit" style="margin-top:16px;">
     <h2 style="margin:0 0 4px;font-size:15px;color:var(--titre);">Code illisible ?</h2>
     <p class="subtitle" style="margin:0 0 14px;">
         Recherchez par nom du patient ou par fragment du code. Vous choisirez
@@ -108,7 +108,7 @@ formulaire laisseraient le pharmacien croire qu'il faut remplir les deux.
 
 {% if ordonnance %}
 <section class="admin-layout" style="margin-top: 22px;">
-    <article class="panel" style="padding: 24px;">
+    <article class="panel panel-bloc">
         <h2 style="margin-top:0;color:var(--primary-dark);">Ordonnance {{ ordonnance.code_qr }}</h2>
         <p><strong>Patient :</strong> {{ ordonnance.consultation.patient }}</p>
         <p><strong>Médecin :</strong> {{ ordonnance.consultation.medecin }}</p>

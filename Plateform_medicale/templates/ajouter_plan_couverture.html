@@ -10,7 +10,7 @@
     <a class="button" href="{% url 'liste_plans_couverture' %}">Retour</a>
 </section>
 
-<section class="panel" style="padding: 22px 24px; max-width: 720px;">
+<section class="panel panel-form">
     {% if form.non_field_errors %}
     <div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
     {% endif %}
