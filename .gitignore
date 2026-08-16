@@ -29,3 +29,5 @@ Thumbs.db
 .worktrees/
 .superpowers/
 
+.vercel
+.env*
