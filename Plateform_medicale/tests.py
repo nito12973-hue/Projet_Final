@@ -6284,3 +6284,82 @@ class FormulaireOrdonnanceMedecinTests(TestCase):
         ordonnance = Ordonnance.objects.get(consultation=self.consultation)
         self.assertTrue(ordonnance.code_qr.startswith('RX-'))
         self.assertNotIn('Morphine', ordonnance.qr_svg)
+
+
+class SalutationDashboardsTests(TestCase):
+    """L'accueil etait FIGE a "Bonjour" sur deux tableaux de bord, absent des
+    deux autres, et l'espace assure affichait "Bonjour " suivi de RIEN quand
+    l'assure n'avait pas encore complete son profil."""
+
+    def _salutation(self, heure):
+        from .templatetags.formats import salutation
+        instant = timezone.localtime().replace(hour=heure, minute=0)
+        with patch('Plateform_medicale.templatetags.formats.timezone.localtime',
+                   return_value=instant):
+            return salutation()
+
+    def test_les_trois_moments_de_la_journee(self):
+        for heure in (5, 8, 11):
+            self.assertEqual(self._salutation(heure), 'Bonjour', heure)
+        for heure in (12, 15, 17):
+            self.assertEqual(self._salutation(heure), 'Bon après-midi', heure)
+        for heure in (18, 21, 23, 0, 4):
+            self.assertEqual(self._salutation(heure), 'Bonsoir', heure)
+
+    def test_le_nom_prefere_la_fiche_metier_au_compte(self):
+        """C'est le nom que la personne reconnait."""
+        from .templatetags.formats import nom_accueil
+        utilisateur = creer_utilisateur(User.Role.ASSURE, 'salut@santesn.sn')
+        utilisateur.first_name = 'Compte'
+        patient = creer_patient(nom='Ba', prenom='Lamarana')
+        self.assertEqual(nom_accueil(utilisateur, patient), 'Lamarana')
+        self.assertEqual(nom_accueil(utilisateur), 'Compte')
+
+    def test_repli_propre_quand_aucun_prenom_nexiste(self):
+        """Jamais de chaine vide, de None, ni de variable brute."""
+        from .templatetags.formats import nom_accueil
+        utilisateur = creer_utilisateur(User.Role.ASSURE, 'sans.prenom@santesn.sn')
+        self.assertEqual(nom_accueil(utilisateur), 'sans.prenom')
+        self.assertEqual(nom_accueil(utilisateur, None), 'sans.prenom')
+
+    def test_les_quatre_dashboards_saluent_par_leur_nom(self):
+        cas = [
+            ('dashboard', User.Role.ADMIN, 'admin-salut@santesn.sn', 'Awa'),
+            ('dashboard_pharmacien', User.Role.PHARMACIEN, 'pharma-salut@santesn.sn', 'Modou'),
+        ]
+        for route, role, email, prenom in cas:
+            self.client.logout()
+            utilisateur = creer_utilisateur(role, email)
+            utilisateur.first_name = prenom
+            utilisateur.save()
+            if role == User.Role.PHARMACIEN:
+                Pharmacien.objects.create(user=utilisateur)
+            self.client.login(username=email, password=PASSWORD)
+            contenu = self.client.get(reverse(route)).content.decode()
+            self.assertIn(prenom, contenu, route)
+            self.assertNotIn('Bonjour {{', contenu)
+
+    def test_lassure_sans_fiche_est_salue_sans_trou(self):
+        """Le defaut corrige : l'ecran affichait la salutation suivie de rien."""
+        creer_utilisateur(User.Role.ASSURE, 'assure-sans-nom@santesn.sn')
+        self.client.login(username='assure-sans-nom@santesn.sn', password=PASSWORD)
+        # Un assure sans fiche est redirige vers son profil : le tableau de
+        # bord n'est jamais rendu sans patient. On suit donc la redirection,
+        # et on verifie qu'une fiche SANS prenom ne laisse pas de trou.
+        patient = Patient.objects.create(
+            user=User.objects.get(email='assure-sans-nom@santesn.sn'),
+            nom='Ba', prenom='', date_naissance=datetime.date(1990, 1, 1))
+        contenu = self.client.get(reverse('dashboard_assure'), follow=True).content.decode()
+        debut = contenu.find('<h1>')
+        self.assertNotEqual(debut, -1, 'aucun titre rendu')
+        titre = contenu[debut + 4:contenu.find('</h1>', debut)].strip()
+        self.assertNotIn('None', titre)
+        self.assertFalse(titre.endswith(','), f'salutation sans nom : {titre!r}')
+        self.assertIn('Ba', titre)
+
+    def test_aucune_variable_django_brute_dans_les_titres(self):
+        creer_utilisateur(User.Role.ADMIN, 'admin-brut@santesn.sn')
+        self.client.login(username='admin-brut@santesn.sn', password=PASSWORD)
+        contenu = self.client.get(reverse('dashboard')).content.decode()
+        for interdit in ('{{', '{%', 'None', 'null'):
+            self.assertNotIn(interdit, contenu[contenu.find('<h1>'):contenu.find('</h1>')])

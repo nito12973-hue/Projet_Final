@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% load icones %}
+{% load formats icones %}
 
 {% block title %}Tableau de bord - Dr {{ medecin.nom }}{% endblock %}
 
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>Bonjour Dr {{ medecin.prenom }} {{ medecin.nom }}</h1>
+        <h1>{% salutation %}, Dr {% nom_accueil user medecin %}</h1>
         <p class="subtitle">Votre activité en un coup d'œil.</p>
     </div>
     {% comment %}

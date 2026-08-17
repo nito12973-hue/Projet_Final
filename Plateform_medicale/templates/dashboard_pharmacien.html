@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% load icones %}
+{% load formats icones %}
 
 {% block title %}Tableau de bord - Pharmacien{% endblock %}
 
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>Espace Pharmacien</h1>
+        <h1>{% salutation %}, {% nom_accueil user %}</h1>
         <p class="subtitle">Vérification des ordonnances et suivi des délivrances.</p>
     </div>
     <a class="button primary" href="{% url 'scanner_ordonnance' %}">Scanner un QR Code</a>
