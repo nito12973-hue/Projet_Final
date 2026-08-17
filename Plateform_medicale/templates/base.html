@@ -4385,7 +4385,13 @@
     <div id="modale-confirmation" class="modale-overlay" hidden>
         <div class="modale-panel" role="alertdialog" aria-modal="true" aria-labelledby="modale-titre" aria-describedby="modale-message">
             <p class="modale-icone" aria-hidden="true">{% icone "alert-triangle" %}</p>
-            <h3 id="modale-titre">Confirmer l'action</h3>
+            {% comment %}
+            h2 et non h3 : la modale suit directement le h1 de la page, sans
+            h2 intermediaire. Elle est masquee (hidden) donc ignoree des
+            lecteurs d'ecran au repos, mais le niveau doit rester juste une
+            fois ouverte.
+            {% endcomment %}
+            <h2 id="modale-titre">Confirmer l'action</h2>
             <p id="modale-message"></p>
             <div class="modale-actions">
                 <button type="button" class="button btn" id="modale-annuler">Annuler</button>
