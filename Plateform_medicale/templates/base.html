@@ -54,6 +54,9 @@
             /* Terracotta : accent ponctuel uniquement (jamais en fond/aplat large). */
             --accent: #e0824f;
             --border: #d9e2ea;
+            /* Fond des champs de saisie. Doit exister dans LES DEUX themes :
+               code en dur, il laissait un champ blanc en theme sombre. */
+            --champ-bg: #fbfdfc;
             --text: #1f2933;
             --muted: #5f6f7d;
             --danger: #b3261e;
@@ -121,6 +124,7 @@
             --primary-soft: #133b43;
             --accent: #e0824f;
             --border: #21404a;
+            --champ-bg: #0d2027;
             --text: #e2e9ea;
             --muted: #9db2ba;
             --danger: #e5675e;
@@ -786,6 +790,12 @@
             font-size: 14px;
         }
 
+        /* La COULEUR DU TEXTE etait absente et le fond code en dur (#fbfdfc).
+           En theme sombre, le champ gardait donc un fond quasi blanc pendant
+           que le texte heritait de la couleur claire de body : on tapait dans
+           un champ SANS RIEN VOIR. Les deux valeurs sont desormais des jetons,
+           et la couleur du texte est explicite -- un champ de saisie ne doit
+           jamais dependre de ce dont il herite. */
         input,
         select,
         textarea {
@@ -796,8 +806,22 @@
             border: 1.5px solid var(--border);
             border-radius: 9px;
             font: inherit;
-            background: #fbfdfc;
+            color: var(--titre);
+            background: var(--champ-bg);
             transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: var(--muted);
+            opacity: 1;
+        }
+
+        /* Liste deroulante native : sur certains navigateurs les <option> ne
+           suivent pas la couleur du <select> et retombent en noir sur noir. */
+        select option {
+            color: var(--titre);
+            background: var(--champ-bg);
         }
 
         input:hover,
