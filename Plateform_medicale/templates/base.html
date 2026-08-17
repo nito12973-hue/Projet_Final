@@ -60,6 +60,12 @@
             --text: #1f2933;
             --muted: #5f6f7d;
             --danger: #b3261e;
+            /* Fond des boutons destructifs, distinct de --danger qui sert
+               AUSSI de couleur de TEXTE. En sombre, --danger doit s'eclaircir
+               pour rester lisible sur fond sombre -- mais un aplat clair sous
+               un libelle blanc tombe alors a 3,26:1 (mesure). Un jeton, un
+               role : celui-ci reste toujours assez fonce pour du blanc. */
+            --danger-surface: #b3261e;
             /* Survol des boutons de suppression : seule variante sombre du rouge --danger. */
             --danger-strong: #8f1e18;
             --success: #1e7a4c;
@@ -129,6 +135,7 @@
             --muted: #9db2ba;
             --danger: #e5675e;
             --danger-strong: #f08a82;
+            --danger-surface: #b5453c;
             --success: #4ec38a;
             --warning: #e0b25f;
             --sb-bg: #0B2027;
@@ -896,7 +903,7 @@
 
         .button.btn-danger {
             border-color: transparent;
-            background: var(--danger);
+            background: var(--danger-surface);
             color: #ffffff;
         }
 
@@ -1740,10 +1747,6 @@
             padding: 10px;
         }
 
-        .carte-verso .carte-verso-mention {
-            color: var(--primary-dark);
-            opacity: 0.65;
-        }
 
         /* Le QR garde sa taille INTRINSEQUE (~23 mm, reglee a la generation).
            Ne pas lui imposer de largeur en CSS : le SVG produit par qrcode
@@ -1759,8 +1762,13 @@
             display: block;
         }
 
+        /* Couleur EXPLICITE. Le verso est clair alors que .carte-assure impose
+           du blanc pour le recto : sans cette couleur la mention sortait
+           blanc sur blanc (1,08:1, mesure). Une seule regle pour cet element
+           -- il y en avait deux, ce qui rendait la cascade illisible. */
         .carte-verso-mention {
             margin: 0;
+            color: #24424b;
             font-size: 8px;
             letter-spacing: 0.06em;
             text-transform: uppercase;

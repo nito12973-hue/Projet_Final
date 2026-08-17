@@ -5591,3 +5591,43 @@ class LisibiliteDesChampsTests(TestCase):
         debut = feuille.find('input::placeholder')
         self.assertNotEqual(debut, -1)
         self.assertIn('color: var(--muted)', feuille[debut:feuille.find('}', debut)])
+
+
+class ContrasteThemeSombreTests(TestCase):
+    """Defauts trouves par MESURE du contraste reel, theme par theme, sur
+    12 pages. Deux etaient reels ; les autres signalements etaient des faux
+    positifs de la sonde (fond en degrade, texte en background-clip)."""
+
+    def setUp(self):
+        creer_utilisateur(User.Role.ADMIN, 'admin-contraste@santesn.sn')
+        self.client.login(username='admin-contraste@santesn.sn', password=PASSWORD)
+
+    def _feuille(self):
+        return self.client.get(reverse('liste_utilisateurs')).content.decode()
+
+    def test_le_bouton_destructif_a_son_propre_jeton_de_fond(self):
+        """--danger sert AUSSI de couleur de texte : en sombre il s'eclaircit
+        pour rester lisible sur fond sombre, et un aplat clair sous un libelle
+        blanc tombait alors a 3,26:1. Un jeton, un role."""
+        feuille = self._feuille()
+        debut = feuille.find('.button.btn-danger {')
+        self.assertNotEqual(debut, -1)
+        regle = feuille[debut:feuille.find('}', debut)]
+        self.assertIn('background: var(--danger-surface)', regle)
+        self.assertNotIn('background: var(--danger)', regle)
+
+    def test_le_jeton_de_fond_destructif_existe_dans_les_deux_themes(self):
+        feuille = self._feuille()
+        self.assertEqual(feuille.count('--danger-surface:'), 2)
+        sombre = feuille[feuille.find(':root[data-theme="sombre"]'):]
+        self.assertIn('--danger-surface:', sombre[:sombre.find('}')])
+
+    def test_la_mention_du_verso_fixe_sa_couleur(self):
+        """Le verso de la carte est CLAIR alors que .carte-assure impose du
+        blanc pour le recto : sans couleur explicite la mention sortait blanc
+        sur blanc (1,08:1). Une seule regle pour cet element -- il y en avait
+        deux, ce qui rendait la cascade illisible."""
+        feuille = self._feuille()
+        self.assertEqual(feuille.count('.carte-verso-mention {'), 1)
+        debut = feuille.find('.carte-verso-mention {')
+        self.assertIn('color:', feuille[debut:feuille.find('}', debut)])
