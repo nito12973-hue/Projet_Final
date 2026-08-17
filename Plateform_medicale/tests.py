@@ -1721,6 +1721,9 @@ class RechercheLieuPrestataireTests(TestCase):
     def setUp(self):
         self.admin = creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
         self.client.login(username='admin@santesn.sn', password=PASSWORD)
+        # Les reponses Nominatim sont desormais mises en cache : sans purge,
+        # un test servirait le resultat simule du precedent.
+        cache.clear()
 
     def test_interdite_aux_non_admins(self):
         self.client.logout()
@@ -1730,24 +1733,36 @@ class RechercheLieuPrestataireTests(TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_sans_query_renvoie_non_trouve(self):
-        response = self.client.get(reverse('recherche_lieu_prestataire'))
-        self.assertEqual(response.json(), {'trouve': False})
+        # On verifie les champs qui portent le contrat, pas l'egalite stricte
+        # du dictionnaire : la reponse s'est enrichie d'une liste `resultats`
+        # de facon retro-compatible, et un test d'egalite exacte casse a
+        # chaque ajout de champ sans qu'aucun comportement ait change.
+        donnees = self.client.get(reverse('recherche_lieu_prestataire')).json()
+        self.assertFalse(donnees['trouve'])
+        self.assertEqual(donnees['resultats'], [])
 
     @patch('Plateform_medicale.views.urllib.request.urlopen')
     def test_lieu_trouve(self, mock_urlopen):
         mock_urlopen.return_value = _reponse_nominatim([
             {'lat': '14.7645', 'lon': '-16.9557', 'display_name': 'Thies, Senegal'},
         ])
-        response = self.client.get(reverse('recherche_lieu_prestataire'), {'q': 'Thies'})
-        self.assertEqual(response.json(), {
-            'trouve': True, 'lat': '14.7645', 'lon': '-16.9557', 'nom': 'Thies, Senegal',
-        })
+        donnees = self.client.get(
+            reverse('recherche_lieu_prestataire'), {'q': 'Thies'}
+        ).json()
+        self.assertTrue(donnees['trouve'])
+        self.assertEqual(donnees['lat'], '14.7645')
+        self.assertEqual(donnees['lon'], '-16.9557')
+        self.assertEqual(donnees['nom'], 'Thies, Senegal')
+        self.assertEqual(len(donnees['resultats']), 1)
 
     @patch('Plateform_medicale.views.urllib.request.urlopen')
     def test_lieu_introuvable(self, mock_urlopen):
         mock_urlopen.return_value = _reponse_nominatim([])
-        response = self.client.get(reverse('recherche_lieu_prestataire'), {'q': 'Zzznotarealplace'})
-        self.assertEqual(response.json(), {'trouve': False})
+        donnees = self.client.get(
+            reverse('recherche_lieu_prestataire'), {'q': 'Zzznotarealplace'}
+        ).json()
+        self.assertFalse(donnees['trouve'])
+        self.assertEqual(donnees['resultats'], [])
 
     @patch('Plateform_medicale.views.urllib.request.urlopen',
            side_effect=urllib.error.URLError('offline'))
@@ -6583,3 +6598,204 @@ class TracePaiementEspecesTests(TestCase):
         source = pathlib.Path('Plateform_medicale/views.py').read_text(encoding='utf-8')
         for interdit in ('wave', 'orange_money', 'orangemoney', 'paydunya', 'stripe'):
             self.assertNotIn(interdit, source.lower())
+
+
+class RechercheEtablissementReelTests(TestCase):
+    """Decouverte d'etablissements REELS via OpenStreetMap.
+
+    Regle non negociable du produit : un etablissement trouve sur la carte
+    n'est PAS un prestataire de la plateforme. La reponse doit porter cette
+    distinction, et l'interface la rendre visible.
+    """
+
+    def setUp(self):
+        creer_utilisateur(User.Role.ADMIN, 'admin-geo@santesn.sn')
+        self.client.login(username='admin-geo@santesn.sn', password=PASSWORD)
+        cache.clear()
+
+    def _reponse_nominatim(self, charge):
+        faux = MagicMock()
+        faux.read.return_value = json.dumps(charge).encode('utf-8')
+        faux.__enter__.return_value = faux
+        faux.__exit__.return_value = False
+        return faux
+
+    LIEU = {
+        'name': 'Hopital Principal de Dakar',
+        'type': 'hospital',
+        'lat': '14.6640', 'lon': '-17.4310',
+        'display_name': 'Hopital Principal de Dakar, Dakar, Senegal',
+        'address': {'road': 'Avenue Nelson Mandela', 'city': 'Dakar'},
+    }
+
+    def test_la_recherche_renvoie_une_liste_exploitable(self):
+        with patch('urllib.request.urlopen',
+                   return_value=self._reponse_nominatim([self.LIEU])):
+            reponse = self.client.get(reverse('recherche_lieu_prestataire'), {'q': 'hopital dakar'})
+        donnees = reponse.json()
+        self.assertTrue(donnees['trouve'])
+        self.assertEqual(len(donnees['resultats']), 1)
+        etab = donnees['resultats'][0]
+        self.assertEqual(etab['nom'], 'Hopital Principal de Dakar')
+        self.assertEqual(etab['ville'], 'Dakar')
+        self.assertEqual(etab['adresse'], 'Avenue Nelson Mandela')
+        self.assertEqual(etab['type_suggere'], Prestataire.Type.HOPITAL)
+
+    def test_un_etablissement_trouve_n_est_pas_inscrit(self):
+        """Le coeur de la regle : trouve sur la carte != prestataire."""
+        with patch('urllib.request.urlopen',
+                   return_value=self._reponse_nominatim([self.LIEU])):
+            donnees = self.client.get(
+                reverse('recherche_lieu_prestataire'), {'q': 'hopital dakar'}
+            ).json()
+        self.assertFalse(donnees['resultats'][0]['inscrit'])
+        # ... et aucun Prestataire n'a ete cree au passage.
+        self.assertEqual(Prestataire.objects.count(), 0)
+
+    def test_un_etablissement_deja_inscrit_est_signale(self):
+        """Sans ce signal, l'administrateur cree un doublon sans le savoir."""
+        Prestataire.objects.create(
+            nom='Hopital Principal', type_prestataire=Prestataire.Type.HOPITAL,
+            ville='Dakar', telephone='338890000', partenaire=True,
+            latitude=14.6640, longitude=-17.4310,
+        )
+        with patch('urllib.request.urlopen',
+                   return_value=self._reponse_nominatim([self.LIEU])):
+            donnees = self.client.get(
+                reverse('recherche_lieu_prestataire'), {'q': 'hopital dakar'}
+            ).json()
+        self.assertTrue(donnees['resultats'][0]['inscrit'])
+
+    def test_service_indisponible_ne_casse_rien(self):
+        with patch('urllib.request.urlopen',
+                   side_effect=urllib.error.URLError('injoignable')):
+            reponse = self.client.get(reverse('recherche_lieu_prestataire'), {'q': 'hopital'})
+        self.assertEqual(reponse.status_code, 200)
+        donnees = reponse.json()
+        self.assertFalse(donnees['trouve'])
+        self.assertEqual(donnees['erreur'], 'service_indisponible')
+        self.assertEqual(donnees['resultats'], [])
+
+    def test_recherche_sans_resultat(self):
+        with patch('urllib.request.urlopen', return_value=self._reponse_nominatim([])):
+            donnees = self.client.get(
+                reverse('recherche_lieu_prestataire'), {'q': 'zzz-introuvable'}
+            ).json()
+        self.assertFalse(donnees['trouve'])
+        self.assertEqual(donnees['resultats'], [])
+
+    def test_requete_vide_n_appelle_pas_le_service(self):
+        with patch('urllib.request.urlopen') as appel:
+            self.client.get(reverse('recherche_lieu_prestataire'), {'q': '   '})
+        appel.assert_not_called()
+
+    def test_le_cache_evite_de_rappeler_nominatim(self):
+        """Politique d'usage d'OpenStreetMap : ne pas rappeler pour la meme
+        recherche. Avant, chaque clic partait chez eux."""
+        with patch('urllib.request.urlopen',
+                   return_value=self._reponse_nominatim([self.LIEU])) as appel:
+            self.client.get(reverse('recherche_lieu_prestataire'), {'q': 'hopital dakar'})
+            self.client.get(reverse('recherche_lieu_prestataire'), {'q': 'hopital dakar'})
+            self.client.get(reverse('recherche_lieu_prestataire'), {'q': 'hopital dakar'})
+        self.assertEqual(appel.call_count, 1)
+
+    def test_l_appel_porte_un_user_agent_identifiant(self):
+        """Exigence explicite de la politique d'usage de Nominatim."""
+        with patch('urllib.request.urlopen',
+                   return_value=self._reponse_nominatim([self.LIEU])) as appel:
+            self.client.get(reverse('recherche_lieu_prestataire'), {'q': 'clinique thies'})
+        requete = appel.call_args[0][0]
+        self.assertIn('SanteSN', requete.get_header('User-agent'))
+        self.assertIn('countrycodes=sn', requete.full_url)
+
+    def test_un_type_osm_inconnu_ne_suggere_rien(self):
+        """On ne devine pas : l'administrateur choisit lui-meme."""
+        lieu = dict(self.LIEU, type='townhall')
+        with patch('urllib.request.urlopen', return_value=self._reponse_nominatim([lieu])):
+            donnees = self.client.get(
+                reverse('recherche_lieu_prestataire'), {'q': 'mairie'}
+            ).json()
+        self.assertEqual(donnees['resultats'][0]['type_suggere'], '')
+
+    def test_des_coordonnees_invalides_ne_levent_pas(self):
+        lieu = dict(self.LIEU, lat='pas-un-nombre', lon=None)
+        with patch('urllib.request.urlopen', return_value=self._reponse_nominatim([lieu])):
+            reponse = self.client.get(reverse('recherche_lieu_prestataire'), {'q': 'bizarre'})
+        self.assertEqual(reponse.status_code, 200)
+        self.assertFalse(reponse.json()['resultats'][0]['inscrit'])
+
+    def test_la_recherche_est_reservee_a_l_administrateur(self):
+        self.client.logout()
+        creer_utilisateur(User.Role.ASSURE, 'assure-geo@santesn.sn')
+        self.client.login(username='assure-geo@santesn.sn', password=PASSWORD)
+        reponse = self.client.get(reverse('recherche_lieu_prestataire'), {'q': 'hopital'})
+        self.assertIn(reponse.status_code, (302, 403))
+
+    def test_le_formulaire_de_creation_porte_la_recherche_et_la_distinction(self):
+        contenu = self.client.get(reverse('ajouter_prestataire')).content.decode()
+        self.assertIn('recherche-etablissement', contenu)
+        self.assertIn('ne les inscrit pas', contenu)
+
+
+class CarteAssureCasLimitesTests(TestCase):
+    """Cas limites de la carte patient : aucun prestataire, un seul, sans
+    coordonnees. Aucun ne doit produire d'erreur."""
+
+    def setUp(self):
+        self.assure_user = creer_utilisateur(User.Role.ASSURE, 'assure-carte@santesn.sn')
+        Patient.objects.create(
+            user=self.assure_user, nom='Diagne', prenom='Fatou',
+            date_naissance=datetime.date(1992, 3, 1), telephone='770000300',
+        )
+        self.client.login(username='assure-carte@santesn.sn', password=PASSWORD)
+
+    def test_aucun_prestataire(self):
+        reponse = self.client.get(reverse('prestataires_proches'))
+        self.assertEqual(reponse.status_code, 200)
+        self.assertEqual(reponse.context['prestataires_geojson'], [])
+
+    def test_un_seul_prestataire_localise(self):
+        Prestataire.objects.create(
+            nom='Centre de sante unique', type_prestataire=Prestataire.Type.CABINET,
+            ville='Mbour', telephone='339000001', partenaire=True,
+            latitude=14.4198, longitude=-16.9646,
+        )
+        reponse = self.client.get(reverse('prestataires_proches'))
+        self.assertEqual(len(reponse.context['prestataires_geojson']), 1)
+
+    def test_un_prestataire_sans_coordonnees_reste_visible_hors_carte(self):
+        """Il ne doit pas disparaitre : il existe, il est juste non localise."""
+        Prestataire.objects.create(
+            nom='Poste sans coordonnees', type_prestataire=Prestataire.Type.CABINET,
+            ville='Kaolack', telephone='339000002', partenaire=True,
+        )
+        reponse = self.client.get(reverse('prestataires_proches'))
+        self.assertEqual(len(reponse.context['prestataires_geojson']), 0)
+        self.assertEqual(len(reponse.context['prestataires_sans_coordonnees']), 1)
+
+    def test_une_position_invalide_dans_l_url_ne_casse_pas(self):
+        reponse = self.client.get(
+            reverse('prestataires_proches'), {'lat': 'abc', 'lng': 'def'}
+        )
+        self.assertEqual(reponse.status_code, 200)
+        self.assertFalse(reponse.context['localisation_active'])
+
+    def test_la_geolocalisation_est_demandee_et_non_subie(self):
+        """Le GPS ne doit plus rester actif en continu : un releve, sur
+        action explicite du patient."""
+        contenu = self.client.get(reverse('prestataires_proches')).content.decode()
+        self.assertIn('bouton-me-localiser', contenu)
+        self.assertIn('getCurrentPosition', contenu)
+        # watchPosition ne subsiste que dans le commentaire qui explique
+        # pourquoi il a ete retire.
+        self.assertNotIn('navigator.geolocation.watchPosition', contenu)
+
+    def test_la_carte_et_la_liste_sont_synchronisees_dans_les_deux_sens(self):
+        contenu = self.client.get(reverse('prestataires_proches')).content.decode()
+        self.assertIn('selectionnerPrestataire', contenu)
+        self.assertIn('prestataire-selectionne', contenu)
+
+    def test_l_attribution_openstreetmap_est_presente(self):
+        """Condition d'utilisation des tuiles : l'attribution est obligatoire."""
+        contenu = self.client.get(reverse('prestataires_proches')).content.decode()
+        self.assertIn('openstreetmap.org/copyright', contenu)

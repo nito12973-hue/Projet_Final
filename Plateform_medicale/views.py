@@ -1,6 +1,8 @@
 import csv
 import datetime
 import json
+import threading
+import time
 import unicodedata
 from decimal import Decimal, InvalidOperation
 import urllib.error
@@ -20,6 +22,7 @@ from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.sessions.models import Session
+from django.core.cache import cache
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction
@@ -1660,46 +1663,164 @@ def liste_prestataires(request):
     return render(request, "liste_prestataires.html", contexte)
 
 
+# --- Nominatim : politesse et conformite -------------------------------------
+#
+# La politique d'usage d'OpenStreetMap impose au maximum UNE requete par
+# seconde et decourage les appels repetes pour la meme recherche. Le code
+# precedent n'avait ni l'un ni l'autre : chaque clic partait directement chez
+# eux. Deux garde-fous, dans cet ordre :
+#
+#   1. cache (24 h) -- une recherche deja faite ne repart jamais ;
+#   2. verrou + attente -- deux requetes ne peuvent pas partir a moins d'une
+#      seconde d'intervalle.
+#
+# Limite connue et assumee : sans CACHES configure, Django utilise
+# LocMemCache, donc cache ET verrou sont par PROCESSUS. Avec plusieurs
+# workers, le debit reel peut atteindre 1 req/s par worker. C'est deja
+# infiniment mieux que rien ; un cache partage (Redis, Memcached) leverait
+# la reserve le jour ou la plateforme tourne sur plusieurs processus.
+
+_NOMINATIM_VERROU = threading.Lock()
+_NOMINATIM_DERNIER_APPEL = [0.0]
+_NOMINATIM_DELAI_MINIMAL = 1.0
+_NOMINATIM_DUREE_CACHE = 60 * 60 * 24
+
+# Correspondance entre les etiquettes OpenStreetMap et nos types internes.
+# On ne devine pas : ce qui n'est pas reconnu reste sans type, et
+# l'administrateur choisit lui-meme.
+_TYPES_OSM = {
+    "hospital": Prestataire.Type.HOPITAL,
+    "clinic": Prestataire.Type.CLINIQUE,
+    "pharmacy": Prestataire.Type.PHARMACIE,
+    "doctors": Prestataire.Type.CABINET,
+    "doctor": Prestataire.Type.CABINET,
+    "health_post": Prestataire.Type.CABINET,
+    "health_centre": Prestataire.Type.CLINIQUE,
+}
+
+
+def _appeler_nominatim(chemin, parametres):
+    """Appel unique a Nominatim, cache et espace dans le temps.
+
+    Renvoie (donnees, erreur). `erreur` vaut None en cas de succes.
+    """
+    url = (
+        f"https://nominatim.openstreetmap.org/{chemin}?"
+        + urllib.parse.urlencode(parametres)
+    )
+    cle_cache = f"nominatim:{url}"
+    en_cache = cache.get(cle_cache)
+    if en_cache is not None:
+        return en_cache, None
+
+    with _NOMINATIM_VERROU:
+        attente = _NOMINATIM_DELAI_MINIMAL - (
+            time.monotonic() - _NOMINATIM_DERNIER_APPEL[0]
+        )
+        if attente > 0:
+            time.sleep(attente)
+        _NOMINATIM_DERNIER_APPEL[0] = time.monotonic()
+
+        requete_http = urllib.request.Request(url, headers={
+            "User-Agent": "SanteSN-PlateformeMedicale/1.0 (plateforme de sante, Senegal)",
+            "Accept-Language": "fr",
+        })
+        try:
+            with urllib.request.urlopen(requete_http, timeout=6) as reponse:
+                donnees = json.loads(reponse.read().decode("utf-8"))
+        except (urllib.error.URLError, TimeoutError, ValueError, OSError):
+            return None, "service_indisponible"
+
+    cache.set(cle_cache, donnees, _NOMINATIM_DUREE_CACHE)
+    return donnees, None
+
+
+def _resultat_osm(lieu):
+    """Normalise un resultat Nominatim en etablissement exploitable.
+
+    IMPORTANT : ce que renvoie cette fonction est un etablissement REEL trouve
+    sur OpenStreetMap. Ce n'est PAS un prestataire de la plateforme. La
+    distinction est portee jusque dans l'interface (`inscrit`), elle ne doit
+    jamais etre gommee.
+    """
+    adresse = lieu.get("address") or {}
+    ville = (
+        adresse.get("city") or adresse.get("town") or adresse.get("village")
+        or adresse.get("municipality") or adresse.get("county") or ""
+    )
+    voie = " ".join(part for part in (
+        adresse.get("house_number"), adresse.get("road"),
+        adresse.get("suburb") or adresse.get("neighbourhood"),
+    ) if part)
+
+    nom = lieu.get("name") or (lieu.get("display_name") or "").split(",")[0]
+    type_osm = (lieu.get("type") or "").lower()
+    latitude = lieu.get("lat")
+    longitude = lieu.get("lon")
+
+    # Un etablissement deja inscrit est signale : l'administrateur doit voir
+    # d'un coup d'oeil qu'il s'apprete a creer un doublon.
+    deja_inscrit = False
+    if latitude and longitude:
+        try:
+            deja_inscrit = Prestataire.objects.filter(
+                latitude__range=(float(latitude) - 0.0005, float(latitude) + 0.0005),
+                longitude__range=(float(longitude) - 0.0005, float(longitude) + 0.0005),
+            ).exists()
+        except (TypeError, ValueError):
+            deja_inscrit = False
+
+    return {
+        "nom": nom,
+        "adresse": voie,
+        "ville": ville,
+        "lat": latitude,
+        "lon": longitude,
+        "type_osm": type_osm,
+        "type_suggere": _TYPES_OSM.get(type_osm, ""),
+        "libelle_complet": lieu.get("display_name", ""),
+        "inscrit": deja_inscrit,
+    }
+
+
 @admin_required
 def recherche_lieu_prestataire(request):
     """
-    Relais serveur vers Nominatim (recherche OpenStreetMap) pour le bouton
-    "Rechercher sur la carte" des formulaires prestataire. Un appel direct
+    Relais serveur vers Nominatim (recherche OpenStreetMap) pour la recherche
+    d'etablissements reels des formulaires prestataire. Un appel direct
     navigateur -> Nominatim est sujet a des echecs intermittents (CORS
     incoherent derriere leur cache, User-Agent de fetch() non identifiant) ;
     en passant par le serveur, la requete est same-origin cote navigateur et
     peut porter un User-Agent conforme a la politique d'usage de Nominatim.
+
+    Renvoie une LISTE de resultats -- l'administrateur choisit. L'ancien
+    contrat (trouve/lat/lon/nom, premier resultat) est conserve pour ne pas
+    casser le bouton "Rechercher sur la carte" existant.
     """
     requete = request.GET.get("q", "").strip()
     if not requete:
-        return JsonResponse({"trouve": False})
+        return JsonResponse({"trouve": False, "resultats": []})
 
-    parametres = urllib.parse.urlencode({
+    donnees, erreur = _appeler_nominatim("search", {
         "format": "json",
-        "limit": 1,
+        "limit": 8,
         "countrycodes": "sn",
+        "addressdetails": 1,
         "q": f"{requete}, Senegal",
     })
-    url = f"https://nominatim.openstreetmap.org/search?{parametres}"
-    requete_http = urllib.request.Request(
-        url, headers={"User-Agent": "SanteSN-PlateformeMedicale/1.0"}
-    )
+    if erreur:
+        return JsonResponse({"trouve": False, "resultats": [], "erreur": erreur})
+    if not donnees:
+        return JsonResponse({"trouve": False, "resultats": []})
 
-    try:
-        with urllib.request.urlopen(requete_http, timeout=5) as reponse:
-            resultats = json.loads(reponse.read().decode("utf-8"))
-    except (urllib.error.URLError, TimeoutError, ValueError):
-        return JsonResponse({"trouve": False, "erreur": "service_indisponible"})
-
-    if not resultats:
-        return JsonResponse({"trouve": False})
-
-    lieu = resultats[0]
+    resultats = [_resultat_osm(lieu) for lieu in donnees]
+    premier = resultats[0]
     return JsonResponse({
         "trouve": True,
-        "lat": lieu.get("lat"),
-        "lon": lieu.get("lon"),
-        "nom": lieu.get("display_name", requete),
+        "lat": premier["lat"],
+        "lon": premier["lon"],
+        "nom": premier["libelle_complet"] or premier["nom"],
+        "resultats": resultats,
     })
 
 

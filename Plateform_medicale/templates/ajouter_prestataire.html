@@ -11,6 +11,95 @@
     <a class="button" href="{% url 'liste_prestataires' %}">Retour</a>
 </section>
 
+<style>
+    /* Bandeau de decouverte : il doit se lire comme une zone DIFFERENTE du
+       formulaire. Un etablissement trouve sur OpenStreetMap n'est pas un
+       prestataire ; l'interface ne doit jamais laisser croire l'inverse. */
+    .decouverte-osm {
+        border-left: 4px solid var(--primary);
+        margin-bottom: 18px;
+    }
+
+    .decouverte-ligne {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .decouverte-ligne input[type="search"] {
+        flex: 1 1 240px;
+        min-width: 0;
+    }
+
+    .resultats-osm {
+        list-style: none;
+        margin: 14px 0 0;
+        padding: 0;
+        display: grid;
+        gap: 8px;
+    }
+
+    .resultat-osm {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        padding: 12px 14px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--fiche-bg);
+    }
+
+    .resultat-osm-nom {
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .resultat-osm-adresse {
+        margin: 2px 0 0;
+        font-size: 0.88rem;
+        color: var(--muted);
+    }
+
+    .etiquette-source {
+        display: inline-block;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 2px 8px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        color: var(--muted);
+        margin-bottom: 4px;
+    }
+
+    .etiquette-deja-inscrit {
+        border-color: var(--primary-strong);
+        color: var(--primary-strong);
+        font-weight: 600;
+    }
+</style>
+
+<section class="panel panel-bloc decouverte-osm">
+    <h2 style="margin-top:0;">Rechercher un établissement réel</h2>
+    <p class="subtitle">
+        Cherche dans les données publiques d'OpenStreetMap (hôpitaux, cliniques,
+        centres de santé, pharmacies, cabinets) au Sénégal. Les résultats sont
+        des établissements <strong>réels</strong> : les sélectionner pré-remplit
+        le formulaire, mais <strong>ne les inscrit pas</strong> sur la plateforme.
+        L'inscription reste votre décision, à l'enregistrement.
+    </p>
+    <div class="decouverte-ligne">
+        <input type="search" id="recherche-etablissement" placeholder="Ex. : hopital Dakar, pharmacie Sangalkam, centre de sante Thies"
+               aria-label="Nom ou type d'établissement à rechercher">
+        <button type="button" id="bouton-chercher-etablissement" class="button primary btn">Rechercher</button>
+    </div>
+    <p id="statut-etablissement" class="subtitle" style="margin:10px 0 0;" role="status" aria-live="polite"></p>
+    <ul id="resultats-etablissement" class="resultats-osm"></ul>
+</section>
+
 <section class="panel panel-form">
     {% if form.non_field_errors %}
     <div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
@@ -116,6 +205,130 @@
                     .finally(function () {
                         boutonRecherche.disabled = false;
                     });
+            });
+        }
+
+        // --- Decouverte d'etablissements reels (OpenStreetMap) --------------
+        //
+        // Tout est construit par createElement/textContent : les noms
+        // viennent d'une source EXTERNE, un innerHTML serait une injection
+        // servie sur un plateau. Meme regle que les popups Leaflet.
+        var champRecherche = document.getElementById('recherche-etablissement');
+        var boutonChercher = document.getElementById('bouton-chercher-etablissement');
+        var statutEtab = document.getElementById('statut-etablissement');
+        var listeEtab = document.getElementById('resultats-etablissement');
+        var champNom = document.getElementById('id_nom');
+        var champType = document.getElementById('id_type_prestataire');
+
+        function appliquerEtablissement(etab) {
+            if (champNom && etab.nom) { champNom.value = etab.nom; }
+            if (champAdresse && etab.adresse) { champAdresse.value = etab.adresse; }
+            if (champVille && etab.ville) { champVille.value = etab.ville; }
+            if (champType && etab.type_suggere) { champType.value = etab.type_suggere; }
+
+            var lat = parseFloat(etab.lat);
+            var lon = parseFloat(etab.lon);
+            if (!isNaN(lat) && !isNaN(lon)) {
+                champLatitude.value = lat.toFixed(6);
+                champLongitude.value = lon.toFixed(6);
+                carte.setView([lat, lon], 16);
+                if (marqueur) {
+                    marqueur.setLatLng([lat, lon]);
+                } else {
+                    marqueur = L.marker([lat, lon]).addTo(carte);
+                }
+            }
+            statutEtab.textContent =
+                'Formulaire pre-rempli depuis OpenStreetMap. Verifiez les informations, '
+                + 'completez ce qui manque, puis enregistrez pour inscrire ce prestataire.';
+            document.getElementById('titre-carte-prestataire').scrollIntoView({
+                behavior: 'smooth', block: 'center',
+            });
+        }
+
+        function afficherResultats(resultats) {
+            listeEtab.textContent = '';
+            resultats.forEach(function (etab) {
+                var item = document.createElement('li');
+                item.className = 'resultat-osm';
+
+                var bloc = document.createElement('div');
+                var etiquette = document.createElement('span');
+                etiquette.className = 'etiquette-source';
+                if (etab.inscrit) {
+                    etiquette.className += ' etiquette-deja-inscrit';
+                    etiquette.textContent = 'Deja inscrit sur la plateforme';
+                } else {
+                    etiquette.textContent = 'Trouve sur OpenStreetMap';
+                }
+                bloc.appendChild(etiquette);
+
+                var nom = document.createElement('p');
+                nom.className = 'resultat-osm-nom';
+                nom.textContent = etab.nom || 'Etablissement sans nom';
+                bloc.appendChild(nom);
+
+                var adresse = document.createElement('p');
+                adresse.className = 'resultat-osm-adresse';
+                adresse.textContent = etab.libelle_complet || '';
+                bloc.appendChild(adresse);
+                item.appendChild(bloc);
+
+                var bouton = document.createElement('button');
+                bouton.type = 'button';
+                bouton.className = 'button btn btn-sm' + (etab.inscrit ? '' : ' primary');
+                bouton.textContent = etab.inscrit ? 'Utiliser quand meme' : 'Utiliser cet etablissement';
+                bouton.addEventListener('click', function () { appliquerEtablissement(etab); });
+                item.appendChild(bouton);
+
+                listeEtab.appendChild(item);
+            });
+        }
+
+        if (boutonChercher) {
+            var lancerRecherche = function () {
+                var requete = (champRecherche.value || '').trim();
+                listeEtab.textContent = '';
+                if (requete.length < 3) {
+                    statutEtab.textContent = 'Saisissez au moins trois caracteres.';
+                    return;
+                }
+                statutEtab.textContent = 'Recherche en cours...';
+                boutonChercher.disabled = true;
+                fetch('{% url "recherche_lieu_prestataire" %}?q=' + encodeURIComponent(requete),
+                      { headers: { 'Accept': 'application/json' } })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (data && data.erreur) {
+                            statutEtab.textContent =
+                                "Le service de recherche est indisponible. Vous pouvez saisir "
+                                + "l'etablissement a la main et placer le point sur la carte.";
+                            return;
+                        }
+                        var resultats = (data && data.resultats) || [];
+                        if (!resultats.length) {
+                            statutEtab.textContent =
+                                'Aucun etablissement trouve. Essayez un autre libelle, ou '
+                                + 'saisissez-le a la main : tous les lieux ne sont pas encore '
+                                + 'cartographies au Senegal.';
+                            return;
+                        }
+                        statutEtab.textContent = resultats.length + ' etablissement(s) trouve(s) dans OpenStreetMap.';
+                        afficherResultats(resultats);
+                    })
+                    .catch(function () {
+                        statutEtab.textContent =
+                            "Recherche indisponible. Saisissez l'etablissement a la main.";
+                    })
+                    .finally(function () { boutonChercher.disabled = false; });
+            };
+
+            boutonChercher.addEventListener('click', lancerRecherche);
+            champRecherche.addEventListener('keydown', function (evenement) {
+                if (evenement.key === 'Enter') {
+                    evenement.preventDefault();  // sinon le formulaire se soumet
+                    lancerRecherche();
+                }
             });
         }
     })();
