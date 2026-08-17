@@ -1610,6 +1610,10 @@ def marquer_paiement_regle(request, pk):
             paiement = form.save(commit=False)
             paiement.statut = Paiement.Statut.REGLE
             paiement.date_reglement = timezone.now()
+            # Qui a constate l'encaissement : jamais saisi, toujours deduit
+            # du compte connecte. En especes, c'est la seule trace de la
+            # personne qui a recu l'argent.
+            paiement.enregistre_par = request.user
             paiement.save()
             journaliser(
                 request, JournalActivite.Action.REGLEMENT,
@@ -3036,6 +3040,41 @@ def prestataires_proches(request):
 
 
 @role_required(User.Role.ASSURE)
+def fiche_prestataire_assure(request, pk):
+    """Fiche d'un prestataire et des medecins qui y exercent.
+
+    Ce chainon manquait : l'ecran de proximite affichait deja le NOMBRE de
+    medecins d'une structure, jamais lesquels. Le parcours prestataire ->
+    medecin -> rendez-vous etait donc impossible a suivre.
+
+    Restreint aux prestataires partenaires, comme la carte : une structure
+    non conventionnee n'a pas a apparaitre dans un parcours de prise en
+    charge.
+    """
+    prestataire = get_object_or_404(Prestataire, pk=pk, partenaire=True)
+    medecins = prestataire.medecins.order_by("nom", "prenom")
+    return render(request, "fiche_prestataire_assure.html", {
+        "prestataire": prestataire,
+        "medecins": medecins,
+        "services": prestataire.services.order_by("nom"),
+    })
+
+
+@role_required(User.Role.ASSURE)
+def fiche_medecin_assure(request, pk):
+    """Profil d'un medecin, avec le bouton de demande de rendez-vous.
+
+    On n'expose que des informations professionnelles (specialite,
+    experience, presentation, structure, telephone) : aucune donnee sur ses
+    patients ni sur ses consultations.
+    """
+    medecin = get_object_or_404(
+        Medecin.objects.select_related("prestataire"), pk=pk
+    )
+    return render(request, "fiche_medecin_assure.html", {"medecin": medecin})
+
+
+@role_required(User.Role.ASSURE)
 def dashboard_assure(request):
     patient = _patient_principal(request)
     if patient is None:
@@ -3190,19 +3229,46 @@ def ajouter_rendez_vous_assure(request):
         return redirect("mon_profil_assure")
     beneficiaires = _beneficiaires(patient)
 
+    def _prestataire_demande(source):
+        """Prestataire retenu, deduit du medecin s'il est fourni.
+
+        Le parcours nominal arrive depuis la fiche d'un medecin : c'est LUI
+        qui determine la structure, pas l'inverse. On ne fait donc confiance
+        au parametre `prestataire` que si aucun medecin n'est designe.
+        """
+        medecin_id = source.get("medecin")
+        if medecin_id and str(medecin_id).isdigit():
+            medecin = Medecin.objects.filter(pk=medecin_id).first()
+            if medecin is not None and medecin.prestataire_id:
+                return medecin.prestataire
+        prestataire_id = source.get("prestataire")
+        if prestataire_id and str(prestataire_id).isdigit():
+            return Prestataire.objects.filter(
+                pk=prestataire_id, partenaire=True
+            ).first()
+        return None
+
     if request.method == "POST":
-        form = RendezVousAssureForm(request.POST, beneficiaires=beneficiaires)
+        form = RendezVousAssureForm(
+            request.POST,
+            beneficiaires=beneficiaires,
+            prestataire=_prestataire_demande(request.POST),
+        )
         if form.is_valid():
             form.save()
             messages.success(request, "Demande de rendez-vous envoyée.")
             return redirect("mes_rendez_vous_assure")
     else:
+        prestataire = _prestataire_demande(request.GET)
         initial = {}
-        prestataire_id = request.GET.get("prestataire")
-        if prestataire_id and prestataire_id.isdigit():
-            if Prestataire.objects.filter(pk=prestataire_id, partenaire=True).exists():
-                initial["prestataire"] = prestataire_id
-        form = RendezVousAssureForm(beneficiaires=beneficiaires, initial=initial)
+        if prestataire is not None:
+            initial["prestataire"] = prestataire.pk
+        medecin_id = request.GET.get("medecin")
+        if medecin_id and medecin_id.isdigit():
+            initial["medecin"] = medecin_id
+        form = RendezVousAssureForm(
+            beneficiaires=beneficiaires, prestataire=prestataire, initial=initial
+        )
     return render(request, "ajouter_rendez_vous_assure.html", {"form": form})
 
 

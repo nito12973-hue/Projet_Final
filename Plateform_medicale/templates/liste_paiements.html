@@ -77,7 +77,10 @@
                         {% if paiement.statut == 'non_regle' %}
                         <a href="{% url 'marquer_paiement_regle' paiement.pk %}" class="button primary btn btn-sm">Marquer réglé</a>
                         {% else %}
-                        <span>{{ paiement.get_mode_reglement_display }} - {{ paiement.date_reglement|date:"d/m/Y" }}</span>
+                        <span>
+                            {{ paiement.get_mode_reglement_display }} - {{ paiement.date_reglement|date:"d/m/Y" }}
+                            {% if paiement.enregistre_par %}<br><small class="subtitle">par {{ paiement.enregistre_par.email }}</small>{% endif %}
+                        </span>
                         {% endif %}
                     </div>
                 </td>

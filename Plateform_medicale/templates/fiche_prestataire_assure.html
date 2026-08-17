@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% load icones %}
+
+{% block title %}{{ prestataire.nom }}{% endblock %}
+
+{% block content %}
+<style>
+    /* Feuille locale au gabarit, comme prestataires_proches.html :
+       base.html porte deja ~4850 lignes, on ne l'alourdit pas pour
+       deux ecrans. Les jetons de couleur restent ceux du theme, donc
+       le mode sombre suit sans regle supplementaire. */
+    .fiche-lignes {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 14px 24px;
+        margin: 0;
+    }
+
+    .fiche-lignes dt {
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--muted);
+        margin-bottom: 3px;
+    }
+
+    .fiche-lignes dd {
+        margin: 0;
+        font-weight: 600;
+    }
+
+    .grille-medecins {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 14px;
+        margin-bottom: 20px;
+    }
+
+    .carte-medecin {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 18px 20px;
+        background: var(--fiche-bg);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+    }
+
+    .carte-medecin h3 {
+        margin: 0;
+        font-size: 1.02rem;
+    }
+
+    .carte-medecin-specialite {
+        margin: 0;
+        font-weight: 600;
+        color: var(--primary-strong);
+    }
+
+    .carte-medecin-meta,
+    .carte-medecin-texte {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--muted);
+    }
+
+    .carte-medecin .actions {
+        margin-top: auto;
+        padding-top: 10px;
+    }
+</style>
+
+<section class="page-title">
+    <div>
+        <h1>{{ prestataire.nom }}</h1>
+        <p class="subtitle">
+            {{ prestataire.get_type_prestataire_display }}
+            {% if prestataire.ville %} · {{ prestataire.ville }}{% endif %}
+        </p>
+    </div>
+    <a class="button" href="{% url 'prestataires_proches' %}">{% icone "chevron-left" %} Retour</a>
+</section>
+
+<section class="panel panel-bloc">
+    <dl class="fiche-lignes">
+        <div>
+            <dt>Type de structure</dt>
+            <dd>{{ prestataire.get_type_prestataire_display }}</dd>
+        </div>
+        {% if prestataire.adresse %}
+        <div>
+            <dt>Adresse</dt>
+            <dd>{{ prestataire.adresse }}</dd>
+        </div>
+        {% endif %}
+        {% if prestataire.ville %}
+        <div>
+            <dt>Ville</dt>
+            <dd>{{ prestataire.ville }}</dd>
+        </div>
+        {% endif %}
+        {% if prestataire.telephone %}
+        <div>
+            <dt>Téléphone</dt>
+            <dd>{{ prestataire.telephone }}</dd>
+        </div>
+        {% endif %}
+    </dl>
+</section>
+
+<section class="page-title">
+    <div>
+        <h2>Médecins de cette structure</h2>
+        <p class="subtitle">Choisissez un médecin pour consulter son profil et demander un rendez-vous.</p>
+    </div>
+</section>
+
+{% if medecins %}
+<div class="grille-medecins">
+    {% for medecin in medecins %}
+    <article class="carte-medecin">
+        <h3>Dr {{ medecin.prenom }} {{ medecin.nom }}</h3>
+        <p class="carte-medecin-specialite">{{ medecin.specialite }}</p>
+        {% if medecin.annees_experience %}
+        <p class="carte-medecin-meta">{{ medecin.annees_experience }} an{{ medecin.annees_experience|pluralize }} d'expérience</p>
+        {% endif %}
+        {% if medecin.presentation %}
+        <p class="carte-medecin-texte">{{ medecin.presentation|truncatewords:28 }}</p>
+        {% endif %}
+        <div class="actions">
+            <a class="button btn btn-sm" href="{% url 'fiche_medecin_assure' medecin.pk %}">Voir le profil</a>
+            <a class="button primary btn btn-sm" href="{% url 'ajouter_rendez_vous_assure' %}?medecin={{ medecin.pk }}">{% icone "calendar" %} Rendez-vous</a>
+        </div>
+    </article>
+    {% endfor %}
+</div>
+{% else %}
+<section class="panel panel-bloc">
+    <p class="etat-vide">Aucun médecin n'est encore rattaché à cette structure.</p>
+</section>
+{% endif %}
+
+{% if services %}
+<section class="panel panel-bloc">
+    <h2>Actes proposés et tarifs</h2>
+    <p class="subtitle">À titre indicatif. Le montant réellement dû dépend de votre prise en charge.</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Acte</th>
+                <th>Tarif</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for service in services %}
+            <tr>
+                <td>{{ service.nom }}</td>
+                <td>{{ service.prix }} F CFA</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endif %}
+{% endblock %}

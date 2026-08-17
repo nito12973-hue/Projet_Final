@@ -1,6 +1,7 @@
 import datetime
 import io
 import json
+import pathlib
 import urllib.error
 from decimal import Decimal
 from unittest.mock import MagicMock, patch
@@ -6363,3 +6364,222 @@ class SalutationDashboardsTests(TestCase):
         contenu = self.client.get(reverse('dashboard')).content.decode()
         for interdit in ('{{', '{%', 'None', 'null'):
             self.assertNotIn(interdit, contenu[contenu.find('<h1>'):contenu.find('</h1>')])
+
+
+class ParcoursPrestataireMedecinTests(TestCase):
+    """Parcours prestataire -> medecins -> profil -> rendez-vous.
+
+    Ce chainon n'existait pas : l'ecran de proximite affichait le NOMBRE de
+    medecins d'une structure, jamais lesquels, et le formulaire de rendez-vous
+    proposait TOUS les medecins de la plateforme -- on pouvait demander un
+    rendez-vous avec un cardiologue de Dakar "chez" une pharmacie de Rufisque.
+    """
+
+    def setUp(self):
+        self.assure_user = creer_utilisateur(User.Role.ASSURE, 'assure-parcours@santesn.sn')
+        self.principal = Patient.objects.create(
+            user=self.assure_user, nom='Ndiaye', prenom='Awa',
+            date_naissance=datetime.date(1990, 5, 4), telephone='770000200',
+        )
+        self.hopital = Prestataire.objects.create(
+            nom='Hopital Parcours', type_prestataire=Prestataire.Type.HOPITAL,
+            ville='Dakar', telephone='338000001', partenaire=True,
+        )
+        self.pharmacie = Prestataire.objects.create(
+            nom='Pharmacie Parcours', type_prestataire=Prestataire.Type.PHARMACIE,
+            ville='Rufisque', telephone='338000002', partenaire=True,
+        )
+        self.medecin_hopital = Medecin.objects.create(
+            nom='Ba', prenom='Ousmane', specialite='Cardiologie',
+            telephone='770000201', email='ba-parcours@santesn.sn',
+            prestataire=self.hopital, annees_experience=12,
+            presentation='Prise en charge de insuffisance cardiaque.',
+        )
+        self.medecin_ailleurs = Medecin.objects.create(
+            nom='Fall', prenom='Cheikh', specialite='Pediatrie',
+            telephone='770000202', email='fall-parcours@santesn.sn',
+            prestataire=self.pharmacie,
+        )
+        self.client.login(username='assure-parcours@santesn.sn', password=PASSWORD)
+
+    def test_la_fiche_prestataire_liste_ses_medecins(self):
+        reponse = self.client.get(
+            reverse('fiche_prestataire_assure', args=[self.hopital.pk])
+        )
+        self.assertEqual(reponse.status_code, 200)
+        contenu = reponse.content.decode()
+        self.assertIn('Ousmane', contenu)
+        self.assertIn('Cardiologie', contenu)
+        # Le medecin d'une AUTRE structure ne doit pas y figurer.
+        self.assertNotIn('Cheikh', contenu)
+
+    def test_la_fiche_prestataire_affiche_experience_et_presentation(self):
+        contenu = self.client.get(
+            reverse('fiche_prestataire_assure', args=[self.hopital.pk])
+        ).content.decode()
+        self.assertIn('12', contenu)
+        self.assertIn('insuffisance cardiaque', contenu)
+
+    def test_un_prestataire_non_partenaire_est_introuvable(self):
+        """Une structure non conventionnee n'a pas a apparaitre dans un
+        parcours de prise en charge -- meme en tapant son URL."""
+        hors_reseau = Prestataire.objects.create(
+            nom='Clinique hors reseau', type_prestataire=Prestataire.Type.CLINIQUE,
+            ville='Thies', telephone='338000003', partenaire=False,
+        )
+        reponse = self.client.get(
+            reverse('fiche_prestataire_assure', args=[hors_reseau.pk])
+        )
+        self.assertEqual(reponse.status_code, 404)
+
+    def test_la_fiche_medecin_est_accessible_et_propose_le_rendez_vous(self):
+        reponse = self.client.get(
+            reverse('fiche_medecin_assure', args=[self.medecin_hopital.pk])
+        )
+        self.assertEqual(reponse.status_code, 200)
+        contenu = reponse.content.decode()
+        self.assertIn('Cardiologie', contenu)
+        self.assertIn(
+            reverse('ajouter_rendez_vous_assure') + '?medecin=' + str(self.medecin_hopital.pk),
+            contenu,
+        )
+
+    def test_la_fiche_medecin_n_expose_aucun_diagnostic(self):
+        """Profil professionnel uniquement : aucune donnee de soin."""
+        Consultation.objects.create(
+            patient=self.principal, medecin=self.medecin_hopital,
+            date_consultation=timezone.now(), diagnostic='Secret medical',
+        )
+        contenu = self.client.get(
+            reverse('fiche_medecin_assure', args=[self.medecin_hopital.pk])
+        ).content.decode()
+        self.assertNotIn('Secret medical', contenu)
+
+    def test_arriver_par_un_medecin_restreint_la_liste_a_sa_structure(self):
+        reponse = self.client.get(
+            reverse('ajouter_rendez_vous_assure') + '?medecin=' + str(self.medecin_hopital.pk)
+        )
+        self.assertEqual(reponse.status_code, 200)
+        choix = list(reponse.context['form'].fields['medecin'].queryset)
+        self.assertEqual(choix, [self.medecin_hopital])
+
+    def test_un_medecin_d_une_autre_structure_est_refuse(self):
+        """Le coeur de la correction : le couple medecin/prestataire doit
+        etre coherent, sinon la demande est rejetee cote serveur."""
+        reponse = self.client.post(reverse('ajouter_rendez_vous_assure'), {
+            'patient': self.principal.pk,
+            'medecin': self.medecin_ailleurs.pk,
+            'prestataire': self.hopital.pk,
+            'date_heure': (timezone.now() + datetime.timedelta(days=3)).strftime('%Y-%m-%dT%H:%M'),
+            'motif': 'Douleurs abdominales depuis trois jours.',
+        })
+        self.assertEqual(reponse.status_code, 200)
+        self.assertFalse(RendezVous.objects.exists())
+        self.assertIn('medecin', reponse.context['form'].errors)
+
+    def test_le_parcours_complet_cree_le_rendez_vous_avec_les_symptomes(self):
+        symptomes = ('Douleurs abdominales depuis trois jours, '
+                     'avec de la fievre et des nausees.')
+        reponse = self.client.post(reverse('ajouter_rendez_vous_assure'), {
+            'patient': self.principal.pk,
+            'medecin': self.medecin_hopital.pk,
+            'prestataire': self.hopital.pk,
+            'date_heure': (timezone.now() + datetime.timedelta(days=2)).strftime('%Y-%m-%dT%H:%M'),
+            'motif': symptomes,
+        }, follow=True)
+        self.assertEqual(reponse.status_code, 200)
+        rendez_vous = RendezVous.objects.get()
+        self.assertEqual(rendez_vous.medecin, self.medecin_hopital)
+        self.assertEqual(rendez_vous.prestataire, self.hopital)
+        self.assertEqual(rendez_vous.motif, symptomes)
+        self.assertEqual(rendez_vous.statut, RendezVous.Statut.DEMANDE)
+
+    def test_le_motif_accepte_une_description_longue(self):
+        """motif etait un CharField(255) : une description detaillee de
+        symptomes etait tronquee ou refusee."""
+        recit = 'Douleurs abdominales. ' * 40  # 880 caracteres
+        RendezVous.objects.create(
+            patient=self.principal, medecin=self.medecin_hopital,
+            prestataire=self.hopital,
+            date_heure=timezone.now() + datetime.timedelta(days=1),
+            motif=recit,
+        )
+        self.assertEqual(RendezVous.objects.get().motif, recit)
+
+    def test_le_rendez_vous_ne_demande_aucun_service_medical(self):
+        """Le service reste dans l'application (facturation) mais n'est pas
+        une etape du parcours du patient."""
+        champs = self.client.get(
+            reverse('ajouter_rendez_vous_assure')
+        ).context['form'].fields
+        self.assertNotIn('service', champs)
+
+    def test_les_ecrans_de_decouverte_sont_interdits_aux_autres_roles(self):
+        self.client.logout()
+        creer_utilisateur(User.Role.PHARMACIEN, 'pharma-parcours@santesn.sn')
+        self.client.login(username='pharma-parcours@santesn.sn', password=PASSWORD)
+        for nom, pk in (('fiche_prestataire_assure', self.hopital.pk),
+                        ('fiche_medecin_assure', self.medecin_hopital.pk)):
+            with self.subTest(vue=nom):
+                self.assertEqual(self.client.get(reverse(nom, args=[pk])).status_code, 403)
+
+    def test_une_structure_sans_medecin_ne_casse_pas(self):
+        vide = Prestataire.objects.create(
+            nom='Poste de sante neuf', type_prestataire=Prestataire.Type.CABINET,
+            ville='Mbour', telephone='338000004', partenaire=True,
+        )
+        reponse = self.client.get(reverse('fiche_prestataire_assure', args=[vide.pk]))
+        self.assertEqual(reponse.status_code, 200)
+        self.assertIn('Aucun m', reponse.content.decode())
+
+
+class TracePaiementEspecesTests(TestCase):
+    """En especes, la seule trace de qui a recu l'argent est le compte qui a
+    constate le reglement. Le champ est deduit, jamais saisi."""
+
+    def setUp(self):
+        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin-caisse@santesn.sn')
+        patient = creer_patient()
+        medecin = creer_medecin('medecin-caisse@santesn.sn')
+        service = ServiceMedical.objects.create(nom='Consultation generale', prix=5000)
+        consultation = Consultation.objects.create(
+            patient=patient, medecin=medecin, service=service,
+            date_consultation=timezone.now(), diagnostic='Rhinite',
+        )
+        self.paiement = Paiement.objects.create(
+            consultation=consultation, montant_total=5000,
+            montant_part_patient=5000,
+        )
+        self.client.login(username='admin-caisse@santesn.sn', password=PASSWORD)
+
+    def test_especes_est_un_mode_de_reglement_disponible(self):
+        self.assertIn('ESPECES', Paiement.ModeReglement.values)
+
+    def test_marquer_regle_enregistre_qui_a_encaisse(self):
+        self.client.post(
+            reverse('marquer_paiement_regle', args=[self.paiement.pk]),
+            {'mode_reglement': Paiement.ModeReglement.ESPECES},
+        )
+        self.paiement.refresh_from_db()
+        self.assertEqual(self.paiement.statut, Paiement.Statut.REGLE)
+        self.assertEqual(self.paiement.mode_reglement, Paiement.ModeReglement.ESPECES)
+        self.assertEqual(self.paiement.enregistre_par, self.admin)
+        self.assertIsNotNone(self.paiement.date_reglement)
+
+    def test_l_ecriture_survit_a_la_suppression_du_compte(self):
+        """SET_NULL : supprimer l'admin ne doit pas effacer le paiement."""
+        self.client.post(
+            reverse('marquer_paiement_regle', args=[self.paiement.pk]),
+            {'mode_reglement': Paiement.ModeReglement.ESPECES},
+        )
+        self.admin.delete()
+        self.paiement.refresh_from_db()
+        self.assertIsNone(self.paiement.enregistre_par)
+        self.assertEqual(self.paiement.statut, Paiement.Statut.REGLE)
+
+    def test_aucune_api_de_paiement_externe_n_est_appelee(self):
+        """Perimetre explicite : pas de Wave, pas d'Orange Money, pas de
+        transaction -- meme simulee."""
+        source = pathlib.Path('Plateform_medicale/views.py').read_text(encoding='utf-8')
+        for interdit in ('wave', 'orange_money', 'orangemoney', 'paydunya', 'stripe'):
+            self.assertNotIn(interdit, source.lower())

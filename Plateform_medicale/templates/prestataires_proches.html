@@ -87,7 +87,7 @@
                 </div>
             </div>
             <details class="details-tableau">
-                <summary>Voir le profil</summary>
+                <summary>Coordonnees</summary>
                 <p class="subtitle" style="margin:8px 0 0;">
                     Adresse : {{ prestataire.adresse|default:"Non renseignee" }}<br>
                     Telephone : {{ prestataire.telephone|default:"Non renseigne" }}
@@ -95,6 +95,7 @@
             </details>
             <div class="actions">
                 <a class="button" href="{{ prestataire.lien_itineraire }}" target="_blank" rel="noopener">Itineraire</a>
+                <a class="button" href="{% url 'fiche_prestataire_assure' prestataire.pk %}">Voir les medecins</a>
                 <a class="button primary" href="{% url 'ajouter_rendez_vous_assure' %}?prestataire={{ prestataire.pk }}">Prendre rendez-vous</a>
             </div>
         </article>
@@ -211,6 +212,9 @@
         var DAKAR = [14.6928, -17.4467];
         var donnees = JSON.parse(document.getElementById('donnees-prestataires-proches').textContent);
         var urlRendezVous = "{% url 'ajouter_rendez_vous_assure' %}";
+        // Gabarit d'URL : le 0 sert de marqueur, remplace par le vrai
+        // identifiant. Evite de concatener un chemin ecrit en dur.
+        var urlFichePrestataire = "{% url 'fiche_prestataire_assure' 0 %}";
 
         var iconesParType = {};
         document.querySelectorAll('#icones-types-source [data-type]').forEach(function (element) {
@@ -364,11 +368,14 @@
             lienItineraire.textContent = 'Itineraire';
             actions.appendChild(lienItineraire);
 
-            var lienProfil = document.createElement('a');
-            lienProfil.className = 'button';
-            lienProfil.href = '#';
-            lienProfil.textContent = 'Voir le profil';
-            lienProfil.addEventListener('click', function (evenement) {
+            // Ce lien s'appelait "Voir le profil" alors qu'il ne faisait que
+            // recentrer la carte : aucun profil ne s'ouvrait. Il porte
+            // desormais son vrai nom, et le profil est un lien a part.
+            var lienCarte = document.createElement('a');
+            lienCarte.className = 'button';
+            lienCarte.href = '#';
+            lienCarte.textContent = 'Situer sur la carte';
+            lienCarte.addEventListener('click', function (evenement) {
                 evenement.preventDefault();
                 var marqueur = marqueursParPk[prestataire.pk];
                 if (marqueur) {
@@ -377,6 +384,12 @@
                     marqueur.openPopup();
                 }
             });
+            actions.appendChild(lienCarte);
+
+            var lienProfil = document.createElement('a');
+            lienProfil.className = 'button';
+            lienProfil.href = urlFichePrestataire.replace('/0/', '/' + prestataire.pk + '/');
+            lienProfil.textContent = 'Voir les medecins';
             actions.appendChild(lienProfil);
 
             var lienRdv = document.createElement('a');

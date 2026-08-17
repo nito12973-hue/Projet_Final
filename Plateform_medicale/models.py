@@ -354,6 +354,17 @@ class Medecin(models.Model):
         blank=True,
         related_name="medecins",
     )
+    presentation = models.TextField(
+        "présentation",
+        blank=True,
+        help_text="Texte libre affiche a l'assure qui choisit son medecin.",
+    )
+    annees_experience = models.PositiveSmallIntegerField(
+        "années d'expérience",
+        null=True,
+        blank=True,
+        help_text="Laisser vide si l'information n'est pas connue.",
+    )
 
     def __str__(self):
         return f"Dr {self.prenom} {self.nom}"
@@ -520,6 +531,17 @@ class Paiement(models.Model):
     statut = models.CharField(max_length=20, choices=Statut.choices, default=Statut.NON_REGLE, db_index=True)
     mode_reglement = models.CharField(max_length=20, choices=ModeReglement.choices, blank=True)
     date_reglement = models.DateTimeField(null=True, blank=True)
+    enregistre_par = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="paiements_enregistres",
+        help_text=(
+            "Qui a constate le reglement. Renseigne automatiquement, jamais "
+            "saisi. SET_NULL : supprimer un compte n'efface pas l'ecriture."
+        ),
+    )
 
     def __str__(self):
         return f"Paiement {self.get_statut_display()} - {self.consultation}"
@@ -647,7 +669,15 @@ class RendezVous(models.Model):
         related_name="rendez_vous",
     )
     date_heure = models.DateTimeField("date et heure")
-    motif = models.CharField(max_length=255, blank=True)
+    motif = models.TextField(
+        "motif / symptômes",
+        blank=True,
+        help_text=(
+            "Decrit par le PATIENT lors de sa demande. Ce n'est pas un "
+            "diagnostic : le diagnostic appartient au medecin et vit dans "
+            "Consultation.diagnostic."
+        ),
+    )
     statut = models.CharField(
         max_length=20,
         choices=Statut.choices,
