@@ -5546,3 +5546,48 @@ class OrdonnanceDocumentTests(TestCase):
         self.client.login(username='autre-doc@santesn.sn', password=PASSWORD)
         self.assertEqual(self._document().status_code, 404)
         self.assertIsNotNone(autre)
+
+
+class LisibiliteDesChampsTests(TestCase):
+    """Le texte saisi doit rester lisible DANS LES DEUX THEMES.
+
+    Defaut constate : la regle input/select/textarea ne fixait aucune couleur
+    de texte et codait son fond en dur (#fbfdfc). En theme sombre le champ
+    gardait donc un fond quasi blanc pendant que le texte heritait de la
+    couleur claire de body -- contraste mesure ~1,07:1, on tapait sans rien
+    voir. Apres correction : 16,44:1 en clair, 14,42:1 en sombre."""
+
+    def setUp(self):
+        creer_utilisateur(User.Role.ADMIN, 'admin-champs@santesn.sn')
+        self.client.login(username='admin-champs@santesn.sn', password=PASSWORD)
+
+    def _feuille(self):
+        return self.client.get(reverse('liste_utilisateurs')).content.decode()
+
+    def test_les_champs_fixent_leur_couleur_de_texte(self):
+        """Un champ de saisie ne doit jamais dependre de ce dont il herite."""
+        feuille = self._feuille()
+        debut = feuille.find('        input,\n        select,\n        textarea {')
+        self.assertNotEqual(debut, -1, "regle des champs introuvable")
+        regle = feuille[debut:feuille.find('}', debut)]
+        self.assertIn('color: var(--titre)', regle)
+        self.assertIn('background: var(--champ-bg)', regle)
+        self.assertNotIn('#fbfdfc', regle)
+
+    def test_le_fond_des_champs_est_defini_dans_les_deux_themes(self):
+        """Un jeton defini dans un seul theme est exactement ce qui a cause
+        le defaut : le champ gardait sa valeur claire en sombre."""
+        feuille = self._feuille()
+        self.assertEqual(feuille.count('--champ-bg:'), 2)
+        sombre = feuille[feuille.find(':root[data-theme="sombre"]'):]
+        self.assertIn('--champ-bg:', sombre[:sombre.find('}')])
+
+    def test_les_listes_deroulantes_aussi(self):
+        """Sur certains navigateurs les <option> ne suivent pas le <select>."""
+        self.assertIn('select option', self._feuille())
+
+    def test_le_texte_indicatif_reste_distinct_du_texte_saisi(self):
+        feuille = self._feuille()
+        debut = feuille.find('input::placeholder')
+        self.assertNotEqual(debut, -1)
+        self.assertIn('color: var(--muted)', feuille[debut:feuille.find('}', debut)])
