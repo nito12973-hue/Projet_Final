@@ -902,7 +902,14 @@ class EspaceMedecinTests(TestCase):
 
         response = self.client.post(
             reverse('ajouter_ordonnance_medecin', args=[consultation.pk]),
-            {'medicaments': 'Paracetamol 500mg - 3x/jour pendant 5 jours'},
+            {
+                # Le formulaire attend desormais des LIGNES structurees.
+                'lignes-TOTAL_FORMS': '1', 'lignes-INITIAL_FORMS': '0',
+                'lignes-MIN_NUM_FORMS': '0', 'lignes-MAX_NUM_FORMS': '1000',
+                'lignes-0-medicament': 'Paracetamol', 'lignes-0-dosage': '500 mg',
+                'lignes-0-posologie': '3x/jour', 'lignes-0-duree': '5 jours',
+                'lignes-0-quantite': '',
+            },
         )
         ordonnance = Ordonnance.objects.get(consultation=consultation)
         self.assertTrue(ordonnance.code_qr.startswith('RX-'))
@@ -5829,12 +5836,20 @@ class ParcoursCompletsTests(TestCase):
 
         ordonnance = self.client.post(
             reverse('ajouter_ordonnance_medecin', args=[consultation.pk]),
-            {'medicaments': 'Amoxicilline 1 g'}, follow=True)
+            {
+                # Creation par lignes structurees : le champ de texte libre
+                # n'existe plus dans le formulaire du medecin.
+                'lignes-TOTAL_FORMS': '1', 'lignes-INITIAL_FORMS': '0',
+                'lignes-MIN_NUM_FORMS': '0', 'lignes-MAX_NUM_FORMS': '1000',
+                'lignes-0-medicament': 'Amoxicilline', 'lignes-0-dosage': '1 g',
+                'lignes-0-posologie': '', 'lignes-0-duree': '', 'lignes-0-quantite': '',
+            }, follow=True)
         self.assertEqual(ordonnance.status_code, 200)
         creee = Ordonnance.objects.filter(consultation=consultation).first()
         self.assertIsNotNone(creee, "l'ordonnance n'a pas ete enregistree")
         document = self.client.get(reverse('voir_ordonnance_medecin', args=[creee.pk]))
-        self.assertContains(document, 'Amoxicilline 1 g')
+        self.assertContains(document, 'Amoxicilline')
+        self.assertContains(document, '1 g')
 
     # --- PHARMACIEN ----------------------------------------------------
     def test_parcours_pharmacien(self):
@@ -6048,3 +6063,201 @@ class LigneOrdonnanceTests(TestCase):
         LigneOrdonnance.objects.create(ordonnance=ordonnance, medicament='Secret')
         self.assertNotIn('Secret', ordonnance.qr_svg)
         self.assertTrue(ordonnance.code_qr.startswith('RX-'))
+
+
+class FormulaireOrdonnanceMedecinTests(TestCase):
+    """Phase 2 : le medecin saisit une ordonnance STRUCTUREE.
+
+    Il n'existe pas de modification d'ordonnance dans SantéSN -- seulement
+    la creation. Ces tests ne verifient donc pas une modification : en
+    inventer une serait ajouter une regle metier au passage."""
+
+    PREFIXE = "lignes"
+
+    def setUp(self):
+        self.patient = creer_patient(nom='Sy', prenom='Awa')
+        self.medecin = creer_medecin('medecin-formset@santesn.sn')
+        self.autre_medecin = creer_medecin('autre-formset@santesn.sn')
+        self.consultation = Consultation.objects.create(
+            patient=self.patient, medecin=self.medecin,
+            date_consultation=timezone.now(), diagnostic='Angine')
+        self.client.login(username='medecin-formset@santesn.sn', password=PASSWORD)
+
+    def _url(self, consultation=None):
+        return reverse('ajouter_ordonnance_medecin',
+                       args=[(consultation or self.consultation).pk])
+
+    def _donnees(self, lignes):
+        data = {f'{self.PREFIXE}-TOTAL_FORMS': str(len(lignes)),
+                f'{self.PREFIXE}-INITIAL_FORMS': '0',
+                f'{self.PREFIXE}-MIN_NUM_FORMS': '0',
+                f'{self.PREFIXE}-MAX_NUM_FORMS': '1000'}
+        for i, ligne in enumerate(lignes):
+            for champ in ('medicament', 'dosage', 'posologie', 'duree', 'quantite'):
+                data[f'{self.PREFIXE}-{i}-{champ}'] = ligne.get(champ, '')
+        return data
+
+    # --- Affichage ------------------------------------------------------
+
+    def test_le_formulaire_souvre_sur_une_ligne_vide(self):
+        reponse = self.client.get(self._url())
+        self.assertEqual(reponse.status_code, 200)
+        self.assertEqual(reponse.context['formset'].total_form_count(), 1)
+        for libelle in ('Médicament', 'Dosage', 'Posologie', 'Durée', 'Quantité'):
+            self.assertContains(reponse, libelle)
+        self.assertContains(reponse, 'Ajouter un médicament')
+
+    def test_le_gabarit_de_ligne_vierge_est_fourni_au_navigateur(self):
+        """Le bouton clone ce gabarit : sans lui, l'ajout dynamique est mort."""
+        reponse = self.client.get(self._url())
+        self.assertContains(reponse, 'id="gabarit-ligne"')
+        self.assertContains(reponse, '__prefix__')
+        self.assertContains(reponse, f'id_{self.PREFIXE}-TOTAL_FORMS')
+
+    def test_chaque_champ_a_un_vrai_label(self):
+        contenu = self.client.get(self._url()).content.decode()
+        for champ in ('medicament', 'dosage', 'posologie', 'duree', 'quantite'):
+            self.assertIn(f'for="id_{self.PREFIXE}-0-{champ}"', contenu)
+
+    # --- Enregistrement -------------------------------------------------
+
+    def test_creation_avec_une_ligne(self):
+        reponse = self.client.post(self._url(), self._donnees([
+            {'medicament': 'Paracétamol', 'dosage': '500 mg',
+             'posologie': '3×/jour', 'duree': '5 jours', 'quantite': '1 boîte'},
+        ]), follow=True)
+        self.assertEqual(reponse.status_code, 200)
+        ordonnance = Ordonnance.objects.get(consultation=self.consultation)
+        ligne = ordonnance.lignes.get()
+        self.assertEqual(ligne.medicament, 'Paracétamol')
+        self.assertEqual(ligne.duree, '5 jours')
+        self.assertEqual(ligne.ordre, 1)
+
+    def test_creation_avec_plusieurs_lignes_et_ordre_de_saisie(self):
+        self.client.post(self._url(), self._donnees([
+            {'medicament': 'Amoxicilline'},
+            {'medicament': 'Ibuprofène'},
+            {'medicament': 'Vitamine C'},
+        ]), follow=True)
+        ordonnance = Ordonnance.objects.get(consultation=self.consultation)
+        self.assertEqual([l.medicament for l in ordonnance.lignes.all()],
+                         ['Amoxicilline', 'Ibuprofène', 'Vitamine C'])
+        self.assertEqual([l.ordre for l in ordonnance.lignes.all()], [1, 2, 3])
+
+    def test_les_champs_facultatifs_peuvent_rester_vides(self):
+        self.client.post(self._url(), self._donnees([{'medicament': 'Doliprane'}]),
+                         follow=True)
+        ligne = Ordonnance.objects.get(consultation=self.consultation).lignes.get()
+        self.assertEqual(ligne.dosage, '')
+        self.assertEqual(ligne.posologie, '')
+
+    def test_la_nouvelle_ordonnance_na_pas_de_texte_libre(self):
+        """medicaments ne porte plus que le contenu des ordonnances
+        anterieures a LigneOrdonnance."""
+        self.client.post(self._url(), self._donnees([{'medicament': 'X'}]), follow=True)
+        self.assertEqual(Ordonnance.objects.get(consultation=self.consultation).medicaments, '')
+
+    def test_rien_nest_complete_automatiquement(self):
+        """'500 mg' ecrit dans le nom NE DOIT PAS glisser dans dosage."""
+        self.client.post(self._url(),
+                         self._donnees([{'medicament': 'Paracétamol 500 mg'}]), follow=True)
+        ligne = Ordonnance.objects.get(consultation=self.consultation).lignes.get()
+        self.assertEqual(ligne.medicament, 'Paracétamol 500 mg')
+        self.assertEqual(ligne.dosage, '')
+
+    # --- Validation serveur ---------------------------------------------
+
+    def test_formulaire_entierement_vide_refuse(self):
+        reponse = self.client.post(self._url(), self._donnees([{}]))
+        self.assertEqual(reponse.status_code, 200)
+        self.assertEqual(Ordonnance.objects.count(), 0)
+        self.assertContains(reponse, 'au moins un médicament')
+
+    def test_ligne_sans_medicament_mais_avec_dosage_refusee(self):
+        """Un dosage sans medicament est une prescription incomprehensible."""
+        reponse = self.client.post(self._url(),
+                                   self._donnees([{'dosage': '500 mg'}]))
+        self.assertEqual(reponse.status_code, 200)
+        self.assertEqual(Ordonnance.objects.count(), 0)
+
+    def test_ligne_vide_ignoree_si_une_autre_est_remplie(self):
+        self.client.post(self._url(), self._donnees([
+            {'medicament': 'Amoxicilline'}, {},
+        ]), follow=True)
+        ordonnance = Ordonnance.objects.get(consultation=self.consultation)
+        self.assertEqual(ordonnance.lignes.count(), 1)
+
+    def test_aucune_ordonnance_creee_si_le_formset_est_invalide(self):
+        """La transaction protege : pas d'ordonnance orpheline sans ligne."""
+        self.client.post(self._url(), self._donnees([{}]))
+        self.assertEqual(Ordonnance.objects.count(), 0)
+        self.assertEqual(LigneOrdonnance.objects.count(), 0)
+
+    def test_total_forms_incoherent_ne_casse_pas_la_page(self):
+        donnees = self._donnees([{'medicament': 'A'}])
+        donnees[f'{self.PREFIXE}-TOTAL_FORMS'] = '99'
+        reponse = self.client.post(self._url(), donnees)
+        self.assertIn(reponse.status_code, (200, 302))
+
+    # --- Permissions ----------------------------------------------------
+
+    def test_un_medecin_ne_prescrit_pas_sur_la_consultation_dun_confrere(self):
+        autre = Consultation.objects.create(
+            patient=self.patient, medecin=self.autre_medecin,
+            date_consultation=timezone.now(), diagnostic='Autre')
+        reponse = self.client.post(self._url(autre),
+                                   self._donnees([{'medicament': 'X'}]))
+        self.assertEqual(reponse.status_code, 404)
+        self.assertEqual(Ordonnance.objects.count(), 0)
+
+    def test_consultation_inexistante_donne_404(self):
+        self.assertEqual(
+            self.client.get(reverse('ajouter_ordonnance_medecin', args=[999999])).status_code,
+            404)
+
+    def test_les_autres_roles_sont_refuses(self):
+        for role, email in ((User.Role.ASSURE, 'assure-formset@santesn.sn'),
+                            (User.Role.PHARMACIEN, 'pharma-formset@santesn.sn'),
+                            (User.Role.ADMIN, 'admin-formset@santesn.sn')):
+            self.client.logout()
+            creer_utilisateur(role, email)
+            self.client.login(username=email, password=PASSWORD)
+            self.assertEqual(self.client.get(self._url()).status_code, 403, role)
+
+    def test_anonyme_redirige(self):
+        self.client.logout()
+        self.assertEqual(self.client.get(self._url()).status_code, 302)
+
+    # --- Parcours de bout en bout ---------------------------------------
+
+    def test_parcours_creation_puis_apercu_a4(self):
+        reponse = self.client.post(self._url(), self._donnees([
+            {'medicament': 'Amoxicilline', 'dosage': '1 g', 'posologie': '2×/jour',
+             'duree': '7 jours', 'quantite': '14 comprimés'},
+            {'medicament': 'Paracétamol', 'dosage': '500 mg'},
+        ]), follow=True)
+        # La creation depose directement sur le document.
+        self.assertContains(reponse, 'Imprimer l\'ordonnance')
+        self.assertContains(reponse, 'class="feuille-table"')
+        for valeur in ('Amoxicilline', '1 g', '14 comprimés', 'Paracétamol'):
+            self.assertContains(reponse, valeur)
+
+    def test_le_pharmacien_lit_ensuite_les_lignes_saisies(self):
+        self.client.post(self._url(), self._donnees([
+            {'medicament': 'Amoxicilline', 'posologie': '2×/jour'},
+        ]), follow=True)
+        ordonnance = Ordonnance.objects.get(consultation=self.consultation)
+        self.client.logout()
+        creer_pharmacien('pharma-lecture@santesn.sn')
+        self.client.login(username='pharma-lecture@santesn.sn', password=PASSWORD)
+        reponse = self.client.post(reverse('scanner_ordonnance'),
+                                   {'code_qr': ordonnance.code_qr})
+        self.assertContains(reponse, 'Amoxicilline')
+        self.assertContains(reponse, '2×/jour')
+
+    def test_le_qr_reste_intact_et_nexpose_pas_les_medicaments(self):
+        self.client.post(self._url(),
+                         self._donnees([{'medicament': 'Morphine'}]), follow=True)
+        ordonnance = Ordonnance.objects.get(consultation=self.consultation)
+        self.assertTrue(ordonnance.code_qr.startswith('RX-'))
+        self.assertNotIn('Morphine', ordonnance.qr_svg)

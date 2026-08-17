@@ -9,23 +9,135 @@
         <h1>Nouvelle ordonnance</h1>
         <p class="subtitle">Pour la consultation de {{ consultation.patient }} du {{ consultation.date_consultation|date:"d/m/Y" }}.</p>
     </div>
-    <a class="button" href="{% url 'historique_consultations' %}">Retour</a>
+    <a class="button btn" href="{% url 'historique_consultations' %}">{% icone "chevron-left" %} Retour</a>
 </section>
 
 <section class="panel panel-form">
-    {% if form.non_field_errors %}
-    <div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
-    {% endif %}
-
-    <form method="post">
+    <form method="post" id="formulaire-ordonnance">
         {% csrf_token %}
-        {% for field in form %}
-        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-        {{ field }}
-        {% if field.help_text %}<p class="aide">{{ field.help_text }}</p>{% endif %}
-        {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
-        {% endfor %}
-        <button class="button primary" type="submit">{% icone "qr-scan" %} Générer l'ordonnance et le QR Code</button>
+        {{ formset.management_form }}
+
+        {% if formset.non_form_errors %}
+        <div class="erreurs-formulaire" role="alert">{{ formset.non_form_errors }}</div>
+        {% endif %}
+
+        {% comment %}
+        Un bloc par medicament. Le gabarit d'une ligne vide est stocke dans
+        un <template> et clone par le bouton : les index et TOTAL_FORMS sont
+        recalcules cote navigateur, mais c'est le FORMSET DJANGO qui valide.
+        {% endcomment %}
+        <div id="lignes-ordonnance">
+            {% for form in formset %}
+            <fieldset class="ligne-medicament">
+                <legend class="ligne-medicament-titre">Médicament <span class="ligne-numero">{{ forloop.counter }}</span></legend>
+                {{ form.id }}
+                <div class="ligne-champs">
+                    {% for champ in form.visible_fields %}
+                    {% if champ.name != "DELETE" %}
+                    <div class="ligne-champ ligne-champ-{{ champ.name }}">
+                        <label for="{{ champ.id_for_label }}">{{ champ.label }}{% if champ.field.required %} *{% endif %}</label>
+                        {{ champ }}
+                        {% if champ.errors %}<div class="erreurs" role="alert">{{ champ.errors }}</div>{% endif %}
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                <div class="ligne-actions">
+                    {% if form.instance.pk %}
+                    <label class="ligne-supprimer-existante">{{ form.DELETE }} Retirer ce médicament</label>
+                    {% else %}
+                    <button type="button" class="button btn btn-danger btn-sm bouton-retirer-ligne">Retirer</button>
+                    {% endif %}
+                </div>
+            </fieldset>
+            {% endfor %}
+        </div>
+
+        <button type="button" class="button btn" id="ajouter-ligne">{% icone "plus-circle" %} Ajouter un médicament</button>
+
+        <div class="actions" style="margin-top:20px;">
+            <button class="button primary" type="submit">{% icone "qr-scan" %} Générer l'ordonnance et le QR Code</button>
+        </div>
     </form>
 </section>
+
+{% comment %}
+Gabarit d'une ligne vierge. __prefix__ est remplace par l'index reel au
+clonage — c'est la convention des formsets Django.
+{% endcomment %}
+<template id="gabarit-ligne">
+    <fieldset class="ligne-medicament">
+        <legend class="ligne-medicament-titre">Médicament <span class="ligne-numero"></span></legend>
+        <div class="ligne-champs">
+            {% for champ in formset.empty_form.visible_fields %}
+            {% if champ.name != "DELETE" %}
+            <div class="ligne-champ ligne-champ-{{ champ.name }}">
+                <label for="{{ champ.id_for_label }}">{{ champ.label }}{% if champ.field.required %} *{% endif %}</label>
+                {{ champ }}
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        <div class="ligne-actions">
+            <button type="button" class="button btn btn-danger btn-sm bouton-retirer-ligne">Retirer</button>
+        </div>
+    </fieldset>
+</template>
+
+<script>
+    (function () {
+        var conteneur = document.getElementById('lignes-ordonnance');
+        var gabarit = document.getElementById('gabarit-ligne');
+        var ajouter = document.getElementById('ajouter-ligne');
+        var total = document.getElementById('id_{{ formset.prefix }}-TOTAL_FORMS');
+        if (!conteneur || !gabarit || !ajouter || !total) { return; }
+
+        function renumeroter() {
+            var lignes = conteneur.querySelectorAll('.ligne-medicament');
+            lignes.forEach(function (ligne, i) {
+                var numero = ligne.querySelector('.ligne-numero');
+                if (numero) { numero.textContent = i + 1; }
+            });
+            // Une ordonnance a toujours au moins une ligne : on ne propose pas
+            // de retirer la derniere.
+            var boutons = conteneur.querySelectorAll('.bouton-retirer-ligne');
+            boutons.forEach(function (b) { b.hidden = lignes.length <= 1; });
+        }
+
+        ajouter.addEventListener('click', function () {
+            var index = parseInt(total.value, 10);
+            var html = gabarit.innerHTML.replace(/__prefix__/g, index);
+            var enveloppe = document.createElement('div');
+            enveloppe.innerHTML = html;
+            var ligne = enveloppe.firstElementChild;
+            conteneur.appendChild(ligne);
+            total.value = index + 1;
+            renumeroter();
+            var premier = ligne.querySelector('input');
+            if (premier) { premier.focus(); }
+        });
+
+        conteneur.addEventListener('click', function (e) {
+            var bouton = e.target.closest('.bouton-retirer-ligne');
+            if (!bouton) { return; }
+            // Uniquement une ligne JAMAIS enregistree : une ligne existante
+            // passe par la case DELETE du formset, pas par le navigateur.
+            var ligne = bouton.closest('.ligne-medicament');
+            ligne.remove();
+            total.value = conteneur.querySelectorAll('.ligne-medicament').length;
+            // Les index doivent rester contigus (form-0, form-1, ...).
+            conteneur.querySelectorAll('.ligne-medicament').forEach(function (l, i) {
+                l.querySelectorAll('input, select, textarea, label').forEach(function (el) {
+                    ['name', 'id', 'for'].forEach(function (attr) {
+                        var v = el.getAttribute(attr);
+                        if (v) { el.setAttribute(attr, v.replace(/-\d+-/, '-' + i + '-')); }
+                    });
+                });
+            });
+            renumeroter();
+        });
+
+        renumeroter();
+    })();
+</script>
 {% endblock %}

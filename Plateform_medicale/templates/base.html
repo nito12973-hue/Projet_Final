@@ -1889,6 +1889,78 @@
             color: var(--primary-dark);
         }
 
+        /* --- Saisie d'une ordonnance structuree (medecin) ----------------
+           Un bloc par medicament. Grille sur grand ecran, colonne sur
+           telephone : cinq champs cote a cote y seraient illisibles. */
+        .ligne-medicament {
+            margin: 0 0 14px;
+            padding: 16px 18px 12px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--surface);
+        }
+
+        .ligne-medicament-titre {
+            padding: 0 6px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .ligne-numero {
+            color: var(--primary-strong);
+        }
+
+        .ligne-champs {
+            display: grid;
+            grid-template-columns: 2fr 1fr 2fr 1fr 1fr;
+            gap: 12px;
+            align-items: start;
+        }
+
+        .ligne-champ label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--titre);
+        }
+
+        .ligne-champ input {
+            margin-bottom: 0;
+        }
+
+        .ligne-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 10px;
+        }
+
+        .ligne-supprimer-existante {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12.5px;
+            color: var(--muted);
+        }
+
+        .ligne-supprimer-existante input {
+            width: auto;
+            min-height: 0;
+            margin: 0;
+        }
+
+        @media (max-width: 900px) {
+            /* Cinq champs cote a cote deviennent illisibles bien avant le
+               telephone : on repasse en colonne des la tablette. */
+            .ligne-champs {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+        }
+
         /* Prescription structuree hors document A4 (ecrans pharmacien).
            Reprend les jetons existants : aucune nouvelle couleur. */
         .table-prescription {
