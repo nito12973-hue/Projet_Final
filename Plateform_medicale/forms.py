@@ -7,6 +7,7 @@ from django.utils import timezone
 
 from .models import (
     Consultation,
+    LigneOrdonnance,
     Medecin,
     Ordonnance,
     Paiement,
@@ -260,6 +261,59 @@ class ConsultationForm(forms.ModelForm):
     # La coherence patient <-> prise en charge est verifiee par
     # Consultation.clean() : la regle vaut aussi pour /admin/, qui n'utilise
     # pas ce formulaire.
+
+
+class LigneOrdonnanceForm(forms.ModelForm):
+    """Une ligne de prescription.
+
+    medicament est le SEUL champ obligatoire. Imposer une posologie ou une
+    duree pousserait le medecin a remplir du vide pour passer la validation :
+    c'est ainsi qu'on fabrique de la fausse donnee medicale. Rien n'est
+    complete automatiquement -- ce qui est enregistre est ce qu'il a saisi.
+    """
+
+    class Meta:
+        model = LigneOrdonnance
+        fields = ["medicament", "dosage", "posologie", "duree", "quantite"]
+        widgets = {
+            "medicament": forms.TextInput(attrs={"placeholder": "Nom du médicament"}),
+            "dosage": forms.TextInput(attrs={"placeholder": "500 mg"}),
+            "posologie": forms.TextInput(attrs={"placeholder": "3 fois par jour"}),
+            "duree": forms.TextInput(attrs={"placeholder": "5 jours"}),
+            "quantite": forms.TextInput(attrs={"placeholder": "1 boîte"}),
+        }
+
+
+class LigneOrdonnanceBaseFormSet(forms.BaseInlineFormSet):
+    """Une ordonnance sans aucun medicament n'a pas de sens."""
+
+    def clean(self):
+        super().clean()
+        if any(self.errors):
+            return
+        remplies = [
+            f for f in self.forms
+            if f.cleaned_data
+            and not f.cleaned_data.get("DELETE")
+            and f.cleaned_data.get("medicament")
+        ]
+        if not remplies:
+            raise forms.ValidationError(
+                "Ajoutez au moins un médicament à l'ordonnance."
+            )
+
+
+# extra=1 : le medecin arrive sur UNE ligne vide, pas sur un formulaire
+# intimidant. can_delete permet de retirer une ligne par le mecanisme Django
+# plutot que par le navigateur seul.
+LigneOrdonnanceFormSet = forms.inlineformset_factory(
+    Ordonnance,
+    LigneOrdonnance,
+    form=LigneOrdonnanceForm,
+    formset=LigneOrdonnanceBaseFormSet,
+    extra=1,
+    can_delete=True,
+)
 
 
 class OrdonnanceForm(forms.ModelForm):

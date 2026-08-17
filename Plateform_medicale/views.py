@@ -41,6 +41,7 @@ from .forms import (
     MedecinForm,
     MedecinProfilForm,
     MonCompteForm,
+    LigneOrdonnanceFormSet,
     OrdonnanceForm,
     PaiementReglementForm,
     PatientCreationForm,
@@ -2687,20 +2688,36 @@ def ajouter_ordonnance_medecin(request, consultation_pk):
     medecin = _medecin_courant(request)
     consultation = get_object_or_404(Consultation, pk=consultation_pk, medecin=medecin)
 
+    # Ordonnance STRUCTUREE : le medecin saisit des lignes, plus du texte
+    # libre. medicaments reste vide pour les nouvelles ordonnances -- il ne
+    # porte que le contenu des ordonnances anterieures a LigneOrdonnance.
+    #
+    # Il n'existe PAS de modification d'ordonnance dans SantéSN : seule la
+    # creation. Ne pas en inventer une ici -- ce serait une regle metier
+    # nouvelle, decidee au passage.
     if request.method == "POST":
-        form = OrdonnanceForm(request.POST)
-        if form.is_valid():
-            ordonnance = form.save(commit=False)
-            ordonnance.consultation = consultation
-            ordonnance.save()
+        ordonnance = Ordonnance(consultation=consultation)
+        formset = LigneOrdonnanceFormSet(request.POST, instance=ordonnance)
+        if formset.is_valid():
+            with transaction.atomic():
+                ordonnance.save()
+                lignes = formset.save(commit=False)
+                # L'ordre suit la saisie : la premiere ligne remplie est la
+                # premiere prescrite.
+                for rang, ligne in enumerate(lignes, start=1):
+                    ligne.ordre = rang
+                    ligne.save()
+                for supprimee in formset.deleted_objects:
+                    supprimee.delete()
             messages.success(request, "Ordonnance créée.", extra_tags="succes-critique")
             return redirect("voir_ordonnance_medecin", pk=ordonnance.pk)
     else:
-        form = OrdonnanceForm()
+        formset = LigneOrdonnanceFormSet(instance=Ordonnance())
+
     return render(
         request,
         "ajouter_ordonnance_medecin.html",
-        {"form": form, "consultation": consultation},
+        {"formset": formset, "consultation": consultation},
     )
 
 
