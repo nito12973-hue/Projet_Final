@@ -5667,3 +5667,204 @@ class RequetesConstantesTests(TestCase):
         self._consultations(1)
         contenu = self.client.get(reverse('historique_consultations')).content.decode()
         self.assertNotIn('ordonnance_set.first', contenu)
+
+
+class ParcoursCompletsTests(TestCase):
+    """Parcours de BOUT EN BOUT, role par role.
+
+    Les ecrans etaient testes un par un. Ces tests verifient les TRANSITIONS :
+    chaque etape doit etre atteignable depuis la precedente par un lien
+    reellement present dans la page, et non seulement par son URL. C'est le
+    defaut que des tests par ecran ne voient pas -- A fonctionne, B fonctionne,
+    mais A ne mene pas a B.
+    """
+
+    def setUp(self):
+        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin-parcours@santesn.sn')
+        self.admin.first_name, self.admin.last_name = 'Awa', 'Ndiaye'
+        self.admin.save()
+
+        self.plan = PlanCouverture.objects.create(
+            nom='Famille 80%', taux_couverture=Decimal('80'))
+        self.assure_user = creer_utilisateur(User.Role.ASSURE, 'assure-parcours@santesn.sn')
+        self.patient = Patient.objects.create(
+            user=self.assure_user, nom='Diop', prenom='Awa',
+            date_naissance=datetime.date(1985, 6, 6), telephone='770000090',
+            plan_couverture=self.plan)
+
+        self.prestataire = Prestataire.objects.create(
+            nom='Hôpital Principal', type_prestataire=Prestataire.Type.HOPITAL,
+            ville='Dakar')
+        self.medecin = creer_medecin('medecin-parcours@santesn.sn')
+        Medecin.objects.filter(pk=self.medecin.pk).update(prestataire=self.prestataire)
+        self.pharmacien = creer_pharmacien('pharma-parcours@santesn.sn')
+
+        self.service = ServiceMedical.objects.create(nom='Consultation', prix=Decimal('15000'))
+        self.pec = PriseEnCharge.objects.create(
+            patient=self.patient, motif='Suivi', statut='validee')
+        self.consultation = Consultation.objects.create(
+            patient=self.patient, medecin=self.medecin, service=self.service,
+            prise_en_charge=self.pec, date_consultation=timezone.now(),
+            diagnostic='Bilan', traitement='Repos')
+        Paiement.calculer_pour(self.consultation).save()
+        self.ordonnance = Ordonnance.objects.create(
+            consultation=self.consultation, medicaments='Paracétamol 500 mg')
+
+    # ------------------------------------------------------------------
+    def _connexion(self, email):
+        """Passe par le VRAI formulaire de connexion, pas par force_login :
+        c'est la premiere transition du parcours."""
+        reponse = self.client.post(reverse('login'),
+                                   {'email': email, 'password': PASSWORD}, follow=True)
+        self.assertEqual(reponse.status_code, 200, f"connexion refusee : {email}")
+        return reponse
+
+    def _etape(self, precedente, url, nom_etape):
+        """Verifie que `url` est ATTEIGNABLE depuis la page precedente (le lien
+        y figure) puis l'ouvre."""
+        self.assertContains(precedente, url,
+                            msg_prefix=f"aucun lien vers {nom_etape}")
+        reponse = self.client.get(url, follow=True)
+        self.assertEqual(reponse.status_code, 200, nom_etape)
+        return reponse
+
+    # --- ADMINISTRATEUR -----------------------------------------------
+    def test_parcours_administrateur(self):
+        page = self._connexion('admin-parcours@santesn.sn')
+        # La connexion doit deposer sur le tableau de bord du role.
+        self.assertContains(page, 'Tableau de bord')
+
+        page = self._etape(page, reverse('liste_utilisateurs'), 'Utilisateurs')
+        page = self._etape(page, reverse('liste_patients'), 'Assurés')
+        page = self._etape(page, reverse('carte_patient', args=[self.patient.pk]),
+                           'carte du bénéficiaire')
+        self.assertContains(page, self.patient.numero_carte)
+        self.assertContains(page, '<svg')                      # le QR y est
+
+        page = self._etape(page, reverse('liste_patients'), 'retour Assurés')
+
+        parametres = self.client.get(reverse('parametres'), follow=True)
+        page = self._etape(parametres, reverse('parametres_section', args=['securite']),
+                           'Paramètres → Sécurité')
+        self.assertContains(page, 'Comptes temporairement bloqués')
+
+        page = self._etape(page, reverse('journal_activite'), 'Journal d\'activité')
+        # L'edition de carte faite plus haut doit y figurer : le parcours
+        # laisse une trace, ce n'est pas qu'un enchainement d'ecrans.
+        self.assertContains(page, 'Carte éditée')
+
+        page = self._etape(page, reverse('parametres_section', args=['securite']),
+                           'retour Sécurité')
+        retour = self.client.get(reverse('dashboard'), follow=True)
+        self.assertEqual(retour.status_code, 200)
+
+    def test_parcours_administrateur_deblocage(self):
+        """Blocage reel -> alerte du tableau de bord -> Securite -> deblocage."""
+        TentativeConnexion.objects.create(
+            email='assure-parcours@santesn.sn',
+            tentatives=TentativeConnexion.MAX_TENTATIVES)
+        self._connexion('admin-parcours@santesn.sn')
+
+        tableau = self.client.get(reverse('dashboard'))
+        self.assertContains(tableau, 'temporairement bloqué')
+        page = self._etape(tableau, reverse('parametres_section', args=['securite']),
+                           'alerte → Sécurité')
+        self.assertContains(page, 'assure-parcours@santesn.sn')
+
+        reponse = self.client.post(
+            reverse('debloquer_compte', args=[self.assure_user.pk]), follow=True)
+        self.assertEqual(reponse.status_code, 200)
+        self.assertFalse(TentativeConnexion.bloque('assure-parcours@santesn.sn'))
+        # L'action doit etre tracee, et visible depuis le journal.
+        journal = self.client.get(reverse('journal_activite'))
+        self.assertContains(journal, 'Déblocage')
+
+    # --- ASSURE --------------------------------------------------------
+    def test_parcours_assure(self):
+        page = self._connexion('assure-parcours@santesn.sn')
+        page = self._etape(page, reverse('mon_profil_assure'), 'Mon profil')
+        self.assertContains(page, 'Mon QR code')
+        self.assertContains(page, 'bouton-voir-qr')
+
+        page = self._etape(page, reverse('mon_historique_assure'), 'Mon historique')
+        page = self._etape(page, reverse('mes_prises_en_charge_assure'),
+                           'Mes prises en charge')
+        self.assertContains(page, 'Suivi')
+
+        page = self._etape(page, reverse('mes_ordonnances_assure'), 'Mes ordonnances')
+        page = self._etape(page, reverse('voir_ordonnance_assure', args=[self.ordonnance.pk]),
+                           'ordonnance')
+        self.assertContains(page, 'Paracétamol 500 mg')
+
+    # --- MEDECIN -------------------------------------------------------
+    def test_parcours_medecin(self):
+        page = self._connexion('medecin-parcours@santesn.sn')
+        page = self._etape(page, reverse('mes_patients'), 'Mes patients')
+        page = self._etape(page, reverse('fiche_patient_medecin', args=[self.patient.pk]),
+                           'fiche patient')
+        self.assertContains(page, self.patient.numero_carte)
+
+        page = self._etape(page, reverse('historique_consultations'), 'Consultations')
+        page = self._etape(page, reverse('voir_ordonnance_medecin', args=[self.ordonnance.pk]),
+                           'ordonnance')
+        # Le document doit etre pret a imprimer, pas seulement affiche.
+        self.assertContains(page, 'Imprimer l\'ordonnance')
+        self.assertContains(page, 'size: A4')
+
+    def test_parcours_medecin_creation_dune_ordonnance(self):
+        """Consultation -> ordonnance -> apercu, en passant par les vrais
+        formulaires."""
+        self._connexion('medecin-parcours@santesn.sn')
+        creation = self.client.post(reverse('ajouter_consultation_medecin'), {
+            'patient': self.patient.pk, 'service': self.service.pk,
+            'prise_en_charge': self.pec.pk,
+            'date_consultation': '2026-08-17T09:00',
+            'diagnostic': 'Angine', 'traitement': 'Repos',
+        }, follow=True)
+        self.assertEqual(creation.status_code, 200)
+        consultation = Consultation.objects.filter(diagnostic='Angine').first()
+        self.assertIsNotNone(consultation, "la consultation n'a pas ete enregistree")
+
+        ordonnance = self.client.post(
+            reverse('ajouter_ordonnance_medecin', args=[consultation.pk]),
+            {'medicaments': 'Amoxicilline 1 g'}, follow=True)
+        self.assertEqual(ordonnance.status_code, 200)
+        creee = Ordonnance.objects.filter(consultation=consultation).first()
+        self.assertIsNotNone(creee, "l'ordonnance n'a pas ete enregistree")
+        document = self.client.get(reverse('voir_ordonnance_medecin', args=[creee.pk]))
+        self.assertContains(document, 'Amoxicilline 1 g')
+
+    # --- PHARMACIEN ----------------------------------------------------
+    def test_parcours_pharmacien(self):
+        page = self._connexion('pharma-parcours@santesn.sn')
+        page = self._etape(page, reverse('scanner_ordonnance'), 'Scanner')
+
+        # Le code exact : chemin normal du comptoir.
+        trouvee = self.client.post(reverse('scanner_ordonnance'),
+                                   {'code_qr': self.ordonnance.code_qr})
+        self.assertEqual(trouvee.status_code, 200)
+        self.assertContains(trouvee, 'Paracétamol 500 mg')
+
+        validee = self.client.post(reverse('valider_delivrance', args=[self.ordonnance.pk]),
+                                   {'code_qr': self.ordonnance.code_qr}, follow=True)
+        self.assertEqual(validee.status_code, 200)
+        self.ordonnance.refresh_from_db()
+        self.assertTrue(Delivrance.objects.filter(ordonnance=self.ordonnance).exists())
+        # La validation doit deposer sur l'historique, ou la delivrance figure.
+        self.assertContains(validee, 'Diop')
+
+    def test_parcours_pharmacien_repli_code_illisible(self):
+        """QR froisse : la recherche par nom doit mener a la meme ordonnance."""
+        self._connexion('pharma-parcours@santesn.sn')
+        reponse = self.client.post(reverse('scanner_ordonnance'), {'recherche': 'Diop'})
+        self.assertEqual(reponse.status_code, 200)
+        self.assertContains(reponse, self.ordonnance.code_qr)
+
+    # --- Transitions refusees ------------------------------------------
+    def test_la_deconnexion_ferme_reellement_le_parcours(self):
+        self._connexion('admin-parcours@santesn.sn')
+        self.assertEqual(self.client.get(reverse('dashboard')).status_code, 200)
+        self.client.post(reverse('logout'))
+        suite = self.client.get(reverse('dashboard'))
+        self.assertEqual(suite.status_code, 302)
+        self.assertIn(reverse('login'), suite.url)

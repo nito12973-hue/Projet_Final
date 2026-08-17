@@ -30,18 +30,30 @@
         <thead>
             <tr>
                 <th>Nom complet</th>
-                <th>Téléphone</th>
-                <th>Numéro de carte</th>
+                <th class="col-optionnelle">Téléphone</th>
+                <th class="col-optionnelle">Numéro de carte</th>
                 <th>Type</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
             {% for patient in patients %}
             <tr>
                 <td>{{ patient.prenom }} {{ patient.nom }}</td>
-                <td>{{ patient.telephone }}</td>
-                <td>{{ patient.numero_carte }}</td>
+                <td class="col-optionnelle">{{ patient.telephone|default:"—" }}</td>
+                <td class="code col-optionnelle">{{ patient.numero_carte }}</td>
                 <td>{{ patient.get_type_beneficiaire_display }}</td>
+                <td>
+                    {% comment %}
+                    La fiche n'etait atteignable QUE par le champ de recherche
+                    JS : la liste elle-meme etait une impasse. Un patient
+                    affiche doit pouvoir s'ouvrir.
+                    {% endcomment %}
+                    <div class="actions">
+                        <a href="{% url 'fiche_patient_medecin' patient.pk %}"
+                           class="button primary btn btn-sm">{% icone "eye" %} Voir la fiche</a>
+                    </div>
+                </td>
             </tr>
             {% endfor %}
         </tbody>
