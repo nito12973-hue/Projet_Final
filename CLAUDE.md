@@ -198,6 +198,19 @@ renseignés par l'admin, affichés à l'assuré. Il n'existe **ni** champ
 serait purement indicatif et ne contraindrait pas la prise de rendez-vous —
 un agenda de créneaux réels est un autre chantier. Ne pas l'ajouter sans lui.
 
+**Un médecin ne peut pas être à deux endroits à la fois.** Contrainte
+`rdv_creneau_unique_par_medecin` (`UniqueConstraint` sur `medecin` +
+`date_heure`, **condition** excluant `ANNULE`) plus un `RendezVous.clean()`
+qui rattache l'erreur au champ `date_heure`. Avant, deux patients pouvaient
+réserver le même créneau chez le même médecin : le système acceptait, et les
+deux se présentaient. Annuler **libère** le créneau — sans la condition, un
+désistement le condamnerait pour toujours.
+
+Portée exacte : l'égalité de `date_heure`, **pas** un chevauchement de durée
+(le modèle ne porte aucune durée de consultation). Deux rendez-vous à une
+minute d'intervalle restent acceptés — c'est cohérent avec un formulaire qui
+saisit à la minute près, mais ce n'est pas un agenda de créneaux.
+
 **`Paiement.enregistre_par`** (`SET_NULL`) trace qui a constaté le règlement,
 renseigné automatiquement depuis `request.user`, jamais saisi. En espèces,
 c'est la seule trace de la personne qui a reçu l'argent. **Aucune API de
