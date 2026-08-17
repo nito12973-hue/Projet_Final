@@ -5144,13 +5144,26 @@ class MonQrCodeAssureTests(TestCase):
             date_naissance=datetime.date(1988, 2, 2), telephone='770000071')
         self.client.login(username='qr-a@santesn.sn', password=PASSWORD)
 
-    def test_le_profil_affiche_un_vrai_qr_et_le_numero(self):
+    def test_le_profil_ouvre_le_qr_par_un_bouton(self):
+        """Un bouton, pas le code en permanence : on ne presente son QR
+        qu'au comptoir. Le code reste dans la page (dialogue natif) pour
+        s'ouvrir sans aller-retour serveur."""
         reponse = self.client.get(reverse('mon_profil_assure'))
         self.assertContains(reponse, 'Mon QR code')
-        self.assertContains(reponse, self.a.numero_carte)
+        self.assertContains(reponse, 'bouton-voir-qr')
         contenu = reponse.content.decode()
         self.assertIn('<svg', contenu)
         self.assertGreater(contenu.count('<rect'), 20)
+
+    def test_le_numero_de_carte_nest_pas_repete_par_la_section_qr(self):
+        """Il est deja sur la carte juste au-dessus, avec son bouton de
+        copie. Le repeter en dessous serait un doublon."""
+        contenu = self.client.get(reverse('mon_profil_assure')).content.decode()
+        # Les deux occurrences legitimes sont dans le bloc carte : le numero
+        # affiche et l'attribut data-copier de son bouton de copie. La
+        # section QR, qui vient apres, ne doit pas en ajouter une troisieme.
+        section_qr = contenu[contenu.find('panel panel-bloc mon-qr'):]
+        self.assertNotIn(self.a.numero_carte, section_qr)
 
     def test_le_qr_du_profil_est_celui_de_la_carte(self):
         """Meme adresse encodee : un second identifiant "pour le profil"
