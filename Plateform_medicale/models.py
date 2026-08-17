@@ -545,7 +545,10 @@ class Paiement(models.Model):
 
 class Ordonnance(models.Model):
     consultation = models.ForeignKey(Consultation, on_delete=models.CASCADE)
-    medicaments = models.TextField()
+    # CONSERVE VOLONTAIREMENT. Porte le texte des ordonnances anterieures a
+    # LigneOrdonnance : il n'est ni transforme ni supprime. blank=True permet
+    # aux nouvelles ordonnances de n'avoir que des lignes structurees.
+    medicaments = models.TextField(blank=True)
     date_creation = models.DateTimeField(auto_now_add=True)
     code_qr = models.CharField(
         "code de verification",
@@ -576,6 +579,53 @@ class Ordonnance(models.Model):
         n'etant pas dessines. Voir _qr_svg pour le detail.
         """
         return _qr_svg(self.code_qr)
+
+
+class LigneOrdonnance(models.Model):
+    """Une ligne de prescription d'une ordonnance.
+
+    AJOUT PUREMENT ADDITIF. Ordonnance.medicaments (texte libre) n'est ni
+    supprime ni transforme : les ordonnances anterieures continuent de
+    s'afficher exactement comme avant. Une ordonnance a soit des lignes
+    structurees, soit son texte historique -- jamais les deux melanges.
+
+    POURQUOI AUCUN PARSING DES ANCIENNES. Les donnees reelles contiennent au
+    moins trois formats, dont des tableaux markdown tapes A LA MAIN par un
+    medecin qui a reconstruit la structure manquante. Decouper ce texte
+    automatiquement finirait par attribuer un dosage au mauvais medicament,
+    sur des ordonnances DEJA DELIVREES. On ne devine pas une prescription.
+
+    POURQUOI PAS DE MODELE Medicament. Aucun referentiel de medicaments
+    n'existe dans le projet. En creer un signifierait soit une table vide --
+    le medecin ne pourrait rien choisir -- soit la peupler de medicaments
+    inventes. `medicament` reste donc du texte ; si un referentiel est acquis
+    un jour, une cle etrangere s'ajoutera A COTE, sans rien casser.
+
+    UN SEUL CHAMP OBLIGATOIRE. Une ligne sans medicament n'a pas de sens.
+    Imposer en plus une posologie ou une duree pousserait le medecin a
+    remplir du vide pour passer la validation : c'est ainsi qu'on fabrique
+    de la fausse donnee medicale.
+    """
+
+    ordonnance = models.ForeignKey(
+        Ordonnance, on_delete=models.CASCADE, related_name="lignes"
+    )
+    medicament = models.CharField("médicament", max_length=200)
+    dosage = models.CharField(max_length=100, blank=True)
+    posologie = models.CharField(max_length=200, blank=True)
+    duree = models.CharField("durée", max_length=100, blank=True)
+    quantite = models.CharField("quantité", max_length=50, blank=True)
+    ordre = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        verbose_name = "ligne d'ordonnance"
+        verbose_name_plural = "lignes d'ordonnance"
+        # pk en second : deux lignes saisies avec le meme ordre gardent
+        # malgre tout leur ordre de creation, jamais un ordre aleatoire.
+        ordering = ["ordre", "pk"]
+
+    def __str__(self):
+        return f"{self.medicament} {self.dosage}".strip()
 
 
 class RendezVous(models.Model):

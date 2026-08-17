@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 
 import openpyxl
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import connection
 from django.forms import modelform_factory
@@ -19,6 +20,7 @@ from .models import (
     Consultation,
     Delivrance,
     JournalActivite,
+    LigneOrdonnance,
     Medecin,
     Notification,
     Ordonnance,
@@ -5868,3 +5870,181 @@ class ParcoursCompletsTests(TestCase):
         suite = self.client.get(reverse('dashboard'))
         self.assertEqual(suite.status_code, 302)
         self.assertIn(reverse('login'), suite.url)
+
+
+class LigneOrdonnanceTests(TestCase):
+    """Phase 1 : structure et affichage. Le formulaire medecin multi-lignes
+    est une phase 2 dediee.
+
+    Regle centrale : une ordonnance a SOIT des lignes structurees, SOIT son
+    texte historique -- jamais les deux melanges, et aucune conversion de
+    l'un vers l'autre."""
+
+    def setUp(self):
+        self.patient = creer_patient(nom='Ba', prenom='Awa')
+        self.medecin = creer_medecin('medecin-ligne@santesn.sn')
+        self.consultation = Consultation.objects.create(
+            patient=self.patient, medecin=self.medecin,
+            date_consultation=timezone.now(), diagnostic='D')
+
+    def _ordonnance(self, texte=''):
+        return Ordonnance.objects.create(consultation=self.consultation,
+                                         medicaments=texte)
+
+    # --- Modele ---------------------------------------------------------
+
+    def test_creation_dune_ligne(self):
+        ordonnance = self._ordonnance()
+        ligne = LigneOrdonnance.objects.create(
+            ordonnance=ordonnance, medicament='Paracétamol', dosage='500 mg',
+            posologie='3×/jour', duree='5 jours', quantite='1 boîte')
+        self.assertEqual(list(ordonnance.lignes.all()), [ligne])
+        self.assertIn('Paracétamol', str(ligne))
+
+    def test_plusieurs_lignes_et_ordre_conserve(self):
+        ordonnance = self._ordonnance()
+        troisieme = LigneOrdonnance.objects.create(
+            ordonnance=ordonnance, medicament='C', ordre=3)
+        premiere = LigneOrdonnance.objects.create(
+            ordonnance=ordonnance, medicament='A', ordre=1)
+        deuxieme = LigneOrdonnance.objects.create(
+            ordonnance=ordonnance, medicament='B', ordre=2)
+        self.assertEqual(list(ordonnance.lignes.all()),
+                         [premiere, deuxieme, troisieme])
+
+    def test_ordre_egal_conserve_lordre_de_creation(self):
+        """Meta.ordering finit par pk : deux lignes de meme ordre ne doivent
+        jamais s'echanger d'un affichage a l'autre."""
+        ordonnance = self._ordonnance()
+        a = LigneOrdonnance.objects.create(ordonnance=ordonnance, medicament='A')
+        b = LigneOrdonnance.objects.create(ordonnance=ordonnance, medicament='B')
+        self.assertEqual([l.pk for l in ordonnance.lignes.all()], [a.pk, b.pk])
+
+    def test_modification_et_suppression_dune_ligne(self):
+        ordonnance = self._ordonnance()
+        ligne = LigneOrdonnance.objects.create(ordonnance=ordonnance, medicament='A')
+        ligne.medicament = 'B'
+        ligne.save()
+        self.assertEqual(ordonnance.lignes.first().medicament, 'B')
+        ligne.delete()
+        self.assertEqual(ordonnance.lignes.count(), 0)
+
+    def test_ligne_sans_medicament_refusee(self):
+        """Le seul champ obligatoire : une ligne sans medicament n'a pas de
+        sens. Les autres restent facultatifs -- imposer une posologie
+        pousserait a remplir du vide pour passer la validation."""
+        ligne = LigneOrdonnance(ordonnance=self._ordonnance(), medicament='')
+        with self.assertRaises(ValidationError):
+            ligne.full_clean()
+
+    def test_les_autres_champs_sont_facultatifs(self):
+        ligne = LigneOrdonnance(ordonnance=self._ordonnance(), medicament='Paracétamol')
+        ligne.full_clean()          # ne doit pas lever
+        ligne.save()
+        self.assertEqual(ligne.dosage, '')
+
+    def test_supprimer_lordonnance_supprime_ses_lignes(self):
+        ordonnance = self._ordonnance()
+        LigneOrdonnance.objects.create(ordonnance=ordonnance, medicament='A')
+        ordonnance.delete()
+        self.assertEqual(LigneOrdonnance.objects.count(), 0)
+
+    # --- Affichage : les deux formats ne se melangent pas ---------------
+
+    def test_ordonnance_structuree_rend_le_tableau(self):
+        ordonnance = self._ordonnance()
+        LigneOrdonnance.objects.create(
+            ordonnance=ordonnance, medicament='Amoxicilline', dosage='1 g',
+            posologie='2×/jour', duree='7 jours', quantite='14 comprimés')
+        self.client.login(username='medecin-ligne@santesn.sn', password=PASSWORD)
+        reponse = self.client.get(reverse('voir_ordonnance_medecin', args=[ordonnance.pk]))
+        self.assertEqual(len(reponse.context['lignes_structurees']), 1)
+        self.assertEqual(reponse.context['lignes_prescription'], [])
+        for valeur in ('Amoxicilline', '1 g', '2×/jour', '7 jours', '14 comprimés'):
+            self.assertContains(reponse, valeur)
+        self.assertContains(reponse, 'class=\"feuille-table\"')
+
+    def test_ordonnance_historique_rend_son_texte_inchange(self):
+        texte = "| Médicament | Dosage |\n| Paracétamol | 500 mg |"
+        ordonnance = self._ordonnance(texte)
+        self.client.login(username='medecin-ligne@santesn.sn', password=PASSWORD)
+        reponse = self.client.get(reverse('voir_ordonnance_medecin', args=[ordonnance.pk]))
+        self.assertEqual(reponse.context['lignes_structurees'], [])
+        self.assertEqual(len(reponse.context['lignes_prescription']), 2)
+        # Le nom de classe figure aussi dans la CSS inline : on cible le balisage.
+        self.assertNotContains(reponse, 'class=\"feuille-table\"')
+
+    def test_les_deux_formats_ne_se_melangent_jamais(self):
+        """Une ordonnance qui aurait a la fois du texte ET des lignes affiche
+        les lignes, sans dupliquer le texte."""
+        ordonnance = self._ordonnance('Ancien texte libre')
+        LigneOrdonnance.objects.create(ordonnance=ordonnance, medicament='Nouveau')
+        self.client.login(username='medecin-ligne@santesn.sn', password=PASSWORD)
+        reponse = self.client.get(reverse('voir_ordonnance_medecin', args=[ordonnance.pk]))
+        self.assertContains(reponse, 'Nouveau')
+        self.assertNotContains(reponse, 'Ancien texte libre')
+
+    def test_champ_facultatif_vide_affiche_un_tiret_et_rien_dinvente(self):
+        ordonnance = self._ordonnance()
+        LigneOrdonnance.objects.create(ordonnance=ordonnance, medicament='Ibuprofène')
+        self.client.login(username='medecin-ligne@santesn.sn', password=PASSWORD)
+        self.assertContains(
+            self.client.get(reverse('voir_ordonnance_medecin', args=[ordonnance.pk])), '—')
+
+    # --- Par role -------------------------------------------------------
+
+    def test_assure_voit_le_tableau_structure(self):
+        assure = creer_utilisateur(User.Role.ASSURE, 'assure-ligne@santesn.sn')
+        Patient.objects.filter(pk=self.patient.pk).update(user=assure)
+        ordonnance = self._ordonnance()
+        LigneOrdonnance.objects.create(ordonnance=ordonnance, medicament='Doliprane')
+        self.client.login(username='assure-ligne@santesn.sn', password=PASSWORD)
+        self.assertContains(
+            self.client.get(reverse('voir_ordonnance_assure', args=[ordonnance.pk])),
+            'Doliprane')
+
+    def test_pharmacien_voit_les_lignes_apres_scan(self):
+        ordonnance = self._ordonnance()
+        LigneOrdonnance.objects.create(ordonnance=ordonnance, medicament='Amoxicilline',
+                                       dosage='1 g', posologie='2×/jour')
+        creer_pharmacien('pharma-ligne@santesn.sn')
+        self.client.login(username='pharma-ligne@santesn.sn', password=PASSWORD)
+        reponse = self.client.post(reverse('scanner_ordonnance'),
+                                   {'code_qr': ordonnance.code_qr})
+        self.assertContains(reponse, 'Amoxicilline')
+        self.assertContains(reponse, '2×/jour')
+        self.assertContains(reponse, 'class=\"table-prescription\"')
+
+    def test_pharmacien_voit_le_texte_dune_ordonnance_historique(self):
+        ordonnance = self._ordonnance('Traitement historique')
+        creer_pharmacien('pharma-histo-ligne@santesn.sn')
+        self.client.login(username='pharma-histo-ligne@santesn.sn', password=PASSWORD)
+        reponse = self.client.post(reverse('scanner_ordonnance'),
+                                   {'code_qr': ordonnance.code_qr})
+        self.assertContains(reponse, 'Traitement historique')
+        self.assertNotContains(reponse, 'class=\"table-prescription\"')
+
+    # --- Non-regression sur les donnees existantes ----------------------
+
+    def test_le_texte_historique_nest_ni_transforme_ni_efface(self):
+        """La garantie de la migration : ajouter des lignes a une ordonnance
+        ne touche jamais son champ medicaments."""
+        texte = 'Medicament A 500mg - 2x/jour pendant 5 jours'
+        ordonnance = self._ordonnance(texte)
+        LigneOrdonnance.objects.create(ordonnance=ordonnance, medicament='B')
+        ordonnance.refresh_from_db()
+        self.assertEqual(ordonnance.medicaments, texte)
+
+    def test_une_ordonnance_peut_navoir_aucune_ligne(self):
+        """C'est le cas de TOUTES les ordonnances anterieures."""
+        ordonnance = self._ordonnance('Texte')
+        self.assertEqual(ordonnance.lignes.count(), 0)
+        self.assertFalse(ordonnance.lignes.exists())
+
+    def test_le_qr_reste_inchange(self):
+        """Phase 1 ne touche pas au QR : il encode le code de verification,
+        pas le contenu medical."""
+        ordonnance = self._ordonnance()
+        LigneOrdonnance.objects.create(ordonnance=ordonnance, medicament='Secret')
+        self.assertNotIn('Secret', ordonnance.qr_svg)
+        self.assertTrue(ordonnance.code_qr.startswith('RX-'))

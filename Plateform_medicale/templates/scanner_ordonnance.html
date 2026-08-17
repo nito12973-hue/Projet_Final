@@ -114,7 +114,37 @@ formulaire laisseraient le pharmacien croire qu'il faut remplir les deux.
         <p><strong>Médecin :</strong> {{ ordonnance.consultation.medecin }}</p>
         <p><strong>Date :</strong> {{ ordonnance.date_creation|date:"d/m/Y H:i" }}</p>
         <p><strong>Médicaments :</strong></p>
+        {% comment %}
+        Lecture seule : le pharmacien delivre, il ne prescrit pas. Tableau si
+        l'ordonnance est structuree, texte d'origine sinon -- jamais une
+        conversion de l'un vers l'autre.
+        {% endcomment %}
+        {% if ordonnance.lignes.exists %}
+        <table class="table-prescription">
+            <thead>
+                <tr>
+                    <th scope="col">Médicament</th>
+                    <th scope="col">Dosage</th>
+                    <th scope="col">Posologie</th>
+                    <th scope="col" class="col-optionnelle">Durée</th>
+                    <th scope="col" class="col-optionnelle">Qté</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ligne in ordonnance.lignes.all %}
+                <tr>
+                    <td><strong>{{ ligne.medicament }}</strong></td>
+                    <td>{{ ligne.dosage|default:"—" }}</td>
+                    <td>{{ ligne.posologie|default:"—" }}</td>
+                    <td class="col-optionnelle">{{ ligne.duree|default:"—" }}</td>
+                    <td class="col-optionnelle">{{ ligne.quantite|default:"—" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
         <p style="white-space: pre-line;">{{ ordonnance.medicaments }}</p>
+        {% endif %}
     </article>
 
     <aside class="panel governance-card">

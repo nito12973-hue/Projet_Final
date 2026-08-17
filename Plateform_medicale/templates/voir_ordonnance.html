@@ -67,10 +67,40 @@ de la donnee medicale.
     <h2 class="feuille-titre">Ordonnance</h2>
 
     <section class="feuille-prescription">
+        {% if lignes_structurees %}
         {% comment %}
-        Une ligne saisie = une ligne prescrite. Le medecin ecrit deja un
-        medicament par ligne ; on respecte sa mise en forme au lieu de la
-        redecouper selon une structure qui n'existe pas.
+        Ordonnance STRUCTUREE : chaque colonne vient d'un champ reel de
+        LigneOrdonnance. Les champs facultatifs vides affichent un tiret --
+        on ne comble jamais un blanc medical par une valeur inventee.
+        {% endcomment %}
+        <table class="feuille-table">
+            <thead>
+                <tr>
+                    <th scope="col">Médicament</th>
+                    <th scope="col">Dosage</th>
+                    <th scope="col">Posologie</th>
+                    <th scope="col">Durée</th>
+                    <th scope="col">Qté</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ligne in lignes_structurees %}
+                <tr>
+                    <td class="feuille-medicament">{{ ligne.medicament }}</td>
+                    <td>{{ ligne.dosage|default:"—" }}</td>
+                    <td>{{ ligne.posologie|default:"—" }}</td>
+                    <td>{{ ligne.duree|default:"—" }}</td>
+                    <td>{{ ligne.quantite|default:"—" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        {% comment %}
+        Ordonnance HISTORIQUE, anterieure a LigneOrdonnance : son texte est
+        rendu tel qu'il a ete saisi. Aucune conversion vers le tableau -- le
+        format d'origine est ambigu, le deviner serait inventer une
+        prescription.
         {% endcomment %}
         <ol class="feuille-lignes">
             {% for ligne in lignes_prescription %}
@@ -79,6 +109,7 @@ de la donnee medicale.
             <li class="feuille-vide">Aucun médicament n'a été saisi sur cette ordonnance.</li>
             {% endfor %}
         </ol>
+        {% endif %}
     </section>
 
     <footer class="feuille-pied">
