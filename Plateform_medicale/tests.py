@@ -5631,3 +5631,39 @@ class ContrasteThemeSombreTests(TestCase):
         self.assertEqual(feuille.count('.carte-verso-mention {'), 1)
         debut = feuille.find('.carte-verso-mention {')
         self.assertIn('color:', feuille[debut:feuille.find('}', debut)])
+
+
+class RequetesConstantesTests(TestCase):
+    """Le nombre de requetes d'une liste ne doit pas suivre son nombre de
+    lignes. Audit mene sur 22 ecrans : 21 etaient deja constants, un seul
+    presentait un vrai N+1."""
+
+    def setUp(self):
+        self.medecin = creer_medecin('medecin-n1@santesn.sn')
+        self.client.login(username='medecin-n1@santesn.sn', password=PASSWORD)
+
+    def _consultations(self, combien):
+        for i in range(combien):
+            patient = creer_patient(nom=f'N{i}', prenom=f'P{i}')
+            consultation = Consultation.objects.create(
+                patient=patient, medecin=self.medecin,
+                date_consultation=timezone.now(), diagnostic='D')
+            Ordonnance.objects.create(consultation=consultation, medicaments='X')
+
+    def test_historique_consultations_ne_requete_pas_par_ligne(self):
+        """.first() sur une relation prechargee emet une NOUVELLE requete
+        LIMIT 1 et ignore le cache du prefetch : une par ligne affichee.
+        Le filtre |first travaille sur la liste deja chargee.
+        Mesure avant correctif : 11 requetes a 3 lignes, 28 a 30."""
+        self._consultations(3)
+        with CaptureQueriesContext(connection) as petit:
+            self.client.get(reverse('historique_consultations'))
+        self._consultations(15)
+        with CaptureQueriesContext(connection) as grand:
+            self.client.get(reverse('historique_consultations'))
+        self.assertEqual(len(petit.captured_queries), len(grand.captured_queries))
+
+    def test_le_gabarit_nappelle_pas_first_sur_la_relation_prechargee(self):
+        self._consultations(1)
+        contenu = self.client.get(reverse('historique_consultations')).content.decode()
+        self.assertNotIn('ordonnance_set.first', contenu)

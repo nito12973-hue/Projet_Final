@@ -52,7 +52,14 @@
                 <td>{{ consultation.diagnostic }}</td>
                 <td>{{ consultation.traitement|default:"-" }}</td>
                 <td>
-                    {% with ordonnance=consultation.ordonnance_set.first %}
+                    {% comment %}
+                    .all|first et non .first : la vue precharge ordonnance_set
+                    (prefetch_related), mais .first() emet une NOUVELLE requete
+                    LIMIT 1 et ignore le cache -- une par ligne affichee.
+                    Mesure : 11 requetes a 3 lignes, 28 a 30. Le filtre |first
+                    travaille sur la liste deja chargee.
+                    {% endcomment %}
+                    {% with ordonnance=consultation.ordonnance_set.all|first %}
                     {% if ordonnance %}
                     <a class="button primary btn btn-sm" href="{% url 'voir_ordonnance_medecin' ordonnance.pk %}">{% icone "qr-scan" %} Voir</a>
                     {% else %}
