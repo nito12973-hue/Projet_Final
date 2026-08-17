@@ -1705,10 +1705,20 @@
             text-align: center;
         }
 
+        /* Le verso est DOMINE par le QR : c'est sa seule fonction. Fond clair
+           sous le code (contraste maximal a l'impression), une seule ligne de
+           mention, rien d'autre. */
         .carte-verso {
-            flex-direction: row;
             align-items: center;
-            gap: 16px;
+            justify-content: center;
+            gap: 8px;
+            background: #f4f7f7;
+            padding: 10px;
+        }
+
+        .carte-verso .carte-verso-mention {
+            color: var(--primary-dark);
+            opacity: 0.65;
         }
 
         /* Le QR garde sa taille INTRINSEQUE (~23 mm, reglee a la generation).
@@ -1717,8 +1727,6 @@
            blanc. Meme recette que le QR des ordonnances, qui fonctionne. */
         .carte-verso-qr {
             flex: 0 0 auto;
-            padding: 5px;
-            border-radius: 6px;
             background: #ffffff;
             line-height: 0;
         }
@@ -1727,27 +1735,71 @@
             display: block;
         }
 
-        .carte-verso-texte {
-            font-size: 9.5px;
-            line-height: 1.5;
+        .carte-verso-mention {
+            margin: 0;
+            font-size: 8px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
         }
 
-        .carte-verso-texte p {
-            margin: 0 0 6px;
-        }
-
-        .carte-verso-titre {
+        /* "Mon QR code" (espace assure) : meme code que la carte imprimee. */
+        .mon-qr {
             display: flex;
             align-items: center;
-            gap: 6px;
-            font-family: 'Manrope', 'Public Sans', 'Segoe UI', Arial, sans-serif;
-            font-size: 12px;
-            font-weight: 800;
+            justify-content: space-between;
+            gap: 24px;
+            flex-wrap: wrap;
+            margin-bottom: 22px;
         }
 
-        .carte-verso-mention {
-            opacity: 0.78;
-            font-size: 8.5px;
+        .mon-qr h2 {
+            margin: 0 0 4px;
+            font-size: 16px;
+            color: var(--titre);
+        }
+
+        .mon-qr-numero {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin: 10px 0 14px;
+            font-size: 15px;
+        }
+
+        .mon-qr-image {
+            flex: 0 0 auto;
+            padding: 10px;
+            border-radius: 12px;
+            background: #ffffff;
+            border: 1px solid var(--bordure);
+            line-height: 0;
+        }
+
+        .mon-qr-image svg {
+            display: block;
+        }
+
+        .qr-agrandi {
+            border: none;
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            background: #ffffff;
+        }
+
+        .qr-agrandi::backdrop {
+            background: rgba(11, 32, 39, 0.55);
+        }
+
+        .qr-agrandi-image svg {
+            display: block;
+            margin: 0 auto;
+        }
+
+        .qr-agrandi .code {
+            margin: 14px 0;
+            font-size: 15px;
+            color: var(--primary-dark);
         }
 
         @media print {

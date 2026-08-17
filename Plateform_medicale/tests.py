@@ -4970,8 +4970,11 @@ class CartePriseEnChargeTests(TestCase):
 
         self.client.login(username='admin-carte@santesn.sn', password=PASSWORD)
         reponse = self._carte()
-        self.assertContains(
-            reponse, reverse('carte_scan', args=[self.principal.numero_carte]))
+        # L'adresse n'est plus ECRITE sur la page : elle n'existe que dans le
+        # code lui-meme. La carte ne s'explique pas, elle se presente.
+        self.assertEqual(
+            reponse.context['url_scan'],
+            'http://testserver' + reverse('carte_scan', args=[self.principal.numero_carte]))
         contenu = reponse.content.decode()
         for secret in ('Hypertension', 'Amlodipine'):
             self.assertNotIn(secret, contenu)
@@ -5094,6 +5097,98 @@ class CartePriseEnChargeTests(TestCase):
         self.client.login(username='pharma-carte@santesn.sn', password=PASSWORD)
         self._scan()
         self.assertEqual(JournalActivite.objects.count(), 0)
+
+    # --- Le QR domine le verso, sans notice technique --------------------
+
+    def test_le_qr_occupe_lessentiel_du_verso(self):
+        """Un QR minuscule perdu dans du texte ne se scanne pas au comptoir.
+        44 mm sur une carte de 54 mm de haut : le code domine, en gardant la
+        marge de silence necessaire a une lecture fiable."""
+        self.client.login(username='admin-carte@santesn.sn', password=PASSWORD)
+        import re as _re
+        contenu = self._carte().content.decode()
+        debut = contenu.find('carte-verso-qr')
+        largeur = _re.search(r'<svg width="([0-9.]+)mm"', contenu[debut:])
+        self.assertIsNotNone(largeur, 'aucun QR trouve au verso')
+        self.assertGreaterEqual(float(largeur.group(1)), 40)
+        self.assertLessEqual(float(largeur.group(1)), 50)
+
+    def test_aucune_notice_technique_sur_lecran_admin(self):
+        """L'interface montre les actions utiles, pas le fonctionnement du
+        systeme : le token, l'encodage et la chaine de permissions relevent
+        du cahier des charges, pas de l'ecran."""
+        self.client.login(username='admin-carte@santesn.sn', password=PASSWORD)
+        contenu = self._carte().content.decode()
+        # Pas de mot generique ici : "token" matcherait csrfmiddlewaretoken,
+        # "permissions" un libelle legitime. On cible les phrases de notice.
+        for jargon in ('Ce que fait ce QR', 'aucun droit par elle-même',
+                       'Pharmacien — voit les ordonnances',
+                       'identifiant sécurisé'):
+            self.assertNotIn(jargon, contenu)
+        # Les deux actions utiles restent.
+        self.assertIn('Imprimer la carte', contenu)
+
+
+class MonQrCodeAssureTests(TestCase):
+    """L'assure consulte son propre QR depuis son profil -- le MEME que celui
+    de sa carte imprimee, pas un second identifiant a garder synchronise."""
+
+    def setUp(self):
+        self.user_a = creer_utilisateur(User.Role.ASSURE, 'qr-a@santesn.sn')
+        self.a = Patient.objects.create(
+            user=self.user_a, nom='Ba', prenom='Awa',
+            date_naissance=datetime.date(1990, 5, 5), telephone='770000070')
+        self.user_b = creer_utilisateur(User.Role.ASSURE, 'qr-b@santesn.sn')
+        self.b = Patient.objects.create(
+            user=self.user_b, nom='Sy', prenom='Modou',
+            date_naissance=datetime.date(1988, 2, 2), telephone='770000071')
+        self.client.login(username='qr-a@santesn.sn', password=PASSWORD)
+
+    def test_le_profil_affiche_un_vrai_qr_et_le_numero(self):
+        reponse = self.client.get(reverse('mon_profil_assure'))
+        self.assertContains(reponse, 'Mon QR code')
+        self.assertContains(reponse, self.a.numero_carte)
+        contenu = reponse.content.decode()
+        self.assertIn('<svg', contenu)
+        self.assertGreater(contenu.count('<rect'), 20)
+
+    def test_le_qr_du_profil_est_celui_de_la_carte(self):
+        """Meme adresse encodee : un second identifiant "pour le profil"
+        serait un second systeme, donc une desynchronisation un jour."""
+        contenu = self.client.get(reverse('mon_profil_assure')).content.decode()
+        attendu = self.a.qr_svg('http://testserver'
+                                + reverse('carte_scan', args=[self.a.numero_carte]),
+                                taille_mm=52)
+        self.assertIn(attendu, contenu)
+
+    def test_un_assure_ne_voit_pas_le_numero_ni_le_qr_dun_autre(self):
+        contenu = self.client.get(reverse('mon_profil_assure')).content.decode()
+        self.assertNotIn(self.b.numero_carte, contenu)
+
+    def test_un_assure_natteint_pas_la_carte_imprimable_dun_autre(self):
+        self.assertEqual(
+            self.client.get(reverse('carte_patient', args=[self.b.pk])).status_code, 403)
+
+    def test_le_profil_ne_montre_aucune_notice_technique(self):
+        contenu = self.client.get(reverse('mon_profil_assure')).content.decode()
+        for jargon in ('Ce que fait ce QR', 'identifiant sécurisé',
+                       'aucun droit par elle-même'):
+            self.assertNotIn(jargon, contenu)
+
+    def test_profil_sans_fiche_ne_plante_pas(self):
+        """Un assure qui n'a pas encore complete son profil n'a pas de numero
+        de carte : la section ne doit pas s'afficher a moitie."""
+        self.client.logout()
+        creer_utilisateur(User.Role.ASSURE, 'qr-sans-fiche@santesn.sn')
+        self.client.login(username='qr-sans-fiche@santesn.sn', password=PASSWORD)
+        reponse = self.client.get(reverse('mon_profil_assure'))
+        self.assertEqual(reponse.status_code, 200)
+        # L'invariant qui compte : aucun QR n'est fabrique sans numero de
+        # carte. Verifie sur le contexte ET sur le balisage de la section.
+        self.assertIsNone(reponse.context['patient'])
+        self.assertIsNone(reponse.context['qr_svg'])
+        self.assertNotContains(reponse, 'class="panel panel-bloc mon-qr"')
+
 
 
 class ColonnesOptionnellesMobileTests(TestCase):

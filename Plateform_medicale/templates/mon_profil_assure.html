@@ -45,6 +45,45 @@
         </div>
     </div>
 </section>
+
+{% comment %}
+Le QR affiche ici est EXACTEMENT celui de la carte imprimee : meme adresse,
+meme fabrique. Pas de second identifiant "pour le profil", qui serait un
+second systeme a garder synchronise.
+{% endcomment %}
+<section class="panel panel-bloc mon-qr">
+    <div>
+        <h2>Mon QR code</h2>
+        <p class="subtitle">À présenter chez un prestataire partenaire.</p>
+        <p class="mon-qr-numero code">{{ patient.numero_carte }}
+            <button type="button" class="btn-copier-carte" data-copier="{{ patient.numero_carte }}" aria-label="Copier le numéro de carte">{% icone "copy" %}</button>
+        </p>
+        <button type="button" class="button btn" id="bouton-agrandir-qr">{% icone "qr-scan" %} Agrandir</button>
+    </div>
+    <div class="mon-qr-image">{{ qr_svg|safe }}</div>
+</section>
+
+{% comment %}
+<dialog> natif : fermeture par Echap et par clic sur le fond sans JS de
+gestion de focus a maintenir.
+{% endcomment %}
+<dialog id="qr-agrandi" class="qr-agrandi">
+    <div class="qr-agrandi-image">{{ qr_svg|safe }}</div>
+    <p class="code">{{ patient.numero_carte }}</p>
+    <button type="button" class="button primary btn" id="fermer-qr">Fermer</button>
+</dialog>
+
+<script>
+    (function () {
+        var boite = document.getElementById('qr-agrandi');
+        var ouvrir = document.getElementById('bouton-agrandir-qr');
+        var fermer = document.getElementById('fermer-qr');
+        if (!boite || !ouvrir || typeof boite.showModal !== 'function') { return; }
+        ouvrir.addEventListener('click', function () { boite.showModal(); });
+        fermer.addEventListener('click', function () { boite.close(); });
+        boite.addEventListener('click', function (e) { if (e.target === boite) { boite.close(); } });
+    })();
+</script>
 {% endif %}
 
 <section class="panel panel-form">

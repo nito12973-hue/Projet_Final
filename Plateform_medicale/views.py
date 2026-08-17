@@ -3035,7 +3035,18 @@ def mon_profil_assure(request):
             initial = {"nom": request.user.last_name, "prenom": request.user.first_name}
         form = ProfilAssureForm(instance=patient, initial=initial)
 
-    return render(request, "mon_profil_assure.html", {"form": form, "patient": patient})
+    # Le QR du profil est EXACTEMENT celui de la carte : meme URL, meme
+    # fabrique. Un second identifiant "pour le profil" serait un second
+    # systeme a garder synchronise, donc a desynchroniser un jour.
+    qr_svg = None
+    if patient is not None:
+        qr_svg = patient.qr_svg(
+            request.build_absolute_uri(reverse("carte_scan", args=[patient.numero_carte])),
+            taille_mm=52,
+        )
+
+    return render(request, "mon_profil_assure.html",
+                  {"form": form, "patient": patient, "qr_svg": qr_svg})
 
 
 @role_required(User.Role.ASSURE)
