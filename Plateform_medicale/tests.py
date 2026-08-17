@@ -5427,3 +5427,122 @@ class CloisonnementParUrlTests(TestCase):
         self.assertEqual(reponse.status_code, 403)
         self.user_b.refresh_from_db()
         self.assertTrue(self.user_b.is_active)
+
+
+class OrdonnanceDocumentTests(TestCase):
+    """L'ordonnance est un DOCUMENT, pas un ecran : meme mise en page A4 a
+    l'ecran et sur papier, et rien d'autre que le document a l'impression.
+
+    Contrainte du modele : Ordonnance.medicaments est UN SEUL champ de texte
+    libre. Ni dosage, ni posologie, ni duree, ni quantite n'existent en base
+    -- les lignes saisies par le medecin sont donc rendues telles quelles."""
+
+    def setUp(self):
+        self.prestataire = Prestataire.objects.create(
+            nom='Hôpital Principal de Dakar',
+            type_prestataire=Prestataire.Type.HOPITAL,
+            ville='Dakar', telephone='338391010')
+        self.medecin = creer_medecin('medecin-doc@santesn.sn', specialite='Cardiologie')
+        Medecin.objects.filter(pk=self.medecin.pk).update(prestataire=self.prestataire)
+        self.medecin.refresh_from_db()
+
+        self.assure_user = creer_utilisateur(User.Role.ASSURE, 'assure-doc@santesn.sn')
+        self.patient = Patient.objects.create(
+            user=self.assure_user, nom='Sow', prenom='Moussa',
+            date_naissance=datetime.date(1975, 1, 1), telephone='770000080')
+
+        self.consultation = Consultation.objects.create(
+            patient=self.patient, medecin=self.medecin,
+            date_consultation=timezone.now(), diagnostic='Hypertension')
+        self.ordonnance = Ordonnance.objects.create(
+            consultation=self.consultation,
+            medicaments='Paracétamol 500 mg — 3×/jour\nAmoxicilline 1 g — 2×/jour')
+
+        self.client.login(username='medecin-doc@santesn.sn', password=PASSWORD)
+
+    def _document(self):
+        return self.client.get(reverse('voir_ordonnance_medecin', args=[self.ordonnance.pk]))
+
+    def test_le_document_porte_les_donnees_reelles(self):
+        reponse = self._document()
+        self.assertContains(reponse, 'SantéSN')
+        self.assertContains(reponse, 'Cardiologie')
+        self.assertContains(reponse, 'Hôpital Principal de Dakar')
+        self.assertContains(reponse, 'Moussa')
+        self.assertContains(reponse, self.patient.numero_carte)
+        self.assertContains(reponse, '01/01/1975')
+        self.assertContains(reponse, self.ordonnance.code_qr)
+
+    def test_une_ligne_saisie_donne_une_ligne_prescrite(self):
+        """Pas de colonnes inventees : le modele n'a qu'un champ de texte."""
+        lignes = self._document().context['lignes_prescription']
+        self.assertEqual(lignes, ['Paracétamol 500 mg — 3×/jour',
+                                  'Amoxicilline 1 g — 2×/jour'])
+
+    def test_les_lignes_vides_sont_ignorees(self):
+        Ordonnance.objects.filter(pk=self.ordonnance.pk).update(
+            medicaments='Ibuprofène 400 mg\n\n\n  \nOméprazole 20 mg\n')
+        self.assertEqual(self._document().context['lignes_prescription'],
+                         ['Ibuprofène 400 mg', 'Oméprazole 20 mg'])
+
+    def test_ordonnance_sans_medicament_affiche_un_etat_vide(self):
+        Ordonnance.objects.filter(pk=self.ordonnance.pk).update(medicaments='')
+        reponse = self._document()
+        self.assertEqual(reponse.context['lignes_prescription'], [])
+        self.assertContains(reponse, "Aucun médicament n'a été saisi")
+
+    def test_beaucoup_de_medicaments_ne_cassent_pas_le_document(self):
+        Ordonnance.objects.filter(pk=self.ordonnance.pk).update(
+            medicaments='\n'.join(f'Médicament {i} — 1×/jour' for i in range(25)))
+        reponse = self._document()
+        self.assertEqual(len(reponse.context['lignes_prescription']), 25)
+        # Une prescription ne doit jamais etre tranchee entre deux pages.
+        self.assertContains(reponse, 'page-break-inside: avoid')
+
+    def test_un_vrai_qr_pas_une_image_decorative(self):
+        contenu = self._document().content.decode()
+        # On ancre sur le BALISAGE : le nom de classe nu matche d'abord la
+        # regle CSS inline de base.html.
+        debut = contenu.find('class="feuille-qr"')
+        self.assertNotEqual(debut, -1)
+        self.assertIn('<svg', contenu[debut:debut + 400])
+        self.assertGreater(contenu[debut:].count('<rect'), 20)
+
+    def test_le_qr_nexpose_pas_les_medicaments(self):
+        """Il encode le code de verification, pas le contenu medical."""
+        contenu = self._document().content.decode()
+        debut = contenu.find('class="feuille-qr"')
+        fin = contenu.find('</svg>', debut)
+        self.assertNotIn('Paracétamol', contenu[debut:fin])
+        self.assertNotIn('Amoxicilline', contenu[debut:fin])
+
+    def test_limpression_ne_sort_que_le_document(self):
+        contenu = self._document().content.decode()
+        self.assertIn('@media print', contenu)
+        self.assertIn('size: A4', contenu)
+        # Le decor applicatif est masque, y compris les actions de la page.
+        self.assertIn('.sans-impression', contenu)
+        self.assertIn('class="page-title sans-impression"', contenu)
+
+    def test_espace_de_signature_sans_signature_inventee(self):
+        """Aucune signature n'est stockee : on reserve l'espace, on n'en
+        fabrique pas une."""
+        reponse = self._document()
+        self.assertContains(reponse, 'Signature et cachet du médecin')
+        self.assertContains(reponse, 'feuille-cadre-signature')
+
+    def test_lassure_voit_le_meme_document(self):
+        self.client.logout()
+        self.client.login(username='assure-doc@santesn.sn', password=PASSWORD)
+        reponse = self.client.get(
+            reverse('voir_ordonnance_assure', args=[self.ordonnance.pk]))
+        self.assertEqual(reponse.status_code, 200)
+        self.assertContains(reponse, 'feuille-prescription')
+        self.assertEqual(len(reponse.context['lignes_prescription']), 2)
+
+    def test_un_medecin_natteint_pas_lordonnance_dun_confrere(self):
+        autre = creer_medecin('autre-doc@santesn.sn')
+        self.client.logout()
+        self.client.login(username='autre-doc@santesn.sn', password=PASSWORD)
+        self.assertEqual(self._document().status_code, 404)
+        self.assertIsNotNone(autre)

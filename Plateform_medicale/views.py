@@ -2704,15 +2704,36 @@ def ajouter_ordonnance_medecin(request, consultation_pk):
     )
 
 
+def _contexte_ordonnance(request, ordonnance, retour_url):
+    """Contexte commun aux deux vues d'ordonnance (medecin et assure).
+
+    medicaments est UN SEUL champ de texte libre : ni dosage, ni posologie,
+    ni duree, ni quantite n'existent en base. On decoupe donc sur les lignes
+    saisies par le medecin -- une ligne = une prescription -- au lieu
+    d'inventer des colonnes.
+
+    Le QR encode l'adresse de verification de l'ordonnance, pas les
+    medicaments : le contenu medical ne quitte jamais le serveur.
+    """
+    lignes = [ligne.strip() for ligne in ordonnance.medicaments.splitlines()
+              if ligne.strip()]
+    return {
+        "ordonnance": ordonnance,
+        "retour_url": retour_url,
+        "lignes_prescription": lignes,
+        "qr_svg": ordonnance.qr_svg,
+    }
+
+
 @role_required(User.Role.MEDECIN)
 def voir_ordonnance_medecin(request, pk):
     medecin = _medecin_courant(request)
-    ordonnance = get_object_or_404(Ordonnance, pk=pk, consultation__medecin=medecin)
-    return render(
-        request,
-        "voir_ordonnance.html",
-        {"ordonnance": ordonnance, "retour_url": "historique_consultations"},
-    )
+    ordonnance = get_object_or_404(
+        Ordonnance.objects.select_related(
+            "consultation__patient", "consultation__medecin__prestataire", "delivrance"),
+        pk=pk, consultation__medecin=medecin)
+    return render(request, "voir_ordonnance.html",
+                  _contexte_ordonnance(request, ordonnance, "historique_consultations"))
 
 
 @role_required(User.Role.MEDECIN)
@@ -3211,12 +3232,12 @@ def mes_ordonnances_assure(request):
 def voir_ordonnance_assure(request, pk):
     patient = _patient_principal(request)
     beneficiaires = _beneficiaires(patient) if patient else Patient.objects.none()
-    ordonnance = get_object_or_404(Ordonnance, pk=pk, consultation__patient__in=beneficiaires)
-    return render(
-        request,
-        "voir_ordonnance.html",
-        {"ordonnance": ordonnance, "retour_url": "mes_ordonnances_assure"},
-    )
+    ordonnance = get_object_or_404(
+        Ordonnance.objects.select_related(
+            "consultation__patient", "consultation__medecin__prestataire", "delivrance"),
+        pk=pk, consultation__patient__in=beneficiaires)
+    return render(request, "voir_ordonnance.html",
+                  _contexte_ordonnance(request, ordonnance, "mes_ordonnances_assure"))
 
 
 @role_required(User.Role.ASSURE)

@@ -1758,6 +1758,204 @@
             color: var(--titre);
         }
 
+        /* --- Ordonnance : feuille A4 -------------------------------------
+           Meme mise en page a l'ecran et sur papier, seule l'echelle change :
+           l'apercu est donc un vrai apercu. Sobre volontairement -- un
+           document medical n'est pas une page marketing. */
+        .feuille {
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 18mm 16mm;
+            background: #ffffff;
+            color: var(--ink);
+            border: 1px solid var(--bordure);
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(11, 32, 39, 0.06),
+                        0 14px 38px rgba(11, 32, 39, 0.07);
+        }
+
+        .feuille-entete {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 24px;
+            padding-bottom: 14px;
+            border-bottom: 2px solid var(--primary-dark);
+        }
+
+        .feuille-marque {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .feuille-marque-nom {
+            margin: 0;
+            font-family: 'Manrope', 'Public Sans', 'Segoe UI', Arial, sans-serif;
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--primary-dark);
+        }
+
+        .feuille-marque-note {
+            margin: 2px 0 0;
+            font-size: 11px;
+            color: var(--muted);
+        }
+
+        .feuille-praticien {
+            text-align: right;
+            font-size: 12px;
+            line-height: 1.6;
+            color: var(--muted);
+        }
+
+        .feuille-praticien p {
+            margin: 0;
+        }
+
+        .feuille-praticien-nom {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--titre);
+        }
+
+        .feuille-etiquette {
+            margin: 0 0 6px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .feuille-patient {
+            margin-top: 20px;
+            padding: 14px 16px;
+            border-radius: 6px;
+            background: var(--fond-doux, #f4f7f7);
+        }
+
+        .feuille-patient-lignes p {
+            margin: 0;
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .feuille-patient-nom {
+            font-size: 16px !important;
+            font-weight: 700;
+            color: var(--titre);
+        }
+
+        .feuille-titre {
+            margin: 26px 0 14px;
+            font-size: 15px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            text-align: center;
+            color: var(--primary-dark);
+        }
+
+        .feuille-lignes {
+            margin: 0;
+            padding-left: 24px;
+            min-height: 60mm;
+        }
+
+        .feuille-lignes li {
+            padding: 9px 0;
+            font-size: 14px;
+            line-height: 1.6;
+            border-bottom: 1px dashed var(--bordure);
+            /* Une prescription ne se coupe pas entre deux pages. */
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
+        .feuille-vide {
+            list-style: none;
+            margin-left: -24px;
+            color: var(--muted);
+            font-style: italic;
+        }
+
+        .feuille-pied {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 32px;
+            margin-top: 26px;
+        }
+
+        .feuille-qr {
+            flex: 0 0 auto;
+            text-align: center;
+            line-height: 0;
+        }
+
+        .feuille-qr svg {
+            display: block;
+        }
+
+        .feuille-qr .code {
+            display: block;
+            margin-top: 6px;
+            font-size: 11px;
+            line-height: 1.4;
+            color: var(--muted);
+        }
+
+        .feuille-signature {
+            flex: 1;
+            max-width: 70mm;
+            text-align: right;
+        }
+
+        .feuille-date {
+            margin: 0 0 14px;
+            font-size: 12.5px;
+            color: var(--muted);
+        }
+
+        /* Trait franc, pas la bordure douce des cartes : sur papier une
+           ligne de signature doit se voir. */
+        .feuille-cadre-signature {
+            height: 26mm;
+            border-bottom: 1px solid rgba(11, 32, 39, 0.45);
+        }
+
+        .feuille-mention {
+            margin: 22px 0 0;
+            padding-top: 10px;
+            border-top: 1px solid var(--bordure);
+            font-size: 10.5px;
+            line-height: 1.6;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        @media (max-width: 760px) {
+            /* A l'ecran etroit la feuille respire moins, mais garde sa
+               structure : l'impression, elle, revient toujours en A4. */
+            .feuille {
+                padding: 20px 16px;
+            }
+
+            .feuille-entete,
+            .feuille-pied {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+
+            .feuille-praticien,
+            .feuille-signature {
+                text-align: left;
+                max-width: none;
+            }
+        }
+
         .qr-agrandi {
             border: none;
             border-radius: 16px;
@@ -1790,8 +1988,40 @@
             #modale-confirmation,
             .topbar,
             .toasts,
-            .carte-sans-impression {
+            .carte-sans-impression,
+            .sans-impression {
                 display: none !important;
+            }
+
+            /* Ordonnance : la feuille devient la page. Ni ombre, ni bordure,
+               ni marge propre -- c'est @page qui porte les marges du papier,
+               sinon elles s'additionnent et le document se decale. */
+            .feuille {
+                max-width: none;
+                margin: 0;
+                padding: 0;
+                border: none;
+                border-radius: 0;
+                box-shadow: none;
+            }
+
+            .feuille-patient {
+                /* Les fonds sont supprimes par defaut a l'impression. */
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            /* Un tableau de prescription ne doit pas se couper : si la liste
+               deborde, elle passe entiere a la page suivante plutot que d'etre
+               tranchee au milieu d'une posologie. */
+            .feuille-lignes li {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+
+            .feuille-pied {
+                break-inside: avoid;
+                page-break-inside: avoid;
             }
 
             body,
@@ -1836,8 +2066,12 @@
                 print-color-adjust: exact;
             }
 
+            /* A4 explicite : sans size, le navigateur retombe sur le format
+               par defaut de l'imprimante (Letter aux Etats-Unis), et la
+               feuille se decale. */
             @page {
-                margin: 10mm;
+                size: A4;
+                margin: 14mm;
             }
         }
 
