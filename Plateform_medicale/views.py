@@ -52,7 +52,6 @@ from .forms import (
     PriseEnChargeForm,
     ProfilAssureForm,
     RendezVousAssureForm,
-    RendezVousForm,
     ServiceMedicalForm,
     SetupWizardForm,
     UtilisateurCreationForm,
@@ -2480,23 +2479,18 @@ def agenda_medecin(request):
     })
 
 
-@role_required(User.Role.MEDECIN)
-def ajouter_rendez_vous(request):
-    medecin = _medecin_courant(request)
-    if medecin is None:
-        return render(request, "medecin_fiche_manquante.html")
-
-    if request.method == "POST":
-        form = RendezVousForm(request.POST)
-        if form.is_valid():
-            rendez_vous = form.save(commit=False)
-            rendez_vous.medecin = medecin
-            rendez_vous.save()
-            messages.success(request, "Rendez-vous créé.")
-            return redirect("agenda_medecin")
-    else:
-        form = RendezVousForm()
-    return render(request, "ajouter_rendez_vous.html", {"form": form})
+# ajouter_rendez_vous (creation par le MEDECIN) a ete RETIREE.
+#
+# Erreur metier : RendezVousForm laissait le medecin choisir n'importe quel
+# patient de la plateforme -- son docstring l'assumait meme explicitement --
+# et le rendez-vous naissait en statut DEMANDE sans que le patient ait rien
+# demande. Un praticien pouvait ainsi inscrire au calendrier une personne
+# qui ne l'avait jamais sollicite.
+#
+# Le rendez-vous est DEMANDE par l'assure (ajouter_rendez_vous_assure, qui
+# borne le choix a ses propres beneficiaires) puis TRAITE par le medecin
+# via changer_statut_rendez_vous ci-dessous. Creation et gestion sont deux
+# choses differentes : le medecin garde la seconde, pas la premiere.
 
 
 @role_required(User.Role.MEDECIN)

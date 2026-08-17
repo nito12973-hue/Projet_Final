@@ -214,37 +214,6 @@ class UtilisateurModificationForm(forms.ModelForm):
             ]
 
 
-class RendezVousForm(forms.ModelForm):
-    """
-    Creation d'un rendez-vous par le medecin.
-
-    Le champ patient n'est volontairement pas restreint aux patients deja
-    suivis par ce medecin : un nouveau patient peut le consulter pour la
-    premiere fois (comme dans un annuaire de soins partage).
-    """
-
-    date_heure = forms.DateTimeField(
-        label='Date et heure',
-        widget=forms.DateTimeInput(attrs={'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M'),
-        input_formats=['%Y-%m-%dT%H:%M'],
-    )
-    prestataire = forms.ModelChoiceField(
-        queryset=Prestataire.objects.filter(partenaire=True),
-        required=False,
-        label='Prestataire',
-    )
-
-    class Meta:
-        model = RendezVous
-        fields = ['patient', 'prestataire', 'date_heure', 'motif']
-
-    def clean_date_heure(self):
-        date_heure = self.cleaned_data['date_heure']
-        if date_heure < timezone.now():
-            raise forms.ValidationError("La date et l'heure du rendez-vous ne peuvent pas être dans le passé.")
-        return date_heure
-
-
 class ConsultationForm(forms.ModelForm):
     """Creation d'une consultation par le medecin connecte."""
 

@@ -9,7 +9,12 @@
         <h1>Bonjour Dr {{ medecin.prenom }} {{ medecin.nom }}</h1>
         <p class="subtitle">Votre activité en un coup d'œil.</p>
     </div>
-    <a class="button primary" href="{% url 'ajouter_rendez_vous' %}">Nouveau rendez-vous</a>
+    {% comment %}
+    Le medecin TRAITE des demandes, il n'en cree pas : le rendez-vous est
+    demande par l'assure. Ce lien ouvre l'agenda deja filtre sur les
+    demandes en attente -- le filtre existe deja, rien a construire.
+    {% endcomment %}
+    <a class="button primary" href="{% url 'agenda_medecin' %}?statut=DEMANDE">{% icone "calendar" %} Demandes de rendez-vous</a>
 </section>
 
 <section class="panel panel-bloc" style="margin-bottom:18px;">
