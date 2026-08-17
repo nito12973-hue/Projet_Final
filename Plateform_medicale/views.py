@@ -2707,20 +2707,31 @@ def ajouter_ordonnance_medecin(request, consultation_pk):
 def _contexte_ordonnance(request, ordonnance, retour_url):
     """Contexte commun aux deux vues d'ordonnance (medecin et assure).
 
-    medicaments est UN SEUL champ de texte libre : ni dosage, ni posologie,
-    ni duree, ni quantite n'existent en base. On decoupe donc sur les lignes
-    saisies par le medecin -- une ligne = une prescription -- au lieu
-    d'inventer des colonnes.
+    DEUX FORMATS, JAMAIS MELANGES :
+
+      - ordonnance STRUCTUREE (elle a des LigneOrdonnance) : on rend le
+        tableau medicament / dosage / posologie / duree / quantite ;
+      - ordonnance HISTORIQUE (texte libre, anterieure a LigneOrdonnance) :
+        on rend ses lignes de texte telles qu'elles ont ete saisies.
+
+    Aucune conversion de l'une vers l'autre : le texte des anciennes
+    ordonnances contient au moins trois formats, dont des tableaux tapes a
+    la main. Le decouper automatiquement finirait par attribuer un dosage au
+    mauvais medicament, sur des ordonnances deja delivrees.
 
     Le QR encode l'adresse de verification de l'ordonnance, pas les
     medicaments : le contenu medical ne quitte jamais le serveur.
     """
-    lignes = [ligne.strip() for ligne in ordonnance.medicaments.splitlines()
-              if ligne.strip()]
+    lignes_structurees = list(ordonnance.lignes.all())
     return {
         "ordonnance": ordonnance,
         "retour_url": retour_url,
-        "lignes_prescription": lignes,
+        "lignes_structurees": lignes_structurees,
+        # Rendu historique : uniquement si aucune ligne structuree n'existe.
+        "lignes_prescription": [] if lignes_structurees else [
+            ligne.strip() for ligne in ordonnance.medicaments.splitlines()
+            if ligne.strip()
+        ],
         "qr_svg": ordonnance.qr_svg,
     }
 

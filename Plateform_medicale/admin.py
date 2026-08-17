@@ -5,6 +5,7 @@ from .models import (
     Consultation,
     Delivrance,
     JournalActivite,
+    LigneOrdonnance,
     Medecin,
     Notification,
     Ordonnance,
@@ -152,8 +153,22 @@ class JournalActiviteAdmin(admin.ModelAdmin):
         return False
 
 
+class LigneOrdonnanceInline(admin.TabularInline):
+    """Les lignes se lisent avec leur ordonnance : une table separee dans
+    /admin/ obligerait a recomposer la prescription a la main."""
+
+    model = LigneOrdonnance
+    extra = 0
+
+
 admin.site.register(Consultation)
-admin.site.register(Ordonnance)
+
+
+@admin.register(Ordonnance)
+class OrdonnanceAdmin(admin.ModelAdmin):
+    list_display = ["code_qr", "consultation", "date_creation"]
+    search_fields = ["code_qr"]
+    inlines = [LigneOrdonnanceInline]
 
 
 @admin.register(Paiement)

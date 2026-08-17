@@ -68,7 +68,26 @@ donc pas l'historique medical du patient.
             <tr>
                 <td>{{ ordonnance.date_creation|date:"d/m/Y" }}</td>
                 <td>{{ ordonnance.consultation.medecin }}</td>
-                <td style="white-space:pre-line;">{{ ordonnance.medicaments }}</td>
+                <td>
+                    {% comment %}
+                    Ordonnance structuree : une ligne par prescription, avec
+                    ses champs reels. Sinon le texte d'origine, inchange.
+                    {% endcomment %}
+                    {% if ordonnance.lignes.exists %}
+                    <ul class="liste-prescription">
+                        {% for ligne in ordonnance.lignes.all %}
+                        <li>
+                            <strong>{{ ligne.medicament }}</strong>{% if ligne.dosage %} {{ ligne.dosage }}{% endif %}
+                            {% if ligne.posologie %}<span class="subtitle">· {{ ligne.posologie }}</span>{% endif %}
+                            {% if ligne.duree %}<span class="subtitle">· {{ ligne.duree }}</span>{% endif %}
+                            {% if ligne.quantite %}<span class="subtitle">· {{ ligne.quantite }}</span>{% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <span style="white-space:pre-line;">{{ ordonnance.medicaments }}</span>
+                    {% endif %}
+                </td>
                 <td>
                     {% if ordonnance.delivrance %}
                     <span class="badge validee">Délivrée le {{ ordonnance.delivrance.date_delivrance|date:"d/m/Y" }}</span>

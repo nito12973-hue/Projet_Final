@@ -1889,6 +1889,73 @@
             color: var(--primary-dark);
         }
 
+        /* Prescription structuree hors document A4 (ecrans pharmacien).
+           Reprend les jetons existants : aucune nouvelle couleur. */
+        .table-prescription {
+            width: 100%;
+            margin-top: 4px;
+            border-collapse: collapse;
+        }
+
+        .table-prescription th {
+            padding: 8px 10px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            text-align: left;
+            color: var(--muted);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .table-prescription td {
+            padding: 10px;
+            font-size: 13.5px;
+            vertical-align: top;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .liste-prescription {
+            margin: 0;
+            padding-left: 18px;
+            line-height: 1.7;
+        }
+
+        /* Tableau de prescription (ordonnances structurees). Sobre : des
+           filets fins, pas de fond colore -- c'est un document medical. */
+        .feuille-table {
+            width: 100%;
+            min-height: 60mm;
+            border-collapse: collapse;
+        }
+
+        .feuille-table th {
+            padding: 8px 10px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            text-align: left;
+            color: var(--muted);
+            border-bottom: 1.5px solid var(--primary-dark);
+        }
+
+        .feuille-table td {
+            padding: 11px 10px;
+            font-size: 13px;
+            line-height: 1.5;
+            vertical-align: top;
+            border-bottom: 1px dashed var(--bordure);
+            /* Une prescription ne se coupe pas entre deux pages. */
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
+        .feuille-medicament {
+            font-weight: 700;
+            color: var(--titre);
+        }
+
         .feuille-lignes {
             margin: 0;
             padding-left: 24px;
