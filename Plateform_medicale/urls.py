@@ -86,7 +86,6 @@ urlpatterns = [
     path('plans-de-couverture/<int:pk>/supprimer/', views.supprimer_plan_couverture, name='supprimer_plan_couverture'),
 
     path('medecin/agenda/', views.agenda_medecin, name='agenda_medecin'),
-    path('medecin/rendez-vous/ajouter/', views.ajouter_rendez_vous, name='ajouter_rendez_vous'),
     path('medecin/rendez-vous/<int:pk>/statut/', views.changer_statut_rendez_vous, name='changer_statut_rendez_vous'),
     path('medecin/patients/', views.mes_patients, name='mes_patients'),
     path('medecin/patients/recherche/', views.rechercher_patients_medecin, name='rechercher_patients_medecin'),

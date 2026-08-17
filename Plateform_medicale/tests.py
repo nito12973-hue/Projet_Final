@@ -13,7 +13,7 @@ from django.db import connection
 from django.forms import modelform_factory
 from django.test import Client, TestCase
 from django.test.utils import CaptureQueriesContext
-from django.urls import reverse
+from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
 
 from .models import (
@@ -844,17 +844,31 @@ class EspaceMedecinTests(TestCase):
         response = self.client.get(reverse('dashboard_medecin'))
         self.assertContains(response, 'pas encore associe')
 
-    def test_creation_rendez_vous_attribue_au_medecin_connecte(self):
-        response = self.client.post(reverse('ajouter_rendez_vous'), {
-            'patient': self.patient.pk,
-            'prestataire': '',
-            'date_heure': (timezone.now() + datetime.timedelta(days=1)).strftime('%Y-%m-%dT%H:%M'),
-            'motif': 'Controle',
-        })
-        self.assertRedirects(response, reverse('agenda_medecin'))
-        rendez_vous = RendezVous.objects.get(patient=self.patient)
-        self.assertEqual(rendez_vous.medecin, self.medecin)
-        self.assertEqual(rendez_vous.statut, RendezVous.Statut.DEMANDE)
+    def test_le_medecin_ne_peut_plus_creer_de_rendez_vous(self):
+        """Erreur metier corrigee : le formulaire laissait le medecin choisir
+        N'IMPORTE QUEL patient de la plateforme, et le rendez-vous naissait
+        en statut DEMANDE sans que le patient ait rien demande. La creation
+        appartient a l'assure ; le medecin traite les demandes.
+
+        La route n'existe plus : le retrait est cote SERVEUR, pas un bouton
+        masque."""
+        with self.assertRaises(NoReverseMatch):
+            reverse('ajouter_rendez_vous')
+        self.assertEqual(
+            self.client.post('/medecin/rendez-vous/ajouter/', {
+                'patient': self.patient.pk,
+                'date_heure': (timezone.now() + datetime.timedelta(days=1))
+                .strftime('%Y-%m-%dT%H:%M'),
+                'motif': 'Controle',
+            }).status_code, 404)
+        self.assertFalse(RendezVous.objects.filter(patient=self.patient).exists())
+
+    def test_le_tableau_de_bord_medecin_mene_aux_demandes(self):
+        """Le bouton ne propose plus de creer, il ouvre l'agenda filtre sur
+        les demandes en attente."""
+        reponse = self.client.get(reverse('dashboard_medecin'))
+        self.assertContains(reponse, 'Demandes de rendez-vous')
+        self.assertNotContains(reponse, 'Nouveau rendez-vous')
 
     def test_medecin_ne_peut_pas_modifier_le_rendez_vous_d_un_autre_medecin(self):
         rendez_vous = RendezVous.objects.create(
@@ -2475,12 +2489,21 @@ class RendezVousDateValidationTests(TestCase):
         self.client.login(username='medecin@santesn.sn', password=PASSWORD)
 
     def test_rendez_vous_dans_le_passe_refuse(self):
+        """La validation suit celui qui CREE reellement : depuis le retrait de
+        la creation par le medecin, elle se verifie du cote assure."""
+        assure = creer_utilisateur(User.Role.ASSURE, 'assure-date@santesn.sn')
+        patient = Patient.objects.create(
+            user=assure, nom='Ba', prenom='Awa',
+            date_naissance=datetime.date(1990, 1, 1), telephone='770000099')
+        self.client.logout()
+        self.client.login(username='assure-date@santesn.sn', password=PASSWORD)
         date_passee = (timezone.now() - datetime.timedelta(days=1)).strftime('%Y-%m-%dT%H:%M')
-        response = self.client.post(reverse('ajouter_rendez_vous'), {
-            'patient': self.patient.pk, 'prestataire': '', 'date_heure': date_passee, 'motif': 'Test',
+        reponse = self.client.post(reverse('ajouter_rendez_vous_assure'), {
+            'patient': patient.pk, 'medecin': self.medecin_utilisateur.pk,
+            'prestataire': '', 'date_heure': date_passee, 'motif': 'Test',
         })
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(RendezVous.objects.filter(patient=self.patient).exists())
+        self.assertEqual(reponse.status_code, 200)
+        self.assertFalse(RendezVous.objects.filter(patient=patient).exists())
 
 
 class ConsultationPriseEnChargeValidationTests(TestCase):
