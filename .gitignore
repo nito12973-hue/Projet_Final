@@ -31,3 +31,6 @@ Thumbs.db
 
 .vercel
 .env*
+
+# Sauvegardes de base de donnees (binaires, hors depot)
+db.sqlite3.sauvegarde-*

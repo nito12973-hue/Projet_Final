@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% load icones %}
+
+{% block title %}Dr {{ medecin.prenom }} {{ medecin.nom }}{% endblock %}
+
+{% block content %}
+<style>
+    /* Meme feuille locale que fiche_prestataire_assure.html : les deux
+       ecrans partagent .fiche-lignes, mais aucun n'est garanti d'etre
+       charge avant l'autre -- on la redeclare plutot que de creer une
+       dependance invisible entre deux gabarits. */
+    .fiche-lignes {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 14px 24px;
+        margin: 0 0 18px;
+    }
+
+    .fiche-lignes dt {
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--muted);
+        margin-bottom: 3px;
+    }
+
+    .fiche-lignes dd {
+        margin: 0;
+        font-weight: 600;
+    }
+</style>
+
+<section class="page-title">
+    <div>
+        <h1>Dr {{ medecin.prenom }} {{ medecin.nom }}</h1>
+        <p class="subtitle">{{ medecin.specialite }}</p>
+    </div>
+    {% if medecin.prestataire %}
+    <a class="button" href="{% url 'fiche_prestataire_assure' medecin.prestataire.pk %}">{% icone "chevron-left" %} Retour</a>
+    {% else %}
+    <a class="button" href="{% url 'prestataires_proches' %}">{% icone "chevron-left" %} Retour</a>
+    {% endif %}
+</section>
+
+<section class="panel panel-bloc">
+    <dl class="fiche-lignes">
+        <div>
+            <dt>Spécialité</dt>
+            <dd>{{ medecin.specialite }}</dd>
+        </div>
+        {% if medecin.annees_experience %}
+        <div>
+            <dt>Expérience</dt>
+            <dd>{{ medecin.annees_experience }} an{{ medecin.annees_experience|pluralize }}</dd>
+        </div>
+        {% endif %}
+        <div>
+            <dt>Structure</dt>
+            <dd>
+                {% if medecin.prestataire %}
+                <a href="{% url 'fiche_prestataire_assure' medecin.prestataire.pk %}">{{ medecin.prestataire.nom }}</a>
+                {% if medecin.prestataire.ville %} · {{ medecin.prestataire.ville }}{% endif %}
+                {% else %}
+                Non rattaché à une structure
+                {% endif %}
+            </dd>
+        </div>
+        {% if medecin.telephone %}
+        <div>
+            <dt>Téléphone</dt>
+            <dd>{{ medecin.telephone }}</dd>
+        </div>
+        {% endif %}
+    </dl>
+
+    {% if medecin.presentation %}
+    <h2>Présentation</h2>
+    <p>{{ medecin.presentation|linebreaksbr }}</p>
+    {% endif %}
+
+    <div class="actions">
+        <a class="button primary" href="{% url 'ajouter_rendez_vous_assure' %}?medecin={{ medecin.pk }}">
+            {% icone "calendar" %} Demander un rendez-vous
+        </a>
+    </div>
+</section>
+{% endblock %}

@@ -353,17 +353,61 @@ class RendezVousAssureForm(forms.ModelForm):
         model = RendezVous
         fields = ['patient', 'medecin', 'prestataire', 'date_heure', 'motif']
         labels = {'patient': 'Beneficiaire'}
+        widgets = {
+            'motif': forms.Textarea(attrs={
+                'rows': 4,
+                'placeholder': (
+                    "Ex. : douleurs abdominales depuis trois jours, "
+                    "avec de la fievre et des nausees."
+                ),
+            }),
+        }
+        help_texts = {
+            'motif': "Decrivez ce que vous ressentez. Le medecin etablira le diagnostic.",
+        }
 
-    def __init__(self, *args, beneficiaires=None, **kwargs):
+    def __init__(self, *args, beneficiaires=None, prestataire=None, **kwargs):
         super().__init__(*args, **kwargs)
         if beneficiaires is not None:
             self.fields['patient'].queryset = beneficiaires
+
+        # Le parcours passe par le prestataire : quand il est connu, on ne
+        # propose QUE ses medecins. Sans ce filtre, l'assure pouvait demander
+        # un rendez-vous avec un cardiologue de Dakar "chez" une pharmacie
+        # de Rufisque -- le formulaire acceptait n'importe quel couple.
+        if prestataire is not None:
+            self.fields['medecin'].queryset = Medecin.objects.filter(
+                prestataire=prestataire
+            ).order_by('nom', 'prenom')
+            self.fields['prestataire'].initial = prestataire
+        else:
+            self.fields['medecin'].queryset = Medecin.objects.select_related(
+                'prestataire'
+            ).order_by('nom', 'prenom')
 
     def clean_date_heure(self):
         date_heure = self.cleaned_data['date_heure']
         if date_heure < timezone.now():
             raise forms.ValidationError("La date et l'heure du rendez-vous ne peuvent pas être dans le passé.")
         return date_heure
+
+    def clean(self):
+        """Le medecin doit exercer chez le prestataire choisi.
+
+        Regle posee ici et non dans le modele : un rendez-vous cree par
+        l'administration ou une reprise de donnees peut legitimement porter
+        un prestataire different (medecin ayant change de structure depuis).
+        C'est la DEMANDE de l'assure qu'on contraint, pas l'historique.
+        """
+        cleaned = super().clean()
+        medecin = cleaned.get('medecin')
+        prestataire = cleaned.get('prestataire')
+        if medecin and prestataire and medecin.prestataire_id != prestataire.pk:
+            self.add_error('medecin', forms.ValidationError(
+                "Ce medecin n'exerce pas chez %(prestataire)s.",
+                params={'prestataire': prestataire.nom},
+            ))
+        return cleaned
 
 
 class PrestataireForm(forms.ModelForm):
@@ -503,7 +547,16 @@ class MedecinForm(forms.ModelForm):
 
     class Meta:
         model = Medecin
-        fields = ['nom', 'prenom', 'specialite', 'telephone', 'email', 'prestataire']
+        fields = [
+            'nom', 'prenom', 'specialite', 'telephone', 'email', 'prestataire',
+            'annees_experience', 'presentation',
+        ]
+        widgets = {
+            'presentation': forms.Textarea(attrs={
+                'rows': 4,
+                'placeholder': "Domaines de prise en charge, parcours, langues parlees...",
+            }),
+        }
 
     def clean_email(self):
         email = self.cleaned_data['email']

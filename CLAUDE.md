@@ -154,6 +154,56 @@ Fonctionnalités livrées après les 15 phases initiales, hors numérotation :
   grandes villes/communes). Si le lieu est introuvable ou le service indisponible,
   message inline sous le bouton (pas d'alerte navigateur).
 
+## Parcours du patient : prestataire → médecin → rendez-vous
+
+**Le patient part d'un lieu, pas d'un acte.** Le parcours est
+`prestataires_proches` → `fiche_prestataire_assure` → `fiche_medecin_assure`
+→ `ajouter_rendez_vous_assure`. Le **service médical n'est pas une étape** :
+il sert à la facturation (`Paiement.calculer_pour` lit `service.prix`) et
+n'apparaît nulle part dans le formulaire de rendez-vous. Ne pas l'y ajouter.
+
+**Le chaînon qui manquait.** `prestataires_proches` affichait déjà
+`medecin_count` — « 4 médecins » — mais aucun écran ne disait *lesquels*.
+`fiche_prestataire_assure` (liste des médecins + actes tarifés à titre
+indicatif) et `fiche_medecin_assure` (profil + bouton de demande) comblent ce
+trou. Les deux sont restreints aux prestataires **partenaires** : une
+structure non conventionnée renvoie 404, même en tapant son URL.
+
+**Le médecin détermine la structure, jamais l'inverse.**
+`ajouter_rendez_vous_assure` accepte `?medecin=` **et** `?prestataire=` ; quand
+les deux sont fournis, c'est le médecin qui gagne (`_prestataire_demande`).
+Quand le prestataire est connu, `RendezVousAssureForm` ne propose **que** ses
+médecins, et son `clean()` refuse un couple incohérent. Avant, le champ
+listait `Medecin.objects.all()` : on pouvait demander un rendez-vous avec un
+cardiologue de Dakar « chez » une pharmacie de Rufisque.
+
+Cette règle vit dans le **formulaire**, pas dans le modèle — volontairement :
+un rendez-vous saisi par l'administration ou repris d'un historique peut
+légitimement porter un autre prestataire (médecin ayant changé de structure).
+C'est la *demande de l'assuré* qu'on contraint, pas les données existantes.
+
+**`RendezVous.motif` est un `TextField`** (« motif / symptômes »), décrit par
+le **patient**. Ce n'est **pas** un diagnostic : le diagnostic appartient au
+médecin et vit dans `Consultation.diagnostic`. Ne jamais fusionner les deux.
+C'était un `CharField(255)` sur une seule ligne — trop court et trop muet pour
+« douleurs abdominales depuis trois jours, avec fièvre et nausées ».
+
+**Piège corrigé dans `prestataires_proches.html`** : le lien « Voir le
+profil » n'ouvrait aucun profil, il recentrait la carte. Il s'appelle
+désormais « Situer sur la carte », et « Voir les médecins » est un vrai lien.
+
+**`Medecin.presentation` et `Medecin.annees_experience`** sont facultatifs,
+renseignés par l'admin, affichés à l'assuré. Il n'existe **ni** champ
+« réalisations » **ni** champ « disponibilités » : un texte de disponibilités
+serait purement indicatif et ne contraindrait pas la prise de rendez-vous —
+un agenda de créneaux réels est un autre chantier. Ne pas l'ajouter sans lui.
+
+**`Paiement.enregistre_par`** (`SET_NULL`) trace qui a constaté le règlement,
+renseigné automatiquement depuis `request.user`, jamais saisi. En espèces,
+c'est la seule trace de la personne qui a reçu l'argent. **Aucune API de
+paiement** (Wave, Orange Money…) n'existe ni ne doit être ajoutée : un test
+vérifie leur absence dans `views.py`.
+
 ## Journal d'activité (livré)
 
 **Emplacement : Paramètres → Sécurité**, pas le menu latéral — c'est une
