@@ -549,16 +549,39 @@ test vérifie que chaque icône de `SECTIONS_PARAMETRES` existe.
 
 ## Comptes de démonstration
 
-Les comptes de démonstration en masse ont été supprimés de la base : un seul
-admin réel (`admin@santesn.local`) est conservé, et des comptes réels
-Assuré/Médecin/Pharmacien ont été créés directement via Gestion des
-utilisateurs pour permettre de tester chaque tableau de bord. La commande
-`seed_demo_users` (peuplement en masse de comptes de démo) a été retirée du
-projet : redondante avec la création de comptes via Gestion des utilisateurs
-et sans utilité une fois les comptes réels en place — ne pas la recréer sans
-raison concrète. `DEMO_USERS.md` n'existe pas (voir phase 15, "Documentation
-/ finalisation") — si une documentation utilisateur finale est un jour
-rédigée, ne pas la nommer ainsi sans vérifier qu'elle est à jour.
+**Base remise à zéro le 2026-08-17.** Il ne reste qu'**un seul compte** :
+`admin@sante.com` (ADMIN, actif). Tout le reste a été supprimé — 42 comptes,
+27 fiches patients, 12 médecins, 13 pharmaciens et l'intégralité des données
+médicales et financières (277 objets, une seule transaction). Les comptes
+Assuré/Médecin/Pharmacien de test sont désormais créés à la main via Gestion
+des utilisateurs.
+
+Cette section affirmait auparavant que les comptes de démonstration en masse
+avaient été supprimés. **C'était faux** : les 30 comptes du peuplement du
+2026-07-19 (`medecin01-10`, `pharmacien01-10`, `assure01-10`) étaient toujours
+en base, avec leurs 20 fiches patients, 10 plans « Plan Essentiel 01 »… et 10
+services aux prix arithmétiques. Elle désignait aussi `admin@santesn.local`
+comme l'admin conservé, alors que ce compte est **inactif** depuis juillet.
+Leçon : une affirmation sur le contenu de la base se vérifie par une requête,
+pas par la mémoire d'une session précédente.
+
+Référentiels conservés parce qu'ils ont été saisis à la main : le plan **IPM**
+(10%) et les prestataires **Coulibaly** et **Sangalkam**. **Aucun service
+médical ne subsiste** — les 10 précédents étaient générés. En créer un est
+donc le préalable à toute consultation facturable.
+
+La commande `seed_demo_users` (peuplement en masse) a été retirée du projet —
+le dossier `management/` n'existe plus : redondante avec la création de
+comptes via Gestion des utilisateurs, ne pas la recréer sans raison concrète.
+`DEMO_USERS.md` n'existe pas (voir phase 15, "Documentation / finalisation") —
+si une documentation utilisateur finale est un jour rédigée, ne pas la nommer
+ainsi sans vérifier qu'elle est à jour.
+
+**Vérifié après la remise à zéro** : `PRAGMA foreign_key_check` → 0 violation,
+`manage.py check` → 0 erreur, et **43 des 43 routes accessibles à l'admin
+répondent 200 sur une base vide** (les 20 autres renvoient 403 : ce sont les
+écrans Assuré/Médecin/Pharmacien, cloisonnement normal). Aucun écran ne casse
+faute de données — le cas limite des moyennes et des graphiques est couvert.
 
 ## Espacements
 
