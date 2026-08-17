@@ -19,8 +19,13 @@ valider_telephone = RegexValidator(
 )
 
 
-def _qr_svg(donnee, box_size=10, border=4):
+def _qr_svg(donnee, taille_mm=None, box_size=10, border=4):
     """Genere un QR code SVG destine a etre INLINE dans une page HTML.
+
+    `taille_mm` fixe la taille PHYSIQUE voulue : le module est calcule a
+    partir du nombre reel de modules du code, qui depend de la longueur de la
+    donnee. Un box_size fixe donnerait un code plus grand pour une URL plus
+    longue -- et le verso d'une carte n'a pas de place pour ca.
 
     Pourquoi ce nettoyage : qrcode ecrit ses modules en <svg:rect ...> avec un
     prefixe de namespace. Colle tel quel dans du HTML, c'est invisible -- un
@@ -37,6 +42,10 @@ def _qr_svg(donnee, box_size=10, border=4):
                          image_factory=qrcode.image.svg.SvgImage)
     code.add_data(donnee)
     code.make(fit=True)
+    if taille_mm:
+        # SvgImage rend 1 mm par unite de box_size / 10.
+        modules = code.modules_count + 2 * border
+        code.box_size = max(1, round(taille_mm * 10 / modules))
     buffer = io.BytesIO()
     code.make_image().save(buffer)
     svg = buffer.getvalue().decode("utf-8")
@@ -289,7 +298,7 @@ class Patient(models.Model):
     def _generer_numero_carte():
         return f"SN-{uuid.uuid4().hex[:10].upper()}"
 
-    def qr_svg(self, url):
+    def qr_svg(self, url, taille_mm=44):
         """QR (SVG) de la carte de prise en charge, encodant `url`.
 
         Meme fabrique que Ordonnance.qr_svg -- pas un second systeme.
@@ -304,11 +313,11 @@ class Patient(models.Model):
         pas de requete, donc pas de nom d'hote.
 
         TAILLE : elle se regle A LA GENERATION, pas en CSS (voir _qr_svg).
-        box_size=7 donne 0,7 mm par module et border=2 reduit la marge : le
-        code fait environ 23 mm de cote, lisible par un telephone et compatible
-        avec une carte de 85,6 x 54 mm.
+        44 mm par defaut : sur une carte de 85,6 x 54 mm, le code occupe
+        l'essentiel du verso en gardant la marge de silence necessaire a une
+        lecture fiable. border=2 modules est le minimum recommande.
         """
-        return _qr_svg(url, box_size=7, border=2)
+        return _qr_svg(url, taille_mm=taille_mm, border=2)
 
     @property
     def est_ayant_droit(self):
