@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% load icones %}
+{% load formats icones %}
 
 {% block title %}Tableau de bord - {{ patient }}{% endblock %}
 
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>Bonjour {{ patient.prenom }}</h1>
+        <h1>{% salutation %}, {% nom_accueil user patient %}</h1>
         <p class="subtitle">Votre espace de prise en charge SantéSN.</p>
     </div>
     <a class="button primary" href="{% url 'ajouter_rendez_vous_assure' %}">Nouveau rendez-vous</a>

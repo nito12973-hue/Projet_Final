@@ -1,4 +1,5 @@
 from django import template
+from django.utils import timezone
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
@@ -76,6 +77,43 @@ _LIBELLES_PAGE = {
     "mon_compte": "Paramètres",
     "changer_mot_de_passe": "Paramètres",
 }
+
+
+@register.simple_tag
+def salutation():
+    """Salutation selon l'heure REELLE, dans le fuseau de la plateforme.
+
+    Le texte etait fige a "Bonjour" sur deux tableaux de bord, et absent des
+    deux autres : un utilisateur qui ouvre SantéSN a 21 h etait accueilli
+    par un "Bonjour". timezone.localtime() suit TIME_ZONE (Africa/Dakar),
+    pas l'heure du serveur ni celle du navigateur.
+    """
+    heure = timezone.localtime().hour
+    if 5 <= heure < 12:
+        return "Bonjour"
+    if 12 <= heure < 18:
+        return "Bon après-midi"
+    return "Bonsoir"
+
+
+@register.simple_tag
+def nom_accueil(utilisateur, personne=None):
+    """Prenom a afficher dans la salutation, avec un repli propre.
+
+    On prefere la fiche metier (Patient/Medecin) au compte : c'est le nom
+    que la personne reconnait. A defaut, le prenom du compte, puis son nom,
+    puis la partie locale de son adresse. JAMAIS de chaine vide, de None,
+    ni de variable brute -- l'ecran affichait "Bonjour " suivi de rien pour
+    un assure qui n'avait pas encore complete son profil.
+    """
+    for candidat in (getattr(personne, "prenom", None),
+                     getattr(utilisateur, "first_name", None),
+                     getattr(personne, "nom", None),
+                     getattr(utilisateur, "last_name", None)):
+        if candidat and str(candidat).strip():
+            return str(candidat).strip()
+    courriel = getattr(utilisateur, "email", "") or ""
+    return courriel.split("@")[0] if "@" in courriel else "bienvenue"
 
 
 @register.filter
