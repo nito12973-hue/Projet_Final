@@ -690,6 +690,49 @@ class RendezVous(models.Model):
         verbose_name = "rendez-vous"
         verbose_name_plural = "rendez-vous"
         ordering = ["date_heure"]
+        constraints = [
+            # Un medecin ne peut pas etre a deux endroits a la fois. Sans
+            # cette contrainte, deux patients pouvaient reserver le MEME
+            # creneau chez le MEME medecin -- le systeme acceptait, et les
+            # deux se presentaient.
+            #
+            # Les rendez-vous ANNULES sont exclus : annuler doit liberer le
+            # creneau, sinon un desistement le condamnerait pour toujours.
+            models.UniqueConstraint(
+                fields=["medecin", "date_heure"],
+                condition=~models.Q(statut="ANNULE"),
+                name="rdv_creneau_unique_par_medecin",
+                violation_error_message=(
+                    "Ce créneau est déjà réservé pour ce médecin. "
+                    "Choisissez une autre date ou une autre heure."
+                ),
+            ),
+        ]
+
+    def clean(self):
+        """Message lisible avant que la contrainte de base ne parle.
+
+        La contrainte ci-dessus est le filet de securite ; elle produit une
+        erreur globale. Ici on rattache le probleme au champ que
+        l'utilisateur doit corriger : la date et l'heure.
+        """
+        super().clean()
+        if self.medecin_id is None or self.date_heure is None:
+            return
+        if self.statut == self.Statut.ANNULE:
+            return
+        conflit = RendezVous.objects.filter(
+            medecin_id=self.medecin_id, date_heure=self.date_heure
+        ).exclude(statut=self.Statut.ANNULE)
+        if self.pk:
+            conflit = conflit.exclude(pk=self.pk)
+        if conflit.exists():
+            raise ValidationError({
+                "date_heure": (
+                    "Ce créneau est déjà réservé pour ce médecin. "
+                    "Choisissez une autre date ou une autre heure."
+                ),
+            })
 
     def __str__(self):
         return f"RDV {self.patient} - Dr {self.medecin} ({self.date_heure:%d/%m/%Y %H:%M})"

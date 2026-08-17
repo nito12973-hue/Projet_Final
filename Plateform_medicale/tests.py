@@ -10,7 +10,7 @@ import openpyxl
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.db import connection
+from django.db import IntegrityError, connection
 from django.forms import modelform_factory
 from django.test import Client, TestCase
 from django.test.utils import CaptureQueriesContext
@@ -6799,3 +6799,125 @@ class CarteAssureCasLimitesTests(TestCase):
         """Condition d'utilisation des tuiles : l'attribution est obligatoire."""
         contenu = self.client.get(reverse('prestataires_proches')).content.decode()
         self.assertIn('openstreetmap.org/copyright', contenu)
+
+
+class CreneauUniqueParMedecinTests(TestCase):
+    """Un medecin ne peut pas etre a deux endroits a la fois.
+
+    Defaut trouve a l'audit : deux patients pouvaient reserver le MEME
+    creneau chez le MEME medecin. Le systeme acceptait, et les deux se
+    presentaient. Verrouille a deux niveaux -- clean() pour le message,
+    contrainte de base pour la garantie.
+    """
+
+    def setUp(self):
+        self.hopital = Prestataire.objects.create(
+            nom='Hopital Creneau', type_prestataire=Prestataire.Type.HOPITAL,
+            ville='Dakar', telephone='338111111', partenaire=True,
+        )
+        self.medecin = Medecin.objects.create(
+            nom='Sy', prenom='Modou', specialite='Generale',
+            telephone='770111111', email='sy-creneau@santesn.sn',
+            prestataire=self.hopital,
+        )
+        self.autre_medecin = Medecin.objects.create(
+            nom='Ka', prenom='Awa', specialite='Pediatrie',
+            telephone='770111112', email='ka-creneau@santesn.sn',
+            prestataire=self.hopital,
+        )
+        self.patient = Patient.objects.create(
+            nom='Ba', prenom='Alioune', date_naissance=datetime.date(1988, 2, 2),
+            telephone='770111113',
+        )
+        self.autre_patient = Patient.objects.create(
+            nom='Ndour', prenom='Bineta', date_naissance=datetime.date(1993, 6, 6),
+            telephone='770111114',
+        )
+        # Seconde et microseconde a zero : le formulaire soumet a la minute
+        # pres. Sans cela, le rendez-vous de reference et celui envoye par le
+        # navigateur portent des dates DIFFERENTES et n entrent pas en conflit.
+        self.creneau = (timezone.now() + datetime.timedelta(days=3)).replace(
+            second=0, microsecond=0
+        )
+
+    def _rdv(self, patient, medecin=None, quand=None, statut=None):
+        return RendezVous(
+            patient=patient, medecin=medecin or self.medecin,
+            prestataire=self.hopital, date_heure=quand or self.creneau,
+            statut=statut or RendezVous.Statut.DEMANDE,
+        )
+
+    def test_le_creneau_est_refuse_a_un_second_patient(self):
+        self._rdv(self.patient).save()
+        with self.assertRaises(ValidationError) as capture:
+            self._rdv(self.autre_patient).full_clean()
+        self.assertIn('date_heure', capture.exception.error_dict)
+
+    def test_la_base_refuse_aussi_sans_passer_par_clean(self):
+        """objects.create() ne declenche pas clean() : la contrainte de base
+        est le seul filet dans ce chemin."""
+        self._rdv(self.patient).save()
+        with self.assertRaises(IntegrityError):
+            RendezVous.objects.create(
+                patient=self.autre_patient, medecin=self.medecin,
+                prestataire=self.hopital, date_heure=self.creneau,
+            )
+
+    def test_annuler_libere_le_creneau(self):
+        """Un desistement ne doit pas condamner l'horaire pour toujours."""
+        premier = self._rdv(self.patient)
+        premier.save()
+        premier.statut = RendezVous.Statut.ANNULE
+        premier.save(update_fields=['statut'])
+
+        remplacant = self._rdv(self.autre_patient)
+        remplacant.full_clean()
+        remplacant.save()
+        self.assertEqual(
+            RendezVous.objects.exclude(statut=RendezVous.Statut.ANNULE).count(), 1
+        )
+
+    def test_deux_medecins_peuvent_partager_le_meme_horaire(self):
+        self._rdv(self.patient).save()
+        second = self._rdv(self.autre_patient, medecin=self.autre_medecin)
+        second.full_clean()
+        second.save()
+        self.assertEqual(RendezVous.objects.count(), 2)
+
+    def test_un_autre_horaire_passe(self):
+        self._rdv(self.patient).save()
+        plus_tard = self._rdv(
+            self.autre_patient, quand=self.creneau + datetime.timedelta(hours=1)
+        )
+        plus_tard.full_clean()
+        plus_tard.save()
+        self.assertEqual(RendezVous.objects.count(), 2)
+
+    def test_modifier_un_rendez_vous_sans_le_deplacer_reste_possible(self):
+        """Le controle ne doit pas voir l'objet comme son propre conflit."""
+        rdv = self._rdv(self.patient)
+        rdv.save()
+        rdv.motif = 'Precision ajoutee'
+        rdv.full_clean()
+        rdv.save()
+        self.assertEqual(RendezVous.objects.get().motif, 'Precision ajoutee')
+
+    def test_l_assure_recoit_un_message_clair(self):
+        """Le patient doit comprendre quoi corriger, pas voir une erreur brute."""
+        assure_user = creer_utilisateur(User.Role.ASSURE, 'assure-creneau@santesn.sn')
+        principal = Patient.objects.create(
+            user=assure_user, nom='Fall', prenom='Ndeye',
+            date_naissance=datetime.date(1995, 1, 1), telephone='770111115',
+        )
+        self._rdv(self.patient).save()
+        self.client.login(username='assure-creneau@santesn.sn', password=PASSWORD)
+        reponse = self.client.post(reverse('ajouter_rendez_vous_assure'), {
+            'patient': principal.pk,
+            'medecin': self.medecin.pk,
+            'prestataire': self.hopital.pk,
+            'date_heure': self.creneau.strftime('%Y-%m-%dT%H:%M'),
+            'motif': 'Fievre.',
+        })
+        self.assertEqual(reponse.status_code, 200)
+        self.assertContains(reponse, 'déjà réservé')
+        self.assertEqual(RendezVous.objects.count(), 1)
