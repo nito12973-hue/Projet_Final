@@ -1559,7 +1559,12 @@ class EspaceAssureTests(TestCase):
         )
         response = self.client.get(reverse('ajouter_rendez_vous_assure'), {'prestataire': prestataire.pk})
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context['form'].initial.get('prestataire'), str(prestataire.pk))
+        # On compare la VALEUR, pas son type : la vue stocke desormais la cle
+        # primaire (entier) et non la chaine brute de l'URL. Le comportement
+        # attendu -- le prestataire est preselectionne -- est identique.
+        self.assertEqual(
+            int(response.context['form'].initial.get('prestataire')), prestataire.pk
+        )
 
     def test_prestataire_invalide_dans_lurl_est_ignore(self):
         self._completer_profil()
