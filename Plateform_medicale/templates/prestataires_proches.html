@@ -6,33 +6,26 @@
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>Prestataires proches</h1>
+        <h1>Trouver un prestataire</h1>
         <p class="subtitle" id="sous-titre-page">
             {% if localisation_active %}
-            Prestataires du reseau tries du plus proche au plus loin de votre position.
+            Tries du plus proche au plus loin de votre position.
             {% else %}
-            Liste complete du reseau partenaire, triee par ville.
+            Reseau partenaire, trie par ville.
             {% endif %}
         </p>
     </div>
 </section>
 
-{% if not localisation_active %}
-<div class="avis avis-attente" id="avis-localisation">
-    <p class="avis-titre">Localisation non activee</p>
-    <p>
-        Pour trier les prestataires du plus proche au plus loin, autorisez la
-        localisation. Un seul releve est effectue, a votre demande : rien ne
-        vous suit pendant vos deplacements.
-    </p>
-    <div class="actions">
-        <button type="button" id="bouton-me-localiser" class="button primary btn btn-sm">
-            {% icone "map-pin" %} Me localiser
-        </button>
-        <span id="statut-localisation" class="subtitle" style="margin:0;" role="status" aria-live="polite"></span>
-    </div>
-</div>
-{% endif %}
+{% comment %}
+Le bandeau "Localisation non activee" qui vivait ici a ete supprime : il
+annoncait une ABSENCE ("vous n'avez pas active X") au lieu d'offrir une
+action, et occupait le haut de la page avant meme la carte. Le bouton, lui,
+est utile : il a rejoint la barre de filtres, ou se prennent les autres
+decisions d'affichage. Les messages qui RESTENT sont ceux qui apprennent
+quelque chose : refus de localisation, position indisponible, aucun
+resultat.
+{% endcomment %}
 
 <form class="filtres" onsubmit="return false;">
     <div>
@@ -69,7 +62,14 @@
             <option value="50">50 km</option>
         </select>
     </div>
+    <div>
+        <label for="bouton-me-localiser">Ma position</label>
+        <button type="button" id="bouton-me-localiser" class="button primary">
+            {% icone "map-pin" %} Me localiser
+        </button>
+    </div>
 </form>
+<p id="statut-localisation" class="subtitle" style="margin:-6px 0 14px;" role="status" aria-live="polite"></p>
 
 <section class="proches-layout">
     <div class="carte-colonne">
@@ -439,7 +439,6 @@
         var champType = document.getElementById('filtre-type');
         var champDistance = document.getElementById('filtre-distance');
         var conteneurListe = document.getElementById('liste-prestataires-proches');
-        var baniereLocalisation = document.getElementById('avis-localisation');
         var sousTitrePage = document.getElementById('sous-titre-page');
 
         var villes = Array.from(new Set(donnees.map(function (p) { return p.ville; }).filter(Boolean))).sort();
@@ -628,12 +627,8 @@
                 carteRecentree = true;
             }
 
-            if (baniereLocalisation) {
-                baniereLocalisation.remove();
-                baniereLocalisation = null;
-            }
             if (sousTitrePage) {
-                sousTitrePage.textContent = 'Prestataires du reseau tries du plus proche au plus loin de votre position (mise a jour en direct pendant vos deplacements).';
+                sousTitrePage.textContent = 'Tries du plus proche au plus loin de votre position (mise a jour en direct pendant vos deplacements).';
             }
             if (champDistance) {
                 champDistance.disabled = false;
