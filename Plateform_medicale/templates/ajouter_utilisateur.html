@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load icones %}
 
 {% block title %}Ajouter un utilisateur{% endblock %}
 
@@ -6,24 +7,57 @@
 <section class="page-title">
     <div>
         <h1>Ajouter un utilisateur</h1>
-        <p class="subtitle">Un mot de passe temporaire sera généré automatiquement et affiché une seule fois.</p>
+        <p class="subtitle">Un compte sera créé et un lien d'activation sécurisé valable 24 heures sera envoyé via le canal disponible.</p>
     </div>
-    <a class="button" href="{% url 'liste_utilisateurs' %}">Retour</a>
+    <a class="button" href="{% url 'liste_utilisateurs' %}">{% icone "chevron-left" %} Retour</a>
 </section>
 
-<section class="panel panel-form">
+<section class="panel panel-form" style="max-width: 640px;">
     {% if form.non_field_errors %}
     <div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
     {% endif %}
 
-    <form method="post">
+    <form method="post" id="form-ajout-utilisateur">
         {% csrf_token %}
         {% for field in form %}
-        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-        {{ field }}
-        {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
+        <div class="champ-groupe" style="margin-bottom: 16px;">
+            <label for="{{ field.id_for_label }}" style="font-weight: 600; margin-bottom: 4px; display: block;">
+                {{ field.label }}
+                {% if field.field.required %}<span style="color:var(--danger);" aria-hidden="true">*</span>{% endif %}
+            </label>
+            {{ field }}
+            {% if field.name == "role" %}
+            <p id="aide-role" class="subtitle" style="margin: 6px 0 0 0; font-size: 13px; color: var(--muted);"></p>
+            {% endif %}
+            {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
+        </div>
         {% endfor %}
-        <button class="button primary" type="submit">Créer l'utilisateur</button>
+        <div style="margin-top: 24px; display: flex; gap: 12px; align-items: center;">
+            <button class="button primary" type="submit">Créer le compte et envoyer l'activation</button>
+            <a class="button btn" href="{% url 'liste_utilisateurs' %}">Annuler</a>
+        </div>
     </form>
 </section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var selectRole = document.getElementById('id_role');
+    var aideRole = document.getElementById('aide-role');
+    if (!selectRole || !aideRole) return;
+
+    var descriptions = {
+        'MEDECIN': 'Le rôle Médecin créera automatiquement sa fiche professionnelle (agenda, consultations et prescriptions).',
+        'PHARMACIEN': 'Le rôle Pharmacien créera son profil d\'officine pour la vérification et délivrance d\'ordonnances.',
+        'ASSURE': 'Le rôle Assuré permettra la prise de rendez-vous et la consultation des ordonnances.'
+    };
+
+    function majAide() {
+        var val = selectRole.value;
+        aideRole.textContent = descriptions[val] || '';
+    }
+
+    selectRole.addEventListener('change', majAide);
+    majAide();
+});
+</script>
 {% endblock %}

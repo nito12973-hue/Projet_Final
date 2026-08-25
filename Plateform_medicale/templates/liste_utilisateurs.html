@@ -9,10 +9,36 @@
         <h1>Utilisateurs</h1>
         <p class="subtitle">Comptes de la plateforme : création, rôles, activation et mots de passe.</p>
     </div>
-    <a class="button primary" href="{% url 'ajouter_utilisateur' %}">Ajouter un utilisateur</a>
+    <div class="actions">
+        <a class="button primary" href="{% url 'ajouter_utilisateur' %}">{% icone "plus" %} Ajouter un utilisateur</a>
+    </div>
 </section>
 
-<div class="actions" style="justify-content:flex-end;margin-bottom:16px;">
+<!-- KPIs Compacts -->
+<div class="kpi-grille" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 20px;" aria-label="Statistiques utilisateurs">
+    <div class="kpi">
+        <span class="kpi-entete">{% icone "users" %} Total Comptes</span>
+        <strong class="code">{{ total_utilisateurs }}</strong>
+        <span class="kpi-pied">Inscrits sur la plateforme</span>
+    </div>
+    <div class="kpi">
+        <span class="kpi-entete">{% icone "heart-pulse" %} Médecins</span>
+        <strong class="code">{{ total_medecins }}</strong>
+        <span class="kpi-pied">Praticiens actifs</span>
+    </div>
+    <div class="kpi">
+        <span class="kpi-entete">{% icone "family" %} Assurés</span>
+        <strong class="code">{{ total_assures }}</strong>
+        <span class="kpi-pied">Bénéficiaires de soins</span>
+    </div>
+    <div class="kpi">
+        <span class="kpi-entete">{% icone "pill" %} Pharmacies & Admins</span>
+        <strong class="code">{{ total_pharmaciens_admins }}</strong>
+        <span class="kpi-pied">Gestion & Officines</span>
+    </div>
+</div>
+
+<div class="actions" style="justify-content:flex-end;margin-bottom:16px;gap:8px;">
     <a class="button btn" data-chargement="Génération..." href="{% url 'exporter_utilisateurs_excel' %}?{{ request.GET.urlencode }}">{% icone "download" %} Exporter en Excel</a>
     <a class="button btn" data-chargement="Génération..." href="{% url 'exporter_utilisateurs_csv' %}?{{ request.GET.urlencode }}">{% icone "download" %} Exporter en CSV</a>
     <a class="button btn" href="{% url 'importer_utilisateurs_excel' %}">{% icone "upload" %} Importer depuis Excel</a>
@@ -22,7 +48,7 @@
     <div style="min-width:180px;">
         <label for="role">Rôle</label>
         <select id="role" name="role" style="margin-bottom:0;">
-            <option value="">Tous</option>
+            <option value="">Tous les rôles</option>
             {% for value, label in roles %}
             <option value="{{ value }}" {% if value == role_selectionne %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
@@ -31,7 +57,7 @@
     <div style="min-width:180px;">
         <label for="statut">Statut</label>
         <select id="statut" name="statut" style="margin-bottom:0;">
-            <option value="">Tous</option>
+            <option value="">Tous les statuts</option>
             <option value="actif" {% if statut_selectionne == "actif" %}selected{% endif %}>Actif</option>
             <option value="inactif" {% if statut_selectionne == "inactif" %}selected{% endif %}>Inactif</option>
         </select>
@@ -40,7 +66,7 @@
         <label for="q">Recherche</label>
         <div class="champ-recherche">
             {% icone "search" %}
-            <input id="q" type="text" name="q" placeholder="Nom ou email" value="{{ recherche }}" style="margin-bottom:0;">
+            <input id="q" type="text" name="q" placeholder="Nom, prénom ou email..." value="{{ recherche }}" style="margin-bottom:0;">
         </div>
     </div>
     <button type="submit" class="button primary btn">Filtrer</button>
@@ -52,11 +78,12 @@
 {% if utilisateurs %}
 <section class="panel">
     <table>
-        <caption class="sr-only">Liste des utilisateurs de la plateforme, avec leurs actions de gestion</caption>
+        <caption class="sr-only">Liste des utilisateurs de la plateforme</caption>
         <thead>
             <tr>
-                {% entete_tri request.GET "last_name" "Nom complet" %}
+                {% entete_tri request.GET "last_name" "Utilisateur" %}
                 {% entete_tri request.GET "email" "Email" "col-optionnelle" %}
+                <th scope="col" class="col-optionnelle">Téléphone</th>
                 {% entete_tri request.GET "role" "Rôle" "col-optionnelle" %}
                 {% entete_tri request.GET "is_active" "Statut" %}
                 <th scope="col">Actions</th>
@@ -65,9 +92,23 @@
         <tbody>
             {% for utilisateur in utilisateurs %}
             <tr>
-                <td>{{ utilisateur.get_full_name|default:"-" }}</td>
+                <td>
+                    <strong>{{ utilisateur.get_full_name|default:utilisateur.email }}</strong>
+                    {% if utilisateur.pk == request.user.pk %}
+                    <span class="badge" style="margin-left:6px;background:var(--primary-subtle);color:var(--primary-strong);">Vous</span>
+                    {% endif %}
+                </td>
                 <td class="col-optionnelle">{{ utilisateur.email }}</td>
-                <td class="col-optionnelle">{{ utilisateur.get_role_display }}</td>
+                <td class="col-optionnelle">
+                    {% if utilisateur.phone_number %}
+                    <span>{{ utilisateur.phone_number }}</span>
+                    {% else %}
+                    <span style="color:var(--muted);">-</span>
+                    {% endif %}
+                </td>
+                <td class="col-optionnelle">
+                    <span class="badge">{{ utilisateur.get_role_display }}</span>
+                </td>
                 <td>
                     {% if utilisateur.is_active %}
                     <span class="badge validee">Actif</span>
@@ -76,22 +117,23 @@
                     {% endif %}
                 </td>
                 <td>
-                    <div class="actions" style="flex-wrap:nowrap;">
-                        <a href="{% url 'modifier_utilisateur' utilisateur.pk %}" class="button primary btn btn-sm">{% icone "edit-2" %} Modifier</a>
-                        <a href="{% url 'reinitialiser_mot_de_passe' utilisateur.pk %}" class="button btn btn-sm">{% icone "key" %} Réinitialiser mdp</a>
+                    <div class="actions" style="flex-wrap:nowrap;gap:6px;">
+                        <a href="{% url 'modifier_utilisateur' utilisateur.pk %}" class="button primary btn btn-sm" title="Modifier le compte">{% icone "edit-2" %} Modifier</a>
+                        <form method="post" action="{% url 'renvoyer_activation' utilisateur.pk %}" class="action-ligne">
+                            {% csrf_token %}
+                            <button type="submit" class="button btn btn-sm" title="Générer et envoyer un nouveau lien d'activation sécurisé">{% icone "mail" %} Renvoyer</button>
+                        </form>
                         {% if utilisateur.pk != request.user.pk %}
                         <form method="post" action="{% url 'activer_desactiver_utilisateur' utilisateur.pk %}" class="action-ligne"
                               {% if utilisateur.is_active %}data-confirmation="Désactiver le compte de {{ utilisateur }} ? Il ne pourra plus se connecter tant qu'il n'est pas réactivé." data-confirmation-action="Oui, désactiver le compte"{% endif %}>
                             {% csrf_token %}
                             {% if utilisateur.is_active %}
-                            <button type="submit" class="button btn btn-sm">Désactiver</button>
+                            <button type="submit" class="button btn btn-sm" title="Désactiver l'accès">Désactiver</button>
                             {% else %}
-                            <button type="submit" class="button btn btn-sm">Activer</button>
+                            <button type="submit" class="button btn btn-sm" title="Activer l'accès">Activer</button>
                             {% endif %}
                         </form>
-                        <a href="{% url 'supprimer_utilisateur' utilisateur.pk %}" class="button btn btn-danger btn-sm">{% icone "trash-2" %} Supprimer</a>
-                        {% else %}
-                        <span class="badge">Vous</span>
+                        <a href="{% url 'supprimer_utilisateur' utilisateur.pk %}" class="button btn btn-danger btn-sm" title="Supprimer définitivement">{% icone "trash-2" %}</a>
                         {% endif %}
                     </div>
                 </td>

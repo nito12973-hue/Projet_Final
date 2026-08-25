@@ -1,31 +1,36 @@
 {% extends "base.html" %}
 {% load icones %}
 
-{% block title %}Confirmer la suppression{% endblock %}
+{% block title %}Supprimer {{ type|lower }} — {{ objet }}{% endblock %}
 
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>Confirmer la suppression</h1>
-        <p class="subtitle">Êtes-vous sûr de vouloir supprimer cet élément ?</p>
+        <h1>Supprimer {{ type|lower }}</h1>
+        <p class="subtitle">Confirmation de suppression définitive.</p>
+    </div>
+    <div class="actions">
+        <a href="javascript:history.back()" class="button btn">{% icone "chevron-left" %} Annuler</a>
     </div>
 </section>
 
 <div class="avis avis-danger">
-    <p class="avis-titre">{% icone "alert-triangle" %} Attention : cette action est irréversible</p>
-    <p>Vous êtes sur le point de supprimer : <strong>{{ objet }}</strong></p>
+    <p class="avis-titre">{% icone "alert-triangle" %} Cette action est irréversible</p>
+    <p style="margin:6px 0 0 0;">Êtes-vous sûr de vouloir supprimer définitivement <strong>{{ objet }}</strong> ?</p>
     {% if avertissement %}
-    <p class="avis-titre">{{ avertissement }}</p>
+    <p class="subtitle" style="margin-top:8px;color:var(--danger);">{{ avertissement }}</p>
     {% endif %}
 </div>
 
-<section class="panel panel-form">
+<section class="panel panel-form" style="max-width:540px;">
     <form method="post">
         {% csrf_token %}
-        <button type="submit" class="button btn-danger">
-            Confirmer la suppression
-        </button>
-        <a href="javascript:history.back()" class="button">Annuler</a>
+        <div style="display:flex;gap:10px;">
+            <button type="submit" class="button btn-danger">
+                {% icone "trash-2" %} Supprimer définitivement
+            </button>
+            <a href="javascript:history.back()" class="button btn">Annuler</a>
+        </div>
     </form>
 </section>
 {% endblock %}

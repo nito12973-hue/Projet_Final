@@ -101,38 +101,71 @@
 </section>
 {% endif %}
 
-<section class="panel" style="margin-top:18px;">
-    <div class="panel-header">
-        <h2>Historique des consultations (avec vous)</h2>
+<section class="panel" style="margin-top:20px;border-radius:16px;">
+    <div class="panel-header" style="border-bottom:1px solid var(--border);padding-bottom:14px;margin-bottom:18px;">
+        <div>
+            <h2 style="margin:0;">Historique &amp; Chronologie Clinique</h2>
+            <p class="subtitle" style="margin:2px 0 0;">Suivi médical et antécédents de consultation</p>
+        </div>
+        <a class="button primary btn-sm" href="{% url 'ajouter_consultation_medecin' %}?patient={{ patient.pk }}">
+            {% icone "plus-circle" %} Nouvelle consultation
+        </a>
     </div>
+
     {% if historique %}
-    <table>
-        <thead>
-            <tr><th>Date</th><th>Diagnostic</th><th>Traitement</th><th>Ordonnance</th></tr>
-        </thead>
-        <tbody>
-            {% for consultation in historique %}
-            <tr>
-                <td>{{ consultation.date_consultation|date:"d/m/Y H:i" }}</td>
-                <td>{{ consultation.diagnostic }}</td>
-                <td>{{ consultation.traitement|default:"-" }}</td>
-                <td>
-                    {% with ordonnance=consultation.ordonnance_set.first %}
+    <div class="timeline-clinique" style="position:relative;padding-left:28px;">
+        <div style="position:absolute;left:11px;top:8px;bottom:8px;width:2px;background:var(--border);"></div>
+
+        {% for consultation in historique %}
+        <div style="position:relative;margin-bottom:20px;">
+            <!-- Pastille chronologique -->
+            <div style="position:absolute;left:-28px;top:0;width:24px;height:24px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 4px var(--surface);">
+                <span style="font-size:11px;">{% icone "stethoscope" %}</span>
+            </div>
+
+            <!-- Fiche de consultation -->
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;box-shadow:0 4px 12px rgba(11,32,39,0.04);">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+                    <div>
+                        <strong style="font-size:14.5px;color:var(--titre);">{{ consultation.date_consultation|date:"l d F Y à H:i"|capfirst }}</strong>
+                        <span style="font-size:12px;color:var(--muted);display:block;">Service : {{ consultation.service|default:"Médecine Générale" }}</span>
+                    </div>
+                    {% with ordonnance=consultation.ordonnances.all|first %}
                     {% if ordonnance %}
-                    <a class="button primary btn btn-sm" href="{% url 'voir_ordonnance_medecin' ordonnance.pk %}">{% icone "qr-scan" %} Voir</a>
+                    <a class="button primary btn btn-sm" href="{% url 'voir_ordonnance_medecin' ordonnance.pk %}" style="font-size:12px;padding:6px 12px;">
+                        {% icone "qr-scan" %} Ordonnance {{ ordonnance.code_qr }}
+                    </a>
                     {% else %}
-                    <a class="button btn btn-sm" href="{% url 'ajouter_ordonnance_medecin' consultation.pk %}">{% icone "plus-circle" %} Creer</a>
+                    <a class="button btn btn-sm" href="{% url 'ajouter_ordonnance_medecin' consultation.pk %}" style="font-size:12px;padding:6px 12px;">
+                        {% icone "plus-circle" %} Rédiger ordonnance
+                    </a>
                     {% endif %}
                     {% endwith %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                </div>
+
+                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:12px;background:var(--primary-soft);padding:12px 14px;border-radius:10px;font-size:13px;">
+                    <div>
+                        <span style="font-weight:700;color:var(--primary-strong);display:block;margin-bottom:2px;">Diagnostic :</span>
+                        <p style="margin:0;color:var(--titre);">{{ consultation.diagnostic }}</p>
+                    </div>
+                    {% if consultation.traitement %}
+                    <div>
+                        <span style="font-weight:700;color:var(--primary-strong);display:block;margin-bottom:2px;">Traitement prescrit :</span>
+                        <p style="margin:0;color:var(--titre);">{{ consultation.traitement }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
     {% else %}
-    <div class="etat-vide">
+    <div class="etat-vide" style="padding:32px 0;">
         {% illustration_vide "clipboard-list" %}
-        <p>Aucune consultation avec ce patient pour le moment.</p>
+        <p style="margin:8px 0 14px;">Aucune consultation enregistrée pour ce patient.</p>
+        <a class="button primary btn-sm" href="{% url 'ajouter_consultation_medecin' %}?patient={{ patient.pk }}">
+            {% icone "plus-circle" %} Démarrer une première consultation
+        </a>
     </div>
     {% endif %}
 </section>

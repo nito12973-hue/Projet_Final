@@ -7,9 +7,9 @@
 <section class="page-title">
     <div>
         <h1>Services médicaux</h1>
-        <p class="subtitle">Catalogue des prestations disponibles.</p>
+        <p class="subtitle">Catalogue des actes et prestations médicales tarifées du réseau conventionné.</p>
     </div>
-    <a class="button primary" href="{% url 'ajouter_service' %}">Ajouter</a>
+    <a class="button primary" href="{% url 'ajouter_service' %}">{% icone "plus-circle" %} Ajouter un service médical</a>
 </section>
 
 {% if services %}

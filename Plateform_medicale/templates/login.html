@@ -14,6 +14,14 @@
 </div>
 {% endif %}
 
+{% if messages %}
+{% for message in messages %}
+<div class="avis-info" role="status" style="margin-bottom:16px;">
+    <p>{{ message }}</p>
+</div>
+{% endfor %}
+{% endif %}
+
 {% if form.non_field_errors %}
 <div class="erreurs" role="alert">
     {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}

@@ -307,31 +307,42 @@ resultat.
 
             if (prestataire.telephone) {
                 var ligneTelephone = document.createElement('div');
-                ligneTelephone.textContent = 'Tel. ' + prestataire.telephone;
+                var lienTel = document.createElement('a');
+                lienTel.href = 'tel:' + prestataire.telephone.replace(/\s+/g, '');
+                lienTel.style.color = 'var(--primary, #0e7c86)';
+                lienTel.style.fontWeight = '600';
+                lienTel.style.textDecoration = 'none';
+                lienTel.textContent = 'Tel. ' + prestataire.telephone;
+                ligneTelephone.appendChild(lienTel);
                 conteneur.appendChild(ligneTelephone);
             }
 
             if (distance !== null) {
                 var ligneDistance = document.createElement('div');
-                ligneDistance.textContent = distance.toFixed(1) + ' km';
+                ligneDistance.style.marginTop = '4px';
+                ligneDistance.textContent = distance.toFixed(1) + ' km (~' + estimerMinutes(distance) + ' min)';
                 conteneur.appendChild(ligneDistance);
             }
 
             var actions = document.createElement('div');
             actions.className = 'popup-actions';
 
+            var origineParam = (dernierePositionUtilisateur.lat !== null)
+                ? '&origin=' + dernierePositionUtilisateur.lat + ',' + dernierePositionUtilisateur.lng
+                : '';
+
             var lienItineraire = document.createElement('a');
             lienItineraire.className = 'button btn-sm';
-            lienItineraire.href = 'https://www.google.com/maps/dir/?api=1&destination=' + prestataire.latitude + ',' + prestataire.longitude;
+            lienItineraire.href = 'https://www.google.com/maps/dir/?api=1' + origineParam + '&destination=' + prestataire.latitude + ',' + prestataire.longitude;
             lienItineraire.target = '_blank';
             lienItineraire.rel = 'noopener';
-            lienItineraire.textContent = 'Itineraire';
+            lienItineraire.textContent = 'Itinéraire';
             actions.appendChild(lienItineraire);
 
             var lienRdv = document.createElement('a');
             lienRdv.className = 'button primary btn-sm';
             lienRdv.href = urlRendezVous + '?prestataire=' + prestataire.pk;
-            lienRdv.textContent = 'Prendre rendez-vous';
+            lienRdv.textContent = 'Prendre RDV';
             actions.appendChild(lienRdv);
 
             conteneur.appendChild(actions);
@@ -383,13 +394,26 @@ resultat.
             var actions = document.createElement('div');
             actions.className = 'actions';
 
+            var origineParam = (dernierePositionUtilisateur.lat !== null)
+                ? '&origin=' + dernierePositionUtilisateur.lat + ',' + dernierePositionUtilisateur.lng
+                : '';
+
             var lienItineraire = document.createElement('a');
             lienItineraire.className = 'button';
-            lienItineraire.href = 'https://www.google.com/maps/dir/?api=1&destination=' + prestataire.latitude + ',' + prestataire.longitude;
+            lienItineraire.href = 'https://www.google.com/maps/dir/?api=1' + origineParam + '&destination=' + prestataire.latitude + ',' + prestataire.longitude;
             lienItineraire.target = '_blank';
             lienItineraire.rel = 'noopener';
-            lienItineraire.textContent = 'Itineraire';
+            lienItineraire.textContent = 'Itinéraire';
             actions.appendChild(lienItineraire);
+
+            if (prestataire.telephone) {
+                var lienAppel = document.createElement('a');
+                lienAppel.className = 'button';
+                lienAppel.href = 'tel:' + prestataire.telephone.replace(/\s+/g, '');
+                lienAppel.textContent = 'Appeler';
+                actions.appendChild(lienAppel);
+            }
+
 
             // Ce lien s'appelait "Voir le profil" alors qu'il ne faisait que
             // recentrer la carte : aucun profil ne s'ouvrait. Il porte

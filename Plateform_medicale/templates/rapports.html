@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% load icones %}
 
-{% block title %}Rapports{% endblock %}
+{% block title %}Rapports d'activité{% endblock %}
 
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>Rapports</h1>
-        <p class="subtitle">Synthèse de l'activité de la plateforme.</p>
+        <h1>Rapports d'activité</h1>
+        <p class="subtitle">Synthèse analytique et indicateurs clés de la plateforme.</p>
     </div>
     <div class="actions">
         <a class="button" data-chargement="Génération..." href="{% url 'exporter_rapports_excel' %}">{% icone "download" %} Exporter en Excel</a>
@@ -15,99 +15,120 @@
     </div>
 </section>
 
-<section class="panel" style="margin-bottom:18px;padding:22px 24px;">
-    <div class="panel-header" style="padding:0 0 16px;flex-wrap:wrap;gap:10px;">
-        <h2 id="titre-graphe-consultations">Consultations par mois</h2>
-        <div class="actions" id="boutons-periode-consultations" role="group" aria-label="Periode du graphique des consultations">
-            <button type="button" class="button btn" data-periode="jour" aria-pressed="false">Jour</button>
-            <button type="button" class="button btn primary" data-periode="mois" aria-pressed="true">Mois</button>
-            <button type="button" class="button btn" data-periode="annee" aria-pressed="false">Annee</button>
-        </div>
+<!-- Bandeau 4 KPI clés -->
+<section class="kpi-grille" style="grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 20px;" aria-label="Chiffres clés">
+    <div class="kpi">
+        <span class="kpi-entete">{% icone "stethoscope" %} Consultations</span>
+        <strong class="code">{{ total_consultations }}</strong>
+        <span class="kpi-pied">Actes réalisés</span>
     </div>
-    <canvas id="graphe-consultations" style="max-height:260px;"></canvas>
-    <details class="details-tableau" id="repli-consultations" hidden>
-        <summary>Voir le tableau</summary>
-        <table>
-            <thead><tr><th id="entete-periode-consultations">Mois</th><th>Total</th></tr></thead>
-            <tbody id="corps-tableau-consultations"></tbody>
-        </table>
-    </details>
+    <div class="kpi">
+        <span class="kpi-entete">{% icone "receipt" %} Ordonnances</span>
+        <strong class="code">{{ total_ordonnances }}</strong>
+        <span class="kpi-pied">Prescriptions médicales</span>
+    </div>
+    <div class="kpi">
+        <span class="kpi-entete">{% icone "qr-scan" %} Délivrances</span>
+        <strong class="code">{{ total_delivrances }}</strong>
+        <span class="kpi-pied">Délivrées en pharmacie</span>
+    </div>
+    <div class="kpi">
+        <span class="kpi-entete">{% icone "building" %} Prestataires</span>
+        <strong class="code">{{ total_prestataires_partenaires }}</strong>
+        <span class="kpi-pied">Partenaires conventionnés</span>
+    </div>
 </section>
 
-<section class="admin-layout">
+<!-- Graphiques analytiques -->
+<div class="admin-layout" style="margin-bottom: 20px; align-items: stretch;">
+    <!-- Graphique 1 : Consultations -->
+    <section class="panel" style="padding: 22px 24px;">
+        <div class="panel-header" style="padding: 0 0 14px; flex-wrap: wrap; gap: 10px;">
+            <h2 id="titre-graphe-consultations">Consultations par mois</h2>
+            <div class="actions" id="boutons-periode-consultations" role="group" aria-label="Période du graphique des consultations">
+                <button type="button" class="button btn" data-periode="jour" aria-pressed="false">Jour</button>
+                <button type="button" class="button btn primary" data-periode="mois" aria-pressed="true">Mois</button>
+                <button type="button" class="button btn" data-periode="annee" aria-pressed="false">Année</button>
+            </div>
+        </div>
+        <canvas id="graphe-consultations" style="max-height: 240px;"></canvas>
+        <details class="details-tableau" id="repli-consultations" hidden style="margin-top: 10px;">
+            <summary>Voir les données du graphique</summary>
+            <table>
+                <thead><tr><th id="entete-periode-consultations">Période</th><th>Total</th></tr></thead>
+                <tbody id="corps-tableau-consultations"></tbody>
+            </table>
+        </details>
+    </section>
+
+    <!-- Graphique 2 : Répartition des prises en charge -->
+    <section class="panel" style="padding: 22px 24px;">
+        <div class="panel-header" style="padding: 0 0 14px;">
+            <h2>Prises en charge par statut</h2>
+        </div>
+        <div style="max-height: 210px; display: flex; justify-content: center; align-items: center; position: relative;">
+            <canvas id="graphe-pec" style="max-height: 200px; max-width: 260px;"></canvas>
+        </div>
+        <div style="margin-top: 14px;">
+            <table style="font-size: 13px;">
+                <tbody>
+                    {% for ligne in prises_en_charge_par_statut %}
+                    <tr>
+                        <td>{{ ligne.label }}</td>
+                        <td class="code" style="text-align: right; font-weight: 700;">{{ ligne.total }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+<!-- Tableaux de répartition consolidés -->
+<section class="admin-layout" style="margin-bottom: 20px;">
     <article class="panel">
         <div class="panel-header">
             <div><h2>Utilisateurs par rôle</h2></div>
         </div>
         <table>
-            <thead><tr><th scope="col">Rôle</th><th scope="col">Total</th></tr></thead>
+            <thead><tr><th scope="col">Rôle</th><th scope="col" style="text-align:right;">Nombre</th></tr></thead>
             <tbody>
                 {% for ligne in utilisateurs_par_role %}
-                <tr><td>{{ ligne.label }}</td><td>{{ ligne.total }}</td></tr>
+                <tr><td>{{ ligne.label }}</td><td class="code" style="text-align:right; font-weight:700;">{{ ligne.total }}</td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </article>
 
-    <aside class="panel governance-card">
-        <h2>Chiffres clés</h2>
-        <p class="subtitle">Consultations : <strong>{{ total_consultations }}</strong></p>
-        <p class="subtitle">Ordonnances : <strong>{{ total_ordonnances }}</strong></p>
-        <p class="subtitle">Délivrances : <strong>{{ total_delivrances }}</strong></p>
-        <p class="subtitle">Prestataires partenaires : <strong>{{ total_prestataires_partenaires }}</strong></p>
-    </aside>
-</section>
-
-<section class="admin-layout" style="margin-top:18px;">
     <article class="panel">
         <div class="panel-header">
-            <div><h2>Assurés par type</h2></div>
+            <div><h2>Assurés par type de bénéficiaire</h2></div>
         </div>
         <table>
-            <thead><tr><th scope="col">Type</th><th scope="col">Total</th></tr></thead>
+            <thead><tr><th scope="col">Type</th><th scope="col" style="text-align:right;">Nombre</th></tr></thead>
             <tbody>
                 {% for ligne in patients_par_type %}
-                <tr><td>{{ ligne.label }}</td><td>{{ ligne.total }}</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </article>
-
-    <article class="panel">
-        <div class="panel-header">
-            <div><h2>Rendez-vous par statut</h2></div>
-        </div>
-        <table>
-            <thead><tr><th scope="col">Statut</th><th scope="col">Total</th></tr></thead>
-            <tbody>
-                {% for ligne in rendez_vous_par_statut %}
-                <tr><td>{{ ligne.label }}</td><td>{{ ligne.total }}</td></tr>
+                <tr><td>{{ ligne.label }}</td><td class="code" style="text-align:right; font-weight:700;">{{ ligne.total }}</td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </article>
 </section>
 
-<section class="panel" style="margin-top:18px;">
+<section class="panel">
     <div class="panel-header">
-        <div><h2>Prises en charge par statut</h2></div>
+        <div><h2>Rendez-vous par statut</h2></div>
     </div>
     <table>
-        <thead><tr><th scope="col">Statut</th><th scope="col">Total</th></tr></thead>
+        <thead><tr><th scope="col">Statut</th><th scope="col" style="text-align:right;">Total</th></tr></thead>
         <tbody>
-            {% for ligne in prises_en_charge_par_statut %}
-            <tr><td>{{ ligne.label }}</td><td>{{ ligne.total }}</td></tr>
+            {% for ligne in rendez_vous_par_statut %}
+            <tr><td>{{ ligne.label }}</td><td class="code" style="text-align:right; font-weight:700;">{{ ligne.total }}</td></tr>
             {% endfor %}
         </tbody>
     </table>
 </section>
 
-{% comment %}
-Modele clone par signalerGraphiqueIndisponible() : meme composant .etat-vide
-(icone + texte) que le reste de l'application, plutot qu'un <p class="empty">
-texte seul -- illustration_vide est un tag serveur, un <template> est le
-moyen le plus simple de mettre son rendu a disposition du JS.
-{% endcomment %}
 <template id="modele-graphique-indisponible">
     <div class="etat-vide">
         {% illustration_vide "bar-chart" %}
@@ -118,19 +139,10 @@ moyen le plus simple de mettre son rendu a disposition du JS.
 {{ consultations_par_jour|json_script:"donnees-consultations-jour" }}
 {{ consultations_par_mois|json_script:"donnees-consultations-mois" }}
 {{ consultations_par_annee|json_script:"donnees-consultations-annee" }}
+{{ prises_en_charge_chart|json_script:"donnees-pec-chart" }}
 
 <script>
     (function () {
-        // Chart.js (~200 Ko) charge a la demande via JS plutot qu'un <script
-        // src> statique : cette page est la seule a en avoir besoin, autant
-        // ne pas le telecharger avant que le reste de la page (tableaux,
-        // filtres) soit deja affiche. En cas d'echec de chargement (reseau,
-        // CDN indisponible), les 5 canevas basculent sur le meme message de
-        // repli que "donnees absentes" plutot que de rester silencieux.
-
-        // Couleurs de marque lues depuis les tokens CSS de base.html (une seule
-        // source de verite), avec repli en dur seulement si la variable est
-        // introuvable (feuille de style non chargee).
         function tokenCouleur(nom, repli) {
             var valeur = getComputedStyle(document.documentElement).getPropertyValue(nom).trim();
             return valeur || repli;
@@ -147,13 +159,9 @@ moyen le plus simple de mettre son rendu a disposition du JS.
 
         function lireDonnees(id) {
             var element = document.getElementById(id);
-            return element ? JSON.parse(element.textContent) : [];
+            return element ? JSON.parse(element.textContent) : null;
         }
 
-
-        // Affiche un etat vide illustre a la place d'un canevas vide (donnees
-        // absentes ou Chart.js indisponible), meme composant que le reste de
-        // l'application plutot qu'un <p class="empty"> texte seul.
         var modeleGraphiqueIndisponible = document.getElementById('modele-graphique-indisponible');
 
         function signalerGraphiqueIndisponible(idCanevas, texte) {
@@ -166,104 +174,132 @@ moyen le plus simple de mettre son rendu a disposition du JS.
             canevas.replaceWith(noeud);
         }
 
-        var IDS_CANEVAS = ['graphe-consultations'];
+        var IDS_CANEVAS = ['graphe-consultations', 'graphe-pec'];
 
-        // Tout ce qui suit suppose Chart.js deja charge -- n'est appele
-        // qu'une fois le <script> injecte plus bas resolu avec succes.
         function demarrerGraphiques() {
+            // 1. Graphique Consultations
+            var PERIODES_CONSULTATIONS = {
+                jour: { id: 'donnees-consultations-jour', titre: 'Consultations par jour', entete: 'Jour' },
+                mois: { id: 'donnees-consultations-mois', titre: 'Consultations par mois', entete: 'Mois' },
+                annee: { id: 'donnees-consultations-annee', titre: 'Consultations par année', entete: 'Année' },
+            };
+            var grapheConsultations = null;
 
+            function afficherPeriodeConsultations(periode) {
+                var config = PERIODES_CONSULTATIONS[periode];
+                var donneesPeriode = lireDonnees(config.id);
+                var canevas = document.getElementById('graphe-consultations');
+                if (!canevas || !donneesPeriode || !donneesPeriode.labels || !donneesPeriode.labels.length) { return; }
 
-        // Graphique "Consultations" avec bascule de periode (jour/mois/annee) :
-        // un seul Chart.js reutilise (data remplacee + update()), plutot que
-        // recreer/detruire l'instance a chaque clic.
-        var PERIODES_CONSULTATIONS = {
-            jour: { id: 'donnees-consultations-jour', titre: 'Consultations par jour', entete: 'Jour' },
-            mois: { id: 'donnees-consultations-mois', titre: 'Consultations par mois', entete: 'Mois' },
-            annee: { id: 'donnees-consultations-annee', titre: 'Consultations par annee', entete: 'Annee' },
-        };
-        var grapheConsultations = null;
+                if (grapheConsultations) {
+                    grapheConsultations.data.labels = donneesPeriode.labels;
+                    grapheConsultations.data.datasets[0].data = donneesPeriode.totaux;
+                    grapheConsultations.update();
+                } else {
+                    grapheConsultations = new Chart(canevas, {
+                        type: 'line',
+                        data: {
+                            labels: donneesPeriode.labels,
+                            datasets: [{
+                                label: 'Consultations',
+                                data: donneesPeriode.totaux,
+                                borderColor: tokenCouleur('--primary', '#0e7c86'),
+                                backgroundColor: tokenCouleurRgba('--primary', '#0e7c86', 0.15),
+                                tension: 0.3,
+                                fill: true,
+                            }],
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: { legend: { display: false } },
+                            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+                        },
+                    });
+                }
 
-        function afficherPeriodeConsultations(periode) {
-            var config = PERIODES_CONSULTATIONS[periode];
-            var donneesPeriode = lireDonnees(config.id);
-            var canevas = document.getElementById('graphe-consultations');
-            if (!canevas || !donneesPeriode.labels || !donneesPeriode.labels.length) { return; }
+                var titre = document.getElementById('titre-graphe-consultations');
+                if (titre) { titre.textContent = config.titre; }
 
-            if (grapheConsultations) {
-                grapheConsultations.data.labels = donneesPeriode.labels;
-                grapheConsultations.data.datasets[0].data = donneesPeriode.totaux;
-                grapheConsultations.update();
-            } else {
-                grapheConsultations = new Chart(canevas, {
-                    type: 'line',
-                    data: {
-                        labels: donneesPeriode.labels,
-                        datasets: [{
-                            label: 'Consultations',
-                            data: donneesPeriode.totaux,
-                            borderColor: tokenCouleur('--primary', '#0e7c86'),
-                            backgroundColor: tokenCouleurRgba('--primary', '#0e7c86', 0.15),
-                            tension: 0.3,
-                            fill: true,
-                        }],
-                    },
-                    options: {
-                        plugins: { legend: { display: false } },
-                        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
-                    },
+                var repli = document.getElementById('repli-consultations');
+                var enteteColonne = document.getElementById('entete-periode-consultations');
+                var corps = document.getElementById('corps-tableau-consultations');
+                if (repli && corps) {
+                    corps.innerHTML = '';
+                    if (enteteColonne) { enteteColonne.textContent = config.entete; }
+                    donneesPeriode.labels.forEach(function (label, i) {
+                        var ligne = document.createElement('tr');
+                        var celluleLabel = document.createElement('td');
+                        celluleLabel.textContent = label;
+                        var celluleTotal = document.createElement('td');
+                        celluleTotal.textContent = donneesPeriode.totaux[i];
+                        celluleTotal.className = 'code';
+                        ligne.appendChild(celluleLabel);
+                        ligne.appendChild(celluleTotal);
+                        corps.appendChild(ligne);
+                    });
+                    repli.hidden = false;
+                }
+
+                document.querySelectorAll('#boutons-periode-consultations button').forEach(function (bouton) {
+                    var actif = bouton.dataset.periode === periode;
+                    bouton.classList.toggle('primary', actif);
+                    bouton.setAttribute('aria-pressed', actif ? 'true' : 'false');
                 });
             }
 
-            var titre = document.getElementById('titre-graphe-consultations');
-            if (titre) { titre.textContent = config.titre; }
-
-            var repli = document.getElementById('repli-consultations');
-            var enteteColonne = document.getElementById('entete-periode-consultations');
-            var corps = document.getElementById('corps-tableau-consultations');
-            if (repli && corps) {
-                corps.innerHTML = '';
-                if (enteteColonne) { enteteColonne.textContent = config.entete; }
-                donneesPeriode.labels.forEach(function (label, i) {
-                    var ligne = document.createElement('tr');
-                    var celluleLabel = document.createElement('td');
-                    celluleLabel.textContent = label;
-                    var celluleTotal = document.createElement('td');
-                    celluleTotal.textContent = donneesPeriode.totaux[i];
-                    ligne.appendChild(celluleLabel);
-                    ligne.appendChild(celluleTotal);
-                    corps.appendChild(ligne);
+            var boutonsPeriode = document.getElementById('boutons-periode-consultations');
+            if (boutonsPeriode) {
+                boutonsPeriode.addEventListener('click', function (evt) {
+                    var btn = evt.target.closest('button[data-periode]');
+                    if (btn) { afficherPeriodeConsultations(btn.dataset.periode); }
                 });
-                repli.hidden = false;
             }
 
-            document.querySelectorAll('#boutons-periode-consultations button').forEach(function (bouton) {
-                var actif = bouton.dataset.periode === periode;
-                bouton.classList.toggle('primary', actif);
-                bouton.setAttribute('aria-pressed', actif ? 'true' : 'false');
-            });
+            afficherPeriodeConsultations('mois');
+
+            // 2. Graphique Doughnut Prises en charge
+            var donneesPec = lireDonnees('donnees-pec-chart');
+            var canevasPec = document.getElementById('graphe-pec');
+            if (canevasPec && donneesPec && donneesPec.labels && donneesPec.labels.length) {
+                var totalPec = donneesPec.totaux.reduce(function (a, b) { return a + b; }, 0);
+                if (totalPec > 0) {
+                    new Chart(canevasPec, {
+                        type: 'doughnut',
+                        data: {
+                            labels: donneesPec.labels,
+                            datasets: [{
+                                data: donneesPec.totaux,
+                                backgroundColor: [
+                                    tokenCouleur('--attente-fg', '#d97706'),
+                                    tokenCouleur('--primary', '#0e7c86'),
+                                    tokenCouleur('--danger', '#e11d48'),
+                                    tokenCouleur('--muted', '#64748b'),
+                                ],
+                                borderWidth: 2,
+                                borderColor: tokenCouleur('--surface', '#ffffff'),
+                            }],
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+                            },
+                        },
+                    });
+                } else {
+                    signalerGraphiqueIndisponible('graphe-pec', 'Aucune prise en charge enregistrée.');
+                }
+            }
         }
-
-        var boutonsPeriodeConsultations = document.getElementById('boutons-periode-consultations');
-        if (boutonsPeriodeConsultations) {
-            boutonsPeriodeConsultations.addEventListener('click', function (evenement) {
-                var bouton = evenement.target.closest('button[data-periode]');
-                if (!bouton) { return; }
-                afficherPeriodeConsultations(bouton.dataset.periode);
-            });
-        }
-
-        afficherPeriodeConsultations('mois');
-
-        } // fin demarrerGraphiques
 
         var scriptChartJs = document.createElement('script');
         scriptChartJs.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js';
-        scriptChartJs.integrity = 'sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC';
         scriptChartJs.crossOrigin = 'anonymous';
         scriptChartJs.onload = demarrerGraphiques;
         scriptChartJs.onerror = function () {
             IDS_CANEVAS.forEach(function (id) {
-                signalerGraphiqueIndisponible(id, 'Graphique indisponible (bibliothèque non chargée).');
+                signalerGraphiqueIndisponible(id, 'Graphique indisponible.');
             });
         };
         document.body.appendChild(scriptChartJs);

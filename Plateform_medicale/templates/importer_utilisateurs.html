@@ -7,44 +7,137 @@
 <section class="page-title">
     <div>
         <h1>Importer des utilisateurs depuis Excel</h1>
-        <p class="subtitle">Créez plusieurs comptes (Assuré principal, Médecin, Pharmacien, Administrateur) en une seule fois.</p>
+        <p class="subtitle">Créez plusieurs comptes (Assuré, Médecin, Pharmacien, Administrateur) en une seule fois.</p>
     </div>
-    <a class="button" href="{% url 'liste_utilisateurs' %}">Retour</a>
+    <a class="button" href="{% url 'liste_utilisateurs' %}">{% icone "chevron-left" %} Retour</a>
 </section>
 
 <section class="panel panel-bloc" style="margin-bottom:18px;">
-    <h2 style="margin-top:0;">Comment proceder</h2>
+    <h2 style="margin-top:0;">Comment procéder</h2>
     <p class="subtitle">
-        Telechargez le modele, remplissez une ligne par compte a creer, puis
-        importez le fichier complete. Colonne <strong>Role</strong> : Assure,
-        Medecin, Pharmacien ou Administrateur. La <strong>Date de naissance</strong>
-        (JJ/MM/AAAA) est obligatoire pour un Assure, la <strong>Specialite</strong>
-        pour un Medecin. <strong>Prestataire</strong> et <strong>Plan de couverture</strong>
-        sont optionnels (nom exact d'un prestataire/plan deja existant).
+        Téléchargez le modèle officiel ci-dessous, renseignez une ligne par compte à créer, puis déposez le fichier complété.
+        Pour chaque compte, un lien d'activation sécurisé sera automatiquement expédié.
     </p>
-    <a class="button" href="{% url 'telecharger_modele_import_utilisateurs' %}">{% icone "download" %} Telecharger le modele Excel</a>
+    <a class="button btn" href="{% url 'telecharger_modele_import_utilisateurs' %}">{% icone "download" %} Télécharger le modèle Excel</a>
 </section>
 
 {% if erreurs %}
-<div class="avis avis-danger">
+<div class="avis avis-danger" style="margin-bottom: 20px;">
     <h2 class="avis-titre" style="margin:0;">
-        {% icone "alert-triangle" %} Import annule : {{ erreurs|length }} erreur{{ erreurs|length|pluralize }} trouvee{{ erreurs|length|pluralize }}
+        {% icone "alert-triangle" %} Import annulé : {{ erreurs|length }} erreur{{ erreurs|length|pluralize }} trouvée{{ erreurs|length|pluralize }}
     </h2>
-    <p class="subtitle">Aucun compte n'a ete cree. Corrigez le fichier puis reimportez-le.</p>
-    <ul style="margin:0;padding-left:20px;color:var(--danger);">
+    <p class="subtitle" style="margin:4px 0 10px 0;">Aucun compte n'a été créé. Veuillez corriger le fichier puis le réimporter.</p>
+    <ul style="margin:0;padding-left:20px;color:var(--danger);font-size:13.5px;">
         {% for erreur in erreurs %}
-        <li>{{ erreur }}</li>
+        <li style="margin-bottom:4px;">{{ erreur }}</li>
         {% endfor %}
     </ul>
 </div>
 {% endif %}
 
 <section class="panel panel-bloc">
-    <form method="post" enctype="multipart/form-data">
+    <form method="post" enctype="multipart/form-data" id="form-import-excel">
         {% csrf_token %}
-        <label for="fichier">Fichier Excel (.xlsx)</label>
-        <input type="file" id="fichier" name="fichier" accept=".xlsx" required>
-        <button class="button primary" type="submit" style="margin-top:16px;">Importer</button>
+        
+        <!-- Zone Drag & Drop -->
+        <div id="drop-zone" style="border: 2px dashed var(--border); border-radius: 12px; padding: 36px 20px; text-align: center; background: var(--surface-muted); cursor: pointer; transition: all 0.2s ease;">
+            <div id="drop-zone-content">
+                <div style="font-size: 32px; margin-bottom: 10px; color: var(--primary);">{% icone "upload" %}</div>
+                <p style="font-size: 15px; font-weight: 600; margin: 0 0 6px 0; color: var(--titre);">
+                    Glissez-déposez votre fichier Excel ici
+                </p>
+                <p style="font-size: 13px; color: var(--muted); margin: 0 0 14px 0;">
+                    ou cliquez pour parcourir vos dossiers (.xlsx uniquement)
+                </p>
+                <input type="file" id="fichier" name="fichier" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="display: none;" required>
+                <button type="button" class="button btn btn-sm" onclick="document.getElementById('fichier').click()">Choisir un fichier</button>
+            </div>
+            
+            <div id="file-preview" style="display: none; align-items: center; justify-content: center; gap: 12px;">
+                <span style="color: var(--primary); display: flex; align-items: center;">{% icone "file-text" %}</span>
+                <div style="text-align: left;">
+                    <strong id="file-name" style="font-size: 14.5px; color: var(--titre); display: block;"></strong>
+                    <span style="font-size: 12.5px; color: var(--success, #10b981);">Fichier prêt à être importé</span>
+                </div>
+                <button type="button" class="button btn btn-sm" id="btn-rechoisir" style="margin-left: 12px;">Changer</button>
+            </div>
+        </div>
+
+        <button class="button primary" type="submit" id="btn-submit-import" style="margin-top:20px;">{% icone "check" %} Lancer l'importation</button>
     </form>
 </section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var dropZone = document.getElementById('drop-zone');
+    var fileInput = document.getElementById('fichier');
+    var dropContent = document.getElementById('drop-zone-content');
+    var filePreview = document.getElementById('file-preview');
+    var fileName = document.getElementById('file-name');
+    var btnRechoisir = document.getElementById('btn-rechoisir');
+
+    if (!dropZone || !fileInput) return;
+
+    function handleFile(file) {
+        if (!file) return;
+        if (!file.name.toLowerCase().endsWith('.xlsx')) {
+            alert('Veuillez sélectionner un fichier au format Excel (.xlsx)');
+            return;
+        }
+        fileName.textContent = file.name;
+        dropContent.style.display = 'none';
+        filePreview.style.display = 'flex';
+        dropZone.style.borderColor = 'var(--primary)';
+        dropZone.style.background = 'var(--primary-subtle, rgba(14,124,134,0.06))';
+    }
+
+    fileInput.addEventListener('change', function () {
+        if (fileInput.files.length > 0) {
+            handleFile(fileInput.files[0]);
+        }
+    });
+
+    if (btnRechoisir) {
+        btnRechoisir.addEventListener('click', function (e) {
+            e.stopPropagation();
+            fileInput.click();
+        });
+    }
+
+    ['dragenter', 'dragover'].forEach(function (eventName) {
+        dropZone.addEventListener(eventName, function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.style.borderColor = 'var(--primary)';
+            dropZone.style.background = 'var(--primary-subtle, rgba(14,124,134,0.1))';
+        }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(function (eventName) {
+        dropZone.addEventListener(eventName, function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (eventName === 'dragleave') {
+                dropZone.style.borderColor = 'var(--border)';
+                dropZone.style.background = 'var(--surface-muted)';
+            }
+        }, false);
+    });
+
+    dropZone.addEventListener('drop', function (e) {
+        var dt = e.dataTransfer;
+        var files = dt.files;
+        if (files && files.length > 0) {
+            fileInput.files = files;
+            handleFile(files[0]);
+        }
+    });
+
+    dropZone.addEventListener('click', function (e) {
+        if (e.target !== btnRechoisir) {
+            fileInput.click();
+        }
+    });
+});
+</script>
 {% endblock %}

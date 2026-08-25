@@ -16,74 +16,17 @@
 </section>
 
 {% if patient %}
-<section style="margin-bottom: 22px;">
-    <div class="carte-assure">
-        <div class="carte-assure-entete">
-            <span class="carte-assure-puce" aria-hidden="true"></span>
-            {% logo_marque taille=26 fond="sombre" %}
-        </div>
-        <div>
-            <p class="carte-assure-label">Carte de prise en charge</p>
-            <p class="carte-assure-numero code">
-                {{ patient.numero_carte }}
-                <button type="button" class="btn-copier-carte" data-copier="{{ patient.numero_carte }}" aria-label="Copier le numero de carte">{% icone "copy" %}</button>
-            </p>
-        </div>
-        <div class="carte-assure-pied">
-            <div>
-                <span class="carte-assure-nom">{{ patient.prenom }} {{ patient.nom }}</span>
-                <span class="carte-assure-type">{{ patient.get_type_beneficiaire_display }}</span>
-            </div>
-            <div class="carte-assure-couverture">
-                {% if patient.taux_couverture is not None %}
-                <strong>{{ patient.taux_couverture }}%</strong>
-                <span>{{ patient.titulaire.plan_couverture.nom }}</span>
-                {% else %}
-                <span>Aucun plan attribue</span>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</section>
-
-{% comment %}
-Le QR affiche ici est EXACTEMENT celui de la carte imprimee : meme adresse,
-meme fabrique. Pas de second identifiant "pour le profil", qui serait un
-second systeme a garder synchronise.
-{% endcomment %}
-{% comment %}
-Un bouton, pas le code en permanence : on ne presente son QR qu'au comptoir.
-Le numero de carte n'est pas repete ici -- il est deja sur la carte
-ci-dessus, avec son bouton de copie.
-{% endcomment %}
-<section class="panel panel-bloc mon-qr">
+<section class="panel panel-bloc" style="margin-bottom: 22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
     <div>
-        <h2>Mon QR code</h2>
-        <p class="subtitle">À présenter chez un prestataire partenaire.</p>
+        <h2 style="margin:0;font-size:16px;">Carte de prise en charge</h2>
+        <p class="subtitle" style="margin:2px 0 0 0;">
+            N° <strong class="code">{{ patient.numero_carte }}</strong> · Taux : <strong>{{ patient.taux_couverture|default:"0" }}%</strong> ({{ patient.titulaire.plan_couverture.nom|default:"Aucun plan attribué" }})
+        </p>
     </div>
-    <button type="button" class="button primary" id="bouton-voir-qr">{% icone "qr-scan" %} Voir</button>
+    <div>
+        <a href="{% url 'carte_assure' %}" class="button primary btn" id="bouton-voir-qr">{% icone "id-card" %} Ma carte &amp; Mon QR code</a>
+    </div>
 </section>
-
-{% comment %}
-<dialog> natif : fermeture par Echap et par clic sur le fond, sans JS de
-gestion de focus a maintenir.
-{% endcomment %}
-<dialog id="qr-agrandi" class="qr-agrandi">
-    <div class="qr-agrandi-image">{{ qr_svg|safe }}</div>
-    <button type="button" class="button primary btn" id="fermer-qr">Fermer</button>
-</dialog>
-
-<script>
-    (function () {
-        var boite = document.getElementById('qr-agrandi');
-        var ouvrir = document.getElementById('bouton-voir-qr');
-        var fermer = document.getElementById('fermer-qr');
-        if (!boite || !ouvrir || typeof boite.showModal !== 'function') { return; }
-        ouvrir.addEventListener('click', function () { boite.showModal(); });
-        fermer.addEventListener('click', function () { boite.close(); });
-        boite.addEventListener('click', function (e) { if (e.target === boite) { boite.close(); } });
-    })();
-</script>
 {% endif %}
 
 <section class="panel panel-form">

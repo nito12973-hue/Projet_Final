@@ -7,7 +7,15 @@
 <section class="page-title">
     <div>
         <h1>Nouvelle ordonnance</h1>
-        <p class="subtitle">Pour la consultation de {{ consultation.patient }} du {{ consultation.date_consultation|date:"d/m/Y" }}.</p>
+        <div class="rappel-patient-bar">
+            <span class="patient-nom">{% icone "user-circle" %} {{ consultation.patient.prenom }} {{ consultation.patient.nom }}</span>
+            <span class="patient-badge">Carte n° {{ consultation.patient.numero_carte }}</span>
+            <span class="text-muted">Né(e) le {{ consultation.patient.date_naissance|date:"d/m/Y" }}</span>
+            {% if consultation.patient.plan_couverture %}
+            <span class="text-muted">Plan : <strong>{{ consultation.patient.plan_couverture.nom }}</strong></span>
+            {% endif %}
+            <span class="text-muted">Consultation du {{ consultation.date_consultation|date:"d/m/Y H:i" }}</span>
+        </div>
     </div>
     <a class="button btn" href="{% url 'historique_consultations' %}">{% icone "chevron-left" %} Retour</a>
 </section>
@@ -79,10 +87,38 @@ clonage — c'est la convention des formsets Django.
             {% endfor %}
         </div>
         <div class="ligne-actions">
-            <button type="button" class="button btn btn-danger btn-sm bouton-retirer-ligne">Retirer</button>
+            <div class="raccourcis-posologie" style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
+                <span style="font-size: 12px; color: var(--muted); font-weight: 600;">Raccourcis :</span>
+                <button type="button" class="btn-posologie-raccourci button btn btn-sm" style="font-size:11.5px;padding:2px 8px;border-radius:12px;" data-texte="1 cp matin et soir">1 cp matin et soir</button>
+                <button type="button" class="btn-posologie-raccourci button btn btn-sm" style="font-size:11.5px;padding:2px 8px;border-radius:12px;" data-texte="1 cp 3x/jour">1 cp 3x/jour</button>
+                <button type="button" class="btn-posologie-raccourci button btn btn-sm" style="font-size:11.5px;padding:2px 8px;border-radius:12px;" data-texte="pendant 5 jours">pendant 5 jours</button>
+                <button type="button" class="btn-posologie-raccourci button btn btn-sm" style="font-size:11.5px;padding:2px 8px;border-radius:12px;" data-texte="pendant 7 jours">pendant 7 jours</button>
+                <button type="button" class="btn-posologie-raccourci button btn btn-sm" style="font-size:11.5px;padding:2px 8px;border-radius:12px;" data-texte="avant les repas">avant les repas</button>
+            </div>
+            <button type="button" class="button btn btn-danger btn-sm bouton-retirer-ligne" style="margin-top:8px;">Retirer</button>
         </div>
     </fieldset>
 </template>
+
+<datalist id="medicaments-sn">
+    <option value="Artemether / Lumefantrine 20/120mg (Coartem)">
+    <option value="Artesunate / Amodiaquine 100/270mg (Camoquin)">
+    <option value="Amoxicilline 500mg Gelule">
+    <option value="Amoxicilline + Acide Clavulanique 1g/125mg (Augmentin)">
+    <option value="Ciprofloxacine 500mg Comprime">
+    <option value="Azithromycine 500mg Comprime (Zithromax)">
+    <option value="Paracetamol 1g Comprime (Doliprane)">
+    <option value="Paracetamol 500mg Sirop (Efferalgan)">
+    <option value="Ibuprofene 400mg Comprime (Advil)">
+    <option value="Diclofenac 50mg Comprime (Voltarene)">
+    <option value="Omeprazole 20mg Gelule (Mopral)">
+    <option value="Metronidazole 500mg Comprime (Flagyl)">
+    <option value="Amlodipine 5mg Comprime (Amlor)">
+    <option value="Losartan 50mg Comprime (Cozaar)">
+    <option value="Metformine 850mg Comprime (Glucophage)">
+    <option value="Cetirizine 10mg Comprime (Zyrtec)">
+    <option value="Salbutamol 100ug Aerosol (Ventoline)">
+</datalist>
 
 <script>
     (function () {
@@ -92,17 +128,44 @@ clonage — c'est la convention des formsets Django.
         var total = document.getElementById('id_{{ formset.prefix }}-TOTAL_FORMS');
         if (!conteneur || !gabarit || !ajouter || !total) { return; }
 
+        function appliquerDatalist() {
+            var champs = document.querySelectorAll('input[name$="-medicament"]');
+            champs.forEach(function (c) {
+                if (!c.getAttribute('list')) {
+                    c.setAttribute('list', 'medicaments-sn');
+                    c.setAttribute('autocomplete', 'off');
+                }
+            });
+        }
+
         function renumeroter() {
             var lignes = conteneur.querySelectorAll('.ligne-medicament');
             lignes.forEach(function (ligne, i) {
                 var numero = ligne.querySelector('.ligne-numero');
                 if (numero) { numero.textContent = i + 1; }
             });
-            // Une ordonnance a toujours au moins une ligne : on ne propose pas
-            // de retirer la derniere.
             var boutons = conteneur.querySelectorAll('.bouton-retirer-ligne');
             boutons.forEach(function (b) { b.hidden = lignes.length <= 1; });
+            appliquerDatalist();
         }
+
+
+        document.addEventListener('click', function (e) {
+            var raccourci = e.target.closest('.btn-posologie-raccourci');
+            if (!raccourci) return;
+            var ligne = raccourci.closest('.ligne-medicament');
+            if (!ligne) return;
+            var champPosologie = ligne.querySelector('input[name$="-posologie"]');
+            if (champPosologie) {
+                var txt = raccourci.getAttribute('data-texte');
+                if (champPosologie.value && !champPosologie.value.endsWith(' ')) {
+                    champPosologie.value += ' ' + txt;
+                } else {
+                    champPosologie.value += txt;
+                }
+                champPosologie.focus();
+            }
+        });
 
         ajouter.addEventListener('click', function () {
             var index = parseInt(total.value, 10);
@@ -120,12 +183,9 @@ clonage — c'est la convention des formsets Django.
         conteneur.addEventListener('click', function (e) {
             var bouton = e.target.closest('.bouton-retirer-ligne');
             if (!bouton) { return; }
-            // Uniquement une ligne JAMAIS enregistree : une ligne existante
-            // passe par la case DELETE du formset, pas par le navigateur.
             var ligne = bouton.closest('.ligne-medicament');
             ligne.remove();
             total.value = conteneur.querySelectorAll('.ligne-medicament').length;
-            // Les index doivent rester contigus (form-0, form-1, ...).
             conteneur.querySelectorAll('.ligne-medicament').forEach(function (l, i) {
                 l.querySelectorAll('input, select, textarea, label').forEach(function (el) {
                     ['name', 'id', 'for'].forEach(function (attr) {

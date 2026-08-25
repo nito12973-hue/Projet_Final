@@ -29,6 +29,15 @@ mene a une liste filtree qui existe reellement.
 {% endcomment %}
 <section class="file-attente" aria-label="À traiter maintenant">
     <h2 class="file-titre">{% icone "clock-history" %} À traiter maintenant</h2>
+
+    {% if nb_pec_urgentes_48h %}
+    <a href="{% url 'liste_prises_en_charge' %}?statut=en_attente&urgent=1" style="display:flex;align-items:center;gap:10px;background:var(--refus-bg);color:var(--refus-fg);border:1px solid var(--danger);padding:10px 16px;border-radius:8px;margin-bottom:14px;text-decoration:none;font-weight:600;font-size:13.5px;">
+        <span style="color:var(--danger);" aria-hidden="true">{% icone "alert-triangle" %}</span>
+        <span>{{ nb_pec_urgentes_48h }} prise{{ nb_pec_urgentes_48h|pluralize }} en charge en attente depuis plus de 48 h</span>
+        <span style="margin-left:auto;font-size:12.5px;text-decoration:underline;">Traiter en priorité &rarr;</span>
+    </a>
+    {% endif %}
+
     {% if file_totale %}
     <div class="file-grille">
         <a class="file-tuile{% if jours_attente_max and jours_attente_max > 7 %} urgent{% endif %}"
@@ -82,8 +91,8 @@ mene a une liste filtree qui existe reellement.
                 {% if montant_regle_7j %}
                 <span class="finances-delta">&#9650; +{{ montant_regle_7j|franc_cfa }} sur 7 jours</span>
                 {% endif %}
-                {% if taux_reglement is not None %}
-                <span class="finances-taux">{{ taux_reglement }} % de taux de règlement</span>
+                {% if taux_recouvrement is not None %}
+                <span class="finances-taux">Taux de recouvrement : {{ taux_recouvrement }} %</span>
                 {% endif %}
             </div>
             <div class="finances-secondaires">

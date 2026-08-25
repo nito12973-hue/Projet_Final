@@ -1,7 +1,9 @@
 import datetime
+from decimal import Decimal
 import io
 import uuid
 from math import atan2, cos, radians, sin, sqrt
+
 
 import qrcode
 import qrcode.image.svg
@@ -9,7 +11,7 @@ from django.conf import settings
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.core.exceptions import ValidationError
-from django.core.validators import RegexValidator
+from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
 from django.utils import timezone
 
@@ -333,6 +335,28 @@ class Patient(models.Model):
         plan = self.titulaire.plan_couverture
         return plan.taux_couverture if plan else None
 
+    def consommation_annuelle_assurance(self, annee=None):
+        """Total des remboursements (parts assurance) consommés par le foyer sur l'année civile."""
+        from django.db.models import Sum
+        if annee is None:
+            annee = timezone.now().year
+        titulaire = self.titulaire
+        membres_foyer = [titulaire.pk] + list(titulaire.ayants_droit.values_list("pk", flat=True))
+        total = Paiement.objects.filter(
+            consultation__patient_id__in=membres_foyer,
+            consultation__date_consultation__year=annee,
+        ).aggregate(total=Sum("montant_part_assurance"))["total"]
+        return total or Decimal("0")
+
+    def plafond_annuel_restant(self, annee=None):
+        """Montant restant sous le plafond annuel pour l'année civile (None si illimité)."""
+        plan = self.titulaire.plan_couverture
+        if not plan or plan.plafond_annuel is None or plan.plafond_annuel <= 0:
+            return None
+        consomme = self.consommation_annuelle_assurance(annee=annee)
+        return max(Decimal("0"), Decimal(str(plan.plafond_annuel)) - Decimal(str(consomme)))
+
+
 
 class Medecin(models.Model):
     user = models.OneToOneField(
@@ -399,7 +423,11 @@ class Pharmacien(models.Model):
 class ServiceMedical(models.Model):
     nom = models.CharField(max_length=100)
     description = models.TextField(blank=True)
-    prix = models.DecimalField(max_digits=10, decimal_places=2)
+    prix = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(0, message="Le prix ne peut pas être négatif.")],
+    )
     prestataire = models.ForeignKey(
         Prestataire,
         on_delete=models.SET_NULL,
@@ -409,6 +437,10 @@ class ServiceMedical(models.Model):
     )
 
     def __str__(self):
+        # Inclure le prestataire évite les ambiguïtés quand plusieurs
+        # prestataires proposent un service de même nom (ex: "Consultation").
+        if self.prestataire_id:
+            return f"{self.nom} ({self.prestataire})"
         return self.nom
 
 
@@ -548,14 +580,36 @@ class Paiement(models.Model):
 
     @classmethod
     def calculer_pour(cls, consultation):
-        """Construit (sans sauvegarder) le Paiement correspondant a une consultation."""
-        montant_total = consultation.service.prix if consultation.service_id else 0
-        taux = 0
+        """Construit (sans sauvegarder) le Paiement correspondant a une consultation.
+        
+        Applique le taux de couverture conventionné et plafonne automatiquement
+        la part assurance au reliquat budgétaire annuel disponible pour le foyer.
+        """
+        from django.db.models import Sum
+        montant_total = consultation.service.prix if consultation.service_id else Decimal("0")
+        taux = Decimal("0")
         prise_en_charge = consultation.prise_en_charge
         if prise_en_charge is not None and prise_en_charge.statut == "validee":
-            taux = consultation.patient.taux_couverture or 0
-        montant_part_assurance = montant_total * taux / 100
-        montant_part_patient = montant_total - montant_part_assurance
+            taux = Decimal(str(consultation.patient.taux_couverture or 0))
+
+        montant_part_assurance = (Decimal(str(montant_total)) * taux / Decimal("100")).quantize(Decimal("0.01"))
+
+        # Application du plafond annuel si présent sur le plan de couverture
+        plan = consultation.patient.titulaire.plan_couverture if (consultation.patient_id and consultation.patient.titulaire) else None
+        if plan and plan.plafond_annuel is not None and plan.plafond_annuel > 0:
+            annee = (consultation.date_consultation or timezone.now()).year
+            titulaire = consultation.patient.titulaire
+            membres_foyer = [titulaire.pk] + list(titulaire.ayants_droit.values_list("pk", flat=True))
+            consomme_deja = Paiement.objects.filter(
+                consultation__patient_id__in=membres_foyer,
+                consultation__date_consultation__year=annee,
+            ).exclude(consultation=consultation).aggregate(total=Sum("montant_part_assurance"))["total"] or Decimal("0")
+
+            reliquat_disponible = max(Decimal("0"), Decimal(str(plan.plafond_annuel)) - Decimal(str(consomme_deja)))
+            if montant_part_assurance > reliquat_disponible:
+                montant_part_assurance = reliquat_disponible
+
+        montant_part_patient = Decimal(str(montant_total)) - montant_part_assurance
         return cls(
             consultation=consultation,
             montant_total=montant_total,
@@ -565,8 +619,14 @@ class Paiement(models.Model):
         )
 
 
+
 class Ordonnance(models.Model):
-    consultation = models.ForeignKey(Consultation, on_delete=models.CASCADE)
+    class Statut(models.TextChoices):
+        ACTIF = "actif", "En attente de délivrance"
+        DELIVRE = "delivre", "Délivrée en pharmacie"
+        ANNULE = "annule", "Annulée par le médecin"
+
+    consultation = models.ForeignKey(Consultation, on_delete=models.CASCADE, related_name="ordonnances")
     # CONSERVE VOLONTAIREMENT. Porte le texte des ordonnances anterieures a
     # LigneOrdonnance : il n'est ni transforme ni supprime. blank=True permet
     # aux nouvelles ordonnances de n'avoir que des lignes structurees.
@@ -579,9 +639,33 @@ class Ordonnance(models.Model):
         editable=False,
         help_text="Encode dans le QR scanne par la pharmacie pour valider l'ordonnance.",
     )
+    statut = models.CharField(
+        max_length=20,
+        choices=Statut.choices,
+        default=Statut.ACTIF,
+        db_index=True,
+    )
+    motif_annulation = models.CharField("motif d'annulation", max_length=255, blank=True)
+    date_annulation = models.DateTimeField("date d'annulation", null=True, blank=True)
 
     def __str__(self):
-        return f"Ordonnance du {self.date_creation:%d/%m/%Y}"
+        return f"Ordonnance #{self.code_qr} du {self.date_creation:%d/%m/%Y}"
+
+    @property
+    def est_delivree(self):
+        return hasattr(self, "delivrance") or self.statut == self.Statut.DELIVRE
+
+    @property
+    def est_annulee(self):
+        return self.statut == self.Statut.ANNULE
+
+    def annuler(self, motif=""):
+        if hasattr(self, "delivrance") or self.statut == self.Statut.DELIVRE:
+            raise ValidationError("Une ordonnance déjà délivrée en pharmacie ne peut plus être annulée.")
+        self.statut = self.Statut.ANNULE
+        self.motif_annulation = motif
+        self.date_annulation = timezone.now()
+        self.save(update_fields=["statut", "motif_annulation", "date_annulation"])
 
     def save(self, *args, **kwargs):
         if not self.code_qr:
@@ -601,6 +685,7 @@ class Ordonnance(models.Model):
         n'etant pas dessines. Voir _qr_svg pour le detail.
         """
         return _qr_svg(self.code_qr)
+
 
 
 class LigneOrdonnance(models.Model):
@@ -755,22 +840,35 @@ class Delivrance(models.Model):
 
 
 class Notification(models.Model):
-    """
-    Notification envoyee par un administrateur a un utilisateur precis.
+    """Notification d'événement système ou métier à destination d'un utilisateur."""
 
-    Pour notifier un role entier, l'administrateur cree une notification par
-    destinataire (fan-out a la creation) : chaque utilisateur garde son propre
-    statut de lecture, sans dependre des autres.
-    """
+    class TypeEvenement(models.TextChoices):
+        RDV_DEMANDE = "RDV_DEMANDE", "Demande de rendez-vous"
+        RDV_CONFIRME = "RDV_CONFIRME", "Rendez-vous confirmé"
+        RDV_REFUSE = "RDV_REFUSE", "Rendez-vous refusé"
+        RDV_ANNULE = "RDV_ANNULE", "Rendez-vous annulé"
+        PEC_DEMANDE = "PEC_DEMANDE", "Demande de prise en charge"
+        PEC_VALIDEE = "PEC_VALIDEE", "Prise en charge validée"
+        PEC_REFUSEE = "PEC_REFUSEE", "Prise en charge refusée"
+        ORDONNANCE_CREEE = "ORDONNANCE_CREEE", "Nouvelle ordonnance"
+        DELIVRANCE_EFFECTUEE = "DELIVRANCE_EFFECTUEE", "Délivrance effectuée"
+        SYSTEME = "SYSTEME", "Notification système"
 
     destinataire = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="notifications",
     )
+    titre = models.CharField(max_length=200, default="Notification")
     message = models.TextField()
-    date_creation = models.DateTimeField(auto_now_add=True)
+    type_evenement = models.CharField(
+        max_length=30, choices=TypeEvenement.choices, default=TypeEvenement.SYSTEME
+    )
+    url_action = models.CharField(max_length=500, blank=True)
     lue = models.BooleanField(default=False)
+    date_creation = models.DateTimeField(auto_now_add=True)
+    email_envoye = models.BooleanField(default=False)
+    email_erreur = models.TextField(blank=True)
 
     class Meta:
         verbose_name = "notification"
@@ -778,7 +876,22 @@ class Notification(models.Model):
         ordering = ["-date_creation"]
 
     def __str__(self):
-        return f"Notification pour {self.destinataire} ({self.date_creation:%d/%m/%Y})"
+        return f"{self.titre} pour {self.destinataire} ({self.date_creation:%d/%m/%Y})"
+
+
+class PreferenceNotification(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="preferences_notifications",
+    )
+    email_rdv = models.BooleanField(default=True)
+    email_prise_en_charge = models.BooleanField(default=True)
+    email_ordonnance = models.BooleanField(default=True)
+    email_delivrance = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"Préférences notifications de {self.user}"
 
 
 class TentativeConnexion(models.Model):

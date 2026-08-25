@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load icones %}
 
 {% block title %}Changer mon mot de passe{% endblock %}
 
@@ -7,6 +8,9 @@
     <div>
         <h1>Changer mon mot de passe</h1>
         <p class="subtitle">Vous resterez connecté après la modification.</p>
+    </div>
+    <div class="actions">
+        <a class="button btn" href="{% url 'mon_compte' %}">{% icone "chevron-left" %} Mon compte</a>
     </div>
 </section>
 

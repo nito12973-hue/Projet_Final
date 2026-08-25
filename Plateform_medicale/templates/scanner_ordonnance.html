@@ -11,49 +11,73 @@
     </div>
 </section>
 
-<section class="panel panel-form panel-form-etroit">
+<section class="panel panel-form panel-form-etroit" style="border-radius:18px;box-shadow:0 10px 30px rgba(11,32,39,0.06);">
     <form method="post">
         {% csrf_token %}
-        <label for="code_qr">Code de l'ordonnance</label>
-        <input id="code_qr" name="code_qr" type="text" placeholder="RX-XXXXXXXXXX" autofocus required>
-        <button class="button primary" type="submit">Vérifier</button>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <label for="code_qr" style="margin:0;font-weight:700;">Code de l'ordonnance</label>
+            <span style="font-size:11.5px;color:var(--muted);background:var(--primary-soft);padding:3px 8px;border-radius:6px;font-weight:600;">
+                {% icone "shield-check" %} Contrôle anti-fraude
+            </span>
+        </div>
+        <div class="champ-recherche" style="margin-bottom:14px;">
+            {% icone "qr-scan" %}
+            <input id="code_qr" name="code_qr" type="text" placeholder="Ex. RX-A1B2C3D4E5" autofocus required style="font-family:'IBM Plex Mono',monospace;font-size:15px;letter-spacing:0.04em;">
+        </div>
+        <button class="button primary" type="submit" style="width:100%;justify-content:center;font-weight:700;padding:12px;">
+            {% icone "check" %} Vérifier et charger l'ordonnance
+        </button>
 
-        <div style="margin-top:16px;">
+        <div style="margin-top:18px;text-align:center;">
             <button type="button" id="bouton-scan-camera" class="button btn" hidden>{% icone "qr-scan" %} Scanner avec la caméra</button>
-            <p id="statut-scan-camera" class="subtitle" style="margin:8px 0 0;" role="status" aria-live="polite"></p>
+            <p id="statut-scan-camera" class="subtitle" style="margin:8px 0 0;font-size:12.5px;" role="status" aria-live="polite"></p>
 
-            <div id="panneau-scan-camera" hidden style="position:relative;max-width:360px;margin-top:12px;border-radius:12px;overflow:hidden;background:#000;">
-                <video id="video-scan-camera" autoplay muted playsinline aria-hidden="true" style="width:100%;display:block;"></video>
+            <div id="panneau-scan-camera" hidden style="position:relative;max-width:340px;margin:14px auto 0;border-radius:16px;overflow:hidden;background:#0b2027;box-shadow:0 12px 32px rgba(11,32,39,0.35);">
+                <video id="video-scan-camera" autoplay muted playsinline aria-hidden="true" style="width:100%;display:block;aspect-ratio:1/1;object-fit:cover;"></video>
                 <canvas id="canvas-scan-camera" style="display:none;"></canvas>
-                <div aria-hidden="true" style="position:absolute;inset:15%;border:2px solid var(--primary-accent);border-radius:12px;pointer-events:none;"></div>
-                <button type="button" id="bouton-fermer-scan-camera" class="button btn" style="position:absolute;top:8px;right:8px;">Fermer la caméra</button>
+                <!-- Cadre de visée laser avec coins renforcés -->
+                <div aria-hidden="true" style="position:absolute;inset:18%;border:2px dashed rgba(79,184,174,0.6);border-radius:14px;pointer-events:none;box-shadow:0 0 0 9999px rgba(11,32,39,0.5);">
+                    <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#4fb8ae,transparent);box-shadow:0 0 8px #4fb8ae;animation:balayage-laser 2.2s ease-in-out infinite;"></div>
+                </div>
+                <button type="button" id="bouton-fermer-scan-camera" class="button btn btn-sm" style="position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.9);padding:6px 12px;font-size:12px;">Fermer</button>
             </div>
         </div>
     </form>
 </section>
+
+<style>
+@keyframes balayage-laser {
+    0%, 100% { top: 4%; opacity: 0.3; }
+    50% { top: 94%; opacity: 1; }
+}
+</style>
 
 {% comment %}
 Repli quand le code est inutilisable (QR froisse, impression pale, code mal
 recopie). Formulaire distinct du precedent : deux champs dans un meme
 formulaire laisseraient le pharmacien croire qu'il faut remplir les deux.
 {% endcomment %}
-<section class="panel panel-form panel-form-etroit" style="margin-top:16px;">
-    <h2 style="margin:0 0 4px;font-size:15px;color:var(--titre);">Code illisible ?</h2>
-    <p class="subtitle" style="margin:0 0 14px;">
-        Recherchez par nom du patient ou par fragment du code. Vous choisirez
-        vous-même l'ordonnance dans la liste.
-    </p>
-    <form method="post">
-        {% csrf_token %}
-        <label for="recherche">Nom du patient ou fragment de code</label>
-        <div class="champ-recherche">
-            {% icone "search" %}
-            <input id="recherche" name="recherche" type="text" value="{{ recherche }}"
-                   placeholder="Ex. Diop, ou F68B" minlength="3" required style="margin-bottom:0;">
-        </div>
-        <button class="button btn" type="submit" style="margin-top:12px;">Rechercher</button>
-    </form>
-</section>
+<details class="panel panel-form panel-form-etroit" {% if recherche %}open{% endif %} style="margin-top:16px;">
+    <summary style="cursor:pointer;font-weight:600;color:var(--muted);display:flex;align-items:center;justify-content:space-between;list-style:none;">
+        <span>{% icone "search" %} Code illisible ? Recherche manuelle de secours</span>
+        <small style="font-size:12px;color:var(--muted);">Afficher la recherche</small>
+    </summary>
+    <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);">
+        <p class="subtitle" style="margin:0 0 14px;">
+            Recherchez par nom du patient ou par fragment du code. Vous choisirez vous-même l'ordonnance dans la liste.
+        </p>
+        <form method="post">
+            {% csrf_token %}
+            <label for="recherche">Nom du patient ou fragment de code</label>
+            <div class="champ-recherche">
+                {% icone "search" %}
+                <input id="recherche" name="recherche" type="text" value="{{ recherche }}"
+                       placeholder="Ex. Diop, ou F68B" minlength="3" required style="margin-bottom:0;">
+            </div>
+            <button class="button btn" type="submit" style="margin-top:12px;">Rechercher</button>
+        </form>
+    </div>
+</details>
 
 {% if resultats %}
 <section class="panel" style="margin-top:16px;">
@@ -82,7 +106,9 @@ formulaire laisseraient le pharmacien croire qu'il faut remplir les deux.
                 <td>{{ resultat.date_creation|date:"d/m/Y" }}</td>
                 <td><span class="code">{{ resultat.code_qr }}</span></td>
                 <td>
-                    {% if resultat.delivrance %}
+                    {% if resultat.est_annulee %}
+                    <span class="badge" style="background:var(--danger, #D9534F); color:#ffffff;">Annulée</span>
+                    {% elif resultat.delivrance %}
                     <span class="badge validee">Déjà délivrée</span>
                     {% else %}
                     <span class="badge en_attente">À délivrer</span>
@@ -148,10 +174,34 @@ formulaire laisseraient le pharmacien croire qu'il faut remplir les deux.
     </article>
 
     <aside class="panel governance-card">
-        {% if ordonnance.delivrance %}
-        <h2>Déjà délivrée</h2>
-        <p class="subtitle">Le {{ ordonnance.delivrance.date_delivrance|date:"d/m/Y H:i" }} par {{ ordonnance.delivrance.pharmacien }}.</p>
-        <span class="badge terminee">Délivrée</span>
+        {% if ordonnance.est_annulee %}
+        <div style="background:var(--refus-bg); border:2px solid var(--danger); border-radius:12px; padding:18px; color:var(--refus-fg);">
+            <h2 style="margin:0 0 8px 0; color:var(--danger); font-size:16px; display:flex; align-items:center; gap:8px;">
+                {% icone "alert-triangle" %} ORDONNANCE ANNULÉE
+            </h2>
+            <p style="font-size:13.5px; margin:0 0 10px 0; line-height:1.4;">
+                Cette ordonnance a été annulée par le médecin prescripteur. Toute délivrance de médicaments est strictement interdite.
+            </p>
+            <div style="font-size:13px; background:rgba(0,0,0,0.05); padding:10px; border-radius:8px;">
+                <p style="margin:0 0 4px 0;"><strong>Date d'annulation :</strong> {{ ordonnance.date_annulation|date:"d/m/Y à H:i" }}</p>
+                <p style="margin:0 0 4px 0;"><strong>Motif :</strong> {{ ordonnance.motif_annulation }}</p>
+                <p style="margin:0;"><strong>Référence :</strong> {{ ordonnance.code_qr }}</p>
+            </div>
+        </div>
+        {% elif ordonnance.delivrance %}
+        <div style="background:var(--refus-bg); border:2px solid var(--danger); border-radius:12px; padding:18px; color:var(--refus-fg);">
+            <h2 style="margin:0 0 8px 0; color:var(--danger); font-size:16px; display:flex; align-items:center; gap:8px;">
+                {% icone "alert-triangle" %} ORDONNANCE DÉJÀ DÉLIVRÉE
+            </h2>
+            <p style="font-size:13.5px; margin:0 0 10px 0; line-height:1.4;">
+                Cette ordonnance a déjà été servie et ne peut pas faire l'objet d'une nouvelle délivrance.
+            </p>
+            <div style="font-size:13px; background:rgba(0,0,0,0.05); padding:10px; border-radius:8px;">
+                <p style="margin:0 0 4px 0;"><strong>Date de délivrance :</strong> {{ ordonnance.delivrance.date_delivrance|date:"d/m/Y à H:i" }}</p>
+                <p style="margin:0 0 4px 0;"><strong>Officine / Pharmacien :</strong> {{ ordonnance.delivrance.pharmacien }}</p>
+                <p style="margin:0;"><strong>Référence :</strong> {{ ordonnance.code_qr }}</p>
+            </div>
+        </div>
         {% else %}
         <h2>Valider la délivrance</h2>
         <p class="subtitle">Confirmez que les médicaments ont été remis au patient.</p>

@@ -13,6 +13,7 @@ urlpatterns = [
 
     path('connexion/', views.login_view, name='login'),
     path('deconnexion/', views.logout_view, name='logout'),
+    path('activer-compte/<uidb64>/<token>/', views.activer_compte, name='activer_compte'),
     path('redirection/', views.post_login_redirect, name='post_login_redirect'),
     path('installation/', views.setup_wizard, name='setup_wizard'),
     path('parametres/', views.parametres, name='parametres'),
@@ -35,6 +36,7 @@ urlpatterns = [
     path('utilisateurs/<int:pk>/modifier/', views.modifier_utilisateur, name='modifier_utilisateur'),
     path('utilisateurs/<int:pk>/activer-desactiver/', views.activer_desactiver_utilisateur, name='activer_desactiver_utilisateur'),
     path('utilisateurs/<int:pk>/reinitialiser-mot-de-passe/', views.reinitialiser_mot_de_passe, name='reinitialiser_mot_de_passe'),
+    path('utilisateurs/<int:pk>/renvoyer-activation/', views.renvoyer_activation, name='renvoyer_activation'),
     path('utilisateurs/<int:pk>/supprimer/', views.supprimer_utilisateur, name='supprimer_utilisateur'),
 
     path('patients/', views.liste_patients, name='liste_patients'),
@@ -66,13 +68,15 @@ urlpatterns = [
     path('prises-en-charge/<int:pk>/supprimer/', views.supprimer_prise_en_charge, name='supprimer_prise_en_charge'),
 
     path('rendez-vous/', views.liste_rendez_vous, name='liste_rendez_vous'),
+    path('rendez-vous/<int:pk>/ics/', views.telecharger_ics_rendez_vous, name='telecharger_ics_rendez_vous'),
     path('ordonnances/', views.liste_ordonnances, name='liste_ordonnances'),
+
 
     path('paiements/', views.liste_paiements, name='liste_paiements'),
     path('paiements/exporter/csv/', views.exporter_paiements_csv, name='exporter_paiements_csv'),
-    path('paiements/importer/', views.importer_reglements_excel, name='importer_reglements_excel'),
-    path('paiements/importer/modele/', views.telecharger_modele_import_reglements, name='telecharger_modele_import_reglements'),
     path('paiements/<int:pk>/regler/', views.marquer_paiement_regle, name='marquer_paiement_regle'),
+    path('paiements/<int:pk>/recu/', views.recu_paiement, name='recu_paiement'),
+
 
     path('prestataires/', views.liste_prestataires, name='liste_prestataires'),
     path('prestataires/recherche-lieu/', views.recherche_lieu_prestataire, name='recherche_lieu_prestataire'),
@@ -94,12 +98,16 @@ urlpatterns = [
     path('medecin/consultations/ajouter/', views.ajouter_consultation_medecin, name='ajouter_consultation_medecin'),
     path('medecin/consultations/<int:consultation_pk>/ordonnance/ajouter/', views.ajouter_ordonnance_medecin, name='ajouter_ordonnance_medecin'),
     path('medecin/ordonnances/<int:pk>/', views.voir_ordonnance_medecin, name='voir_ordonnance_medecin'),
+    path('medecin/ordonnances/<int:pk>/annuler/', views.annuler_ordonnance_medecin, name='annuler_ordonnance_medecin'),
     path('medecin/profil/', views.modifier_profil_medecin, name='modifier_profil_medecin'),
+
 
     path('pharmacien/scanner/', views.scanner_ordonnance, name='scanner_ordonnance'),
     path('pharmacien/ordonnances/<int:pk>/delivrer/', views.valider_delivrance, name='valider_delivrance'),
     path('pharmacien/historique/', views.historique_delivrances, name='historique_delivrances'),
 
+    path('assure/carte/', views.carte_assure, name='carte_assure'),
+    path('assure/carte/<int:pk>/', views.carte_assure, name='carte_assure_detail'),
     path('assure/profil/', views.mon_profil_assure, name='mon_profil_assure'),
     path('assure/ayants-droit/', views.liste_ayants_droit, name='liste_ayants_droit'),
     path('assure/ayants-droit/ajouter/', views.ajouter_ayant_droit, name='ajouter_ayant_droit'),
@@ -120,4 +128,6 @@ urlpatterns = [
     path('notifications/envoyees/', views.liste_notifications_envoyees, name='liste_notifications_envoyees'),
     path('notifications/', views.mes_notifications, name='mes_notifications'),
     path('notifications/<int:pk>/lue/', views.marquer_notification_lue, name='marquer_notification_lue'),
+    path('notifications/tout-marquer-lu/', views.marquer_toutes_notifications_lues, name='marquer_toutes_notifications_lues'),
+    path('api/notifications/dernieres/', views.api_dernieres_notifications, name='api_dernieres_notifications'),
 ]

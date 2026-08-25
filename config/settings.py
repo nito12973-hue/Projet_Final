@@ -28,9 +28,15 @@ SECRET_KEY = config('SECRET_KEY')
 
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
-if 'test' in sys.argv and 'testserver' not in ALLOWED_HOSTS:
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,testserver', cast=Csv())
+if 'testserver' not in ALLOWED_HOSTS:
     ALLOWED_HOSTS = [*ALLOWED_HOSTS, 'testserver']
+
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
+
 
 
 # Application definition
@@ -134,6 +140,23 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+# STATIC_ROOT : répertoire cible de `collectstatic` en production.
+# En développement, Django sert les fichiers depuis APP_DIRS ; STATIC_ROOT
+# n'est utilisé qu'en production (DEBUG=False) via le serveur web (nginx, etc.).
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+
+# Fichiers médias (uploads utilisateurs)
+# https://docs.djangoproject.com/en/5.2/topics/files/
+#
+# MEDIA_ROOT n'existe pas par défaut dans Django : sans lui, tout ImageField
+# ou FileField lèverait une erreur dès le premier upload. Défini ici pour
+# anticiper tout ajout futur (photo de profil, documents de prise en charge…).
+# En développement, config/urls.py expose /media/ automatiquement (voir urls.py).
+# En production, c'est le serveur web qui sert ce répertoire.
+
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 
 # Authentification SantéSN
@@ -151,6 +174,105 @@ LOGOUT_REDIRECT_URL = 'login'
 SESSION_COOKIE_HTTPONLY = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 SESSION_COOKIE_AGE = 60 * 60 * 8  # 8 heures
+
+
+# Email
+# https://docs.djangoproject.com/en/5.2/topics/email/
+#
+# En développement : console (affiche dans le terminal, aucun envoi réel).
+# En production : backend SMTP, configuré depuis les variables d'environnement.
+# Toutes les variables EMAIL_* ont une valeur par défaut sûre : sans .env,
+# l'application démarre et les emails tombent dans la console.
+
+EMAIL_BACKEND = config(
+    'EMAIL_BACKEND',
+    default='django.core.mail.backends.console.EmailBackend',
+)
+EMAIL_HOST = config('EMAIL_HOST', default='localhost')
+EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@santesn.sn')
+SERVER_EMAIL = DEFAULT_FROM_EMAIL  # Adresse des mails d'erreur Django (ADMINS)
+
+
+# Logging
+# https://docs.djangoproject.com/en/5.2/topics/logging/
+#
+# En développement (DEBUG=True) : toutes les erreurs Django s'affichent
+# dans la console — le comportement par défaut, aucune configuration nécessaire.
+# En production (DEBUG=False) : les erreurs sont écrites dans logs/django.log
+# (traceback complet) ET envoyées par email aux ADMINS si EMAIL est configuré.
+# Le dossier logs/ est créé au démarrage s'il n'existe pas.
+
+import logging  # noqa: E402 — placé ici pour rester au plus près de l'usage
+
+LOGS_DIR = BASE_DIR / 'logs'
+LOGS_DIR.mkdir(exist_ok=True)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{asctime} {levelname} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+            'filters': ['require_debug_true'],
+        },
+        'file_erreurs': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_DIR / 'django_erreurs.log',
+            'maxBytes': 10 * 1024 * 1024,  # 10 Mo
+            'backupCount': 5,
+            'formatter': 'verbose',
+            'level': 'ERROR',
+        },
+        'mail_admins': {
+            'class': 'django.utils.log.AdminEmailHandler',
+            'filters': ['require_debug_false'],
+            'level': 'ERROR',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file_erreurs'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'django.request': {
+            'handlers': ['file_erreurs', 'mail_admins'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        # Logger de l'application : utilisé pour tracer les événements métier
+        # au niveau INFO/WARNING, sans passer par JournalActivite (qui est
+        # réservé aux décisions administratives traçables).
+        'Plateform_medicale': {
+            'handlers': ['console', 'file_erreurs'],
+            'level': 'DEBUG' if DEBUG else 'INFO',
+            'propagate': False,
+        },
+    },
+}
 
 
 # Sécurité production

@@ -36,35 +36,48 @@
 </form>
 
 {% if prises_en_charge %}
-<section class="panel">
-    <table>
-        <thead>
-            <tr>
-                {% entete_tri request.GET "patient__nom" "Patient" %}
-                {% entete_tri request.GET "date_demande" "Date demande" "col-optionnelle" %}
-                <th class="col-optionnelle">Motif</th>
-                {% entete_tri request.GET "statut" "Statut" %}
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for prise in prises_en_charge %}
-            <tr>
-                <td>{{ prise.patient }}</td>
-                <td class="col-optionnelle">{{ prise.date_demande|date:"d/m/Y H:i" }}</td>
-                <td class="col-optionnelle">{{ prise.motif }}</td>
-                <td><span class="badge {{ prise.statut }}">{{ prise.get_statut_display }}</span></td>
-                <td>
-                    <div class="actions">
-                        <a href="{% url 'modifier_prise_en_charge' prise.pk %}" class="button primary btn btn-sm">{% icone "edit-2" %} Modifier</a>
-                        <a href="{% url 'supprimer_prise_en_charge' prise.pk %}" class="button btn btn-danger btn-sm">{% icone "trash-2" %} Supprimer</a>
-                    </div>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</section>
+<form method="post">
+    {% csrf_token %}
+    <div style="margin-bottom: 12px; display: flex; gap: 10px; align-items: center;">
+        <button type="submit" name="action" value="valider_selection" class="button primary btn btn-sm">{% icone "check-circle" %} Valider la sélection</button>
+        <button type="submit" name="action" value="refuser_selection" class="button btn btn-danger btn-sm">{% icone "x-circle" %} Refuser la sélection</button>
+    </div>
+    <section class="panel">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:36px;"><input type="checkbox" onclick="document.querySelectorAll('input[name=selection]').forEach(cb => cb.checked = this.checked)"></th>
+                    {% entete_tri request.GET "patient__nom" "Patient" %}
+                    {% entete_tri request.GET "date_demande" "Date demande" "col-optionnelle" %}
+                    <th class="col-optionnelle">Motif</th>
+                    {% entete_tri request.GET "statut" "Statut" %}
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for prise in prises_en_charge %}
+                <tr>
+                    <td>
+                        {% if prise.statut == 'en_attente' %}
+                        <input type="checkbox" name="selection" value="{{ prise.pk }}">
+                        {% endif %}
+                    </td>
+                    <td>{{ prise.patient }}</td>
+                    <td class="col-optionnelle">{{ prise.date_demande|date:"d/m/Y H:i" }}</td>
+                    <td class="col-optionnelle">{{ prise.motif }}</td>
+                    <td><span class="badge {{ prise.statut }}">{{ prise.get_statut_display }}</span></td>
+                    <td>
+                        <div class="actions">
+                            <a href="{% url 'modifier_prise_en_charge' prise.pk %}" class="button primary btn btn-sm">{% icone "edit-2" %} Modifier</a>
+                            <a href="{% url 'supprimer_prise_en_charge' prise.pk %}" class="button btn btn-danger btn-sm">{% icone "trash-2" %} Supprimer</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+</form>
 {% if prises_en_charge.paginator.num_pages > 1 %}
 <nav class="pagination" aria-label="Pagination">
     {% if prises_en_charge.has_previous %}

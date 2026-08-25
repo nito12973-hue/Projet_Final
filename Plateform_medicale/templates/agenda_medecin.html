@@ -51,27 +51,37 @@
         <tbody>
             {% for rdv in rendez_vous %}
             <tr>
-                <td>{{ rdv.date_heure|date:"d/m/Y H:i" }}</td>
-                <td>{{ rdv.patient }}</td>
-                <td>{{ rdv.prestataire|default:"-" }}</td>
-                <td>{{ rdv.motif|default:"-" }}</td>
-                <td>
-                    <span class="badge {% if rdv.statut == 'DEMANDE' %}en_attente{% elif rdv.statut == 'CONFIRME' %}confirme{% elif rdv.statut == 'ANNULE' %}refusee{% elif rdv.statut == 'TERMINE' %}terminee{% endif %}">{{ rdv.get_statut_display }}</span>
+                <td style="white-space:nowrap;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span class="code" style="font-weight:700;color:var(--primary-strong);background:var(--primary-soft);padding:4px 8px;border-radius:6px;font-size:12.5px;">
+                            {{ rdv.date_heure|date:"H:i" }}
+                        </span>
+                        <span style="font-size:13px;color:var(--titre);">{{ rdv.date_heure|date:"d/m/Y" }}</span>
+                    </div>
                 </td>
                 <td>
-                    <div class="actions">
+                    <strong style="color:var(--titre);display:block;font-size:13.5px;">{{ rdv.patient }}</strong>
+                    <span style="font-size:11.5px;color:var(--muted);">Carte: {{ rdv.patient.numero_carte }}</span>
+                </td>
+                <td>{{ rdv.prestataire|default:"Hôpital Principal" }}</td>
+                <td><span style="font-size:13px;">{{ rdv.motif|default:"Consultation générale" }}</span></td>
+                <td>
+                    <span class="badge {% if rdv.statut == 'DEMANDE' %}en_attente{% elif rdv.statut == 'CONFIRME' %}confirme{% elif rdv.statut == 'ANNULE' %}refusee{% elif rdv.statut == 'TERMINE' %}terminee{% endif %}">
+                        {{ rdv.get_statut_display }}
+                    </span>
+                </td>
+                <td>
+                    <div class="actions" style="gap:6px;">
+                        {% if rdv.statut == 'CONFIRME' %}
+                        <a href="{% url 'ajouter_consultation_medecin' %}?rdv_id={{ rdv.pk }}" class="button primary btn btn-sm" title="Ouvrir la consultation pour ce patient">
+                            {% icone "stethoscope" %} Démarrer
+                        </a>
+                        {% endif %}
                         {% if rdv.statut == 'DEMANDE' %}
                         <form method="post" action="{% url 'changer_statut_rendez_vous' rdv.pk %}" class="action-ligne">
                             {% csrf_token %}
                             <input type="hidden" name="statut" value="CONFIRME">
-                            <button type="submit" class="button primary btn btn-sm">Confirmer</button>
-                        </form>
-                        {% endif %}
-                        {% if rdv.statut == 'CONFIRME' %}
-                        <form method="post" action="{% url 'changer_statut_rendez_vous' rdv.pk %}" class="action-ligne">
-                            {% csrf_token %}
-                            <input type="hidden" name="statut" value="TERMINE">
-                            <button type="submit" class="button primary btn btn-sm">Marquer termine</button>
+                            <button type="submit" class="button primary btn btn-sm">{% icone "check" %} Confirmer</button>
                         </form>
                         {% endif %}
                         {% if rdv.statut == 'DEMANDE' or rdv.statut == 'CONFIRME' %}

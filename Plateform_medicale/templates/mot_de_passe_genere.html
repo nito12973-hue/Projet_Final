@@ -1,21 +1,50 @@
 {% extends "base.html" %}
 {% load icones %}
 
-{% block title %}Mot de passe généré{% endblock %}
+{% block title %}{% if action == "creation" %}Utilisateur créé{% else %}Lien d'activation généré{% endif %}{% endblock %}
 
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>{% if action == "creation" %}Utilisateur créé{% else %}Mot de passe réinitialisé{% endif %}</h1>
-        <p class="subtitle">Communiquez ce mot de passe à {{ utilisateur }} : il ne sera plus jamais affiché.</p>
+        <h1>{% if action == "creation" %}Utilisateur créé{% else %}Lien d'activation généré{% endif %}</h1>
+        <p class="subtitle">Le compte a été créé avec succès pour <strong>{{ utilisateur.email }}</strong>.</p>
     </div>
 </section>
 
-<div class="avis avis-succes" style="padding: 24px;">
-    <p class="avis-titre">Compte : {{ utilisateur.email }}</p>
-    <div style="display:flex;align-items:center;gap:12px;">
-        <p id="mot-de-passe-genere" class="code" style="font-size: 20px; font-weight: 800; color: var(--primary-strong); margin: 0;">{{ mot_de_passe }}</p>
-        <button type="button" class="button btn btn-sm" data-copier="{{ mot_de_passe }}">{% icone "copy" %} Copier</button>
+<div class="panel" style="padding: 24px; max-width: 640px; margin-bottom: 24px;">
+    <div style="margin-bottom: 18px;">
+        <p style="font-size: 14.5px; margin: 0 0 8px 0; color: var(--titre);">
+            {% if whatsapp_statut == "ENVOYE" %}
+            {% icone "check" %} Le lien d'activation a été envoyé par <strong>WhatsApp</strong> au numéro enregistré.
+            {% elif email_envoye %}
+            {% icone "check" %} Le lien d'activation a été envoyé par <strong>Email</strong> à <strong>{{ utilisateur.email }}</strong>.
+            {% else %}
+            {% icone "alert-triangle" %} Aucun canal d'expédition n'était disponible. Veuillez transmettre le lien manuellement.
+            {% endif %}
+        </p>
+        {% if whatsapp_statut != "ENVOYE" and whatsapp_statut != "NON_CONFIGURE" and whatsapp_statut %}
+        <p style="font-size: 13px; color: var(--muted); margin: 0;">
+            {% if whatsapp_statut == "SANS_TELEPHONE" or whatsapp_statut == "NUMERO_INVALIDE" %}
+            (WhatsApp non disponible : bascule automatique sur l'email de secours)
+            {% elif whatsapp_statut == "ECHEC" %}
+            (Échec de l'envoi WhatsApp : bascule automatique sur l'email de secours)
+            {% endif %}
+        </p>
+        {% endif %}
+    </div>
+
+    <div style="margin-top: 16px; border-top: 1px solid var(--border); padding-top: 16px;">
+        <label for="champ-lien-activation" style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--titre);">
+            Lien d'activation direct (valable 24 heures)
+        </label>
+        <div style="display: flex; align-items: center; gap: 10px; background: var(--champ-bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; margin-bottom: 12px;">
+            <input type="text" readonly value="{{ lien_activation }}" style="flex: 1; border: none; background: transparent; font-family: monospace; font-size: 13px; color: var(--titre); outline: none;" id="champ-lien-activation">
+            <button type="button" class="button btn btn-sm" data-copier="{{ lien_activation }}">{% icone "copy" %} Copier le lien</button>
+        </div>
+
+        <p style="font-size: 12.5px; color: var(--muted); margin: 0;">
+            {% icone "shield-check" %} Par sécurité, l'utilisateur définira son mot de passe directement via ce lien sécurisé.
+        </p>
     </div>
 </div>
 

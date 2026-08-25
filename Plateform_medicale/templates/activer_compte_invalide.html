@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load icones %}
+
+{% block title %}Lien d'activation expiré ou invalide — SantéSN{% endblock %}
+
+{% block content %}
+<div class="auth-container" style="max-width: 480px; margin: 40px auto;">
+    <section class="panel" style="padding: 36px 28px; text-align: center;">
+        <div style="display: inline-flex; align-items: center; justify-content: center; width: 60px; height: 60px; border-radius: 50%; background: var(--danger-subtle); color: var(--danger); margin-bottom: 16px;">
+            {% icone "alert-triangle" %}
+        </div>
+        <h1 style="font-size: 20px; font-weight: 800; color: var(--titre); margin: 0 0 10px;">Lien expiré ou invalide</h1>
+        <p class="subtitle" style="margin-bottom: 24px; font-size: 14.5px;">
+            Ce lien d'activation n'est plus valable. Il a peut-être déjà été utilisé ou a dépassé sa durée de validité de 24 heures.
+        </p>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <a class="button primary" href="{% url 'login' %}" style="justify-content: center;">Aller à la page de connexion</a>
+        </div>
+    </section>
+</div>
+{% endblock %}
