@@ -60,15 +60,28 @@ def login_view(request):
     next_valide = bool(next_url) and url_has_allowed_host_and_scheme(
         next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()
     )
-    destination = next_url if next_valide else 'post_login_redirect'
+    destination = 'post_login_redirect'
+    if next_valide:
+        # Seul un ADMIN peut être renvoyé vers le tableau de bord ou les rapports d'administration
+        admin_only_prefixes = ('/tableau-de-bord', '/rapports', '/parametres', '/utilisateurs', '/plans-couverture')
+        if any(next_url.startswith(p) for p in admin_only_prefixes):
+            if request.user.is_authenticated and request.user.role == User.Role.ADMIN:
+                destination = next_url
+        else:
+            destination = next_url
 
     if request.user.is_authenticated:
-        return redirect(destination)
+        return redirect('post_login_redirect')
 
     form = LoginForm(request=request, data=request.POST or None)
     if request.method == 'POST' and form.is_valid():
         login(request, form.user)
-        return redirect(destination)
+        if next_valide:
+            admin_only_prefixes = ('/tableau-de-bord', '/rapports', '/parametres', '/utilisateurs', '/plans-couverture')
+            if any(next_url.startswith(p) for p in admin_only_prefixes) and form.user.role != User.Role.ADMIN:
+                return redirect('post_login_redirect')
+            return redirect(next_url)
+        return redirect('post_login_redirect')
 
     return render(request, 'login.html', {'form': form, 'session_expiree': next_valide})
 
