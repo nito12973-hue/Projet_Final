@@ -4802,7 +4802,6 @@
 </head>
 <body>
     <a href="#contenu-principal" class="lien-evitement">Aller au contenu</a>
-    <div id="barre-chargement"></div>
     <div id="fond-sidebar" class="sidebar-overlay"></div>
     <div class="shell">
         <aside id="barre-laterale">
@@ -5241,34 +5240,7 @@
             });
         })();
 
-        (function () {
-            // Barre de chargement : feedback visuel a chaque navigation/soumission.
-            var barre = document.getElementById('barre-chargement');
-            if (!barre) { return; }
 
-            function demarrerBarre() {
-                barre.style.transition = 'none';
-                barre.style.width = '0';
-                barre.classList.add('active');
-                requestAnimationFrame(function () {
-                    barre.style.transition = '';
-                    barre.style.width = '80%';
-                });
-            }
-
-            document.addEventListener('click', function (evenement) {
-                var lien = evenement.target.closest('a[href]');
-                if (!lien || lien.target || lien.hasAttribute('download')) { return; }
-                if (lien.origin !== window.location.origin) { return; }
-                if (evenement.metaKey || evenement.ctrlKey || evenement.shiftKey || evenement.altKey) { return; }
-                if (lien.getAttribute('href').charAt(0) === '#') { return; }
-                demarrerBarre();
-            });
-
-            document.addEventListener('submit', function () {
-                demarrerBarre();
-            });
-        })();
 
         (function () {
             // Bascule 'menu reduit' de la page Parametres. Elle ne duplique
