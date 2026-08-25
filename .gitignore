@@ -24,6 +24,9 @@ media/
 Thumbs.db
 ~$*
 *.tmp
+*.docx
+*.doc
+
 
 
 # Dossiers d'outils et branches auxiliaires
