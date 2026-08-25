@@ -2189,47 +2189,6 @@
             .feuille-praticien,
             .feuille-signature {
                 text-align: left;
-                max-width: none;
-            }
-
-            /* Toasts et panneaux flottants adaptatifs pour mobile/tablette */
-            .toasts {
-                top: 10px !important;
-                right: 10px !important;
-                left: 10px !important;
-                max-width: none !important;
-                width: auto !important;
-                z-index: 1200 !important;
-            }
-
-            .toast {
-                padding: 12px 14px !important;
-                font-size: 13.5px !important;
-                box-shadow: 0 8px 24px rgba(11, 32, 39, 0.22) !important;
-            }
-
-            .menu-notifications-panneau {
-                position: fixed !important;
-                top: 56px !important;
-                left: 10px !important;
-                right: 10px !important;
-                width: auto !important;
-                max-width: none !important;
-                max-height: calc(100vh - 74px) !important;
-                z-index: 1100 !important;
-                box-shadow: 0 16px 40px rgba(11, 32, 39, 0.28) !important;
-            }
-
-            .menu-compte-panneau {
-                position: fixed !important;
-                top: 56px !important;
-                left: 10px !important;
-                right: 10px !important;
-                width: auto !important;
-                max-width: none !important;
-                z-index: 1100 !important;
-                box-shadow: 0 16px 40px rgba(11, 32, 39, 0.28) !important;
-            }
         }
 
         .qr-agrandi {
@@ -4829,12 +4788,149 @@
             top: 12px;
         }
 
-        /* Accessibilité : réduire les animations si demandé */
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
+        /* ==========================================================================
+           RESPONSIVE MOBILE & TABLETTE — NOTIFICATIONS, TOPBAR & DIALOGUES FLOTTANTS
+           ========================================================================== */
+        @media (max-width: 768px) {
+            /* 1. Barre supérieure (Topbar) */
+            .topbar {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                gap: 8px !important;
+                padding: 10px 0 !important;
+                margin-bottom: 16px !important;
+            }
+
+            .topbar-recherche {
+                display: none !important;
+            }
+
+            .fil-ariane {
+                font-size: 15px !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                max-width: 48vw !important;
+            }
+
+            .topbar-droite {
+                display: flex !important;
+                align-items: center !important;
+                gap: 8px !important;
+                margin-left: auto !important;
+            }
+
+            .topbar-bouton {
+                width: 40px !important;
+                height: 40px !important;
+                border-radius: 10px !important;
+                background: var(--surface) !important;
+                border: 1px solid var(--border) !important;
+            }
+
+            /* 2. Panneau Déroulant de Notifications */
+            .menu-notifications {
+                position: static !important;
+            }
+
+            .menu-notifications-panneau {
+                position: fixed !important;
+                top: 62px !important;
+                left: 12px !important;
+                right: 12px !important;
+                width: auto !important;
+                max-width: none !important;
+                max-height: calc(100vh - 80px) !important;
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                background: #ffffff !important;
+                border: 1px solid var(--border) !important;
+                border-radius: 16px !important;
+                padding: 16px !important;
+                box-shadow: 0 16px 48px rgba(11, 32, 39, 0.28) !important;
+                z-index: 99999 !important;
+            }
+
+            .menu-notifications-entete {
+                padding-bottom: 10px !important;
+                margin-bottom: 10px !important;
+                font-size: 14px !important;
+            }
+
+            .menu-notifications-entete strong {
+                font-size: 15px !important;
+                color: var(--titre) !important;
+            }
+
+            .menu-notifications-entete button {
+                font-size: 13px !important;
+                font-weight: 600 !important;
+                padding: 4px 8px !important;
+            }
+
+            .menu-notifications-liste {
+                max-height: 50vh !important;
+                gap: 8px !important;
+            }
+
+            .notif-item {
+                padding: 12px 14px !important;
+                border-radius: 10px !important;
+            }
+
+            .notif-titre {
+                font-size: 14px !important;
+            }
+
+            .notif-txt {
+                font-size: 13px !important;
+                line-height: 1.4 !important;
+            }
+
+            .menu-notifications-pied {
+                padding-top: 12px !important;
+                margin-top: 10px !important;
+                font-size: 13.5px !important;
+            }
+
+            /* 3. Menu Déroulant Profil Compte */
+            .menu-compte {
+                position: static !important;
+            }
+
+            .menu-compte-panneau {
+                position: fixed !important;
+                top: 62px !important;
+                left: 12px !important;
+                right: 12px !important;
+                width: auto !important;
+                max-width: none !important;
+                background: #ffffff !important;
+                border: 1px solid var(--border) !important;
+                border-radius: 16px !important;
+                padding: 14px !important;
+                box-shadow: 0 16px 48px rgba(11, 32, 39, 0.28) !important;
+                z-index: 99999 !important;
+            }
+
+            /* 4. Toasts / Messages Flash */
+            .toasts {
+                position: fixed !important;
+                top: 12px !important;
+                left: 12px !important;
+                right: 12px !important;
+                max-width: none !important;
+                width: auto !important;
+                z-index: 999999 !important;
+            }
+
+            .toast {
+                width: 100% !important;
+                padding: 14px 16px !important;
+                border-radius: 12px !important;
+                font-size: 14px !important;
+                box-shadow: 0 10px 30px rgba(11, 32, 39, 0.25) !important;
             }
         }
     </style>
