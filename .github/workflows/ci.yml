@@ -1,0 +1,49 @@
+name: CI SantéSN - Tests & Validation
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout du code
+      uses: actions/checkout@v4
+
+    - name: Configuration de Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+        cache: 'pip'
+
+    - name: Installation des dépendances
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Vérification du projet Django
+      env:
+        SECRET_KEY: 'ci-test-secret-key-santesn-django-security-token'
+        DEBUG: 'True'
+        ALLOWED_HOSTS: 'localhost,127.0.0.1,testserver'
+      run: |
+        python manage.py check
+
+    - name: Exécution des 107 tests unitaires et d'intégration
+      env:
+        SECRET_KEY: 'ci-test-secret-key-santesn-django-security-token'
+        DEBUG: 'True'
+        ALLOWED_HOSTS: 'localhost,127.0.0.1,testserver'
+      run: |
+        python manage.py test
+
+    - name: Test de compilation des fichiers statiques (WhiteNoise)
+      env:
+        SECRET_KEY: 'ci-test-secret-key-santesn-django-security-token'
+        DEBUG: 'False'
+        ALLOWED_HOSTS: 'localhost,127.0.0.1,testserver'
+      run: |
+        python manage.py collectstatic --no-input
