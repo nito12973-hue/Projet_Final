@@ -75,7 +75,7 @@ class Command(BaseCommand):
 
         pharmacien, _ = Pharmacien.objects.get_or_create(
             user=pharma_user,
-            defaults={"nom": "Grande Pharmacie Dakaroise", "prestataire": pharma}
+            defaults={"prestataire": pharma}
         )
 
         patient, _ = Patient.objects.get_or_create(
