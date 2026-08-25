@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load icones %}
 
 {% block title %}Nouvelle consultation{% endblock %}
 
@@ -8,7 +9,9 @@
         <h1>Nouvelle consultation</h1>
         <p class="subtitle">Après enregistrement, vous pourrez créer l'ordonnance.</p>
     </div>
-    <a class="button" href="{% url 'historique_consultations' %}">Retour</a>
+    <div class="actions">
+        <a class="button btn" href="{% url 'historique_consultations' %}">{% icone "chevron-left" %} Retour</a>
+    </div>
 </section>
 
 <section class="panel panel-form">
@@ -18,6 +21,9 @@
 
     <form method="post">
         {% csrf_token %}
+        {% if rdv %}
+        <input type="hidden" name="rdv_id" value="{{ rdv.pk }}">
+        {% endif %}
         {% for field in form %}
         <label for="{{ field.id_for_label }}">{{ field.label }}</label>
         {{ field }}

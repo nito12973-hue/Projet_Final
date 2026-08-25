@@ -1,34 +1,93 @@
 {% extends "base.html" %}
+{% load icones %}
 
-{% block title %}Import termine{% endblock %}
+{% block title %}Import terminé — Onboarding des utilisateurs{% endblock %}
 
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>Import termine</h1>
+        <h1>Import terminé</h1>
         <p class="subtitle">
-            {{ resultats|length }} compte{{ resultats|length|pluralize }} cree{{ resultats|length|pluralize }}.
-            Communiquez ces mots de passe aux interesses : ce tableau ne sera plus jamais affiche.
+            {{ total_crees }} compte{{ total_crees|pluralize }} créé{{ total_crees|pluralize }} avec succès. Les liens d'activation sécurisés ont été générés.
         </p>
     </div>
-    <a class="button primary" href="{% url 'liste_utilisateurs' %}">Retour a la liste des utilisateurs</a>
+    <a class="button primary" href="{% url 'liste_utilisateurs' %}">Retour à la liste des utilisateurs</a>
 </section>
 
+<div class="kpi-grille" style="grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 20px;" aria-label="Statistiques d'importation">
+    <div class="kpi">
+        <span class="kpi-entete">{% icone "check" %} Comptes créés</span>
+        <strong class="code">{{ total_crees }}</strong>
+        <span class="kpi-pied">Prêts pour activation</span>
+    </div>
+    <div class="kpi">
+        <span class="kpi-entete">{% icone "chat" %} WhatsApp</span>
+        <strong class="code">{{ total_whatsapp }}</strong>
+        <span class="kpi-pied">Liens transmis par WhatsApp</span>
+    </div>
+    <div class="kpi">
+        <span class="kpi-entete">{% icone "mail" %} Emails</span>
+        <strong class="code">{{ total_email }}</strong>
+        <span class="kpi-pied">Liens transmis par Email</span>
+    </div>
+</div>
+
 <section class="panel" style="padding:0;">
+    <div class="panel-header" style="padding:16px 20px;">
+        <h2 style="font-size:16px;margin:0;">Résultat détaillé de l'onboarding sécurisé</h2>
+    </div>
     <table>
         <thead>
-            <tr><th>Email</th><th>Nom complet</th><th>Role</th><th>Mot de passe</th></tr>
+            <tr>
+                <th scope="col">Ligne</th>
+                <th scope="col">Utilisateur</th>
+                <th scope="col">Rôle</th>
+                <th scope="col">Compte</th>
+                <th scope="col">Email</th>
+                <th scope="col">WhatsApp</th>
+            </tr>
         </thead>
         <tbody>
             {% for resultat in resultats %}
             <tr>
-                <td>{{ resultat.email }}</td>
-                <td>{{ resultat.nom_complet }}</td>
-                <td>{{ resultat.role }}</td>
-                <td class="code" style="font-weight:700;color:var(--primary-strong);">{{ resultat.mot_de_passe }}</td>
+                <td class="code">{{ resultat.numero_ligne }}</td>
+                <td>
+                    <strong>{{ resultat.nom_complet }}</strong><br>
+                    <span style="font-size:12.5px;color:var(--muted);">{{ resultat.email }}</span>
+                </td>
+                <td><span class="badge">{{ resultat.role }}</span></td>
+                <td>
+                    <span class="badge" style="background:var(--primary-subtle);color:var(--primary-strong);">{% icone "check" %} Créé</span>
+                </td>
+                <td>
+                    {% if resultat.whatsapp_statut == "ENVOYE" %}
+                    <span class="badge" style="background:var(--surface-muted);color:var(--muted);">Non requis (WhatsApp utilisé)</span>
+                    {% elif resultat.email_envoye %}
+                    <span class="badge" style="background:var(--primary-subtle);color:var(--primary-strong);">Envoyé (Secours)</span>
+                    {% else %}
+                    <span class="badge" style="background:var(--refus-bg);color:var(--refus-fg);" title="{{ resultat.email_erreur|default:'Non envoyé' }}">Échec</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if resultat.whatsapp_statut == "ENVOYE" %}
+                    <span class="badge" style="background:var(--primary-subtle);color:var(--primary-strong);">Envoyé</span>
+                    {% elif resultat.whatsapp_statut == "NON_CONFIGURE" %}
+                    <span class="badge" style="background:var(--surface-muted);color:var(--muted);" title="{{ resultat.whatsapp_message }}">Non configuré</span>
+                    {% elif resultat.whatsapp_statut == "SANS_TELEPHONE" %}
+                    <span class="badge" style="background:var(--surface-muted);color:var(--muted);">Sans téléphone</span>
+                    {% elif resultat.whatsapp_statut == "NUMERO_INVALIDE" %}
+                    <span class="badge" style="background:var(--attente-bg);color:var(--attente-fg);" title="{{ resultat.whatsapp_message }}">Numéro invalide</span>
+                    {% else %}
+                    <span class="badge" style="background:var(--refus-bg);color:var(--refus-fg);" title="{{ resultat.whatsapp_message }}">Échec</span>
+                    {% endif %}
+                </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </section>
+
+<div class="panel-bloc" style="margin-top:16px;background:var(--primary-soft);border:1px solid var(--border);border-radius:12px;font-size:13px;color:var(--primary-strong);">
+    {% icone "shield-check" %} <strong>Confidentialité garantie</strong> : Conformément aux règles de sécurité, les jetons d'activation sont transmis de manière confidentielle et ne sont pas exposés en clair dans ce tableau. Si un utilisateur nécessite un nouveau lien, utilisez l'action <em>« Renvoyer activation »</em> dans la liste des utilisateurs.
+</div>
 {% endblock %}

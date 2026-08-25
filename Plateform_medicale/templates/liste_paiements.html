@@ -11,7 +11,6 @@
     </div>
     <div class="actions">
         <a class="button btn" data-chargement="Génération..." href="{% url 'exporter_paiements_csv' %}?{{ request.GET.urlencode }}">{% icone "download" %} Exporter en CSV</a>
-        <a class="button primary btn" href="{% url 'importer_reglements_excel' %}">{% icone "upload" %} Importer des règlements</a>
     </div>
 </section>
 
@@ -77,10 +76,13 @@
                         {% if paiement.statut == 'non_regle' %}
                         <a href="{% url 'marquer_paiement_regle' paiement.pk %}" class="button primary btn btn-sm">Marquer réglé</a>
                         {% else %}
-                        <span>
-                            {{ paiement.get_mode_reglement_display }} - {{ paiement.date_reglement|date:"d/m/Y" }}
-                            {% if paiement.enregistre_par %}<br><small class="subtitle">par {{ paiement.enregistre_par.email }}</small>{% endif %}
-                        </span>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span>
+                                {{ paiement.get_mode_reglement_display }} - {{ paiement.date_reglement|date:"d/m/Y" }}
+                                {% if paiement.enregistre_par %}<br><small class="subtitle">par {{ paiement.enregistre_par.email }}</small>{% endif %}
+                            </span>
+                            <a href="{% url 'recu_paiement' paiement.pk %}" class="button btn btn-sm" title="Imprimer la quittance">{% icone "printer" %} Reçu</a>
+                        </div>
                         {% endif %}
                     </div>
                 </td>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accès réservé — SantéSN</title>
+    <meta name="theme-color" content="#0b2027">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect x='18' y='6' width='12' height='36' rx='4' fill='%230e7c86'/%3E%3Crect x='6' y='18' width='36' height='12' rx='4' fill='%230e7c86'/%3E%3Cpath d='M6 24H14L17 16L21 32L25 19L27.5 24H42' fill='none' stroke='%23e0824f' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #eff4f3;
+            color: #1f2933;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            text-align: center;
+            padding: 24px;
+        }
+        .carte {
+            max-width: 480px;
+            background: #ffffff;
+            padding: 40px 32px;
+            border-radius: 18px;
+            box-shadow: 0 12px 36px rgba(11,32,39,0.08);
+            border: 1px solid #d9e2ea;
+        }
+        h1 {
+            font-size: 52px;
+            margin: 0 0 6px;
+            color: #0b2027;
+            font-weight: 800;
+        }
+        h2 {
+            font-size: 20px;
+            margin: 0 0 12px;
+            color: #0b2027;
+        }
+        p {
+            color: #5f6f7d;
+            font-size: 14.5px;
+            line-height: 1.5;
+            margin: 0 0 24px;
+        }
+        .actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        a {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 11px 22px;
+            border-radius: 10px;
+            font-weight: 600;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .btn-principal {
+            background: linear-gradient(135deg, #0b2027 0%, #095059 100%);
+            color: #ffffff;
+        }
+        .btn-secondaire {
+            background: #dcece9;
+            color: #095059;
+        }
+    </style>
+</head>
+<body>
+    <div class="carte">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="margin-bottom:12px;">
+            <rect x="18" y="6" width="12" height="36" rx="4" fill="#0B2027"/>
+            <rect x="6" y="18" width="36" height="12" rx="4" fill="#0B2027"/>
+            <path d="M6 24H14L17 16L21 32L25 19L27.5 24H42" fill="none" stroke="#E0824F" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <h1>403</h1>
+        <h2>Accès réservé</h2>
+        <p>Cette page est strictement réservée à un autre profil d'utilisateur (administrateur, médecin ou pharmacien). Pour continuer, revenez à votre espace ou connectez-vous avec le compte approprié.</p>
+        <div class="actions">
+            <a href="/redirection/" class="btn-principal">Retour à mon espace</a>
+            <a href="/connexion/" class="btn-secondaire">Changer de compte</a>
+        </div>
+    </div>
+</body>
+</html>

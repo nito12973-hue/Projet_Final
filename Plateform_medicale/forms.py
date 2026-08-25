@@ -1,8 +1,10 @@
+import datetime
 import secrets
 import string
 
 from django import forms
 from django.contrib.auth import authenticate, password_validation
+from django.db.models import Q
 from django.utils import timezone
 
 from .models import (
@@ -14,6 +16,7 @@ from .models import (
     Patient,
     Pharmacien,
     PlanCouverture,
+    PreferenceNotification,
     Prestataire,
     PriseEnCharge,
     RendezVous,
@@ -33,6 +36,31 @@ def generer_mot_de_passe():
     """Genere un mot de passe temporaire aleatoire (creation ou reinitialisation)."""
     alphabet = string.ascii_letters + string.digits
     return ''.join(secrets.choice(alphabet) for _ in range(12))
+
+
+class FormControlMixin:
+    """
+    Mixin qui applique automatiquement class="form-control" à tous les champs
+    d'un formulaire, sauf les champs déjà dotés d'une classe CSS explicite.
+
+    Utilisation : faire hériter le formulaire de FormControlMixin (en premier),
+    puis de forms.ModelForm ou forms.Form.
+
+    Exemple : class MonForm(FormControlMixin, forms.ModelForm): ...
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            widget = field.widget
+            # Les CheckboxInput, HiddenInput et MultiWidget ont un rendu
+            # différent ; on ne leur applique pas form-control.
+            if isinstance(widget, (forms.CheckboxInput, forms.HiddenInput,
+                                   forms.CheckboxSelectMultiple, forms.MultiWidget)):
+                continue
+            css_actuel = widget.attrs.get('class', '')
+            if 'form-control' not in css_actuel:
+                widget.attrs['class'] = ('form-control ' + css_actuel).strip()
 
 
 def lier_fiche_medecin(utilisateur):
@@ -300,11 +328,17 @@ class OrdonnanceForm(forms.ModelForm):
 
 
 class MedecinProfilForm(forms.ModelForm):
-    """Le medecin ne modifie que ses informations professionnelles (pas email/role, geres par l'admin)."""
+    """Le medecin modifie ses informations professionnelles (pas email/role, geres par l'admin)."""
 
     class Meta:
         model = Medecin
-        fields = ['specialite', 'telephone']
+        fields = ['specialite', 'telephone', 'annees_experience', 'presentation']
+        widgets = {
+            'presentation': forms.Textarea(attrs={
+                'rows': 4,
+                'placeholder': "Domaines de prise en charge, parcours, langues parlées...",
+            }),
+        }
 
 
 class ProfilAssureForm(forms.ModelForm):
@@ -322,16 +356,34 @@ class ProfilAssureForm(forms.ModelForm):
             'date_naissance': forms.DateInput(attrs={'type': 'date'}),
         }
 
+    def clean_date_naissance(self):
+        """La date de naissance ne peut pas être dans le futur."""
+        date_naissance = self.cleaned_data.get('date_naissance')
+        if date_naissance and date_naissance > datetime.date.today():
+            raise forms.ValidationError(
+                "La date de naissance ne peut pas être dans le futur."
+            )
+        return date_naissance
+
 
 class AyantDroitForm(forms.ModelForm):
     """Creation/modification d'un ayant droit par l'assure principal."""
 
     class Meta:
         model = Patient
-        fields = ['nom', 'prenom', 'date_naissance', 'telephone', 'lien_parente']
+        fields = ['nom', 'prenom', 'date_naissance', 'telephone', 'adresse', 'lien_parente']
         widgets = {
             'date_naissance': forms.DateInput(attrs={'type': 'date'}),
         }
+
+    def clean_date_naissance(self):
+        """La date de naissance ne peut pas être dans le futur."""
+        date_naissance = self.cleaned_data.get('date_naissance')
+        if date_naissance and date_naissance > datetime.date.today():
+            raise forms.ValidationError(
+                "La date de naissance ne peut pas être dans le futur."
+            )
+        return date_naissance
 
 
 class RendezVousAssureForm(forms.ModelForm):
@@ -376,8 +428,12 @@ class RendezVousAssureForm(forms.ModelForm):
         # un rendez-vous avec un cardiologue de Dakar "chez" une pharmacie
         # de Rufisque -- le formulaire acceptait n'importe quel couple.
         if prestataire is not None:
+            # Les medecins SANS structure restent proposes : tant que
+            # l'administrateur ne leur en a pas attribue une, les exclure les
+            # rendrait introuvables et bloquerait toute demande de
+            # rendez-vous. C'est exactement ce qui se produisait.
             self.fields['medecin'].queryset = Medecin.objects.filter(
-                prestataire=prestataire
+                Q(prestataire=prestataire) | Q(prestataire__isnull=True)
             ).order_by('nom', 'prenom')
             self.fields['prestataire'].initial = prestataire
         else:
@@ -402,7 +458,11 @@ class RendezVousAssureForm(forms.ModelForm):
         cleaned = super().clean()
         medecin = cleaned.get('medecin')
         prestataire = cleaned.get('prestataire')
-        if medecin and prestataire and medecin.prestataire_id != prestataire.pk:
+        # `medecin.prestataire_id is not None` est indispensable : un medecin
+        # sans structure n'est en contradiction avec aucun prestataire. Sans
+        # cette condition, il etait refuse partout.
+        if (medecin and prestataire and medecin.prestataire_id is not None
+                and medecin.prestataire_id != prestataire.pk):
             self.add_error('medecin', forms.ValidationError(
                 "Ce medecin n'exerce pas chez %(prestataire)s.",
                 params={'prestataire': prestataire.nom},
@@ -457,6 +517,15 @@ class PatientForm(forms.ModelForm):
         widgets = {
             'date_naissance': forms.DateInput(attrs={'type': 'date'}),
         }
+
+    def clean_date_naissance(self):
+        """La date de naissance ne peut pas être dans le futur."""
+        date_naissance = self.cleaned_data.get('date_naissance')
+        if date_naissance and date_naissance > datetime.date.today():
+            raise forms.ValidationError(
+                "La date de naissance ne peut pas être dans le futur."
+            )
+        return date_naissance
 
     def clean(self):
         cleaned_data = super().clean()
@@ -574,6 +643,15 @@ class ServiceMedicalForm(forms.ModelForm):
     class Meta:
         model = ServiceMedical
         fields = ['nom', 'description', 'prix', 'prestataire']
+        labels = {
+            'nom': "Nom de l'acte / service médical",
+            'description': "Description",
+            'prix': "Tarif conventionné (FCFA)",
+            'prestataire': "Établissement conventionné (optionnel)",
+        }
+        help_texts = {
+            'prestataire': "Laissez vide si ce tarif s'applique à l'ensemble du réseau conventionné.",
+        }
         widgets = {
             'description': forms.Textarea(attrs={'rows': 3}),
         }
@@ -596,6 +674,15 @@ class PlanCouvertureForm(forms.ModelForm):
     class Meta:
         model = PlanCouverture
         fields = ['nom', 'taux_couverture', 'plafond_annuel']
+        labels = {
+            'nom': "Nom du plan de couverture",
+            'taux_couverture': "Taux de prise en charge (%)",
+            'plafond_annuel': "Plafond annuel de remboursement (FCFA)",
+        }
+        help_texts = {
+            'taux_couverture': "Pourcentage des frais pris en charge par l'assurance (ex: 80 pour 80%).",
+            'plafond_annuel': "Laissez vide pour une couverture sans plafond annuel.",
+        }
 
 
 class PaiementReglementForm(forms.ModelForm):
@@ -666,3 +753,55 @@ class MonCompteForm(forms.ModelForm):
             elif not self.instance.check_password(mot_de_passe):
                 self.add_error("mot_de_passe_actuel", "Mot de passe incorrect.")
         return donnees
+
+
+class PreferenceNotificationForm(forms.ModelForm):
+    class Meta:
+        model = PreferenceNotification
+        fields = [
+            "email_rdv",
+            "email_prise_en_charge",
+            "email_ordonnance",
+            "email_delivrance",
+        ]
+        labels = {
+            "email_rdv": "Mise à jour des rendez-vous",
+            "email_prise_en_charge": "Validation / Refus de prise en charge",
+            "email_ordonnance": "Émission d'ordonnance",
+            "email_delivrance": "Avis de délivrance en pharmacie",
+        }
+
+
+class ActivationCompteForm(forms.Form):
+    """Formulaire sécurisé pour définir son mot de passe initial lors de l'onboarding."""
+
+    nouveau_mot_de_passe = forms.CharField(
+        label="Nouveau mot de passe",
+        widget=forms.PasswordInput(attrs={"autocomplete": "new-password", "placeholder": "Minimum 8 caractères"}),
+        min_length=8,
+        help_text="Choisissez un mot de passe robuste d'au moins 8 caractères.",
+    )
+    confirmation_mot_de_passe = forms.CharField(
+        label="Confirmer le mot de passe",
+        widget=forms.PasswordInput(attrs={"autocomplete": "new-password", "placeholder": "Répétez le mot de passe"}),
+    )
+
+    def __init__(self, utilisateur, *args, **kwargs):
+        self.utilisateur = utilisateur
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        donnees = super().clean()
+        p1 = donnees.get("nouveau_mot_de_passe")
+        p2 = donnees.get("confirmation_mot_de_passe")
+        if p1 and p2 and p1 != p2:
+            self.add_error("confirmation_mot_de_passe", "Les deux mots de passe ne correspondent pas.")
+        return donnees
+
+    def sauvegarder(self):
+        mot_de_passe = self.cleaned_data["nouveau_mot_de_passe"]
+        self.utilisateur.set_password(mot_de_passe)
+        self.utilisateur.is_active = True
+        self.utilisateur.save(update_fields=["password", "is_active"])
+        return self.utilisateur
+

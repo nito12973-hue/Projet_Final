@@ -1,324 +1,159 @@
 {% extends "base.html" %}
 {% load formats icones %}
 
-{% block title %}Tableau de bord - Dr {{ medecin.nom }}{% endblock %}
+{% block title %}Espace Médecin — Dr {{ medecin.prenom }} {{ medecin.nom }}{% endblock %}
 
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>{% salutation %}, Dr {% nom_accueil user medecin %}</h1>
-        <p class="subtitle">Votre activité en un coup d'œil.</p>
-    </div>
-    {% comment %}
-    Le medecin TRAITE des demandes, il n'en cree pas : le rendez-vous est
-    demande par l'assure. Ce lien ouvre l'agenda deja filtre sur les
-    demandes en attente -- le filtre existe deja, rien a construire.
-    {% endcomment %}
-    <a class="button primary" href="{% url 'agenda_medecin' %}?statut=DEMANDE">{% icone "calendar" %} Demandes de rendez-vous</a>
-</section>
-
-<section class="panel panel-bloc" style="margin-bottom:18px;">
-    <label for="recherche-patients-champ">Recherche rapide</label>
-    <div class="recherche-patients">
-        <input type="search" id="recherche-patients-champ" name="q" autocomplete="off"
-               placeholder="Numéro de carte, nom ou prénom..."
-               aria-expanded="false" aria-controls="recherche-patients-resultats"
-               aria-haspopup="listbox" role="combobox" aria-autocomplete="list">
-        <p id="recherche-patients-indice" class="subtitle" style="margin:6px 0 0;" hidden></p>
-        <ul id="recherche-patients-resultats" class="recherche-patients-resultats" role="listbox"
-            aria-live="polite" hidden></ul>
+        <h1>Bonjour Dr. {{ medecin.nom|default:user.last_name }}</h1>
+        <p class="subtitle">Voici votre activité du jour.</p>
     </div>
 </section>
 
-<section class="dash-grid">
-    <a class="dash-stat" href="{% url 'agenda_medecin' %}">
-        <span class="dash-stat-icon">{% icone "calendar" %}</span>
-        <strong>{{ total_rendez_vous_a_venir }}</strong>
-        <span>Rendez-vous à venir</span>
-    </a>
-    <a class="dash-stat" href="{% url 'mes_patients' %}">
-        <span class="dash-stat-icon">{% icone "users" %}</span>
-        <strong>{{ total_patients }}</strong>
-        <span>Patients suivis</span>
-    </a>
-    <a class="dash-stat" href="{% url 'historique_consultations' %}">
-        <span class="dash-stat-icon">{% icone "clipboard-list" %}</span>
-        <strong>{{ total_consultations }}</strong>
-        <span>Consultations</span>
-    </a>
-    <a class="dash-stat" href="{% url 'historique_consultations' %}">
-        <span class="dash-stat-icon">{% icone "pill" %}</span>
-        <strong>{{ total_ordonnances }}</strong>
-        <span>Ordonnances émises</span>
-    </a>
-</section>
-
-<section class="panel panel-bloc" style="margin-top:18px;">
-    <div class="panel-header" style="padding:0 0 14px;">
-        <div>
-            <h2>Vos consultations</h2>
-            <p class="subtitle" style="margin:2px 0 0;">30 derniers jours</p>
+{# Rangée 1 : 2 Indicateurs clés du jour #}
+<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:20px;margin-bottom:24px;">
+    {# 1. Demandes en attente #}
+    <div class="dash-assure-card" style="min-height:140px;">
+        <div class="dash-card-header" style="margin-bottom:8px;">
+            <strong>
+                <span class="dash-card-icon" style="background:var(--attente-bg);color:var(--warning);">{% icone "clock-history" %}</span>
+                Demandes en attente
+            </strong>
         </div>
-        <a class="button btn" href="{% url 'historique_consultations' %}">Voir l'historique</a>
+        <div>
+            <p style="margin:0 0 8px;font-size:36px;font-weight:800;color:var(--titre);font-variant-numeric:tabular-nums;line-height:1;">
+                {{ nb_demandes_en_attente }}
+            </p>
+        </div>
+        <div style="padding-top:6px;border-top:1px solid var(--border);">
+            <a href="{% url 'agenda_medecin' %}?statut=DEMANDE" style="font-size:12.5px;font-weight:600;color:var(--primary);text-decoration:none;">
+                Demandes de rendez-vous &rarr;
+            </a>
+        </div>
     </div>
-    <canvas id="graphe-tendance-consultations" style="max-height:140px;"></canvas>
-</section>
 
-<section class="panel" style="margin-top: 22px;">
-    <div class="panel-header">
-        <h2>Prochains rendez-vous</h2>
-        <a class="button" href="{% url 'agenda_medecin' %}">Voir l'agenda</a>
+    {# 2. Rendez-vous aujourd'hui #}
+    <div class="dash-assure-card" style="min-height:140px;">
+        <div class="dash-card-header" style="margin-bottom:8px;">
+            <strong>
+                <span class="dash-card-icon">{% icone "calendar" %}</span>
+                Rendez-vous aujourd'hui
+            </strong>
+        </div>
+        <div>
+            <p style="margin:0 0 8px;font-size:36px;font-weight:800;color:var(--titre);font-variant-numeric:tabular-nums;line-height:1;">
+                {{ total_rendez_vous_du_jour }}
+            </p>
+        </div>
+        <div style="padding-top:6px;border-top:1px solid var(--border);">
+            <a href="{% url 'agenda_medecin' %}" style="font-size:12.5px;font-weight:600;color:var(--primary);text-decoration:none;">
+                Voir l'agenda &rarr;
+            </a>
+        </div>
     </div>
-    {% if prochains_rendez_vous %}
-    <table>
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Patient</th>
-                <th>Motif</th>
-                <th>Statut</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for rdv in prochains_rendez_vous %}
-            <tr>
-                <td>{{ rdv.date_heure|date:"d/m/Y H:i" }}</td>
-                <td>{{ rdv.patient }}</td>
-                <td>{{ rdv.motif|default:"-" }}</td>
-                <td>
-                    <span class="dash-pill {% if rdv.statut == 'CONFIRME' or rdv.statut == 'TERMINE' %}ok{% elif rdv.statut == 'ANNULE' %}danger{% else %}attente{% endif %}">{{ rdv.get_statut_display }}</span>
-                </td>
-            </tr>
+</div>
+
+{# Corps principal : 2 Colonnes (Ma journée 60% | Outils & Activité récente 40%) #}
+<div class="medecin-grid-main">
+    {# Colonne Gauche : Ma journée #}
+    <section class="panel" style="margin:0;padding:22px 24px;">
+        <div class="panel-header" style="padding:0 0 16px 0;">
+            <div>
+                <h2 style="margin:0;font-size:16px;">Ma journée</h2>
+                <p class="subtitle" style="margin:2px 0 0;">Planning et consultations du jour</p>
+            </div>
+            <a class="button btn btn-sm" href="{% url 'agenda_medecin' %}">Tout l'agenda</a>
+        </div>
+
+        {% if rendez_vous_du_jour %}
+        <div style="display:flex;flex-direction:column;gap:10px;">
+            {% for rdv in rendez_vous_du_jour %}
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface);flex-wrap:wrap;">
+                <div style="display:flex;align-items:center;gap:14px;min-width:0;">
+                    <span class="medecin-horaire-pill">{{ rdv.date_heure|date:"H:i" }}</span>
+                    <div>
+                        <strong style="font-size:14px;color:var(--titre);display:block;">{{ rdv.patient }}</strong>
+                        <span style="font-size:12px;color:var(--muted);">{{ rdv.motif|default:"Consultation générale" }}</span>
+                    </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <span class="dash-pill {% if rdv.statut == 'CONFIRME' or rdv.statut == 'TERMINE' %}ok{% elif rdv.statut == 'ANNULE' %}danger{% else %}attente{% endif %}">
+                        {{ rdv.get_statut_display }}
+                    </span>
+                    {% if rdv.statut != 'TERMINE' and rdv.statut != 'ANNULE' %}
+                    <a href="{% url 'ajouter_consultation_medecin' %}?rdv_id={{ rdv.pk }}" class="button primary btn-sm">
+                        Démarrer
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
             {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <div class="etat-vide">
-        {% illustration_vide "calendar" %}
-        <p>Aucun rendez-vous à venir.</p>
+        </div>
+        {% else %}
+        <div class="etat-vide" style="padding:28px 0;">
+            {% illustration_vide "calendar" %}
+            <p style="margin:8px 0 12px;">Aucun rendez-vous programmé aujourd'hui.</p>
+            <a href="{% url 'agenda_medecin' %}" class="button btn btn-sm">Consulter l'agenda</a>
+        </div>
+        {% endif %}
+    </section>
+
+    {# Colonne Droite : Recherche Patient + Patients récents + Ordonnances récentes #}
+    <div style="display:flex;flex-direction:column;gap:18px;">
+        {# 1. Recherche patient #}
+        <div class="panel" style="margin:0;padding:18px 20px;">
+            <h3 style="margin:0 0 10px;font-size:14.5px;color:var(--titre);">Recherche patient</h3>
+            <form method="get" action="{% url 'mes_patients' %}" style="display:flex;gap:8px;padding:0;background:none;border:none;box-shadow:none;max-width:none;">
+                <input type="search" name="q" placeholder="Nom, prénom ou N° carte..." style="flex:1;min-width:0;font-size:13px;padding:8px 12px;" aria-label="Rechercher un patient">
+                <button type="submit" class="button primary btn-sm" style="padding:8px 12px;" aria-label="Rechercher">
+                    {% icone "search" %}
+                </button>
+            </form>
+        </div>
+
+        {# 2. Patients récents #}
+        <div class="panel" style="margin:0;padding:18px 20px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                <h3 style="margin:0;font-size:14.5px;color:var(--titre);">Patients récents</h3>
+                <a href="{% url 'mes_patients' %}" style="font-size:11.5px;color:var(--primary);text-decoration:none;font-weight:600;">Tous ({{ total_patients }})</a>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px;">
+                {% for item in derniers_patients %}
+                <a href="{% url 'fiche_patient_medecin' item.patient.pk %}" class="side-list-item">
+                    <span style="display:flex;align-items:center;gap:8px;">
+                        <span style="color:var(--muted);">{% icone "user" %}</span>
+                        <span>{{ item.patient }}</span>
+                    </span>
+                    <span style="color:var(--muted);font-size:13px;">&rsaquo;</span>
+                </a>
+                {% empty %}
+                <p style="margin:0;font-size:12.5px;color:var(--muted);text-align:center;padding:8px 0;">Aucun patient récent.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        {# 3. Ordonnances récentes #}
+        <div class="panel" style="margin:0;padding:18px 20px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                <h3 style="margin:0;font-size:14.5px;color:var(--titre);">Ordonnances récentes</h3>
+                <a href="{% url 'historique_consultations' %}" style="font-size:11.5px;color:var(--primary);text-decoration:none;font-weight:600;">Toutes</a>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px;">
+                {% for ord in dernieres_ordonnances %}
+                <a href="{% url 'voir_ordonnance_medecin' ord.pk %}" class="side-list-item">
+                    <span style="display:flex;align-items:center;gap:8px;">
+                        <span style="color:var(--primary);">{% icone "pill" %}</span>
+                        <span>Ordonnance #{{ ord.code_qr }}</span>
+                    </span>
+                    <span style="font-size:11.5px;color:var(--muted);font-weight:normal;">{{ ord.date_creation|date:"d/m" }}</span>
+                </a>
+                {% empty %}
+                <p style="margin:0;font-size:12.5px;color:var(--muted);text-align:center;padding:8px 0;">Aucune ordonnance émise.</p>
+                {% endfor %}
+            </div>
+        </div>
     </div>
-    {% endif %}
-</section>
-
-<script>
-    (function () {
-        var champ = document.getElementById('recherche-patients-champ');
-        var conteneurResultats = document.getElementById('recherche-patients-resultats');
-        var indiceFormat = document.getElementById('recherche-patients-indice');
-        if (!champ) { return; }
-
-        var URL_RECHERCHE = '{% url "rechercher_patients_medecin" %}';
-        var GABARIT_URL_FICHE = '{% url "fiche_patient_medecin" pk=0 %}';
-        var FORMAT_CARTE = /^SN-[0-9A-Fa-f]{10}$/;
-        var minuteur = null;
-        var requeteEnCours = null;
-        var indexActif = -1;
-
-        function formatRessembleCarte(valeur) {
-            return /^SN-/i.test(valeur) && !FORMAT_CARTE.test(valeur);
-        }
-
-        function fermerResultats() {
-            if (requeteEnCours) {
-                requeteEnCours.abort();
-                requeteEnCours = null;
-            }
-            conteneurResultats.hidden = true;
-            conteneurResultats.innerHTML = '';
-            champ.setAttribute('aria-expanded', 'false');
-            champ.removeAttribute('aria-activedescendant');
-            indexActif = -1;
-        }
-
-        function formatDateNaissance(valeurIso) {
-            var parties = (valeurIso || '').split('-');
-            if (parties.length !== 3) { return ''; }
-            return parties[2] + '/' + parties[1] + '/' + parties[0];
-        }
-
-        function afficherResultats(resultats) {
-            conteneurResultats.innerHTML = '';
-            indexActif = -1;
-            champ.removeAttribute('aria-activedescendant');
-            if (!resultats.length) {
-                var vide = document.createElement('li');
-                vide.className = 'recherche-patients-vide';
-                vide.setAttribute('role', 'presentation');
-                vide.textContent = 'Aucun patient trouvé.';
-                conteneurResultats.appendChild(vide);
-                conteneurResultats.hidden = false;
-                champ.setAttribute('aria-expanded', 'true');
-                return;
-            }
-            resultats.forEach(function (patient, index) {
-                var item = document.createElement('li');
-                item.className = 'recherche-patients-item';
-                item.id = 'recherche-patients-item-' + index;
-                item.setAttribute('role', 'option');
-
-                var nom = document.createElement('strong');
-                nom.textContent = patient.prenom + ' ' + patient.nom;
-                var details = document.createElement('span');
-                var texteDetails = patient.numero_carte + ' - ' + patient.type_beneficiaire;
-                var dateNaissance = formatDateNaissance(patient.date_naissance);
-                if (dateNaissance) { texteDetails += ' - ' + dateNaissance; }
-                details.textContent = texteDetails;
-                item.appendChild(nom);
-                item.appendChild(details);
-
-                if (patient.deja_vu) {
-                    var badge = document.createElement('span');
-                    badge.className = 'badge';
-                    badge.textContent = 'Déjà suivi';
-                    item.appendChild(badge);
-                }
-
-                item.addEventListener('click', function () {
-                    window.location.href = GABARIT_URL_FICHE.replace(/0\/$/, patient.id + '/');
-                });
-                conteneurResultats.appendChild(item);
-            });
-            conteneurResultats.hidden = false;
-            champ.setAttribute('aria-expanded', 'true');
-        }
-
-        function lancerRecherche(valeur) {
-            if (requeteEnCours) { requeteEnCours.abort(); }
-            var controleur = new AbortController();
-            requeteEnCours = controleur;
-            fetch(URL_RECHERCHE + '?q=' + encodeURIComponent(valeur), {
-                headers: { 'Accept': 'application/json' },
-                signal: controleur.signal,
-            })
-                .then(function (reponse) { return reponse.json(); })
-                .then(function (donnees) { afficherResultats(donnees.resultats || []); })
-                .catch(function (erreur) {
-                    if (erreur.name !== 'AbortError') { fermerResultats(); }
-                });
-        }
-
-        champ.addEventListener('input', function () {
-            var valeur = champ.value.trim();
-            window.clearTimeout(minuteur);
-
-            if (indiceFormat) {
-                if (formatRessembleCarte(valeur)) {
-                    indiceFormat.textContent = 'Format attendu : SN-XXXXXXXXXX';
-                    indiceFormat.hidden = false;
-                } else {
-                    indiceFormat.hidden = true;
-                }
-            }
-
-            if (valeur.length < 2) {
-                fermerResultats();
-                return;
-            }
-            minuteur = window.setTimeout(function () { lancerRecherche(valeur); }, 300);
-        });
-
-        champ.addEventListener('keydown', function (evenement) {
-            if (evenement.key === 'Escape') {
-                fermerResultats();
-                return;
-            }
-
-            var items = conteneurResultats.querySelectorAll('.recherche-patients-item');
-            if (!items.length || conteneurResultats.hidden) { return; }
-
-            if (evenement.key === 'ArrowDown') {
-                evenement.preventDefault();
-                indexActif = Math.min(indexActif + 1, items.length - 1);
-            } else if (evenement.key === 'ArrowUp') {
-                evenement.preventDefault();
-                indexActif = Math.max(indexActif - 1, 0);
-            } else if (evenement.key === 'Enter') {
-                if (indexActif >= 0 && items[indexActif]) {
-                    evenement.preventDefault();
-                    items[indexActif].click();
-                }
-                return;
-            } else {
-                return;
-            }
-
-            items.forEach(function (item, index) {
-                item.classList.toggle('actif', index === indexActif);
-            });
-            champ.setAttribute('aria-activedescendant', items[indexActif].id);
-        });
-
-        document.addEventListener('click', function (evenement) {
-            if (!champ.contains(evenement.target) && !conteneurResultats.contains(evenement.target)) {
-                fermerResultats();
-            }
-        });
-    })();
-</script>
-
-{{ tendance_consultations|json_script:"donnees-tendance-consultations" }}
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"
-        integrity="sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC"
-        crossorigin="anonymous"></script>
-<script>
-    (function () {
-        // Mini-graphique de tendance : version compacte du graphique de
-        // rapports.html (memes tokens de couleur, meme repli si Chart.js
-        // indisponible), sans axes ni legende pour rester lisible en petit.
-        var canevas = document.getElementById('graphe-tendance-consultations');
-        if (!canevas) { return; }
-
-        if (typeof Chart === 'undefined') {
-            var message = document.createElement('p');
-            message.className = 'empty';
-            message.textContent = 'Graphique indisponible (bibliothèque non chargée).';
-            canevas.replaceWith(message);
-            return;
-        }
-
-        var element = document.getElementById('donnees-tendance-consultations');
-        var donnees = element ? JSON.parse(element.textContent) : { labels: [], totaux: [] };
-        if (!donnees.totaux.some(function (total) { return total > 0; })) {
-            var vide = document.createElement('p');
-            vide.className = 'empty';
-            vide.textContent = 'Aucune consultation sur les 30 derniers jours.';
-            canevas.replaceWith(vide);
-            return;
-        }
-
-        function tokenCouleur(nom, repli) {
-            var valeur = getComputedStyle(document.documentElement).getPropertyValue(nom).trim();
-            return valeur || repli;
-        }
-
-        new Chart(canevas, {
-            type: 'line',
-            data: {
-                labels: donnees.labels,
-                datasets: [{
-                    data: donnees.totaux,
-                    borderColor: tokenCouleur('--primary', '#0e7c86'),
-                    backgroundColor: 'rgba(14, 124, 134, 0.12)',
-                    fill: true,
-                    tension: 0.35,
-                    pointRadius: 0,
-                    borderWidth: 2,
-                }],
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: { callbacks: { title: function (items) { return items[0].label; } } },
-                },
-                scales: {
-                    x: { display: false },
-                    y: { display: false, beginAtZero: true },
-                },
-            },
-        });
-    })();
-</script>
+</div>
 {% endblock %}
+

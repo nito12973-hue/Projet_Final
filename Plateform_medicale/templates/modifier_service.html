@@ -1,11 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}Modifier {{ service.nom }}{% endblock %}
+{% block title %}Modifier le service médical — {{ service.nom }}{% endblock %}
 
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>Modifier {{ service.nom }}</h1>
+        <h1>Modifier le service médical</h1>
+        <p class="subtitle">{{ service.nom }} — mise à jour du tarif ou du rattachement.</p>
     </div>
     <a class="button" href="{% url 'liste_services' %}">Retour</a>
 </section>

@@ -1,24 +1,31 @@
 {% extends "base.html" %}
+{% load icones %}
 
-{% block title %}Réinitialiser le mot de passe{% endblock %}
+{% block title %}Réinitialiser le compte{% endblock %}
 
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>Réinitialiser le mot de passe</h1>
-        <p class="subtitle">Un nouveau mot de passe temporaire sera genere pour {{ utilisateur }}.</p>
+        <h1>Réinitialiser l'accès de {{ utilisateur.get_full_name|default:utilisateur.email }}</h1>
+        <p class="subtitle">Un nouveau lien sécurisé sera généré pour permettre à l'utilisateur de redéfinir son mot de passe.</p>
     </div>
+    <a class="button" href="{% url 'liste_utilisateurs' %}">{% icone "chevron-left" %} Retour</a>
 </section>
 
-<div class="avis avis-attente">
-    <p class="avis-titre">Le mot de passe actuel de {{ utilisateur }} sera immediatement remplace et ne pourra plus etre utilise.</p>
+<div class="avis avis-info" style="max-width: 640px; margin-bottom: 20px;">
+    <p class="avis-titre" style="margin: 0; display: flex; align-items: center; gap: 8px;">
+        {% icone "info" %}
+        Le lien d'activation sécurisé sera transmis par WhatsApp (si disponible) ou par email de secours. L'utilisateur disposera de 24 heures pour définir son nouveau mot de passe.
+    </p>
 </div>
 
-<section class="panel panel-form">
+<section class="panel panel-form" style="max-width: 640px;">
     <form method="post">
         {% csrf_token %}
-        <button class="button primary" type="submit">Générer un nouveau mot de passe</button>
-        <a href="{% url 'liste_utilisateurs' %}" class="button">Annuler</a>
+        <div style="display: flex; gap: 12px; align-items: center;">
+            <button class="button primary" type="submit">{% icone "mail" %} Envoyer le lien de réinitialisation</button>
+            <a href="{% url 'liste_utilisateurs' %}" class="button btn">Annuler</a>
+        </div>
     </form>
 </section>
 {% endblock %}

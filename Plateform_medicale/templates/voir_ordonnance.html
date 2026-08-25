@@ -11,9 +11,21 @@
     </div>
     <div class="actions">
         <a class="button btn" href="{% url retour_url %}">{% icone "chevron-left" %} Retour</a>
-        <button type="button" class="button primary" id="bouton-imprimer-ordonnance">{% icone "clipboard-list" %} Imprimer l'ordonnance</button>
+        {% if user.role == 'MEDECIN' and not ordonnance.est_delivree and not ordonnance.est_annulee %}
+        <button type="button" class="button btn btn-danger" onclick="document.getElementById('modal-annulation').style.display='flex'">Annuler l'ordonnance</button>
+        {% endif %}
+        <button type="button" class="button primary" id="bouton-imprimer-ordonnance">{% icone "printer" %} Imprimer l'ordonnance</button>
     </div>
 </section>
+
+{% if ordonnance.est_annulee %}
+<div class="alert alert-danger sans-impression" style="margin-bottom: 1.5rem; border-left: 4px solid var(--danger, #D9534F); padding: 1rem 1.25rem; border-radius: 8px; background: rgba(217, 83, 79, 0.1);">
+    <strong style="color: var(--danger, #D9534F);">Statut : Ordonnance Annulée</strong><br>
+    <span>Cette prescription a été annulée le {{ ordonnance.date_annulation|date:"d/m/Y à H:i" }}.</span><br>
+    <span style="font-weight: 500;">Motif indiqué : {{ ordonnance.motif_annulation }}</span>
+</div>
+{% endif %}
+
 
 {% comment %}
 Feuille A4 : la mise en page est la MEME a l'ecran et sur papier, seule
@@ -121,13 +133,20 @@ de la donnee medicale.
             <p class="feuille-date">
                 Prescrit le {{ ordonnance.date_creation|date:"d/m/Y" }}
             </p>
-            {% comment %}
-            Aucune signature n'est stockee en base : on reserve l'espace pour
-            une signature manuscrite a l'impression plutot que d'en fabriquer
-            une.
-            {% endcomment %}
             <p class="feuille-etiquette">Signature et cachet du médecin</p>
-            <div class="feuille-cadre-signature" aria-hidden="true"></div>
+            <div class="feuille-cadre-signature" style="position:relative;display:flex;align-items:center;justify-content:space-between;padding:8px 14px;min-height:95px;border:1.5px dashed #b8ced4;border-radius:10px;background:rgba(239,244,243,0.35);">
+                <div style="font-size:12px;color:#24424b;line-height:1.4;">
+                    <strong style="font-size:12.5px;">Dr. {{ ordonnance.consultation.medecin }}</strong><br>
+                    <span style="font-size:11px;color:#5f6f7d;">{{ ordonnance.consultation.medecin.specialite|default:"Médecine Générale" }}</span><br>
+                    <span style="font-size:10.5px;color:#5f6f7d;">Réf. Consultation #{{ ordonnance.consultation.pk }}</span>
+                </div>
+                <!-- Cachet officiel numérique circulaire -->
+                <div class="cachet-officiel" aria-hidden="true" style="width:82px;height:82px;border:2px dashed #0e7c86;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#0e7c86;text-align:center;font-size:7.5px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;transform:rotate(-8deg);opacity:0.85;box-shadow:inset 0 0 0 2px rgba(14,124,134,0.1);">
+                    <span>SantéSN</span>
+                    <span style="font-size:7px;border-top:1px solid #0e7c86;border-bottom:1px solid #0e7c86;padding:1px 0;margin:2px 0;">Certifié</span>
+                    <span>Tiers Payant</span>
+                </div>
+            </div>
         </div>
     </footer>
 
@@ -137,7 +156,27 @@ de la donnee medicale.
         Délivrée le {{ ordonnance.delivrance.date_delivrance|date:"d/m/Y" }}.
         {% endif %}
     </p>
-</article>
+{% if user.role == 'MEDECIN' and not ordonnance.est_delivree and not ordonnance.est_annulee %}
+<div id="modal-annulation" class="sans-impression" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); align-items:center; justify-content:center; z-index:9999;">
+    <div style="background:var(--surface, #ffffff); padding:2rem; border-radius:12px; max-width:480px; width:92%; box-shadow:0 12px 32px rgba(0,0,0,0.25); border:1px solid var(--border, #d0d7de);">
+        <h3 style="margin-top:0; color:var(--titre, #132b45); font-size:1.25rem;">Annuler l'ordonnance #{{ ordonnance.code_qr }}</h3>
+        <p style="font-size:0.9rem; color:var(--texte-secondaire, #57606a); line-height:1.45;">
+            Cette action est irréversible. L'ordonnance ne pourra plus être délivrée en pharmacie et le motif sera archivé dans le dossier.
+        </p>
+        <form method="POST" action="{% url 'annuler_ordonnance_medecin' ordonnance.pk %}">
+            {% csrf_token %}
+            <div style="margin-bottom:1.25rem;">
+                <label for="motif_annulation" style="display:block; margin-bottom:0.4rem; font-weight:600; font-size:0.9rem;">Motif d'annulation :</label>
+                <input type="text" id="motif_annulation" name="motif_annulation" required placeholder="Exemple : Erreur de posologie ou changement de traitement" style="width:100%; padding:0.65rem 0.75rem; border-radius:6px; border:1px solid var(--border, #d0d7de); background:var(--fond-input, #ffffff); color:var(--texte, #212529); font-size:0.95rem; box-sizing:border-box;">
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:0.75rem;">
+                <button type="button" class="button btn" onclick="document.getElementById('modal-annulation').style.display='none'">Fermer</button>
+                <button type="submit" class="button btn btn-danger">Confirmer l'annulation</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
 
 <script>
     (function () {

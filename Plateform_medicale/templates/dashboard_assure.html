@@ -1,97 +1,188 @@
 {% extends "base.html" %}
 {% load formats icones %}
 
-{% block title %}Tableau de bord - {{ patient }}{% endblock %}
+{% block title %}Espace Assuré — {{ patient }}{% endblock %}
 
 {% block content %}
-<section class="page-title">
+<section class="page-title" style="margin-bottom:24px;">
     <div>
-        <h1>{% salutation %}, {% nom_accueil user patient %}</h1>
-        <p class="subtitle">Votre espace de prise en charge SantéSN.</p>
+        <h1 style="font-size:24px;margin-bottom:4px;">Bonjour {{ patient.prenom|default:user.first_name }}</h1>
+        <p class="subtitle">Bienvenue sur votre espace de santé dématérialisé.</p>
     </div>
-    <a class="button primary" href="{% url 'ajouter_rendez_vous_assure' %}">Nouveau rendez-vous</a>
+    <div>
+        <a href="{% url 'carte_assure' %}" class="button primary" style="gap:8px;font-weight:700;padding:10px 18px;">
+            {% icone "id-card" %} Ma carte &amp; QR Code
+        </a>
+    </div>
 </section>
 
-<section style="margin-bottom: 22px;">
-    <div class="carte-assure">
-        <div class="carte-assure-entete">
-            <span class="carte-assure-puce" aria-hidden="true"></span>
-            {% logo_marque taille=26 fond="sombre" %}
-        </div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));gap:24px;margin-bottom:28px;">
+    {# 1. Bloc Couverture & Droits #}
+    <div class="panel panel-bloc" style="margin:0;display:flex;flex-direction:column;justify-content:space-between;border-radius:18px;box-shadow:0 6px 24px rgba(11,32,39,0.06);">
         <div>
-            <p class="carte-assure-label">Carte de prise en charge</p>
-            <p class="carte-assure-numero code">
-                {{ patient.numero_carte }}
-                <button type="button" class="btn-copier-carte" data-copier="{{ patient.numero_carte }}" aria-label="Copier le numéro de carte">{% icone "copy" %}</button>
-            </p>
-        </div>
-        <div class="carte-assure-pied">
-            <div>
-                <span class="carte-assure-nom">{{ patient.prenom }} {{ patient.nom }}</span>
-                <span class="carte-assure-type">{{ patient.get_type_beneficiaire_display }}</span>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                <span style="font-size:13px;font-weight:700;color:var(--primary-strong);text-transform:uppercase;letter-spacing:0.04em;display:flex;align-items:center;gap:6px;">
+                    {% icone "shield-check" %} Couverture IPM
+                </span>
+                <span class="badge validee" style="font-size:12px;">Active</span>
             </div>
-            <div class="carte-assure-couverture">
-                {% if patient.taux_couverture is not None %}
-                <strong>{{ patient.taux_couverture }}%</strong>
-                <span>{{ patient.titulaire.plan_couverture.nom }}</span>
-                {% else %}
-                <span>Aucun plan attribué</span>
+
+            <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px;">
+                <div>
+                    <span style="font-size:12px;color:var(--muted);display:block;">Taux de prise en charge</span>
+                    <strong style="font-size:38px;font-weight:800;color:var(--titre);line-height:1;">
+                        {{ patient.taux_couverture|default:"0" }}%
+                    </strong>
+                </div>
+                <div style="text-align:right;">
+                    <span style="font-size:12px;color:var(--muted);display:block;">Formule</span>
+                    <strong style="font-size:14px;color:var(--titre);">{{ patient.titulaire.plan_couverture.nom|default:"IPM Salarié" }}</strong>
+                </div>
+            </div>
+
+            {% if patient.titulaire.plan_couverture.plafond_annuel %}
+            <div style="background:var(--primary-soft);padding:14px 16px;border-radius:12px;margin-bottom:8px;">
+                <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:8px;">
+                    <span style="color:var(--primary-strong);font-weight:600;">Budget annuel restant</span>
+                    <strong style="color:var(--primary-dark);font-size:13.5px;">{{ patient.plafond_annuel_restant|franc_cfa }}</strong>
+                </div>
+                <div style="height:6px;border-radius:999px;background:rgba(14,124,134,0.18);overflow:hidden;">
+                    <div style="height:100%;border-radius:999px;background:var(--primary);width:75%;"></div>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:5px;">
+                    <span>Consommé</span>
+                    <span>Plafond : {{ patient.titulaire.plan_couverture.plafond_annuel|franc_cfa }}</span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;padding-top:12px;border-top:1px solid var(--border);font-size:13px;">
+            <span style="color:var(--muted);">{{ total_ayants_droit }} ayant{{ total_ayants_droit|pluralize }} droit couvert{{ total_ayants_droit|pluralize }}</span>
+            <a href="{% url 'liste_ayants_droit' %}" style="color:var(--primary);font-weight:600;text-decoration:none;">
+                Gérer mes ayants droit &rarr;
+            </a>
+        </div>
+    </div>
+
+    {# 2. Bloc Prochain Rendez-vous #}
+    <div class="panel panel-bloc" style="margin:0;display:flex;flex-direction:column;justify-content:space-between;border-radius:18px;box-shadow:0 6px 24px rgba(11,32,39,0.06);">
+        <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                <span style="font-size:13px;font-weight:700;color:var(--primary-strong);text-transform:uppercase;letter-spacing:0.04em;display:flex;align-items:center;gap:6px;">
+                    {% icone "calendar" %} Prochain rendez-vous
+                </span>
+                {% if prochain_rdv_principal %}
+                <span class="badge {% if prochain_rdv_principal.statut == 'CONFIRME' %}validee{% elif prochain_rdv_principal.statut == 'DEMANDE' %}en_attente{% else %}refusee{% endif %}" style="font-size:12px;">
+                    {{ prochain_rdv_principal.get_statut_display }}
+                </span>
                 {% endif %}
             </div>
+
+            {% if prochain_rdv_principal %}
+            <div style="background:var(--champ-bg);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;">
+                <strong style="font-size:15.5px;color:var(--titre);display:block;margin-bottom:2px;">
+                    Dr. {{ prochain_rdv_principal.medecin }}
+                </strong>
+                <p style="font-size:13px;color:var(--muted);margin:0 0 12px;">
+                    {{ prochain_rdv_principal.medecin.specialite|default:"Consultation générale" }} · {{ prochain_rdv_principal.prestataire|default:"Cabinet Médical" }}
+                </p>
+                <div style="display:flex;align-items:center;justify-content:space-between;font-size:13.5px;font-weight:600;color:var(--titre);">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span style="color:var(--primary);">{% icone "clock-history" %}</span>
+                        <span>{{ prochain_rdv_principal.date_heure|date:"l d F Y à H:i"|capfirst }}</span>
+                    </div>
+                    <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=RDV+Dr.+{{ prochain_rdv_principal.medecin|urlencode }}&dates={{ prochain_rdv_principal.date_heure|date:'Ymd\THis' }}/{{ prochain_rdv_principal.date_heure|date:'Ymd\THis' }}&details=Consultation+SantéSN" target="_blank" rel="noopener noreferrer" style="font-size:11.5px;color:var(--primary);text-decoration:none;background:var(--primary-soft);padding:3px 8px;border-radius:6px;">
+                        + Google Agenda
+                    </a>
+                </div>
+            </div>
+            {% else %}
+            <div class="etat-vide" style="padding:22px 0;">
+                {% illustration_vide "calendar" %}
+                <p style="margin:4px 0 12px;font-size:13.5px;color:var(--muted);">Aucun rendez-vous planifié.</p>
+                <a href="{% url 'ajouter_rendez_vous_assure' %}" class="button primary btn-sm">
+                    {% icone "plus-circle" %} Prendre un rendez-vous
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;padding-top:12px;border-top:1px solid var(--border);font-size:13px;">
+            <a href="{% url 'ajouter_rendez_vous_assure' %}" style="color:var(--primary);font-weight:600;text-decoration:none;">
+                + Nouveau RDV
+            </a>
+            <a href="{% url 'mes_rendez_vous_assure' %}" style="color:var(--muted);text-decoration:none;">
+                Historique des RDV &rarr;
+            </a>
         </div>
     </div>
-</section>
+</div>
 
-<section class="dash-grid">
-    <a class="dash-stat" href="{% url 'liste_ayants_droit' %}">
-        <span class="dash-stat-icon">{% icone "family" %}</span>
-        <strong>{{ total_ayants_droit }}</strong>
-        <span>Ayants droit</span>
-    </a>
-    <a class="dash-stat" href="{% url 'mes_rendez_vous_assure' %}">
-        <span class="dash-stat-icon">{% icone "calendar" %}</span>
-        <strong>{{ total_rendez_vous_a_venir }}</strong>
-        <span>Rendez-vous à venir</span>
-    </a>
-    <a class="dash-stat" href="{% url 'mes_ordonnances_assure' %}">
-        <span class="dash-stat-icon">{% icone "pill" %}</span>
-        <strong>{{ total_ordonnances }}</strong>
-        <span>Ordonnances disponibles</span>
-    </a>
-</section>
-
-<section class="panel" style="margin-top: 22px;">
-    <div class="panel-header">
-        <h2>Prochains rendez-vous</h2>
-        <a class="button" href="{% url 'mes_rendez_vous_assure' %}">Voir tout</a>
+{# 3. Dernières démarches médicales #}
+<section class="panel" style="border-radius:18px;box-shadow:0 6px 24px rgba(11,32,39,0.06);">
+    <div class="panel-header" style="border-bottom:1px solid var(--border);padding:18px 24px;">
+        <div>
+            <h2 style="font-size:17px;margin:0;">Dernières démarches médicales</h2>
+            <p class="subtitle" style="margin:2px 0 0;">Ordonnances récentes et prises en charge</p>
+        </div>
+        <a href="{% url 'mon_historique_assure' %}" class="button btn btn-sm">
+            Historique complet &rarr;
+        </a>
     </div>
-    {% if prochains_rendez_vous %}
-    <table>
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Bénéficiaire</th>
-                <th>Médecin</th>
-                <th>Statut</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for rdv in prochains_rendez_vous %}
-            <tr>
-                <td>{{ rdv.date_heure|date:"d/m/Y H:i" }}</td>
-                <td>{{ rdv.patient }}</td>
-                <td>{{ rdv.medecin }}</td>
-                <td>
-                    <span class="dash-pill {% if rdv.statut == 'CONFIRME' or rdv.statut == 'TERMINE' %}ok{% elif rdv.statut == 'ANNULE' %}danger{% else %}attente{% endif %}">{{ rdv.get_statut_display }}</span>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+
+    {% if dernieres_prises_en_charge or derniere_ordonnance %}
+    <div style="padding:16px 24px;display:flex;flex-direction:column;gap:12px;">
+        {% if derniere_ordonnance %}
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid var(--border);border-radius:12px;background:var(--champ-bg);gap:12px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <span style="width:36px;height:36px;border-radius:10px;background:var(--primary-soft);color:var(--primary-strong);display:flex;align-items:center;justify-content:center;">
+                    {% icone "pill" %}
+                </span>
+                <div>
+                    <strong style="font-size:14px;color:var(--titre);display:block;">Ordonnance #{{ derniere_ordonnance.code_qr }}</strong>
+                    <span style="font-size:12px;color:var(--muted);">Émise le {{ derniere_ordonnance.date_creation|date:"d F Y" }} par Dr. {{ derniere_ordonnance.consultation.medecin }}</span>
+                </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;">
+                <span class="badge {% if derniere_ordonnance.delivrance %}validee{% else %}en_attente{% endif %}">
+                    {% if derniere_ordonnance.delivrance %}Délivrée en pharmacie{% else %}Disponible à délivrer{% endif %}
+                </span>
+                <a href="{% url 'voir_ordonnance_assure' derniere_ordonnance.pk %}" class="button primary btn btn-sm">
+                    Consulter
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if dernieres_prises_en_charge %}
+        {% with pec=dernieres_prises_en_charge.0 %}
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid var(--border);border-radius:12px;background:var(--champ-bg);gap:12px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <span style="width:36px;height:36px;border-radius:10px;background:var(--primary-soft);color:var(--primary-strong);display:flex;align-items:center;justify-content:center;">
+                    {% icone "shield-check" %}
+                </span>
+                <div>
+                    <strong style="font-size:14px;color:var(--titre);display:block;">Demande de prise en charge</strong>
+                    <span style="font-size:12px;color:var(--muted);">Déposée le {{ pec.date_demande|date:"d F Y" }} · {{ pec.prestataire|default:"Prestataire agréé" }}</span>
+                </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;">
+                <span class="badge {% if pec.statut == 'validee' %}validee{% elif pec.statut == 'refusee' %}refusee{% else %}en_attente{% endif %}">
+                    {{ pec.get_statut_display }}
+                </span>
+                <a href="{% url 'mes_prises_en_charge_assure' %}" class="button btn btn-sm">
+                    Détails
+                </a>
+            </div>
+        </div>
+        {% endwith %}
+        {% endif %}
+    </div>
     {% else %}
-    <div class="etat-vide">
-        {% illustration_vide "calendar" %}
-        <p>Aucun rendez-vous à venir.</p>
+    <div class="etat-vide" style="padding:28px 0;">
+        {% illustration_vide "clipboard-list" %}
+        <p style="margin:4px 0 0;font-size:13px;color:var(--muted);">Aucune démarche médicale récente.</p>
     </div>
     {% endif %}
 </section>

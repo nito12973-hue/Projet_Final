@@ -153,6 +153,107 @@
         </section>
         {% endif %}
 
+        {% if section == "notifications" %}
+        <section class="panel param-carte">
+            <div class="panel-header">
+                <div>
+                    <h2>Notifications obligatoires</h2>
+                    <p class="subtitle">Ces alertes de sécurité ne peuvent pas être désactivées.</p>
+                </div>
+            </div>
+            <div class="param-corps">
+                <div class="param-ligne">
+                    <span class="param-txt"><strong>Sécurité du compte & Connexion</strong>
+                        <span>Changement de mot de passe, tentatives de connexion et blocages de compte.</span></span>
+                    <span class="param-fin"><span class="badge badge-succes">Toujours actives</span></span>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel param-carte">
+            <div class="panel-header">
+                <div>
+                    <h2>Préférences d'emails (notifications optionnelles)</h2>
+                    <p class="subtitle">Choisissez les événements métier pour lesquels vous souhaitez recevoir un email.</p>
+                </div>
+            </div>
+            <div class="param-corps">
+                <form method="post" action="{% url 'parametres_section' 'notifications' %}">
+                    {% csrf_token %}
+                    {% for field in pref_form %}
+                    <div class="param-ligne">
+                        <label for="{{ field.id_for_label }}" class="param-txt" style="cursor:pointer;">
+                            <strong>{{ field.label }}</strong>
+                            <span>Recevoir un avis par email lors de cet événement.</span>
+                        </label>
+                        <span class="param-fin">
+                            <input type="checkbox" name="{{ field.name }}" id="{{ field.id_for_label }}" {% if field.value %}checked{% endif %} class="form-check-input" style="width:20px;height:20px;accent-color:#12885a;cursor:pointer;">
+                        </span>
+                    </div>
+                    {% endfor %}
+                    <div style="margin-top:1.5rem; text-align:right;">
+                        <button type="submit" class="btn btn-primaire">Enregistrer mes préférences</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+        {% endif %}
+
+        {% if section == "donnees" %}
+        <section class="panel param-carte">
+            <div class="panel-header">
+                <div>
+                    <h2>Importation des données</h2>
+                    <p class="subtitle">Chargement de données en masse via des fichiers Excel structurés.</p>
+                </div>
+            </div>
+            <div class="param-corps">
+                <div class="param-ligne">
+                    <span class="param-txt"><strong>Importation des Utilisateurs</strong>
+                        <span>Permet de créer des comptes d'utilisateurs en masse à partir d'un fichier Excel (.xlsx).</span></span>
+                    <span class="param-fin">
+                        <a class="button btn" href="{% url 'telecharger_modele_import_utilisateurs' %}">{% icone "download" %} Modèle Excel</a>
+                        <a class="button primary btn" href="{% url 'importer_utilisateurs_excel' %}">{% icone "upload" %} Importer</a>
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel param-carte">
+            <div class="panel-header">
+                <div>
+                    <h2>Exportation des données</h2>
+                    <p class="subtitle">Extractions et sauvegardes de données au format Excel, CSV ou PDF.</p>
+                </div>
+            </div>
+            <div class="param-corps">
+                <div class="param-ligne">
+                    <span class="param-txt"><strong>Export des Utilisateurs</strong>
+                        <span>Liste complète des comptes enregistrés sur la plateforme.</span></span>
+                    <span class="param-fin">
+                        <a class="button btn" href="{% url 'exporter_utilisateurs_excel' %}">Excel</a>
+                        <a class="button btn" href="{% url 'exporter_utilisateurs_csv' %}">CSV</a>
+                    </span>
+                </div>
+                <div class="param-ligne">
+                    <span class="param-txt"><strong>Journal Comptable des Paiements</strong>
+                        <span>Relevé détaillé des paiements et règlements perçus.</span></span>
+                    <span class="param-fin">
+                        <a class="button btn" href="{% url 'exporter_paiements_csv' %}">CSV</a>
+                    </span>
+                </div>
+                <div class="param-ligne">
+                    <span class="param-txt"><strong>Rapports & Synthèses d'Activité</strong>
+                        <span>Rapports d'activité mensuels et bilans d'utilisation.</span></span>
+                    <span class="param-fin">
+                        <a class="button btn" href="{% url 'exporter_rapports_excel' %}">Excel</a>
+                        <a class="button btn" href="{% url 'exporter_rapports_pdf' %}">PDF</a>
+                    </span>
+                </div>
+            </div>
+        </section>
+        {% endif %}
+
         {% if section == "securite" %}
         <section class="panel param-carte">
             <div class="panel-header">

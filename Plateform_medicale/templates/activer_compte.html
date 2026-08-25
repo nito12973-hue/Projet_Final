@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load icones %}
+
+{% block title %}Activation de votre compte — SantéSN{% endblock %}
+
+{% block content %}
+<div class="auth-container" style="max-width: 480px; margin: 40px auto;">
+    <section class="panel" style="padding: 32px 28px;">
+        <div style="text-align: center; margin-bottom: 24px;">
+            <div style="display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 50%; background: var(--primary-subtle); color: var(--primary-strong); margin-bottom: 12px;">
+                {% icone "lock" %}
+            </div>
+            <h1 style="font-size: 22px; font-weight: 800; color: var(--titre); margin: 0 0 6px;">Activez votre compte</h1>
+            <p class="subtitle" style="margin: 0;">Bienvenue {{ utilisateur.first_name }} {{ utilisateur.last_name }}. Choisissez votre mot de passe pour finaliser l'accès.</p>
+        </div>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+            
+            <div class="form-group" style="margin-bottom: 18px;">
+                <label for="{{ form.nouveau_mot_de_passe.id_for_label }}" style="display: block; font-weight: 600; font-size: 13.5px; color: var(--titre); margin-bottom: 6px;">{{ form.nouveau_mot_de_passe.label }}</label>
+                {{ form.nouveau_mot_de_passe }}
+                {% if form.nouveau_mot_de_passe.help_text %}
+                <span class="champ-aide" style="display: block; font-size: 12px; color: var(--muted); margin-top: 4px;">{{ form.nouveau_mot_de_passe.help_text }}</span>
+                {% endif %}
+                {% if form.nouveau_mot_de_passe.errors %}
+                <div class="champ-erreur" style="color: var(--danger); font-size: 12.5px; margin-top: 4px;">{{ form.nouveau_mot_de_passe.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label for="{{ form.confirmation_mot_de_passe.id_for_label }}" style="display: block; font-weight: 600; font-size: 13.5px; color: var(--titre); margin-bottom: 6px;">{{ form.confirmation_mot_de_passe.label }}</label>
+                {{ form.confirmation_mot_de_passe }}
+                {% if form.confirmation_mot_de_passe.errors %}
+                <div class="champ-erreur" style="color: var(--danger); font-size: 12.5px; margin-top: 4px;">{{ form.confirmation_mot_de_passe.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="button primary" style="width: 100%; justify-content: center; padding: 12px;">{% icone "check" %} Valider et activer mon compte</button>
+        </form>
+    </section>
+</div>
+{% endblock %}

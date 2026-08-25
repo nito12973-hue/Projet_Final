@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+{% load formats icones %}
+
+{% block title %}Quittance de paiement {{ reference_recu }}{% endblock %}
+
+{% block content %}
+<section class="page-title sans-impression">
+    <div>
+        <h1>Reçu de paiement</h1>
+        <p class="subtitle">Quittance officielle de règlement des frais médicaux.</p>
+    </div>
+    <div class="actions">
+        <a class="button btn" href="javascript:history.back()">{% icone "chevron-left" %} Retour</a>
+        <button type="button" class="button primary" id="bouton-imprimer-recu">{% icone "printer" %} Imprimer la quittance</button>
+    </div>
+</section>
+
+<div class="panneau-recu-conteneur">
+    <article class="feuille-recu">
+        <header class="recu-entete">
+            <div class="recu-marque">
+                {% logo_marque taille=32 fond="clair" %}
+                <div>
+                    <h2 class="recu-marque-titre">SantéSN</h2>
+                    <p class="recu-marque-sous-titre">Plateforme Nationale de Santé</p>
+                </div>
+            </div>
+            <div class="recu-reference-bloc">
+                <span class="badge {% if paiement.statut == 'regle' %}ok{% else %}en_attente{% endif %}">
+                    {{ paiement.get_statut_display|upper }}
+                </span>
+                <p class="recu-numero code">{{ reference_recu }}</p>
+                <p class="recu-date">{{ paiement.date_reglement|default:paiement.consultation.date_consultation|date:"d/m/Y à H:i" }}</p>
+            </div>
+        </header>
+
+        <hr class="recu-separateur">
+
+        <div class="recu-grille-infos">
+            <div class="recu-col-info">
+                <span class="recu-libelle">Bénéficiaire / Patient</span>
+                <strong class="recu-valeur">{{ paiement.consultation.patient.prenom }} {{ paiement.consultation.patient.nom }}</strong>
+                <span class="recu-detail">Carte n° <span class="code">{{ paiement.consultation.patient.numero_carte }}</span></span>
+                {% if paiement.consultation.patient.est_ayant_droit %}
+                <span class="recu-detail">Ayant droit de {{ paiement.consultation.patient.titulaire.prenom }} {{ paiement.consultation.patient.titulaire.nom }}</span>
+                {% endif %}
+            </div>
+            <div class="recu-col-info">
+                <span class="recu-libelle">Praticien & Établissement</span>
+                <strong class="recu-valeur">Dr {{ paiement.consultation.medecin }}</strong>
+                <span class="recu-detail">{{ paiement.consultation.medecin.specialite|default:"Médecine générale" }}</span>
+                {% if paiement.consultation.medecin.prestataire %}
+                <span class="recu-detail">{{ paiement.consultation.medecin.prestataire.nom }} ({{ paiement.consultation.medecin.prestataire.ville }})</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <section class="recu-corps">
+            <table class="recu-tableau">
+                <thead>
+                    <tr>
+                        <th scope="col">Désignation de la prestation</th>
+                        <th scope="col" style="text-align: right;">Montant conventionné</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <strong>{{ paiement.consultation.service.nom|default:"Consultation médicale" }}</strong>
+                            <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">
+                                Acte médical dispensé le {{ paiement.consultation.date_consultation|date:"d/m/Y" }}
+                            </div>
+                        </td>
+                        <td style="text-align: right; font-weight: 600;">
+                            {{ paiement.montant_total|franc_cfa }}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="recu-recapitulatif">
+                <div class="recu-ligne-calcul">
+                    <span>Montant total de l'acte :</span>
+                    <span>{{ paiement.montant_total|franc_cfa }}</span>
+                </div>
+                <div class="recu-ligne-calcul">
+                    <span>Part assurance / IPM ({% if paiement.taux_applique %}{{ paiement.taux_applique }}%{% else %}0%{% endif %}) :</span>
+                    <span style="color: var(--primary-strong);">- {{ paiement.montant_part_assurance|franc_cfa }}</span>
+                </div>
+                <div class="recu-ligne-calcul recu-ligne-total">
+                    <strong>Net réglé par le patient :</strong>
+                    <strong class="recu-montant-paye">{{ paiement.montant_part_patient|franc_cfa }}</strong>
+                </div>
+            </div>
+        </section>
+
+        <footer class="recu-pied">
+            <div class="recu-reglement-details">
+                <p><strong>Mode de paiement :</strong> {{ paiement.get_mode_reglement_display|default:"Non spécifié" }}</p>
+                {% if paiement.enregistre_par %}
+                <p><strong>Encaissé par :</strong> {{ paiement.enregistre_par.get_full_name|default:paiement.enregistre_par.email }}</p>
+                {% endif %}
+                <p style="font-size: 11.5px; color: var(--muted); margin-top: 6px;">
+                    Cette quittance certifie le règlement libératoire de la part patient pour les actes mentionnés ci-dessus.
+                </p>
+            </div>
+            <div class="recu-cachet">
+                <div class="recu-cadre-cachet">
+                    <span>Cachet et signature</span>
+                </div>
+            </div>
+        </footer>
+    </article>
+</div>
+
+<style>
+.panneau-recu-conteneur {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0 40px;
+}
+.feuille-recu {
+    background: var(--surface, #ffffff);
+    border: 1px solid var(--border, #d9e2ea);
+    border-radius: 12px;
+    padding: 32px;
+    max-width: 650px;
+    width: 100%;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    color: var(--text, #1f2933);
+}
+.recu-entete {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+}
+.recu-marque {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.recu-marque-titre {
+    margin: 0;
+    font-size: 20px;
+    color: var(--primary-dark, #0b2027);
+    font-weight: 800;
+}
+.recu-marque-sous-titre {
+    margin: 0;
+    font-size: 12px;
+    color: var(--muted, #5f6f7d);
+}
+.recu-reference-bloc {
+    text-align: right;
+}
+.recu-numero {
+    margin: 6px 0 2px;
+    font-weight: 700;
+    font-size: 14px;
+}
+.recu-date {
+    margin: 0;
+    font-size: 12px;
+    color: var(--muted, #5f6f7d);
+}
+.recu-separateur {
+    border: 0;
+    border-top: 1px solid var(--border, #d9e2ea);
+    margin: 20px 0;
+}
+.recu-grille-infos {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+}
+.recu-col-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.recu-libelle {
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--muted, #5f6f7d);
+    font-weight: 600;
+}
+.recu-valeur {
+    font-size: 15px;
+    color: var(--titre, #132b45);
+}
+.recu-detail {
+    font-size: 12.5px;
+    color: var(--text, #1f2933);
+}
+.recu-tableau {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+}
+.recu-tableau th {
+    background: var(--bg, #eff4f3);
+    padding: 10px 12px;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--muted, #5f6f7d);
+    border-bottom: 1px solid var(--border, #d9e2ea);
+}
+.recu-tableau td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border, #d9e2ea);
+    font-size: 14px;
+}
+.recu-recapitulatif {
+    background: var(--bg, #eff4f3);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 24px;
+}
+.recu-ligne-calcul {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13.5px;
+    margin-bottom: 6px;
+}
+.recu-ligne-total {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border, #d9e2ea);
+    font-size: 16px;
+}
+.recu-montant-paye {
+    color: var(--primary-strong, #095059);
+    font-size: 18px;
+}
+.recu-pied {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 20px;
+    align-items: end;
+}
+.recu-reglement-details p {
+    margin: 0 0 4px;
+    font-size: 13px;
+}
+.recu-cadre-cachet {
+    border: 1px dashed var(--muted, #5f6f7d);
+    border-radius: 8px;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11.5px;
+    color: var(--muted, #5f6f7d);
+}
+
+@media print {
+    .sans-impression, header, nav, aside, footer {
+        display: none !important;
+    }
+    body {
+        background: #ffffff !important;
+    }
+    .panneau-recu-conteneur {
+        margin: 0 !important;
+    }
+    .feuille-recu {
+        box-shadow: none !important;
+        border: 1px solid #000000 !important;
+        max-width: 100% !important;
+        padding: 20px !important;
+    }
+    @page {
+        size: A5 portrait;
+        margin: 10mm;
+    }
+}
+</style>
+
+<script>
+    (function () {
+        var btn = document.getElementById('bouton-imprimer-recu');
+        if (btn) {
+            btn.addEventListener('click', function () { window.print(); });
+        }
+    })();
+</script>
+{% endblock %}

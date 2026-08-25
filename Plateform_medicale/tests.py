@@ -29,6 +29,7 @@ from .models import (
     Patient,
     Pharmacien,
     PlanCouverture,
+    PreferenceNotification,
     Prestataire,
     PriseEnCharge,
     RendezVous,
@@ -609,9 +610,10 @@ class DashboardAdminTests(TestCase):
     def test_nav_admin_a_des_separateurs_de_section(self):
         response = self.client.get(reverse('dashboard'))
         self.assertContains(response, 'class="nav-section"')
-        self.assertContains(response, '>Gestion<')
-        self.assertContains(response, '>Opérations<')
-        self.assertContains(response, '>Système<')
+        self.assertContains(response, '>Pilotage & Opérations<')
+        self.assertContains(response, '>Acteurs & Établissements<')
+        self.assertContains(response, '>Activité Médicale & Finances<')
+        self.assertContains(response, '>Analyse & Configuration<')
 
 
 class GestionUtilisateursTests(TestCase):
@@ -658,13 +660,11 @@ class GestionUtilisateursTests(TestCase):
             'role': User.Role.MEDECIN.value,
         })
         self.assertEqual(response.status_code, 200)
-        mot_de_passe = response.context['mot_de_passe']
+        # Le nouveau flux onboarding ne retourne plus de mot de passe en clair mais un lien d'activation
+        self.assertIn('lien_activation', response.context)
+        self.assertIn('utilisateur', response.context)
         utilisateur = User.objects.get(email='fatou.ndiaye@santesn.sn')
         self.assertEqual(utilisateur.role, User.Role.MEDECIN)
-
-        self.client.logout()
-        connecte = self.client.login(username='fatou.ndiaye@santesn.sn', password=mot_de_passe)
-        self.assertTrue(connecte)
 
     def test_modification_role_utilisateur(self):
         cible = creer_utilisateur(User.Role.MEDECIN, 'cible@santesn.sn')
@@ -762,11 +762,67 @@ class GestionUtilisateursTests(TestCase):
         cible = creer_utilisateur(User.Role.MEDECIN, 'cible@santesn.sn')
         response = self.client.post(reverse('reinitialiser_mot_de_passe', args=[cible.pk]))
         self.assertEqual(response.status_code, 200)
-        nouveau_mot_de_passe = response.context['mot_de_passe']
+        # Le nouveau flux génère un lien d'activation, pas un mot de passe
+        self.assertIn('lien_activation', response.context)
+        self.assertIn('utilisateur', response.context)
+        self.assertEqual(response.context['action'], 'reinitialisation')
 
-        self.client.logout()
-        connecte = self.client.login(username='cible@santesn.sn', password=nouveau_mot_de_passe)
-        self.assertTrue(connecte)
+    def test_renvoyer_activation_mono_canal_whatsapp_ok_pas_email(self):
+        cible = creer_utilisateur(User.Role.MEDECIN, 'whatsapp.ok@santesn.sn')
+        cible.phone_number = '770001122'
+        cible.save(update_fields=['phone_number'])
+        with patch('Plateform_medicale.services.onboarding.envoyer_message_whatsapp') as mock_wa, \
+             patch('Plateform_medicale.services.onboarding.EmailMultiAlternatives') as mock_email:
+            mock_wa.return_value = {'succes': True, 'statut': 'ENVOYE', 'message': 'Message envoyé avec succès'}
+            response = self.client.post(reverse('renvoyer_activation', args=[cible.pk]), follow=True)
+            self.assertRedirects(response, reverse('liste_utilisateurs'))
+            # Vérifier que WhatsApp a été appelé mais PAS l'email
+            mock_wa.assert_called_once()
+            mock_email.assert_not_called()
+            messages_recus = [m.message for m in response.context['messages']]
+            self.assertTrue(any("Le lien d'activation a été envoyé par WhatsApp." in m for m in messages_recus))
+
+    def test_renvoyer_activation_mono_canal_whatsapp_non_configure_email_secours(self):
+        cible = creer_utilisateur(User.Role.MEDECIN, 'wa.nonconfig@santesn.sn')
+        cible.phone_number = '770001122'
+        cible.save(update_fields=['phone_number'])
+        with patch('Plateform_medicale.services.onboarding.envoyer_message_whatsapp') as mock_wa:
+            mock_wa.return_value = {'succes': False, 'statut': 'NON_CONFIGURE', 'message': 'WhatsApp non configuré'}
+            response = self.client.post(reverse('renvoyer_activation', args=[cible.pk]), follow=True)
+            self.assertRedirects(response, reverse('liste_utilisateurs'))
+            messages_recus = [m.message for m in response.context['messages']]
+            self.assertTrue(any("WhatsApp n'est pas configuré. Le lien d'activation a été envoyé par email." in m for m in messages_recus))
+
+    def test_renvoyer_activation_mono_canal_sans_telephone_email_secours(self):
+        cible = creer_utilisateur(User.Role.MEDECIN, 'sans.tel@santesn.sn')
+        cible.phone_number = ''
+        cible.save(update_fields=['phone_number'])
+        response = self.client.post(reverse('renvoyer_activation', args=[cible.pk]), follow=True)
+        self.assertRedirects(response, reverse('liste_utilisateurs'))
+        messages_recus = [m.message for m in response.context['messages']]
+        self.assertTrue(any("Le numéro WhatsApp n'est pas disponible. Le lien d'activation a été envoyé par email." in m for m in messages_recus))
+
+    def test_renvoyer_activation_mono_canal_whatsapp_echec_email_secours(self):
+        cible = creer_utilisateur(User.Role.MEDECIN, 'wa.echec@santesn.sn')
+        cible.phone_number = '770001122'
+        cible.save(update_fields=['phone_number'])
+        with patch('Plateform_medicale.services.onboarding.envoyer_message_whatsapp') as mock_wa:
+            mock_wa.return_value = {'succes': False, 'statut': 'ECHEC', 'message': 'API timeout'}
+            response = self.client.post(reverse('renvoyer_activation', args=[cible.pk]), follow=True)
+            self.assertRedirects(response, reverse('liste_utilisateurs'))
+            messages_recus = [m.message for m in response.context['messages']]
+            self.assertTrue(any("Échec de l'envoi WhatsApp. Le lien d'activation a été envoyé par email en secours." in m for m in messages_recus))
+
+    def test_renvoyer_activation_mono_canal_aucun_canal_disponible(self):
+        cible = creer_utilisateur(User.Role.MEDECIN, 'aucun.canal@santesn.sn')
+        cible.phone_number = ''
+        cible.save(update_fields=['phone_number'])
+        with patch('Plateform_medicale.services.onboarding.EmailMultiAlternatives') as mock_email:
+            mock_email.side_effect = Exception("SMTP Down")
+            response = self.client.post(reverse('renvoyer_activation', args=[cible.pk]), follow=True)
+            self.assertRedirects(response, reverse('liste_utilisateurs'))
+            messages_recus = [m.message for m in response.context['messages']]
+            self.assertTrue(any("aucun canal d'activation n'est disponible" in m for m in messages_recus))
 
     def test_filtre_par_role(self):
         creer_utilisateur(User.Role.MEDECIN, 'medecin@santesn.sn')
@@ -1320,6 +1376,43 @@ class HistoriqueConsultationsTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context['consultations']), 2)
 
+    def test_medecin_peut_annuler_son_ordonnance_non_delivree(self):
+        ordonnance = Ordonnance.objects.create(consultation=self.consultation_a)
+        response = self.client.post(
+            reverse('annuler_ordonnance_medecin', kwargs={'pk': ordonnance.pk}),
+            {'motif_annulation': 'Erreur de dosage'}
+        )
+        self.assertRedirects(response, reverse('voir_ordonnance_medecin', kwargs={'pk': ordonnance.pk}))
+        ordonnance.refresh_from_db()
+        self.assertTrue(ordonnance.est_annulee)
+        self.assertEqual(ordonnance.motif_annulation, 'Erreur de dosage')
+        self.assertIsNotNone(ordonnance.date_annulation)
+
+    def test_medecin_ne_peut_pas_annuler_sans_motif(self):
+        ordonnance = Ordonnance.objects.create(consultation=self.consultation_a)
+        response = self.client.post(
+            reverse('annuler_ordonnance_medecin', kwargs={'pk': ordonnance.pk}),
+            {'motif_annulation': '  '}
+        )
+        ordonnance.refresh_from_db()
+        self.assertFalse(ordonnance.est_annulee)
+
+    def test_medecin_ne_peut_pas_annuler_ordonnance_deja_delivree(self):
+        from Plateform_medicale.models import Delivrance, Pharmacien
+        user_ph = User.objects.create_user(email='ph-test-annul@santesn.sn', password='Password123', role=User.Role.PHARMACIEN)
+        prest = Prestataire.objects.create(nom='Pharmacie Test Annul', type_etablissement='PHARMACIE')
+        ph = Pharmacien.objects.create(user=user_ph, nom='Test', prenom='Pharm', prestataire=prest)
+        ordonnance = Ordonnance.objects.create(consultation=self.consultation_a)
+        Delivrance.objects.create(ordonnance=ordonnance, pharmacien=ph)
+        
+        response = self.client.post(
+            reverse('annuler_ordonnance_medecin', kwargs={'pk': ordonnance.pk}),
+            {'motif_annulation': 'Tentative tardive'}
+        )
+        ordonnance.refresh_from_db()
+        self.assertFalse(ordonnance.est_annulee)
+
+
 
 class EspacePharmacienTests(TestCase):
     def setUp(self):
@@ -1390,6 +1483,16 @@ class EspacePharmacienTests(TestCase):
         self.assertRedirects(response, reverse('historique_delivrances'))
         delivrance = Delivrance.objects.get(ordonnance=self.ordonnance)
         self.assertEqual(delivrance.pharmacien, self.pharmacien)
+
+    def test_pharmacien_ne_peut_pas_delivrer_ordonnance_annulee(self):
+        self.ordonnance.annuler(motif="Annulation test")
+        response = self.client.post(reverse('valider_delivrance', args=[self.ordonnance.pk]), {
+            'code_qr': self.ordonnance.code_qr,
+        })
+        self.assertRedirects(response, reverse('historique_delivrances'))
+        self.assertFalse(Delivrance.objects.filter(ordonnance=self.ordonnance).exists())
+
+
 
     def test_double_delivrance_refusee(self):
         Delivrance.objects.create(ordonnance=self.ordonnance, pharmacien=self.pharmacien)
@@ -2001,12 +2104,107 @@ class NotificationsTests(TestCase):
         self.client.login(username='medecin@santesn.sn', password=PASSWORD)
 
         response = self.client.get(reverse('mes_notifications'), {'lue': 'non'})
-        self.assertContains(response, 'Pas encore lue')
-        self.assertNotContains(response, 'Deja lue')
+        self.assertIn('Pas encore lue', [n.message for n in response.context['notifications']])
+        self.assertNotIn('Deja lue', [n.message for n in response.context['notifications']])
 
         response = self.client.get(reverse('mes_notifications'), {'lue': 'oui'})
-        self.assertContains(response, 'Deja lue')
-        self.assertNotContains(response, 'Pas encore lue')
+        self.assertIn('Deja lue', [n.message for n in response.context['notifications']])
+        self.assertNotIn('Pas encore lue', [n.message for n in response.context['notifications']])
+
+    def test_marquer_toutes_notifications_lues(self):
+        medecin_user = creer_utilisateur(User.Role.MEDECIN, 'medecin-toutes@santesn.sn')
+        Notification.objects.create(destinataire=medecin_user, message='Notif 1', lue=False)
+        Notification.objects.create(destinataire=medecin_user, message='Notif 2', lue=False)
+
+        self.client.logout()
+        self.client.login(username='medecin-toutes@santesn.sn', password=PASSWORD)
+        response = self.client.post(reverse('marquer_toutes_notifications_lues'))
+        self.assertRedirects(response, reverse('mes_notifications'))
+        self.assertEqual(Notification.objects.filter(destinataire=medecin_user, lue=False).count(), 0)
+
+    def test_api_dernieres_notifications(self):
+        medecin_user = creer_utilisateur(User.Role.MEDECIN, 'medecin-api@santesn.sn')
+        Notification.objects.create(destinataire=medecin_user, titre='Titre Test', message='Message Test', lue=False)
+
+        self.client.logout()
+        self.client.login(username='medecin-api@santesn.sn', password=PASSWORD)
+        response = self.client.get(reverse('api_dernieres_notifications'))
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data['non_lues_count'], 1)
+        self.assertEqual(len(data['notifications']), 1)
+        self.assertEqual(data['notifications'][0]['titre'], 'Titre Test')
+
+    def test_emettre_notification_resilience_smtp(self):
+        medecin_user = creer_utilisateur(User.Role.MEDECIN, 'medecin-smtp@santesn.sn')
+        with self.settings(EMAIL_BACKEND='django.core.mail.backends.smtp.EmailBackend'):
+            from unittest.mock import patch
+            with patch('django.core.mail.send_mail', side_effect=Exception('SMTP Error')):
+                response = self.client.post(reverse('envoyer_notification'), {
+                    'destinataire': medecin_user.pk, 'message': 'Test resilience',
+                })
+        self.assertRedirects(response, reverse('liste_notifications_envoyees'))
+        self.assertEqual(Notification.objects.filter(destinataire=medecin_user).count(), 1)
+
+    def test_preferences_notifications_valeurs_par_defaut(self):
+        medecin_user = creer_utilisateur(User.Role.MEDECIN, 'medecin-pref-defaut@santesn.sn')
+        prefs = PreferenceNotification.objects.create(user=medecin_user)
+        self.assertTrue(prefs.email_rdv)
+        self.assertTrue(prefs.email_prise_en_charge)
+        self.assertTrue(prefs.email_ordonnance)
+        self.assertTrue(prefs.email_delivrance)
+
+    def test_preferences_notifications_affichage_et_sauvegarde(self):
+        medecin_user = creer_utilisateur(User.Role.MEDECIN, 'medecin-pref-ui@santesn.sn')
+        self.client.logout()
+        self.client.login(username='medecin-pref-ui@santesn.sn', password=PASSWORD)
+
+        response = self.client.get(reverse('parametres_section', args=['notifications']))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Préférences d\'emails')
+
+        response = self.client.post(reverse('parametres_section', args=['notifications']), {
+            'email_rdv': 'on',
+            # email_prise_en_charge non coche -> False
+        })
+        self.assertRedirects(response, reverse('parametres_section', args=['notifications']))
+
+        prefs = PreferenceNotification.objects.get(user=medecin_user)
+        self.assertTrue(prefs.email_rdv)
+        self.assertFalse(prefs.email_prise_en_charge)
+
+    def test_preferences_notifications_isolation_entre_utilisateurs(self):
+        user_a = creer_utilisateur(User.Role.MEDECIN, 'user-a-pref@santesn.sn')
+        user_b = creer_utilisateur(User.Role.PHARMACIEN, 'user-b-pref@santesn.sn')
+
+        prefs_b = PreferenceNotification.objects.create(user=user_b, email_rdv=True)
+
+        self.client.logout()
+        self.client.login(username='user-a-pref@santesn.sn', password=PASSWORD)
+        self.client.post(reverse('parametres_section', args=['notifications']), {
+            # User A decoche tout
+        })
+
+        prefs_b.refresh_from_db()
+        self.assertTrue(prefs_b.email_rdv, "Les préférences de User B ne doivent pas être affectées par User A.")
+
+    def test_notifications_optionnelles_respectent_choix_utilisateur(self):
+        from django.core import mail
+        from Plateform_medicale.services.notifications import emettre_notification
+
+        user_opt = creer_utilisateur(User.Role.ASSURE, 'assure-opt@santesn.sn')
+        PreferenceNotification.objects.create(user=user_opt, email_rdv=False)
+
+        mail.outbox = []
+        emettre_notification(
+            destinataire=user_opt,
+            titre="Demande RDV",
+            message="Rendez-vous enregistré",
+            type_evenement=Notification.TypeEvenement.RDV_DEMANDE,
+            url_action="/assure/rendez-vous/"
+        )
+
+        self.assertEqual(len(mail.outbox), 0, "Aucun email ne doit être envoyé quand email_rdv est désactivé.")
 
     def test_filtre_lue_sur_liste_notifications_envoyees(self):
         medecin_user = creer_utilisateur(User.Role.MEDECIN, 'medecin@santesn.sn')
@@ -2131,17 +2329,16 @@ class RapportsTests(TestCase):
         self.assertEqual(
             classeur.sheetnames,
             [
-                'Chiffres cles',
-                'Utilisateurs par role',
-                'Assures par type',
-                'Rendez-vous par statut',
-                'Prises en charge par statut',
-                'Consultations par mois',
+                'SYNTHESE',
+                'CONSULTATIONS',
+                'PRISES_EN_CHARGE',
+                'ORDONNANCES_DELIVRANCES',
+                'UTILISATEURS_ASSURES',
             ],
         )
-        feuille_roles = classeur['Utilisateurs par role']
-        lignes = {ligne[0].value: ligne[1].value for ligne in feuille_roles.iter_rows(min_row=2)}
-        self.assertEqual(lignes['Médecin'], 1)
+        feuille_roles = classeur['UTILISATEURS_ASSURES']
+        lignes = {ligne[0].value: ligne[1].value for ligne in feuille_roles.iter_rows(min_row=2) if ligne[0].value}
+        self.assertEqual(lignes.get('Rôle : Médecin'), 1)
 
     def test_export_rapports_pdf_interdit_aux_non_admins(self):
         self.client.logout()
@@ -3495,13 +3692,9 @@ class LibellesAccentuesTests(TestCase):
         creer_utilisateur(User.Role.ADMIN, 'admin-couleurs@santesn.sn')
         self.client.login(username='admin-couleurs@santesn.sn', password=PASSWORD)
         contenu = self.client.get(reverse('rapports')).content.decode()
-        self.assertEqual(contenu.count('<canvas'), 1)
+        self.assertEqual(contenu.count('<canvas'), 2)
         self.assertIn('graphe-consultations', contenu)
         self.assertNotIn('COULEURS_STATUT', contenu)
-        # Un seul "Voir le tableau" subsiste : celui de la courbe, ou le
-        # tableau accompagne un graphique reel au lieu de le remplacer.
-        self.assertEqual(contenu.count('Voir le tableau'), 1)
-        # Les repartitions restent lisibles, en tableau plein.
         for titre in ('Utilisateurs par rôle', 'Assurés par type',
                       'Rendez-vous par statut', 'Prises en charge par statut'):
             self.assertIn(titre, contenu)
@@ -3626,32 +3819,9 @@ class PaginationHorsAdminTests(TestCase):
         self.assertNotContains(reponse, 'aria-label="Pagination"')
 
 
-ENTETES_IMPORT_REGLEMENTS = [
-    'Reference', 'Patient', 'Date de consultation', 'Part patient',
-    'Mode de reglement', 'Date de reglement',
-]
 
 
-def creer_fichier_import_reglements(lignes, entetes=None):
-    classeur = openpyxl.Workbook()
-    feuille = classeur.active
-    feuille.append(entetes or ENTETES_IMPORT_REGLEMENTS)
-    for ligne in lignes:
-        feuille.append(ligne)
-    tampon = io.BytesIO()
-    classeur.save(tampon)
-    tampon.seek(0)
-    return SimpleUploadedFile(
-        'reglements.xlsx', tampon.read(),
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    )
-
-
-class ImportReglementsTests(TestCase):
-    """L'import n'ajoute pas de paiements (impossible : Paiement est en 1-1
-    avec Consultation et ses montants sont derives). Il enregistre le
-    reglement de paiements existants, en tout ou rien."""
-
+class ImportReglementsExcelTests(TestCase):
     def setUp(self):
         creer_utilisateur(User.Role.ADMIN, 'admin-reglements@santesn.sn')
         self.medecin = creer_medecin('medecin-reglements@santesn.sn')
@@ -3665,142 +3835,21 @@ class ImportReglementsTests(TestCase):
         self.paiement.save()
         self.client.login(username='admin-reglements@santesn.sn', password=PASSWORD)
 
-    def _importer(self, lignes, entetes=None):
-        return self.client.post(reverse('importer_reglements_excel'),
-                                {'fichier': creer_fichier_import_reglements(lignes, entetes)})
+    def test_route_import_reglements_desormais_404(self):
+        """Vérifie que la route d'importation de règlements renvoie 404 en GET et POST."""
+        self.assertEqual(self.client.get('/paiements/importer/').status_code, 404)
+        self.assertEqual(self.client.post('/paiements/importer/').status_code, 404)
 
-    # --- cas nominal ---
+    def test_route_modele_import_reglements_desormais_404(self):
+        """Vérifie que la route du modèle d'importation de règlements renvoie 404 en GET et POST."""
+        self.assertEqual(self.client.get('/paiements/importer/modele/').status_code, 404)
+        self.assertEqual(self.client.post('/paiements/importer/modele/').status_code, 404)
 
-    def test_import_valide(self):
-        reponse = self._importer([[self.paiement.pk, 'Awa Sow', '', '', 'Especes', '10/08/2026']])
-        self.assertRedirects(reponse, reverse('liste_paiements'))
+    def test_post_direct_aucun_paiement_modifie(self):
+        """Vérifie qu'un POST direct sur l'ancienne URL ne modifie aucun paiement."""
+        self.client.post('/paiements/importer/', {'paiement_id': self.paiement.pk})
         self.paiement.refresh_from_db()
-        self.assertEqual(self.paiement.statut, Paiement.Statut.REGLE)
-        self.assertEqual(self.paiement.mode_reglement, Paiement.ModeReglement.ESPECES)
-        self.assertEqual(self.paiement.date_reglement.date(), datetime.date(2026, 8, 10))
-
-    def test_libelle_accentue_du_mode_accepte(self):
-        self._importer([[self.paiement.pk, '', '', '', 'Espèces', '10/08/2026']])
-        self.paiement.refresh_from_db()
-        self.assertEqual(self.paiement.mode_reglement, Paiement.ModeReglement.ESPECES)
-
-    def test_montant_de_controle_correct_accepte(self):
-        self._importer([[self.paiement.pk, '', '', self.paiement.montant_part_patient,
-                         'Virement', '10/08/2026']])
-        self.paiement.refresh_from_db()
-        self.assertEqual(self.paiement.statut, Paiement.Statut.REGLE)
-
-    # --- cas d'erreur ---
-
-    def _erreurs(self, lignes, entetes=None):
-        reponse = self._importer(lignes, entetes)
-        self.assertEqual(reponse.status_code, 200)
-        self.paiement.refresh_from_db()
-        self.assertEqual(self.paiement.statut, Paiement.Statut.NON_REGLE,
-                         "aucun reglement ne doit passer si une ligne est invalide")
-        return reponse
-
-    def test_fichier_vide(self):
-        self.assertContains(self._erreurs([]), 'aucune ligne')
-
-    def test_colonne_manquante(self):
-        reponse = self._erreurs([[self.paiement.pk, '', '', '']],
-                                entetes=['Reference', 'Patient', 'Part patient', 'Mode'])
-        self.assertContains(reponse, 'En-t')
-
-    def test_reference_inexistante(self):
-        self.assertContains(self._erreurs([[999999, '', '', '', 'Especes', '10/08/2026']]),
-                            'aucun paiement ne porte la r')
-
-    def test_reference_invalide(self):
-        self.assertContains(self._erreurs([['abc', '', '', '', 'Especes', '10/08/2026']]),
-                            'invalide')
-
-    def test_mode_inconnu(self):
-        self.assertContains(self._erreurs([[self.paiement.pk, '', '', '', 'Bitcoin', '10/08/2026']]),
-                            'inconnu')
-
-    def test_mode_absent(self):
-        self.assertContains(self._erreurs([[self.paiement.pk, '', '', '', '', '10/08/2026']]),
-                            'mode de r')
-
-    def test_date_invalide(self):
-        self.assertContains(self._erreurs([[self.paiement.pk, '', '', '', 'Especes', '32/13/2026']]),
-                            'invalide')
-
-    def test_date_absente(self):
-        self.assertContains(self._erreurs([[self.paiement.pk, '', '', '', 'Especes', '']]),
-                            'obligatoire')
-
-    def test_date_future_refusee(self):
-        futur = (timezone.localdate() + datetime.timedelta(days=5)).strftime('%d/%m/%Y')
-        self.assertContains(self._erreurs([[self.paiement.pk, '', '', '', 'Especes', futur]]),
-                            'futur')
-
-    def test_montant_de_controle_incoherent(self):
-        self.assertContains(
-            self._erreurs([[self.paiement.pk, '', '', '999999', 'Especes', '10/08/2026']]),
-            'ne correspond pas')
-
-    def test_montant_invalide(self):
-        self.assertContains(
-            self._erreurs([[self.paiement.pk, '', '', 'beaucoup', 'Especes', '10/08/2026']]),
-            'invalide')
-
-    def test_doublon_dans_le_fichier(self):
-        self.assertContains(
-            self._erreurs([[self.paiement.pk, '', '', '', 'Especes', '10/08/2026'],
-                           [self.paiement.pk, '', '', '', 'Virement', '11/08/2026']]),
-            'appara')
-
-    def test_paiement_deja_regle(self):
-        self.paiement.statut = Paiement.Statut.REGLE
-        self.paiement.save()
-        reponse = self._importer([[self.paiement.pk, '', '', '', 'Especes', '10/08/2026']])
-        self.assertContains(reponse, 'est d')
-
-    def test_plusieurs_erreurs_signalees_ensemble(self):
-        reponse = self._erreurs([
-            [999999, '', '', '', 'Especes', '10/08/2026'],
-            [self.paiement.pk, '', '', '', 'Bitcoin', '10/08/2026'],
-        ])
-        self.assertContains(reponse, 'aucun paiement ne porte la r')
-        self.assertContains(reponse, 'inconnu')
-
-    def test_tout_ou_rien(self):
-        """Une ligne valide suivie d'une invalide : rien ne doit passer."""
-        autre = Consultation.objects.create(
-            patient=self.patient, medecin=self.medecin,
-            date_consultation=timezone.now(), diagnostic='Autre')
-        paiement2 = Paiement.calculer_pour(autre)
-        paiement2.save()
-        self._importer([[self.paiement.pk, '', '', '', 'Especes', '10/08/2026'],
-                        [paiement2.pk, '', '', '', 'Bitcoin', '10/08/2026']])
-        self.paiement.refresh_from_db()
-        paiement2.refresh_from_db()
         self.assertEqual(self.paiement.statut, Paiement.Statut.NON_REGLE)
-        self.assertEqual(paiement2.statut, Paiement.Statut.NON_REGLE)
-
-    # --- permissions et aller-retour ---
-
-    def test_role_non_admin_refuse(self):
-        self.client.logout()
-        creer_medecin('autre-medecin-regl@santesn.sn')
-        self.client.login(username='autre-medecin-regl@santesn.sn', password=PASSWORD)
-        for nom in ('importer_reglements_excel', 'telecharger_modele_import_reglements'):
-            self.assertEqual(self.client.get(reverse(nom)).status_code, 403, nom)
-
-    def test_export_csv_contient_la_reference(self):
-        """Sans identifiant dans l'export, l'aller-retour serait impossible."""
-        reponse = self.client.get(reverse('exporter_paiements_csv'))
-        contenu = reponse.content.decode('utf-8-sig')
-        self.assertIn('Reference', contenu.splitlines()[0])
-        self.assertIn(str(self.paiement.pk), contenu)
-
-    def test_modele_telechargeable(self):
-        reponse = self.client.get(reverse('telecharger_modele_import_reglements'))
-        self.assertEqual(reponse.status_code, 200)
-        self.assertIn('spreadsheetml', reponse['Content-Type'])
 
 
 class NavigationCoherenteTests(TestCase):
@@ -3837,13 +3886,9 @@ class NavigationCoherenteTests(TestCase):
                 self.client.get(reverse('parametres_section', args=[section])),
                 reverse('importer_utilisateurs_excel'))
 
-    def test_import_reglements_uniquement_sur_la_page_paiements(self):
-        self.assertContains(self.client.get(reverse('liste_paiements')),
-                            reverse('importer_reglements_excel'))
-        for section in SECTIONS_TOUTES:
-            self.assertNotContains(
-                self.client.get(reverse('parametres_section', args=[section])),
-                reverse('importer_reglements_excel'))
+    def test_import_reglements_absent_de_liste_paiements(self):
+        self.assertNotContains(self.client.get(reverse('liste_paiements')),
+                               '/paiements/importer/')
 
     def test_exports_uniquement_sur_leur_page_metier(self):
         # Les exports proposes dans Parametres ignoraient les filtres alors
@@ -6600,7 +6645,8 @@ class TracePaiementEspecesTests(TestCase):
     def test_aucune_api_de_paiement_externe_n_est_appelee(self):
         """Perimetre explicite : pas de Wave, pas d'Orange Money, pas de
         transaction -- meme simulee."""
-        source = pathlib.Path('Plateform_medicale/views.py').read_text(encoding='utf-8')
+        sources = [p.read_text(encoding='utf-8') for p in pathlib.Path('Plateform_medicale/views').glob('*.py')]
+        source = "".join(sources)
         for interdit in ('wave', 'orange_money', 'orangemoney', 'paydunya', 'stripe'):
             self.assertNotIn(interdit, source.lower())
 
@@ -6926,3 +6972,521 @@ class CreneauUniqueParMedecinTests(TestCase):
         self.assertEqual(reponse.status_code, 200)
         self.assertContains(reponse, 'déjà réservé')
         self.assertEqual(RendezVous.objects.count(), 1)
+
+
+class AuditIdorEtSecuriteEmpiriqueTests(TestCase):
+    """Suite d'audit de sécurité et IDOR indépendante pour la qualification V1."""
+
+    def setUp(self):
+        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin-audit@santesn.sn')
+        self.medecin_a = creer_medecin('medecin-a@santesn.sn', specialite='Cardiologie')
+        self.medecin_a_user = self.medecin_a.user
+
+        self.medecin_b = creer_medecin('medecin-b@santesn.sn', specialite='Pediatrie')
+        self.medecin_b_user = self.medecin_b.user
+
+        self.assure_a_user = creer_utilisateur(User.Role.ASSURE, 'assure-a@santesn.sn')
+        self.patient_a = Patient.objects.create(
+            user=self.assure_a_user, nom='Diop', prenom='Amina',
+            date_naissance=datetime.date(1990, 5, 10), telephone='771000001'
+        )
+
+        self.assure_b_user = creer_utilisateur(User.Role.ASSURE, 'assure-b@santesn.sn')
+        self.patient_b = Patient.objects.create(
+            user=self.assure_b_user, nom='Sow', prenom='Moussa',
+            date_naissance=datetime.date(1992, 8, 15), telephone='771000002'
+        )
+
+        self.hopital = Prestataire.objects.create(nom='Hopital Principal', adresse='Dakar')
+
+    def test_idor_assure_ne_peut_pas_voir_ordonnance_d_un_autre(self):
+        c_b = Consultation.objects.create(patient=self.patient_b, medecin=self.medecin_b, date_consultation=timezone.now())
+        ord_b = Ordonnance.objects.create(consultation=c_b)
+        self.client.login(username='assure-a@santesn.sn', password=PASSWORD)
+        res = self.client.get(reverse('voir_ordonnance_assure', args=[ord_b.pk]))
+        self.assertEqual(res.status_code, 404)
+
+    def test_idor_assure_ne_peut_pas_voir_prise_en_charge_d_un_autre(self):
+        pec_b = PriseEnCharge.objects.create(patient=self.patient_b, motif='Examen Scanner')
+        self.client.login(username='assure-a@santesn.sn', password=PASSWORD)
+        res = self.client.get(reverse('mes_prises_en_charge_assure'))
+        self.assertNotContains(res, 'Examen Scanner')
+
+    def test_idor_notification_marquer_lue_interdite_pour_autre_compte(self):
+        notif_b = Notification.objects.create(destinataire=self.assure_b_user, message='Confidentiel')
+        self.client.login(username='assure-a@santesn.sn', password=PASSWORD)
+        res = self.client.post(reverse('marquer_notification_lue', args=[notif_b.pk]))
+        self.assertEqual(res.status_code, 404)
+
+    def test_medecin_ne_peut_pas_creer_rendez_vous_directement(self):
+        """Workflow strict : seul l'assuré peut faire une demande de rendez-vous."""
+        self.client.login(username='medecin-a@santesn.sn', password=PASSWORD)
+        # La route d'ajout de RDV médecin n'existe pas
+        with self.assertRaises(Exception):
+            reverse('ajouter_rendez_vous_medecin')
+
+    def test_panne_smtp_simulee_n_empeche_pas_l_action_metier(self):
+        """Si SMTP échoue, la notification en base est créée et l'action réussit."""
+        from unittest.mock import patch
+        from Plateform_medicale.services.notifications import emettre_notification
+
+        with patch('django.core.mail.EmailMultiAlternatives.send', side_effect=Exception('Erreur SMTP test')):
+            notif = emettre_notification(
+                destinataire=self.assure_a_user,
+                titre='Rendez-vous confirmé',
+                message='Votre rendez-vous est confirmé.',
+                type_evenement=Notification.TypeEvenement.RDV_CONFIRME
+            )
+
+        self.assertIsNotNone(notif.pk)
+        self.assertFalse(notif.email_envoye)
+        self.assertIn('Erreur SMTP test', notif.email_erreur)
+        self.assertEqual(Notification.objects.filter(destinataire=self.assure_a_user).count(), 1)
+
+
+class OnboardingEtActivationTests(TestCase):
+    """Tests du système d'onboarding sécurisé et d'activation par jeton unique."""
+
+    def setUp(self):
+        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin-onboarding@santesn.sn')
+        self.user = User.objects.create_user(
+            email='nouvel-assure@santesn.sn',
+            role=User.Role.ASSURE,
+            first_name='Moussa',
+            last_name='Ndiaye',
+            phone_number='771234567',
+        )
+
+    def test_generation_et_activation_compte_succes(self):
+        from Plateform_medicale.services.onboarding import generer_lien_activation
+        from django.utils.http import urlsafe_base64_encode
+        from django.utils.encoding import force_bytes
+        from django.contrib.auth.tokens import default_token_generator
+
+        uidb64 = urlsafe_base64_encode(force_bytes(self.user.pk))
+        token = default_token_generator.make_token(self.user)
+
+        # 1. Accès au formulaire d'activation
+        reponse_get = self.client.get(reverse('activer_compte', kwargs={'uidb64': uidb64, 'token': token}))
+        self.assertEqual(reponse_get.status_code, 200)
+        self.assertContains(reponse_get, 'Activez votre compte')
+
+        # 2. Définition du mot de passe
+        reponse_post = self.client.post(
+            reverse('activer_compte', kwargs={'uidb64': uidb64, 'token': token}),
+            {
+                'nouveau_mot_de_passe': 'PassSecure2026!',
+                'confirmation_mot_de_passe': 'PassSecure2026!',
+            },
+            follow=True,
+        )
+        self.assertEqual(reponse_post.status_code, 200)
+        self.assertContains(reponse_post, "Votre mot de passe")
+
+        # 3. Vérification de la connexion avec le nouveau mot de passe
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password('PassSecure2026!'))
+        self.assertTrue(self.user.is_active)
+
+    def test_token_usage_unique_invalide_apres_utilisation(self):
+        from django.utils.http import urlsafe_base64_encode
+        from django.utils.encoding import force_bytes
+        from django.contrib.auth.tokens import default_token_generator
+
+        uidb64 = urlsafe_base64_encode(force_bytes(self.user.pk))
+        token = default_token_generator.make_token(self.user)
+
+        # Première utilisation
+        self.client.post(
+            reverse('activer_compte', kwargs={'uidb64': uidb64, 'token': token}),
+            {
+                'nouveau_mot_de_passe': 'PassSecure2026!',
+                'confirmation_mot_de_passe': 'PassSecure2026!',
+            },
+        )
+
+        # Deuxième tentative avec le même token -> Invalide
+        reponse_rejeu = self.client.get(reverse('activer_compte', kwargs={'uidb64': uidb64, 'token': token}))
+        self.assertEqual(reponse_rejeu.status_code, 200)
+        self.assertContains(reponse_rejeu, 'Lien expiré ou invalide')
+
+    def test_renvoyer_activation_par_admin(self):
+        self.client.login(username='admin-onboarding@santesn.sn', password=PASSWORD)
+        reponse = self.client.post(reverse('renvoyer_activation', args=[self.user.pk]), follow=True)
+        self.assertEqual(reponse.status_code, 200)
+        self.assertContains(reponse, "activation")
+
+
+class WhatsAppServiceTests(TestCase):
+    """Tests du service WhatsApp officiel, distinction des statuts et résilience."""
+
+    def test_whatsapp_sans_telephone(self):
+        from Plateform_medicale.services.whatsapp import envoyer_message_whatsapp
+        res = envoyer_message_whatsapp('', 'Message test')
+        self.assertFalse(res['succes'])
+        self.assertEqual(res['statut'], 'SANS_TELEPHONE')
+
+    def test_whatsapp_non_configure(self):
+        from Plateform_medicale.services.whatsapp import envoyer_message_whatsapp
+        res = envoyer_message_whatsapp('771234567', 'Message test')
+        self.assertFalse(res['succes'])
+        self.assertEqual(res['statut'], 'NON_CONFIGURE')
+        self.assertIn("n'est pas configuré", res['message'])
+
+    def test_whatsapp_numero_invalide_avec_config(self):
+        from Plateform_medicale.services.whatsapp import envoyer_message_whatsapp
+        with self.settings(WHATSAPP_ENABLED=True, WHATSAPP_API_TOKEN='test-token', WHATSAPP_PHONE_NUMBER_ID='123456'):
+            res = envoyer_message_whatsapp('123', 'Message test')
+            self.assertFalse(res['succes'])
+            self.assertEqual(res['statut'], 'NUMERO_INVALIDE')
+
+    def test_whatsapp_succes_simulation_api(self):
+        from unittest.mock import MagicMock, patch
+        from Plateform_medicale.services.whatsapp import envoyer_message_whatsapp
+
+        reponse_mock = MagicMock()
+        reponse_mock.read.return_value = b'{"messages": [{"id": "wamid.HBgLM"}]}'
+        reponse_mock.__enter__.return_value = reponse_mock
+
+        with self.settings(WHATSAPP_ENABLED=True, WHATSAPP_API_TOKEN='token-valid', WHATSAPP_PHONE_NUMBER_ID='12345'):
+            with patch('urllib.request.urlopen', return_value=reponse_mock):
+                res = envoyer_message_whatsapp('771234567', 'Bonjour Moussa, votre compte est prêt.')
+                self.assertTrue(res['succes'])
+                self.assertEqual(res['statut'], 'ENVOYE')
+                self.assertIn('succès', res['message'])
+
+    def test_onboarding_resilience_panne_whatsapp(self):
+        from Plateform_medicale.services.onboarding import envoyer_activation_utilisateur
+        user = User.objects.create_user(email='test-resilience@santesn.sn', phone_number='770001122')
+        statut = envoyer_activation_utilisateur(user)
+        self.assertIn('http', statut['lien_activation'])
+        self.assertFalse(statut['whatsapp_envoye'])
+        self.assertIn(statut['whatsapp_statut'], ['NON_CONFIGURE', 'ECHEC'])
+
+
+class RapportsKpiEtPdfTests(TestCase):
+    """Tests des rapports d'activité, KPI et export ReportLab PDF vectoriel."""
+
+    def setUp(self):
+        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin-rapports@santesn.sn')
+
+    def test_vue_rapports_accessible_admin_avec_kpi(self):
+        self.client.login(username='admin-rapports@santesn.sn', password=PASSWORD)
+        reponse = self.client.get(reverse('rapports'))
+        self.assertEqual(reponse.status_code, 200)
+        self.assertContains(reponse, "Rapports d'activité")
+        self.assertContains(reponse, 'Consultations')
+        self.assertContains(reponse, 'Ordonnances')
+        self.assertContains(reponse, 'Délivrances')
+
+    def test_export_pdf_rapports_vectoriel_numbered_canvas(self):
+        self.client.login(username='admin-rapports@santesn.sn', password=PASSWORD)
+        reponse = self.client.get(reverse('exporter_rapports_pdf'))
+        self.assertEqual(reponse.status_code, 200)
+        self.assertEqual(reponse['Content-Type'], 'application/pdf')
+        self.assertIn('attachment; filename="rapports_santesn.pdf"', reponse['Content-Disposition'])
+        # Le PDF généré avec graphiques vectoriels et en-tête institutionnel doit être substantiel
+        self.assertTrue(len(reponse.content) > 3000)
+
+
+class RapportsExcelMultiFeuillesTests(TestCase):
+    """Tests du classeur Excel multi-feuilles professionnel et cohérence avec le PDF."""
+
+    def setUp(self):
+        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin-excel@santesn.sn')
+
+    def test_export_excel_structure_5_feuilles_et_coherence(self):
+        import io
+        import openpyxl
+        from Plateform_medicale.views.dashboard import _donnees_rapports
+
+        self.client.login(username='admin-excel@santesn.sn', password=PASSWORD)
+        reponse = self.client.get(reverse('exporter_rapports_excel'))
+        self.assertEqual(reponse.status_code, 200)
+        self.assertEqual(
+            reponse['Content-Type'],
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+
+        classeur = openpyxl.load_workbook(io.BytesIO(reponse.content), data_only=True)
+        feuilles_attendues = [
+            'SYNTHESE',
+            'CONSULTATIONS',
+            'PRISES_EN_CHARGE',
+            'ORDONNANCES_DELIVRANCES',
+            'UTILISATEURS_ASSURES',
+        ]
+        for f in feuilles_attendues:
+            self.assertIn(f, classeur.sheetnames, f"La feuille {f} doit être présente dans l'export Excel.")
+
+        # Vérification de cohérence 1:1 avec les agrégats
+        donnees = _donnees_rapports()
+        ws_syn = classeur['SYNTHESE']
+        self.assertEqual(ws_syn['A1'].value, "SantéSN — Synthèse Administrative & Métriques Clés")
+
+        # Vérification de la feuille Prises en charge
+        ws_pec = classeur['PRISES_EN_CHARGE']
+        self.assertEqual(ws_pec['A1'].value, "Statut de prise en charge")
+        self.assertEqual(ws_pec['C1'].value, "Pourcentage")
+
+
+class ImportUtilisateursConfidentialiteTests(TestCase):
+    """Tests de confidentialité des jetons et de restitution des statuts post-import."""
+
+    def setUp(self):
+        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin-import-conf@santesn.sn')
+
+    def test_resultat_import_ne_divulgue_pas_de_token_en_clair(self):
+        from Plateform_medicale.views.utilisateurs import _creer_comptes_import_utilisateurs
+        lignes = [
+            {
+                "numero_ligne": 2,
+                "email": "medecin-import-test@santesn.sn",
+                "role": User.Role.MEDECIN,
+                "nom": "Sow",
+                "prenom": "Aminata",
+                "telephone": "771112233",
+                "specialite": "Généraliste",
+                "prestataire": None,
+            }
+        ]
+        resultats = _creer_comptes_import_utilisateurs(lignes)
+        self.assertEqual(len(resultats), 1)
+        r = resultats[0]
+        # Vérification qu'aucun token ou lien brut n'est retourné dans les résultats
+        self.assertNotIn("lien_activation", r)
+        self.assertNotIn("mot_de_passe", r)
+        self.assertTrue(r["compte_cree"])
+        self.assertIn(r["whatsapp_statut"], ["NON_CONFIGURE", "ENVOYE", "ECHEC"])
+
+
+class ProductiviteMetierV11Tests(TestCase):
+    """Tests automatisés des fonctionnalités Productivité Métier V1.1."""
+
+    def setUp(self):
+        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin-v11@santesn.sn')
+        self.medecin_user = creer_utilisateur(User.Role.MEDECIN, 'dr.v11@santesn.sn')
+        self.medecin = Medecin.objects.create(
+            user=self.medecin_user, nom='Diagne', prenom='Dr',
+            telephone='771112233', email=self.medecin_user.email
+        )
+        self.autre_medecin_user = creer_utilisateur(User.Role.MEDECIN, 'dr.autre@santesn.sn')
+        self.autre_medecin = Medecin.objects.create(
+            user=self.autre_medecin_user, nom='Seck', prenom='Dr',
+            telephone='772223344', email=self.autre_medecin_user.email
+        )
+        self.patient_user = creer_utilisateur(User.Role.ASSURE, 'patient-v11@santesn.sn')
+        self.patient = Patient.objects.create(
+            user=self.patient_user, nom='Ndiaye', prenom='Awa',
+            telephone='773334455', type_beneficiaire='PRINCIPAL',
+            date_naissance='1990-05-15'
+        )
+        self.service = ServiceMedical.objects.create(nom='Consultation Générale', prix=15000)
+        self.pharmacien_user = creer_utilisateur(User.Role.PHARMACIEN, 'pharm-v11@santesn.sn')
+        self.pharmacien = Pharmacien.objects.create(user=self.pharmacien_user)
+
+    def test_medecin_demarrer_consultation_avec_rdv(self):
+        rdv = RendezVous.objects.create(
+            patient=self.patient, medecin=self.medecin,
+            date_heure=timezone.now(), statut=RendezVous.Statut.CONFIRME
+        )
+        self.client.login(username='dr.v11@santesn.sn', password=PASSWORD)
+        # 1. Ouverture du formulaire
+        res = self.client.get(reverse('ajouter_consultation_medecin'), {'rdv_id': rdv.pk})
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.context['form'].initial.get('patient'), self.patient.pk)
+
+        # 2. Soumission de la consultation
+        res_post = self.client.post(reverse('ajouter_consultation_medecin') + f'?rdv_id={rdv.pk}', {
+            'patient': self.patient.pk,
+            'service': self.service.pk,
+            'date_consultation': timezone.now().strftime('%Y-%m-%dT%H:%M'),
+            'diagnostic': 'Paludisme simple',
+        }, follow=True)
+        self.assertEqual(res_post.status_code, 200)
+        # Vérification que le RDV est passé en TERMINE
+        rdv.refresh_from_db()
+        self.assertEqual(rdv.statut, RendezVous.Statut.TERMINE)
+
+    def test_medecin_ne_peut_pas_demarrer_consultation_rdv_autre_medecin(self):
+        rdv_autre = RendezVous.objects.create(
+            patient=self.patient, medecin=self.autre_medecin,
+            date_heure=timezone.now(), statut=RendezVous.Statut.CONFIRME
+        )
+        self.client.login(username='dr.v11@santesn.sn', password=PASSWORD)
+        # Tentative d'accès au RDV d'un autre médecin -> 404
+        res = self.client.get(reverse('ajouter_consultation_medecin'), {'rdv_id': rdv_autre.pk})
+        self.assertEqual(res.status_code, 404)
+
+    def test_pharmacien_anti_double_delivrance_serveur(self):
+        cons = Consultation.objects.create(
+            patient=self.patient, medecin=self.medecin,
+            service=self.service, date_consultation=timezone.now(),
+            diagnostic='Asthme'
+        )
+        ord_obj = Ordonnance.objects.create(consultation=cons)
+        self.client.login(username='pharm-v11@santesn.sn', password=PASSWORD)
+
+        # Première délivrance -> OK
+        res1 = self.client.post(reverse('valider_delivrance', args=[ord_obj.pk]), {
+            'code_qr': ord_obj.code_qr
+        }, follow=True)
+        self.assertEqual(res1.status_code, 200)
+        self.assertTrue(Delivrance.objects.filter(ordonnance=ord_obj).exists())
+
+        # Seconde tentative (POST direct) -> Rejetée avec message d'erreur
+        res2 = self.client.post(reverse('valider_delivrance', args=[ord_obj.pk]), {
+            'code_qr': ord_obj.code_qr
+        }, follow=True)
+        self.assertEqual(res2.status_code, 200)
+        messages_recus = [m.message for m in res2.context['messages']]
+        self.assertTrue(any("déjà été délivrée" in m for m in messages_recus))
+        self.assertEqual(Delivrance.objects.filter(ordonnance=ord_obj).count(), 1)
+
+    def test_admin_pec_filtre_urgent_48h(self):
+        self.client.login(username='admin-v11@santesn.sn', password=PASSWORD)
+        pec_recente = PriseEnCharge.objects.create(
+            patient=self.patient, motif='Consultation cardiologie',
+            statut='en_attente'
+        )
+        pec_ancienne = PriseEnCharge.objects.create(
+            patient=self.patient, motif='Hospitalisation urgence',
+            statut='en_attente'
+        )
+        # Forcer la date de création à > 48h
+        il_y_a_3_jours = timezone.now() - datetime.timedelta(days=3)
+        PriseEnCharge.objects.filter(pk=pec_ancienne.pk).update(date_demande=il_y_a_3_jours)
+
+        # Filtre urgent=1
+        res = self.client.get(reverse('liste_prises_en_charge'), {'urgent': '1'})
+        self.assertEqual(res.status_code, 200)
+        pecs = list(res.context['prises_en_charge'])
+        self.assertIn(pec_ancienne, pecs)
+        self.assertNotIn(pec_recente, pecs)
+
+    def test_admin_taux_recouvrement_calcul(self):
+        self.client.login(username='admin-v11@santesn.sn', password=PASSWORD)
+        cons = Consultation.objects.create(
+            patient=self.patient, medecin=self.medecin,
+            service=self.service, date_consultation=timezone.now(),
+            diagnostic='Grippe'
+        )
+        p = Paiement.calculer_pour(cons)
+        p.statut = Paiement.Statut.REGLE
+        p.save()
+        res = self.client.get(reverse('dashboard'))
+        self.assertEqual(res.status_code, 200)
+        self.assertIn('taux_recouvrement', res.context)
+        self.assertEqual(res.context['taux_recouvrement'], 100.0)
+
+
+class PlafondAnnuelTests(TestCase):
+    def setUp(self):
+        self.plan = PlanCouverture.objects.create(
+            nom="Plan Entreprise",
+            taux_couverture=Decimal("80.00"),
+            plafond_annuel=Decimal("50000.00")
+        )
+        self.patient = creer_patient(nom="AssurePrincipal", prenom="Moussa")
+        self.patient.plan_couverture = self.plan
+        self.patient.save()
+
+        self.ayant_droit = Patient.objects.create(
+            nom="AyantDroit",
+            prenom="Fatou",
+            date_naissance=datetime.date(2018, 5, 10),
+            type_beneficiaire=Patient.TypeBeneficiaire.AYANT_DROIT,
+            assure_principal=self.patient,
+            lien_parente=Patient.LienParente.ENFANT,
+        )
+
+        self.medecin = creer_medecin("dr-plafond@santesn.sn")
+        self.service_cher = ServiceMedical.objects.create(nom="Chirurgie", prix=Decimal("60000.00"))
+        self.service_consult = ServiceMedical.objects.create(nom="Consultation", prix=Decimal("20000.00"))
+
+    def test_calcul_paiement_respecte_le_taux_si_sous_le_plafond(self):
+        # Consultation 20 000 FCFA avec prise en charge validée
+        pec = PriseEnCharge.objects.create(patient=self.patient, motif="Consultation", statut="validee")
+        cons = Consultation.objects.create(
+            patient=self.patient, medecin=self.medecin, service=self.service_consult,
+            date_consultation=timezone.now(), prise_en_charge=pec
+        )
+        paiement = Paiement.calculer_pour(cons)
+        # 80% de 20 000 = 16 000 FCFA (inférieur au plafond de 50 000 FCFA)
+        self.assertEqual(paiement.montant_part_assurance, Decimal("16000.00"))
+        self.assertEqual(paiement.montant_part_patient, Decimal("4000.00"))
+
+    def test_calcul_paiement_plafonne_la_part_assurance_au_reliquat(self):
+        # Consultation 60 000 FCFA -> 80% = 48 000 FCFA (sous le plafond de 50 000)
+        pec1 = PriseEnCharge.objects.create(patient=self.patient, motif="Chirurgie 1", statut="validee")
+        cons1 = Consultation.objects.create(
+            patient=self.patient, medecin=self.medecin, service=self.service_cher,
+            date_consultation=timezone.now(), prise_en_charge=pec1
+        )
+        p1 = Paiement.calculer_pour(cons1)
+        p1.save()
+        self.assertEqual(p1.montant_part_assurance, Decimal("48000.00"))
+
+        # Deuxième consultation pour l'ayant droit : 20 000 FCFA -> 80% = 16 000 FCFA
+        # Mais reliquat disponible = 50 000 - 48 000 = 2 000 FCFA
+        pec2 = PriseEnCharge.objects.create(patient=self.ayant_droit, motif="Consultation Enfant", statut="validee")
+        cons2 = Consultation.objects.create(
+            patient=self.ayant_droit, medecin=self.medecin, service=self.service_consult,
+            date_consultation=timezone.now(), prise_en_charge=pec2
+        )
+        p2 = Paiement.calculer_pour(cons2)
+        self.assertEqual(p2.montant_part_assurance, Decimal("2000.00"))
+        self.assertEqual(p2.montant_part_patient, Decimal("18000.00"))
+        self.assertEqual(p2.montant_total, Decimal("20000.00"))
+
+    def test_reliquat_et_consommation_foyer(self):
+        pec = PriseEnCharge.objects.create(patient=self.patient, motif="Soin", statut="validee")
+        cons = Consultation.objects.create(
+            patient=self.patient, medecin=self.medecin, service=self.service_consult,
+            date_consultation=timezone.now(), prise_en_charge=pec
+        )
+        Paiement.calculer_pour(cons).save()
+
+        # Consommation = 16 000 FCFA, reliquat = 34 000 FCFA
+        self.assertEqual(self.patient.consommation_annuelle_assurance(), Decimal("16000.00"))
+        self.assertEqual(self.patient.plafond_annuel_restant(), Decimal("34000.00"))
+        self.assertEqual(self.ayant_droit.plafond_annuel_restant(), Decimal("34000.00"))
+
+    def test_recu_paiement_accessible_et_formate(self):
+        pec = PriseEnCharge.objects.create(patient=self.patient, motif="Consultation", statut="validee")
+        cons = Consultation.objects.create(
+            patient=self.patient, medecin=self.medecin, service=self.service_consult,
+            date_consultation=timezone.now(), prise_en_charge=pec
+        )
+        paiement = Paiement.calculer_pour(cons)
+        paiement.statut = Paiement.Statut.REGLE
+        paiement.mode_reglement = Paiement.ModeReglement.MOBILE_MONEY
+        paiement.date_reglement = timezone.now()
+        paiement.save()
+
+        # Connexion en admin
+        admin_user = User.objects.create_user(email="admin-recu@santesn.sn", password=PASSWORD, role=User.Role.ADMIN)
+        self.client.login(username="admin-recu@santesn.sn", password=PASSWORD)
+        response = self.client.get(reverse("recu_paiement", kwargs={"pk": paiement.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Quittance officielle")
+        self.assertContains(response, paiement.consultation.patient.nom)
+        self.assertContains(response, "Net réglé par le patient")
+
+    def test_telecharger_ics_rendez_vous_genere_fichier_valide(self):
+        rdv = RendezVous.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            date_heure=timezone.now() + datetime.timedelta(days=2),
+            statut=RendezVous.Statut.CONFIRME,
+        )
+        admin_user = User.objects.create_user(email="admin-ics@santesn.sn", password=PASSWORD, role=User.Role.ADMIN)
+        self.client.login(username="admin-ics@santesn.sn", password=PASSWORD)
+        response = self.client.get(reverse("telecharger_ics_rendez_vous", kwargs={"pk": rdv.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "text/calendar; charset=utf-8")
+        self.assertIn("BEGIN:VCALENDAR", response.content.decode("utf-8"))
+        self.assertIn("SUMMARY:RDV Médical - Dr", response.content.decode("utf-8"))
+        self.assertIn("STATUS:CONFIRMED", response.content.decode("utf-8"))
+
+

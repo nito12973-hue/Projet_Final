@@ -93,7 +93,7 @@
             --ok-bg: #dcfce7;
             --ok-fg: #15683f;
             --attente-bg: #fff1d6;
-            --attente-fg: #8a5a00;
+            --attente-fg: #78350f;
             --refus-bg: #fee4e2;
             --refus-fg: #b3261e;
             --neutre-bg: #eef3f3;
@@ -142,7 +142,7 @@
             --ok-bg: #12362a;
             --ok-fg: #79dba9;
             --attente-bg: #3a2e15;
-            --attente-fg: #e8c37a;
+            --attente-fg: #fbbf24;
             --refus-bg: #3d1f1d;
             --refus-fg: #f0a09a;
             --neutre-bg: #17323a;
@@ -499,17 +499,28 @@
         }
 
         h1 {
-            margin: 0 0 8px;
+            margin: 0 0 6px;
             color: var(--titre);
             font-family: 'Manrope', 'Public Sans', 'Segoe UI', Arial, sans-serif;
-            font-size: 28px;
-            font-weight: 800;
-            line-height: 1.2;
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1.25;
+        }
+
+        h2, h3 {
+            color: var(--titre);
+            font-family: 'Manrope', 'Public Sans', 'Segoe UI', Arial, sans-serif;
+            font-weight: 600;
+            letter-spacing: -0.01em;
         }
 
         .subtitle {
             margin: 0;
             color: var(--muted);
+            font-size: 13.5px;
+            line-height: 1.45;
+            font-weight: 400;
         }
 
         /* Aide contextuelle sous un champ de formulaire (field.help_text). */
@@ -766,7 +777,7 @@
 
         .badge.en_attente {
             background: var(--attente-bg);
-            color: var(--warning);
+            color: var(--attente-fg);
         }
 
         .badge.validee,
@@ -949,6 +960,59 @@
             margin-bottom: 16px;
         }
 
+        /* Encart de rappel patient compact (UX-013) */
+        .rappel-patient-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px 16px;
+            padding: 8px 14px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--primary);
+            border-radius: 8px;
+            margin-top: 8px;
+            font-size: 13px;
+        }
+
+        .rappel-patient-bar .patient-nom {
+            font-weight: 700;
+            color: var(--titre);
+        }
+
+        .rappel-patient-bar .patient-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: var(--primary-soft);
+            color: var(--primary-strong);
+            font-family: 'IBM Plex Mono', monospace;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        /* Conteneur QR fluide et scannable dans les dialogues (Carte Assuré) */
+        .qr-container-dialog {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            width: 100%;
+            max-width: 320px;
+            margin: 0 auto;
+        }
+
+        .qr-container-dialog svg {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
         /* Bandeau d'avis (danger/succes/attente) : encart informatif ou
            d'alerte, reutilise sur les ecrans de confirmation/mot de passe
            genere/import - remplace les blocs de style inline duplique. */
@@ -1114,7 +1178,9 @@
         .modale-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(11, 32, 39, 0.55);
+            background: rgba(11, 32, 39, 0.60);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1200,7 +1266,7 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            max-width: 360px;
+            max-width: 420px;
         }
 
         .toast {
@@ -2246,11 +2312,51 @@
             }
         }
 
+        .carte-assure {
+            position: relative;
+            width: 100%;
+            max-width: 360px;
+            aspect-ratio: 1.586 / 1;
+            border-radius: 18px;
+            padding: 22px 24px;
+            color: #ffffff;
+            background: linear-gradient(135deg, #071f24 0%, #095059 55%, #0e7c86 100%);
+            box-shadow: 0 16px 38px rgba(11, 32, 39, 0.26), 0 4px 10px rgba(0, 0, 0, 0.10);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .carte-assure:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 46px rgba(11, 32, 39, 0.32);
+        }
+
+        .carte-assure::before {
+            content: "";
+            position: absolute;
+            right: -20px;
+            bottom: -30px;
+            width: 180px;
+            height: 180px;
+            background-color: rgba(255, 255, 255, 0.05);
+            -webkit-mask-image: var(--masque-croix);
+            mask-image: var(--masque-croix);
+            -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+            -webkit-mask-size: contain;
+            mask-size: contain;
+            pointer-events: none;
+        }
+
         .carte-assure::after {
             content: "";
             position: absolute;
             inset: 0;
-            background: radial-gradient(120% 100% at 100% 0%, rgba(79, 184, 174, 0.35), transparent 60%);
+            background: radial-gradient(120% 100% at 100% 0%, rgba(79, 184, 174, 0.40), transparent 60%);
             pointer-events: none;
         }
 
@@ -2259,13 +2365,40 @@
             align-items: center;
             justify-content: space-between;
             position: relative;
+            z-index: 1;
         }
 
         .carte-assure-puce {
-            width: 34px;
-            height: 24px;
-            border-radius: 5px;
-            background: linear-gradient(135deg, var(--accent) 0%, #f0a875 100%);
+            position: relative;
+            width: 38px;
+            height: 28px;
+            border-radius: 6px;
+            background: linear-gradient(135deg, #f4d06f 0%, #d4a337 50%, #fbe8a6 100%);
+            border: 1px solid #aa7f21;
+            box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.6), 0 2px 5px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+        }
+
+        .carte-assure-puce::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: rgba(138, 98, 14, 0.6);
+        }
+
+        .carte-assure-puce::after {
+            content: "";
+            position: absolute;
+            left: 35%;
+            top: 0;
+            bottom: 0;
+            width: 30%;
+            border-left: 1px solid rgba(138, 98, 14, 0.6);
+            border-right: 1px solid rgba(138, 98, 14, 0.6);
+            border-radius: 2px;
         }
 
         .carte-assure-label {
@@ -2355,12 +2488,218 @@
             opacity: 1;
         }
 
-        /* ===== Dashboard administrateur : direction "Clinique claire" =====
-           Fond de page clair, menu lateral navy conserve, et un seul bloc
-           sombre : le bandeau "A traiter". Le contraste devient un geste
-           delibere au service de la hierarchie au lieu d'etre le fond par
-           defaut (l'ancien canevas .dash-command noircissait toute la page). */
+        /* ===== Composants Dashboards Métiers (Assuré, Médecin, Pharmacien) ===== */
+        .dash-assure-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
 
+        .dash-assure-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 22px 24px;
+            box-shadow: 0 4px 16px rgba(11, 32, 39, 0.05);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 220px;
+            transition: box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+
+        .dash-assure-card:hover {
+            border-color: #9ecbc6;
+            box-shadow: 0 8px 24px rgba(11, 32, 39, 0.08);
+        }
+
+        .dash-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .dash-card-header strong {
+            font-size: 15.5px;
+            color: var(--titre);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dash-card-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 9px;
+            background: var(--primary-soft);
+            color: var(--primary-strong);
+        }
+
+        .dash-actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .dash-action-tuile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 18px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            color: var(--titre);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 13.5px;
+            box-shadow: 0 2px 8px rgba(11, 32, 39, 0.04);
+            transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+        }
+
+        .dash-action-tuile:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary);
+            color: var(--primary);
+            box-shadow: 0 8px 20px rgba(14, 124, 134, 0.12);
+        }
+
+        .dash-action-tuile .icone-nav {
+            color: var(--primary);
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+
+        .card-item-demarche {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: var(--neutre-bg);
+            text-decoration: none;
+            color: inherit;
+            margin-bottom: 8px;
+            transition: background 0.15s ease;
+        }
+
+        .card-item-demarche:hover {
+            background: var(--primary-soft);
+        }
+
+        .card-item-demarche .item-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .card-item-demarche .item-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 7px;
+            background: var(--surface);
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .assistance-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            padding: 16px 22px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--primary);
+            border-radius: 14px;
+            box-shadow: 0 2px 8px rgba(11, 32, 39, 0.04);
+            margin-top: 8px;
+        }
+
+        .medecin-grid-main {
+            display: grid;
+            grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.95fr);
+            gap: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .medecin-grid-main {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .medecin-horaire-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5px 9px;
+            border-radius: 7px;
+            background: var(--primary-soft);
+            color: var(--primary-strong);
+            font-family: 'IBM Plex Mono', monospace;
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        .side-list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 9px 12px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--titre);
+            font-weight: 600;
+            font-size: 13.5px;
+            transition: background 0.15s ease;
+        }
+
+        .side-list-item:hover {
+            background: var(--primary-soft);
+            color: var(--primary-strong);
+        }
+
+        .pharmacien-scan-hero {
+            padding: 24px;
+            text-align: center;
+            background: var(--neutre-bg);
+            border: 2px dashed var(--border);
+            border-radius: 14px;
+            margin-bottom: 16px;
+            cursor: pointer;
+            transition: border-color 0.2s ease, background 0.2s ease;
+            text-decoration: none;
+            display: block;
+            color: var(--text);
+        }
+
+        .pharmacien-scan-hero:hover {
+            border-color: var(--primary);
+            background: var(--primary-soft);
+        }
+
+        .pharmacien-scan-hero .icone-nav {
+            width: 38px;
+            height: 38px;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        /* ===== Dashboard administrateur : direction "Clinique claire" ===== */
         .section-titre {
             margin: 28px 0 14px;
             display: flex;
@@ -3975,12 +4314,112 @@
             transform: rotate(180deg);
         }
 
+        .topbar-droite {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: auto;
+        }
+
+        .menu-notifications {
+            position: relative;
+        }
+        .menu-notifications > summary::-webkit-details-marker {
+            display: none;
+        }
+        .menu-notifications > summary {
+            list-style: none;
+            cursor: pointer;
+        }
+        .menu-notifications-panneau {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            z-index: 40;
+            width: 320px;
+            max-width: min(320px, calc(100vw - 24px));
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: var(--surface);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.12);
+        }
+        .menu-notifications-entete {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        .menu-notifications-entete button {
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-size: 12px;
+            cursor: pointer;
+            padding: 0;
+        }
+        .menu-notifications-liste {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 280px;
+            overflow-y: auto;
+        }
+        .notif-item {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--texte);
+            background: var(--bg);
+            transition: background 0.15s ease;
+        }
+        .notif-item:hover {
+            background: var(--surface);
+        }
+        .notif-item.non-lue {
+            border-left: 3px solid var(--primary);
+            font-weight: 500;
+        }
+        .notif-titre {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--titre);
+        }
+        .notif-txt {
+            font-size: 12px;
+            color: var(--muted);
+            line-height: 1.3;
+        }
+        .notif-date {
+            font-size: 10px;
+            color: var(--muted);
+            margin-top: 2px;
+        }
+        .menu-notifications-pied {
+            display: block;
+            text-align: center;
+            padding-top: 8px;
+            margin-top: 8px;
+            border-top: 1px solid var(--border);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
         .menu-compte-panneau {
             position: absolute;
             top: calc(100% + 8px);
             right: 0;
             z-index: 40;
-            min-width: 232px;
+            width: 240px;
+            max-width: min(280px, calc(100vw - 24px));
             padding: 8px;
             border: 1px solid var(--border);
             border-radius: 14px;
@@ -4096,31 +4535,15 @@
         }
 
         @media (max-width: 900px) {
-            /* Colonnes secondaires des listes ADMIN. Mesure AVANT correctif :
-               un tableau de 9 colonnes faisait 1063 px dans une carte de
-               356 px, et la colonne Actions se retrouvait HORS ECRAN -- on ne
-               pouvait plus ni modifier ni desactiver un compte depuis un
-               telephone. A 820 px (tablette), 5 listes debordaient deja.
-               Les listes gardent leur forme tabulaire -- c'est ce qu'on vient
-               y chercher, comparer des lignes -- et perdent seulement ce qui
-               n'aide ni a identifier ni a agir. La colonne Actions n'est
-               JAMAIS optionnelle. Le mode carte (.tableau-carte) reste
-               reserve aux ecrans Assure : sur un referentiel de 9 colonnes il
-               produirait des cartes interminables. */
             .col-optionnelle {
                 display: none;
             }
 
-            /* Les boutons d'action s'empilent : trois boutons cote a cote
-               suffisaient a repousser la colonne hors de l'ecran. */
             .actions {
                 flex-direction: column;
                 align-items: stretch;
             }
 
-            /* Le tableau ne doit plus imposer sa largeur naturelle : sans
-               cela, une cellule longue (un motif, un objet de journal) le
-               retend au-dela de la carte malgre les colonnes masquees. */
             .panel table {
                 table-layout: fixed;
             }
@@ -4134,7 +4557,7 @@
             }
 
             .topbar {
-                margin: -32px 0 16px;
+                margin: -32px 0 20px;
                 padding: 10px 0;
                 gap: 10px;
             }
@@ -4145,7 +4568,7 @@
             }
 
             .topbar-recherche {
-                margin-left: auto;
+                margin: 0;
                 width: auto;
                 flex: 1;
                 min-width: 0;
@@ -4164,7 +4587,7 @@
             background: var(--surface);
             color: var(--titre);
             cursor: pointer;
-            margin-bottom: 14px;
+            margin-bottom: 0;
         }
 
         .sidebar-overlay {
@@ -4210,19 +4633,47 @@
 
         @media (max-width: 560px) {
             .contenu main {
-                width: calc(100% - 32px);
+                width: calc(100% - 24px);
+                padding: 24px 0 40px;
+            }
+
+            .topbar {
+                margin: -24px 0 18px;
+                padding: 8px 0;
             }
 
             .page-title {
                 flex-direction: column;
                 align-items: stretch;
+                gap: 10px;
+                margin-bottom: 18px;
             }
 
-            h1 { font-size: 24px; }
+            .page-title h1 {
+                font-size: 22px;
+                line-height: 1.25;
+                margin-bottom: 4px;
+            }
+
+            .page-title .subtitle {
+                font-size: 13px;
+                line-height: 1.4;
+            }
+
+            .page-title .actions {
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .page-title .actions .button {
+                flex: 1 1 calc(50% - 4px);
+                min-width: 130px;
+                text-align: center;
+                justify-content: center;
+            }
 
             form { padding: 18px; }
-
-            .actions .button { flex: 1; justify-content: center; }
 
             .admin-layout { grid-template-columns: 1fr; }
 
@@ -4381,55 +4832,71 @@
                 {% if current_role == "ADMIN" %}
                 {% with url_name=request.resolver_match.url_name %}
                 <a href="{% url 'dashboard' %}" aria-label="Tableau de bord" data-tooltip="Tableau de bord" class="{% if url_name == 'dashboard' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord</span></a>
-                <span class="nav-section">Gestion</span>
+                <span class="nav-section">Pilotage & Opérations</span>
+                <a href="{% url 'liste_prises_en_charge' %}" aria-label="Prises en charge" data-tooltip="Prises en charge" class="{% if url_name == 'liste_prises_en_charge' or url_name == 'ajouter_prise_en_charge' or url_name == 'modifier_prise_en_charge' or url_name == 'supprimer_prise_en_charge' %}active{% endif %}">{% icone "shield-check" %} <span class="nav-texte">Prises en charge</span></a>
+                
+                <span class="nav-section">Acteurs & Établissements</span>
                 <a href="{% url 'liste_utilisateurs' %}" aria-label="Utilisateurs" data-tooltip="Utilisateurs" class="{% if url_name == 'liste_utilisateurs' or url_name == 'ajouter_utilisateur' or url_name == 'modifier_utilisateur' or url_name == 'importer_utilisateurs_excel' or url_name == 'reinitialiser_mot_de_passe' or url_name == 'supprimer_utilisateur' %}active{% endif %}">{% icone "users" %} <span class="nav-texte">Utilisateurs</span></a>
                 <a href="{% url 'liste_patients' %}" aria-label="Assurés" data-tooltip="Assurés" class="{% if url_name == 'liste_patients' or url_name == 'ajouter_patient' or url_name == 'modifier_patient' or url_name == 'supprimer_patient' %}active{% endif %}">{% icone "id-card" %} <span class="nav-texte">Assurés</span></a>
                 <a href="{% url 'liste_medecins' %}" aria-label="Médecins" data-tooltip="Médecins" class="{% if url_name == 'liste_medecins' or url_name == 'ajouter_medecin' or url_name == 'modifier_medecin' or url_name == 'supprimer_medecin' %}active{% endif %}">{% icone "stethoscope" %} <span class="nav-texte">Médecins</span></a>
                 <a href="{% url 'liste_pharmaciens' %}" aria-label="Pharmaciens" data-tooltip="Pharmaciens" class="{% if url_name == 'liste_pharmaciens' or url_name == 'modifier_pharmacien' %}active{% endif %}">{% icone "pill" %} <span class="nav-texte">Pharmaciens</span></a>
                 <a href="{% url 'liste_prestataires' %}" aria-label="Prestataires" data-tooltip="Prestataires" class="{% if url_name == 'liste_prestataires' or url_name == 'ajouter_prestataire' or url_name == 'modifier_prestataire' or url_name == 'supprimer_prestataire' %}active{% endif %}">{% icone "building" %} <span class="nav-texte">Prestataires</span></a>
+                
+                <span class="nav-section">Activité Médicale & Finances</span>
                 <a href="{% url 'liste_services' %}" aria-label="Services médicaux" data-tooltip="Services médicaux" class="{% if url_name == 'liste_services' or url_name == 'ajouter_service' or url_name == 'modifier_service' or url_name == 'supprimer_service' %}active{% endif %}">{% icone "credit-card" %} <span class="nav-texte">Services médicaux</span></a>
                 <a href="{% url 'liste_plans_couverture' %}" aria-label="Plans de couverture" data-tooltip="Plans de couverture" class="{% if url_name == 'liste_plans_couverture' or url_name == 'ajouter_plan_couverture' or url_name == 'modifier_plan_couverture' or url_name == 'supprimer_plan_couverture' %}active{% endif %}">{% icone "clipboard-list" %} <span class="nav-texte">Plans de couverture</span></a>
-                <span class="nav-section">Opérations</span>
-                <a href="{% url 'liste_prises_en_charge' %}" aria-label="Prises en charge" data-tooltip="Prises en charge" class="{% if url_name == 'liste_prises_en_charge' or url_name == 'ajouter_prise_en_charge' or url_name == 'modifier_prise_en_charge' or url_name == 'supprimer_prise_en_charge' %}active{% endif %}">{% icone "shield-check" %} <span class="nav-texte">Prises en charge</span></a>
                 <a href="{% url 'liste_rendez_vous' %}" aria-label="Rendez-vous" data-tooltip="Rendez-vous" class="{% if url_name == 'liste_rendez_vous' %}active{% endif %}">{% icone "calendar" %} <span class="nav-texte">Rendez-vous</span></a>
                 <a href="{% url 'liste_consultations' %}" aria-label="Consultations" data-tooltip="Consultations" class="{% if url_name == 'liste_consultations' %}active{% endif %}">{% icone "clock-history" %} <span class="nav-texte">Consultations</span></a>
                 <a href="{% url 'liste_ordonnances' %}" aria-label="Ordonnances" data-tooltip="Ordonnances" class="{% if url_name == 'liste_ordonnances' %}active{% endif %}">{% icone "qr-scan" %} <span class="nav-texte">Ordonnances</span></a>
                 <a href="{% url 'liste_paiements' %}" aria-label="Paiements" data-tooltip="Paiements" class="{% if url_name == 'liste_paiements' or url_name == 'marquer_paiement_regle' %}active{% endif %}">{% icone "receipt" %} <span class="nav-texte">Paiements</span></a>
-                <span class="nav-section">Système</span>
+                
+                <span class="nav-section">Analyse & Configuration</span>
                 <a href="{% url 'rapports' %}" aria-label="Rapports" data-tooltip="Rapports" class="{% if url_name == 'rapports' %}active{% endif %}">{% icone "bar-chart" %} <span class="nav-texte">Rapports</span></a>
                 <a href="{% url 'envoyer_notification' %}" aria-label="Notifications" data-tooltip="Notifications" class="{% if url_name == 'envoyer_notification' or url_name == 'liste_notifications_envoyees' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span></a>
-                {% comment %}
-                Le journal n'a plus d'entree propre dans le menu : il vit dans
-                Parametres > Securite, dont il est une fonction d'administration.
-                L'entree Parametres reste donc active pendant sa consultation.
-                {% endcomment %}
                 <a href="{% url 'parametres' %}" aria-label="Paramètres" data-tooltip="Paramètres" class="{% if url_name == 'parametres' or url_name == 'parametres_section' or url_name == 'journal_activite' or url_name == 'mon_compte' or url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "settings" %} <span class="nav-texte">Paramètres</span></a>
                 {% endwith %}
                 {% elif current_role == "MEDECIN" %}
-                <a href="{% url 'dashboard_medecin' %}" aria-label="Tableau de bord" data-tooltip="Tableau de bord" class="{% if request.resolver_match.url_name == 'dashboard_medecin' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord</span></a>
-                <a href="{% url 'agenda_medecin' %}" aria-label="Agenda" data-tooltip="Agenda" class="{% if request.resolver_match.url_name == 'agenda_medecin' %}active{% endif %}">{% icone "calendar" %} <span class="nav-texte">Agenda</span></a>
-                <a href="{% url 'mes_patients' %}" aria-label="Patients" data-tooltip="Patients" class="{% if request.resolver_match.url_name == 'mes_patients' %}active{% endif %}">{% icone "users" %} <span class="nav-texte">Patients</span></a>
-                <a href="{% url 'historique_consultations' %}" aria-label="Consultations" data-tooltip="Consultations" class="{% if request.resolver_match.url_name == 'historique_consultations' %}active{% endif %}">{% icone "clipboard-list" %} <span class="nav-texte">Consultations</span></a>
-                <a href="{% url 'mes_notifications' %}" aria-label="Notifications" data-tooltip="Notifications" class="{% if request.resolver_match.url_name == 'mes_notifications' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span>{% if notifications_non_lues %} <span class="badge-non-lues">{{ notifications_non_lues }}</span>{% endif %}</a>
-                <a href="{% url 'modifier_profil_medecin' %}" aria-label="Mon profil" data-tooltip="Mon profil" class="{% if request.resolver_match.url_name == 'modifier_profil_medecin' %}active{% endif %}">{% icone "user-circle" %} <span class="nav-texte">Mon profil</span></a>
-                {# Parametres, comme pour l'admin et l'assure : le mot de passe est personnel, il vit dans le menu du compte et dans Parametres > Securite. #}
-                <a href="{% url 'parametres' %}" aria-label="Paramètres" data-tooltip="Paramètres" class="{% if request.resolver_match.url_name == 'parametres' or request.resolver_match.url_name == 'parametres_section' or request.resolver_match.url_name == 'mon_compte' or request.resolver_match.url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "settings" %} <span class="nav-texte">Paramètres</span></a>
+                {% with url_name=request.resolver_match.url_name %}
+                <span class="nav-section">Activité médicale</span>
+                <a href="{% url 'dashboard_medecin' %}" aria-label="Tableau de bord" data-tooltip="Tableau de bord" class="{% if url_name == 'dashboard_medecin' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord</span></a>
+                <a href="{% url 'agenda_medecin' %}" aria-label="Agenda & RDV" data-tooltip="Agenda & RDV" class="{% if url_name == 'agenda_medecin' %}active{% endif %}">{% icone "calendar" %} <span class="nav-texte">Agenda & RDV</span></a>
+                <a href="{% url 'mes_patients' %}" aria-label="Patients" data-tooltip="Patients" class="{% if url_name == 'mes_patients' or url_name == 'fiche_patient_medecin' %}active{% endif %}">{% icone "users" %} <span class="nav-texte">Patients</span></a>
+                <a href="{% url 'historique_consultations' %}" aria-label="Consultations" data-tooltip="Consultations" class="{% if url_name == 'historique_consultations' or url_name == 'ajouter_consultation_medecin' or url_name == 'ajouter_ordonnance_medecin' or url_name == 'voir_ordonnance_medecin' %}active{% endif %}">{% icone "clipboard-list" %} <span class="nav-texte">Consultations</span></a>
+                
+                <span class="nav-section">Mon compte</span>
+                <a href="{% url 'modifier_profil_medecin' %}" aria-label="Mon profil" data-tooltip="Mon profil" class="{% if url_name == 'modifier_profil_medecin' %}active{% endif %}">{% icone "user-circle" %} <span class="nav-texte">Mon profil</span></a>
+                <a href="{% url 'mes_notifications' %}" aria-label="Notifications" data-tooltip="Notifications" class="{% if url_name == 'mes_notifications' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span>{% if notifications_non_lues %} <span class="badge-non-lues">{{ notifications_non_lues }}</span>{% endif %}</a>
+                <a href="{% url 'parametres' %}" aria-label="Paramètres" data-tooltip="Paramètres" class="{% if url_name == 'parametres' or url_name == 'parametres_section' or url_name == 'mon_compte' or url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "settings" %} <span class="nav-texte">Paramètres</span></a>
+                {% endwith %}
                 {% elif current_role == "PHARMACIEN" %}
-                <a href="{% url 'dashboard_pharmacien' %}" aria-label="Tableau de bord" data-tooltip="Tableau de bord" class="{% if request.resolver_match.url_name == 'dashboard_pharmacien' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord</span></a>
-                <a href="{% url 'scanner_ordonnance' %}" aria-label="Scanner un QR Code" data-tooltip="Scanner un QR Code" class="{% if request.resolver_match.url_name == 'scanner_ordonnance' %}active{% endif %}">{% icone "qr-scan" %} <span class="nav-texte">Scanner un QR Code</span></a>
-                <a href="{% url 'historique_delivrances' %}" aria-label="Historique" data-tooltip="Historique" class="{% if request.resolver_match.url_name == 'historique_delivrances' %}active{% endif %}">{% icone "clock-history" %} <span class="nav-texte">Historique</span></a>
-                <a href="{% url 'mes_notifications' %}" aria-label="Notifications" data-tooltip="Notifications" class="{% if request.resolver_match.url_name == 'mes_notifications' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span>{% if notifications_non_lues %} <span class="badge-non-lues">{{ notifications_non_lues }}</span>{% endif %}</a>
-                {# Parametres, comme pour l'admin et l'assure : le mot de passe est personnel, il vit dans le menu du compte et dans Parametres > Securite. #}
-                <a href="{% url 'parametres' %}" aria-label="Paramètres" data-tooltip="Paramètres" class="{% if request.resolver_match.url_name == 'parametres' or request.resolver_match.url_name == 'parametres_section' or request.resolver_match.url_name == 'mon_compte' or request.resolver_match.url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "settings" %} <span class="nav-texte">Paramètres</span></a>
+                {% with url_name=request.resolver_match.url_name %}
+                <span class="nav-section">Comptoir & délivrances</span>
+                <a href="{% url 'dashboard_pharmacien' %}" aria-label="Tableau de bord" data-tooltip="Tableau de bord" class="{% if url_name == 'dashboard_pharmacien' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord</span></a>
+                <a href="{% url 'scanner_ordonnance' %}" aria-label="Scanner / Vérifier" data-tooltip="Scanner / Vérifier" class="{% if url_name == 'scanner_ordonnance' %}active{% endif %}">{% icone "qr-scan" %} <span class="nav-texte">Scanner / Vérifier</span></a>
+                <a href="{% url 'historique_delivrances' %}" aria-label="Historique" data-tooltip="Historique" class="{% if url_name == 'historique_delivrances' %}active{% endif %}">{% icone "clock-history" %} <span class="nav-texte">Historique</span></a>
+                
+                <span class="nav-section">Mon compte</span>
+                <a href="{% url 'mes_notifications' %}" aria-label="Notifications" data-tooltip="Notifications" class="{% if url_name == 'mes_notifications' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span>{% if notifications_non_lues %} <span class="badge-non-lues">{{ notifications_non_lues }}</span>{% endif %}</a>
+                <a href="{% url 'parametres' %}" aria-label="Paramètres" data-tooltip="Paramètres" class="{% if url_name == 'parametres' or url_name == 'parametres_section' or url_name == 'mon_compte' or url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "settings" %} <span class="nav-texte">Paramètres</span></a>
+                {% endwith %}
                 {% elif current_role == "ASSURE" %}
                 {% with url_name=request.resolver_match.url_name %}
                 <a href="{% url 'dashboard_assure' %}" aria-label="Tableau de bord" data-tooltip="Tableau de bord" class="{% if url_name == 'dashboard_assure' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord</span></a>
-                <a href="{% url 'mon_profil_assure' %}" aria-label="Mon profil" data-tooltip="Mon profil" class="{% if url_name == 'mon_profil_assure' %}active{% endif %}">{% icone "user-circle" %} <span class="nav-texte">Mon profil</span></a>
-                <a href="{% url 'liste_ayants_droit' %}" aria-label="Mes ayants droit" data-tooltip="Mes ayants droit" class="{% if url_name == 'liste_ayants_droit' or url_name == 'ajouter_ayant_droit' or url_name == 'modifier_ayant_droit' %}active{% endif %}">{% icone "users" %} <span class="nav-texte">Mes ayants droit</span></a>
-                <a href="{% url 'prestataires_proches' %}" aria-label="Prestataires proches" data-tooltip="Prestataires proches" class="{% if url_name == 'prestataires_proches' %}active{% endif %}">{% icone "map-pin" %} <span class="nav-texte">Prestataires proches</span></a>
+                
+                <span class="nav-section">Mes soins & démarches</span>
                 <a href="{% url 'mes_rendez_vous_assure' %}" aria-label="Mes rendez-vous" data-tooltip="Mes rendez-vous" class="{% if url_name == 'mes_rendez_vous_assure' or url_name == 'ajouter_rendez_vous_assure' %}active{% endif %}">{% icone "calendar" %} <span class="nav-texte">Mes rendez-vous</span></a>
                 <a href="{% url 'mes_ordonnances_assure' %}" aria-label="Mes ordonnances" data-tooltip="Mes ordonnances" class="{% if url_name == 'mes_ordonnances_assure' or url_name == 'voir_ordonnance_assure' %}active{% endif %}">{% icone "pill" %} <span class="nav-texte">Mes ordonnances</span></a>
                 <a href="{% url 'mes_prises_en_charge_assure' %}" aria-label="Mes prises en charge" data-tooltip="Mes prises en charge" class="{% if url_name == 'mes_prises_en_charge_assure' %}active{% endif %}">{% icone "shield-check" %} <span class="nav-texte">Mes prises en charge</span></a>
+                
+                <span class="nav-section">Ma couverture & famille</span>
+                {% if user.patient %}
+                <a href="{% url 'carte_assure' %}" aria-label="Ma carte d'assuré" data-tooltip="Ma carte d'assuré" class="{% if url_name == 'carte_assure' or url_name == 'carte_assure_detail' %}active{% endif %}">{% icone "id-card" %} <span class="nav-texte">Ma carte d'assuré</span></a>
+                {% endif %}
+                <a href="{% url 'mon_profil_assure' %}" aria-label="Mes informations" data-tooltip="Mes informations" class="{% if url_name == 'mon_profil_assure' %}active{% endif %}">{% icone "user-circle" %} <span class="nav-texte">Mes informations</span></a>
+                <a href="{% url 'liste_ayants_droit' %}" aria-label="Mes ayants droit" data-tooltip="Mes ayants droit" class="{% if url_name == 'liste_ayants_droit' or url_name == 'ajouter_ayant_droit' or url_name == 'modifier_ayant_droit' %}active{% endif %}">{% icone "users" %} <span class="nav-texte">Mes ayants droit</span></a>
+                <a href="{% url 'prestataires_proches' %}" aria-label="Prestataires proches" data-tooltip="Prestataires proches" class="{% if url_name == 'prestataires_proches' %}active{% endif %}">{% icone "map-pin" %} <span class="nav-texte">Prestataires proches</span></a>
+                
+                <span class="nav-section">Mon compte</span>
                 <a href="{% url 'mon_historique_assure' %}" aria-label="Mon historique" data-tooltip="Mon historique" class="{% if url_name == 'mon_historique_assure' %}active{% endif %}">{% icone "clock-history" %} <span class="nav-texte">Mon historique</span></a>
                 <a href="{% url 'mes_notifications' %}" aria-label="Notifications" data-tooltip="Notifications" class="{% if url_name == 'mes_notifications' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span>{% if notifications_non_lues %} <span class="badge-non-lues">{{ notifications_non_lues }}</span>{% endif %}</a>
                 <a href="{% url 'parametres' %}" aria-label="Paramètres" data-tooltip="Paramètres" class="{% if url_name == 'parametres' or url_name == 'mon_compte' or url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "settings" %} <span class="nav-texte">Paramètres</span></a>
@@ -4469,39 +4936,60 @@
                         <input id="recherche-globale" type="search" name="q" placeholder="Rechercher un utilisateur">
                     </form>
                     {% endif %}
-                    <a class="topbar-bouton" href="{% url 'mes_notifications' %}"
-                       aria-label="Notifications{% if notifications_non_lues %} : {{ notifications_non_lues }} non lue(s){% endif %}">
-                        {% icone "bell" %}
-                        {% if notifications_non_lues %}<span class="topbar-pastille">{{ notifications_non_lues }}</span>{% endif %}
-                    </a>
-                    <details class="menu-compte">
-                        <summary class="topbar-compte" aria-label="Menu du compte">
-                            <span class="topbar-avatar" aria-hidden="true">{{ user.get_full_name|default:user.email|slice:":2"|upper }}</span>
-                            <span class="topbar-identite">
-                                <b>{{ user.get_full_name|default:user.email }}</b>
-                                <span>{{ current_role_label }}</span>
-                            </span>
-                            {% icone "chevron-down" %}
-                        </summary>
-                        <div class="menu-compte-panneau">
-                            <p class="menu-compte-entete">
-                                <b>{{ user.get_full_name|default:user.email }}</b>
-                                <span>{{ user.email }}</span>
-                            </p>
-                            {% comment %}
-                            Vers mon_compte, PAS vers parametres : depuis que la
-                            carte du compte a quitte la section "General", ce
-                            lien y ouvrait une page qui ne contenait plus ce que
-                            son libelle promet.
-                            {% endcomment %}
-                            <a href="{% url 'mon_compte' %}">{% icone "user-circle" %} Mon compte</a>
-                            <a href="{% url 'changer_mot_de_passe' %}">{% icone "lock" %} Mot de passe</a>
-                            <form method="post" action="{% url 'logout' %}">
-                                {% csrf_token %}
-                                <button type="submit">{% icone "log-out" %} Déconnexion</button>
-                            </form>
-                        </div>
-                    </details>
+                    <div class="topbar-droite">
+                        <details class="menu-notifications">
+                            <summary class="topbar-bouton" aria-label="Notifications{% if notifications_non_lues %} : {{ notifications_non_lues }} non lue(s){% endif %}">
+                                {% icone "bell" %}
+                                {% if notifications_non_lues %}<span class="topbar-pastille">{{ notifications_non_lues }}</span>{% endif %}
+                            </summary>
+                            <div class="menu-notifications-panneau">
+                                <div class="menu-notifications-entete">
+                                    <strong>Notifications</strong>
+                                    {% if notifications_non_lues %}
+                                    <form method="post" action="{% url 'marquer_toutes_notifications_lues' %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="next" value="{{ request.path }}">
+                                        <button type="submit">Tout marquer comme lu</button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                                <div class="menu-notifications-liste">
+                                    {% for n in user.notifications.all|slice:":5" %}
+                                    <a href="{% if n.url_action %}{{ n.url_action }}{% else %}{% url 'mes_notifications' %}{% endif %}" class="notif-item {% if not n.lue %}non-lue{% endif %}">
+                                        <span class="notif-titre">{{ n.titre }}</span>
+                                        <span class="notif-txt">{{ n.message }}</span>
+                                        <span class="notif-date">{{ n.date_creation|date:"d/m/Y H:i" }}</span>
+                                    </a>
+                                    {% empty %}
+                                    <p class="notif-txt" style="text-align:center; padding: 12px 0;">Aucune notification.</p>
+                                    {% endfor %}
+                                </div>
+                                <a href="{% url 'mes_notifications' %}" class="menu-notifications-pied">Voir toutes les notifications</a>
+                            </div>
+                        </details>
+                        <details class="menu-compte">
+                            <summary class="topbar-compte" aria-label="Menu du compte">
+                                <span class="topbar-avatar" aria-hidden="true">{{ user.get_full_name|default:user.email|slice:":2"|upper }}</span>
+                                <span class="topbar-identite">
+                                    <b>{{ user.get_full_name|default:user.email }}</b>
+                                    <span>{{ current_role_label }}</span>
+                                </span>
+                                {% icone "chevron-down" %}
+                            </summary>
+                            <div class="menu-compte-panneau">
+                                <p class="menu-compte-entete">
+                                    <b>{{ user.get_full_name|default:user.email }}</b>
+                                    <span>{{ user.email }}</span>
+                                </p>
+                                <a href="{% url 'mon_compte' %}">{% icone "user-circle" %} Mon compte</a>
+                                <a href="{% url 'changer_mot_de_passe' %}">{% icone "lock" %} Mot de passe</a>
+                                <form method="post" action="{% url 'logout' %}">
+                                    {% csrf_token %}
+                                    <button type="submit">{% icone "log-out" %} Déconnexion</button>
+                                </form>
+                            </div>
+                        </details>
+                    </div>
                 </header>
                 {% endif %}
                 {% if messages %}
@@ -4511,7 +4999,7 @@
                         {% if "succes-critique" in message.tags %}
                         <span class="toast-icone-succes" aria-hidden="true">{% icone "check" %}</span>
                         {% endif %}
-                        <span>{{ message }}</span>
+                        <span>{{ message|linebreaksbr }}</span>
                         <button type="button" class="toast-fermer" aria-label="Fermer">{% icone "x" %}</button>
                     </div>
                     {% endfor %}
@@ -4690,20 +5178,43 @@
         })();
 
         (function () {
-            // Bouton "Copier" generique : n'importe quel bouton portant
-            // data-copier="valeur" declenche la copie, un seul ecouteur
-            // delegue plutot qu'un script par ecran (introduit sur
-            // mot_de_passe_genere.html seul, generalise ici).
+            // Bouton "Copier" universel avec fallback execCommand
             document.addEventListener('click', function (evenement) {
                 var bouton = evenement.target.closest('[data-copier]');
-                if (!bouton || !navigator.clipboard) { return; }
+                if (!bouton) { return; }
                 var valeur = bouton.getAttribute('data-copier');
                 if (!valeur) { return; }
-                navigator.clipboard.writeText(valeur).then(function () {
+
+                function marquerSucces() {
                     var libelleOriginal = bouton.innerHTML;
-                    bouton.textContent = 'Copie !';
-                    window.setTimeout(function () { bouton.innerHTML = libelleOriginal; }, 1600);
-                });
+                    bouton.innerHTML = '<span style="color:var(--success,#10b981);font-weight:700;">Copié !</span>';
+                    window.setTimeout(function () { bouton.innerHTML = libelleOriginal; }, 1800);
+                }
+
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(valeur).then(marquerSucces).catch(function () {
+                        copierFallback(valeur);
+                    });
+                } else {
+                    copierFallback(valeur);
+                }
+
+                function copierFallback(texte) {
+                    var input = document.createElement('textarea');
+                    input.value = texte;
+                    input.style.position = 'fixed';
+                    input.style.opacity = '0';
+                    document.body.appendChild(input);
+                    input.focus();
+                    input.select();
+                    try {
+                        document.execCommand('copy');
+                        marquerSucces();
+                    } catch (err) {
+                        console.error('Erreur copie :', err);
+                    }
+                    document.body.removeChild(input);
+                }
             });
         })();
 

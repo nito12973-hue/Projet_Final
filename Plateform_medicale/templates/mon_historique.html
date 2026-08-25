@@ -36,7 +36,12 @@
                 <td>{{ consultation.paiement.montant_part_patient|franc_cfa|default:"-" }}</td>
                 <td>
                     {% if consultation.paiement %}
-                    <span class="badge {% if consultation.paiement.statut == 'regle' %}validee{% else %}en_attente{% endif %}">{{ consultation.paiement.get_statut_display }}</span>
+                    <div style="display:flex;align-items:center;gap:6px;">
+                        <span class="badge {% if consultation.paiement.statut == 'regle' %}validee{% else %}en_attente{% endif %}">{{ consultation.paiement.get_statut_display }}</span>
+                        {% if consultation.paiement.statut == 'regle' %}
+                        <a href="{% url 'recu_paiement' consultation.paiement.pk %}" class="button btn btn-sm" title="Imprimer le reçu" style="padding:2px 6px;">{% icone "printer" %}</a>
+                        {% endif %}
+                    </div>
                     {% else %}
                     -
                     {% endif %}

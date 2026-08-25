@@ -508,49 +508,10 @@
         .forme-organique.forme-1 { width: 260px; height: 260px; top: -30px; right: 8%; }
         .forme-organique.forme-2 { width: 200px; height: 200px; bottom: -10px; left: 4%; }
 
-        .telephone-mockup {
-            position: relative;
-            z-index: 1;
-            width: 260px;
-            padding: 14px 10px 26px;
-            background: linear-gradient(160deg, var(--primary-dark) 0%, #123138 100%);
-            border-radius: 38px;
+        .hero-visuel .carte-demo {
             box-shadow: var(--ombre-forte);
-        }
-
-        .telephone-encoche {
-            position: absolute;
-            top: 14px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 70px;
-            height: 16px;
-            background: #0b1220;
-            border-radius: 999px;
-        }
-
-        .telephone-ecran {
-            background: #f4faf9;
-            border-radius: 26px;
-            padding: 30px 14px 16px;
-        }
-
-        .telephone-entete {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 800;
-            font-size: 14px;
-            color: var(--primary-dark);
-            margin-bottom: 14px;
-            padding: 0 4px;
-        }
-
-        .carte-demo-telephone {
-            padding: 16px;
-            box-shadow: none;
             border: 1px solid var(--border);
-            animation: none;
+            border-radius: 20px;
         }
 
         .carte-satellite {
@@ -1341,73 +1302,38 @@
                 <span class="forme-organique forme-1"></span>
                 <span class="forme-organique forme-2"></span>
 
-                <div class="telephone-mockup">
-                    <span class="telephone-encoche"></span>
-                    <div class="telephone-ecran">
-                        <div class="telephone-entete">
-                            {% logo_marque taille=20 fond="clair" epaisseur_pouls=3.2 %}
-                            <span>SantéSN</span>
-                        </div>
-                        <div class="carte-demo carte-demo-telephone">
-                            <div class="entete-carte">
-                                <span class="pastille">{% icone "stethoscope" %}</span>
-                                <div>
-                                    <h3>Rendez-vous du jour</h3>
-                                    <span class="sous">Dr Ndiaye — Clinique Pasteur</span>
-                                </div>
-                            </div>
-                            <div class="ligne-rdv">
-                                <span class="heure">08h00</span>
-                                <div>
-                                    <div class="nom">Mamadou Diallo</div>
-                                    <div class="detail">IPM Santé · EMP001</div>
-                                </div>
-                                <span class="etiquette">Confirmé</span>
-                            </div>
-                            <div class="ligne-rdv">
-                                <span class="heure">09h00</span>
-                                <div>
-                                    <div class="nom">Aïssatou Diallo</div>
-                                    <div class="detail">Ayant droit · Épouse</div>
-                                </div>
-                                <span class="etiquette">Confirmé</span>
-                            </div>
-                            <div class="mini-stats">
-                                <div class="mini-stat">
-                                    <span class="mini-stat-icon">{% icone "calendar" %}</span>
-                                    <div><strong>37</strong><span>RDV aujourd'hui</span></div>
-                                </div>
-                                <div class="mini-stat">
-                                    <span class="mini-stat-icon">{% icone "pill" %}</span>
-                                    <div><strong>12</strong><span>Ordonnances</span></div>
-                                </div>
-                            </div>
+                <div class="carte-demo" style="width: 100%; max-width: 440px; position: relative; z-index: 1;">
+                    <div class="entete-carte">
+                        <span class="pastille">{% icone "stethoscope" %}</span>
+                        <div>
+                            <h3>Rendez-vous du jour</h3>
+                            <span class="sous">Dr Ndiaye — Cardiologie (Dakar)</span>
                         </div>
                     </div>
-                </div>
-
-                <div class="cartes-satellites">
-                    <div class="carte-satellite satellite-qr">
-                        <span class="pastille pastille-sm">{% icone "qr-scan" %}</span>
+                    <div class="ligne-rdv">
+                        <span class="heure">08h30</span>
                         <div>
-                            <strong>Ordonnance vérifiée</strong>
-                            <span class="motif-qr" aria-hidden="true"></span>
+                            <div class="nom">Moussa Diop</div>
+                            <div class="detail">IPM Salarié · Couverture 80%</div>
                         </div>
+                        <span class="etiquette">Confirmé</span>
                     </div>
-
-                    <div class="carte-satellite satellite-medecin">
-                        <span class="avatar-initiales">DN</span>
+                    <div class="ligne-rdv">
+                        <span class="heure">09h15</span>
                         <div>
-                            <strong>Dr Ndiaye</strong>
-                            <span class="satellite-sous-texte">En consultation</span>
+                            <div class="nom">Fatou Diop</div>
+                            <div class="detail">Ayant droit · Épouse</div>
                         </div>
+                        <span class="etiquette">Confirmé</span>
                     </div>
-
-                    <div class="carte-satellite satellite-ordonnance">
-                        <span class="pastille pastille-sm">{% icone "pill" %}</span>
-                        <div>
-                            <strong>3 médicaments</strong>
-                            <span class="satellite-sous-texte">Prête</span>
+                    <div class="mini-stats">
+                        <div class="mini-stat">
+                            <span class="mini-stat-icon">{% icone "shield-check" %}</span>
+                            <div><strong>100%</strong><span>Tiers Payant</span></div>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="mini-stat-icon">{% icone "qr-scan" %}</span>
+                            <div><strong>Sécurisé</strong><span>QR Code</span></div>
                         </div>
                     </div>
                 </div>

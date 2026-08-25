@@ -7,8 +7,14 @@
 <section class="page-title">
     <div>
         <h1>Mes notifications</h1>
-        <p class="subtitle">Messages recus de l'administration.</p>
+        <p class="subtitle">Événements récents et messages système.</p>
     </div>
+    {% if notifications %}
+    <form method="post" action="{% url 'marquer_toutes_notifications_lues' %}">
+        {% csrf_token %}
+        <button type="submit" class="button btn">{% icone "check" %} Tout marquer comme lu</button>
+    </form>
+    {% endif %}
 </section>
 
 <form method="get" class="filtres">
@@ -32,16 +38,19 @@
         <thead>
             <tr>
                 <th>Date</th>
-                <th>Message</th>
+                <th>Sujet & Message</th>
                 <th>Statut</th>
                 <th>Actions</th>
             </tr>
         </thead>
         <tbody>
             {% for notification in notifications %}
-            <tr>
-                <td>{{ notification.date_creation|date:"d/m/Y H:i" }}</td>
-                <td>{{ notification.message }}</td>
+            <tr class="{% if not notification.lue %}ligne-non-lue{% endif %}">
+                <td style="white-space:nowrap;">{{ notification.date_creation|date:"d/m/Y H:i" }}</td>
+                <td>
+                    <strong>{{ notification.titre }}</strong><br>
+                    <span>{{ notification.message }}</span>
+                </td>
                 <td>
                     {% if notification.lue %}
                     <span class="badge validee">Lue</span>
@@ -50,14 +59,17 @@
                     {% endif %}
                 </td>
                 <td>
-                    {% if not notification.lue %}
-                    <form method="post" action="{% url 'marquer_notification_lue' notification.pk %}" class="action-ligne">
-                        {% csrf_token %}
-                        <button type="submit" class="button primary btn btn-sm">Marquer comme lue</button>
-                    </form>
-                    {% else %}
-                    -
-                    {% endif %}
+                    <div class="actions">
+                        {% if notification.url_action %}
+                        <a href="{{ notification.url_action }}" class="button primary btn btn-sm">Accéder</a>
+                        {% endif %}
+                        {% if not notification.lue %}
+                        <form method="post" action="{% url 'marquer_notification_lue' notification.pk %}" class="action-ligne">
+                            {% csrf_token %}
+                            <button type="submit" class="button btn btn-sm">Marquer comme lue</button>
+                        </form>
+                        {% endif %}
+                    </div>
                 </td>
             </tr>
             {% endfor %}
