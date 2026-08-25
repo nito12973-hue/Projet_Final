@@ -3,7 +3,7 @@ services:
     name: santesn-platform
     env: python
     buildCommand: "./build.sh"
-    startCommand: "gunicorn config.wsgi:application"
+    startCommand: "python manage.py migrate --no-input && python manage.py seed_demo && gunicorn config.wsgi:application"
     plan: free
     envVars:
       - key: PYTHON_VERSION
@@ -13,6 +13,6 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: ALLOWED_HOSTS
-        value: ".onrender.com,localhost,127.0.0.1"
+        value: "*"
       - key: CSRF_TRUSTED_ORIGINS
         value: "https://*.onrender.com"

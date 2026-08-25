@@ -28,14 +28,7 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-santesn-platform-clou
 
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = list(config('ALLOWED_HOSTS', default='localhost,127.0.0.1,testserver,.onrender.com,.railway.app', cast=Csv()))
-for h in ['testserver', 'localhost', '127.0.0.1']:
-    if h not in ALLOWED_HOSTS:
-        ALLOWED_HOSTS.append(h)
-
-RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
-if RENDER_EXTERNAL_HOSTNAME and RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
-    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+ALLOWED_HOSTS = ['*']
 
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
@@ -43,8 +36,7 @@ CSRF_TRUSTED_ORIGINS = [
     'https://*.onrender.com',
     'https://*.railway.app',
 ]
-if RENDER_EXTERNAL_HOSTNAME:
-    CSRF_TRUSTED_ORIGINS.append(f'https://{RENDER_EXTERNAL_HOSTNAME}')
+
 
 
 
@@ -161,7 +153,7 @@ STORAGES = {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
     },
 }
 
@@ -256,8 +248,7 @@ LOGGING = {
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'formatter': 'simple',
-            'filters': ['require_debug_true'],
+            'formatter': 'verbose',
         },
         'file_erreurs': {
             'class': 'logging.handlers.RotatingFileHandler',
@@ -265,11 +256,6 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,  # 10 Mo
             'backupCount': 5,
             'formatter': 'verbose',
-            'level': 'ERROR',
-        },
-        'mail_admins': {
-            'class': 'django.utils.log.AdminEmailHandler',
-            'filters': ['require_debug_false'],
             'level': 'ERROR',
         },
     },
@@ -280,10 +266,11 @@ LOGGING = {
             'propagate': True,
         },
         'django.request': {
-            'handlers': ['file_erreurs', 'mail_admins'],
+            'handlers': ['console', 'file_erreurs'],
             'level': 'ERROR',
             'propagate': False,
         },
+
         # Logger de l'application : utilisé pour tracer les événements métier
         # au niveau INFO/WARNING, sans passer par JournalActivite (qui est
         # réservé aux décisions administratives traçables).
