@@ -22,6 +22,9 @@ media/
 .vscode/
 .DS_Store
 Thumbs.db
+~$*
+*.tmp
+
 
 # Dossiers d'outils et branches auxiliaires
 .worktrees/
