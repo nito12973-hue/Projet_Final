@@ -76,8 +76,9 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
-
         html { scroll-behavior: smooth; }
+        section[id], footer[id], div[id] { scroll-margin-top: 85px; }
+
 
         body {
             font-family: 'Public Sans', 'Segoe UI', Arial, sans-serif;
@@ -1903,6 +1904,31 @@
         }, { threshold: 0.4 });
 
         document.querySelectorAll('.chiffre-anime').forEach((el) => observateurStats.observe(el));
+
+        // Défilement doux et fluide pour tous les liens d'ancrage (#)
+        document.querySelectorAll('a[href^="#"]').forEach((lien) => {
+            lien.addEventListener('click', function(e) {
+                const href = this.getAttribute('href');
+                if (!href || href === '#') return;
+                const cible = document.querySelector(href);
+                if (cible) {
+                    e.preventDefault();
+                    // Fermer le menu mobile s'il est ouvert
+                    const menuMobile = document.getElementById('menu-mobile');
+                    if (menuMobile && menuMobile.checked) {
+                        menuMobile.checked = false;
+                    }
+                    cible.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                    // Met à jour l'URL proprement
+                    if (window.history && window.history.pushState) {
+                        window.history.pushState(null, null, href);
+                    }
+                }
+            });
+        });
     </script>
 </body>
 </html>
