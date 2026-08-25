@@ -76,9 +76,8 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        html { scroll-behavior: smooth; }
-        section[id], footer[id], div[id] { scroll-margin-top: 85px; }
 
+        html { scroll-behavior: smooth; }
 
         body {
             font-family: 'Public Sans', 'Segoe UI', Arial, sans-serif;
@@ -1904,67 +1903,6 @@
         }, { threshold: 0.4 });
 
         document.querySelectorAll('.chiffre-anime').forEach((el) => observateurStats.observe(el));
-
-        // Moteur de défilement doux et progressif (Universel & garanti)
-        function defilementProgressif(cibleElement, duree = 750) {
-            const entete = document.querySelector('header');
-            const decalage = entete ? entete.offsetHeight + 12 : 80;
-            const positionDepart = window.pageYOffset || document.documentElement.scrollTop;
-            const cibleTop = cibleElement.getBoundingClientRect().top + positionDepart;
-            const positionFinale = Math.max(0, cibleTop - decalage);
-            const distance = positionFinale - positionDepart;
-            
-            if (Math.abs(distance) < 5) return;
-
-            let tempsDepart = null;
-
-            function animer(tempsActuel) {
-                if (!tempsDepart) tempsDepart = tempsActuel;
-                const ecoule = tempsActuel - tempsDepart;
-                const progression = Math.min(ecoule / duree, 1);
-                
-                // Formule mathématique easeInOutCubic (doux au départ et à l'arrivée)
-                const facteur = progression < 0.5
-                    ? 4 * progression * progression * progression
-                    : 1 - Math.pow(-2 * progression + 2, 3) / 2;
-
-                window.scrollTo(0, positionDepart + (distance * facteur));
-
-                if (ecoule < duree) {
-                    window.requestAnimationFrame(animer);
-                }
-            }
-
-            window.requestAnimationFrame(animer);
-        }
-
-        document.querySelectorAll('a[href^="#"]').forEach((lien) => {
-            lien.addEventListener('click', function(e) {
-                const href = this.getAttribute('href');
-                if (!href || href === '#') return;
-                
-                // Recherche de la cible par ID ou sélecteur
-                const cible = document.querySelector(href);
-                if (cible) {
-                    e.preventDefault();
-                    e.stopPropagation();
-
-                    // Fermer le menu mobile s'il est ouvert
-                    const menuMobile = document.getElementById('menu-mobile');
-                    if (menuMobile && menuMobile.checked) {
-                        menuMobile.checked = false;
-                    }
-
-                    // Défilement animé garanti
-                    defilementProgressif(cible, 750);
-
-                    // Mise à jour de l'URL sans saut
-                    if (window.history && window.history.pushState) {
-                        window.history.pushState(null, null, href);
-                    }
-                }
-            });
-        });
     </script>
 </body>
 </html>
