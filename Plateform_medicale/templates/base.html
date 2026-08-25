@@ -2191,6 +2191,45 @@
                 text-align: left;
                 max-width: none;
             }
+
+            /* Toasts et panneaux flottants adaptatifs pour mobile/tablette */
+            .toasts {
+                top: 10px !important;
+                right: 10px !important;
+                left: 10px !important;
+                max-width: none !important;
+                width: auto !important;
+                z-index: 1200 !important;
+            }
+
+            .toast {
+                padding: 12px 14px !important;
+                font-size: 13.5px !important;
+                box-shadow: 0 8px 24px rgba(11, 32, 39, 0.22) !important;
+            }
+
+            .menu-notifications-panneau {
+                position: fixed !important;
+                top: 56px !important;
+                left: 10px !important;
+                right: 10px !important;
+                width: auto !important;
+                max-width: none !important;
+                max-height: calc(100vh - 74px) !important;
+                z-index: 1100 !important;
+                box-shadow: 0 16px 40px rgba(11, 32, 39, 0.28) !important;
+            }
+
+            .menu-compte-panneau {
+                position: fixed !important;
+                top: 56px !important;
+                left: 10px !important;
+                right: 10px !important;
+                width: auto !important;
+                max-width: none !important;
+                z-index: 1100 !important;
+                box-shadow: 0 16px 40px rgba(11, 32, 39, 0.28) !important;
+            }
         }
 
         .qr-agrandi {
@@ -5240,9 +5279,17 @@
             });
         })();
 
-
-
         (function () {
+            // Fermeture automatique des menus déroulants au toucher extérieur sur mobile/tablette
+            document.addEventListener('click', function (evenement) {
+                var ouverts = document.querySelectorAll('details.menu-notifications[open], details.menu-compte[open]');
+                ouverts.forEach(function (details) {
+                    if (!details.contains(evenement.target)) {
+                        details.removeAttribute('open');
+                    }
+                });
+            });
+        })();
             // Bascule 'menu reduit' de la page Parametres. Elle ne duplique
             // aucune logique : elle actionne le bouton chevron du menu, qui
             // reste la source unique (classe sur body + localStorage + icone).

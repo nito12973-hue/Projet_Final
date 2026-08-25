@@ -33,23 +33,23 @@
 </form>
 
 {% if notifications %}
-<section class="panel">
-    <table>
+<section class="panel" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+    <table class="table-responsive" style="width: 100%;">
         <thead>
             <tr>
-                <th>Date</th>
+                <th style="min-width: 130px;">Date</th>
                 <th>Sujet & Message</th>
-                <th>Statut</th>
-                <th>Actions</th>
+                <th style="min-width: 100px;">Statut</th>
+                <th style="min-width: 150px;">Actions</th>
             </tr>
         </thead>
         <tbody>
             {% for notification in notifications %}
             <tr class="{% if not notification.lue %}ligne-non-lue{% endif %}">
-                <td style="white-space:nowrap;">{{ notification.date_creation|date:"d/m/Y H:i" }}</td>
+                <td style="white-space:nowrap; font-size: 12.5px;">{{ notification.date_creation|date:"d/m/Y H:i" }}</td>
                 <td>
-                    <strong>{{ notification.titre }}</strong><br>
-                    <span>{{ notification.message }}</span>
+                    <strong style="color: var(--titre); font-size: 14px;">{{ notification.titre }}</strong><br>
+                    <span style="font-size: 13px; color: var(--texte);">{{ notification.message }}</span>
                 </td>
                 <td>
                     {% if notification.lue %}
@@ -59,12 +59,12 @@
                     {% endif %}
                 </td>
                 <td>
-                    <div class="actions">
+                    <div class="actions" style="display: flex; gap: 6px; flex-wrap: wrap;">
                         {% if notification.url_action %}
                         <a href="{{ notification.url_action }}" class="button primary btn btn-sm">Accéder</a>
                         {% endif %}
                         {% if not notification.lue %}
-                        <form method="post" action="{% url 'marquer_notification_lue' notification.pk %}" class="action-ligne">
+                        <form method="post" action="{% url 'marquer_notification_lue' notification.pk %}" class="action-ligne" style="margin: 0; padding: 0; background: none; border: none; box-shadow: none;">
                             {% csrf_token %}
                             <button type="submit" class="button btn btn-sm">Marquer comme lue</button>
                         </form>

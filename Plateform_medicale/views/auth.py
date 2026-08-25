@@ -241,7 +241,7 @@ SECTIONS_PARAMETRES = [
     ("general", "Général", "settings", None),
     ("apparence", "Apparence", "eye", None),
     ("securite", "Sécurité", "lock", None),
-    ("notifications", "Notifications", "bell", User.Role.ADMIN),
+    ("notifications", "Notifications", "bell", None),
 ]
 
 
