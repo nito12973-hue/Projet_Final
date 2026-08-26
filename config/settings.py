@@ -108,16 +108,15 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 NEON_DATABASE_URL = 'postgresql://neondb_owner:npg_KCjgGRfY9oU2@ep-round-tree-ay6jpqcs-pooler.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require'
-DATABASE_URL = config('DATABASE_URL', default=NEON_DATABASE_URL)
+DATABASE_URL = os.environ.get('DATABASE_URL') or config('DATABASE_URL', default=None)
 
-if not DATABASE_URL or not str(DATABASE_URL).strip():
-    DATABASE_URL = NEON_DATABASE_URL
-
-if DATABASE_URL and str(DATABASE_URL).strip().startswith(('postgres://', 'postgresql://')):
+# Sur Vercel, Render ou dès qu'une URL postgres est active :
+if os.environ.get('VERCEL') or os.environ.get('RENDER') or (DATABASE_URL and str(DATABASE_URL).strip().startswith(('postgres://', 'postgresql://'))):
+    target_url = str(DATABASE_URL).strip() if (DATABASE_URL and str(DATABASE_URL).strip().startswith(('postgres://', 'postgresql://'))) else NEON_DATABASE_URL
     import dj_database_url
     DATABASES = {
         'default': dj_database_url.parse(
-            str(DATABASE_URL).strip(),
+            target_url,
             conn_max_age=600,
             conn_health_checks=True,
             ssl_require=True,
