@@ -24,7 +24,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # pour SECRET_KEY : demarrer sans .env correctement rempli doit echouer, pas
 # retomber silencieusement sur une cle connue.
 
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-santesn-platform-cloud-default-key-2026')
+DEFAULT_SECRET_KEY = 'django-insecure-santesn-platform-cloud-default-key-2026-prod-secure-dakar'
+_raw_secret_key = config('SECRET_KEY', default=DEFAULT_SECRET_KEY)
+if not _raw_secret_key or not str(_raw_secret_key).strip():
+    _raw_secret_key = DEFAULT_SECRET_KEY
+SECRET_KEY = str(_raw_secret_key).strip()
 
 DEBUG = config('DEBUG', default=True, cast=bool)
 
