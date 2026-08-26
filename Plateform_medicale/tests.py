@@ -1400,8 +1400,8 @@ class HistoriqueConsultationsTests(TestCase):
     def test_medecin_ne_peut_pas_annuler_ordonnance_deja_delivree(self):
         from Plateform_medicale.models import Delivrance, Pharmacien
         user_ph = User.objects.create_user(email='ph-test-annul@santesn.sn', password='Password123', role=User.Role.PHARMACIEN)
-        prest = Prestataire.objects.create(nom='Pharmacie Test Annul', type_etablissement='PHARMACIE')
-        ph = Pharmacien.objects.create(user=user_ph, nom='Test', prenom='Pharm', prestataire=prest)
+        prest = Prestataire.objects.create(nom='Pharmacie Test Annul', type_prestataire=Prestataire.Type.PHARMACIE)
+        ph = Pharmacien.objects.create(user=user_ph, prestataire=prest)
         ordonnance = Ordonnance.objects.create(consultation=self.consultation_a)
         Delivrance.objects.create(ordonnance=ordonnance, pharmacien=ph)
         

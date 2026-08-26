@@ -241,7 +241,6 @@ SECTIONS_PARAMETRES = [
     ("general", "Général", "settings", None),
     ("apparence", "Apparence", "eye", None),
     ("securite", "Sécurité", "lock", None),
-    ("notifications", "Notifications", "bell", None),
 ]
 
 
@@ -406,7 +405,7 @@ def activer_compte(request, uidb64, token):
             login(request, utilisateur)
             messages.success(
                 request,
-                f"Bienvenue {utilisateur.first_name or ''} ! Votre compte est activé avec succès.",
+                f"Bienvenue {utilisateur.first_name or ''} ! Votre compte est activé avec succès. Votre mot de passe a bien été enregistré.",
             )
             return redirect("post_login_redirect")
     else:
