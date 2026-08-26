@@ -247,12 +247,18 @@ SERVER_EMAIL = DEFAULT_FROM_EMAIL  # Adresse des mails d'erreur Django (ADMINS)
 # dans la console — le comportement par défaut, aucune configuration nécessaire.
 # En production (DEBUG=False) : les erreurs sont écrites dans logs/django.log
 # (traceback complet) ET envoyées par email aux ADMINS si EMAIL est configuré.
-# Le dossier logs/ est créé au démarrage s'il n'existe pas.
+# Le dossier logs/ est créé au démarrage s'il n'êtes pas.
 
 import logging  # noqa: E402 — placé ici pour rester au plus près de l'usage
 
 LOGS_DIR = BASE_DIR / 'logs'
-LOGS_DIR.mkdir(exist_ok=True)
+CAN_WRITE_LOGS = False
+
+try:
+    LOGS_DIR.mkdir(exist_ok=True)
+    CAN_WRITE_LOGS = True
+except OSError:
+    CAN_WRITE_LOGS = False
 
 LOGGING = {
     'version': 1,
@@ -280,32 +286,28 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
         },
-        'file_erreurs': {
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': LOGS_DIR / 'django_erreurs.log',
-            'maxBytes': 10 * 1024 * 1024,  # 10 Mo
-            'backupCount': 5,
-            'formatter': 'verbose',
-            'level': 'ERROR',
-        },
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'file_erreurs'],
+            'handlers': ['console'],
             'level': 'INFO',
             'propagate': True,
         },
         'django.request': {
-            'handlers': ['console', 'file_erreurs'],
+            'handlers': ['console'],
             'level': 'ERROR',
             'propagate': False,
         },
-
+        'utils': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
         # Logger de l'application : utilisé pour tracer les événements métier
         # au niveau INFO/WARNING, sans passer par JournalActivite (qui est
         # réservé aux décisions administratives traçables).
         'Plateform_medicale': {
-            'handlers': ['console', 'file_erreurs'],
+            'handlers': ['console'],
             'level': 'DEBUG' if DEBUG else 'INFO',
             'propagate': False,
         },
@@ -318,10 +320,8 @@ LOGGING = {
 # https://docs.djangoproject.com/en/6.0/topics/security/
 
 if not DEBUG:
-    SECURE_SSL_REDIRECT = True
+    SECURE_SSL_REDIRECT = False  # Vercel et les plateformes Cloud gèrent le SSL au niveau Edge
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
-    SECURE_HSTS_SECONDS = 31536000
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
+
