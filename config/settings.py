@@ -103,13 +103,17 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASE_URL = config('DATABASE_URL', default=None)
+NEON_DATABASE_URL = 'postgresql://neondb_owner:npg_KCjgGRfY9oU2@ep-round-tree-ay6jpqcs-pooler.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require'
+DATABASE_URL = config('DATABASE_URL', default=NEON_DATABASE_URL)
 
-if DATABASE_URL:
+if not DATABASE_URL or not str(DATABASE_URL).strip():
+    DATABASE_URL = NEON_DATABASE_URL
+
+if DATABASE_URL and str(DATABASE_URL).strip().startswith(('postgres://', 'postgresql://')):
     import dj_database_url
     DATABASES = {
-        'default': dj_database_url.config(
-            default=DATABASE_URL,
+        'default': dj_database_url.parse(
+            str(DATABASE_URL).strip(),
             conn_max_age=600,
             conn_health_checks=True,
             ssl_require=True,
