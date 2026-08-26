@@ -92,7 +92,7 @@ class Command(BaseCommand):
         # 5. Service Médical
         service, _ = ServiceMedical.objects.get_or_create(
             nom="Consultation Médecine Générale",
-            defaults={"code": "CS-GEN", "prix": Decimal("15000.00"), "taux_remboursement": Decimal("80.00"), "prestataire": hopital}
+            defaults={"description": "Consultation générale et bilan de routine", "prix": Decimal("15000.00"), "prestataire": hopital}
         )
 
         # 6. Consultation & Ordonnance de démonstration
