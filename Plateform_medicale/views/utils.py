@@ -6,6 +6,7 @@ sécurisées, le journaliseur d'activité et le filtre rendez-vous commun.
 Aucune vue Django ici : ce module ne dépend que de Django ORM et des modèles.
 """
 
+import datetime
 import logging
 import unicodedata
 from functools import wraps
@@ -13,6 +14,7 @@ from functools import wraps
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
+from django.db.models import Count, Q
 from django.utils import timezone
 
 logger = logging.getLogger("Plateform_medicale")
@@ -189,8 +191,15 @@ def compteurs_files_attente(request=None):
     if request is not None and hasattr(request, "_compteurs_files_attente"):
         return request._compteurs_files_attente
 
+    maintenant = timezone.now()
+    il_y_a_48h = maintenant - datetime.timedelta(hours=48)
+    pec_stats = PriseEnCharge.objects.aggregate(
+        total_attente=Count("id", filter=Q(statut="en_attente")),
+        urgentes_48h=Count("id", filter=Q(statut="en_attente", date_demande__lte=il_y_a_48h)),
+    )
     compteurs = {
-        "prises_en_charge_attente": PriseEnCharge.objects.filter(statut="en_attente").count(),
+        "prises_en_charge_attente": pec_stats["total_attente"] or 0,
+        "nb_pec_urgentes_48h": pec_stats["urgentes_48h"] or 0,
         "paiements_non_regles": Paiement.objects.filter(statut=Paiement.Statut.NON_REGLE).count(),
     }
     if request is not None:

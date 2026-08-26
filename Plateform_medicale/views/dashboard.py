@@ -157,8 +157,7 @@ def dashboard(request):
         .order_by("-total")
     ]
 
-    il_y_a_48h = maintenant - datetime.timedelta(hours=48)
-    nb_pec_urgentes_48h = PriseEnCharge.objects.filter(statut="en_attente", date_demande__lte=il_y_a_48h).count()
+    nb_pec_urgentes_48h = compteurs.get("nb_pec_urgentes_48h", 0)
 
     contexte = {
         "total_patients": Patient.objects.count(),

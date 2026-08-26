@@ -4,9 +4,9 @@
 {% block title %}Espace Assuré — {{ patient }}{% endblock %}
 
 {% block content %}
-<section class="page-title" style="margin-bottom:24px;">
+<section class="page-title">
     <div>
-        <h1 style="font-size:24px;margin-bottom:4px;">Bonjour {{ patient.prenom|default:user.first_name }}</h1>
+        <h1>Bonjour {{ patient.prenom|default:patient.nom|default:user.get_full_name }}</h1>
         <p class="subtitle">Bienvenue sur votre espace de santé dématérialisé.</p>
     </div>
     <div>

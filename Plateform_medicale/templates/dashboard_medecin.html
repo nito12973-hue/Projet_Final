@@ -11,6 +11,20 @@
     </div>
 </section>
 
+<section class="panel panel-bloc" style="margin-bottom:22px;">
+    <label for="recherche-patients-champ" style="font-weight:700;font-size:13.5px;color:var(--titre);margin-bottom:8px;display:block;">Recherche rapide de patient</label>
+    <div class="recherche-patients" style="position:relative;">
+        <input type="search" id="recherche-patients-champ" name="q" autocomplete="off"
+               placeholder="Rechercher par numéro de carte, nom ou prénom..."
+               data-url-recherche="{% url 'rechercher_patients_medecin' %}"
+               aria-expanded="false" aria-controls="recherche-patients-resultats"
+               aria-haspopup="listbox" role="combobox" aria-autocomplete="list">
+        <p id="recherche-patients-indice" class="subtitle" style="margin:6px 0 0;" hidden></p>
+        <ul id="recherche-patients-resultats" class="recherche-patients-resultats" role="listbox"
+            aria-live="polite" hidden></ul>
+    </div>
+</section>
+
 {# Rangée 1 : 2 Indicateurs clés du jour #}
 <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:20px;margin-bottom:24px;">
     {# 1. Demandes en attente #}
