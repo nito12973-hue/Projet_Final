@@ -5,13 +5,15 @@ Gestion des paiements : liste, export CSV et règlement manuel.
 import csv
 
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.db.models import Q, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from ..forms import PaiementReglementForm
-from ..models import JournalActivite, Paiement
+from ..models import JournalActivite, Paiement, User
 from .utils import _cellule_csv, _paginer, _trier, admin_required, journaliser
 
 
@@ -112,10 +114,15 @@ def marquer_paiement_regle(request, pk):
                 f"Paiement #{paiement.pk} · {paiement.consultation.patient}",
                 f"{paiement.montant_part_patient} F CFA · {paiement.get_mode_reglement_display()}",
             )
-from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
+            messages.success(request, f"Paiement #{paiement.pk} marqué comme réglé.")
+            return redirect("liste_paiements")
+    else:
+        form = PaiementReglementForm(instance=paiement)
 
-from ..models import JournalActivite, Paiement, User
+    return render(request, "marquer_paiement_regle.html", {
+        "paiement": paiement,
+        "form": form,
+    })
 
 
 @login_required
