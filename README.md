@@ -1,4 +1,4 @@
-# 🏥 SantéSN — Plateforme Pour la prise en charge medicale dans une structure
+#  SantéSN — Plateforme Pour la prise en charge medicale dans une structure
 
 [![CI SantéSN - Tests & Validation](https://github.com/nito12973-hue/Projet_Final/actions/workflows/ci.yml/badge.svg)](https://github.com/nito12973-hue/Projet_Final/actions/workflows/ci.yml)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%20%7C%203.14-blue.svg)](https://www.python.org/)
@@ -9,7 +9,7 @@ SantéSN est une solution web médicale et assurantielle moderne conçue pour le
 
 ---
 
-## 🚀 Déploiement en 1 Clic (Mode Cloud & Test Hors-Local)
+##  Déploiement en 1 Clic (Mode Cloud & Test Hors-Local)
 
 Pour tester l'application directement en ligne sur Internet sans configuration locale, cliquez sur le bouton ci-dessous :
 
@@ -19,18 +19,18 @@ Pour tester l'application directement en ligne sur Internet sans configuration l
 
 ---
 
-## 🔑 Comptes de Démonstration (Mot de passe unique : `Password123`)
+##  Comptes de Démonstration (Mot de passe unique : `Password123`)
 
 | Rôle | Identifiant (Email) | Mot de passe | Espace & Fonctionnalités Clés |
 | :--- | :--- | :--- | :--- |
-| 🛡️ **Administrateur IPM** | `admin@santesn.sn` | `Password123` | Dashboard financier, plans de couverture, liquidations, exports PDF/Excel |
-| 👤 **Assuré (Patient)** | `assure@santesn.sn` | `Password123` | Carte dématérialisée (QR Code / ISO), suivi du plafond annuel, ayants droit, RDV |
-| 🩺 **Médecin Traitant** | `medecin@santesn.sn` | `Password123` | Agenda des consultations, dossiers patients, ordonnance sécurisée A4 certifiée |
-| 💊 **Pharmacien d'Officine** | `pharmacien@santesn.sn` | `Password123` | Scanner d'ordonnance par caméra, validation atomique anti-double délivrance |
+|  **Administrateur IPM** | `admin@santesn.sn` | `Password123` | Dashboard financier, plans de couverture, liquidations, exports PDF/Excel |
+|  **Assuré (Patient)** | `assure@santesn.sn` | `Password123` | Carte dématérialisée (QR Code / ISO), suivi du plafond annuel, ayants droit, RDV |
+|  **Médecin Traitant** | `medecin@santesn.sn` | `Password123` | Agenda des consultations, dossiers patients, ordonnance sécurisée A4 certifiée |
+|  **Pharmacien d'Officine** | `pharmacien@santesn.sn` | `Password123` | Scanner d'ordonnance par caméra, validation atomique anti-double délivrance |
 
 ---
 
-## ✨ Fonctionnalités Majeures
+##  Fonctionnalités Majeures
 
 1. **Carte de Prise en Charge Dématérialisée :** Format physique ISO 7810 ID-1 avec micro-puce dorée et QR Code dynamique vectoriel.
 2. **Ordonnance Sécurisée Anti-Fraude :** Tampon officiel SantéSN certifié et verrouillage transactionnel lors de la délivrance en pharmacie.
@@ -42,7 +42,7 @@ Pour tester l'application directement en ligne sur Internet sans configuration l
 
 ---
 
-## 💻 Installation et Lancement en Local
+##  Installation et Lancement en Local
 
 ```bash
 # 1. Cloner le dépôt
@@ -69,7 +69,7 @@ L'application est accessible à l'adresse : [http://127.0.0.1:8000/](http://127.
 
 ---
 
-## 🧪 Tests Automatisés
+##  Tests Automatisés
 
 Le projet inclut une suite de **107 tests unitaires et de sécurité** exécutés automatiquement via GitHub Actions :
 
@@ -79,7 +79,7 @@ python manage.py test
 
 ---
 
-## 📚 Documentation Technique
+##  Documentation Technique
 
-* 📘 [`GUIDE_UTILISATEUR.md`](GUIDE_UTILISATEUR.md) : Manuel d'utilisation détaillé pas-à-pas pour chaque profil.
-* ⚙️ [`FONCTIONNEMENT.txt`](FONCTIONNEMENT.txt) : Spécifications détaillées de l'architecture et des règles métier.
+*  [`GUIDE_UTILISATEUR.md`](GUIDE_UTILISATEUR.md) : Manuel d'utilisation détaillé pas-à-pas pour chaque profil.
+*  [`FONCTIONNEMENT.txt`](FONCTIONNEMENT.txt) : Spécifications détaillées de l'architecture et des règles métier.
