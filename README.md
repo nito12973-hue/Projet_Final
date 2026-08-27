@@ -1,4 +1,4 @@
-# 🏥 SantéSN — Plateforme Intégrée de Gestion du Tiers Payant & Dématérialisation du Parcours de Soins
+# 🏥 SantéSN — Plateforme Pour la prise en charge medicale dans une structure
 
 [![CI SantéSN - Tests & Validation](https://github.com/nito12973-hue/Projet_Final/actions/workflows/ci.yml/badge.svg)](https://github.com/nito12973-hue/Projet_Final/actions/workflows/ci.yml)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%20%7C%203.14-blue.svg)](https://www.python.org/)
