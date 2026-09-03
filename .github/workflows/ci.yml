@@ -32,7 +32,7 @@ jobs:
       run: |
         python manage.py check
 
-    - name: Exécution des 107 tests unitaires et d'intégration
+    - name: Exécution des 659 tests unitaires et d'intégration
       env:
         SECRET_KEY: 'ci-test-secret-key-santesn-django-security-token'
         DEBUG: 'True'

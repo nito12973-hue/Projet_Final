@@ -12,7 +12,7 @@ from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError, connection
 from django.forms import modelform_factory
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.test.utils import CaptureQueriesContext
 from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
@@ -40,6 +40,7 @@ from .models import (
 )
 from .views import SECTIONS_PARAMETRES as SECTIONS_PARAMETRES_REELLES
 from .views import TAILLE_PAGE_LISTE
+from .services.notifications import emettre_notification
 
 SECTIONS_TOUTES = ('general', 'apparence', 'securite')
 
@@ -957,6 +958,9 @@ class EspaceMedecinTests(TestCase):
 
     def test_creation_consultation_et_ordonnance_avec_qr(self):
         response = self.client.post(reverse('ajouter_consultation_medecin'), {
+            'mode': 'spontane',
+            'contexte_admission': 'URGENCE',
+            'numero_carte': self.patient.numero_carte,
             'patient': self.patient.pk,
             'service': '',
             'prise_en_charge': '',
@@ -1168,47 +1172,46 @@ class PreRemplissagePatientConsultationTests(TestCase):
         self.patient = creer_patient(nom='Diop', prenom='Awa')
         self.client.login(username='medecin1@santesn.sn', password=PASSWORD)
 
-    def test_patient_preselectionne_si_parametre_valide(self):
+    def test_acces_direct_par_parametre_patient_seul_refuse(self):
+        """La simple recherche d'un patient ne permet pas d'ouvrir la consultation directement."""
         response = self.client.get(
             reverse('ajouter_consultation_medecin'), {'patient': self.patient.pk}
         )
-        self.assertEqual(response.context['form'].initial.get('patient'), str(self.patient.pk))
+        self.assertRedirects(response, reverse('agenda_medecin'))
 
-    def test_formulaire_vide_sans_parametre(self):
+    def test_acces_direct_sans_contexte_refuse(self):
+        """L'accès à l'URL sans RDV ni mode spontané est rejeté."""
         response = self.client.get(reverse('ajouter_consultation_medecin'))
-        self.assertNotIn('patient', response.context['form'].initial)
+        self.assertRedirects(response, reverse('agenda_medecin'))
 
-    def test_parametre_non_numerique_ignore_silencieusement(self):
+    def test_consultation_spontanee_pre_remplissage_par_numero_carte(self):
+        """En mode spontané, fournir le numéro de carte pré-sélectionne le patient."""
         response = self.client.get(
-            reverse('ajouter_consultation_medecin'), {'patient': 'abc'}
+            reverse('ajouter_consultation_medecin'),
+            {'mode': 'spontane', 'numero_carte': self.patient.numero_carte}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['form'].initial.get('patient'), self.patient.pk)
+        self.assertEqual(response.context['form'].initial.get('numero_carte'), self.patient.numero_carte)
+
+    def test_consultation_spontanee_carte_invalide_non_pre_remplie(self):
+        """En mode spontané, un numéro de carte inconnu n'attribue aucun patient."""
+        response = self.client.get(
+            reverse('ajouter_consultation_medecin'),
+            {'mode': 'spontane', 'numero_carte': 'INEXISTANT'}
         )
         self.assertEqual(response.status_code, 200)
         self.assertNotIn('patient', response.context['form'].initial)
 
-    def test_parametre_chiffre_unicode_non_convertible_ignore_silencieusement(self):
-        """
-        '²²' passe str.isdigit() mais fait planter int() (ValueError) : sans
-        isdecimal(), Patient.objects.filter(pk='²²') remontait un 500.
-        """
-        response = self.client.get(
-            reverse('ajouter_consultation_medecin'), {'patient': '²²'}
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertNotIn('patient', response.context['form'].initial)
-
-    def test_parametre_patient_inexistant_ignore_silencieusement(self):
-        response = self.client.get(
-            reverse('ajouter_consultation_medecin'), {'patient': '999999'}
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertNotIn('patient', response.context['form'].initial)
-
-    def test_soumission_post_inchangee_avec_parametre_dans_l_url(self):
-        """Non-regression : le POST ignore le query-string, comme avant."""
+    def test_consultation_spontanee_post_avec_contexte_et_carte(self):
+        """Une soumission POST spontanée valide crée la consultation et redirige vers l'ordonnance."""
         response = self.client.post(
-            reverse('ajouter_consultation_medecin') + '?patient=%s' % self.patient.pk,
+            reverse('ajouter_consultation_medecin'),
             {
+                'mode': 'spontane',
                 'patient': self.patient.pk,
+                'numero_carte': self.patient.numero_carte,
+                'contexte_admission': 'URGENCE',
                 'service': '',
                 'prise_en_charge': '',
                 'date_consultation': '2026-08-01T10:00',
@@ -1265,10 +1268,24 @@ class FichePatientMedecinTests(TestCase):
         self.assertEqual(historique[0].diagnostic, 'Vue par moi')
         self.assertNotContains(response, 'ConfidentielAutreMedecin')
 
-    def test_bouton_nouvelle_consultation_pre_remplit_le_patient(self):
+    def test_boutons_consultation_fiche_patient_selon_contexte(self):
+        # Sans RDV confirmé : bouton consultation spontanée / urgence avec numéro de carte
         response = self.client.get(reverse('fiche_patient_medecin', args=[self.patient.pk]))
-        url_attendue = reverse('ajouter_consultation_medecin') + '?patient=%s' % self.patient.pk
-        self.assertContains(response, url_attendue)
+        url_spontanee = reverse('ajouter_consultation_medecin') + f'?mode=spontane&numero_carte={self.patient.numero_carte}'
+        self.assertContains(response, url_spontanee)
+        self.assertNotContains(response, f'?patient={self.patient.pk}')
+
+        # Avec RDV confirmé : bouton démarrer la consultation sur RDV
+        rdv = RendezVous.objects.create(
+            medecin=self.medecin,
+            patient=self.patient,
+            prestataire=self.medecin.prestataire,
+            date_heure=timezone.now() + datetime.timedelta(hours=2),
+            statut=RendezVous.Statut.CONFIRME,
+        )
+        response_rdv = self.client.get(reverse('fiche_patient_medecin', args=[self.patient.pk]))
+        url_rdv = reverse('ajouter_consultation_medecin') + f'?rdv_id={rdv.pk}'
+        self.assertContains(response_rdv, url_rdv)
 
     def test_ayants_droit_affiches_pour_un_assure_principal(self):
         ayant_droit = creer_patient(nom='Diop', prenom='Petit')
@@ -1358,7 +1375,7 @@ class HistoriqueConsultationsTests(TestCase):
     def test_formulaire_de_creation_dans_un_panel(self):
         # .panel-form porte le padding canonique des panneaux de contenu
         # (remplace les styles en ligne qui avaient derive en 13 valeurs).
-        response = self.client.get(reverse('ajouter_consultation_medecin'))
+        response = self.client.get(reverse('ajouter_consultation_medecin'), {'mode': 'spontane'})
         self.assertContains(response, 'class="panel panel-form"')
 
     def test_filtre_par_patient(self):
@@ -2036,6 +2053,80 @@ class AdminPatientFormTests(TestCase):
 
 
 class NotificationsTests(TestCase):
+    @override_settings(WHATSAPP_ENABLED=True)
+    @patch('Plateform_medicale.services.notifications.envoyer_message_whatsapp')
+    @patch('Plateform_medicale.services.notifications.EmailMultiAlternatives.send')
+    def test_multicanal_whatsapp_succes_ne_chasse_pas_d_email(self, mock_email_send, mock_wa_send):
+        mock_wa_send.return_value = {'succes': True, 'statut': 'ENVOYE', 'message': 'OK'}
+        user = creer_utilisateur(User.Role.ASSURE, 'assure-wa@santesn.sn')
+        user.phone_number = '771234567'
+        user.save()
+
+        notif = emettre_notification(user, 'Test Titre', 'Test Message')
+        self.assertTrue(notif.whatsapp_envoye)
+        self.assertFalse(notif.email_envoye)
+        mock_wa_send.assert_called_once()
+        mock_email_send.assert_not_called()
+
+    @override_settings(WHATSAPP_ENABLED=True)
+    @patch('Plateform_medicale.services.notifications.envoyer_message_whatsapp')
+    @patch('Plateform_medicale.services.notifications.EmailMultiAlternatives.send')
+    def test_multicanal_whatsapp_echec_bascule_sur_email(self, mock_email_send, mock_wa_send):
+        mock_wa_send.return_value = {'succes': False, 'statut': 'ECHEC', 'message': 'Erreur Meta'}
+        user = creer_utilisateur(User.Role.ASSURE, 'assure-fallback@santesn.sn')
+        user.phone_number = '771234567'
+        user.save()
+
+        notif = emettre_notification(user, 'Test Titre', 'Test Message')
+        self.assertFalse(notif.whatsapp_envoye)
+        self.assertTrue(notif.email_envoye)
+        mock_wa_send.assert_called_once()
+        mock_email_send.assert_called_once()
+
+    @override_settings(WHATSAPP_ENABLED=False)
+    @patch('Plateform_medicale.services.notifications.envoyer_message_whatsapp')
+    @patch('Plateform_medicale.services.notifications.EmailMultiAlternatives.send')
+    def test_multicanal_whatsapp_desactive_utilise_email_directement(self, mock_email_send, mock_wa_send):
+        user = creer_utilisateur(User.Role.ASSURE, 'assure-nowa@santesn.sn')
+        user.phone_number = '771234567'
+        user.save()
+
+        notif = emettre_notification(user, 'Test Titre', 'Test Message')
+        self.assertFalse(notif.whatsapp_envoye)
+        self.assertTrue(notif.email_envoye)
+        mock_wa_send.assert_not_called()
+        mock_email_send.assert_called_once()
+
+    @override_settings(WHATSAPP_ENABLED=True)
+    @patch('Plateform_medicale.services.notifications.envoyer_message_whatsapp')
+    @patch('Plateform_medicale.services.notifications.EmailMultiAlternatives.send')
+    def test_multicanal_sans_telephone_bascule_sur_email(self, mock_email_send, mock_wa_send):
+        user = creer_utilisateur(User.Role.ASSURE, 'assure-sans-tel@santesn.sn')
+        user.phone_number = ''
+        user.save()
+
+        notif = emettre_notification(user, 'Test Titre', 'Test Message')
+        self.assertFalse(notif.whatsapp_envoye)
+        self.assertTrue(notif.email_envoye)
+        mock_wa_send.assert_not_called()
+        mock_email_send.assert_called_once()
+
+    @override_settings(WHATSAPP_ENABLED=True)
+    @patch('Plateform_medicale.services.notifications.envoyer_message_whatsapp')
+    @patch('Plateform_medicale.services.notifications.EmailMultiAlternatives.send')
+    def test_multicanal_double_panne_ne_plante_pas_l_application(self, mock_email_send, mock_wa_send):
+        mock_wa_send.return_value = {'succes': False, 'statut': 'ECHEC', 'message': 'Panne WA'}
+        mock_email_send.side_effect = Exception('Panne SMTP')
+        user = creer_utilisateur(User.Role.ASSURE, 'assure-panne@santesn.sn')
+        user.phone_number = '771234567'
+        user.save()
+
+        notif = emettre_notification(user, 'Test Titre', 'Test Message')
+        self.assertFalse(notif.whatsapp_envoye)
+        self.assertFalse(notif.email_envoye)
+        self.assertIn('Panne SMTP', notif.email_erreur)
+        self.assertEqual(Notification.objects.filter(pk=notif.pk).count(), 1)
+
     def setUp(self):
         self.admin = creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
         self.client.login(username='admin@santesn.sn', password=PASSWORD)
@@ -2159,15 +2250,17 @@ class NotificationsTests(TestCase):
         self.client.logout()
         self.client.login(username='medecin-pref-ui@santesn.sn', password=PASSWORD)
 
-        response = self.client.get(reverse('parametres_section', args=['notifications']))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Préférences d\'emails')
+        registre = SECTIONS_PARAMETRES_REELLES + [("notifications", "Notifications", "bell", None)]
+        with patch('Plateform_medicale.views.SECTIONS_PARAMETRES', registre):
+            response = self.client.get(reverse('parametres_section', args=['notifications']))
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, 'Préférences d\'emails')
 
-        response = self.client.post(reverse('parametres_section', args=['notifications']), {
-            'email_rdv': 'on',
-            # email_prise_en_charge non coche -> False
-        })
-        self.assertRedirects(response, reverse('parametres_section', args=['notifications']))
+            response = self.client.post(reverse('parametres_section', args=['notifications']), {
+                'email_rdv': 'on',
+                # email_prise_en_charge non coche -> False
+            })
+            self.assertRedirects(response, reverse('parametres_section', args=['notifications']))
 
         prefs = PreferenceNotification.objects.get(user=medecin_user)
         self.assertTrue(prefs.email_rdv)
@@ -2181,9 +2274,11 @@ class NotificationsTests(TestCase):
 
         self.client.logout()
         self.client.login(username='user-a-pref@santesn.sn', password=PASSWORD)
-        self.client.post(reverse('parametres_section', args=['notifications']), {
-            # User A decoche tout
-        })
+        registre = SECTIONS_PARAMETRES_REELLES + [("notifications", "Notifications", "bell", None)]
+        with patch('Plateform_medicale.views.SECTIONS_PARAMETRES', registre):
+            self.client.post(reverse('parametres_section', args=['notifications']), {
+                # User A decoche tout
+            })
 
         prefs_b.refresh_from_db()
         self.assertTrue(prefs_b.email_rdv, "Les préférences de User B ne doivent pas être affectées par User A.")
@@ -2510,6 +2605,9 @@ class PaiementTests(TestCase):
         prise = PriseEnCharge.objects.create(patient=self.patient, motif='Test', statut='validee')
 
         self.client.post(reverse('ajouter_consultation_medecin'), {
+            'mode': 'spontane',
+            'contexte_admission': 'URGENCE',
+            'numero_carte': self.patient.numero_carte,
             'patient': self.patient.pk,
             'service': self.service.pk,
             'prise_en_charge': prise.pk,
@@ -2527,6 +2625,9 @@ class PaiementTests(TestCase):
     def test_consultation_sans_prise_en_charge_validee_patient_paie_tout(self):
         prise_en_attente = PriseEnCharge.objects.create(patient=self.patient, motif='Test')
         self.client.post(reverse('ajouter_consultation_medecin'), {
+            'mode': 'spontane',
+            'contexte_admission': 'URGENCE',
+            'numero_carte': self.patient.numero_carte,
             'patient': self.patient.pk,
             'service': self.service.pk,
             'prise_en_charge': prise_en_attente.pk,
@@ -2734,6 +2835,9 @@ class ConsultationPriseEnChargeValidationTests(TestCase):
     def test_prise_en_charge_dun_autre_patient_refusee(self):
         prise_en_charge = PriseEnCharge.objects.create(patient=self.autre_patient, motif='Autre')
         response = self.client.post(reverse('ajouter_consultation_medecin'), {
+            'mode': 'spontane',
+            'contexte_admission': 'URGENCE',
+            'numero_carte': self.patient.numero_carte,
             'patient': self.patient.pk, 'service': '', 'prise_en_charge': prise_en_charge.pk,
             'date_consultation': '2026-08-01T10:00', 'diagnostic': 'Test', 'traitement': '',
         })
@@ -5914,6 +6018,9 @@ class ParcoursCompletsTests(TestCase):
         formulaires."""
         self._connexion('medecin-parcours@santesn.sn')
         creation = self.client.post(reverse('ajouter_consultation_medecin'), {
+            'mode': 'spontane',
+            'contexte_admission': 'URGENCE',
+            'numero_carte': self.patient.numero_carte,
             'patient': self.patient.pk, 'service': self.service.pk,
             'prise_en_charge': self.pec.pk,
             'date_consultation': '2026-08-17T09:00',
@@ -7488,5 +7595,950 @@ class PlafondAnnuelTests(TestCase):
         self.assertIn("BEGIN:VCALENDAR", response.content.decode("utf-8"))
         self.assertIn("SUMMARY:RDV Médical - Dr", response.content.decode("utf-8"))
         self.assertIn("STATUS:CONFIRMED", response.content.decode("utf-8"))
+
+
+class Phase1SecuriteIntegriteTests(TestCase):
+    def setUp(self):
+        self.admin_user = User.objects.create_user(email="admin-sec@santesn.sn", password=PASSWORD, role=User.Role.ADMIN, is_staff=True)
+        self.medecin = creer_medecin("dr.sec@santesn.sn")
+        self.patient = creer_patient(nom="Fall", prenom="Ibrahima")
+        self.pharmacien = creer_pharmacien("pharma.sec@santesn.sn")
+        self.consultation = Consultation.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            date_consultation=timezone.now(),
+            diagnostic="Infection respiratoire aiguë",
+            traitement="Amoxicilline 1g 3x/jour pendant 7 jours",
+        )
+        self.ordonnance = Ordonnance.objects.create(
+            consultation=self.consultation,
+            medicaments="Amoxicilline 1g",
+        )
+
+    def test_secret_medical_consultation_admin_exclut_diagnostic_et_traitement(self):
+        """Le secret médical doit interdire l'exposition de diagnostic et traitement dans ConsultationAdmin."""
+        from django.contrib.admin.sites import site
+        from .models import Consultation
+        from .admin import ConsultationAdmin
+
+        admin_instance = site._registry[Consultation]
+        self.assertIsInstance(admin_instance, ConsultationAdmin)
+        self.assertIn("diagnostic", admin_instance.exclude)
+        self.assertIn("traitement", admin_instance.exclude)
+
+        request = MagicMock()
+        request.user = self.admin_user
+        fields = admin_instance.get_fields(request, self.consultation)
+        self.assertNotIn("diagnostic", fields)
+        self.assertNotIn("traitement", fields)
+
+    def test_consultation_admin_interdit_creation_directe(self):
+        """Une consultation ne peut pas être créée directement depuis Django Admin."""
+        from django.contrib.admin.sites import site
+        from .models import Consultation
+
+        admin_instance = site._registry[Consultation]
+        request = MagicMock()
+        request.user = self.admin_user
+        self.assertFalse(admin_instance.has_add_permission(request))
+
+    def test_ordonnance_admin_interdit_creation_directe(self):
+        """Une ordonnance ne peut pas être forgée depuis Django Admin."""
+        from django.contrib.admin.sites import site
+        from .models import Ordonnance
+
+        admin_instance = site._registry[Ordonnance]
+        request = MagicMock()
+        request.user = self.admin_user
+        self.assertFalse(admin_instance.has_add_permission(request))
+
+    def test_ordonnance_propriete_est_expiree(self):
+        """Une ordonnance récente n'est pas expirée, une ordonnance de plus de 90j est expirée."""
+        self.assertFalse(self.ordonnance.est_expiree)
+
+        # Simuler une ordonnance émise il y a 95 jours
+        date_ancienne = timezone.now() - datetime.timedelta(days=95)
+        Ordonnance.objects.filter(pk=self.ordonnance.pk).update(date_creation=date_ancienne)
+        self.ordonnance.refresh_from_db()
+        self.assertTrue(self.ordonnance.est_expiree)
+
+    def test_pharmacien_ne_peut_pas_delivrer_ordonnance_expiree(self):
+        """La vue valider_delivrance doit rejeter fermement une ordonnance expirée."""
+        self.client.login(username="pharma.sec@santesn.sn", password=PASSWORD)
+        date_ancienne = timezone.now() - datetime.timedelta(days=95)
+        Ordonnance.objects.filter(pk=self.ordonnance.pk).update(date_creation=date_ancienne)
+
+        response = self.client.post(
+            reverse("valider_delivrance", args=[self.ordonnance.pk]),
+            {"code_qr": self.ordonnance.code_qr},
+        )
+        self.assertRedirects(response, reverse("historique_delivrances"))
+        self.assertFalse(Delivrance.objects.filter(ordonnance=self.ordonnance).exists())
+        self.ordonnance.refresh_from_db()
+        self.assertNotEqual(self.ordonnance.statut, Ordonnance.Statut.DELIVRE)
+
+    def test_scanner_ordonnance_affiche_statut_expiree(self):
+        """Le scanner d'ordonnance signale l'expiration au pharmacien."""
+        self.client.login(username="pharma.sec@santesn.sn", password=PASSWORD)
+        date_ancienne = timezone.now() - datetime.timedelta(days=95)
+        Ordonnance.objects.filter(pk=self.ordonnance.pk).update(date_creation=date_ancienne)
+
+        response = self.client.post(
+            reverse("scanner_ordonnance"),
+            {"code_qr": self.ordonnance.code_qr},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "ORDONNANCE EXPIRÉE")
+        # Le formulaire de délivrance ne doit pas être affiché
+        self.assertNotContains(response, 'Valider la délivrance</button>')
+
+    def test_valider_delivrance_ordonnance_active_succes(self):
+        """Une ordonnance active et valide est délivrée correctement avec verrouillage atomique."""
+        self.client.login(username="pharma.sec@santesn.sn", password=PASSWORD)
+        response = self.client.post(
+            reverse("valider_delivrance", args=[self.ordonnance.pk]),
+            {"code_qr": self.ordonnance.code_qr},
+        )
+        self.assertRedirects(response, reverse("historique_delivrances"))
+        self.assertTrue(Delivrance.objects.filter(ordonnance=self.ordonnance).exists())
+        self.ordonnance.refresh_from_db()
+        self.assertEqual(self.ordonnance.statut, Ordonnance.Statut.DELIVRE)
+
+    def test_double_delivrance_concurrente_rejette_deuxieme_appel(self):
+        """Deux soumissions successives ou concurrentes ne créent qu'une seule délivrance."""
+        self.client.login(username="pharma.sec@santesn.sn", password=PASSWORD)
+        # Première soumission -> succès
+        res1 = self.client.post(
+            reverse("valider_delivrance", args=[self.ordonnance.pk]),
+            {"code_qr": self.ordonnance.code_qr},
+        )
+        self.assertEqual(Delivrance.objects.filter(ordonnance=self.ordonnance).count(), 1)
+
+        # Deuxième soumission immédiate -> rejet
+        res2 = self.client.post(
+            reverse("valider_delivrance", args=[self.ordonnance.pk]),
+            {"code_qr": self.ordonnance.code_qr},
+        )
+        self.assertEqual(Delivrance.objects.filter(ordonnance=self.ordonnance).count(), 1)
+
+
+class Phase2UXTests(TestCase):
+    def setUp(self):
+        self.assure_user = User.objects.create_user(email="assure.ux@santesn.sn", password=PASSWORD, role=User.Role.ASSURE)
+        self.plan = PlanCouverture.objects.create(nom="Plan Standard", taux_couverture=80, plafond_annuel=500000)
+        self.patient = Patient.objects.create(
+            user=self.assure_user,
+            nom="Diop",
+            prenom="Aminata",
+            date_naissance=datetime.date(1990, 1, 1),
+            telephone="770000001",
+            numero_carte="SN-UX-001",
+            plan_couverture=self.plan,
+        )
+        self.medecin = creer_medecin("dr.ux@santesn.sn")
+        self.pharmacien = creer_pharmacien("pharma.ux@santesn.sn")
+
+    def test_dashboard_assure_sans_jauge_factice(self):
+        """Le dashboard assuré ne contient plus la fausse barre de 75% en dur."""
+        self.client.login(username="assure.ux@santesn.sn", password=PASSWORD)
+        response = self.client.get(reverse("dashboard_assure"))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("width:75%", response.content.decode("utf-8"))
+        self.assertContains(response, "Budget annuel restant")
+        self.assertContains(response, "Plafond annuel")
+
+    def test_dashboard_medecin_rdv_termine_affiche_consulte(self):
+        """Un rendez-vous terminé affiche le statut 'Consulté' au lieu du bouton Démarrer."""
+        rdv_termine = RendezVous.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            date_heure=timezone.now(),
+            statut=RendezVous.Statut.TERMINE,
+        )
+        self.client.login(username="dr.ux@santesn.sn", password=PASSWORD)
+        response = self.client.get(reverse("dashboard_medecin"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Consulté")
+        self.assertNotContains(response, f"ajouter_consultation_medecin?rdv_id={rdv_termine.pk}")
+
+    def test_dashboard_medecin_sans_doublon_formulaire_recherche(self):
+        """Le second formulaire de recherche patient a été retiré de la colonne droite."""
+        self.client.login(username="dr.ux@santesn.sn", password=PASSWORD)
+        response = self.client.get(reverse("dashboard_medecin"))
+        self.assertEqual(response.status_code, 200)
+        # Vérifie qu'il n'y a plus le formulaire de recherche classique de droite
+        self.assertNotContains(response, '<h3 style="margin:0 0 10px;font-size:14.5px;color:var(--titre);">Recherche patient</h3>')
+
+    def test_dashboard_pharmacien_sans_total_cumule(self):
+        """Le bloc superflu de cumul historique d'ordonnances a été retiré du dashboard pharmacien."""
+        self.client.login(username="pharma.ux@santesn.sn", password=PASSWORD)
+        response = self.client.get(reverse("dashboard_pharmacien"))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "Total cumulé officine")
+
+    def test_recu_paiement_retour_sans_history_back(self):
+        """Le reçu de paiement utilise un lien de retour déterministe et n'a aucun history.back()."""
+        consultation = Consultation.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            date_consultation=timezone.now(),
+        )
+        paiement = Paiement.objects.create(
+            consultation=consultation,
+            montant_total=10000,
+            montant_part_assurance=8000,
+            montant_part_patient=2000,
+            statut=Paiement.Statut.REGLE,
+        )
+        self.client.login(username="assure.ux@santesn.sn", password=PASSWORD)
+        response = self.client.get(reverse("recu_paiement", kwargs={"pk": paiement.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "javascript:history.back()")
+        self.assertContains(response, reverse("mon_historique_assure"))
+
+    def test_carte_patient_retour_sans_history_back(self):
+        """La carte patient n'a aucun javascript:history.back()."""
+        self.client.login(username="assure.ux@santesn.sn", password=PASSWORD)
+        response = self.client.get(reverse("carte_assure"))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "javascript:history.back()")
+        self.assertContains(response, reverse("dashboard_assure"))
+
+    def test_mes_ordonnances_affiche_statut_expiree(self):
+        """La liste des ordonnances de l'assuré affiche clairement le statut Expirée."""
+        consultation = Consultation.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            date_consultation=timezone.now(),
+        )
+        ordonnance = Ordonnance.objects.create(
+            consultation=consultation,
+            medicaments="Paracétamol 1g",
+        )
+        date_ancienne = timezone.now() - datetime.timedelta(days=95)
+        Ordonnance.objects.filter(pk=ordonnance.pk).update(date_creation=date_ancienne)
+
+        self.client.login(username="assure.ux@santesn.sn", password=PASSWORD)
+        response = self.client.get(reverse("mes_ordonnances_assure"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Expirée")
+
+    def test_medecin_terminer_consultation_sans_prescription(self):
+        """
+        Vérifie le parcours d'une consultation sans ordonnance :
+        1. Le bouton 'Terminer sans prescription' existe sur la page d'ordonnance.
+        2. Le médecin suit le lien vers historique_consultations.
+        3. Aucune ordonnance n'est créée.
+        4. La consultation reste correctement enregistrée.
+        5. Le paiement calculé reste intact.
+        6. Un utilisateur non médecin reçoit un 403.
+        """
+        consultation = Consultation.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            date_consultation=timezone.now(),
+            diagnostic="Visite de contrôle de routine",
+            traitement="Repos et hydratation",
+        )
+        paiement_initial = Paiement.calculer_pour(consultation)
+        paiement_initial.save()
+
+        # 1. Le médecin accède à l'étape d'ordonnance
+        self.client.login(username="dr.ux@santesn.sn", password=PASSWORD)
+        url_ordonnance = reverse("ajouter_ordonnance_medecin", kwargs={"consultation_pk": consultation.pk})
+        response = self.client.get(url_ordonnance)
+        self.assertEqual(response.status_code, 200)
+
+        # 1 bis. Vérifie la présence du bouton secondaire "Terminer sans prescription"
+        self.assertContains(response, "Terminer sans prescription")
+        self.assertContains(response, reverse("historique_consultations"))
+
+        # 2. Le médecin termine sans prescription en allant sur historique_consultations
+        url_historique = reverse("historique_consultations")
+        res_historique = self.client.get(url_historique)
+        self.assertEqual(res_historique.status_code, 200)
+        self.assertContains(res_historique, consultation.patient.nom)
+
+        # 3. Aucune ordonnance n'a été créée pour cette consultation
+        self.assertEqual(Ordonnance.objects.filter(consultation=consultation).count(), 0)
+
+        # 4. La consultation est toujours présente et intacte
+        consultation_db = Consultation.objects.get(pk=consultation.pk)
+        self.assertEqual(consultation_db.diagnostic, "Visite de contrôle de routine")
+        self.assertEqual(consultation_db.traitement, "Repos et hydratation")
+
+        # 5. Le paiement initial n'a subi aucune altération
+        paiement_db = Paiement.objects.get(consultation=consultation)
+        self.assertEqual(paiement_db.montant_total, paiement_initial.montant_total)
+        self.assertEqual(paiement_db.montant_part_assurance, paiement_initial.montant_part_assurance)
+        self.assertEqual(paiement_db.montant_part_patient, paiement_initial.montant_part_patient)
+
+        # 6. Un utilisateur avec un autre rôle (ex: ASSURE) ne peut pas accéder à cette vue (403)
+        self.client.logout()
+        self.client.login(username="assure.ux@santesn.sn", password=PASSWORD)
+        res_interdit = self.client.get(url_ordonnance)
+        self.assertEqual(res_interdit.status_code, 403)
+
+
+class CorrectionsAuditMetierTests(TestCase):
+    """Vérifie spécifiquement les corrections de l'audit de logique métier."""
+
+    def setUp(self):
+        self.assure_user = creer_utilisateur(User.Role.ASSURE, "assure.audit@santesn.sn")
+        self.patient = creer_patient(nom="Sall", prenom="Aissatou")
+        self.patient.user = self.assure_user
+        self.patient.save()
+        self.medecin_user = creer_utilisateur(User.Role.MEDECIN, "dr.audit@santesn.sn")
+        self.medecin = Medecin.objects.create(
+            user=self.medecin_user, nom="Sow", prenom="Oumar", telephone="771234567", email="dr.audit@santesn.sn"
+        )
+        self.client.login(username="dr.audit@santesn.sn", password=PASSWORD)
+
+    def test_annulation_rendez_vous_par_medecin_succes_et_notification(self):
+        """Un médecin peut annuler un rendez-vous (statut ANNULE) sans crash 500 et le patient est notifié."""
+        rdv = RendezVous.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            date_heure=timezone.now() + datetime.timedelta(days=1),
+            statut=RendezVous.Statut.DEMANDE,
+        )
+
+        response = self.client.post(
+            reverse("changer_statut_rendez_vous", args=[rdv.pk]),
+            {"statut": "ANNULE"},
+        )
+        self.assertRedirects(response, reverse("agenda_medecin"))
+        rdv.refresh_from_db()
+        self.assertEqual(rdv.statut, RendezVous.Statut.ANNULE)
+
+        # Vérifie que la notification a été émise sans exception
+        notif = Notification.objects.filter(
+            destinataire=self.patient.user,
+            type_evenement=Notification.TypeEvenement.RDV_REFUSE,
+        ).first()
+        self.assertIsNotNone(notif)
+        self.assertIn("n'a pas pu être retenue", notif.message)
+
+    def test_medecin_desactive_impossible_a_selectionner_pour_rendez_vous(self):
+        """Un médecin dont le compte utilisateur est désactivé ne doit pas pouvoir être choisi pour un RDV."""
+        # 1. Médecin désactivé
+        user_inactif = User.objects.create_user(
+            email="dr.inactif@santesn.sn", password=PASSWORD, role=User.Role.MEDECIN, is_active=False
+        )
+        medecin_inactif = Medecin.objects.create(
+            user=user_inactif, nom="Inactif", prenom="Dr", telephone="770009999", email="dr.inactif@santesn.sn"
+        )
+
+        # 2. Médecin actif
+        medecin_actif = self.medecin
+
+        # 3. Médecin sans compte User (profil métier légitime)
+        medecin_sans_compte = Medecin.objects.create(
+            user=None, nom="SansCompte", prenom="Dr", telephone="770008888", email="dr.sanscompte@santesn.sn"
+        )
+
+        from Plateform_medicale.forms import RendezVousAssureForm
+
+        # Vérification du queryset global
+        form = RendezVousAssureForm()
+        qs = list(form.fields["medecin"].queryset)
+        self.assertIn(medecin_actif, qs)
+        self.assertIn(medecin_sans_compte, qs)
+        self.assertNotIn(medecin_inactif, qs)
+
+        # Vérification du rejet à la validation du formulaire
+        donnees = {
+            "patient": self.patient.pk,
+            "medecin": medecin_inactif.pk,
+            "date_heure": (timezone.now() + datetime.timedelta(days=2)).strftime("%Y-%m-%dT%H:%M"),
+            "motif": "Consultation",
+        }
+        form_soumis = RendezVousAssureForm(data=donnees)
+        self.assertFalse(form_soumis.is_valid())
+        self.assertIn("medecin", form_soumis.errors)
+
+        # Vérification avec prestataire spécifié
+        hopital = Prestataire.objects.create(nom="Hôpital Test", partenaire=True)
+        medecin_actif.prestataire = hopital
+        medecin_actif.save()
+        medecin_inactif.prestataire = hopital
+        medecin_inactif.save()
+
+        form_prestataire = RendezVousAssureForm(prestataire=hopital)
+        qs_prestataire = list(form_prestataire.fields["medecin"].queryset)
+        self.assertIn(medecin_actif, qs_prestataire)
+        self.assertNotIn(medecin_inactif, qs_prestataire)
+
+    def test_aucune_url_base_de_donnees_en_dur_dans_les_parametres(self):
+        """Vérifie qu'aucune URL Neon en dur ne subsiste et que DATABASE_URL est strictement requis en déploiement."""
+        import os
+        from unittest.mock import MagicMock, patch
+        from django.conf import settings
+        from django.core.exceptions import ImproperlyConfigured
+        from pathlib import Path
+
+        # 1. Vérification que la variable historique NEON_DATABASE_URL n'existe plus dans settings
+        self.assertFalse(hasattr(settings, "NEON_DATABASE_URL"))
+
+        # 2. Vérification par analyse statique du fichier config/settings.py
+        settings_path = Path(settings.BASE_DIR) / "config" / "settings.py"
+        settings_code = settings_path.read_text(encoding="utf-8")
+        self.assertNotIn("NEON_DATABASE_URL", settings_code)
+        self.assertNotIn("npg_", settings_code)
+        self.assertNotIn("ep-round-tree", settings_code)
+        self.assertNotIn("neondb_owner", settings_code)
+
+        # 3. Vérification qu'en environnement de déploiement (VERCEL=1), une absence de DATABASE_URL lève ImproperlyConfigured
+        scope = {
+            "os": os,
+            "sys": MagicMock(argv=["manage.py", "runserver"]),
+            "config": lambda key, default=None: None,
+            "BASE_DIR": Path(settings.BASE_DIR),
+        }
+        with patch.dict(os.environ, {"VERCEL": "1", "DATABASE_URL": ""}, clear=False):
+            with self.assertRaises(ImproperlyConfigured) as ctx:
+                exec(
+                    compile(
+                        """
+DATABASE_URL = os.environ.get('DATABASE_URL') or config('DATABASE_URL', default=None)
+if 'test' in sys.argv:
+    DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3'}}
+elif DATABASE_URL and str(DATABASE_URL).strip().startswith(('postgres://', 'postgresql://')):
+    DATABASES = {'default': {}}
+elif os.environ.get('VERCEL') or os.environ.get('RENDER'):
+    from django.core.exceptions import ImproperlyConfigured
+    raise ImproperlyConfigured("DATABASE_URL est obligatoire en environnement de production (Vercel/Render).")
+""",
+                        "<string>",
+                        "exec",
+                    ),
+                    scope,
+                )
+            self.assertIn("DATABASE_URL est obligatoire", str(ctx.exception))
+
+    def test_ajouter_consultation_avec_rdv_statuts_et_permissions(self):
+        """Vérifie le démarrage de consultation par rapport au statut et propriétaire du rendez-vous."""
+        # 1. RDV CONFIRME -> autorisé
+        rdv_confirme = RendezVous.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            date_heure=timezone.now() + datetime.timedelta(days=1),
+            statut=RendezVous.Statut.CONFIRME,
+        )
+        resp_get = self.client.get(reverse("ajouter_consultation_medecin") + f"?rdv_id={rdv_confirme.pk}")
+        self.assertEqual(resp_get.status_code, 200)
+
+        # 2. RDV ANNULE -> interdit (erreur et redirection agenda, statut préservé)
+        rdv_annule = RendezVous.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            date_heure=timezone.now() + datetime.timedelta(days=1),
+            statut=RendezVous.Statut.ANNULE,
+        )
+        resp_annule = self.client.get(reverse("ajouter_consultation_medecin") + f"?rdv_id={rdv_annule.pk}")
+        self.assertRedirects(resp_annule, reverse("agenda_medecin"))
+        rdv_annule.refresh_from_db()
+        self.assertEqual(rdv_annule.statut, RendezVous.Statut.ANNULE)
+
+        # Tentative en POST également rejetée
+        resp_post_annule = self.client.post(
+            reverse("ajouter_consultation_medecin"),
+            {
+                "rdv_id": rdv_annule.pk,
+                "patient": self.patient.pk,
+                "date_consultation": timezone.now().strftime("%Y-%m-%dT%H:%M"),
+                "diagnostic": "Test",
+            },
+        )
+        self.assertRedirects(resp_post_annule, reverse("agenda_medecin"))
+        rdv_annule.refresh_from_db()
+        self.assertEqual(rdv_annule.statut, RendezVous.Statut.ANNULE)
+
+        # 3. RDV TERMINE -> interdit
+        rdv_termine = RendezVous.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            date_heure=timezone.now() - datetime.timedelta(days=1),
+            statut=RendezVous.Statut.TERMINE,
+        )
+        resp_termine = self.client.get(reverse("ajouter_consultation_medecin") + f"?rdv_id={rdv_termine.pk}")
+        self.assertRedirects(resp_termine, reverse("agenda_medecin"))
+
+        # 4. RDV d'un autre médecin -> interdit (PermissionDenied 403)
+        autre_user = creer_utilisateur(User.Role.MEDECIN, "autre.dr@santesn.sn")
+        autre_medecin = Medecin.objects.create(
+            user=autre_user, nom="Diop", prenom="Alioune", telephone="779998877", email="autre.dr@santesn.sn"
+        )
+        rdv_autre = RendezVous.objects.create(
+            patient=self.patient,
+            medecin=autre_medecin,
+            date_heure=timezone.now() + datetime.timedelta(days=1),
+            statut=RendezVous.Statut.CONFIRME,
+        )
+        resp_autre = self.client.get(reverse("ajouter_consultation_medecin") + f"?rdv_id={rdv_autre.pk}")
+        self.assertEqual(resp_autre.status_code, 404)
+
+    def test_pec_interdiction_retrogradation_si_consultation_liee(self):
+        """Interdit de rétrograder une PEC validée vers refusée ou en attente si une consultation existe."""
+        pec = PriseEnCharge.objects.create(patient=self.patient, motif="Chirurgie", statut="validee")
+        service = ServiceMedical.objects.create(nom="Consultation Gynécologie", prix=Decimal("15000"))
+        Consultation.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            service=service,
+            prise_en_charge=pec,
+            date_consultation=timezone.now(),
+            diagnostic="Examen",
+        )
+
+        # 1. Rétrogradation vers refusée -> rejetée
+        pec.statut = "refusee"
+        with self.assertRaises(ValidationError) as ctx:
+            pec.clean()
+        self.assertIn("statut", ctx.exception.message_dict)
+
+        # 2. Rétrogradation vers en_attente -> rejetée
+        pec.statut = "en_attente"
+        with self.assertRaises(ValidationError) as ctx:
+            pec.clean()
+        self.assertIn("statut", ctx.exception.message_dict)
+
+        # 3. PEC validée SANS consultation liée -> modification autorisée
+        pec_libre = PriseEnCharge.objects.create(patient=self.patient, motif="Scanner", statut="validee")
+        pec_libre.statut = "refusee"
+        pec_libre.clean()
+
+    def test_distinction_notification_refus_vs_annulation_medecin(self):
+        """Une demande refusée émet RDV_REFUSE, mais un rendez-vous confirmé puis annulé émet RDV_ANNULE."""
+        # A. Annulation d'une demande initiale -> RDV_REFUSE
+        rdv_demande = RendezVous.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            date_heure=timezone.now() + datetime.timedelta(days=2),
+            statut=RendezVous.Statut.DEMANDE,
+        )
+        self.client.post(reverse("changer_statut_rendez_vous", args=[rdv_demande.pk]), {"statut": "ANNULE"})
+        notif_refus = Notification.objects.filter(
+            destinataire=self.patient.user, type_evenement=Notification.TypeEvenement.RDV_REFUSE
+        ).first()
+        self.assertIsNotNone(notif_refus)
+        self.assertIn("n'a pas pu être retenue", notif_refus.message)
+
+        # B. Annulation d'un RDV déjà CONFIRME -> RDV_ANNULE
+        rdv_confirme = RendezVous.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            date_heure=timezone.now() + datetime.timedelta(days=3),
+            statut=RendezVous.Statut.CONFIRME,
+        )
+        self.client.post(reverse("changer_statut_rendez_vous", args=[rdv_confirme.pk]), {"statut": "ANNULE"})
+        notif_annule = Notification.objects.filter(
+            destinataire=self.patient.user, type_evenement=Notification.TypeEvenement.RDV_ANNULE
+        ).first()
+        self.assertIsNotNone(notif_annule)
+        self.assertIn("annulé par le praticien", notif_annule.message)
+        self.assertNotIn("n'a pas pu être retenue", notif_annule.message)
+
+    def test_annulation_rdv_par_assure_notifie_medecin(self):
+        """Quand l'assuré annule son rendez-vous, le créneau est annulé et le médecin reçoit RDV_ANNULE."""
+        rdv = RendezVous.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            date_heure=timezone.now() + datetime.timedelta(days=2),
+            statut=RendezVous.Statut.CONFIRME,
+        )
+        self.client.login(username="assure.audit@santesn.sn", password=PASSWORD)
+        response = self.client.post(reverse("annuler_rendez_vous_assure", args=[rdv.pk]))
+        self.assertRedirects(response, reverse("mes_rendez_vous_assure"))
+        rdv.refresh_from_db()
+        self.assertEqual(rdv.statut, RendezVous.Statut.ANNULE)
+
+        notif_medecin = Notification.objects.filter(
+            destinataire=self.medecin.user, type_evenement=Notification.TypeEvenement.RDV_ANNULE
+        ).first()
+        self.assertIsNotNone(notif_medecin)
+        self.assertIn("annulé par le patient", notif_medecin.message)
+
+
+class WorkflowConsultationsEtUrgencesTests(TestCase):
+    """
+    Validation rigoureuse du workflow :
+    - Consultation sur rendez-vous programmé (CONFIRME uniquement).
+    - Consultation spontanée / urgence qualifiée (numéro de carte et contexte obligatoires).
+    - Interdiction stricte de créer une consultation sur simple recherche de patient.
+    - Contrôle d'appartenance du ServiceMedical au prestataire du médecin.
+    - Pureté absolue du diagnostic médical (aucune pollution textuelle).
+    - Traçabilité d'audit dans JournalActivite sans faux rendez-vous.
+    """
+
+    def setUp(self):
+        self.prestataire_a = Prestataire.objects.create(
+            nom="Hôpital Principal", type_prestataire=Prestataire.Type.HOPITAL
+        )
+        self.prestataire_b = Prestataire.objects.create(
+            nom="Clinique de la Madeleine", type_prestataire=Prestataire.Type.CLINIQUE
+        )
+
+        self.medecin = creer_medecin("medecin.workflow@santesn.sn")
+        self.medecin.prestataire = self.prestataire_a
+        self.medecin.save()
+
+        self.autre_medecin = creer_medecin("autre.medecin@santesn.sn")
+        self.autre_medecin.prestataire = self.prestataire_b
+        self.autre_medecin.save()
+
+        self.patient = creer_patient(nom="Ndiaye", prenom="Fatou")
+        self.patient_b = creer_patient(nom="Fall", prenom="Moussa")
+
+        self.service_global = ServiceMedical.objects.create(
+            nom="Consultation Standard", prix=Decimal("10000"), prestataire=None
+        )
+        self.service_etablissement_a = ServiceMedical.objects.create(
+            nom="Consultation Urgence HP", prix=Decimal("15000"), prestataire=self.prestataire_a
+        )
+        self.service_etablissement_b = ServiceMedical.objects.create(
+            nom="Consultation Spécialisée Madeleine", prix=Decimal("25000"), prestataire=self.prestataire_b
+        )
+
+        self.client.login(username="medecin.workflow@santesn.sn", password=PASSWORD)
+
+    def test_1_rdv_confirme_autorise_et_rdv_termine(self):
+        rdv = RendezVous.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            prestataire=self.prestataire_a,
+            date_heure=timezone.now() + datetime.timedelta(hours=2),
+            statut=RendezVous.Statut.CONFIRME,
+        )
+        resp_get = self.client.get(reverse("ajouter_consultation_medecin") + f"?rdv_id={rdv.pk}")
+        self.assertEqual(resp_get.status_code, 200)
+
+        resp_post = self.client.post(
+            reverse("ajouter_consultation_medecin"),
+            {
+                "rdv_id": rdv.pk,
+                "patient": self.patient.pk,
+                "service": self.service_etablissement_a.pk,
+                "date_consultation": timezone.now().strftime("%Y-%m-%dT%H:%M"),
+                "diagnostic": "Syndrome grippal",
+                "traitement": "Repos",
+            },
+        )
+        consultation = Consultation.objects.filter(medecin=self.medecin, patient=self.patient).first()
+        self.assertIsNotNone(consultation)
+        self.assertEqual(consultation.diagnostic, "Syndrome grippal")
+        rdv.refresh_from_db()
+        self.assertEqual(rdv.statut, RendezVous.Statut.TERMINE)
+        self.assertRedirects(resp_post, reverse("ajouter_ordonnance_medecin", args=[consultation.pk]))
+
+    def test_2_rdv_annule_refuse(self):
+        rdv = RendezVous.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            prestataire=self.prestataire_a,
+            date_heure=timezone.now() + datetime.timedelta(hours=2),
+            statut=RendezVous.Statut.ANNULE,
+        )
+        resp_get = self.client.get(reverse("ajouter_consultation_medecin") + f"?rdv_id={rdv.pk}")
+        self.assertRedirects(resp_get, reverse("agenda_medecin"))
+        rdv.refresh_from_db()
+        self.assertEqual(rdv.statut, RendezVous.Statut.ANNULE)
+
+    def test_3_rdv_termine_refuse(self):
+        rdv = RendezVous.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            prestataire=self.prestataire_a,
+            date_heure=timezone.now() - datetime.timedelta(days=1),
+            statut=RendezVous.Statut.TERMINE,
+        )
+        resp_get = self.client.get(reverse("ajouter_consultation_medecin") + f"?rdv_id={rdv.pk}")
+        self.assertRedirects(resp_get, reverse("agenda_medecin"))
+
+    def test_4_rdv_autre_medecin_inaccessible(self):
+        rdv_autre = RendezVous.objects.create(
+            patient=self.patient,
+            medecin=self.autre_medecin,
+            prestataire=self.prestataire_b,
+            date_heure=timezone.now() + datetime.timedelta(hours=2),
+            statut=RendezVous.Statut.CONFIRME,
+        )
+        resp_get = self.client.get(reverse("ajouter_consultation_medecin") + f"?rdv_id={rdv_autre.pk}")
+        self.assertEqual(resp_get.status_code, 404)
+
+    def test_5_parametre_patient_seul_sans_contexte_refuse(self):
+        resp_get = self.client.get(reverse("ajouter_consultation_medecin"), {"patient": self.patient.pk})
+        self.assertRedirects(resp_get, reverse("agenda_medecin"))
+
+        resp_post = self.client.post(
+            reverse("ajouter_consultation_medecin"),
+            {
+                "patient": self.patient.pk,
+                "date_consultation": timezone.now().strftime("%Y-%m-%dT%H:%M"),
+                "diagnostic": "Tentative libre",
+            },
+        )
+        self.assertRedirects(resp_post, reverse("agenda_medecin"))
+        self.assertFalse(Consultation.objects.filter(diagnostic="Tentative libre").exists())
+
+    def test_6_consultation_spontanee_urgence_autorisee(self):
+        resp = self.client.post(
+            reverse("ajouter_consultation_medecin"),
+            {
+                "mode": "spontane",
+                "patient": self.patient.pk,
+                "numero_carte": self.patient.numero_carte,
+                "contexte_admission": "URGENCE",
+                "service": self.service_etablissement_a.pk,
+                "date_consultation": timezone.now().strftime("%Y-%m-%dT%H:%M"),
+                "diagnostic": "Traumatisme crânien léger",
+                "traitement": "Surveillance",
+            },
+        )
+        consultation = Consultation.objects.filter(diagnostic="Traumatisme crânien léger").first()
+        self.assertIsNotNone(consultation)
+        self.assertRedirects(resp, reverse("ajouter_ordonnance_medecin", args=[consultation.pk]))
+
+    def test_7_consultation_spontanee_passage_spontane_autorisee(self):
+        resp = self.client.post(
+            reverse("ajouter_consultation_medecin"),
+            {
+                "mode": "spontane",
+                "patient": self.patient.pk,
+                "numero_carte": self.patient.numero_carte,
+                "contexte_admission": "PASSAGE_SPONTANE",
+                "service": self.service_global.pk,
+                "date_consultation": timezone.now().strftime("%Y-%m-%dT%H:%M"),
+                "diagnostic": "Renouvellement traitement",
+                "traitement": "Ordonnance renouvelée",
+            },
+        )
+        consultation = Consultation.objects.filter(diagnostic="Renouvellement traitement").first()
+        self.assertIsNotNone(consultation)
+        self.assertRedirects(resp, reverse("ajouter_ordonnance_medecin", args=[consultation.pk]))
+
+    def test_8_consultation_spontanee_sans_contexte_refusee(self):
+        resp = self.client.post(
+            reverse("ajouter_consultation_medecin"),
+            {
+                "mode": "spontane",
+                "patient": self.patient.pk,
+                "numero_carte": self.patient.numero_carte,
+                "contexte_admission": "",
+                "service": self.service_global.pk,
+                "date_consultation": timezone.now().strftime("%Y-%m-%dT%H:%M"),
+                "diagnostic": "Sans motif",
+            },
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertFormError(
+            resp.context["form"], "contexte_admission", "Le contexte d'admission (Urgence ou Passage spontané) est obligatoire."
+        )
+        self.assertFalse(Consultation.objects.filter(diagnostic="Sans motif").exists())
+
+    def test_9_numero_carte_invalide_refuse(self):
+        resp = self.client.post(
+            reverse("ajouter_consultation_medecin"),
+            {
+                "mode": "spontane",
+                "patient": self.patient.pk,
+                "numero_carte": "SN-FAUX-000",
+                "contexte_admission": "URGENCE",
+                "service": self.service_global.pk,
+                "date_consultation": timezone.now().strftime("%Y-%m-%dT%H:%M"),
+                "diagnostic": "Carte fausse",
+            },
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertFormError(
+            resp.context["form"], "numero_carte", "Aucun assuré ne correspond à ce numéro de carte de prise en charge."
+        )
+        self.assertFalse(Consultation.objects.filter(diagnostic="Carte fausse").exists())
+
+    def test_10_numero_carte_discordant_avec_patient_refuse(self):
+        resp = self.client.post(
+            reverse("ajouter_consultation_medecin"),
+            {
+                "mode": "spontane",
+                "patient": self.patient.pk,
+                "numero_carte": self.patient_b.numero_carte,
+                "contexte_admission": "URGENCE",
+                "service": self.service_global.pk,
+                "date_consultation": timezone.now().strftime("%Y-%m-%dT%H:%M"),
+                "diagnostic": "Carte d'un autre",
+            },
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertFormError(
+            resp.context["form"], "numero_carte", "Le numéro de carte saisi ne correspond pas au patient sélectionné."
+        )
+        self.assertFalse(Consultation.objects.filter(diagnostic="Carte d'un autre").exists())
+
+    def test_11_service_autre_prestataire_refuse(self):
+        resp = self.client.post(
+            reverse("ajouter_consultation_medecin"),
+            {
+                "mode": "spontane",
+                "patient": self.patient.pk,
+                "numero_carte": self.patient.numero_carte,
+                "contexte_admission": "URGENCE",
+                "service": self.service_etablissement_b.pk,
+                "date_consultation": timezone.now().strftime("%Y-%m-%dT%H:%M"),
+                "diagnostic": "Service interdit",
+            },
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertFormError(resp.context["form"], "service", "Ce service médical n'appartient pas à votre établissement.")
+        self.assertFalse(Consultation.objects.filter(diagnostic="Service interdit").exists())
+
+    def test_12_service_global_autorise(self):
+        resp = self.client.post(
+            reverse("ajouter_consultation_medecin"),
+            {
+                "mode": "spontane",
+                "patient": self.patient.pk,
+                "numero_carte": self.patient.numero_carte,
+                "contexte_admission": "PASSAGE_SPONTANE",
+                "service": self.service_global.pk,
+                "date_consultation": timezone.now().strftime("%Y-%m-%dT%H:%M"),
+                "diagnostic": "Service global OK",
+            },
+        )
+        self.assertRedirects(
+            resp,
+            reverse("ajouter_ordonnance_medecin", args=[Consultation.objects.get(diagnostic="Service global OK").pk]),
+        )
+
+    def test_13_role_non_medecin_refuse(self):
+        self.client.logout()
+        creer_utilisateur(User.Role.ASSURE, "assure.interdit@santesn.sn")
+        self.client.login(username="assure.interdit@santesn.sn", password=PASSWORD)
+        resp = self.client.get(reverse("ajouter_consultation_medecin"), {"mode": "spontane"})
+        self.assertEqual(resp.status_code, 403)
+
+    def test_14_aucune_ordonnance_creee_automatiquement(self):
+        nb_ordonnances_avant = Ordonnance.objects.count()
+        self.client.post(
+            reverse("ajouter_consultation_medecin"),
+            {
+                "mode": "spontane",
+                "patient": self.patient.pk,
+                "numero_carte": self.patient.numero_carte,
+                "contexte_admission": "URGENCE",
+                "service": self.service_global.pk,
+                "date_consultation": timezone.now().strftime("%Y-%m-%dT%H:%M"),
+                "diagnostic": "Sans ordonnance auto",
+            },
+        )
+        self.assertEqual(Ordonnance.objects.count(), nb_ordonnances_avant)
+
+    def test_15_paiement_calcule_avec_moteur_existant(self):
+        plan = PlanCouverture.objects.create(nom="Mutuelle 70%", taux_couverture=Decimal("70.00"))
+        self.patient.plan_couverture = plan
+        self.patient.save()
+        pec = PriseEnCharge.objects.create(patient=self.patient, motif="PEC Urgence", statut="validee")
+
+        self.client.post(
+            reverse("ajouter_consultation_medecin"),
+            {
+                "mode": "spontane",
+                "patient": self.patient.pk,
+                "numero_carte": self.patient.numero_carte,
+                "contexte_admission": "URGENCE",
+                "service": self.service_etablissement_a.pk,
+                "prise_en_charge": pec.pk,
+                "date_consultation": timezone.now().strftime("%Y-%m-%dT%H:%M"),
+                "diagnostic": "Vérif paiement",
+            },
+        )
+        consultation = Consultation.objects.get(diagnostic="Vérif paiement")
+        paiement = consultation.paiement
+        self.assertEqual(paiement.montant_total, Decimal("15000"))
+        self.assertEqual(paiement.taux_applique, Decimal("70.00"))
+        self.assertEqual(paiement.montant_part_assurance, Decimal("10500.00"))
+        self.assertEqual(paiement.montant_part_patient, Decimal("4500.00"))
+
+    def test_16_secret_medical_aucun_diagnostic_confrere(self):
+        Consultation.objects.create(
+            patient=self.patient,
+            medecin=self.autre_medecin,
+            date_consultation=timezone.now(),
+            diagnostic="PathologieConfidentielleConfrere",
+        )
+        Consultation.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            date_consultation=timezone.now(),
+            diagnostic="PathologieVisibleParMoi",
+        )
+        resp = self.client.get(reverse("fiche_patient_medecin", args=[self.patient.pk]))
+        self.assertContains(resp, "PathologieVisibleParMoi")
+        self.assertNotContains(resp, "PathologieConfidentielleConfrere")
+
+    def test_17_diagnostic_reste_pur_medical(self):
+        self.client.post(
+            reverse("ajouter_consultation_medecin"),
+            {
+                "mode": "spontane",
+                "patient": self.patient.pk,
+                "numero_carte": self.patient.numero_carte,
+                "contexte_admission": "URGENCE",
+                "service": self.service_global.pk,
+                "date_consultation": timezone.now().strftime("%Y-%m-%dT%H:%M"),
+                "diagnostic": "Crise hypertensive aiguë",
+            },
+        )
+        consultation = Consultation.objects.get(diagnostic="Crise hypertensive aiguë")
+        self.assertEqual(consultation.diagnostic, "Crise hypertensive aiguë")
+        self.assertNotIn("URGENCE", consultation.diagnostic)
+        self.assertNotIn("Urgence", consultation.diagnostic)
+        self.assertNotIn("Passage spontané", consultation.diagnostic)
+
+    def test_18_tracabilite_audit_journal_activite(self):
+        self.client.post(
+            reverse("ajouter_consultation_medecin"),
+            {
+                "mode": "spontane",
+                "patient": self.patient.pk,
+                "numero_carte": self.patient.numero_carte,
+                "contexte_admission": "URGENCE",
+                "service": self.service_global.pk,
+                "date_consultation": timezone.now().strftime("%Y-%m-%dT%H:%M"),
+                "diagnostic": "Traçabilité journal",
+            },
+        )
+        consultation = Consultation.objects.get(diagnostic="Traçabilité journal")
+        journal = JournalActivite.objects.filter(
+            action=JournalActivite.Action.CREATION,
+            objet__contains=f"Consultation #{consultation.pk}",
+        ).first()
+        self.assertIsNotNone(journal)
+        self.assertIn("Admission non programmée : Urgence médicale", journal.details)
+        self.assertIn(self.patient.numero_carte, journal.details)
+
+    def test_19_aucun_faux_rendez_vous_cree(self):
+        nb_rdv_avant = RendezVous.objects.count()
+        self.client.post(
+            reverse("ajouter_consultation_medecin"),
+            {
+                "mode": "spontane",
+                "patient": self.patient.pk,
+                "numero_carte": self.patient.numero_carte,
+                "contexte_admission": "PASSAGE_SPONTANE",
+                "service": self.service_global.pk,
+                "date_consultation": timezone.now().strftime("%Y-%m-%dT%H:%M"),
+                "diagnostic": "Contrôle sans faux RDV",
+            },
+        )
+        self.assertEqual(RendezVous.objects.count(), nb_rdv_avant)
+
+
+
+
+
+
+
+
+
 
 

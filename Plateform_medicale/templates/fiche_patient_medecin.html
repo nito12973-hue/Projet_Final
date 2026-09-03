@@ -15,7 +15,15 @@
     </div>
     <div class="actions">
         <a class="button" href="{% url 'mes_patients' %}">{% icone "chevron-left" %} Mes patients</a>
-        <a class="button primary" href="{% url 'ajouter_consultation_medecin' %}?patient={{ patient.pk }}">{% icone "plus-circle" %} Nouvelle consultation</a>
+        {% if rdv_confirme %}
+        <a class="button primary" href="{% url 'ajouter_consultation_medecin' %}?rdv_id={{ rdv_confirme.pk }}">
+            {% icone "stethoscope" %} Démarrer la consultation (RDV programmé)
+        </a>
+        {% else %}
+        <a class="button secondary" href="{% url 'ajouter_consultation_medecin' %}?mode=spontane&numero_carte={{ patient.numero_carte }}">
+            {% icone "alert-triangle" %} Consultation spontanée / urgence
+        </a>
+        {% endif %}
     </div>
 </section>
 
@@ -107,9 +115,15 @@
             <h2 style="margin:0;">Historique &amp; Chronologie Clinique</h2>
             <p class="subtitle" style="margin:2px 0 0;">Suivi médical et antécédents de consultation</p>
         </div>
-        <a class="button primary btn-sm" href="{% url 'ajouter_consultation_medecin' %}?patient={{ patient.pk }}">
-            {% icone "plus-circle" %} Nouvelle consultation
+        {% if rdv_confirme %}
+        <a class="button primary btn-sm" href="{% url 'ajouter_consultation_medecin' %}?rdv_id={{ rdv_confirme.pk }}">
+            {% icone "stethoscope" %} Démarrer la consultation
         </a>
+        {% else %}
+        <a class="button secondary btn-sm" href="{% url 'ajouter_consultation_medecin' %}?mode=spontane&numero_carte={{ patient.numero_carte }}">
+            {% icone "alert-triangle" %} Consultation spontanée / urgence
+        </a>
+        {% endif %}
     </div>
 
     {% if historique %}
@@ -163,9 +177,15 @@
     <div class="etat-vide" style="padding:32px 0;">
         {% illustration_vide "clipboard-list" %}
         <p style="margin:8px 0 14px;">Aucune consultation enregistrée pour ce patient.</p>
-        <a class="button primary btn-sm" href="{% url 'ajouter_consultation_medecin' %}?patient={{ patient.pk }}">
-            {% icone "plus-circle" %} Démarrer une première consultation
+        {% if rdv_confirme %}
+        <a class="button primary btn-sm" href="{% url 'ajouter_consultation_medecin' %}?rdv_id={{ rdv_confirme.pk }}">
+            {% icone "stethoscope" %} Démarrer la consultation (RDV)
         </a>
+        {% else %}
+        <a class="button secondary btn-sm" href="{% url 'ajouter_consultation_medecin' %}?mode=spontane&numero_carte={{ patient.numero_carte }}">
+            {% icone "alert-triangle" %} Consultation spontanée / urgence
+        </a>
+        {% endif %}
     </div>
     {% endif %}
 </section>

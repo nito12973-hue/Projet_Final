@@ -466,36 +466,44 @@ class PriseEnCharge(models.Model):
         return f"Prise en charge de {self.patient} - {self.statut}"
 
     def clean(self):
-        """Interdit de changer de patient une fois des consultations rattachees.
-
-        Les consultations restent liees a la prise en charge : les reattribuer
-        par ce biais donnerait a un assure les soins d'une autre personne
-        (l'ecran "Mes prises en charge" affiche consultation_set, medecin et
-        montants compris). Corriger une erreur de saisie reste possible tant
-        qu'aucune consultation n'existe -- c'est le seul cas legitime.
-
-        La regle vit ici et non dans le formulaire : /admin/ expose lui aussi
-        ce champ, et les ModelForm des deux cotes appellent full_clean().
-        """
+        """Interdit de changer de patient ou de rétrograder le statut une fois des consultations rattachées."""
         if not self.pk or self.patient_id is None:
             return
-        patient_enregistre = (
+        anciennes_valeurs = (
             type(self).objects.filter(pk=self.pk)
-            .values_list("patient_id", flat=True)
+            .values("patient_id", "statut")
             .first()
         )
-        if (
-            patient_enregistre is not None
-            and patient_enregistre != self.patient_id
-            and self.consultation_set.exists()
-        ):
-            raise ValidationError({
-                "patient": (
-                    "Des consultations sont déjà rattachées à cette prise en "
-                    "charge : la réattribuer donnerait ces soins à une autre "
-                    "personne. Créez une nouvelle prise en charge."
-                ),
-            })
+        if anciennes_valeurs:
+            patient_enregistre = anciennes_valeurs["patient_id"]
+            ancien_statut = anciennes_valeurs["statut"]
+
+            if (
+                patient_enregistre is not None
+                and patient_enregistre != self.patient_id
+                and self.consultation_set.exists()
+            ):
+                raise ValidationError({
+                    "patient": (
+                        "Des consultations sont déjà rattachées à cette prise en "
+                        "charge : la réattribuer donnerait ces soins à une autre "
+                        "personne. Créez une nouvelle prise en charge."
+                    ),
+                })
+
+            # Intégrité financière : interdire la rétrogradation d'une PEC validée
+            # vers refusée ou en attente si des consultations / paiements y sont rattachés.
+            if (
+                ancien_statut == "validee"
+                and self.statut in ("refusee", "en_attente")
+                and self.consultation_set.exists()
+            ):
+                raise ValidationError({
+                    "statut": (
+                        "Cette prise en charge est déjà rattachée à une ou plusieurs "
+                        "consultations : son statut ne peut plus être rétrogradé en attente ou refusé."
+                    ),
+                })
 
 
 class Consultation(models.Model):
@@ -658,6 +666,14 @@ class Ordonnance(models.Model):
     @property
     def est_annulee(self):
         return self.statut == self.Statut.ANNULE
+
+    @property
+    def est_expiree(self):
+        delai = getattr(settings, "DELAI_VALIDITE_ORDONNANCE_JOURS", 90)
+        if not delai:
+            return False
+        return timezone.now() > (self.date_creation + datetime.timedelta(days=delai))
+
 
     def annuler(self, motif=""):
         if hasattr(self, "delivrance") or self.statut == self.Statut.DELIVRE:

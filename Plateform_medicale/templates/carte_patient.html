@@ -23,7 +23,7 @@
         <a class="button btn" href="{% url 'dashboard_assure' %}">{% icone "chevron-left" %} Mon tableau de bord</a>
         <span class="badge ok" style="padding:7px 14px;font-size:13px;">{% icone "shield-check" %} Carte active &amp; vérifiée</span>
         {% else %}
-        <a class="button btn" href="javascript:history.back()">{% icone "chevron-left" %} Retour</a>
+        <a class="button btn" href="{% url 'post_login_redirect' %}">{% icone "chevron-left" %} Retour</a>
         {% endif %}
     </div>
 </section>

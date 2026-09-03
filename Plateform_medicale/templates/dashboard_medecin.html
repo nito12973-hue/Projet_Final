@@ -95,7 +95,9 @@
                     <span class="dash-pill {% if rdv.statut == 'CONFIRME' or rdv.statut == 'TERMINE' %}ok{% elif rdv.statut == 'ANNULE' %}danger{% else %}attente{% endif %}">
                         {{ rdv.get_statut_display }}
                     </span>
-                    {% if rdv.statut != 'TERMINE' and rdv.statut != 'ANNULE' %}
+                    {% if rdv.statut == 'TERMINE' %}
+                    <span class="dash-pill ok" style="font-size:12px;">Consulté</span>
+                    {% elif rdv.statut != 'ANNULE' %}
                     <a href="{% url 'ajouter_consultation_medecin' %}?rdv_id={{ rdv.pk }}" class="button primary btn-sm">
                         Démarrer
                     </a>
@@ -113,20 +115,9 @@
         {% endif %}
     </section>
 
-    {# Colonne Droite : Recherche Patient + Patients récents + Ordonnances récentes #}
+    {# Colonne Droite : Patients récents + Accès historique #}
     <div style="display:flex;flex-direction:column;gap:18px;">
-        {# 1. Recherche patient #}
-        <div class="panel" style="margin:0;padding:18px 20px;">
-            <h3 style="margin:0 0 10px;font-size:14.5px;color:var(--titre);">Recherche patient</h3>
-            <form method="get" action="{% url 'mes_patients' %}" style="display:flex;gap:8px;padding:0;background:none;border:none;box-shadow:none;max-width:none;">
-                <input type="search" name="q" placeholder="Nom, prénom ou N° carte..." style="flex:1;min-width:0;font-size:13px;padding:8px 12px;" aria-label="Rechercher un patient">
-                <button type="submit" class="button primary btn-sm" style="padding:8px 12px;" aria-label="Rechercher">
-                    {% icone "search" %}
-                </button>
-            </form>
-        </div>
-
-        {# 2. Patients récents #}
+        {# 1. Patients récents #}
         <div class="panel" style="margin:0;padding:18px 20px;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
                 <h3 style="margin:0;font-size:14.5px;color:var(--titre);">Patients récents</h3>
@@ -147,24 +138,16 @@
             </div>
         </div>
 
-        {# 3. Ordonnances récentes #}
+        {# 2. Accès aux consultations et ordonnances #}
         <div class="panel" style="margin:0;padding:18px 20px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-                <h3 style="margin:0;font-size:14.5px;color:var(--titre);">Ordonnances récentes</h3>
-                <a href="{% url 'historique_consultations' %}" style="font-size:11.5px;color:var(--primary);text-decoration:none;font-weight:600;">Toutes</a>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:4px;">
-                {% for ord in dernieres_ordonnances %}
-                <a href="{% url 'voir_ordonnance_medecin' ord.pk %}" class="side-list-item">
-                    <span style="display:flex;align-items:center;gap:8px;">
-                        <span style="color:var(--primary);">{% icone "pill" %}</span>
-                        <span>Ordonnance #{{ ord.code_qr }}</span>
-                    </span>
-                    <span style="font-size:11.5px;color:var(--muted);font-weight:normal;">{{ ord.date_creation|date:"d/m" }}</span>
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <h3 style="margin:0;font-size:14px;color:var(--titre);">Consultations &amp; Ordonnances</h3>
+                    <p class="subtitle" style="margin:2px 0 0;font-size:12px;">Historique médical complet</p>
+                </div>
+                <a href="{% url 'historique_consultations' %}" class="button btn btn-sm">
+                    Consulter
                 </a>
-                {% empty %}
-                <p style="margin:0;font-size:12.5px;color:var(--muted);text-align:center;padding:8px 0;">Aucune ordonnance émise.</p>
-                {% endfor %}
             </div>
         </div>
     </div>

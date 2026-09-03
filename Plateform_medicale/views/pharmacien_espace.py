@@ -6,7 +6,9 @@ historique des délivrances.
 import datetime
 
 from django.contrib import messages
+from django.db import transaction
 from django.db.models import Q
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -146,21 +148,35 @@ def valider_delivrance(request, pk):
     if pharmacien is None:
         return render(request, "pharmacien_fiche_manquante.html")
     code_qr = request.POST.get("code_qr", "").strip().upper()
-    ordonnance = get_object_or_404(Ordonnance, pk=pk, code_qr=code_qr)
-    if ordonnance.est_annulee:
-        messages.error(
-            request,
-            f"Ordonnance annulée par le prescripteur ({ordonnance.motif_annulation})."
-        )
-    elif hasattr(ordonnance, "delivrance"):
-        messages.error(request, "Cette ordonnance a déjà été délivrée.")
-    else:
-        delivrance = Delivrance.objects.create(ordonnance=ordonnance, pharmacien=pharmacien)
-        ordonnance.statut = Ordonnance.Statut.DELIVRE
-        ordonnance.save(update_fields=["statut"])
-        from ..services.notifications import notifier_delivrance_effectuee
-        notifier_delivrance_effectuee(delivrance)
-        messages.success(request, "Délivrance validée.", extra_tags="succes-critique")
+    if not code_qr:
+        raise Http404("Code QR manquant.")
+
+    with transaction.atomic():
+        try:
+            ordonnance = Ordonnance.objects.select_for_update().get(pk=pk, code_qr=code_qr)
+        except Ordonnance.DoesNotExist:
+            raise Http404("Aucune ordonnance ne correspond à ce code.")
+
+        if ordonnance.est_annulee:
+            messages.error(
+                request,
+                f"Ordonnance annulée par le prescripteur ({ordonnance.motif_annulation})."
+            )
+        elif hasattr(ordonnance, "delivrance") or ordonnance.statut == Ordonnance.Statut.DELIVRE:
+            messages.error(request, "Cette ordonnance a déjà été délivrée.")
+        elif ordonnance.est_expiree:
+            messages.error(
+                request,
+                "Cette ordonnance a dépassé sa durée de validité et ne peut plus être délivrée."
+            )
+        else:
+            delivrance = Delivrance.objects.create(ordonnance=ordonnance, pharmacien=pharmacien)
+            ordonnance.statut = Ordonnance.Statut.DELIVRE
+            ordonnance.save(update_fields=["statut"])
+            from ..services.notifications import notifier_delivrance_effectuee
+            notifier_delivrance_effectuee(delivrance)
+            messages.success(request, "Délivrance validée.", extra_tags="succes-critique")
+
     return redirect("historique_delivrances")
 
 

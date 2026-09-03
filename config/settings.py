@@ -107,21 +107,29 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-NEON_DATABASE_URL = 'postgresql://neondb_owner:npg_KCjgGRfY9oU2@ep-round-tree-ay6jpqcs-pooler.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require'
 DATABASE_URL = os.environ.get('DATABASE_URL') or config('DATABASE_URL', default=None)
 
-# Sur Vercel, Render ou dès qu'une URL postgres est active :
-if os.environ.get('VERCEL') or os.environ.get('RENDER') or (DATABASE_URL and str(DATABASE_URL).strip().startswith(('postgres://', 'postgresql://'))):
-    target_url = str(DATABASE_URL).strip() if (DATABASE_URL and str(DATABASE_URL).strip().startswith(('postgres://', 'postgresql://'))) else NEON_DATABASE_URL
+# Base de données pour les tests automatisés ou production
+if 'test' in sys.argv:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': ':memory:',
+        }
+    }
+elif DATABASE_URL and str(DATABASE_URL).strip().startswith(('postgres://', 'postgresql://')):
     import dj_database_url
     DATABASES = {
         'default': dj_database_url.parse(
-            target_url,
+            str(DATABASE_URL).strip(),
             conn_max_age=600,
             conn_health_checks=True,
             ssl_require=True,
         )
     }
+elif os.environ.get('VERCEL') or os.environ.get('RENDER'):
+    from django.core.exceptions import ImproperlyConfigured
+    raise ImproperlyConfigured("DATABASE_URL est obligatoire en environnement de production (Vercel/Render).")
 elif config('DB_ENGINE', default='sqlite') == 'postgresql':
     DATABASES = {
         'default': {
@@ -242,6 +250,11 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@santesn.sn')
 SERVER_EMAIL = DEFAULT_FROM_EMAIL  # Adresse des mails d'erreur Django (ADMINS)
 
+# Configuration WhatsApp Business (Meta Cloud API / Passerelle SMS-WhatsApp)
+WHATSAPP_ENABLED = config('WHATSAPP_ENABLED', default=False, cast=bool)
+WHATSAPP_API_TOKEN = config('WHATSAPP_API_TOKEN', default=None)
+WHATSAPP_PHONE_NUMBER_ID = config('WHATSAPP_PHONE_NUMBER_ID', default=None)  # Adresse des mails d'erreur Django (ADMINS)
+
 
 # Logging
 # https://docs.djangoproject.com/en/5.2/topics/logging/
@@ -327,4 +340,9 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
+
+
+# Règle métier : durée de validité d'une ordonnance (en jours, paramétrable)
+DELAI_VALIDITE_ORDONNANCE_JOURS = config('DELAI_VALIDITE_ORDONNANCE_JOURS', default=90, cast=int)
+
 

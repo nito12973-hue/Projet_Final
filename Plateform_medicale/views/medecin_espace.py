@@ -14,9 +14,15 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from ..forms import ConsultationForm, LigneOrdonnanceFormSet, MedecinProfilForm
+from ..forms import (
+    ConsultationForm,
+    ConsultationSpontaneeForm,
+    LigneOrdonnanceFormSet,
+    MedecinProfilForm,
+)
 from ..models import (
     Consultation,
+    JournalActivite,
     Medecin,
     Ordonnance,
     Paiement,
@@ -103,15 +109,23 @@ def agenda_medecin(request):
 def changer_statut_rendez_vous(request, pk):
     medecin = _medecin_courant(request)
     rendez_vous = get_object_or_404(RendezVous, pk=pk, medecin=medecin)
+    ancien_statut = rendez_vous.statut
     nouveau_statut = request.POST.get("statut")
     if nouveau_statut in RendezVous.Statut.values:
         rendez_vous.statut = nouveau_statut
         rendez_vous.save(update_fields=["statut"])
-        from ..services.notifications import notifier_confirmation_rdv, notifier_refus_rdv
+        from ..services.notifications import (
+            notifier_confirmation_rdv,
+            notifier_refus_rdv,
+            notifier_annulation_rdv_par_medecin,
+        )
         if nouveau_statut == RendezVous.Statut.CONFIRME:
             notifier_confirmation_rdv(rendez_vous)
-        elif nouveau_statut == RendezVous.Statut.REFUSE:
-            notifier_refus_rdv(rendez_vous)
+        elif nouveau_statut == RendezVous.Statut.ANNULE:
+            if ancien_statut == RendezVous.Statut.CONFIRME:
+                notifier_annulation_rdv_par_medecin(rendez_vous)
+            else:
+                notifier_refus_rdv(rendez_vous)
         messages.success(request, "Statut du rendez-vous mis à jour.")
     return redirect("agenda_medecin")
 
@@ -221,11 +235,22 @@ def fiche_patient_medecin(request, pk):
         .order_by("date_heure")
     )
 
+    rdv_confirme = (
+        RendezVous.objects.filter(
+            medecin=medecin,
+            patient=patient,
+            statut=RendezVous.Statut.CONFIRME,
+        )
+        .order_by("date_heure")
+        .first()
+    )
+
     contexte = {
         "patient": patient,
         "historique": historique,
         "ayants_droit": ayants_droit,
         "prochains_rendez_vous": prochains_rendez_vous,
+        "rdv_confirme": rdv_confirme,
         "deja_vu": _patients_du_medecin(medecin).filter(pk=patient.pk).exists(),
     }
     return render(request, "fiche_patient_medecin.html", contexte)
@@ -270,32 +295,94 @@ def ajouter_consultation_medecin(request):
         return render(request, "medecin_fiche_manquante.html")
 
     rdv_id = request.GET.get("rdv_id") or request.POST.get("rdv_id")
-    rdv = None
-    if rdv_id and str(rdv_id).isdigit():
-        rdv = get_object_or_404(RendezVous, pk=rdv_id, medecin=medecin)
+    mode = request.GET.get("mode") or request.POST.get("mode")
 
-    if request.method == "POST":
-        form = ConsultationForm(request.POST)
-        if form.is_valid():
-            consultation = form.save(commit=False)
-            consultation.medecin = medecin
-            consultation.save()
-            Paiement.calculer_pour(consultation).save()
-            if rdv:
+    # 1. PARCOURS A : Consultation sur rendez-vous programmé
+    if rdv_id:
+        if not str(rdv_id).isdigit():
+            messages.error(request, "Identifiant de rendez-vous invalide.")
+            return redirect("agenda_medecin")
+        rdv = get_object_or_404(RendezVous, pk=rdv_id, medecin=medecin)
+        if rdv.statut != RendezVous.Statut.CONFIRME:
+            messages.error(
+                request,
+                f"Impossible de démarrer la consultation : ce rendez-vous est {rdv.get_statut_display().lower()} (seul un rendez-vous confirmé peut être consulté)."
+            )
+            return redirect("agenda_medecin")
+
+        if request.method == "POST":
+            form = ConsultationForm(request.POST, medecin=medecin)
+            if form.is_valid():
+                consultation = form.save(commit=False)
+                consultation.medecin = medecin
+                consultation.patient = rdv.patient
+                consultation.save()
+                Paiement.calculer_pour(consultation).save()
                 rdv.statut = RendezVous.Statut.TERMINE
                 rdv.save(update_fields=["statut"])
-            messages.success(request, "Consultation enregistrée avec succès.")
-            return redirect("ajouter_ordonnance_medecin", consultation_pk=consultation.pk)
+                messages.success(request, "Consultation enregistrée avec succès.")
+                return redirect("ajouter_ordonnance_medecin", consultation_pk=consultation.pk)
+        else:
+            initial = {
+                "patient": rdv.patient_id,
+                "date_consultation": timezone.now(),
+            }
+            form = ConsultationForm(initial=initial, medecin=medecin)
+        return render(request, "ajouter_consultation_medecin.html", {
+            "form": form,
+            "rdv": rdv,
+            "mode": "rdv",
+        })
+
+    # 2. PARCOURS B : Consultation spontanée / urgence non programmée
+    elif mode == "spontane":
+        numero_carte = (request.GET.get("numero_carte") or request.POST.get("numero_carte") or "").strip()
+        patient_trouve = None
+        if numero_carte:
+            patient_trouve = Patient.objects.filter(numero_carte__iexact=numero_carte).first()
+
+        if request.method == "POST":
+            form = ConsultationSpontaneeForm(request.POST, medecin=medecin)
+            if form.is_valid():
+                consultation = form.save(commit=False)
+                consultation.medecin = medecin
+                # Le diagnostic reste purement le texte clinique saisi par le praticien
+                consultation.save()
+                Paiement.calculer_pour(consultation).save()
+
+                contexte = form.cleaned_data.get("contexte_admission")
+                contexte_label = "Urgence médicale" if contexte == "URGENCE" else "Passage spontané non programmé"
+                carte = form.cleaned_data.get("numero_carte")
+                etablissement = str(medecin.prestataire) if medecin.prestataire else "Non rattaché"
+                journaliser(
+                    request,
+                    JournalActivite.Action.CREATION,
+                    f"Consultation #{consultation.pk} ({consultation.patient})",
+                    f"Admission non programmée : {contexte_label} | Carte vérifiée : {carte} | Établissement : {etablissement}",
+                )
+
+                messages.success(request, f"Consultation ({contexte_label.lower()}) enregistrée avec succès.")
+                return redirect("ajouter_ordonnance_medecin", consultation_pk=consultation.pk)
+        else:
+            initial = {"date_consultation": timezone.now()}
+            if patient_trouve:
+                initial["patient"] = patient_trouve.pk
+                initial["numero_carte"] = patient_trouve.numero_carte
+            form = ConsultationSpontaneeForm(initial=initial, medecin=medecin)
+        return render(request, "ajouter_consultation_medecin.html", {
+            "form": form,
+            "mode": "spontane",
+            "patient_spontane": patient_trouve,
+        })
+
+    # 3. REJET SERVEUR : tentative d'accès libre sans RDV et sans flux spontané qualifié
     else:
-        patient_id = request.GET.get("patient", "")
-        initial = {}
-        if rdv:
-            initial["patient"] = rdv.patient_id
-            initial["date_consultation"] = timezone.now()
-        elif patient_id.isdecimal() and Patient.objects.filter(pk=patient_id).exists():
-            initial["patient"] = patient_id
-        form = ConsultationForm(initial=initial)
-    return render(request, "ajouter_consultation_medecin.html", {"form": form, "rdv": rdv})
+        messages.error(
+            request,
+            "La simple recherche d'un patient n'autorise pas la création directe d'une consultation. "
+            "Veuillez démarrer un rendez-vous confirmé ou initier une consultation spontanée / urgence qualifiée."
+        )
+        return redirect("agenda_medecin")
 
 
 @role_required(User.Role.MEDECIN)

@@ -1,13 +1,19 @@
 {% extends "base.html" %}
 {% load icones %}
 
-{% block title %}Nouvelle consultation{% endblock %}
+{% block title %}{% if mode == "spontane" %}Consultation spontanée / Urgence{% else %}Consultation sur rendez-vous{% endif %}{% endblock %}
 
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>Nouvelle consultation</h1>
-        <p class="subtitle">Après enregistrement, vous pourrez créer l'ordonnance.</p>
+        <h1>{% if mode == "spontane" %}Consultation spontanée / Urgence{% else %}Consultation sur rendez-vous{% endif %}</h1>
+        <p class="subtitle">
+            {% if mode == "spontane" %}
+            Accueil d'urgence ou passage spontané non programmé.
+            {% else %}
+            Consultation issue de l'agenda médical programmé.
+            {% endif %}
+        </p>
     </div>
     <div class="actions">
         <a class="button btn" href="{% url 'historique_consultations' %}">{% icone "chevron-left" %} Retour</a>
@@ -19,14 +25,39 @@
     <div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
     {% endif %}
 
+    {% if mode == "rdv" and rdv %}
+    <div style="background:var(--primary-soft);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;gap:12px;">
+        <span style="font-size:20px;color:var(--primary-strong);">{% icone "calendar" %}</span>
+        <div>
+            <strong style="color:var(--titre);font-size:14px;">Rendez-vous confirmé</strong>
+            <p style="margin:2px 0 0;font-size:12.5px;color:var(--muted);">
+                Patient : <strong>{{ rdv.patient }}</strong> &bull; Date : {{ rdv.date_heure|date:"d/m/Y à H:i" }} &bull; Motif : {{ rdv.motif|default:"Consultation générale" }}
+            </p>
+        </div>
+    </div>
+    {% elif mode == "spontane" %}
+    <div style="background:rgba(217,119,6,0.08);border:1px solid rgba(217,119,6,0.25);border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;gap:12px;">
+        <span style="font-size:20px;color:#b45309;">{% icone "alert-triangle" %}</span>
+        <div>
+            <strong style="color:#92400e;font-size:14px;">Contexte d'admission non programmée</strong>
+            <p style="margin:2px 0 0;font-size:12.5px;color:var(--muted);">
+                Vérification de concordance du numéro de carte d'assuré et qualification obligatoire du motif d'admission (Urgence ou Passage spontané).
+            </p>
+        </div>
+    </div>
+    {% endif %}
+
     <form method="post">
         {% csrf_token %}
         {% if rdv %}
         <input type="hidden" name="rdv_id" value="{{ rdv.pk }}">
+        {% elif mode == "spontane" %}
+        <input type="hidden" name="mode" value="spontane">
         {% endif %}
         {% for field in form %}
         <label for="{{ field.id_for_label }}">{{ field.label }}</label>
         {{ field }}
+        {% if field.help_text %}<p class="help" style="margin:2px 0 6px;font-size:12px;color:var(--muted);">{{ field.help_text }}</p>{% endif %}
         {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
         {% endfor %}
         <button class="button primary" type="submit">Enregistrer la consultation</button>
