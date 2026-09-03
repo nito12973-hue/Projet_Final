@@ -243,7 +243,7 @@ class UtilisateurModificationForm(forms.ModelForm):
 
 
 class ConsultationForm(forms.ModelForm):
-    """Creation d'une consultation par le medecin connecte."""
+    """Creation d'une consultation sur rendez-vous par le medecin connecte."""
 
     date_consultation = forms.DateTimeField(
         label='Date de consultation',
@@ -255,9 +255,84 @@ class ConsultationForm(forms.ModelForm):
         model = Consultation
         fields = ['patient', 'service', 'prise_en_charge', 'date_consultation', 'diagnostic', 'traitement']
 
-    # La coherence patient <-> prise en charge est verifiee par
-    # Consultation.clean() : la regle vaut aussi pour /admin/, qui n'utilise
-    # pas ce formulaire.
+    def __init__(self, *args, medecin=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.medecin = medecin
+        if medecin and medecin.prestataire:
+            self.fields['service'].queryset = ServiceMedical.objects.filter(
+                Q(prestataire=medecin.prestataire) | Q(prestataire__isnull=True)
+            )
+        elif medecin:
+            self.fields['service'].queryset = ServiceMedical.objects.filter(prestataire__isnull=True)
+        if 'service' in self.fields:
+            self.fields['service'].error_messages['invalid_choice'] = "Ce service médical n'appartient pas à votre établissement."
+
+    def clean_service(self):
+        service = self.cleaned_data.get('service')
+        if service and service.prestataire and self.medecin and self.medecin.prestataire:
+            if service.prestataire != self.medecin.prestataire:
+                raise forms.ValidationError("Ce service médical n'appartient pas à votre établissement.")
+        elif service and service.prestataire and self.medecin and not self.medecin.prestataire:
+            raise forms.ValidationError("Ce service médical n'appartient pas à votre établissement.")
+        return service
+
+
+class ConsultationSpontaneeForm(ConsultationForm):
+    """Creation d'une consultation spontanee ou d'urgence (sans rendez-vous)."""
+
+    contexte_admission = forms.ChoiceField(
+        choices=[
+            ("", "--- Sélectionnez le contexte d'admission ---"),
+            ("URGENCE", "Urgence médicale"),
+            ("PASSAGE_SPONTANE", "Passage spontané non programmé"),
+        ],
+        label="Contexte d'admission",
+        required=True,
+        error_messages={
+            "required": "Le contexte d'admission (Urgence ou Passage spontané) est obligatoire."
+        },
+    )
+    numero_carte = forms.CharField(
+        label="Numéro de carte de prise en charge",
+        max_length=50,
+        required=True,
+        widget=forms.TextInput(attrs={'placeholder': 'Ex : SN-XXXXXXXXXX'}),
+        help_text="Vérification de concordance de carte : numéro figurant sur la carte physique de l'assuré.",
+    )
+
+    class Meta(ConsultationForm.Meta):
+        fields = [
+            'patient',
+            'numero_carte',
+            'contexte_admission',
+            'service',
+            'prise_en_charge',
+            'date_consultation',
+            'diagnostic',
+            'traitement',
+        ]
+
+    def clean(self):
+        cleaned_data = super().clean()
+        contexte = cleaned_data.get('contexte_admission')
+        if contexte and contexte not in ("URGENCE", "PASSAGE_SPONTANE"):
+            self.add_error('contexte_admission', "Le contexte d'admission (Urgence ou Passage spontané) est obligatoire.")
+
+        carte = (cleaned_data.get('numero_carte') or '').strip()
+        patient = cleaned_data.get('patient')
+
+        if not carte:
+            self.add_error('numero_carte', "Le numéro de carte est obligatoire pour une consultation spontanée.")
+        else:
+            patient_carte = Patient.objects.filter(numero_carte__iexact=carte).first()
+            if not patient_carte:
+                self.add_error('numero_carte', "Aucun assuré ne correspond à ce numéro de carte de prise en charge.")
+            elif patient and patient != patient_carte:
+                self.add_error('numero_carte', "Le numéro de carte saisi ne correspond pas au patient sélectionné.")
+            elif not patient and patient_carte:
+                cleaned_data['patient'] = patient_carte
+
+        return cleaned_data
 
 
 class LigneOrdonnanceForm(forms.ModelForm):
@@ -389,7 +464,10 @@ class AyantDroitForm(forms.ModelForm):
 class RendezVousAssureForm(forms.ModelForm):
     """Demande de rendez-vous par l'assure, pour lui-meme ou un ayant droit."""
 
-    medecin = forms.ModelChoiceField(queryset=Medecin.objects.all(), label='Médecin')
+    medecin = forms.ModelChoiceField(
+        queryset=Medecin.objects.filter(Q(user__is_active=True) | Q(user__isnull=True)),
+        label='Médecin',
+    )
     prestataire = forms.ModelChoiceField(
         queryset=Prestataire.objects.filter(partenaire=True),
         required=False,
@@ -424,9 +502,8 @@ class RendezVousAssureForm(forms.ModelForm):
             self.fields['patient'].queryset = beneficiaires
 
         # Le parcours passe par le prestataire : quand il est connu, on ne
-        # propose QUE ses medecins. Sans ce filtre, l'assure pouvait demander
-        # un rendez-vous avec un cardiologue de Dakar "chez" une pharmacie
-        # de Rufisque -- le formulaire acceptait n'importe quel couple.
+        # propose QUE ses medecins actifs (ou sans compte specifique).
+        actif_ou_sans_compte = Q(user__is_active=True) | Q(user__isnull=True)
         if prestataire is not None:
             # Les medecins SANS structure restent proposes : tant que
             # l'administrateur ne leur en a pas attribue une, les exclure les
@@ -434,10 +511,14 @@ class RendezVousAssureForm(forms.ModelForm):
             # rendez-vous. C'est exactement ce qui se produisait.
             self.fields['medecin'].queryset = Medecin.objects.filter(
                 Q(prestataire=prestataire) | Q(prestataire__isnull=True)
+            ).filter(
+                actif_ou_sans_compte
             ).order_by('nom', 'prenom')
             self.fields['prestataire'].initial = prestataire
         else:
-            self.fields['medecin'].queryset = Medecin.objects.select_related(
+            self.fields['medecin'].queryset = Medecin.objects.filter(
+                actif_ou_sans_compte
+            ).select_related(
                 'prestataire'
             ).order_by('nom', 'prenom')
 

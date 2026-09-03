@@ -110,6 +110,8 @@ formulaire laisseraient le pharmacien croire qu'il faut remplir les deux.
                     <span class="badge" style="background:var(--danger, #D9534F); color:#ffffff;">Annulée</span>
                     {% elif resultat.delivrance %}
                     <span class="badge validee">Déjà délivrée</span>
+                    {% elif resultat.est_expiree %}
+                    <span class="badge" style="background:var(--muted); color:#ffffff;">Expirée</span>
                     {% else %}
                     <span class="badge en_attente">À délivrer</span>
                     {% endif %}
@@ -199,6 +201,19 @@ formulaire laisseraient le pharmacien croire qu'il faut remplir les deux.
             <div style="font-size:13px; background:rgba(0,0,0,0.05); padding:10px; border-radius:8px;">
                 <p style="margin:0 0 4px 0;"><strong>Date de délivrance :</strong> {{ ordonnance.delivrance.date_delivrance|date:"d/m/Y à H:i" }}</p>
                 <p style="margin:0 0 4px 0;"><strong>Officine / Pharmacien :</strong> {{ ordonnance.delivrance.pharmacien }}</p>
+                <p style="margin:0;"><strong>Référence :</strong> {{ ordonnance.code_qr }}</p>
+            </div>
+        </div>
+        {% elif ordonnance.est_expiree %}
+        <div style="background:var(--refus-bg); border:2px solid var(--danger); border-radius:12px; padding:18px; color:var(--refus-fg);">
+            <h2 style="margin:0 0 8px 0; color:var(--danger); font-size:16px; display:flex; align-items:center; gap:8px;">
+                {% icone "alert-triangle" %} ORDONNANCE EXPIRÉE
+            </h2>
+            <p style="font-size:13.5px; margin:0 0 10px 0; line-height:1.4;">
+                Cette ordonnance a dépassé sa durée de validité et ne peut plus faire l'objet d'une délivrance.
+            </p>
+            <div style="font-size:13px; background:rgba(0,0,0,0.05); padding:10px; border-radius:8px;">
+                <p style="margin:0 0 4px 0;"><strong>Date d'émission :</strong> {{ ordonnance.date_creation|date:"d/m/Y" }}</p>
                 <p style="margin:0;"><strong>Référence :</strong> {{ ordonnance.code_qr }}</p>
             </div>
         </div>

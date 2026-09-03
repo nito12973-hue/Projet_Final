@@ -4,13 +4,31 @@
 {% block title %}Supprimer {{ type|lower }} — {{ objet }}{% endblock %}
 
 {% block content %}
+{% if type|lower == "ayant droit" %}
+    {% url 'liste_ayants_droit' as url_annulation %}
+{% elif type|lower == "médecin" %}
+    {% url 'liste_medecins' as url_annulation %}
+{% elif type|lower == "patient" %}
+    {% url 'liste_patients' as url_annulation %}
+{% elif type|lower == "prestataire" %}
+    {% url 'liste_prestataires' as url_annulation %}
+{% elif type|lower == "prise en charge" %}
+    {% url 'liste_prises_en_charge' as url_annulation %}
+{% elif type|lower == "service" %}
+    {% url 'liste_services' as url_annulation %}
+{% elif type|lower == "utilisateur" %}
+    {% url 'liste_utilisateurs' as url_annulation %}
+{% else %}
+    {% url 'post_login_redirect' as url_annulation %}
+{% endif %}
+
 <section class="page-title">
     <div>
         <h1>Supprimer {{ type|lower }}</h1>
         <p class="subtitle">Confirmation de suppression définitive.</p>
     </div>
     <div class="actions">
-        <a href="javascript:history.back()" class="button btn">{% icone "chevron-left" %} Annuler</a>
+        <a href="{{ url_annulation }}" class="button btn">{% icone "chevron-left" %} Annuler</a>
     </div>
 </section>
 
@@ -29,7 +47,7 @@
             <button type="submit" class="button btn-danger">
                 {% icone "trash-2" %} Supprimer définitivement
             </button>
-            <a href="javascript:history.back()" class="button btn">Annuler</a>
+            <a href="{{ url_annulation }}" class="button btn">Annuler</a>
         </div>
     </form>
 </section>

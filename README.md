@@ -35,7 +35,7 @@ Pour tester l'application directement en ligne sur Internet sans configuration l
 1. **Carte de Prise en Charge Dématérialisée :** Format physique ISO 7810 ID-1 avec micro-puce dorée et QR Code dynamique vectoriel.
 2. **Ordonnance Sécurisée Anti-Fraude :** Tampon officiel SantéSN certifié et verrouillage transactionnel lors de la délivrance en pharmacie.
 3. **Gestion Intelligente des Plafonds Annuels :** Écrêtement automatique de la part assurance en fonction du reliquat budgétaire annuel familial restant.
-4. **Scanner Optique Pharmacien :** Reconnaissance instantanée par webcam (`html5-qrcode`) et mode de saisie manuelle sécurisée.
+4. **Scanner Optique Pharmacien :** Reconnaissance instantanée par webcam (`jsQR@1.4.0`) et mode de saisie manuelle sécurisée.
 5. **Cartographie Sanitaire Intégrée (GIS) :** Géolocalisation des prestataires partenaires (Hôpitaux, Pharmacies, Cliniques) avec calcul d'itinéraire.
 6. **Contrôle d'Accès Strict (RBAC) :** Isolation hermétique des 4 rôles et protection contre les attaques CSRF et IDOR.
 7. **Politique Zéro-Emoji :** Respect scrupuleux des chartes institutionnelles avec 100% d'icônes vectorielles SVG intégrées.
@@ -52,7 +52,7 @@ cd Projet_Final
 # 2. Créer et activer l'environnement virtuel
 python -m venv venv
 source venv/bin/activate  # Sur Linux/macOS
-.env\Scripts\Activate   # Sur Windows
+. env\Scripts\Activate   # Sur Windows
 
 # 3. Installer les dépendances
 pip install -r requirements.txt
@@ -65,13 +65,13 @@ python manage.py seed_demo
 python manage.py runserver
 ```
 
-L'application est accessible à l'adresse : [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
 
 ---
 
 ##  Tests Automatisés
+##  Tests Automatisés
 
-Le projet inclut une suite de **107 tests unitaires et de sécurité** exécutés automatiquement via GitHub Actions :
+Le projet inclut une suite de **659 tests unitaires et de sécurité** exécutés automatiquement via GitHub Actions :
 
 ```bash
 python manage.py test
@@ -80,6 +80,9 @@ python manage.py test
 ---
 
 ##  Documentation Technique
+##  Documentation Technique
 
+*  [`GUIDE_UTILISATEUR.md`](GUIDE_UTILISATEUR.md) : Manuel d'utilisation détaillé pas-à-pas pour chaque profil.
+*  [`FONCTIONNEMENT.txt`](FONCTIONNEMENT.txt) : Spécifications détaillées de l'architecture et des règles métier.
 *  [`GUIDE_UTILISATEUR.md`](GUIDE_UTILISATEUR.md) : Manuel d'utilisation détaillé pas-à-pas pour chaque profil.
 *  [`FONCTIONNEMENT.txt`](FONCTIONNEMENT.txt) : Spécifications détaillées de l'architecture et des règles métier.

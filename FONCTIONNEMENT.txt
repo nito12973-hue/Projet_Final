@@ -25,7 +25,7 @@ chaque modification de detail.
 Arborescence :
   Plateform_medicale/
     models.py              toutes les entites metier (section 2)
-    views.py               toutes les vues (~1700 lignes, section 4)
+    views/                 package modulaire de vues (20 modules thematiques, section 4)
     forms.py                formulaires Django + helpers (mots de passe,
                             creation de fiches medecin/pharmacien)
     urls.py                 routes de l'app (section 4)
@@ -309,7 +309,7 @@ Relations cle a retenir :
   contourner).
 
 
-4. VUES ET ROUTES (views.py / urls.py), par domaine
+4. VUES ET ROUTES (package views/ et urls.py), par domaine
 ------------------------------------------------------
 Public / transverse
   landing ("/")                     page publique

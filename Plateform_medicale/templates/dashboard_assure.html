@@ -16,7 +16,7 @@
     </div>
 </section>
 
-<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));gap:24px;margin-bottom:28px;">
+<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:20px;margin-bottom:24px;">
     {# 1. Bloc Couverture & Droits #}
     <div class="panel panel-bloc" style="margin:0;display:flex;flex-direction:column;justify-content:space-between;border-radius:18px;box-shadow:0 6px 24px rgba(11,32,39,0.06);">
         <div>
@@ -41,17 +41,14 @@
             </div>
 
             {% if patient.titulaire.plan_couverture.plafond_annuel %}
-            <div style="background:var(--primary-soft);padding:14px 16px;border-radius:12px;margin-bottom:8px;">
-                <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:8px;">
+            <div style="background:var(--primary-soft);padding:12px 14px;border-radius:12px;margin-bottom:8px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;">
                     <span style="color:var(--primary-strong);font-weight:600;">Budget annuel restant</span>
-                    <strong style="color:var(--primary-dark);font-size:13.5px;">{{ patient.plafond_annuel_restant|franc_cfa }}</strong>
+                    <strong style="color:var(--primary-dark);font-size:14px;">{{ patient.plafond_annuel_restant|franc_cfa }}</strong>
                 </div>
-                <div style="height:6px;border-radius:999px;background:rgba(14,124,134,0.18);overflow:hidden;">
-                    <div style="height:100%;border-radius:999px;background:var(--primary);width:75%;"></div>
-                </div>
-                <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:5px;">
-                    <span>Consommé</span>
-                    <span>Plafond : {{ patient.titulaire.plan_couverture.plafond_annuel|franc_cfa }}</span>
+                <div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:4px;">
+                    <span>Plafond annuel</span>
+                    <span>{{ patient.titulaire.plan_couverture.plafond_annuel|franc_cfa }}</span>
                 </div>
             </div>
             {% endif %}
@@ -132,21 +129,21 @@
     </div>
 
     {% if dernieres_prises_en_charge or derniere_ordonnance %}
-    <div style="padding:16px 24px;display:flex;flex-direction:column;gap:12px;">
+    <div style="padding:12px 18px;display:flex;flex-direction:column;gap:10px;">
         {% if derniere_ordonnance %}
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid var(--border);border-radius:12px;background:var(--champ-bg);gap:12px;flex-wrap:wrap;">
-            <div style="display:flex;align-items:center;gap:12px;">
-                <span style="width:36px;height:36px;border-radius:10px;background:var(--primary-soft);color:var(--primary-strong);display:flex;align-items:center;justify-content:center;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border:1px solid var(--border);border-radius:12px;background:var(--champ-bg);gap:10px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span style="width:32px;height:32px;border-radius:8px;background:var(--primary-soft);color:var(--primary-strong);display:flex;align-items:center;justify-content:center;">
                     {% icone "pill" %}
                 </span>
                 <div>
-                    <strong style="font-size:14px;color:var(--titre);display:block;">Ordonnance #{{ derniere_ordonnance.code_qr }}</strong>
+                    <strong style="font-size:13.5px;color:var(--titre);display:block;">Ordonnance #{{ derniere_ordonnance.code_qr }}</strong>
                     <span style="font-size:12px;color:var(--muted);">Émise le {{ derniere_ordonnance.date_creation|date:"d F Y" }} par Dr. {{ derniere_ordonnance.consultation.medecin }}</span>
                 </div>
             </div>
-            <div style="display:flex;align-items:center;gap:12px;">
-                <span class="badge {% if derniere_ordonnance.delivrance %}validee{% else %}en_attente{% endif %}">
-                    {% if derniere_ordonnance.delivrance %}Délivrée en pharmacie{% else %}Disponible à délivrer{% endif %}
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span class="badge {% if derniere_ordonnance.delivrance %}validee{% elif derniere_ordonnance.est_expiree %}refusee{% else %}en_attente{% endif %}">
+                    {% if derniere_ordonnance.delivrance %}Délivrée en pharmacie{% elif derniere_ordonnance.est_expiree %}Expirée{% else %}Disponible à délivrer{% endif %}
                 </span>
                 <a href="{% url 'voir_ordonnance_assure' derniere_ordonnance.pk %}" class="button primary btn btn-sm">
                     Consulter
@@ -157,17 +154,17 @@
 
         {% if dernieres_prises_en_charge %}
         {% with pec=dernieres_prises_en_charge.0 %}
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid var(--border);border-radius:12px;background:var(--champ-bg);gap:12px;flex-wrap:wrap;">
-            <div style="display:flex;align-items:center;gap:12px;">
-                <span style="width:36px;height:36px;border-radius:10px;background:var(--primary-soft);color:var(--primary-strong);display:flex;align-items:center;justify-content:center;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border:1px solid var(--border);border-radius:12px;background:var(--champ-bg);gap:10px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span style="width:32px;height:32px;border-radius:8px;background:var(--primary-soft);color:var(--primary-strong);display:flex;align-items:center;justify-content:center;">
                     {% icone "shield-check" %}
                 </span>
                 <div>
-                    <strong style="font-size:14px;color:var(--titre);display:block;">Demande de prise en charge</strong>
+                    <strong style="font-size:13.5px;color:var(--titre);display:block;">Demande de prise en charge</strong>
                     <span style="font-size:12px;color:var(--muted);">Déposée le {{ pec.date_demande|date:"d F Y" }} · {{ pec.prestataire|default:"Prestataire agréé" }}</span>
                 </div>
             </div>
-            <div style="display:flex;align-items:center;gap:12px;">
+            <div style="display:flex;align-items:center;gap:10px;">
                 <span class="badge {% if pec.statut == 'validee' %}validee{% elif pec.statut == 'refusee' %}refusee{% else %}en_attente{% endif %}">
                     {{ pec.get_statut_display }}
                 </span>

@@ -32,8 +32,9 @@
         <thead>
             <tr>
                 <th>Date</th>
-                <th>Beneficiaire</th>
-                <th>Medecin</th>
+                <th>Bénéficiaire</th>
+                <th>Médecin</th>
+                <th>Statut</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -41,8 +42,20 @@
             {% for ordonnance in ordonnances %}
             <tr>
                 <td><span class="libelle-mobile">Date</span>{{ ordonnance.date_creation|date:"d/m/Y H:i" }}</td>
-                <td><span class="libelle-mobile">Beneficiaire</span>{{ ordonnance.consultation.patient }}</td>
-                <td><span class="libelle-mobile">Medecin</span>{{ ordonnance.consultation.medecin }}</td>
+                <td><span class="libelle-mobile">Bénéficiaire</span>{{ ordonnance.consultation.patient }}</td>
+                <td><span class="libelle-mobile">Médecin</span>{{ ordonnance.consultation.medecin }}</td>
+                <td>
+                    <span class="libelle-mobile">Statut</span>
+                    {% if ordonnance.est_annulee %}
+                    <span class="badge" style="background:var(--danger, #D9534F); color:#ffffff;">Annulée</span>
+                    {% elif ordonnance.delivrance %}
+                    <span class="badge validee">Délivrée</span>
+                    {% elif ordonnance.est_expiree %}
+                    <span class="badge" style="background:var(--muted); color:#ffffff;">Expirée</span>
+                    {% else %}
+                    <span class="badge en_attente">Disponible</span>
+                    {% endif %}
+                </td>
                 <td>
                     <span class="libelle-mobile">Actions</span>
                     <a class="button primary btn btn-sm" href="{% url 'voir_ordonnance_assure' ordonnance.pk %}">{% icone "qr-scan" %} Voir le QR</a>

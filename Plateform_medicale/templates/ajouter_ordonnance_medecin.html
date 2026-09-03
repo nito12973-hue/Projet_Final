@@ -63,8 +63,9 @@
 
         <button type="button" class="button btn" id="ajouter-ligne">{% icone "plus-circle" %} Ajouter un médicament</button>
 
-        <div class="actions" style="margin-top:20px;">
+        <div class="actions" style="margin-top:20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
             <button class="button primary" type="submit">{% icone "qr-scan" %} Générer l'ordonnance et le QR Code</button>
+            <a href="{% url 'historique_consultations' %}" class="button btn">Terminer sans prescription</a>
         </div>
     </form>
 </section>

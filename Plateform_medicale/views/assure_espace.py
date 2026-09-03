@@ -384,6 +384,8 @@ def annuler_rendez_vous_assure(request, pk):
     if rendez_vous.statut in (RendezVous.Statut.DEMANDE, RendezVous.Statut.CONFIRME):
         rendez_vous.statut = RendezVous.Statut.ANNULE
         rendez_vous.save(update_fields=["statut"])
+        from ..services.notifications import notifier_annulation_rdv_par_assure
+        notifier_annulation_rdv_par_assure(rendez_vous)
         messages.success(request, "Rendez-vous annulé.")
     else:
         messages.error(request, "Ce rendez-vous ne peut plus être annulé.")

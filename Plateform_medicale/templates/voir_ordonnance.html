@@ -24,6 +24,11 @@
     <span>Cette prescription a été annulée le {{ ordonnance.date_annulation|date:"d/m/Y à H:i" }}.</span><br>
     <span style="font-weight: 500;">Motif indiqué : {{ ordonnance.motif_annulation }}</span>
 </div>
+{% elif ordonnance.est_expiree and not ordonnance.est_delivree %}
+<div class="alert alert-warning sans-impression" style="margin-bottom: 1.5rem; border-left: 4px solid var(--warning, #e0b25f); padding: 1rem 1.25rem; border-radius: 8px; background: var(--attente-bg);">
+    <strong style="color: var(--attente-fg);">Statut : Ordonnance Expirée</strong><br>
+    <span>Cette prescription a dépassé sa durée de validité et ne peut plus faire l'objet d'une délivrance en pharmacie.</span>
+</div>
 {% endif %}
 
 
