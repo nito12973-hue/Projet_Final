@@ -155,7 +155,13 @@ def envoyer_activation_utilisateur(utilisateur, request=None):
         f"Ce lien est valable 24 heures.\n\n"
         f"SantéSN"
     )
-    whatsapp_res = envoyer_message_whatsapp(telephone, whatsapp_texte)
+    template_nom = getattr(settings, "WHATSAPP_TEMPLATE_NAME", None)
+    template_params = [prenom, lien_activation] if template_nom else None
+    whatsapp_res = envoyer_message_whatsapp(
+        telephone, whatsapp_texte, template_nom=template_nom, template_params=template_params
+    )
+    if not whatsapp_res["succes"] and template_nom:
+        whatsapp_res = envoyer_message_whatsapp(telephone, whatsapp_texte)
 
     email_envoye = False
     email_erreur = None
