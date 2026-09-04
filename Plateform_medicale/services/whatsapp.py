@@ -14,9 +14,10 @@ from django.conf import settings
 logger = logging.getLogger("Plateform_medicale")
 
 
-def envoyer_message_whatsapp(numero_telephone, texte_message):
+def envoyer_message_whatsapp(numero_telephone, texte_message, template_nom=None, template_params=None):
     """
     Envoie un message via l'API officielle WhatsApp Cloud.
+    Supporte les messages directs (texte) et les modèles officiels (template).
 
     Retourne un dictionnaire de résultat :
     {
@@ -58,12 +59,28 @@ def envoyer_message_whatsapp(numero_telephone, texte_message):
         }
 
     url = f"https://graph.facebook.com/v19.0/{phone_number_id}/messages"
-    payload = {
-        "messaging_product": "whatsapp",
-        "to": numero_nettoye,
-        "type": "text",
-        "text": {"preview_url": False, "body": texte_message},
-    }
+    if template_nom:
+        components = []
+        if template_params:
+            parameters = [{"type": "text", "text": str(p)} for p in template_params]
+            components.append({"type": "body", "parameters": parameters})
+        payload = {
+            "messaging_product": "whatsapp",
+            "to": numero_nettoye,
+            "type": "template",
+            "template": {
+                "name": template_nom,
+                "language": {"code": "fr"},
+                "components": components,
+            },
+        }
+    else:
+        payload = {
+            "messaging_product": "whatsapp",
+            "to": numero_nettoye,
+            "type": "text",
+            "text": {"preview_url": False, "body": texte_message},
+        }
 
     try:
         donnees = json.dumps(payload).encode("utf-8")

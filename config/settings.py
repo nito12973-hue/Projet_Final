@@ -253,7 +253,8 @@ SERVER_EMAIL = DEFAULT_FROM_EMAIL  # Adresse des mails d'erreur Django (ADMINS)
 # Configuration WhatsApp Business (Meta Cloud API / Passerelle SMS-WhatsApp)
 WHATSAPP_ENABLED = config('WHATSAPP_ENABLED', default=False, cast=bool)
 WHATSAPP_API_TOKEN = config('WHATSAPP_API_TOKEN', default=None)
-WHATSAPP_PHONE_NUMBER_ID = config('WHATSAPP_PHONE_NUMBER_ID', default=None)  # Adresse des mails d'erreur Django (ADMINS)
+WHATSAPP_PHONE_NUMBER_ID = config('WHATSAPP_PHONE_NUMBER_ID', default=None)
+WHATSAPP_TEMPLATE_NAME = config('WHATSAPP_TEMPLATE_NAME', default=None)
 
 
 # Logging
