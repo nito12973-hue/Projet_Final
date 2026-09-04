@@ -17,12 +17,37 @@
 
 
 {% if patient %}
-<section class="panel panel-bloc" style="margin-bottom: 22px; padding: 16px 20px;">
-    <p style="margin: 0; font-size: 14px; color: var(--muted);">
-        Votre compte est lié à la carte n° <strong class="code" style="color: var(--titre);">{{ patient.numero_carte }}</strong>. 
-        Pour consulter ou imprimer votre carte complète avec son QR code, rendez-vous dans l'onglet <a href="{% url 'carte_assure' %}" style="color: var(--primary); font-weight: 600; text-decoration: none;">Ma carte d'assuré &rarr;</a>
-    </p>
+<section class="panel panel-bloc" style="margin-bottom: 20px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+    <div>
+        <p style="margin: 0; font-size: 14px; color: var(--muted);">
+            Carte n° <strong class="code" style="color: var(--titre);">{{ patient.numero_carte }}</strong>
+        </p>
+    </div>
+    <div>
+        <a href="{% url 'carte_assure' %}" class="button btn">{% icone "id-card" %} Ma carte complète</a>
+    </div>
 </section>
+
+{% if qr_svg %}
+<section class="panel panel-bloc mon-qr" style="margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+    <div>
+        <h2 style="margin: 0; font-size: 15px;">Mon QR code</h2>
+        <p class="subtitle" style="margin: 2px 0 0 0; font-size: 13px;">À présenter pour vérification immédiate de vos droits.</p>
+    </div>
+    <div>
+        <button type="button" class="button btn" id="bouton-voir-qr" onclick="var d=document.getElementById('dialogue-qr-profil'); if(d){ typeof d.showModal === 'function' ? d.showModal() : d.setAttribute('open', ''); }">{% icone "qr-scan" %} Mon QR code</button>
+    </div>
+    <dialog id="dialogue-qr-profil" class="modale-dialogue" style="padding: 24px; border: none; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; background: #ffffff;">
+        <h3 style="margin: 0 0 16px; font-size: 17px; color: var(--titre);">Mon QR code assuré</h3>
+        <div class="qr-agrandi" style="display: inline-block;">
+            {{ qr_svg|safe }}
+        </div>
+        <div style="margin-top: 18px;">
+            <button type="button" class="button primary btn" onclick="var d=document.getElementById('dialogue-qr-profil'); if(d){ typeof d.close === 'function' ? d.close() : d.removeAttribute('open'); }">Fermer</button>
+        </div>
+    </dialog>
+</section>
+{% endif %}
 {% endif %}
 
 <section class="panel panel-form">
