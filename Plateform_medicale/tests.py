@@ -7235,10 +7235,11 @@ class WhatsAppServiceTests(TestCase):
 
     def test_whatsapp_non_configure(self):
         from Plateform_medicale.services.whatsapp import envoyer_message_whatsapp
-        res = envoyer_message_whatsapp('771234567', 'Message test')
-        self.assertFalse(res['succes'])
-        self.assertEqual(res['statut'], 'NON_CONFIGURE')
-        self.assertIn("n'est pas configuré", res['message'])
+        with self.settings(WHATSAPP_ENABLED=False, WHATSAPP_API_TOKEN='', WHATSAPP_PHONE_NUMBER_ID=''):
+            res = envoyer_message_whatsapp('771234567', 'Message test')
+            self.assertFalse(res['succes'])
+            self.assertEqual(res['statut'], 'NON_CONFIGURE')
+            self.assertIn("n'est pas configuré", res['message'])
 
     def test_whatsapp_numero_invalide_avec_config(self):
         from Plateform_medicale.services.whatsapp import envoyer_message_whatsapp
