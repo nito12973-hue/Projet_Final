@@ -8743,6 +8743,194 @@ class AuditParcoursUtilisateurTests(TestCase):
         self.assertIn(f'href="{reverse("parametres")}"', html_admin)
 
 
+class SynchronisationIdentiteTests(TestCase):
+    """Validation de la synchronisation ciblée Nom/Prénom entre User et Patient/Médecin."""
+
+    def setUp(self):
+        self.mdp = "MotDePasse123!"
+        # Admin
+        self.admin = User.objects.create_superuser(
+            email="admin.sync@santesn.sn",
+            password=self.mdp,
+            first_name="Admin",
+            last_name="Systeme",
+            role=User.Role.ADMIN,
+        )
+        # Assuré
+        self.user_assure = User.objects.create_user(
+            email="assure.sync@santesn.sn",
+            password=self.mdp,
+            first_name="Amadou",
+            last_name="Diallo",
+            phone_number="771112233",
+            role=User.Role.ASSURE,
+        )
+        self.patient = Patient.objects.create(
+            user=self.user_assure,
+            prenom="Amadou",
+            nom="Diallo",
+            date_naissance=datetime.date(1990, 1, 1),
+            telephone="771112233",
+            type_beneficiaire=Patient.TypeBeneficiaire.PRINCIPAL,
+        )
+        # Médecin
+        self.user_medecin = User.objects.create_user(
+            email="medecin.sync@santesn.sn",
+            password=self.mdp,
+            first_name="Fatou",
+            last_name="Sow",
+            phone_number="774445566",
+            role=User.Role.MEDECIN,
+        )
+        self.medecin = Medecin.objects.create(
+            user=self.user_medecin,
+            prenom="Fatou",
+            nom="Sow",
+            specialite="Cardiologie",
+            telephone="338000000",
+            email="dr.sow@clinique.sn",
+        )
+
+    def test_a_assure_mon_compte_met_a_jour_patient_et_user(self):
+        """A. Assuré : Mon compte -> nom/prénom -> Patient + User cohérents."""
+        self.client.login(email="assure.sync@santesn.sn", password=self.mdp)
+        rep = self.client.post(reverse("mon_compte"), {
+            "first_name": "Moussa",
+            "last_name": "Ndiaye",
+            "phone_number": "771112233",
+            "email": "assure.sync@santesn.sn",
+            "mot_de_passe_actuel": "",
+        })
+        self.assertEqual(rep.status_code, 302)
+        self.user_assure.refresh_from_db()
+        self.patient.refresh_from_db()
+        self.assertEqual(self.user_assure.first_name, "Moussa")
+        self.assertEqual(self.user_assure.last_name, "Ndiaye")
+        self.assertEqual(self.patient.prenom, "Moussa")
+        self.assertEqual(self.patient.nom, "Ndiaye")
+
+    def test_b_assure_mes_informations_met_a_jour_patient_et_user(self):
+        """B. Assuré : Mes informations -> nom/prénom -> Patient + User cohérents."""
+        self.client.login(email="assure.sync@santesn.sn", password=self.mdp)
+        rep = self.client.post(reverse("mon_profil_assure"), {
+            "prenom": "Ibrahima",
+            "nom": "Ba",
+            "date_naissance": "1990-01-01",
+            "telephone": "771112233",
+            "adresse": "Dakar Plateau",
+        })
+        self.assertEqual(rep.status_code, 302)
+        self.user_assure.refresh_from_db()
+        self.patient.refresh_from_db()
+        self.assertEqual(self.patient.prenom, "Ibrahima")
+        self.assertEqual(self.patient.nom, "Ba")
+        self.assertEqual(self.user_assure.first_name, "Ibrahima")
+        self.assertEqual(self.user_assure.last_name, "Ba")
+
+    def test_c_medecin_mon_compte_met_a_jour_medecin_et_user(self):
+        """C. Médecin : Mon compte -> nom/prénom -> Medecin + User cohérents."""
+        self.client.login(email="medecin.sync@santesn.sn", password=self.mdp)
+        rep = self.client.post(reverse("mon_compte"), {
+            "first_name": "Aissatou",
+            "last_name": "Fall",
+            "phone_number": "774445566",
+            "email": "medecin.sync@santesn.sn",
+            "mot_de_passe_actuel": "",
+        })
+        self.assertEqual(rep.status_code, 302)
+        self.user_medecin.refresh_from_db()
+        self.medecin.refresh_from_db()
+        self.assertEqual(self.user_medecin.first_name, "Aissatou")
+        self.assertEqual(self.user_medecin.last_name, "Fall")
+        self.assertEqual(self.medecin.prenom, "Aissatou")
+        self.assertEqual(self.medecin.nom, "Fall")
+
+    def test_d_admin_modifier_patient_met_a_jour_user(self):
+        """D. Admin : Modification Patient -> User cohérent."""
+        self.client.login(email="admin.sync@santesn.sn", password=self.mdp)
+        rep = self.client.post(reverse("modifier_patient", args=[self.patient.pk]), {
+            "prenom": "Cheikh",
+            "nom": "Dieng",
+            "date_naissance": "1990-01-01",
+            "telephone": "771112233",
+            "adresse": "Medina",
+            "type_beneficiaire": Patient.TypeBeneficiaire.PRINCIPAL,
+        })
+        self.assertEqual(rep.status_code, 302)
+        self.user_assure.refresh_from_db()
+        self.patient.refresh_from_db()
+        self.assertEqual(self.patient.prenom, "Cheikh")
+        self.assertEqual(self.patient.nom, "Dieng")
+        self.assertEqual(self.user_assure.first_name, "Cheikh")
+        self.assertEqual(self.user_assure.last_name, "Dieng")
+
+    def test_e_admin_modifier_medecin_met_a_jour_user(self):
+        """E. Admin : Modification Medecin -> User cohérent."""
+        self.client.login(email="admin.sync@santesn.sn", password=self.mdp)
+        rep = self.client.post(reverse("modifier_medecin", args=[self.medecin.pk]), {
+            "prenom": "Oumar",
+            "nom": "Kane",
+            "specialite": "Pédiatrie",
+            "telephone": "338000000",
+            "email": "dr.sow@clinique.sn",
+        })
+        self.assertEqual(rep.status_code, 302)
+        self.user_medecin.refresh_from_db()
+        self.medecin.refresh_from_db()
+        self.assertEqual(self.medecin.prenom, "Oumar")
+        self.assertEqual(self.medecin.nom, "Kane")
+        self.assertEqual(self.user_medecin.first_name, "Oumar")
+        self.assertEqual(self.user_medecin.last_name, "Kane")
+
+    def test_f_modifier_phone_number_ne_modifie_pas_telephone_metier(self):
+        """F. Téléphone : modifier User.phone_number ne modifie PAS Patient.telephone ni Medecin.telephone."""
+        # 1. Médecin : change son phone_number personnel dans Mon compte
+        self.client.login(email="medecin.sync@santesn.sn", password=self.mdp)
+        rep = self.client.post(reverse("mon_compte"), {
+            "first_name": "Fatou",
+            "last_name": "Sow",
+            "phone_number": "779998877",
+            "email": "medecin.sync@santesn.sn",
+            "mot_de_passe_actuel": "",
+        })
+        self.assertEqual(rep.status_code, 302)
+        self.user_medecin.refresh_from_db()
+        self.medecin.refresh_from_db()
+        self.assertEqual(self.user_medecin.phone_number, "779998877")
+        self.assertEqual(self.medecin.telephone, "338000000")  # Inchangé !
+
+        # 2. Assuré : change son phone_number dans Mon compte
+        self.client.login(email="assure.sync@santesn.sn", password=self.mdp)
+        rep2 = self.client.post(reverse("mon_compte"), {
+            "first_name": "Amadou",
+            "last_name": "Diallo",
+            "phone_number": "776665544",
+            "email": "assure.sync@santesn.sn",
+            "mot_de_passe_actuel": "",
+        })
+        self.assertEqual(rep2.status_code, 302)
+        self.user_assure.refresh_from_db()
+        self.patient.refresh_from_db()
+        self.assertEqual(self.user_assure.phone_number, "776665544")
+        self.assertEqual(self.patient.telephone, "771112233")  # Inchangé !
+
+    def test_g_modifier_user_email_ne_modifie_pas_medecin_email_pro(self):
+        """G. Email : modifier User.email ne modifie PAS Medecin.email professionnel."""
+        self.client.login(email="medecin.sync@santesn.sn", password=self.mdp)
+        rep = self.client.post(reverse("mon_compte"), {
+            "first_name": "Fatou",
+            "last_name": "Sow",
+            "phone_number": "774445566",
+            "email": "nouveau.login.medecin@santesn.sn",
+            "mot_de_passe_actuel": self.mdp,
+        })
+        self.assertEqual(rep.status_code, 302)
+        self.user_medecin.refresh_from_db()
+        self.medecin.refresh_from_db()
+        self.assertEqual(self.user_medecin.email, "nouveau.login.medecin@santesn.sn")
+        self.assertEqual(self.medecin.email, "dr.sow@clinique.sn")  # Inchangé !
+
+
 
 
 

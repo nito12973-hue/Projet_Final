@@ -92,6 +92,36 @@ def lier_fiche_pharmacien(utilisateur):
     Pharmacien.objects.create(user=utilisateur)
 
 
+def aligner_patient_vers_user(patient):
+    """La source métier Patient met à jour l'identité d'affichage du compte User (Nom/Prénom uniquement)."""
+    if patient.user_id:
+        user = patient.user
+        modifs = []
+        if patient.prenom and user.first_name != patient.prenom:
+            user.first_name = patient.prenom
+            modifs.append('first_name')
+        if patient.nom and user.last_name != patient.nom:
+            user.last_name = patient.nom
+            modifs.append('last_name')
+        if modifs:
+            user.save(update_fields=modifs)
+
+
+def aligner_medecin_vers_user(medecin):
+    """La source métier Medecin met à jour l'identité d'affichage du compte User (Nom/Prénom uniquement)."""
+    if medecin.user_id:
+        user = medecin.user
+        modifs = []
+        if medecin.prenom and user.first_name != medecin.prenom:
+            user.first_name = medecin.prenom
+            modifs.append('first_name')
+        if medecin.nom and user.last_name != medecin.nom:
+            user.last_name = medecin.nom
+            modifs.append('last_name')
+        if modifs:
+            user.save(update_fields=modifs)
+
+
 class LoginForm(forms.Form):
     """Connexion : email + mot de passe uniquement. Aucun choix de rôle."""
 
@@ -453,6 +483,12 @@ class ProfilAssureForm(forms.ModelForm):
             )
         return date_naissance
 
+    def save(self, commit=True):
+        patient = super().save(commit=commit)
+        if commit:
+            aligner_patient_vers_user(patient)
+        return patient
+
 
 class AyantDroitForm(forms.ModelForm):
     """Creation/modification d'un ayant droit par l'assure principal."""
@@ -640,6 +676,12 @@ class PatientForm(forms.ModelForm):
             )
         return cleaned_data
 
+    def save(self, commit=True):
+        patient = super().save(commit=commit)
+        if commit:
+            aligner_patient_vers_user(patient)
+        return patient
+
 
 class PatientCreationForm(PatientForm):
     """
@@ -729,6 +771,12 @@ class MedecinForm(forms.ModelForm):
         if comptes.exists():
             raise forms.ValidationError("Cet email est déjà utilisé par un compte existant.")
         return email
+
+    def save(self, commit=True):
+        medecin = super().save(commit=commit)
+        if commit:
+            aligner_medecin_vers_user(medecin)
+        return medecin
 
 
 class ServiceMedicalForm(forms.ModelForm):
@@ -847,6 +895,34 @@ class MonCompteForm(forms.ModelForm):
             elif not self.instance.check_password(mot_de_passe):
                 self.add_error("mot_de_passe_actuel", "Mot de passe incorrect.")
         return donnees
+
+    def save(self, commit=True):
+        user = super().save(commit=commit)
+        if commit:
+            if user.role == User.Role.ASSURE and hasattr(user, 'patient') and user.patient:
+                patient = user.patient
+                modifs_patient = []
+                if user.first_name and patient.prenom != user.first_name:
+                    patient.prenom = user.first_name
+                    modifs_patient.append('prenom')
+                if user.last_name and patient.nom != user.last_name:
+                    patient.nom = user.last_name
+                    modifs_patient.append('nom')
+                if modifs_patient:
+                    patient.save(update_fields=modifs_patient)
+
+            elif user.role == User.Role.MEDECIN and hasattr(user, 'medecin') and user.medecin:
+                medecin = user.medecin
+                modifs_medecin = []
+                if user.first_name and medecin.prenom != user.first_name:
+                    medecin.prenom = user.first_name
+                    modifs_medecin.append('prenom')
+                if user.last_name and medecin.nom != user.last_name:
+                    medecin.nom = user.last_name
+                    modifs_medecin.append('nom')
+                if modifs_medecin:
+                    medecin.save(update_fields=modifs_medecin)
+        return user
 
 
 class PreferenceNotificationForm(forms.ModelForm):
