@@ -13,7 +13,12 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from ..forms import AyantDroitForm, ProfilAssureForm, RendezVousAssureForm
+from ..forms import (
+    AyantDroitForm,
+    ProfilAssureForm,
+    RendezVousAssureForm,
+    aligner_patient_vers_user,
+)
 from ..models import (
     Consultation,
     JournalActivite,
@@ -209,6 +214,7 @@ def mon_profil_assure(request):
             profil.user = request.user
             profil.type_beneficiaire = Patient.TypeBeneficiaire.PRINCIPAL
             profil.save()
+            aligner_patient_vers_user(profil)
             messages.success(request, "Profil enregistré.")
             return redirect("dashboard_assure")
     else:
