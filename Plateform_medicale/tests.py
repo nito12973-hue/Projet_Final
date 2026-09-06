@@ -8709,6 +8709,39 @@ class AuditParcoursUtilisateurTests(TestCase):
         self.assertIn("Clinique Privée Externe", contenu)
         self.assertNotIn(reverse("fiche_prestataire_assure", args=[clinique_hors_reseau.pk]), contenu)
 
+    def test_ux_parametres_et_theme_topbar(self):
+        """Vérifie que Paramètres est réservé à l'Admin dans le menu principal,
+        et que le sélecteur de thème est directement accessible dans la topbar."""
+        # 1. Médecin : pas de 'Paramètres' dans la navigation latérale, mais Thème dans la topbar
+        self.client.login(email="dr.audit@santesn.sn", password=self.mdp)
+        rep_medecin = self.client.get(reverse("dashboard_medecin"))
+        self.assertEqual(rep_medecin.status_code, 200)
+        html_medecin = rep_medecin.content.decode()
+        self.assertIn('menu-theme', html_medecin)
+        self.assertIn('data-theme-choix="clair"', html_medecin)
+        self.assertIn('data-theme-choix="sombre"', html_medecin)
+        self.assertIn('data-theme-choix="systeme"', html_medecin)
+        self.assertNotIn(f'href="{reverse("parametres")}"', html_medecin)
+
+        # 2. Assuré : pas de 'Paramètres' dans la navigation latérale
+        self.client.login(email="assure.audit@santesn.sn", password=self.mdp)
+        rep_assure = self.client.get(reverse("dashboard_assure"))
+        self.assertEqual(rep_assure.status_code, 200)
+        html_assure = rep_assure.content.decode()
+        self.assertIn('menu-theme', html_assure)
+        self.assertNotIn(f'href="{reverse("parametres")}"', html_assure)
+
+        # 3. Administrateur : conserve le lien Paramètres dans son menu principal
+        User.objects.create_superuser(
+            email="admin.audit@santesn.sn", password=self.mdp, role=User.Role.ADMIN
+        )
+        self.client.login(email="admin.audit@santesn.sn", password=self.mdp)
+        rep_admin = self.client.get(reverse("dashboard"))
+        self.assertEqual(rep_admin.status_code, 200)
+        html_admin = rep_admin.content.decode()
+        self.assertIn('menu-theme', html_admin)
+        self.assertIn(f'href="{reverse("parametres")}"', html_admin)
+
 
 
 

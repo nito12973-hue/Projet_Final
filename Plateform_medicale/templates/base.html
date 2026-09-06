@@ -4320,6 +4320,78 @@
             margin-left: auto;
         }
 
+        .menu-theme {
+            position: relative;
+        }
+        .menu-theme > summary::-webkit-details-marker {
+            display: none;
+        }
+        .menu-theme > summary {
+            list-style: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .menu-theme-panneau {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            z-index: 40;
+            width: 200px;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: var(--surface);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.12);
+        }
+        .menu-theme-entete {
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 8px;
+            font-size: 12.5px;
+            font-weight: 700;
+            color: var(--titre);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .menu-theme-options {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .theme-bouton-rapide {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            background: transparent;
+            color: var(--text);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: left;
+            transition: background 0.15s ease, border-color 0.15s ease;
+        }
+        .theme-bouton-rapide:hover {
+            background: var(--bg);
+            border-color: var(--border);
+        }
+        .theme-bouton-rapide[aria-checked="true"] {
+            background: var(--primary-soft);
+            color: var(--primary-strong);
+            border-color: var(--primary);
+            font-weight: 700;
+        }
+        .theme-bouton-rapide .icone-nav {
+            width: 16px;
+            height: 16px;
+        }
+
         .menu-notifications {
             position: relative;
         }
@@ -4830,6 +4902,20 @@
                 border: 1px solid var(--border) !important;
             }
 
+            /* Menu Thème Mobile */
+            .menu-theme-panneau {
+                position: fixed !important;
+                top: 62px !important;
+                right: 12px !important;
+                width: 200px !important;
+                max-width: calc(100vw - 24px) !important;
+                background: var(--surface) !important;
+                border: 1px solid var(--border) !important;
+                border-radius: 14px !important;
+                box-shadow: 0 16px 48px rgba(11, 32, 39, 0.28) !important;
+                z-index: 99999 !important;
+            }
+
             /* 2. Panneau Déroulant de Notifications */
             .menu-notifications {
                 position: static !important;
@@ -5001,7 +5087,6 @@
                 <span class="nav-section">Mon compte</span>
                 <a href="{% url 'modifier_profil_medecin' %}" aria-label="Mon profil" data-tooltip="Mon profil" class="{% if url_name == 'modifier_profil_medecin' %}active{% endif %}">{% icone "user-circle" %} <span class="nav-texte">Mon profil</span></a>
                 <a href="{% url 'mes_notifications' %}" aria-label="Notifications" data-tooltip="Notifications" class="{% if url_name == 'mes_notifications' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span>{% if notifications_non_lues %} <span class="badge-non-lues">{{ notifications_non_lues }}</span>{% endif %}</a>
-                <a href="{% url 'parametres' %}" aria-label="Paramètres" data-tooltip="Paramètres" class="{% if url_name == 'parametres' or url_name == 'parametres_section' or url_name == 'mon_compte' or url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "settings" %} <span class="nav-texte">Paramètres</span></a>
                 {% endwith %}
                 {% elif current_role == "PHARMACIEN" %}
                 {% with url_name=request.resolver_match.url_name %}
@@ -5012,7 +5097,6 @@
                 
                 <span class="nav-section">Mon compte</span>
                 <a href="{% url 'mes_notifications' %}" aria-label="Notifications" data-tooltip="Notifications" class="{% if url_name == 'mes_notifications' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span>{% if notifications_non_lues %} <span class="badge-non-lues">{{ notifications_non_lues }}</span>{% endif %}</a>
-                <a href="{% url 'parametres' %}" aria-label="Paramètres" data-tooltip="Paramètres" class="{% if url_name == 'parametres' or url_name == 'parametres_section' or url_name == 'mon_compte' or url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "settings" %} <span class="nav-texte">Paramètres</span></a>
                 {% endwith %}
                 {% elif current_role == "ASSURE" %}
                 {% with url_name=request.resolver_match.url_name %}
@@ -5034,7 +5118,6 @@
                 <span class="nav-section">Mon compte</span>
                 <a href="{% url 'mon_historique_assure' %}" aria-label="Mon historique" data-tooltip="Mon historique" class="{% if url_name == 'mon_historique_assure' %}active{% endif %}">{% icone "clock-history" %} <span class="nav-texte">Mon historique</span></a>
                 <a href="{% url 'mes_notifications' %}" aria-label="Notifications" data-tooltip="Notifications" class="{% if url_name == 'mes_notifications' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span>{% if notifications_non_lues %} <span class="badge-non-lues">{{ notifications_non_lues }}</span>{% endif %}</a>
-                <a href="{% url 'parametres' %}" aria-label="Paramètres" data-tooltip="Paramètres" class="{% if url_name == 'parametres' or url_name == 'mon_compte' or url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "settings" %} <span class="nav-texte">Paramètres</span></a>
                 {% endwith %}
                 {% endif %}
             </nav>
@@ -5072,6 +5155,30 @@
                     </form>
                     {% endif %}
                     <div class="topbar-droite">
+                        <details class="menu-theme" id="menu-theme-topbar">
+                            <summary class="topbar-bouton" aria-label="Changer le thème d'affichage" title="Thème d'affichage">
+                                <span class="icone-theme-actuel" id="icone-theme-actuel">{% icone "sun" %}</span>
+                            </summary>
+                            <div class="menu-theme-panneau" role="dialog" aria-label="Choix du thème">
+                                <div class="menu-theme-entete">
+                                    <strong>Thème</strong>
+                                </div>
+                                <div class="menu-theme-options" role="radiogroup" aria-label="Thème d'affichage">
+                                    <button type="button" class="theme-bouton-rapide" data-theme-choix="clair" role="radio" aria-checked="false">
+                                        {% icone "sun" %}
+                                        <span>Clair</span>
+                                    </button>
+                                    <button type="button" class="theme-bouton-rapide" data-theme-choix="sombre" role="radio" aria-checked="false">
+                                        {% icone "moon" %}
+                                        <span>Sombre</span>
+                                    </button>
+                                    <button type="button" class="theme-bouton-rapide" data-theme-choix="systeme" role="radio" aria-checked="false">
+                                        {% icone "monitor" %}
+                                        <span>Système</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </details>
                         <details class="menu-notifications">
                             <summary class="topbar-bouton" aria-label="Notifications{% if notifications_non_lues %} : {{ notifications_non_lues }} non lue(s){% endif %}">
                                 {% icone "bell" %}
@@ -5379,7 +5486,7 @@
         (function () {
             // Fermeture automatique des menus déroulants au toucher extérieur sur mobile/tablette
             document.addEventListener('click', function (evenement) {
-                var ouverts = document.querySelectorAll('details.menu-notifications[open], details.menu-compte[open]');
+                var ouverts = document.querySelectorAll('details.menu-theme[open], details.menu-notifications[open], details.menu-compte[open]');
                 ouverts.forEach(function (details) {
                     if (!details.contains(evenement.target)) {
                         details.removeAttribute('open');
@@ -5409,10 +5516,14 @@
         })();
 
         (function () {
-            // Selecteur de theme (page Parametres). Le theme lui-meme est
+            // Selecteur de theme (topbar et page Parametres). Le theme lui-meme est
             // applique par le script du <head> ; ici on ne gere que le choix.
             var boutons = document.querySelectorAll('[data-theme-choix]');
             if (!boutons.length) { return; }
+
+            var svgSun = '<svg class="icone-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+            var svgMoon = '<svg class="icone-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+            var svgMonitor = '<svg class="icone-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>';
 
             function appliquer(choix) {
                 var sombre = choix === 'sombre'
@@ -5426,6 +5537,16 @@
                     b.setAttribute('aria-checked',
                         b.dataset.themeChoix === choix ? 'true' : 'false');
                 });
+                var iconeTop = document.getElementById('icone-theme-actuel');
+                if (iconeTop) {
+                    if (choix === 'sombre') {
+                        iconeTop.innerHTML = svgMoon;
+                    } else if (choix === 'clair') {
+                        iconeTop.innerHTML = svgSun;
+                    } else {
+                        iconeTop.innerHTML = svgMonitor;
+                    }
+                }
             }
 
             var actuel = 'systeme';
@@ -5437,6 +5558,10 @@
                     var choix = bouton.dataset.themeChoix;
                     try { localStorage.setItem('theme-santesn', choix); } catch (e) {}
                     appliquer(choix);
+                    var menuTheme = document.getElementById('menu-theme-topbar');
+                    if (menuTheme && menuTheme.open) {
+                        menuTheme.removeAttribute('open');
+                    }
                 });
             });
         })();
