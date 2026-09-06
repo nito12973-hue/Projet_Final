@@ -165,7 +165,7 @@ def dashboard_assure(request):
     maintenant = timezone.now()
     rendez_vous_a_venir = RendezVous.objects.filter(
         patient__in=beneficiaires, date_heure__gte=maintenant
-    ).exclude(statut=RendezVous.Statut.ANNULE)
+    ).exclude(statut__in=[RendezVous.Statut.ANNULE, RendezVous.Statut.REFUSE])
 
     qr_svg = patient.qr_svg(
         request.build_absolute_uri(reverse("carte_scan", args=[patient.numero_carte])),
@@ -358,7 +358,7 @@ def ajouter_rendez_vous_assure(request):
             rdv = form.save()
             from ..services.notifications import notifier_demande_rdv
             notifier_demande_rdv(rdv)
-            messages.success(request, "Demande de rendez-vous envoyée.")
+            messages.success(request, "Votre demande de rendez-vous a bien été envoyée.")
             return redirect("mes_rendez_vous_assure")
     else:
         prestataire = _prestataire_demande(request.GET)
@@ -381,7 +381,9 @@ def annuler_rendez_vous_assure(request, pk):
     beneficiaires = _beneficiaires(patient) if patient else Patient.objects.none()
     rendez_vous = get_object_or_404(RendezVous, pk=pk, patient__in=beneficiaires)
 
-    if rendez_vous.statut in (RendezVous.Statut.DEMANDE, RendezVous.Statut.CONFIRME):
+    if rendez_vous.statut == RendezVous.Statut.ANNULE:
+        messages.info(request, "Ce rendez-vous est déjà annulé.")
+    elif rendez_vous.statut in (RendezVous.Statut.DEMANDE, RendezVous.Statut.CONFIRME):
         rendez_vous.statut = RendezVous.Statut.ANNULE
         rendez_vous.save(update_fields=["statut"])
         from ..services.notifications import notifier_annulation_rdv_par_assure

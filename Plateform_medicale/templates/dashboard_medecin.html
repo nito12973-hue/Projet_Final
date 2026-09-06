@@ -36,7 +36,7 @@
             </strong>
         </div>
         <div>
-            <p style="margin:0 0 8px;font-size:36px;font-weight:800;color:var(--titre);font-variant-numeric:tabular-nums;line-height:1;">
+            <p id="nb-demandes-attente-val" style="margin:0 0 8px;font-size:36px;font-weight:800;color:var(--titre);font-variant-numeric:tabular-nums;line-height:1;">
                 {{ nb_demandes_en_attente }}
             </p>
         </div>
@@ -92,14 +92,18 @@
                     </div>
                 </div>
                 <div style="display:flex;align-items:center;gap:10px;">
-                    <span class="dash-pill {% if rdv.statut == 'CONFIRME' or rdv.statut == 'TERMINE' %}ok{% elif rdv.statut == 'ANNULE' %}danger{% else %}attente{% endif %}">
+                    <span class="dash-pill {% if rdv.statut == 'CONFIRME' or rdv.statut == 'TERMINE' %}ok{% elif rdv.statut == 'ANNULE' or rdv.statut == 'REFUSE' %}danger{% else %}attente{% endif %}">
                         {{ rdv.get_statut_display }}
                     </span>
                     {% if rdv.statut == 'TERMINE' %}
                     <span class="dash-pill ok" style="font-size:12px;">Consulté</span>
-                    {% elif rdv.statut != 'ANNULE' %}
+                    {% elif rdv.statut == 'CONFIRME' %}
                     <a href="{% url 'ajouter_consultation_medecin' %}?rdv_id={{ rdv.pk }}" class="button primary btn-sm">
                         Démarrer
+                    </a>
+                    {% elif rdv.statut == 'DEMANDE' %}
+                    <a href="{% url 'agenda_medecin' %}?statut=DEMANDE" class="button btn-sm">
+                        Traiter
                     </a>
                     {% endif %}
                 </div>
@@ -152,5 +156,46 @@
         </div>
     </div>
 </div>
+
+<script>
+(function() {
+    var urlApi = "{% url 'api_demandes_en_attente_medecin' %}";
+    var compteurEl = document.getElementById("nb-demandes-attente-val");
+    var currentCount = compteurEl ? parseInt(compteurEl.textContent.trim(), 10) || 0 : 0;
+
+    function verifierDemandes() {
+        if (document.hidden) return;
+        fetch(urlApi, {
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        })
+        .then(function(res) { return res.ok ? res.json() : null; })
+        .then(function(data) {
+            if (!data) return;
+            if (compteurEl && typeof data.count === "number") {
+                compteurEl.textContent = data.count;
+            }
+            if (typeof data.count === "number" && data.count > currentCount) {
+                var banniere = document.getElementById("demandes-nouvelles-alerte");
+                if (!banniere) {
+                    banniere = document.createElement("div");
+                    banniere.id = "demandes-nouvelles-alerte";
+                    banniere.style.cssText = "margin-bottom:20px;padding:12px 16px;background:var(--primary-soft);border:1px solid var(--primary);border-radius:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;";
+                    var pageTitle = document.querySelector(".page-title");
+                    if (pageTitle && pageTitle.parentNode) {
+                        pageTitle.parentNode.insertBefore(banniere, pageTitle.nextSibling);
+                    }
+                }
+                banniere.innerHTML = "<span><strong>Nouvelle demande de rendez-vous reçue !</strong> Vous avez de nouvelles demandes en attente de validation.</span> <a href=\"{% url 'agenda_medecin' %}?statut=DEMANDE\" class=\"button primary btn-sm\">Consulter l'agenda</a>";
+                currentCount = data.count;
+            } else if (typeof data.count === "number") {
+                currentCount = data.count;
+            }
+        })
+        .catch(function() {});
+    }
+
+    setInterval(verifierDemandes, 20000);
+})();
+</script>
 {% endblock %}
 

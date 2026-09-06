@@ -255,12 +255,14 @@ class ConsultationForm(forms.ModelForm):
         model = Consultation
         fields = ['patient', 'service', 'prise_en_charge', 'date_consultation', 'diagnostic', 'traitement']
 
-    def __init__(self, *args, medecin=None, **kwargs):
+    def __init__(self, *args, medecin=None, rdv=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.medecin = medecin
-        if medecin and medecin.prestataire:
+        self.rdv = rdv
+        prestataire_effectif = (medecin.prestataire if medecin else None) or (rdv.prestataire if rdv else None)
+        if prestataire_effectif:
             self.fields['service'].queryset = ServiceMedical.objects.filter(
-                Q(prestataire=medecin.prestataire) | Q(prestataire__isnull=True)
+                Q(prestataire=prestataire_effectif, prestataire__partenaire=True) | Q(prestataire__isnull=True)
             )
         elif medecin:
             self.fields['service'].queryset = ServiceMedical.objects.filter(prestataire__isnull=True)
@@ -269,11 +271,12 @@ class ConsultationForm(forms.ModelForm):
 
     def clean_service(self):
         service = self.cleaned_data.get('service')
-        if service and service.prestataire and self.medecin and self.medecin.prestataire:
-            if service.prestataire != self.medecin.prestataire:
+        prestataire_effectif = (self.medecin.prestataire if self.medecin else None) or (self.rdv.prestataire if self.rdv else None)
+        if service and service.prestataire:
+            if not prestataire_effectif or service.prestataire != prestataire_effectif:
                 raise forms.ValidationError("Ce service médical n'appartient pas à votre établissement.")
-        elif service and service.prestataire and self.medecin and not self.medecin.prestataire:
-            raise forms.ValidationError("Ce service médical n'appartient pas à votre établissement.")
+            if not service.prestataire.partenaire:
+                raise forms.ValidationError("Ce service médical appartient à un établissement non partenaire.")
         return service
 
 
@@ -407,13 +410,23 @@ class MedecinProfilForm(forms.ModelForm):
 
     class Meta:
         model = Medecin
-        fields = ['specialite', 'telephone', 'annees_experience', 'presentation']
+        fields = ['specialite', 'prestataire', 'telephone', 'annees_experience', 'presentation']
         widgets = {
             'presentation': forms.Textarea(attrs={
                 'rows': 4,
                 'placeholder': "Domaines de prise en charge, parcours, langues parlées...",
             }),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'prestataire' in self.fields:
+            qs = Prestataire.objects.filter(partenaire=True)
+            if self.instance and self.instance.prestataire_id:
+                qs = Prestataire.objects.filter(Q(partenaire=True) | Q(pk=self.instance.prestataire_id))
+            self.fields['prestataire'].queryset = qs.order_by('nom')
+            self.fields['prestataire'].empty_label = "--- Aucun établissement rattaché ---"
+            self.fields['prestataire'].required = False
 
 
 class ProfilAssureForm(forms.ModelForm):

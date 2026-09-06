@@ -66,7 +66,7 @@
                 <td>{{ rdv.prestataire|default:"Hôpital Principal" }}</td>
                 <td><span style="font-size:13px;">{{ rdv.motif|default:"Consultation générale" }}</span></td>
                 <td>
-                    <span class="badge {% if rdv.statut == 'DEMANDE' %}en_attente{% elif rdv.statut == 'CONFIRME' %}confirme{% elif rdv.statut == 'ANNULE' %}refusee{% elif rdv.statut == 'TERMINE' %}terminee{% endif %}">
+                    <span class="badge {% if rdv.statut == 'DEMANDE' %}en_attente{% elif rdv.statut == 'CONFIRME' %}confirme{% elif rdv.statut == 'ANNULE' or rdv.statut == 'REFUSE' %}refusee{% elif rdv.statut == 'TERMINE' %}terminee{% endif %}">
                         {{ rdv.get_statut_display }}
                     </span>
                 </td>
@@ -76,19 +76,25 @@
                         <a href="{% url 'ajouter_consultation_medecin' %}?rdv_id={{ rdv.pk }}" class="button primary btn btn-sm" title="Ouvrir la consultation pour ce patient">
                             {% icone "stethoscope" %} Démarrer
                         </a>
-                        {% endif %}
-                        {% if rdv.statut == 'DEMANDE' %}
+                        <form method="post" action="{% url 'changer_statut_rendez_vous' rdv.pk %}" class="action-ligne"
+                              data-confirmation="Annuler le rendez-vous confirmé de {{ rdv.patient }} ?"
+                              data-confirmation-action="Oui, annuler le rendez-vous">
+                            {% csrf_token %}
+                            <input type="hidden" name="statut" value="ANNULE">
+                            <button type="submit" class="button btn btn-danger btn-sm">Annuler</button>
+                        </form>
+                        {% elif rdv.statut == 'DEMANDE' %}
                         <form method="post" action="{% url 'changer_statut_rendez_vous' rdv.pk %}" class="action-ligne">
                             {% csrf_token %}
                             <input type="hidden" name="statut" value="CONFIRME">
                             <button type="submit" class="button primary btn btn-sm">{% icone "check" %} Confirmer</button>
                         </form>
-                        {% endif %}
-                        {% if rdv.statut == 'DEMANDE' or rdv.statut == 'CONFIRME' %}
-                        <form method="post" action="{% url 'changer_statut_rendez_vous' rdv.pk %}" class="action-ligne">
+                        <form method="post" action="{% url 'changer_statut_rendez_vous' rdv.pk %}" class="action-ligne"
+                              data-confirmation="Refuser la demande de rendez-vous de {{ rdv.patient }} ?"
+                              data-confirmation-action="Oui, refuser la demande">
                             {% csrf_token %}
-                            <input type="hidden" name="statut" value="ANNULE">
-                            <button type="submit" class="button btn btn-danger btn-sm">Annuler</button>
+                            <input type="hidden" name="statut" value="REFUSE">
+                            <button type="submit" class="button btn btn-danger btn-sm">{% icone "x" %} Refuser</button>
                         </form>
                         {% endif %}
                     </div>
@@ -115,4 +121,45 @@
     <p>{% if statut_choisi or periode_choisie %}Aucun rendez-vous ne correspond à ces critères.{% else %}Aucun rendez-vous enregistré.{% endif %}</p>
 </div>
 {% endif %}
+
+<script>
+(function() {
+    var urlApi = "{% url 'api_demandes_en_attente_medecin' %}";
+    var initialPending = null;
+
+    function verifierDemandes() {
+        if (document.hidden) return;
+        fetch(urlApi, {
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        })
+        .then(function(res) { return res.ok ? res.json() : null; })
+        .then(function(data) {
+            if (!data || typeof data.count !== "number") return;
+            if (initialPending === null) {
+                initialPending = data.count;
+                return;
+            }
+            if (data.count > initialPending) {
+                var banniere = document.getElementById("demandes-nouvelles-alerte-agenda");
+                if (!banniere) {
+                    banniere = document.createElement("div");
+                    banniere.id = "demandes-nouvelles-alerte-agenda";
+                    banniere.style.cssText = "margin-bottom:18px;padding:12px 16px;background:var(--primary-soft);border:1px solid var(--primary);border-radius:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;";
+                    var formFiltres = document.querySelector("form.filtres");
+                    if (formFiltres && formFiltres.parentNode) {
+                        formFiltres.parentNode.insertBefore(banniere, formFiltres);
+                    }
+                }
+                banniere.innerHTML = "<span><strong>Nouvelle demande de rendez-vous en attente !</strong> Le planning a évolué.</span> <a href=\"\" class=\"button primary btn-sm\">Actualiser la page</a>";
+                initialPending = data.count;
+            } else {
+                initialPending = data.count;
+            }
+        })
+        .catch(function() {});
+    }
+
+    setInterval(verifierDemandes, 20000);
+})();
+</script>
 {% endblock %}

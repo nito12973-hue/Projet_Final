@@ -55,7 +55,7 @@
                 <td class="col-optionnelle">{{ rdv.medecin }}</td>
                 <td class="col-optionnelle">{{ rdv.prestataire|default:"—" }}</td>
                 <td class="col-optionnelle">{{ rdv.motif|default:"—" }}</td>
-                <td><span class="badge {% if rdv.statut == 'CONFIRME' %}validee{% elif rdv.statut == 'ANNULE' %}refusee{% elif rdv.statut == 'DEMANDE' %}en_attente{% endif %}">{{ rdv.get_statut_display }}</span></td>
+                <td><span class="badge {% if rdv.statut == 'CONFIRME' %}validee{% elif rdv.statut == 'ANNULE' or rdv.statut == 'REFUSE' %}refusee{% elif rdv.statut == 'DEMANDE' %}en_attente{% elif rdv.statut == 'TERMINE' %}terminee{% endif %}">{{ rdv.get_statut_display }}</span></td>
             </tr>
             {% endfor %}
         </tbody>

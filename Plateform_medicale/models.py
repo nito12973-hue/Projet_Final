@@ -757,6 +757,7 @@ class RendezVous(models.Model):
     class Statut(models.TextChoices):
         DEMANDE = "DEMANDE", "Demande"
         CONFIRME = "CONFIRME", "Confirmé"
+        REFUSE = "REFUSE", "Refusé"
         ANNULE = "ANNULE", "Annulé"
         TERMINE = "TERMINE", "Terminé"
 
@@ -797,11 +798,11 @@ class RendezVous(models.Model):
             # creneau chez le MEME medecin -- le systeme acceptait, et les
             # deux se presentaient.
             #
-            # Les rendez-vous ANNULES sont exclus : annuler doit liberer le
-            # creneau, sinon un desistement le condamnerait pour toujours.
+            # Les rendez-vous ANNULES et REFUSES sont exclus : annuler ou refuser
+            # doit liberer le creneau pour un autre patient.
             models.UniqueConstraint(
                 fields=["medecin", "date_heure"],
-                condition=~models.Q(statut="ANNULE"),
+                condition=~models.Q(statut__in=["ANNULE", "REFUSE"]),
                 name="rdv_creneau_unique_par_medecin",
                 violation_error_message=(
                     "Ce créneau est déjà réservé pour ce médecin. "
@@ -820,11 +821,11 @@ class RendezVous(models.Model):
         super().clean()
         if self.medecin_id is None or self.date_heure is None:
             return
-        if self.statut == self.Statut.ANNULE:
+        if self.statut in (self.Statut.ANNULE, self.Statut.REFUSE):
             return
         conflit = RendezVous.objects.filter(
             medecin_id=self.medecin_id, date_heure=self.date_heure
-        ).exclude(statut=self.Statut.ANNULE)
+        ).exclude(statut__in=[self.Statut.ANNULE, self.Statut.REFUSE])
         if self.pk:
             conflit = conflit.exclude(pk=self.pk)
         if conflit.exists():
