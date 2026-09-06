@@ -202,6 +202,7 @@ from .medecin_espace import (  # noqa: F401
     voir_ordonnance_medecin,
     annuler_ordonnance_medecin,
     modifier_profil_medecin,
+    api_demandes_en_attente_medecin,
 )
 
 # Espace pharmacien

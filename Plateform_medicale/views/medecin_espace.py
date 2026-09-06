@@ -59,7 +59,7 @@ def dashboard_medecin(request):
 
     rendez_vous_du_jour = RendezVous.objects.filter(
         medecin=medecin, date_heure__date=aujourd_hui
-    ).exclude(statut=RendezVous.Statut.ANNULE).select_related("patient").order_by("date_heure")
+    ).exclude(statut__in=[RendezVous.Statut.ANNULE, RendezVous.Statut.REFUSE]).select_related("patient").order_by("date_heure")
 
     derniers_patients = Consultation.objects.filter(
         medecin=medecin
@@ -111,22 +111,54 @@ def changer_statut_rendez_vous(request, pk):
     rendez_vous = get_object_or_404(RendezVous, pk=pk, medecin=medecin)
     ancien_statut = rendez_vous.statut
     nouveau_statut = request.POST.get("statut")
-    if nouveau_statut in RendezVous.Statut.values:
-        rendez_vous.statut = nouveau_statut
-        rendez_vous.save(update_fields=["statut"])
-        from ..services.notifications import (
-            notifier_confirmation_rdv,
-            notifier_refus_rdv,
-            notifier_annulation_rdv_par_medecin,
+
+    if nouveau_statut not in RendezVous.Statut.values:
+        messages.error(request, "Statut de rendez-vous invalide.")
+        return redirect("agenda_medecin")
+
+    if nouveau_statut == ancien_statut:
+        messages.info(request, "Le statut du rendez-vous est déjà à jour.")
+        return redirect("agenda_medecin")
+
+    if ancien_statut in (RendezVous.Statut.ANNULE, RendezVous.Statut.REFUSE, RendezVous.Statut.TERMINE):
+        messages.warning(
+            request,
+            f"Impossible de modifier un rendez-vous {rendez_vous.get_statut_display().lower()}."
         )
-        if nouveau_statut == RendezVous.Statut.CONFIRME:
-            notifier_confirmation_rdv(rendez_vous)
-        elif nouveau_statut == RendezVous.Statut.ANNULE:
-            if ancien_statut == RendezVous.Statut.CONFIRME:
-                notifier_annulation_rdv_par_medecin(rendez_vous)
-            else:
-                notifier_refus_rdv(rendez_vous)
-        messages.success(request, "Statut du rendez-vous mis à jour.")
+        return redirect("agenda_medecin")
+
+    transitions_autorisees = {
+        RendezVous.Statut.DEMANDE: [RendezVous.Statut.CONFIRME, RendezVous.Statut.REFUSE, RendezVous.Statut.ANNULE],
+        RendezVous.Statut.CONFIRME: [RendezVous.Statut.ANNULE],
+    }
+
+    if nouveau_statut not in transitions_autorisees.get(ancien_statut, []):
+        messages.warning(
+            request,
+            f"Transition non autorisée : impossible de passer de {rendez_vous.get_statut_display()} à {dict(RendezVous.Statut.choices).get(nouveau_statut, nouveau_statut)}."
+        )
+        return redirect("agenda_medecin")
+
+    rendez_vous.statut = nouveau_statut
+    rendez_vous.save(update_fields=["statut"])
+
+    from ..services.notifications import (
+        notifier_confirmation_rdv,
+        notifier_refus_rdv,
+        notifier_annulation_rdv_par_medecin,
+    )
+    if nouveau_statut == RendezVous.Statut.CONFIRME:
+        notifier_confirmation_rdv(rendez_vous)
+        messages.success(request, "Rendez-vous confirmé.")
+    elif nouveau_statut == RendezVous.Statut.REFUSE:
+        notifier_refus_rdv(rendez_vous)
+        messages.success(request, "Demande de rendez-vous refusée.")
+    elif nouveau_statut == RendezVous.Statut.ANNULE:
+        if ancien_statut == RendezVous.Statut.CONFIRME:
+            notifier_annulation_rdv_par_medecin(rendez_vous)
+        else:
+            notifier_refus_rdv(rendez_vous)
+        messages.success(request, "Rendez-vous annulé.")
     return redirect("agenda_medecin")
 
 
@@ -311,7 +343,7 @@ def ajouter_consultation_medecin(request):
             return redirect("agenda_medecin")
 
         if request.method == "POST":
-            form = ConsultationForm(request.POST, medecin=medecin)
+            form = ConsultationForm(request.POST, medecin=medecin, rdv=rdv)
             if form.is_valid():
                 consultation = form.save(commit=False)
                 consultation.medecin = medecin
@@ -327,7 +359,7 @@ def ajouter_consultation_medecin(request):
                 "patient": rdv.patient_id,
                 "date_consultation": timezone.now(),
             }
-            form = ConsultationForm(initial=initial, medecin=medecin)
+            form = ConsultationForm(initial=initial, medecin=medecin, rdv=rdv)
         return render(request, "ajouter_consultation_medecin.html", {
             "form": form,
             "rdv": rdv,
@@ -534,4 +566,31 @@ def annuler_ordonnance_medecin(request, pk):
 
     messages.success(request, f"Ordonnance #{ordonnance.code_qr} annulée.")
     return redirect("voir_ordonnance_medecin", pk=pk)
+
+
+@role_required(User.Role.MEDECIN)
+def api_demandes_en_attente_medecin(request):
+    """API JSON légère pour le polling d'actualisation des demandes de RDV en attente."""
+    medecin = _medecin_courant(request)
+    if medecin is None:
+        return JsonResponse({"count": 0, "items": []})
+
+    demandes = RendezVous.objects.filter(
+        medecin=medecin,
+        statut=RendezVous.Statut.DEMANDE,
+    ).select_related("patient").order_by("date_heure")
+
+    count = demandes.count()
+    items = [
+        {
+            "id": r.id,
+            "patient": f"{r.patient.prenom} {r.patient.nom}".strip(),
+            "date": r.date_heure.strftime("%d/%m/%Y"),
+            "heure": r.date_heure.strftime("%H:%M"),
+            "motif": r.motif or "Consultation générale",
+        }
+        for r in demandes[:5]
+    ]
+    return JsonResponse({"count": count, "items": items})
+
 

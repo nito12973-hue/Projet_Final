@@ -35,7 +35,7 @@
         <h1>Dr {{ medecin.prenom }} {{ medecin.nom }}</h1>
         <p class="subtitle">{{ medecin.specialite }}</p>
     </div>
-    {% if medecin.prestataire %}
+    {% if medecin.prestataire and medecin.prestataire.partenaire %}
     <a class="button" href="{% url 'fiche_prestataire_assure' medecin.prestataire.pk %}">{% icone "chevron-left" %} Retour</a>
     {% else %}
     <a class="button" href="{% url 'prestataires_proches' %}">{% icone "chevron-left" %} Retour</a>
@@ -58,7 +58,11 @@
             <dt>Structure</dt>
             <dd>
                 {% if medecin.prestataire %}
-                <a href="{% url 'fiche_prestataire_assure' medecin.prestataire.pk %}">{{ medecin.prestataire.nom }}</a>
+                    {% if medecin.prestataire.partenaire %}
+                    <a href="{% url 'fiche_prestataire_assure' medecin.prestataire.pk %}">{{ medecin.prestataire.nom }}</a>
+                    {% else %}
+                    <span>{{ medecin.prestataire.nom }}</span>
+                    {% endif %}
                 {% if medecin.prestataire.ville %} · {{ medecin.prestataire.ville }}{% endif %}
                 {% else %}
                 Non rattaché à une structure

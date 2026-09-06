@@ -8534,6 +8534,183 @@ class WorkflowConsultationsEtUrgencesTests(TestCase):
         self.assertEqual(RendezVous.objects.count(), nb_rdv_avant)
 
 
+class AuditParcoursUtilisateurTests(TestCase):
+    """Tests unitaires pour les parcours réels audités et stabilisés."""
+
+    def setUp(self):
+        self.mdp = "MotDePasseTest123!"
+        self.user_medecin = User.objects.create_user(
+            email="dr.audit@santesn.sn",
+            password=self.mdp,
+            role=User.Role.MEDECIN,
+            first_name="Saliou",
+            last_name="Ndoye",
+            phone_number="771000001",
+        )
+        self.medecin = Medecin.objects.create(
+            user=self.user_medecin,
+            nom="Ndoye",
+            prenom="Saliou",
+            telephone="771000001",
+            specialite="Cardiologie",
+        )
+        self.user_assure = User.objects.create_user(
+            email="assure.audit@santesn.sn",
+            password=self.mdp,
+            role=User.Role.ASSURE,
+            first_name="Lamarana",
+            last_name="Diallo",
+            phone_number="789576145",
+        )
+        self.patient = Patient.objects.create(
+            user=self.user_assure,
+            nom="Diallo",
+            prenom="Lamarana",
+            numero_carte="SN-AUDIT-001",
+            date_naissance=datetime.date(1990, 1, 1),
+            telephone="789576145",
+        )
+        self.hopital = Prestataire.objects.create(
+            nom="Hôpital Principal de Dakar",
+            type_prestataire=Prestataire.Type.HOPITAL,
+            ville="Dakar",
+            partenaire=True,
+        )
+        self.service_hopital = ServiceMedical.objects.create(
+            nom="Consultation Cardiologie Spécialisée",
+            prix=Decimal("15000"),
+            prestataire=self.hopital,
+        )
+        self.service_global = ServiceMedical.objects.create(
+            nom="Consultation Médecine Générale",
+            prix=Decimal("5000"),
+            prestataire=None,
+        )
+
+    def test_rendezvous_statut_refuse_libere_creneau_et_notifie(self):
+        """Le médecin peut refuser une demande de RDV, libérant le créneau horaire."""
+        self.client.login(email="dr.audit@santesn.sn", password=self.mdp)
+        demain_10h = timezone.now().replace(minute=0, second=0, microsecond=0) + datetime.timedelta(days=1)
+        rdv1 = RendezVous.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            prestataire=self.hopital,
+            date_heure=demain_10h,
+            statut=RendezVous.Statut.DEMANDE,
+        )
+        reponse = self.client.post(
+            reverse("changer_statut_rendez_vous", args=[rdv1.pk]),
+            {"statut": RendezVous.Statut.REFUSE},
+        )
+        self.assertRedirects(reponse, reverse("agenda_medecin"))
+        rdv1.refresh_from_db()
+        self.assertEqual(rdv1.statut, RendezVous.Statut.REFUSE)
+
+        # Vérifier qu'un autre patient peut maintenant réserver ce même créneau libéré
+        autre_user = User.objects.create_user(
+            email="autre.assure@santesn.sn", password=self.mdp, role=User.Role.ASSURE
+        )
+        autre_patient = Patient.objects.create(
+            user=autre_user, nom="Sow", prenom="Aida", numero_carte="SN-AUDIT-002",
+            date_naissance=datetime.date(1995, 5, 5)
+        )
+        rdv2 = RendezVous(
+            patient=autre_patient,
+            medecin=self.medecin,
+            prestataire=self.hopital,
+            date_heure=demain_10h,
+            statut=RendezVous.Statut.DEMANDE,
+        )
+        # Ne doit pas lever de ValidationError
+        rdv2.full_clean()
+        rdv2.save()
+        self.assertEqual(rdv2.statut, RendezVous.Statut.DEMANDE)
+
+    def test_machine_etat_idempotence_et_rejet_transition_terminale(self):
+        """Les transitions d'états sont idempotentes et protègent les états terminaux."""
+        self.client.login(email="dr.audit@santesn.sn", password=self.mdp)
+        demain = timezone.now() + datetime.timedelta(days=2)
+        rdv = RendezVous.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            date_heure=demain,
+            statut=RendezVous.Statut.DEMANDE,
+        )
+        # 1. Demande -> Confirme
+        self.client.post(reverse("changer_statut_rendez_vous", args=[rdv.pk]), {"statut": "CONFIRME"})
+        rdv.refresh_from_db()
+        self.assertEqual(rdv.statut, RendezVous.Statut.CONFIRME)
+
+        # 2. Idempotence : Confirme -> Confirme renvoie redirection sans erreur
+        reponse = self.client.post(reverse("changer_statut_rendez_vous", args=[rdv.pk]), {"statut": "CONFIRME"})
+        self.assertRedirects(reponse, reverse("agenda_medecin"))
+
+        # 3. Confirme -> Annule (médecin annule)
+        self.client.post(reverse("changer_statut_rendez_vous", args=[rdv.pk]), {"statut": "ANNULE"})
+        rdv.refresh_from_db()
+        self.assertEqual(rdv.statut, RendezVous.Statut.ANNULE)
+
+        # 4. État terminal : Annule -> Confirme doit être rejeté
+        self.client.post(reverse("changer_statut_rendez_vous", args=[rdv.pk]), {"statut": "CONFIRME"})
+        rdv.refresh_from_db()
+        self.assertEqual(rdv.statut, RendezVous.Statut.ANNULE)
+
+    def test_api_demandes_en_attente_medecin(self):
+        """L'API de polling médecin renvoie le décompte et les détails des demandes."""
+        self.client.login(email="dr.audit@santesn.sn", password=self.mdp)
+        RendezVous.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            date_heure=timezone.now() + datetime.timedelta(days=1),
+            statut=RendezVous.Statut.DEMANDE,
+            motif="Bilan cardiaque",
+        )
+        reponse = self.client.get(reverse("api_demandes_en_attente_medecin"))
+        self.assertEqual(reponse.status_code, 200)
+        data = reponse.json()
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(len(data["items"]), 1)
+        self.assertIn("Diallo", data["items"][0]["patient"])
+        self.assertEqual(data["items"][0]["motif"], "Bilan cardiaque")
+
+    def test_consultation_form_service_visibilite_avec_rdv_prestataire(self):
+        """Un médecin sans structure directe accède aux services de l'établissement du RDV."""
+        from .forms import ConsultationForm
+        self.assertIsNone(self.medecin.prestataire)
+        rdv = RendezVous.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            prestataire=self.hopital,
+            date_heure=timezone.now() + datetime.timedelta(days=1),
+            statut=RendezVous.Statut.CONFIRME,
+        )
+        form = ConsultationForm(medecin=self.medecin, rdv=rdv)
+        services = list(form.fields["service"].queryset)
+        self.assertIn(self.service_hopital, services)
+        self.assertIn(self.service_global, services)
+
+    def test_fiche_medecin_prestataire_non_partenaire_sans_lien_404(self):
+        """La fiche d'un médecin attaché à un établissement hors réseau n'affiche pas de lien brisé."""
+        clinique_hors_reseau = Prestataire.objects.create(
+            nom="Clinique Privée Externe",
+            type_prestataire=Prestataire.Type.CLINIQUE,
+            partenaire=False,
+        )
+        medecin_externe = Medecin.objects.create(
+            nom="Fall", prenom="Mamadou", specialite="Pédiatrie",
+            email="dr.fall.externe@santesn.sn",
+            prestataire=clinique_hors_reseau,
+        )
+        self.client.login(email="assure.audit@santesn.sn", password=self.mdp)
+        reponse = self.client.get(reverse("fiche_medecin_assure", args=[medecin_externe.pk]))
+        self.assertEqual(reponse.status_code, 200)
+        contenu = reponse.content.decode()
+        # Le nom s'affiche mais sans lien 404 vers fiche_prestataire_assure
+        self.assertIn("Clinique Privée Externe", contenu)
+        self.assertNotIn(reverse("fiche_prestataire_assure", args=[clinique_hors_reseau.pk]), contenu)
+
+
+
 
 
 

@@ -100,6 +100,7 @@ urlpatterns = [
     path('medecin/ordonnances/<int:pk>/', views.voir_ordonnance_medecin, name='voir_ordonnance_medecin'),
     path('medecin/ordonnances/<int:pk>/annuler/', views.annuler_ordonnance_medecin, name='annuler_ordonnance_medecin'),
     path('medecin/profil/', views.modifier_profil_medecin, name='modifier_profil_medecin'),
+    path('api/medecin/demandes-en-attente/', views.api_demandes_en_attente_medecin, name='api_demandes_en_attente_medecin'),
 
 
     path('pharmacien/scanner/', views.scanner_ordonnance, name='scanner_ordonnance'),
