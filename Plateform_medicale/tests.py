@@ -42,7 +42,7 @@ from .views import SECTIONS_PARAMETRES as SECTIONS_PARAMETRES_REELLES
 from .views import TAILLE_PAGE_LISTE
 from .services.notifications import emettre_notification
 
-SECTIONS_TOUTES = ('general', 'apparence', 'securite')
+SECTIONS_TOUTES = ('general', 'securite')
 
 PASSWORD = 'MotDePasseSolide2026!'
 
@@ -3442,7 +3442,7 @@ class ParametresEtMonCompteTests(TestCase):
         self.assertContains(reponse, 'Configuration de la plateforme')
 
     def test_chaque_categorie_ouvre_sa_propre_page(self):
-        for slug in ('general', 'apparence', 'securite'):
+        for slug in ('general', 'securite'):
             reponse = self.client.get(reverse('parametres_section', args=[slug]))
             self.assertEqual(reponse.status_code, 200, slug)
             self.assertEqual(reponse.context['section'], slug)
@@ -3535,8 +3535,15 @@ class ParametresEtMonCompteTests(TestCase):
         self.admin.refresh_from_db()
         self.assertEqual(self.admin.role, User.Role.ADMIN)
 
-    def test_selecteur_de_theme_present(self):
+    def test_section_apparence_supprimee_renvoie_404(self):
+        """La section /parametres/apparence/ n'existe plus et renvoie bien 404."""
         reponse = self.client.get(reverse('parametres_section', args=['apparence']))
+        self.assertEqual(reponse.status_code, 404)
+
+    def test_selecteur_de_theme_present_dans_topbar(self):
+        """Le selecteur de theme reste present dans la topbar sur les pages."""
+        reponse = self.client.get(reverse('parametres'))
+        self.assertContains(reponse, 'id="menu-theme-topbar"')
         for choix in ('clair', 'sombre', 'systeme'):
             self.assertContains(reponse, f'data-theme-choix="{choix}"')
 
@@ -3605,7 +3612,7 @@ class ParametresContenuTests(TestCase):
         slugs = [s['slug'] for s in reponse.context['sections']]
         self.assertNotIn('notifications', slugs)
         self.assertNotIn('donnees', slugs)
-        self.assertEqual(slugs, ['general', 'apparence', 'securite'])
+        self.assertEqual(slugs, ['general', 'securite'])
 
     def test_chaque_section_pointe_une_icone_qui_existe(self):
         """Panne silencieuse : _ICONES.get(nom, "") renvoie une chaine VIDE
