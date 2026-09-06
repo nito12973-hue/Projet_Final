@@ -353,9 +353,12 @@ def debloquer_compte(request, pk):
     clic annulerait la protection au pire moment.
     """
     utilisateur = get_object_or_404(User, pk=pk)
+    ligne_tentative = TentativeConnexion.objects.filter(email=utilisateur.email.lower()).first()
+    nb_echecs = ligne_tentative.tentatives if ligne_tentative else 0
     supprimees = TentativeConnexion.objects.filter(email=utilisateur.email.lower()).delete()[0]
     if supprimees:
-        journaliser(request, JournalActivite.Action.DEBLOCAGE, f"Utilisateur {utilisateur.email}")
+        details = f"Déblocage manuel par l'administration ({nb_echecs} échec{'s' if nb_echecs > 1 else ''} réinitialisé{'s' if nb_echecs > 1 else ''})"
+        journaliser(request, JournalActivite.Action.DEBLOCAGE, f"Utilisateur {utilisateur.email}", details=details)
         messages.success(
             request,
             f"Le compte de {utilisateur} peut de nouveau se connecter.",

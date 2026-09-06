@@ -131,6 +131,7 @@
                         </form>
                         {% endif %}
                         <a href="{% url 'modifier_utilisateur' utilisateur.pk %}" class="button primary btn btn-sm" title="Modifier le compte">{% icone "edit-2" %} Modifier</a>
+                        <a href="{% url 'journal_activite' %}?q={{ utilisateur.email }}" class="button btn btn-sm" title="Consulter l'historique d'activité de cet utilisateur">{% icone "file-text" %} Historique</a>
                         <form method="post" action="{% url 'renvoyer_activation' utilisateur.pk %}" class="action-ligne">
                             {% csrf_token %}
                             <button type="submit" class="button btn btn-sm" title="Générer et envoyer un nouveau lien d'activation sécurisé">{% icone "mail" %} Renvoyer</button>
