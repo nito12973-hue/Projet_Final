@@ -8938,13 +8938,179 @@ class SynchronisationIdentiteTests(TestCase):
         self.assertEqual(self.medecin.email, "dr.sow@clinique.sn")  # Inchangé !
 
 
+class VisibiliteComptesBloquesP1ATests(TestCase):
+    """Tests P1-A : Visibilité et déblocage des comptes temporairement bloqués dans /utilisateurs/."""
 
+    def setUp(self):
+        self.admin = creer_utilisateur(User.Role.ADMIN, "admin-p1a@santesn.sn")
+        self.assure = creer_utilisateur(User.Role.ASSURE, "assure-p1a@santesn.sn")
+        self.medecin = creer_utilisateur(User.Role.MEDECIN, "medecin-p1a@santesn.sn")
+        self.pharmacien = creer_utilisateur(User.Role.PHARMACIEN, "pharmacien-p1a@santesn.sn")
+        self.inactif = creer_utilisateur(User.Role.ASSURE, "inactif-p1a@santesn.sn")
+        self.inactif.is_active = False
+        self.inactif.save(update_fields=["is_active"])
+        self.client.login(username="admin-p1a@santesn.sn", password=PASSWORD)
 
+    def _bloquer(self, email):
+        for _ in range(TentativeConnexion.MAX_TENTATIVES):
+            TentativeConnexion.enregistrer_echec(email)
 
+    def test_a_compte_bloque_apparait_comme_bloque_temporairement(self):
+        """A. Un compte avec 5 échecs encore dans la fenêtre de blocage apparaît comme 'Bloqué temporairement'."""
+        self._bloquer(self.assure.email)
+        rep = self.client.get(reverse("liste_utilisateurs"))
+        self.assertEqual(rep.status_code, 200)
+        self.assertContains(rep, "Bloqué temporairement")
+        self.assertContains(rep, "min")
 
+    def test_b_compte_bloque_n_est_pas_affiche_comme_actif(self):
+        """B. Un compte bloqué n'est pas présenté comme 'Actif' dans son badge."""
+        self._bloquer(self.assure.email)
+        rep = self.client.get(reverse("liste_utilisateurs"))
+        self.assertEqual(rep.status_code, 200)
+        page = rep.context["utilisateurs"]
+        u_assure = next(u for u in page if u.pk == self.assure.pk)
+        self.assertTrue(u_assure.est_temporairement_bloque)
+        self.assertGreater(u_assure.minutes_restantes_blocage, 0)
+        content = rep.content.decode("utf-8")
+        lignes_tr = [tr for tr in content.split("<tr>") if self.assure.email in tr]
+        self.assertTrue(lignes_tr)
+        ligne_assure = lignes_tr[0]
+        self.assertIn("Bloqué temporairement", ligne_assure)
+        self.assertNotIn('<span class="badge validee">Actif</span>', ligne_assure)
 
+    def test_c_filtre_statut_bloque_retourne_uniquement_comptes_bloques(self):
+        """C. statut=bloque retourne uniquement les comptes réellement bloqués."""
+        self._bloquer(self.assure.email)
+        rep = self.client.get(reverse("liste_utilisateurs"), {"statut": "bloque"})
+        self.assertEqual(rep.status_code, 200)
+        users = list(rep.context["utilisateurs"])
+        self.assertEqual(len(users), 1)
+        self.assertEqual(users[0].pk, self.assure.pk)
+        self.assertContains(rep, self.assure.email)
+        self.assertNotContains(rep, self.medecin.email)
+        self.assertNotContains(rep, self.pharmacien.email)
 
+    def test_d_filtre_statut_actif_exclut_comptes_bloques(self):
+        """D. statut=actif exclut les comptes temporairement bloqués."""
+        self._bloquer(self.assure.email)
+        rep = self.client.get(reverse("liste_utilisateurs"), {"statut": "actif"})
+        self.assertEqual(rep.status_code, 200)
+        users = list(rep.context["utilisateurs"])
+        emails = [u.email for u in users]
+        self.assertNotIn(self.assure.email, emails)
+        self.assertIn(self.medecin.email, emails)
+        self.assertIn(self.pharmacien.email, emails)
 
+    def test_e_bouton_debloquer_apparait_uniquement_pour_compte_bloque(self):
+        """E. Le bouton 'Débloquer' apparaît uniquement pour un compte temporairement bloqué."""
+        self._bloquer(self.assure.email)
+        rep = self.client.get(reverse("liste_utilisateurs"))
+        content = rep.content.decode("utf-8")
+        lignes_tr = [tr for tr in content.split("<tr>") if self.assure.email in tr]
+        self.assertTrue(lignes_tr)
+        ligne_assure = lignes_tr[0]
+        self.assertIn("Débloquer", ligne_assure)
+        self.assertIn(f"/utilisateurs/{self.assure.pk}/debloquer/", ligne_assure)
 
+        lignes_medecin = [tr for tr in content.split("<tr>") if self.medecin.email in tr]
+        self.assertTrue(lignes_medecin)
+        self.assertNotIn("Débloquer", lignes_medecin[0])
 
+    def test_f_bouton_appelle_vue_existante_debloquer_compte(self):
+        """F. Le bouton appelle bien la vue existante debloquer_compte avec source=utilisateurs."""
+        self._bloquer(self.assure.email)
+        self.assertTrue(TentativeConnexion.bloque(self.assure.email))
+        rep = self.client.post(
+            reverse("debloquer_compte", args=[self.assure.pk]),
+            {"source": "utilisateurs"},
+        )
+        self.assertEqual(rep.status_code, 302)
+        self.assertEqual(rep.url, reverse("liste_utilisateurs"))
+        self.assertFalse(TentativeConnexion.bloque(self.assure.email))
 
+    def test_g_apres_deblocage_compte_n_est_plus_bloque_et_redevient_actif(self):
+        """G. Après déblocage : plus bloqué, badge redevient Actif, bouton Débloquer disparaît."""
+        self._bloquer(self.assure.email)
+        rep_post = self.client.post(
+            reverse("debloquer_compte", args=[self.assure.pk]),
+            {"source": "utilisateurs"},
+            follow=True,
+        )
+        self.assertEqual(rep_post.status_code, 200)
+        self.assertContains(rep_post, f"Le compte de {self.assure} peut de nouveau se connecter.")
+
+        rep = self.client.get(reverse("liste_utilisateurs"))
+        content = rep.content.decode("utf-8")
+        lignes_tr = [tr for tr in content.split("<tr>") if self.assure.email in tr]
+        self.assertTrue(lignes_tr)
+        ligne_assure = lignes_tr[0]
+        self.assertNotIn("Bloqué temporairement", ligne_assure)
+        self.assertIn('<span class="badge validee">Actif</span>', ligne_assure)
+        self.assertNotIn("Débloquer", ligne_assure)
+
+    def test_h_compte_inactif_sans_blocage_reste_inactif(self):
+        """H. Un compte is_active=False sans blocage TentativeConnexion reste 'Inactif' et non 'Bloqué'."""
+        rep = self.client.get(reverse("liste_utilisateurs"))
+        content = rep.content.decode("utf-8")
+        lignes_tr = [tr for tr in content.split("<tr>") if self.inactif.email in tr]
+        self.assertTrue(lignes_tr)
+        ligne_inactif = lignes_tr[0]
+        self.assertIn('<span class="badge refusee">Inactif</span>', ligne_inactif)
+        self.assertNotIn("Bloqué", ligne_inactif)
+        self.assertNotIn("Débloquer", ligne_inactif)
+
+        rep_inactif = self.client.get(reverse("liste_utilisateurs"), {"statut": "inactif"})
+        self.assertContains(rep_inactif, self.inactif.email)
+
+    def test_i_permissions_administrateur_strictement_conservees(self):
+        """I. Les permissions administrateur restent strictement nécessaires."""
+        self._bloquer(self.assure.email)
+        self.client.logout()
+
+        # Anonyme
+        rep_anon = self.client.get(reverse("liste_utilisateurs"))
+        self.assertEqual(rep_anon.status_code, 302)
+        rep_anon_post = self.client.post(
+            reverse("debloquer_compte", args=[self.assure.pk]),
+            {"source": "utilisateurs"},
+        )
+        self.assertEqual(rep_anon_post.status_code, 302)
+
+        # Assuré
+        self.client.login(username=self.assure.email, password=PASSWORD)
+        rep_assure = self.client.get(reverse("liste_utilisateurs"))
+        self.assertEqual(rep_assure.status_code, 403)
+        rep_assure_post = self.client.post(
+            reverse("debloquer_compte", args=[self.assure.pk]),
+            {"source": "utilisateurs"},
+        )
+        self.assertEqual(rep_assure_post.status_code, 403)
+
+    def test_j_absence_de_regression_assure_medecin_pharmacien(self):
+        """J. Absence de régression pour Assuré, Médecin et Pharmacien."""
+        self.client.logout()
+        # Assuré accède à son espace
+        self.client.login(username=self.assure.email, password=PASSWORD)
+        rep = self.client.get(reverse("mon_profil_assure"))
+        self.assertEqual(rep.status_code, 200)
+
+        # Médecin accède à son espace
+        self.client.logout()
+        self.client.login(username=self.medecin.email, password=PASSWORD)
+        rep = self.client.get(reverse("dashboard_medecin"))
+        self.assertEqual(rep.status_code, 200)
+
+        # Pharmacien accède à son espace
+        self.client.logout()
+        self.client.login(username=self.pharmacien.email, password=PASSWORD)
+        rep = self.client.get(reverse("dashboard_pharmacien"))
+        self.assertEqual(rep.status_code, 200)
+
+    def test_deblocage_depuis_parametres_garde_redirection_existante(self):
+        """Vérifie que débloquer depuis Paramètres sans source=utilisateurs conserve l'URL vers parametres."""
+        self._bloquer(self.assure.email)
+        rep = self.client.post(reverse("debloquer_compte", args=[self.assure.pk]))
+        self.assertEqual(rep.status_code, 302)
+        self.assertIn("parametres", rep.url)
+        self.assertIn("securite", rep.url)

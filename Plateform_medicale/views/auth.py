@@ -365,6 +365,8 @@ def debloquer_compte(request, pk):
         # Expiration survenue entre l'affichage et le clic : ce n'est pas une
         # erreur, le resultat voulu est deja atteint.
         messages.info(request, f"Le compte de {utilisateur} n'était plus bloqué.")
+    if request.POST.get("source") == "utilisateurs":
+        return redirect("liste_utilisateurs")
     return redirect(f"{reverse('parametres_section', args=['securite'])}#comptes-bloques")
 
 
