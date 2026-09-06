@@ -32,6 +32,7 @@ from ..models import (
     Pharmacien,
     PlanCouverture,
     Prestataire,
+    TentativeConnexion,
     User,
     valider_telephone,
 )
@@ -54,12 +55,20 @@ def _filtrer_utilisateurs(request):
     statut = request.GET.get("statut", "")
     recherche = request.GET.get("q", "").strip()
 
+    comptes_bloques = TentativeConnexion.comptes_bloques()
+    dict_bloques = {u.email.lower(): ligne for u, ligne in comptes_bloques}
+    emails_bloques = {u.email for u, _ in comptes_bloques}
+
     if role:
         utilisateurs = utilisateurs.filter(role=role)
     if statut == "actif":
         utilisateurs = utilisateurs.filter(is_active=True)
+        if emails_bloques:
+            utilisateurs = utilisateurs.exclude(email__in=emails_bloques)
     elif statut == "inactif":
         utilisateurs = utilisateurs.filter(is_active=False)
+    elif statut == "bloque":
+        utilisateurs = utilisateurs.filter(email__in=emails_bloques)
     if recherche:
         utilisateurs = utilisateurs.filter(
             Q(email__icontains=recherche)
@@ -69,15 +78,33 @@ def _filtrer_utilisateurs(request):
 
     utilisateurs = _trier(request, utilisateurs, ["last_name", "email", "role", "is_active"], ["last_name", "first_name"])
 
-    return utilisateurs, {"role": role, "statut": statut, "recherche": recherche}
+    return utilisateurs, {
+        "role": role,
+        "statut": statut,
+        "recherche": recherche,
+        "emails_bloques": emails_bloques,
+        "comptes_bloques_dict": dict_bloques,
+    }
 
 
 @admin_required
 def liste_utilisateurs(request):
     utilisateurs, filtres = _filtrer_utilisateurs(request)
     tous = User.objects.all()
+    page_utilisateurs = _paginer(request, utilisateurs)
+    dict_bloques = filtres.get("comptes_bloques_dict", {})
+    for u in page_utilisateurs:
+        ligne = dict_bloques.get(u.email.lower())
+        if ligne:
+            u.est_temporairement_bloque = True
+            restant = ligne.secondes_restantes()
+            u.minutes_restantes_blocage = max(1, -(-restant // 60))
+        else:
+            u.est_temporairement_bloque = False
+            u.minutes_restantes_blocage = 0
+
     contexte = {
-        "utilisateurs": _paginer(request, utilisateurs),
+        "utilisateurs": page_utilisateurs,
         "roles": User.Role.choices,
         "role_selectionne": filtres["role"],
         "statut_selectionne": filtres["statut"],
@@ -92,7 +119,8 @@ def liste_utilisateurs(request):
 
 @admin_required
 def exporter_utilisateurs_excel(request):
-    utilisateurs, _ = _filtrer_utilisateurs(request)
+    utilisateurs, filtres = _filtrer_utilisateurs(request)
+    emails_bloques = filtres.get("emails_bloques", set())
 
     classeur = openpyxl.Workbook()
     feuille = classeur.active
@@ -101,13 +129,19 @@ def exporter_utilisateurs_excel(request):
     feuille.append(entetes)
 
     for utilisateur in utilisateurs:
+        if utilisateur.email in emails_bloques:
+            statut_libelle = "Bloqué temporairement"
+        elif utilisateur.is_active:
+            statut_libelle = "Actif"
+        else:
+            statut_libelle = "Inactif"
         feuille.append([
             utilisateur.email,
             utilisateur.first_name,
             utilisateur.last_name,
             utilisateur.phone_number,
             utilisateur.get_role_display(),
-            "Actif" if utilisateur.is_active else "Inactif",
+            statut_libelle,
             utilisateur.date_joined.strftime("%d/%m/%Y %H:%M"),
         ])
 
@@ -124,7 +158,8 @@ def exporter_utilisateurs_excel(request):
 
 @admin_required
 def exporter_utilisateurs_csv(request):
-    utilisateurs, _ = _filtrer_utilisateurs(request)
+    utilisateurs, filtres = _filtrer_utilisateurs(request)
+    emails_bloques = filtres.get("emails_bloques", set())
 
     reponse = HttpResponse(content_type="text/csv")
     reponse["Content-Disposition"] = 'attachment; filename="utilisateurs_santesn.csv"'
@@ -132,13 +167,19 @@ def exporter_utilisateurs_csv(request):
     ecrivain = csv.writer(reponse, delimiter=";")
     ecrivain.writerow(["Email", "Prenom", "Nom", "Telephone", "Role", "Statut", "Date de creation"])
     for utilisateur in utilisateurs:
+        if utilisateur.email in emails_bloques:
+            statut_libelle = "Bloqué temporairement"
+        elif utilisateur.is_active:
+            statut_libelle = "Actif"
+        else:
+            statut_libelle = "Inactif"
         ecrivain.writerow([_cellule_csv(v) for v in [
             utilisateur.email,
             utilisateur.first_name,
             utilisateur.last_name,
             utilisateur.phone_number,
             utilisateur.get_role_display(),
-            "Actif" if utilisateur.is_active else "Inactif",
+            statut_libelle,
             utilisateur.date_joined.strftime("%d/%m/%Y %H:%M"),
         ]])
     return reponse
