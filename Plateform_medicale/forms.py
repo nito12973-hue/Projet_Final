@@ -9,6 +9,7 @@ from django.utils import timezone
 
 from .models import (
     Consultation,
+    JournalActivite,
     LigneOrdonnance,
     Medecin,
     Ordonnance,
@@ -162,7 +163,17 @@ class LoginForm(forms.Form):
 
             self.user = authenticate(self.request, username=email, password=password)
             if self.user is None:
-                TentativeConnexion.enregistrer_echec(email)
+                ligne = TentativeConnexion.enregistrer_echec(email)
+                if ligne.tentatives == TentativeConnexion.MAX_TENTATIVES:
+                    utilisateur_existant = User.objects.filter(email=email.lower()).first()
+                    if utilisateur_existant:
+                        JournalActivite.objects.create(
+                            auteur=None,
+                            auteur_libelle="Système (sécurité)",
+                            action=JournalActivite.Action.MODIFICATION,
+                            objet=f"Utilisateur {utilisateur_existant.email}",
+                            details="Compte temporairement bloqué (5 échecs consécutifs)",
+                        )
                 raise forms.ValidationError(
                     'Email ou mot de passe incorrect.'
                 )

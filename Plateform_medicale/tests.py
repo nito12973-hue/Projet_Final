@@ -9114,3 +9114,166 @@ class VisibiliteComptesBloquesP1ATests(TestCase):
         self.assertEqual(rep.status_code, 302)
         self.assertIn("parametres", rep.url)
         self.assertIn("securite", rep.url)
+
+
+class TraçabiliteBlocagesP1BTests(TestCase):
+    """Tests P1-B : Traçabilité des blocages temporaires et déblocages manuels."""
+
+    def setUp(self):
+        self.admin = creer_utilisateur(User.Role.ADMIN, "admin-p1b@santesn.sn")
+        self.assure = creer_utilisateur(User.Role.ASSURE, "assure-p1b@santesn.sn")
+        self.medecin = creer_utilisateur(User.Role.MEDECIN, "medecin-p1b@santesn.sn")
+        self.pharmacien = creer_utilisateur(User.Role.PHARMACIEN, "pharmacien-p1b@santesn.sn")
+        TentativeConnexion.objects.all().delete()
+
+    def _echouer(self, n, email=None):
+        email = email or self.assure.email
+        for _ in range(n):
+            self.client.post(reverse("login"), {"email": email, "password": "faux-password"})
+
+    def test_a_cinquieme_echec_genere_exactement_une_entree_journal(self):
+        """A. Le 5e échec d'un utilisateur existant génère exactement un événement d'audit."""
+        initial = JournalActivite.objects.filter(objet=f"Utilisateur {self.assure.email}").count()
+        self._echouer(TentativeConnexion.MAX_TENTATIVES)
+        final = JournalActivite.objects.filter(objet=f"Utilisateur {self.assure.email}").count()
+        self.assertEqual(final, initial + 1)
+
+        entree = JournalActivite.objects.filter(objet=f"Utilisateur {self.assure.email}").latest("date")
+        self.assertEqual(entree.action, JournalActivite.Action.MODIFICATION)
+        self.assertIn("temporairement bloqué", entree.details)
+        self.assertIn("5 échecs", entree.details)
+
+    def test_b_echecs_1_a_4_ne_generent_aucun_evenement(self):
+        """B. Les échecs 1 à 4 ne génèrent aucun événement de blocage."""
+        initial = JournalActivite.objects.filter(objet=f"Utilisateur {self.assure.email}").count()
+        self._echouer(TentativeConnexion.MAX_TENTATIVES - 1)
+        final = JournalActivite.objects.filter(objet=f"Utilisateur {self.assure.email}").count()
+        self.assertEqual(final, initial)
+
+    def test_c_echecs_6_plus_ne_generent_aucun_doublon(self):
+        """C. Les échecs 6+ ne génèrent aucun doublon d'événement."""
+        self._echouer(TentativeConnexion.MAX_TENTATIVES)
+        compte_5 = JournalActivite.objects.filter(objet=f"Utilisateur {self.assure.email}").count()
+        self._echouer(3)
+        compte_8 = JournalActivite.objects.filter(objet=f"Utilisateur {self.assure.email}").count()
+        self.assertEqual(compte_5, compte_8)
+
+    def test_d_adresse_inexistante_ne_genere_aucune_entree(self):
+        """D. Une adresse email inexistante ne génère pas d'événement dans JournalActivite."""
+        email_inconnu = "inconnu-inexistant@santesn.sn"
+        initial = JournalActivite.objects.count()
+        self._echouer(TentativeConnexion.MAX_TENTATIVES, email=email_inconnu)
+        final = JournalActivite.objects.count()
+        self.assertEqual(final, initial)
+        self.assertFalse(JournalActivite.objects.filter(objet__icontains=email_inconnu).exists())
+
+    def test_e_objet_identifie_correctement_utilisateur(self):
+        """E. L'objet du journal identifie exactement l'utilisateur concerné."""
+        self._echouer(TentativeConnexion.MAX_TENTATIVES)
+        entree = JournalActivite.objects.filter(objet=f"Utilisateur {self.assure.email}").latest("date")
+        self.assertEqual(entree.objet, f"Utilisateur {self.assure.email}")
+
+    def test_f_auteur_identifie_comme_systeme_securite(self):
+        """F. L'auteur de l'événement automatique est 'Système (sécurité)' avec auteur=None."""
+        self._echouer(TentativeConnexion.MAX_TENTATIVES)
+        entree = JournalActivite.objects.filter(objet=f"Utilisateur {self.assure.email}").latest("date")
+        self.assertIsNone(entree.auteur)
+        self.assertEqual(entree.auteur_libelle, "Système (sécurité)")
+
+    def test_g_deblocage_manuel_fonctionne_toujours(self):
+        """G. Le déblocage manuel supprime la ligne TentativeConnexion et rétablit l'accès."""
+        self._echouer(TentativeConnexion.MAX_TENTATIVES)
+        self.assertTrue(TentativeConnexion.bloque(self.assure.email))
+
+        self.client.login(username=self.admin.email, password=PASSWORD)
+        rep = self.client.post(
+            reverse("debloquer_compte", args=[self.assure.pk]),
+            {"source": "utilisateurs"},
+        )
+        self.assertEqual(rep.status_code, 302)
+        self.assertFalse(TentativeConnexion.bloque(self.assure.email))
+
+    def test_h_deblocage_manuel_action_deblocage_conservee(self):
+        """H. L'action DEBLOCAGE est conservée pour le déblocage manuel."""
+        self._echouer(TentativeConnexion.MAX_TENTATIVES)
+        self.client.login(username=self.admin.email, password=PASSWORD)
+        self.client.post(reverse("debloquer_compte", args=[self.assure.pk]))
+
+        entree = JournalActivite.objects.filter(
+            objet=f"Utilisateur {self.assure.email}",
+            action=JournalActivite.Action.DEBLOCAGE,
+        ).latest("date")
+        self.assertEqual(entree.action, JournalActivite.Action.DEBLOCAGE)
+        self.assertEqual(entree.auteur, self.admin)
+
+    def test_i_details_deblocage_contient_nombre_echecs_reinitialises(self):
+        """I. Le détail du déblocage contient le nombre exact d'échecs réinitialisés."""
+        self._echouer(TentativeConnexion.MAX_TENTATIVES)
+        self.client.login(username=self.admin.email, password=PASSWORD)
+        self.client.post(reverse("debloquer_compte", args=[self.assure.pk]))
+
+        entree = JournalActivite.objects.filter(
+            objet=f"Utilisateur {self.assure.email}",
+            action=JournalActivite.Action.DEBLOCAGE,
+        ).latest("date")
+        self.assertIn("5 échecs réinitialisés", entree.details)
+
+    def test_j_lien_historique_present_et_fonctionnel(self):
+        """J. Le lien Historique est présent dans /utilisateurs/ et filtre le journal sur l'utilisateur."""
+        self.client.login(username=self.admin.email, password=PASSWORD)
+        rep = self.client.get(reverse("liste_utilisateurs"))
+        self.assertEqual(rep.status_code, 200)
+        self.assertContains(rep, f"/journal/?q={self.assure.email}")
+        self.assertContains(rep, "Historique")
+
+        rep_journal = self.client.get(reverse("journal_activite"), {"q": self.assure.email})
+        self.assertEqual(rep_journal.status_code, 200)
+
+    def test_k_journal_inaccessible_aux_non_administrateurs(self):
+        """K. Le journal reste inaccessible aux non-administrateurs."""
+        self.client.logout()
+        rep_anon = self.client.get(reverse("journal_activite"))
+        self.assertEqual(rep_anon.status_code, 302)
+
+        self.client.login(username=self.assure.email, password=PASSWORD)
+        rep_assure = self.client.get(reverse("journal_activite"))
+        self.assertEqual(rep_assure.status_code, 403)
+
+        self.client.logout()
+        self.client.login(username=self.medecin.email, password=PASSWORD)
+        rep_medecin = self.client.get(reverse("journal_activite"))
+        self.assertEqual(rep_medecin.status_code, 403)
+
+    def test_l_absence_de_regression_assure_medecin_pharmacien(self):
+        """L. Aucun impact sur les espaces Assuré, Médecin et Pharmacien."""
+        self.client.logout()
+        self.client.login(username=self.assure.email, password=PASSWORD)
+        self.assertEqual(self.client.get(reverse("mon_profil_assure")).status_code, 200)
+
+        self.client.logout()
+        self.client.login(username=self.medecin.email, password=PASSWORD)
+        self.assertEqual(self.client.get(reverse("dashboard_medecin")).status_code, 200)
+
+        self.client.logout()
+        self.client.login(username=self.pharmacien.email, password=PASSWORD)
+        self.assertEqual(self.client.get(reverse("dashboard_pharmacien")).status_code, 200)
+
+    def test_m_nouveau_cycle_de_blocage_apres_deblocage_genere_nouvelle_entree(self):
+        """M. Un nouveau cycle de blocage après déblocage génère un nouvel événement d'audit."""
+        self._echouer(TentativeConnexion.MAX_TENTATIVES)
+        compte_1 = JournalActivite.objects.filter(
+            objet=f"Utilisateur {self.assure.email}",
+            action=JournalActivite.Action.MODIFICATION,
+        ).count()
+        self.assertEqual(compte_1, 1)
+
+        self.client.login(username=self.admin.email, password=PASSWORD)
+        self.client.post(reverse("debloquer_compte", args=[self.assure.pk]))
+        self.client.logout()
+
+        self._echouer(TentativeConnexion.MAX_TENTATIVES)
+        compte_2 = JournalActivite.objects.filter(
+            objet=f"Utilisateur {self.assure.email}",
+            action=JournalActivite.Action.MODIFICATION,
+        ).count()
+        self.assertEqual(compte_2, 2)
