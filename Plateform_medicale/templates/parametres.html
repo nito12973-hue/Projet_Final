@@ -7,7 +7,7 @@
 <section class="page-title">
     <div>
         <h1>Paramètres</h1>
-        <p class="subtitle">Configuration de la plateforme, apparence et sécurité. Vos informations personnelles sont dans le menu de votre compte.</p>
+        <p class="subtitle">Configuration de la plateforme et sécurité. Vos informations personnelles sont dans le menu de votre compte.</p>
     </div>
 </section>
 
@@ -95,59 +95,6 @@
                     <strong>Envoi d'emails</strong>
                     <span>non configuré : les mots de passe générés sont affichés à l'écran</span>
                     <span class="param-etat">inactif</span>
-                </div>
-            </div>
-        </section>
-        {% endif %}
-
-        {% if section == "apparence" %}
-        <section class="panel param-carte">
-            <div class="panel-header">
-                <div>
-                    <h2>Thème</h2>
-                    <p class="subtitle">Ce réglage ne concerne que cet appareil — il n'est pas enregistré sur votre compte.</p>
-                </div>
-            </div>
-            <div class="param-corps">
-                <div class="themes" role="radiogroup" aria-label="Thème de l'interface">
-                    <button type="button" class="theme" data-theme-choix="clair" role="radio" aria-checked="false">
-                        <span class="theme-apercu theme-apercu-clair" aria-hidden="true"><i></i><i></i></span>
-                        <strong>Clair</strong><span>Le thème par défaut.</span>
-                    </button>
-                    <button type="button" class="theme" data-theme-choix="sombre" role="radio" aria-checked="false">
-                        <span class="theme-apercu theme-apercu-sombre" aria-hidden="true"><i></i><i></i></span>
-                        <strong>Sombre</strong><span>Confortable en faible luminosité.</span>
-                    </button>
-                    <button type="button" class="theme" data-theme-choix="systeme" role="radio" aria-checked="false">
-                        <span class="theme-apercu theme-apercu-systeme" aria-hidden="true"><i></i><i></i></span>
-                        <strong>Système</strong><span>Suit le réglage de votre appareil.</span>
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <section class="panel param-carte">
-            <div class="panel-header">
-                <div>
-                    <h2>Affichage</h2>
-                    <p class="subtitle">Confort de lecture, propre à cet appareil.</p>
-                </div>
-            </div>
-            <div class="param-corps">
-                <div class="param-ligne">
-                    <span class="param-txt"><strong>Menu latéral réduit</strong>
-                        <span>Affiche les icônes seules pour gagner de la largeur sur les tableaux. Se règle aussi depuis le chevron du menu.</span></span>
-                    <span class="param-fin">
-                        <button type="button" class="bascule" data-bascule-menu aria-pressed="false">
-                            <span class="bascule-piste" aria-hidden="true"><i></i></span>
-                            <span class="sr-only">Réduire le menu latéral</span>
-                        </button>
-                    </span>
-                </div>
-                <div class="param-ligne">
-                    <span class="param-txt"><strong>Animations</strong>
-                        <span>L'interface suit le réglage d'accessibilité de votre système d'exploitation.</span></span>
-                    <span class="param-fin"><span class="param-fige">Réglage système</span></span>
                 </div>
             </div>
         </section>

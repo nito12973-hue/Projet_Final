@@ -239,7 +239,6 @@ def deconnecter_partout(request):
 # compte de l'utilisateur.
 SECTIONS_PARAMETRES = [
     ("general", "Général", "settings", None),
-    ("apparence", "Apparence", "eye", None),
     ("securite", "Sécurité", "lock", None),
 ]
 
@@ -281,8 +280,6 @@ def parametres(request, section="general"):
             "langue_plateforme": "Français",
             "fuseau_horaire": settings.TIME_ZONE,
         })
-    elif section == "apparence":
-        pass
     elif section == "notifications":
         prefs, _ = PreferenceNotification.objects.get_or_create(user=request.user)
         if request.method == "POST":
