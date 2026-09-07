@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 Service d'émission centralisé des événements métier, notifications et emails réactifs.
 """
@@ -45,7 +45,7 @@ def _obtenir_utilisateur_assure(patient):
     if getattr(patient, "user", None):
         return patient.user
     if getattr(patient, "assure_principal", None) and getattr(patient.assure_principal, "user", None):
-        return _obtenir_utilisateur_assure(patient)
+        return _obtenir_utilisateur_assure(patient.assure_principal)
     return None
 
 
