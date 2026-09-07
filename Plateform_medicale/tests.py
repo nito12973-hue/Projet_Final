@@ -9277,3 +9277,79 @@ class TraçabiliteBlocagesP1BTests(TestCase):
             action=JournalActivite.Action.MODIFICATION,
         ).count()
         self.assertEqual(compte_2, 2)
+
+
+class NotificationAyantDroitP1Tests(TestCase):
+    def setUp(self):
+        self.user_assure = creer_utilisateur(User.Role.ASSURE, "assure-principal-p1@santesn.sn")
+        self.assure_principal = Patient.objects.create(
+            user=self.user_assure,
+            nom="Diop",
+            prenom="Moussa",
+            date_naissance=datetime.date(1985, 5, 10),
+            type_beneficiaire=Patient.TypeBeneficiaire.PRINCIPAL,
+        )
+        self.ayant_droit = Patient.objects.create(
+            nom="Diop",
+            prenom="Awa",
+            date_naissance=datetime.date(2015, 8, 20),
+            type_beneficiaire=Patient.TypeBeneficiaire.AYANT_DROIT,
+            assure_principal=self.assure_principal,
+            lien_parente=Patient.LienParente.ENFANT,
+        )
+        self.medecin_user = creer_utilisateur(User.Role.MEDECIN, "medecin-p1@santesn.sn")
+        self.medecin = Medecin.objects.create(
+            user=self.medecin_user,
+            nom="Sow",
+            prenom="Fatou",
+            specialite="Généraliste",
+        )
+
+    def test_a_assure_principal_avec_user_retourne_son_user(self):
+        """A. Assuré principal avec User -> retourne son User."""
+        from Plateform_medicale.services.notifications import _obtenir_utilisateur_assure
+        user = _obtenir_utilisateur_assure(self.assure_principal)
+        self.assertEqual(user, self.user_assure)
+
+    def test_b_ayant_droit_retourne_user_assure_principal(self):
+        """B. Ayant droit sans User mais avec assure_principal -> retourne le User de l'assure_principal."""
+        from Plateform_medicale.services.notifications import _obtenir_utilisateur_assure
+        user = _obtenir_utilisateur_assure(self.ayant_droit)
+        self.assertEqual(user, self.user_assure)
+
+    def test_c_patient_sans_user_et_sans_assure_principal_retourne_none(self):
+        """C. Patient sans User et sans assure_principal -> retourne None."""
+        from Plateform_medicale.services.notifications import _obtenir_utilisateur_assure
+        orphelin = Patient.objects.create(
+            nom="Sans",
+            prenom="Compte",
+            date_naissance=datetime.date(1990, 1, 1),
+            type_beneficiaire=Patient.TypeBeneficiaire.PRINCIPAL,
+        )
+        user = _obtenir_utilisateur_assure(orphelin)
+        self.assertIsNone(user)
+
+    def test_d_patient_none_retourne_none(self):
+        """D. Patient None -> retourne None."""
+        from Plateform_medicale.services.notifications import _obtenir_utilisateur_assure
+        self.assertIsNone(_obtenir_utilisateur_assure(None))
+
+    def test_e_aucun_appel_recursif_infini(self):
+        """E. Aucun appel récursif infini pour un ayant droit."""
+        from Plateform_medicale.services.notifications import _obtenir_utilisateur_assure
+        user = _obtenir_utilisateur_assure(self.ayant_droit)
+        self.assertIsNotNone(user)
+
+    @patch("Plateform_medicale.services.notifications.EmailMultiAlternatives.send")
+    def test_f_notification_ayant_droit_ne_provoque_plus_de_recursion_error(self, mock_email_send):
+        """F. Une notification destinée à un ayant droit ne provoque plus de RecursionError."""
+        from Plateform_medicale.services.notifications import notifier_confirmation_rdv
+        rdv = RendezVous.objects.create(
+            patient=self.ayant_droit,
+            medecin=self.medecin,
+            date_heure=timezone.now() + datetime.timedelta(days=1),
+            motif="Fièvre enfant",
+            statut=RendezVous.Statut.CONFIRME,
+        )
+        notifier_confirmation_rdv(rdv)
+        self.assertTrue(Notification.objects.filter(destinataire=self.user_assure).exists())
