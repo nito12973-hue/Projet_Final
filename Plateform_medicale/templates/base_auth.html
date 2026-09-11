@@ -425,33 +425,6 @@
             .panneau-form { padding: 24px 18px 28px; }
         }
 
-        .btn-demo {
-            padding: 8px 10px;
-            background: #ffffff;
-            border: 1.5px solid var(--border);
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--primary-dark);
-            cursor: pointer;
-            transition: all 0.18s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-        }
-        .btn-demo:hover {
-            background: var(--primary-soft);
-            border-color: var(--primary);
-            color: var(--primary-strong);
-            transform: translateY(-1px);
-            box-shadow: 0 3px 6px rgba(14, 124, 134, 0.15);
-        }
-        .btn-demo:active {
-            transform: translateY(0);
-        }
-
         /* Focus clavier : meme anneau turquoise que .form-control, coherent
            avec base.html/landing.html. */
         .btn-principal:focus-visible {
@@ -476,16 +449,6 @@
     <div class="auth-shell">
         <aside class="panneau-marque">
             <div>
-                <!-- Badge Républicain Sénégal -->
-                <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(0, 0, 0, 0.22); padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.15); margin-bottom: 20px;">
-                    <span style="display: inline-flex; width: 18px; height: 11px; border-radius: 2px; overflow: hidden;">
-                        <span style="background: #00853f; width: 6px; height: 100%;"></span>
-                        <span style="background: #fdef42; width: 6px; height: 100%; color: #00853f; font-size: 7px; line-height: 11px; text-align: center; font-weight: bold;">★</span>
-                        <span style="background: #e31b23; width: 6px; height: 100%;"></span>
-                    </span>
-                    <span style="font-size: 10.5px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: #ffffff;">RÉPUBLIQUE DU SÉNÉGAL</span>
-                </div>
-
                 <span class="logo">
                     <svg width="46" height="46" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                         <rect x="18" y="6" width="12" height="36" rx="4" fill="rgba(255,255,255,0.9)"/>
@@ -494,16 +457,13 @@
                     </svg>
                     Santé<span style="color: var(--primary-light);">SN</span>
                 </span>
-                <p class="slogan">Portail National de Tiers Payant Numérisé &amp; Santé Connectée</p>
+                <p class="slogan">La santé connectée au service de tous.</p>
             </div>
             <ul class="points-forts">
-                <li><span class="puce">{% icone "shield-check" %}</span>Données médicales souveraines &amp; chiffrées</li>
-                <li><span class="puce">{% icone "users" %}</span>Réseau officiel : CMU, Médecins, Pharmacies</li>
-                <li><span class="puce">{% icone "zap" %}</span>Télétransmission &amp; Tiers payant instantanés</li>
+                <li><span class="puce">{% icone "shield-check" %}</span>Données médicales sécurisées</li>
+                <li><span class="puce">{% icone "users" %}</span>Assurés, médecins et pharmaciens réunis</li>
+                <li><span class="puce">{% icone "zap" %}</span>Prise en charge simplifiée et rapide</li>
             </ul>
-            <div style="font-size: 11px; opacity: 0.85; color: #dcece9; margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 12px;">
-                Conforme aux exigences de la CDP Sénégal (Loi 2008-12)
-            </div>
         </aside>
 
         <section class="panneau-form">
