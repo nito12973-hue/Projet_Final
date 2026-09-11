@@ -61,10 +61,9 @@
         });
         var vueSatellite = L.layerGroup([esriSatellite, esriLabels]);
 
-        // 2. Plan Moderne Urbain (CartoDB Voyager)
-        var vuePlan = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OpenStreetMap &copy; CARTO',
-            subdomains: 'abcd',
+        // 2. Plan Moderne Urbain (Esri World Street Map - Zéro 403)
+        var vuePlan = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+            attribution: '&copy; Esri &mdash; Plan Urbain',
             maxZoom: 19
         });
 
