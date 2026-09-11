@@ -39,7 +39,19 @@ ISO 7810 ID-1 (ratio 1.586), et non une seconde carte a maintenir.
 {% endcomment %}
 <div class="carte-planche">
     <figure class="carte-face">
-        <div class="carte-assure">
+        <div class="carte-assure" style="position: relative; overflow: hidden;">
+            <!-- Bandeau Républicain Officiel Sénégal -->
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.18);">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="display: inline-flex; width: 22px; height: 13px; border-radius: 2px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.3); vertical-align: middle;">
+                        <span style="background: #00853f; width: 7px; height: 100%;"></span>
+                        <span style="background: #fdef42; width: 8px; height: 100%; color: #00853f; font-size: 8px; line-height: 13px; text-align: center; font-weight: bold;">★</span>
+                        <span style="background: #e31b23; width: 7px; height: 100%;"></span>
+                    </span>
+                    <span style="font-size: 9.5px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; color: #f8fafc;">RÉPUBLIQUE DU SÉNÉGAL</span>
+                </div>
+                <span style="background: rgba(254, 240, 138, 0.2); color: #fef08a; border: 1px solid rgba(254, 240, 138, 0.4); font-size: 8.5px; font-weight: 800; padding: 2px 7px; border-radius: 4px; letter-spacing: 0.5px;">RÉSEAU CMU</span>
+            </div>
             <div class="carte-assure-entete">
                 <span class="carte-assure-puce" aria-hidden="true"></span>
                 {% logo_marque taille=26 fond="sombre" %}
@@ -72,9 +84,12 @@ ISO 7810 ID-1 (ratio 1.586), et non une seconde carte a maintenir.
     Le fonctionnement du code appartient au cahier des charges.
     {% endcomment %}
     <figure class="carte-face">
-        <div class="carte-assure carte-verso">
+        <div class="carte-assure carte-verso" style="position: relative; overflow: hidden;">
             <div class="carte-verso-qr">{{ qr_svg|safe }}</div>
-            <p class="carte-verso-mention">Carte strictement personnelle</p>
+            <p class="carte-verso-mention">Carte strictement personnelle • Présentation obligatoire</p>
+            <div style="margin-top: 5px; font-size: 8.5px; opacity: 0.8; letter-spacing: 0.5px; text-transform: uppercase; color: #fef08a;">
+                🔒 Sceau Numérique CMU Sénégal
+            </div>
         </div>
         <figcaption class="carte-sans-impression">Verso</figcaption>
     </figure>
