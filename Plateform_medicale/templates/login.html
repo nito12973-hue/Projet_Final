@@ -1,57 +1,12 @@
 {% extends "base_auth.html" %}
 {% load icones %}
 
-{% block title %}Connexion — Portail National SantéSN{% endblock %}
+{% block title %}Connexion — SantéSN{% endblock %}
 
 {% block content %}
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-    <a href="{% url 'landing' %}" class="lien-retour-accueil" style="margin: 0;">{% icone "chevron-left" %} Retour à l'accueil</a>
-    <span style="display: inline-flex; align-items: center; gap: 6px; background: #e0f2fe; color: #0369a1; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;">
-        🔒 Connexion TLS 1.3
-    </span>
-</div>
-
-<!-- En-tête officiel de formulaire -->
-<div style="margin-bottom: 20px;">
-    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-        <span style="display: inline-flex; width: 22px; height: 13px; border-radius: 2px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.25);">
-            <span style="background: #00853f; width: 7px; height: 100%;"></span>
-            <span style="background: #fdef42; width: 8px; height: 100%; color: #00853f; font-size: 8px; line-height: 13px; text-align: center; font-weight: bold;">★</span>
-            <span style="background: #e31b23; width: 7px; height: 100%;"></span>
-        </span>
-        <span style="font-size: 11.5px; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; color: var(--primary-strong);">
-            PORTAIL SANTÉ DU SÉNÉGAL • CMU
-        </span>
-    </div>
-    <h1 style="font-size: 24px; font-weight: 800; color: var(--primary-dark); margin: 0 0 6px;">Espace Sécurisé</h1>
-    <p class="sous-titre" style="margin-bottom: 16px; font-size: 14px; color: var(--muted);">
-        Identifiez-vous pour accéder à vos dossiers, ordonnances et remboursements.
-    </p>
-</div>
-
-<!-- Accès Rapide Démo (Indispensable pour tests et démonstrations 1-clic) -->
-<div style="background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 14px; padding: 12px 14px; margin-bottom: 22px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-        <span style="font-size: 11px; font-weight: 800; color: var(--primary-strong); text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 5px;">
-            ⚡ Accès Rapide Démonstration :
-        </span>
-        <span style="font-size: 10px; color: var(--muted);">(remplit les identifiants en 1 clic)</span>
-    </div>
-    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px;">
-        <button type="button" class="btn-demo" onclick="remplirDemo('medecin@santesn.sn', 'passer123')">
-            👨‍⚕️ Médecin
-        </button>
-        <button type="button" class="btn-demo" onclick="remplirDemo('pharmacien@santesn.sn', 'passer123')">
-            💊 Pharmacien
-        </button>
-        <button type="button" class="btn-demo" onclick="remplirDemo('assure@santesn.sn', 'passer123')">
-            👤 Assuré CMU
-        </button>
-        <button type="button" class="btn-demo" onclick="remplirDemo('admin@santesn.sn', 'passer123')">
-            🛡️ Administrateur
-        </button>
-    </div>
-</div>
+<a href="{% url 'landing' %}" class="lien-retour-accueil">{% icone "chevron-left" %} Retour à l'accueil</a>
+<h1>Connexion</h1>
+<p class="sous-titre">Accédez à votre espace sécurisé.</p>
 
 {% if session_expiree %}
 <div class="avis-info" role="status">
@@ -73,53 +28,26 @@
 </div>
 {% endif %}
 
-<form method="post" novalidate id="form-connexion">
+<form method="post" novalidate>
     {% csrf_token %}
 
-    <div style="margin-bottom: 16px;">
-        <label for="{{ form.email.id_for_label }}" style="display: flex; align-items: center; gap: 6px; font-weight: 700; color: var(--texte);">
-            {% icone "user" %} Identifiant ou Adresse Email
-        </label>
-        {{ form.email }}
-        {% if form.email.errors %}<div class="erreurs" role="alert">{{ form.email.errors }}</div>{% endif %}
-    </div>
+    <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+    {{ form.email }}
+    {% if form.email.errors %}<div class="erreurs" role="alert">{{ form.email.errors }}</div>{% endif %}
 
-    <div style="margin-bottom: 22px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-            <label for="{{ form.password.id_for_label }}" style="display: flex; align-items: center; gap: 6px; margin: 0; font-weight: 700; color: var(--texte);">
-                {% icone "shield-check" %} Mot de passe
-            </label>
-        </div>
-        <div style="position: relative;">
-            {{ form.password }}
-            <button type="button" id="btn-toggle-mdp" onclick="toggleMdp()" style="position: absolute; right: 12px; top: 12px; background: none; border: none; cursor: pointer; color: var(--muted); font-size: 16px; padding: 0;" title="Afficher/masquer">
-                👁️
-            </button>
-        </div>
-        {% if form.password.errors %}<div class="erreurs" role="alert">{{ form.password.errors }}</div>{% endif %}
+    <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+    <div style="position: relative;">
+        {{ form.password }}
+        <button type="button" id="btn-toggle-mdp" onclick="toggleMdp()" style="position: absolute; right: 12px; top: 12px; background: none; border: none; cursor: pointer; color: var(--muted); font-size: 16px; padding: 0;" title="Afficher/masquer">
+            👁️
+        </button>
     </div>
+    {% if form.password.errors %}<div class="erreurs" role="alert">{{ form.password.errors }}</div>{% endif %}
 
-    <button type="submit" class="btn-principal" style="font-size: 16px; font-weight: 800; letter-spacing: 0.5px; height: 50px;">
-        Se connecter à mon espace →
-    </button>
+    <button type="submit" class="btn-principal">Se connecter</button>
 </form>
 
 <script>
-function remplirDemo(email, pass) {
-    var emailInput = document.getElementById("{{ form.email.id_for_label }}");
-    var passInput = document.getElementById("{{ form.password.id_for_label }}");
-    if (emailInput) {
-        emailInput.value = email;
-        emailInput.style.backgroundColor = "#e0f2fe";
-        setTimeout(function() { emailInput.style.backgroundColor = ""; }, 500);
-    }
-    if (passInput) {
-        passInput.value = pass;
-        passInput.style.backgroundColor = "#e0f2fe";
-        setTimeout(function() { passInput.style.backgroundColor = ""; }, 500);
-    }
-}
-
 function toggleMdp() {
     var passInput = document.getElementById("{{ form.password.id_for_label }}");
     var btn = document.getElementById("btn-toggle-mdp");
