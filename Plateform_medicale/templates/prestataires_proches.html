@@ -449,11 +449,49 @@ resultat.
             return article;
         }
 
-        var carte = L.map('carte-prestataires-proches').setView(DAKAR, 12);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
+        // 1. Fond Satellite Réaliste HD (Esri World Imagery)
+        var esriSatellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: '&copy; Esri World Imagery',
+            maxZoom: 19
+        });
+        // 2. Noms des rues et quartiers (Couche transparente)
+        var esriLabels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+            attribution: '&copy; Esri Labels',
+            maxZoom: 19
+        });
+        var vueSatellite = L.layerGroup([esriSatellite, esriLabels]);
+
+        // 3. Plan Moderne Urbain (CartoDB Voyager)
+        var vuePlan = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap &copy; CARTO',
+            subdomains: 'abcd',
+            maxZoom: 19
+        });
+
+        // 4. OpenStreetMap Standard (Fallback)
+        var vueOSM = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        }).addTo(carte);
+            maxZoom: 19
+        });
+
+        var carte = L.map('carte-prestataires-proches', {
+            center: DAKAR,
+            zoom: 12,
+            layers: [vueSatellite] // Vue Satellite HD par défaut
+        });
+
+        // Sélecteur de calques en haut à droite
+        var baseMaps = {
+            "🛰️ Satellite Haute Définition": vueSatellite,
+            "🗺️ Plan Moderne Urbain": vuePlan,
+            "📐 Carte Standard": vueOSM
+        };
+        L.control.layers(baseMaps, null, { position: 'topright' }).addTo(carte);
+
+        // Correction automatique de la taille (évite tout affichage gris)
+        setTimeout(function() {
+            carte.invalidateSize();
+        }, 350);
 
         var groupeMarqueurs = L.layerGroup().addTo(carte);
         var marqueursParPk = {};
