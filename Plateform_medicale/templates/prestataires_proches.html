@@ -467,9 +467,9 @@ resultat.
             maxZoom: 19
         });
 
-        // 4. OpenStreetMap Standard (Fallback)
-        var vueOSM = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        // 4. Carte Topographique & Relief (Esri Topo Map - Zéro erreur de chargement)
+        var vueOSM = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+            attribution: '&copy; Esri &mdash; Topo & Relief | <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
             maxZoom: 19
         });
 
@@ -483,7 +483,7 @@ resultat.
         var baseMaps = {
             "🛰️ Satellite Haute Définition": vueSatellite,
             "🗺️ Plan Moderne Urbain": vuePlan,
-            "📐 Carte Standard": vueOSM
+            "🏔️ Topographie & Relief": vueOSM
         };
         L.control.layers(baseMaps, null, { position: 'topright' }).addTo(carte);
 
