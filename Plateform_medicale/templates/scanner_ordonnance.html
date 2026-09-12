@@ -11,13 +11,13 @@
     </div>
 </section>
 
-<section class="panel panel-form panel-form-etroit" style="border-radius:18px;box-shadow:0 10px 30px rgba(11,32,39,0.06);">
+<section class="panel panel-form panel-form-etroit">
     <form method="post">
         {% csrf_token %}
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
             <label for="code_qr" style="margin:0;font-weight:700;">Code de l'ordonnance</label>
             <span style="font-size:11.5px;color:var(--muted);background:var(--primary-soft);padding:3px 8px;border-radius:6px;font-weight:600;">
-                {% icone "shield-check" %} Contrôle anti-fraude
+                {% icone "shield-check" %} Contrôle ordonnance
             </span>
         </div>
         <div class="champ-recherche" style="margin-bottom:14px;">
@@ -107,11 +107,11 @@ formulaire laisseraient le pharmacien croire qu'il faut remplir les deux.
                 <td><span class="code">{{ resultat.code_qr }}</span></td>
                 <td>
                     {% if resultat.est_annulee %}
-                    <span class="badge" style="background:var(--danger, #D9534F); color:#ffffff;">Annulée</span>
+                    <span class="badge refusee">Annulée</span>
                     {% elif resultat.delivrance %}
                     <span class="badge validee">Déjà délivrée</span>
                     {% elif resultat.est_expiree %}
-                    <span class="badge" style="background:var(--muted); color:#ffffff;">Expirée</span>
+                    <span class="badge refusee">Expirée</span>
                     {% else %}
                     <span class="badge en_attente">À délivrer</span>
                     {% endif %}
@@ -137,11 +137,22 @@ formulaire laisseraient le pharmacien croire qu'il faut remplir les deux.
 {% if ordonnance %}
 <section class="admin-layout" style="margin-top: 22px;">
     <article class="panel panel-bloc">
-        <h2 style="margin-top:0;color:var(--primary-dark);">Ordonnance {{ ordonnance.code_qr }}</h2>
-        <p><strong>Patient :</strong> {{ ordonnance.consultation.patient }}</p>
-        <p><strong>Médecin :</strong> {{ ordonnance.consultation.medecin }}</p>
-        <p><strong>Date :</strong> {{ ordonnance.date_creation|date:"d/m/Y H:i" }}</p>
-        <p><strong>Médicaments :</strong></p>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
+            <h2 style="margin:0;color:var(--primary-dark);">Ordonnance <span class="code">{{ ordonnance.code_qr }}</span></h2>
+            {% if ordonnance.est_annulee %}
+            <span class="badge refusee">Annulée</span>
+            {% elif ordonnance.delivrance %}
+            <span class="badge validee">Délivrée</span>
+            {% elif ordonnance.est_expiree %}
+            <span class="badge refusee">Expirée</span>
+            {% else %}
+            <span class="badge en_attente">Valide pour délivrance</span>
+            {% endif %}
+        </div>
+        <p><strong>Patient :</strong> {{ ordonnance.consultation.patient }} · Carte <span class="code">{{ ordonnance.consultation.patient.numero_carte }}</span></p>
+        <p><strong>Médecin prescripteur :</strong> Dr. {{ ordonnance.consultation.medecin }}</p>
+        <p><strong>Date de prescription :</strong> {{ ordonnance.date_creation|date:"d/m/Y à H:i" }}</p>
+        <p style="margin-bottom:6px;"><strong>Médicaments prescrits :</strong></p>
         {% comment %}
         Lecture seule : le pharmacien delivre, il ne prescrit pas. Tableau si
         l'ordonnance est structuree, texte d'origine sinon -- jamais une
@@ -177,7 +188,7 @@ formulaire laisseraient le pharmacien croire qu'il faut remplir les deux.
 
     <aside class="panel governance-card">
         {% if ordonnance.est_annulee %}
-        <div style="background:var(--refus-bg); border:2px solid var(--danger); border-radius:12px; padding:18px; color:var(--refus-fg);">
+        <div style="background:var(--refus-bg); border:1.5px solid var(--danger); border-radius:12px; padding:18px; color:var(--refus-fg);">
             <h2 style="margin:0 0 8px 0; color:var(--danger); font-size:16px; display:flex; align-items:center; gap:8px;">
                 {% icone "alert-triangle" %} ORDONNANCE ANNULÉE
             </h2>
@@ -191,7 +202,7 @@ formulaire laisseraient le pharmacien croire qu'il faut remplir les deux.
             </div>
         </div>
         {% elif ordonnance.delivrance %}
-        <div style="background:var(--refus-bg); border:2px solid var(--danger); border-radius:12px; padding:18px; color:var(--refus-fg);">
+        <div style="background:var(--refus-bg); border:1.5px solid var(--danger); border-radius:12px; padding:18px; color:var(--refus-fg);">
             <h2 style="margin:0 0 8px 0; color:var(--danger); font-size:16px; display:flex; align-items:center; gap:8px;">
                 {% icone "alert-triangle" %} ORDONNANCE DÉJÀ DÉLIVRÉE
             </h2>
@@ -205,7 +216,7 @@ formulaire laisseraient le pharmacien croire qu'il faut remplir les deux.
             </div>
         </div>
         {% elif ordonnance.est_expiree %}
-        <div style="background:var(--refus-bg); border:2px solid var(--danger); border-radius:12px; padding:18px; color:var(--refus-fg);">
+        <div style="background:var(--refus-bg); border:1.5px solid var(--danger); border-radius:12px; padding:18px; color:var(--refus-fg);">
             <h2 style="margin:0 0 8px 0; color:var(--danger); font-size:16px; display:flex; align-items:center; gap:8px;">
                 {% icone "alert-triangle" %} ORDONNANCE EXPIRÉE
             </h2>
@@ -219,11 +230,17 @@ formulaire laisseraient le pharmacien croire qu'il faut remplir les deux.
         </div>
         {% else %}
         <h2>Valider la délivrance</h2>
-        <p class="subtitle">Confirmez que les médicaments ont été remis au patient.</p>
+        <p class="subtitle">Confirmez que les médicaments ont été remis au patient après vérification de sa carte de prise en charge.</p>
+        <div style="background:var(--champ-bg);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:14px;font-size:13px;line-height:1.5;">
+            <p style="margin:0 0 4px;"><strong>Patient :</strong> {{ ordonnance.consultation.patient }}</p>
+            <p style="margin:0;"><strong>Carte :</strong> <span class="code">{{ ordonnance.consultation.patient.numero_carte }}</span></p>
+        </div>
         <form method="post" action="{% url 'valider_delivrance' ordonnance.pk %}">
             {% csrf_token %}
             <input type="hidden" name="code_qr" value="{{ ordonnance.code_qr }}">
-            <button class="button primary" type="submit">Valider la délivrance</button>
+            <button class="button primary" type="submit" style="width:100%;justify-content:center;padding:12px;font-weight:700;">
+                {% icone "check" %} Confirmer la délivrance
+            </button>
         </form>
         {% endif %}
     </aside>

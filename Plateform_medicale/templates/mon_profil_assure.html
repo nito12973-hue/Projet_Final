@@ -17,10 +17,10 @@
 
 
 {% if patient %}
-<section class="panel panel-bloc" style="margin-bottom: 20px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+<section class="panel panel-bloc" style="margin-bottom: 20px; padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; border-radius: 16px; box-shadow: var(--ombre-douce);">
     <div>
-        <p style="margin: 0; font-size: 14px; color: var(--muted);">
-            Carte n° <strong class="code" style="color: var(--titre);">{{ patient.numero_carte }}</strong>
+        <p style="margin: 0; font-size: 13.5px; color: var(--muted);">
+            Numéro de carte de prise en charge : <strong class="code" style="color: var(--titre); font-size: 15px;">{{ patient.numero_carte }}</strong>
         </p>
     </div>
     <div>
@@ -29,20 +29,20 @@
 </section>
 
 {% if qr_svg %}
-<section class="panel panel-bloc mon-qr" style="margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+<section class="panel panel-bloc mon-qr" style="margin-bottom: 20px; padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; border-radius: 16px; box-shadow: var(--ombre-douce);">
     <div>
-        <h2 style="margin: 0; font-size: 15px;">Mon QR code</h2>
-        <p class="subtitle" style="margin: 2px 0 0 0; font-size: 13px;">À présenter pour vérification immédiate de vos droits.</p>
+        <h2 style="margin: 0; font-size: 15.5px; font-weight: 700;">Mon QR code</h2>
+        <p class="subtitle" style="margin: 3px 0 0 0; font-size: 13px;">À présenter pour vérification immédiate de vos droits.</p>
     </div>
     <div>
         <button type="button" class="button btn" id="bouton-voir-qr" onclick="var d=document.getElementById('dialogue-qr-profil'); if(d){ typeof d.showModal === 'function' ? d.showModal() : d.setAttribute('open', ''); }">{% icone "qr-scan" %} Mon QR code</button>
     </div>
-    <dialog id="dialogue-qr-profil" class="modale-dialogue" style="padding: 24px; border: none; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; background: #ffffff;">
-        <h3 style="margin: 0 0 16px; font-size: 17px; color: var(--titre);">Mon QR code assuré</h3>
-        <div class="qr-agrandi" style="display: inline-block;">
+    <dialog id="dialogue-qr-profil" class="modale-dialogue" style="padding: 28px; border: 1px solid var(--border); border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); text-align: center; background: var(--surface); max-width: 360px; width: 90%;">
+        <h3 style="margin: 0 0 16px; font-size: 17px; color: var(--titre); font-weight: 700;">Mon QR code assuré</h3>
+        <div class="qr-agrandi" style="display: inline-block; padding: 12px; background: #ffffff; border-radius: 12px; border: 1px solid var(--border);">
             {{ qr_svg|safe }}
         </div>
-        <div style="margin-top: 18px;">
+        <div style="margin-top: 20px;">
             <button type="button" class="button primary btn" onclick="var d=document.getElementById('dialogue-qr-profil'); if(d){ typeof d.close === 'function' ? d.close() : d.removeAttribute('open'); }">Fermer</button>
         </div>
     </dialog>
@@ -50,7 +50,7 @@
 {% endif %}
 {% endif %}
 
-<section class="panel panel-form">
+<section class="panel panel-form" style="border-radius: 16px; box-shadow: var(--ombre-douce); padding: 24px;">
     {% if form.non_field_errors %}
     <div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
     {% endif %}
@@ -58,12 +58,14 @@
     <form method="post">
         {% csrf_token %}
         {% for field in form %}
-        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        <label for="{{ field.id_for_label }}" style="font-weight: 600; font-size: 13.5px; margin-bottom: 4px; display: block;">{{ field.label }}</label>
         {{ field }}
-        {% if field.help_text %}<p class="aide">{{ field.help_text }}</p>{% endif %}
+        {% if field.help_text %}<p class="aide" style="font-size: 12px; color: var(--muted); margin-top: 4px;">{{ field.help_text }}</p>{% endif %}
         {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
         {% endfor %}
-        <button class="button primary" type="submit">Enregistrer</button>
+        <div style="margin-top: 16px;">
+            <button class="button primary" type="submit">Enregistrer</button>
+        </div>
     </form>
 </section>
 {% endblock %}

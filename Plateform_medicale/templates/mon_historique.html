@@ -12,38 +12,40 @@
 </section>
 
 {% if consultations %}
-<section class="panel">
+<section class="panel" style="border-radius: 16px; box-shadow: var(--ombre-douce); overflow: hidden; border: 1px solid var(--border);">
     <table>
         <thead>
             <tr>
-                <th>Date</th>
-                <th>Beneficiaire</th>
-                <th>Medecin</th>
+                <th>Date &amp; heure</th>
+                <th>Bénéficiaire</th>
+                <th>Médecin</th>
                 <th>Diagnostic</th>
                 <th>Traitement</th>
-                <th>Part a ma charge</th>
-                <th>Statut</th>
+                <th>Part à ma charge</th>
+                <th>Règlement</th>
             </tr>
         </thead>
         <tbody>
             {% for consultation in consultations %}
             <tr>
-                <td>{{ consultation.date_consultation|date:"d/m/Y H:i" }}</td>
+                <td><strong>{{ consultation.date_consultation|date:"d/m/Y H:i" }}</strong></td>
                 <td>{{ consultation.patient }}</td>
-                <td>{{ consultation.medecin }}</td>
+                <td>Dr. {{ consultation.medecin }}</td>
                 <td>{{ consultation.diagnostic }}</td>
                 <td>{{ consultation.traitement|default:"-" }}</td>
-                <td>{{ consultation.paiement.montant_part_patient|franc_cfa|default:"-" }}</td>
+                <td class="code">{{ consultation.paiement.montant_part_patient|franc_cfa|default:"-" }}</td>
                 <td>
                     {% if consultation.paiement %}
-                    <div style="display:flex;align-items:center;gap:6px;">
+                    <div style="display:flex;align-items:center;gap:8px;">
                         <span class="badge {% if consultation.paiement.statut == 'regle' %}validee{% else %}en_attente{% endif %}">{{ consultation.paiement.get_statut_display }}</span>
                         {% if consultation.paiement.statut == 'regle' %}
-                        <a href="{% url 'recu_paiement' consultation.paiement.pk %}" class="button btn btn-sm" title="Imprimer le reçu" style="padding:2px 6px;">{% icone "printer" %}</a>
+                        <a href="{% url 'recu_paiement' consultation.paiement.pk %}" class="button btn btn-sm" title="Imprimer le reçu de paiement" style="padding:4px 8px;gap:4px;">
+                            {% icone "printer" %} Reçu
+                        </a>
                         {% endif %}
                     </div>
                     {% else %}
-                    -
+                    <span style="color:var(--muted);">-</span>
                     {% endif %}
                 </td>
             </tr>

@@ -4,40 +4,163 @@
 {% block title %}Mes consultations{% endblock %}
 
 {% block content %}
+<style>
+.consultations-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.filtres.filtres-consultation {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 24px;
+    box-shadow: var(--ombre-douce);
+}
+.filtres.filtres-consultation .filtre-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.filtres.filtres-consultation .filtre-item label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--muted);
+}
+.filtres.filtres-consultation .filtre-patient {
+    min-width: 240px;
+    flex: 1;
+}
+.filtres.filtres-consultation .filtre-date {
+    min-width: 170px;
+}
+.filtres.filtres-consultation select,
+.filtres.filtres-consultation input {
+    margin-bottom: 0;
+}
+.filtres.filtres-consultation .filtres-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 1px;
+}
+.table-consultations td {
+    vertical-align: top;
+    padding: 14px 16px;
+}
+.cell-date-service {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.cell-date-main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.cell-date-text {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--titre);
+}
+.cell-service-tag {
+    font-size: 11.5px;
+    color: var(--muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.cell-patient {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.patient-link {
+    color: var(--titre);
+    text-decoration: none;
+    font-size: 14px;
+}
+.patient-link:hover {
+    color: var(--primary);
+    text-decoration: underline;
+}
+.cell-patient-card {
+    font-size: 11.5px;
+    color: var(--muted);
+    font-family: var(--font-mono, monospace);
+}
+.cell-diagnostic {
+    max-width: 320px;
+    line-height: 1.45;
+    font-size: 13.5px;
+    color: var(--texte);
+}
+.cell-traitement {
+    max-width: 280px;
+    line-height: 1.45;
+    font-size: 13px;
+    color: var(--muted);
+}
+@media (max-width: 768px) {
+    .filtres.filtres-consultation {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .filtres.filtres-consultation .filtre-patient,
+    .filtres.filtres-consultation .filtre-date {
+        min-width: 100%;
+    }
+    .filtres.filtres-consultation .filtres-actions {
+        margin-top: 6px;
+    }
+}
+</style>
+
 <section class="page-title">
     <div>
         <h1>Historique des consultations</h1>
-        <p class="subtitle">Vos consultations passees.</p>
+        <p class="subtitle">Vos consultations passées et actes cliniques enregistrés.</p>
     </div>
-    <a class="button primary" href="{% url 'ajouter_consultation_medecin' %}">Nouvelle consultation</a>
+    <div class="consultations-header-actions">
+        <a class="button primary btn" href="{% url 'agenda_medecin' %}">{% icone "calendar" %} Consulter l'agenda</a>
+        <a class="button outline btn" href="{% url 'ajouter_consultation_medecin' %}?mode=spontane">{% icone "alert-triangle" %} Consultation spontanée / Urgence</a>
+    </div>
 </section>
 
-<form method="get" class="filtres">
-    <div style="min-width:220px;">
+<form method="get" class="filtres filtres-consultation">
+    <div class="filtre-item filtre-patient">
         <label for="patient">Patient</label>
-        <select id="patient" name="patient" style="margin-bottom:0;">
-            <option value="">Tous</option>
+        <select id="patient" name="patient">
+            <option value="">Tous les patients</option>
             {% for patient in patients_du_medecin %}
             <option value="{{ patient.pk }}" {% if patient_selectionne == patient.pk|stringformat:"s" %}selected{% endif %}>{{ patient }}</option>
             {% endfor %}
         </select>
     </div>
-    <div style="min-width:180px;">
+    <div class="filtre-item filtre-date">
         <label for="date">Date</label>
-        <input id="date" type="date" name="date" value="{{ date_selectionnee }}" style="margin-bottom:0;">
+        <input id="date" type="date" name="date" value="{{ date_selectionnee }}">
     </div>
-    <button type="submit" class="button primary btn">Filtrer</button>
-    {% if patient_selectionne or date_selectionnee %}
-    <a href="{% url 'historique_consultations' %}" class="button btn">Réinitialiser</a>
-    {% endif %}
+    <div class="filtres-actions">
+        <button type="submit" class="button primary btn">{% icone "filter" %} Filtrer</button>
+        {% if patient_selectionne or date_selectionnee %}
+        <a href="{% url 'historique_consultations' %}" class="button btn">Réinitialiser</a>
+        {% endif %}
+    </div>
 </form>
 
 {% if consultations %}
 <section class="panel">
-    <table>
+    <table class="table-consultations">
         <thead>
             <tr>
-                <th>Date</th>
+                <th>Date &amp; Service</th>
                 <th>Patient</th>
                 <th>Diagnostic</th>
                 <th>Traitement</th>
@@ -47,10 +170,31 @@
         <tbody>
             {% for consultation in consultations %}
             <tr>
-                <td>{{ consultation.date_consultation|date:"d/m/Y H:i" }}</td>
-                <td>{{ consultation.patient }}</td>
-                <td>{{ consultation.diagnostic }}</td>
-                <td>{{ consultation.traitement|default:"-" }}</td>
+                <td>
+                    <div class="cell-date-service">
+                        <div class="cell-date-main">
+                            <span class="medecin-horaire-pill">{{ consultation.date_consultation|date:"H:i" }}</span>
+                            <span class="cell-date-text">{{ consultation.date_consultation|date:"d/m/Y" }}</span>
+                        </div>
+                        {% if consultation.service %}
+                        <span class="cell-service-tag">{% icone "activity" %} {{ consultation.service.nom }}</span>
+                        {% endif %}
+                    </div>
+                </td>
+                <td>
+                    <div class="cell-patient">
+                        <a class="patient-link" href="{% url 'fiche_patient_medecin' consultation.patient.pk %}"><strong>{{ consultation.patient }}</strong></a>
+                        {% if consultation.patient.numero_carte %}
+                        <span class="code cell-patient-card">{{ consultation.patient.numero_carte }}</span>
+                        {% endif %}
+                    </div>
+                </td>
+                <td>
+                    <div class="cell-diagnostic">{{ consultation.diagnostic }}</div>
+                </td>
+                <td>
+                    <div class="cell-traitement">{{ consultation.traitement|default:"—" }}</div>
+                </td>
                 <td>
                     {% comment %}
                     .all|first et non .first : la vue precharge ordonnance_set
@@ -63,7 +207,7 @@
                     {% if ordonnance %}
                     <a class="button primary btn btn-sm" href="{% url 'voir_ordonnance_medecin' ordonnance.pk %}">{% icone "qr-scan" %} Voir</a>
                     {% else %}
-                    <a class="button btn btn-sm" href="{% url 'ajouter_ordonnance_medecin' consultation.pk %}">{% icone "plus-circle" %} Creer</a>
+                    <a class="button btn btn-sm" href="{% url 'ajouter_ordonnance_medecin' consultation.pk %}">{% icone "plus-circle" %} Créer</a>
                     {% endif %}
                     {% endwith %}
                 </td>

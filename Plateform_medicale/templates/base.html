@@ -106,6 +106,16 @@
             --fiche-bg: linear-gradient(150deg, #f8fbfb, #eff5f5);
             --btn-a: #0b2027;
             --btn-b: #095059;
+
+            /* Jetons d'espacement & d'élévation harmonisés (Phase 1) */
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 16px;
+            --space-lg: 24px;
+            --space-xl: 32px;
+            --ombre-douce: 0 4px 20px -2px rgba(11, 32, 39, 0.04);
+            --ombre-forte: 0 8px 24px -4px rgba(11, 32, 39, 0.08);
+            --table-hover: rgba(14, 124, 134, 0.04);
         }
 
         /* ===== Theme sombre =====
@@ -152,6 +162,9 @@
             --fiche-bg: linear-gradient(150deg, #14303a, #102830);
             --btn-a: #0e7c86;
             --btn-b: #14606b;
+            --ombre-douce: 0 4px 20px -2px rgba(0, 0, 0, 0.28);
+            --ombre-forte: 0 8px 24px -4px rgba(0, 0, 0, 0.45);
+            --table-hover: rgba(79, 184, 174, 0.07);
         }
 
         * {
@@ -555,10 +568,8 @@
         .empty {
             background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 18px;
-            box-shadow:
-                0 2px 5px rgba(11, 32, 39, 0.06),
-                0 14px 38px rgba(11, 32, 39, 0.07);
+            border-radius: 14px;
+            box-shadow: var(--ombre-douce);
         }
 
         .panel {
@@ -575,15 +586,16 @@
             padding: 14px 16px;
             text-align: left;
             border-bottom: 1px solid var(--border);
-            vertical-align: top;
+            vertical-align: middle;
         }
 
         th {
-            color: var(--titre);
-            background: var(--primary-soft);
-            font-size: 13px;
+            color: var(--muted);
+            background: var(--surface);
+            font-size: 11.5px;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.04em;
+            letter-spacing: 0.05em;
         }
 
         /* En-tete de tableau collant : reste visible en scrollant une
@@ -631,7 +643,7 @@
         }
 
         tbody tr:hover {
-            background: var(--accent-turquoise-wash);
+            background: var(--table-hover);
         }
 
         tr:last-child td {
@@ -766,30 +778,54 @@
         .badge {
             display: inline-flex;
             align-items: center;
-            min-height: 26px;
-            padding: 4px 9px;
+            gap: 6px;
+            min-height: 24px;
+            padding: 3px 10px;
             border-radius: 999px;
-            background: #eef2f6;
-            color: #40515f;
-            font-size: 13px;
-            font-weight: 700;
+            background: var(--neutre-bg);
+            color: var(--neutre-fg);
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            line-height: 1.3;
+            border: 1px solid transparent;
+        }
+
+        .badge::before {
+            content: "";
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+            flex-shrink: 0;
+        }
+
+        .badge:has(svg)::before {
+            display: none;
         }
 
         .badge.en_attente {
             background: var(--attente-bg);
             color: var(--attente-fg);
+            border-color: rgba(224, 130, 79, 0.2);
         }
 
         .badge.validee,
         .badge.terminee,
-        .badge.confirme {
+        .badge.confirme,
+        .badge.ok,
+        .badge.regle {
             background: var(--ok-bg);
             color: var(--success);
+            border-color: rgba(46, 125, 50, 0.18);
         }
 
-        .badge.refusee {
+        .badge.refusee,
+        .badge.annule {
             background: var(--refus-bg);
             color: var(--danger);
+            border-color: rgba(217, 83, 79, 0.2);
         }
 
         form {
@@ -798,7 +834,7 @@
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: 14px;
-            box-shadow: 0 6px 24px rgba(11, 32, 39, 0.07);
+            box-shadow: var(--ombre-douce);
         }
 
         label {
@@ -853,8 +889,8 @@
         textarea:focus {
             outline: none;
             border-color: var(--primary);
-            background: #ffffff;
-            box-shadow: 0 0 0 4px rgba(14, 124, 134, 0.16);
+            background: var(--surface);
+            box-shadow: 0 0 0 3px rgba(14, 124, 134, 0.14);
         }
 
         textarea {
@@ -865,50 +901,54 @@
         .button {
             display: inline-flex;
             align-items: center;
+            justify-content: center;
+            gap: 6px;
             min-height: 38px;
-            padding: 9px 13px;
-            border-radius: 9px;
+            padding: 8px 14px;
+            border-radius: 8px;
             color: var(--titre);
             text-decoration: none;
             font-weight: 600;
-            font-size: 14px;
+            font-size: 13.5px;
             border: 1px solid var(--border);
             background: var(--surface);
             cursor: pointer;
-            transition: background 0.18s ease, border-color 0.18s ease, transform 0.15s ease;
+            box-shadow: 0 1px 2px rgba(11, 32, 39, 0.04);
+            transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
         }
 
         .button:hover {
             background: var(--primary-soft);
             border-color: #8fcac2;
             transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(11, 32, 39, 0.06);
         }
 
         .button.primary {
             border-color: transparent;
             background: linear-gradient(135deg, var(--btn-a) 0%, var(--btn-b) 100%);
             color: #ffffff;
-            box-shadow: 0 6px 16px rgba(14, 124, 134, 0.30);
+            box-shadow: 0 2px 8px rgba(14, 124, 134, 0.22);
         }
 
         .button.primary:hover {
             background: linear-gradient(135deg, var(--btn-b) 0%, var(--btn-a) 100%);
             border-color: transparent;
-            transform: translateY(-2px);
-            box-shadow: 0 10px 22px rgba(14, 124, 134, 0.40);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(14, 124, 134, 0.30);
         }
 
         .button.btn {
             min-height: 34px;
-            padding: 8px 12px;
+            padding: 6px 12px;
             font-size: 13px;
             border-radius: 8px;
             cursor: pointer;
         }
 
         .button.btn-sm {
-            min-height: 30px;
-            padding: 6px 10px;
+            min-height: 28px;
+            padding: 4px 9px;
             font-size: 12px;
         }
 
@@ -916,11 +956,13 @@
             border-color: transparent;
             background: var(--danger-surface);
             color: #ffffff;
+            box-shadow: 0 2px 6px rgba(179, 38, 30, 0.2);
         }
 
         .button.btn-danger:hover {
             background: var(--danger-strong);
             border-color: transparent;
+            box-shadow: 0 4px 10px rgba(179, 38, 30, 0.3);
         }
 
         /* wrap plutot que nowrap : depuis l'ajout du bouton "Carte", trois
@@ -2173,22 +2215,59 @@
         }
 
         @media (max-width: 760px) {
-            /* A l'ecran etroit la feuille respire moins, mais garde sa
-               structure : l'impression, elle, revient toujours en A4. */
+            /* A l'ecran etroit, le QR code de verification se place en haut
+               pour etre immediatement scannable par le pharmacien sans defilement,
+               sans aucune duplication de code dans le DOM. L'impression A4,
+               elle, retablit l'ordre standard en bas de page. */
             .feuille {
+                display: flex;
+                flex-direction: column;
                 padding: 20px 16px;
             }
 
-            .feuille-entete,
-            .feuille-pied {
+            .feuille-entete {
+                order: 1;
                 flex-direction: column;
                 align-items: flex-start;
-                gap: 16px;
+                gap: 12px;
             }
 
-            .feuille-praticien,
+            .feuille-pied {
+                display: contents;
+            }
+
+            .feuille-qr {
+                order: 2;
+                margin: 14px auto;
+                padding: 14px 18px;
+                background: #ffffff;
+                border: 1px solid var(--border);
+                border-radius: 14px;
+                box-shadow: var(--ombre-douce);
+            }
+
+            .feuille-patient {
+                order: 3;
+                margin-top: 10px;
+            }
+
+            .feuille-titre {
+                order: 4;
+            }
+
+            .feuille-prescription {
+                order: 5;
+            }
+
             .feuille-signature {
+                order: 6;
                 text-align: left;
+                margin-top: 16px;
+                max-width: none;
+            }
+
+            .feuille-mention {
+                order: 7;
             }
         }
 
@@ -2233,12 +2312,20 @@
                ni marge propre -- c'est @page qui porte les marges du papier,
                sinon elles s'additionnent et le document se decale. */
             .feuille {
+                display: block !important;
                 max-width: none;
                 margin: 0;
                 padding: 0;
                 border: none;
                 border-radius: 0;
                 box-shadow: none;
+            }
+
+            .feuille-entete {
+                display: flex !important;
+                flex-direction: row !important;
+                justify-content: space-between !important;
+                align-items: flex-start !important;
             }
 
             .feuille-patient {
@@ -2256,8 +2343,27 @@
             }
 
             .feuille-pied {
+                display: flex !important;
+                flex-direction: row !important;
+                justify-content: space-between !important;
+                align-items: flex-end !important;
                 break-inside: avoid;
                 page-break-inside: avoid;
+            }
+
+            .feuille-qr {
+                order: unset !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+
+            .feuille-signature {
+                order: unset !important;
+                text-align: right !important;
+                max-width: 70mm !important;
             }
 
             body,
@@ -5223,6 +5329,15 @@
                                     <b>{{ user.get_full_name|default:user.email }}</b>
                                     <span>{{ user.email }}</span>
                                 </p>
+                                {% if current_role == "MEDECIN" %}
+                                <a href="{% url 'dashboard_medecin' %}">{% icone "stethoscope" %} Tableau de bord</a>
+                                {% elif current_role == "PHARMACIEN" %}
+                                <a href="{% url 'dashboard_pharmacien' %}">{% icone "grid" %} Tableau de bord</a>
+                                {% elif current_role == "ASSURE" %}
+                                <a href="{% url 'dashboard_assure' %}">{% icone "grid" %} Tableau de bord</a>
+                                {% elif current_role == "ADMIN" %}
+                                <a href="{% url 'dashboard' %}">{% icone "grid" %} Tableau de bord</a>
+                                {% endif %}
                                 <a href="{% url 'mon_compte' %}">{% icone "user-circle" %} Mon compte</a>
                                 <a href="{% url 'changer_mot_de_passe' %}">{% icone "lock" %} Mot de passe</a>
                                 <form method="post" action="{% url 'logout' %}">

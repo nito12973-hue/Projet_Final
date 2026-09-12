@@ -35,24 +35,24 @@ demande sans consultation n'affiche donc aucun montant -- c'est la realite,
 pas un oubli.
 {% endcomment %}
 {% for ligne in lignes %}
-<section class="panel pec">
-    <div class="pec-entete">
+<section class="panel pec" style="border-radius: 16px; box-shadow: var(--ombre-douce); border: 1px solid var(--border); margin-bottom: 24px; overflow: hidden;">
+    <div class="pec-entete" style="background: var(--surface-alt); padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
         <span class="pec-titre">
-            <strong>{{ ligne.prise.motif }}</strong>
-            <span>{{ ligne.prise.patient }} · demandée le {{ ligne.prise.date_demande|date:"d/m/Y" }}</span>
+            <strong style="font-size: 16px; color: var(--titre);">{{ ligne.prise.motif }}</strong>
+            <span style="font-size: 13px; color: var(--muted); display: block; margin-top: 2px;">{{ ligne.prise.patient }} · Demandée le {{ ligne.prise.date_demande|date:"d/m/Y" }}</span>
         </span>
         <span class="badge {{ ligne.prise.statut }}">{{ ligne.prise.get_statut_display }}</span>
     </div>
 
-    <div class="pec-corps">
+    <div class="pec-corps" style="padding: 20px;">
         {% if ligne.prise.statut == "en_attente" %}
-        <p class="pec-message">
+        <p class="pec-message" style="margin: 0 0 16px; padding: 12px 16px; border-radius: 10px; font-size: 13px;">
             {% icone "clock-history" %}
             Votre demande est en cours d'examen par l'administration. Tant qu'elle
             n'est pas validée, les consultations liées restent à votre charge.
         </p>
         {% elif ligne.prise.statut == "refusee" %}
-        <p class="pec-message pec-message-refus">
+        <p class="pec-message pec-message-refus" style="margin: 0 0 16px; padding: 12px 16px; border-radius: 10px; font-size: 13px;">
             {% icone "alert-triangle" %}
             Cette demande a été refusée : les soins concernés restent à votre
             charge. Contactez l'administration pour en connaître la raison.
@@ -74,10 +74,10 @@ pas un oubli.
                 {% for consultation in ligne.consultations %}
                 <tr>
                     <td>
-                        {{ consultation.date_consultation|date:"d/m/Y" }}
+                        <strong>{{ consultation.date_consultation|date:"d/m/Y" }}</strong>
                         {% if consultation.service %}<span class="pec-service">{{ consultation.service.nom }}</span>{% endif %}
                     </td>
-                    <td>{{ consultation.medecin }}</td>
+                    <td>Dr. {{ consultation.medecin }}</td>
                     {% if consultation.paiement %}
                     <td class="code">{{ consultation.paiement.montant_part_assurance|franc_cfa }}</td>
                     <td class="code">{{ consultation.paiement.montant_part_patient|franc_cfa }}</td>
@@ -94,12 +94,18 @@ pas un oubli.
             </tbody>
         </table>
 
-        <p class="pec-total">
-            <span>Total pris en charge <strong class="code">{{ ligne.montant_couvert|franc_cfa }}</strong></span>
-            <span>Reste à votre charge <strong class="code attente">{{ ligne.montant_a_charge|franc_cfa }}</strong></span>
-        </p>
+        <div class="pec-total" style="display: flex; gap: 16px; justify-content: flex-end; align-items: center; margin-top: 16px; flex-wrap: wrap;">
+            <div style="background: var(--primary-soft); padding: 8px 14px; border-radius: 10px; font-size: 13px;">
+                <span style="color: var(--primary-strong);">Total pris en charge :</span>
+                <strong class="code" style="color: var(--primary-dark); margin-left: 6px;">{{ ligne.montant_couvert|franc_cfa }}</strong>
+            </div>
+            <div style="background: var(--champ-bg); border: 1px solid var(--border); padding: 8px 14px; border-radius: 10px; font-size: 13px;">
+                <span style="color: var(--muted);">Reste à votre charge :</span>
+                <strong class="code attente" style="margin-left: 6px;">{{ ligne.montant_a_charge|franc_cfa }}</strong>
+            </div>
+        </div>
         {% else %}
-        <p class="pec-vide">Aucune consultation n'est encore rattachée à cette demande.</p>
+        <p class="pec-vide" style="margin: 0; color: var(--muted); font-size: 13.5px; padding: 12px 0;">Aucune consultation n'est encore rattachée à cette demande.</p>
         {% endif %}
     </div>
 </section>

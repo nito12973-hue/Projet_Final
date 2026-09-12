@@ -7,14 +7,14 @@
 <section class="page-title">
     <div>
         <h1>{{ patient.prenom }} {{ patient.nom }}</h1>
-        <p class="subtitle">
-            {{ patient.numero_carte }}
-            <button type="button" class="btn-copier-carte" style="background:rgba(11,32,39,0.08);" data-copier="{{ patient.numero_carte }}" aria-label="Copier le numero de carte">{% icone "copy" %}</button>
+        <p class="subtitle" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span class="code" style="font-size:13px;font-weight:700;color:var(--titre);">{{ patient.numero_carte }}</span>
+            <button type="button" class="btn-copier-carte" data-copier="{{ patient.numero_carte }}" aria-label="Copier le numéro de carte" style="display:inline-flex;align-items:center;justify-content:center;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;" title="Copier le numéro de carte">{% icone "copy" %}</button>
             {% if deja_vu %}<span class="badge">Déjà suivi</span>{% endif %}
         </p>
     </div>
     <div class="actions">
-        <a class="button" href="{% url 'mes_patients' %}">{% icone "chevron-left" %} Mes patients</a>
+        <a class="button btn" href="{% url 'mes_patients' %}">{% icone "chevron-left" %} Mes patients</a>
         {% if rdv_confirme %}
         <a class="button primary" href="{% url 'ajouter_consultation_medecin' %}?rdv_id={{ rdv_confirme.pk }}">
             {% icone "stethoscope" %} Démarrer la consultation (RDV programmé)
@@ -27,12 +27,12 @@
     </div>
 </section>
 
-<section class="admin-layout">
+<section class="fiche-patient-grid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));gap:20px;margin-bottom:22px;">
     <article class="panel panel-bloc">
         <div class="panel-header" style="padding:0 0 16px;">
-            <h2>Identite</h2>
+            <h2 style="margin:0;font-size:16px;color:var(--titre);">Identité du patient</h2>
         </div>
-        <div class="carte-assure" style="margin-bottom:20px;">
+        <div class="carte-assure" style="margin-bottom:18px;">
             <div class="carte-assure-entete">
                 <span class="carte-assure-puce" aria-hidden="true"></span>
                 {% logo_marque taille=26 fond="sombre" %}
@@ -41,7 +41,7 @@
                 <p class="carte-assure-label">Carte de prise en charge</p>
                 <p class="carte-assure-numero code">
                     {{ patient.numero_carte }}
-                    <button type="button" class="btn-copier-carte" data-copier="{{ patient.numero_carte }}" aria-label="Copier le numero de carte">{% icone "copy" %}</button>
+                    <button type="button" class="btn-copier-carte" data-copier="{{ patient.numero_carte }}" aria-label="Copier le numéro de carte">{% icone "copy" %}</button>
                 </p>
             </div>
             <div class="carte-assure-pied">
@@ -54,16 +54,16 @@
                     <strong>{{ patient.taux_couverture }}%</strong>
                     <span>{{ patient.titulaire.plan_couverture.nom }}</span>
                     {% else %}
-                    <span>Aucun plan attribue</span>
+                    <span>Aucun plan attribué</span>
                     {% endif %}
                 </div>
             </div>
         </div>
-        <p class="subtitle" style="margin-bottom:8px;">A comparer avec la carte presentee par le patient.</p>
+        <p class="subtitle" style="margin-bottom:12px;font-size:12.5px;">À comparer avec la carte physique présentée par le patient.</p>
         <table>
             <tbody>
-                <tr><th>Date de naissance</th><td>{{ patient.date_naissance|date:"d/m/Y" }}</td></tr>
-                <tr><th>Téléphone</th><td>{{ patient.telephone|default:"-" }}</td></tr>
+                <tr><th style="width:40%;">Date de naissance</th><td>{{ patient.date_naissance|date:"d/m/Y" }}</td></tr>
+                <tr><th>Téléphone</th><td>{{ patient.telephone|default:"—" }}</td></tr>
             </tbody>
         </table>
     </article>
@@ -71,16 +71,16 @@
     {% if ayants_droit %}
     <article class="panel panel-bloc">
         <div class="panel-header" style="padding:0 0 16px;">
-            <h2>Ayants droit</h2>
+            <h2 style="margin:0;font-size:16px;color:var(--titre);">Ayants droit rattachés</h2>
         </div>
         <table>
             <thead><tr><th>Nom complet</th><th>Lien</th><th>Numéro de carte</th></tr></thead>
             <tbody>
                 {% for ayant_droit in ayants_droit %}
                 <tr>
-                    <td>{{ ayant_droit.prenom }} {{ ayant_droit.nom }}</td>
-                    <td>{{ ayant_droit.get_lien_parente_display }}</td>
-                    <td>{{ ayant_droit.numero_carte }}</td>
+                    <td style="font-weight:600;color:var(--titre);">{{ ayant_droit.prenom }} {{ ayant_droit.nom }}</td>
+                    <td><span class="badge" style="font-size:11.5px;">{{ ayant_droit.get_lien_parente_display }}</span></td>
+                    <td class="code" style="font-size:12.5px;">{{ ayant_droit.numero_carte }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -90,17 +90,20 @@
 </section>
 
 {% if prochains_rendez_vous %}
-<section class="panel" style="margin-top:18px;">
-    <div class="panel-header">
-        <h2>Prochains rendez-vous</h2>
+<section class="panel" style="margin-bottom:22px;">
+    <div class="panel-header" style="padding:16px 20px 12px;">
+        <h2 style="margin:0;font-size:16px;color:var(--titre);">Prochains rendez-vous</h2>
     </div>
     <table>
-        <thead><tr><th>Date</th><th>Motif</th><th>Statut</th></tr></thead>
+        <thead><tr><th style="min-width:140px;">Date &amp; Heure</th><th>Motif</th><th>Statut</th></tr></thead>
         <tbody>
             {% for rdv in prochains_rendez_vous %}
             <tr>
-                <td>{{ rdv.date_heure|date:"d/m/Y H:i" }}</td>
-                <td>{{ rdv.motif|default:"-" }}</td>
+                <td style="white-space:nowrap;">
+                    <span class="medecin-horaire-pill" style="margin-right:8px;">{{ rdv.date_heure|date:"H:i" }}</span>
+                    <span style="font-weight:600;color:var(--titre);">{{ rdv.date_heure|date:"d/m/Y" }}</span>
+                </td>
+                <td>{{ rdv.motif|default:"—" }}</td>
                 <td><span class="dash-pill {% if rdv.statut == 'CONFIRME' or rdv.statut == 'TERMINE' %}ok{% elif rdv.statut == 'ANNULE' or rdv.statut == 'REFUSE' %}danger{% else %}attente{% endif %}">{{ rdv.get_statut_display }}</span></td>
             </tr>
             {% endfor %}
@@ -110,47 +113,38 @@
 {% endif %}
 
 <section class="panel" style="margin-top:20px;border-radius:16px;">
-    <div class="panel-header" style="border-bottom:1px solid var(--border);padding-bottom:14px;margin-bottom:18px;">
+    <div class="panel-header" style="border-bottom:1px solid var(--border);padding:18px 22px;margin-bottom:18px;">
         <div>
-            <h2 style="margin:0;">Historique &amp; Chronologie Clinique</h2>
-            <p class="subtitle" style="margin:2px 0 0;">Suivi médical et antécédents de consultation</p>
+            <h2 style="margin:0;font-size:16px;color:var(--titre);">Historique &amp; Chronologie Clinique</h2>
+            <p class="subtitle" style="margin:2px 0 0;">Observations et antécédents enregistrés par votre cabinet</p>
         </div>
-        {% if rdv_confirme %}
-        <a class="button primary btn-sm" href="{% url 'ajouter_consultation_medecin' %}?rdv_id={{ rdv_confirme.pk }}">
-            {% icone "stethoscope" %} Démarrer la consultation
-        </a>
-        {% else %}
-        <a class="button secondary btn-sm" href="{% url 'ajouter_consultation_medecin' %}?mode=spontane&numero_carte={{ patient.numero_carte }}">
-            {% icone "alert-triangle" %} Consultation spontanée / urgence
-        </a>
-        {% endif %}
     </div>
 
     {% if historique %}
-    <div class="timeline-clinique" style="position:relative;padding-left:28px;">
+    <div class="timeline-clinique" style="position:relative;padding-left:28px;padding-right:20px;padding-bottom:10px;">
         <div style="position:absolute;left:11px;top:8px;bottom:8px;width:2px;background:var(--border);"></div>
 
         {% for consultation in historique %}
         <div style="position:relative;margin-bottom:20px;">
             <!-- Pastille chronologique -->
-            <div style="position:absolute;left:-28px;top:0;width:24px;height:24px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 4px var(--surface);">
+            <div style="position:absolute;left:-28px;top:2px;width:24px;height:24px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 4px var(--surface);">
                 <span style="font-size:11px;">{% icone "stethoscope" %}</span>
             </div>
 
             <!-- Fiche de consultation -->
-            <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;box-shadow:0 4px 12px rgba(11,32,39,0.04);">
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;box-shadow:var(--ombre-douce);">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
                     <div>
                         <strong style="font-size:14.5px;color:var(--titre);">{{ consultation.date_consultation|date:"l d F Y à H:i"|capfirst }}</strong>
-                        <span style="font-size:12px;color:var(--muted);display:block;">Service : {{ consultation.service|default:"Médecine Générale" }}</span>
+                        <span style="font-size:12px;color:var(--muted);display:block;margin-top:2px;">Service : {{ consultation.service|default:"Médecine Générale" }}</span>
                     </div>
                     {% with ordonnance=consultation.ordonnances.all|first %}
                     {% if ordonnance %}
-                    <a class="button primary btn btn-sm" href="{% url 'voir_ordonnance_medecin' ordonnance.pk %}" style="font-size:12px;padding:6px 12px;">
+                    <a class="button primary btn btn-sm" href="{% url 'voir_ordonnance_medecin' ordonnance.pk %}" style="font-size:12px;padding:6px 12px;display:inline-flex;align-items:center;gap:6px;">
                         {% icone "qr-scan" %} Ordonnance {{ ordonnance.code_qr }}
                     </a>
                     {% else %}
-                    <a class="button btn btn-sm" href="{% url 'ajouter_ordonnance_medecin' consultation.pk %}" style="font-size:12px;padding:6px 12px;">
+                    <a class="button btn btn-sm" href="{% url 'ajouter_ordonnance_medecin' consultation.pk %}" style="font-size:12px;padding:6px 12px;display:inline-flex;align-items:center;gap:6px;">
                         {% icone "plus-circle" %} Rédiger ordonnance
                     </a>
                     {% endif %}
@@ -160,12 +154,12 @@
                 <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:12px;background:var(--primary-soft);padding:12px 14px;border-radius:10px;font-size:13px;">
                     <div>
                         <span style="font-weight:700;color:var(--primary-strong);display:block;margin-bottom:2px;">Diagnostic :</span>
-                        <p style="margin:0;color:var(--titre);">{{ consultation.diagnostic }}</p>
+                        <p style="margin:0;color:var(--titre);line-height:1.4;">{{ consultation.diagnostic }}</p>
                     </div>
                     {% if consultation.traitement %}
                     <div>
                         <span style="font-weight:700;color:var(--primary-strong);display:block;margin-bottom:2px;">Traitement prescrit :</span>
-                        <p style="margin:0;color:var(--titre);">{{ consultation.traitement }}</p>
+                        <p style="margin:0;color:var(--titre);line-height:1.4;">{{ consultation.traitement }}</p>
                     </div>
                     {% endif %}
                 </div>
@@ -174,9 +168,9 @@
         {% endfor %}
     </div>
     {% else %}
-    <div class="etat-vide" style="padding:32px 0;">
+    <div class="etat-vide" style="padding:36px 20px;text-align:center;">
         {% illustration_vide "clipboard-list" %}
-        <p style="margin:8px 0 14px;">Aucune consultation enregistrée pour ce patient.</p>
+        <p style="margin:8px 0 16px;color:var(--muted);font-size:13.5px;">Aucune consultation enregistrée pour ce patient.</p>
         {% if rdv_confirme %}
         <a class="button primary btn-sm" href="{% url 'ajouter_consultation_medecin' %}?rdv_id={{ rdv_confirme.pk }}">
             {% icone "stethoscope" %} Démarrer la consultation (RDV)
