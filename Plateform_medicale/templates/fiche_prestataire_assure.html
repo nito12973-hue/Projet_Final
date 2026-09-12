@@ -39,11 +39,13 @@
     .carte-medecin {
         display: flex;
         flex-direction: column;
-        gap: 6px;
-        padding: 18px 20px;
-        background: var(--fiche-bg);
+        gap: 8px;
+        padding: 20px;
+        background: var(--surface);
         border: 1px solid var(--border);
-        border-radius: 14px;
+        border-radius: 16px;
+        box-shadow: var(--ombre-douce);
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
 
     .carte-medecin h3 {
@@ -81,7 +83,7 @@
     <a class="button" href="{% url 'prestataires_proches' %}">{% icone "chevron-left" %} Retour</a>
 </section>
 
-<section class="panel panel-bloc">
+<section class="panel panel-bloc" style="border-radius: 16px; box-shadow: var(--ombre-douce);">
     <dl class="fiche-lignes">
         <div>
             <dt>Type de structure</dt>

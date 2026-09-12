@@ -6,96 +6,126 @@
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>Mon agenda</h1>
-        <p class="subtitle">Tous vos rendez-vous, passés et à venir.</p>
+        <h1>Mon agenda médical</h1>
+        <p class="subtitle">Gestion des consultations programmées et suivi des créneaux de rendez-vous.</p>
+    </div>
+    <div class="actions">
+        <a class="button btn" href="{% url 'dashboard_medecin' %}">
+            {% icone "chevron-left" %} Tableau de bord
+        </a>
+        <a class="button primary" href="{% url 'ajouter_consultation_medecin' %}?mode=spontane">
+            {% icone "plus-circle" %} Consultation spontanée / Urgence
+        </a>
     </div>
 </section>
 
-<form method="get" class="filtres">
-    <div style="min-width:200px;">
-        <label for="periode">Période</label>
-        <select id="periode" name="periode" style="margin-bottom:0;">
-            <option value="">Tous</option>
-            <option value="a_venir" {% if periode_choisie == "a_venir" %}selected{% endif %}>À venir</option>
-            <option value="passes" {% if periode_choisie == "passes" %}selected{% endif %}>Passés</option>
-        </select>
-    </div>
-    <div style="min-width:200px;">
-        <label for="statut">Statut</label>
-        <select id="statut" name="statut" style="margin-bottom:0;">
-            <option value="">Tous</option>
-            {% for value, label in statuts %}
-            <option value="{{ value }}" {% if value == statut_choisi %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <button type="submit" class="button primary btn">Filtrer</button>
-    {% if statut_choisi or periode_choisie %}
-    <a href="{% url 'agenda_medecin' %}" class="button btn">Réinitialiser</a>
-    {% endif %}
-</form>
+<section class="panel panel-bloc" style="margin-bottom:22px;padding:18px 20px;">
+    <form method="get" class="filtres" style="display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin:0;">
+        <div style="flex:1;min-width:180px;">
+            <label for="periode" style="font-size:12.5px;font-weight:700;color:var(--titre);margin-bottom:6px;display:block;">Période</label>
+            <select id="periode" name="periode" style="margin-bottom:0;width:100%;">
+                <option value="">Tous les rendez-vous</option>
+                <option value="a_venir" {% if periode_choisie == "a_venir" %}selected{% endif %}>Rendez-vous à venir</option>
+                <option value="passes" {% if periode_choisie == "passes" %}selected{% endif %}>Rendez-vous passés</option>
+            </select>
+        </div>
+        <div style="flex:1;min-width:180px;">
+            <label for="statut" style="font-size:12.5px;font-weight:700;color:var(--titre);margin-bottom:6px;display:block;">Statut</label>
+            <select id="statut" name="statut" style="margin-bottom:0;width:100%;">
+                <option value="">Tous les statuts</option>
+                {% for value, label in statuts %}
+                <option value="{{ value }}" {% if value == statut_choisi %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding-bottom:1px;">
+            <button type="submit" class="button primary btn" style="display:inline-flex;align-items:center;gap:6px;">
+                {% icone "search" %} Filtrer
+            </button>
+            {% if statut_choisi or periode_choisie %}
+            <a href="{% url 'agenda_medecin' %}" class="button btn" title="Réinitialiser les filtres" style="display:inline-flex;align-items:center;gap:6px;">
+                {% icone "x" %} Réinitialiser
+            </a>
+            {% endif %}
+        </div>
+    </form>
+</section>
 
 {% if rendez_vous %}
-<section class="panel">
+<section class="panel" style="margin-bottom:24px;">
     <table>
         <thead>
             <tr>
-                <th>Date</th>
-                <th>Patient</th>
-                <th>Prestataire</th>
-                <th>Motif</th>
-                <th>Statut</th>
-                <th>Actions</th>
+                <th style="min-width:140px;">Date &amp; Heure</th>
+                <th style="min-width:180px;">Patient</th>
+                <th style="min-width:160px;">Établissement</th>
+                <th style="min-width:160px;">Motif</th>
+                <th style="min-width:110px;">Statut</th>
+                <th style="min-width:180px;text-align:right;">Actions</th>
             </tr>
         </thead>
         <tbody>
             {% for rdv in rendez_vous %}
             <tr>
                 <td style="white-space:nowrap;">
-                    <div style="display:flex;align-items:center;gap:8px;">
-                        <span class="code" style="font-weight:700;color:var(--primary-strong);background:var(--primary-soft);padding:4px 8px;border-radius:6px;font-size:12.5px;">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <span class="medecin-horaire-pill">
                             {{ rdv.date_heure|date:"H:i" }}
                         </span>
-                        <span style="font-size:13px;color:var(--titre);">{{ rdv.date_heure|date:"d/m/Y" }}</span>
+                        <span style="font-size:13px;font-weight:600;color:var(--titre);">
+                            {{ rdv.date_heure|date:"d/m/Y" }}
+                        </span>
                     </div>
                 </td>
                 <td>
                     <strong style="color:var(--titre);display:block;font-size:13.5px;">{{ rdv.patient }}</strong>
-                    <span style="font-size:11.5px;color:var(--muted);">Carte: {{ rdv.patient.numero_carte }}</span>
+                    <span style="font-size:11.5px;color:var(--muted);">Carte : {{ rdv.patient.numero_carte }}</span>
                 </td>
-                <td>{{ rdv.prestataire|default:"Hôpital Principal" }}</td>
-                <td><span style="font-size:13px;">{{ rdv.motif|default:"Consultation générale" }}</span></td>
+                <td>
+                    {% if rdv.prestataire %}
+                    <span style="font-size:13px;color:var(--titre);">{{ rdv.prestataire.nom|default:rdv.prestataire }}</span>
+                    {% else %}
+                    <span style="color:var(--muted);font-size:13px;">&mdash;</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <span style="font-size:13px;color:var(--text);">{{ rdv.motif|default:"Consultation générale" }}</span>
+                </td>
                 <td>
                     <span class="badge {% if rdv.statut == 'DEMANDE' %}en_attente{% elif rdv.statut == 'CONFIRME' %}confirme{% elif rdv.statut == 'ANNULE' or rdv.statut == 'REFUSE' %}refusee{% elif rdv.statut == 'TERMINE' %}terminee{% endif %}">
                         {{ rdv.get_statut_display }}
                     </span>
                 </td>
-                <td>
-                    <div class="actions" style="gap:6px;">
+                <td style="text-align:right;">
+                    <div class="action-buttons-inline" style="display:inline-flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:wrap;">
                         {% if rdv.statut == 'CONFIRME' %}
-                        <a href="{% url 'ajouter_consultation_medecin' %}?rdv_id={{ rdv.pk }}" class="button primary btn btn-sm" title="Ouvrir la consultation pour ce patient">
+                        <a href="{% url 'ajouter_consultation_medecin' %}?rdv_id={{ rdv.pk }}" class="button primary btn btn-sm" title="Démarrer la consultation médicale pour ce patient">
                             {% icone "stethoscope" %} Démarrer
                         </a>
-                        <form method="post" action="{% url 'changer_statut_rendez_vous' rdv.pk %}" class="action-ligne"
+                        <form method="post" action="{% url 'changer_statut_rendez_vous' rdv.pk %}" class="action-ligne" style="margin:0;display:inline;"
                               data-confirmation="Annuler le rendez-vous confirmé de {{ rdv.patient }} ?"
                               data-confirmation-action="Oui, annuler le rendez-vous">
                             {% csrf_token %}
                             <input type="hidden" name="statut" value="ANNULE">
-                            <button type="submit" class="button btn btn-danger btn-sm">Annuler</button>
+                            <button type="submit" class="button btn btn-danger btn-sm" title="Annuler le rendez-vous">Annuler</button>
                         </form>
                         {% elif rdv.statut == 'DEMANDE' %}
-                        <form method="post" action="{% url 'changer_statut_rendez_vous' rdv.pk %}" class="action-ligne">
+                        <form method="post" action="{% url 'changer_statut_rendez_vous' rdv.pk %}" class="action-ligne" style="margin:0;display:inline;">
                             {% csrf_token %}
                             <input type="hidden" name="statut" value="CONFIRME">
                             <button type="submit" class="button primary btn btn-sm">{% icone "check" %} Confirmer</button>
                         </form>
-                        <form method="post" action="{% url 'changer_statut_rendez_vous' rdv.pk %}" class="action-ligne"
+                        <form method="post" action="{% url 'changer_statut_rendez_vous' rdv.pk %}" class="action-ligne" style="margin:0;display:inline;"
                               data-confirmation="Refuser la demande de rendez-vous de {{ rdv.patient }} ?"
                               data-confirmation-action="Oui, refuser la demande">
                             {% csrf_token %}
                             <input type="hidden" name="statut" value="REFUSE">
                             <button type="submit" class="button btn btn-danger btn-sm">{% icone "x" %} Refuser</button>
                         </form>
+                        {% elif rdv.statut == 'TERMINE' %}
+                        <span style="font-size:12px;color:var(--muted);font-style:italic;">Consulté</span>
+                        {% else %}
+                        <span style="font-size:12px;color:var(--muted);">&mdash;</span>
                         {% endif %}
                     </div>
                 </td>
@@ -104,8 +134,9 @@
         </tbody>
     </table>
 </section>
+
 {% if rendez_vous.paginator.num_pages > 1 %}
-<nav class="pagination" aria-label="Pagination">
+<nav class="pagination" aria-label="Pagination de l'agenda" style="margin-top:20px;">
     {% if rendez_vous.has_previous %}
     <a href="?{% prefixe_pagination request.GET %}page={{ rendez_vous.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Précédent</a>
     {% endif %}
@@ -115,10 +146,20 @@
     {% endif %}
 </nav>
 {% endif %}
+
 {% else %}
-<div class="etat-vide">
+<div class="etat-vide" style="padding:40px 20px;text-align:center;">
     {% illustration_vide "calendar" %}
-    <p>{% if statut_choisi or periode_choisie %}Aucun rendez-vous ne correspond à ces critères.{% else %}Aucun rendez-vous enregistré.{% endif %}</p>
+    <p style="margin:12px 0 16px;color:var(--muted);font-size:14px;">
+        {% if statut_choisi or periode_choisie %}
+        Aucun rendez-vous ne correspond aux critères de recherche.
+        {% else %}
+        Aucun rendez-vous enregistré dans votre agenda.
+        {% endif %}
+    </p>
+    {% if statut_choisi or periode_choisie %}
+    <a href="{% url 'agenda_medecin' %}" class="button btn btn-sm">Réinitialiser les filtres</a>
+    {% endif %}
 </div>
 {% endif %}
 
@@ -144,7 +185,8 @@
                 if (!banniere) {
                     banniere = document.createElement("div");
                     banniere.id = "demandes-nouvelles-alerte-agenda";
-                    banniere.style.cssText = "margin-bottom:18px;padding:12px 16px;background:var(--primary-soft);border:1px solid var(--primary);border-radius:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;";
+                    banniere.className = "avis avis-attente";
+                    banniere.style.cssText = "margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;";
                     var formFiltres = document.querySelector("form.filtres");
                     if (formFiltres && formFiltres.parentNode) {
                         formFiltres.parentNode.insertBefore(banniere, formFiltres);

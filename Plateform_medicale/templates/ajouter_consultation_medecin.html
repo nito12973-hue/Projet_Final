@@ -4,6 +4,123 @@
 {% block title %}{% if mode == "spontane" %}Consultation spontanée / Urgence{% else %}Consultation sur rendez-vous{% endif %}{% endblock %}
 
 {% block content %}
+<style>
+.consultation-contexte-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 18px;
+    margin-bottom: 24px;
+    border-radius: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    box-shadow: var(--ombre-douce);
+}
+.consultation-contexte-banner.rdv-banner {
+    border-left: 4px solid var(--primary);
+}
+.consultation-contexte-banner.spontane-banner {
+    border-left: 4px solid #d97706;
+}
+.banner-icon {
+    font-size: 22px;
+    color: var(--primary-strong);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2px;
+}
+.banner-icon.warning-icon {
+    color: #d97706;
+}
+.banner-body {
+    flex: 1;
+}
+.banner-top {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+.banner-date {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 500;
+}
+.banner-details {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--texte);
+}
+.banner-desc {
+    margin: 2px 0 0;
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.45;
+}
+.consultation-bloc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: var(--ombre-douce);
+}
+.consultation-bloc-titre {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: var(--titre);
+    margin: 0 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+}
+.consultation-grid-admin {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+}
+.consultation-form-champ {
+    display: flex;
+    flex-direction: column;
+}
+.consultation-form-champ label {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--titre);
+    margin-bottom: 6px;
+}
+.consultation-form-champ .help {
+    margin: 4px 0 0;
+    font-size: 12px;
+    color: var(--muted);
+}
+.consultation-form-champ textarea {
+    min-height: 110px;
+    resize: vertical;
+    line-height: 1.5;
+    font-family: inherit;
+}
+.consultation-actions-bar {
+    margin-top: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+@media (max-width: 640px) {
+    .consultation-grid-admin {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
 <section class="page-title">
     <div>
         <h1>{% if mode == "spontane" %}Consultation spontanée / Urgence{% else %}Consultation sur rendez-vous{% endif %}</h1>
@@ -26,23 +143,49 @@
     {% endif %}
 
     {% if mode == "rdv" and rdv %}
-    <div style="background:var(--primary-soft);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;gap:12px;">
-        <span style="font-size:20px;color:var(--primary-strong);">{% icone "calendar" %}</span>
-        <div>
-            <strong style="color:var(--titre);font-size:14px;">Rendez-vous confirmé</strong>
-            <p style="margin:2px 0 0;font-size:12.5px;color:var(--muted);">
-                Patient : <strong>{{ rdv.patient }}</strong> &bull; Date : {{ rdv.date_heure|date:"d/m/Y à H:i" }} &bull; Motif : {{ rdv.motif|default:"Consultation générale" }}
-            </p>
+    <div class="consultation-contexte-banner rdv-banner">
+        <div class="banner-icon">{% icone "calendar" %}</div>
+        <div class="banner-body">
+            <div class="banner-top">
+                <span class="badge ok">Rendez-vous confirmé</span>
+                <span class="medecin-horaire-pill">{{ rdv.date_heure|date:"H:i" }}</span>
+                <span class="banner-date">{{ rdv.date_heure|date:"d/m/Y" }}</span>
+            </div>
+            <div class="banner-details">
+                <span>Patient : <strong>{{ rdv.patient }}</strong></span>
+                {% if rdv.patient.numero_carte %}
+                <span class="code">Carte {{ rdv.patient.numero_carte }}</span>
+                {% endif %}
+                <span>Motif : <em>{{ rdv.motif|default:"Consultation générale" }}</em></span>
+                {% if rdv.prestataire %}
+                <span>Établissement : {{ rdv.prestataire.nom|default:rdv.prestataire }}</span>
+                {% endif %}
+            </div>
         </div>
     </div>
     {% elif mode == "spontane" %}
-    <div style="background:rgba(217,119,6,0.08);border:1px solid rgba(217,119,6,0.25);border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;gap:12px;">
-        <span style="font-size:20px;color:#b45309;">{% icone "alert-triangle" %}</span>
-        <div>
-            <strong style="color:#92400e;font-size:14px;">Contexte d'admission non programmée</strong>
-            <p style="margin:2px 0 0;font-size:12.5px;color:var(--muted);">
+    <div class="consultation-contexte-banner spontane-banner">
+        <div class="banner-icon warning-icon">{% icone "alert-triangle" %}</div>
+        <div class="banner-body">
+            <div class="banner-top">
+                <span class="badge en_attente">Admission non programmée</span>
+            </div>
+            {% if patient_spontane %}
+            <div class="banner-details">
+                <span>Patient identifié : <strong>{{ patient_spontane.prenom }} {{ patient_spontane.nom }}</strong></span>
+                <span class="code">Carte {{ patient_spontane.numero_carte }}</span>
+                {% if patient_spontane.date_naissance %}
+                <span>Né(e) le {{ patient_spontane.date_naissance|date:"d/m/Y" }}</span>
+                {% endif %}
+                {% if patient_spontane.titulaire.plan_couverture %}
+                <span>Couverture : {{ patient_spontane.titulaire.plan_couverture.nom }}</span>
+                {% endif %}
+            </div>
+            {% else %}
+            <p class="banner-desc">
                 Vérification de concordance du numéro de carte d'assuré et qualification obligatoire du motif d'admission (Urgence ou Passage spontané).
             </p>
+            {% endif %}
         </div>
     </div>
     {% endif %}
@@ -54,13 +197,92 @@
         {% elif mode == "spontane" %}
         <input type="hidden" name="mode" value="spontane">
         {% endif %}
+
+        <!-- Section 1 : Contexte d'admission & Patient -->
+        <div class="consultation-bloc">
+            <h3 class="consultation-bloc-titre">{% icone "user-circle" %} Contexte d'admission & Patient</h3>
+            <div class="consultation-grid-admin">
+                {% if form.contexte_admission %}
+                <div class="consultation-form-champ">
+                    <label for="{{ form.contexte_admission.id_for_label }}">{{ form.contexte_admission.label }} *</label>
+                    {{ form.contexte_admission }}
+                    {% if form.contexte_admission.help_text %}<p class="help">{{ form.contexte_admission.help_text }}</p>{% endif %}
+                    {% if form.contexte_admission.errors %}<div class="erreurs" role="alert">{{ form.contexte_admission.errors }}</div>{% endif %}
+                </div>
+                {% endif %}
+
+                {% if form.numero_carte %}
+                <div class="consultation-form-champ">
+                    <label for="{{ form.numero_carte.id_for_label }}">{{ form.numero_carte.label }} *</label>
+                    {{ form.numero_carte }}
+                    {% if form.numero_carte.help_text %}<p class="help">{{ form.numero_carte.help_text }}</p>{% endif %}
+                    {% if form.numero_carte.errors %}<div class="erreurs" role="alert">{{ form.numero_carte.errors }}</div>{% endif %}
+                </div>
+                {% endif %}
+
+                <div class="consultation-form-champ">
+                    <label for="{{ form.patient.id_for_label }}">{{ form.patient.label }} *</label>
+                    {{ form.patient }}
+                    {% if form.patient.help_text %}<p class="help">{{ form.patient.help_text }}</p>{% endif %}
+                    {% if form.patient.errors %}<div class="erreurs" role="alert">{{ form.patient.errors }}</div>{% endif %}
+                </div>
+
+                <div class="consultation-form-champ">
+                    <label for="{{ form.service.id_for_label }}">{{ form.service.label }}</label>
+                    {{ form.service }}
+                    {% if form.service.help_text %}<p class="help">{{ form.service.help_text }}</p>{% endif %}
+                    {% if form.service.errors %}<div class="erreurs" role="alert">{{ form.service.errors }}</div>{% endif %}
+                </div>
+
+                <div class="consultation-form-champ">
+                    <label for="{{ form.prise_en_charge.id_for_label }}">{{ form.prise_en_charge.label }}</label>
+                    {{ form.prise_en_charge }}
+                    {% if form.prise_en_charge.help_text %}<p class="help">{{ form.prise_en_charge.help_text }}</p>{% endif %}
+                    {% if form.prise_en_charge.errors %}<div class="erreurs" role="alert">{{ form.prise_en_charge.errors }}</div>{% endif %}
+                </div>
+
+                <div class="consultation-form-champ">
+                    <label for="{{ form.date_consultation.id_for_label }}">{{ form.date_consultation.label }} *</label>
+                    {{ form.date_consultation }}
+                    {% if form.date_consultation.help_text %}<p class="help">{{ form.date_consultation.help_text }}</p>{% endif %}
+                    {% if form.date_consultation.errors %}<div class="erreurs" role="alert">{{ form.date_consultation.errors }}</div>{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 2 : Observations cliniques & Acte -->
+        <div class="consultation-bloc">
+            <h3 class="consultation-bloc-titre">{% icone "activity" %} Observations cliniques & Acte médical</h3>
+            <div class="consultation-form-champ" style="margin-bottom: 16px;">
+                <label for="{{ form.diagnostic.id_for_label }}">{{ form.diagnostic.label }} *</label>
+                {{ form.diagnostic }}
+                {% if form.diagnostic.help_text %}<p class="help">{{ form.diagnostic.help_text }}</p>{% endif %}
+                {% if form.diagnostic.errors %}<div class="erreurs" role="alert">{{ form.diagnostic.errors }}</div>{% endif %}
+            </div>
+
+            <div class="consultation-form-champ">
+                <label for="{{ form.traitement.id_for_label }}">{{ form.traitement.label }}</label>
+                {{ form.traitement }}
+                {% if form.traitement.help_text %}<p class="help">{{ form.traitement.help_text }}</p>{% endif %}
+                {% if form.traitement.errors %}<div class="erreurs" role="alert">{{ form.traitement.errors }}</div>{% endif %}
+            </div>
+        </div>
+
         {% for field in form %}
-        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-        {{ field }}
-        {% if field.help_text %}<p class="help" style="margin:2px 0 6px;font-size:12px;color:var(--muted);">{{ field.help_text }}</p>{% endif %}
-        {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
+        {% if field.name not in "contexte_admission numero_carte patient service prise_en_charge date_consultation diagnostic traitement" %}
+        <div class="consultation-form-champ" style="margin-bottom: 16px;">
+            <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
+            {{ field }}
+            {% if field.help_text %}<p class="help">{{ field.help_text }}</p>{% endif %}
+            {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
+        </div>
+        {% endif %}
         {% endfor %}
-        <button class="button primary" type="submit">Enregistrer la consultation</button>
+
+        <div class="consultation-actions-bar">
+            <button class="button primary" type="submit">{% icone "check" %} Enregistrer la consultation</button>
+            <a class="button btn" href="{% url 'historique_consultations' %}">Annuler</a>
+        </div>
     </form>
 </section>
 {% endblock %}

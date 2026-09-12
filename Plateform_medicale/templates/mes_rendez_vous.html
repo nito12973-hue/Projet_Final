@@ -12,17 +12,17 @@
     <a class="button primary" href="{% url 'ajouter_rendez_vous_assure' %}">Nouveau rendez-vous</a>
 </section>
 
-<form method="get" class="filtres">
-    <div style="min-width:200px;">
-        <label for="periode">Période</label>
+<form method="get" class="filtres" style="background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px 18px; box-shadow: var(--ombre-douce); margin-bottom: 20px;">
+    <div style="min-width:180px;">
+        <label for="periode" style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px;display:block;">Période</label>
         <select id="periode" name="periode" style="margin-bottom:0;">
             <option value="">Tous</option>
             <option value="a_venir" {% if periode_choisie == "a_venir" %}selected{% endif %}>À venir</option>
             <option value="passes" {% if periode_choisie == "passes" %}selected{% endif %}>Passés</option>
         </select>
     </div>
-    <div style="min-width:200px;">
-        <label for="statut">Statut</label>
+    <div style="min-width:180px;">
+        <label for="statut" style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px;display:block;">Statut</label>
         <select id="statut" name="statut" style="margin-bottom:0;">
             <option value="">Tous</option>
             {% for value, label in statuts %}
@@ -30,20 +30,22 @@
             {% endfor %}
         </select>
     </div>
-    <button type="submit" class="button primary btn">Filtrer</button>
-    {% if statut_choisi or periode_choisie %}
-    <a href="{% url 'mes_rendez_vous_assure' %}" class="button btn">Réinitialiser</a>
-    {% endif %}
+    <div style="display:flex;align-items:flex-end;gap:8px;">
+        <button type="submit" class="button primary btn">{% icone "filter" %} Filtrer</button>
+        {% if statut_choisi or periode_choisie %}
+        <a href="{% url 'mes_rendez_vous_assure' %}" class="button btn">Réinitialiser</a>
+        {% endif %}
+    </div>
 </form>
 
 {% if rendez_vous %}
-<section class="panel">
+<section class="panel" style="border-radius: 16px; box-shadow: var(--ombre-douce); overflow: hidden; border: 1px solid var(--border);">
     <table class="tableau-carte">
         <thead>
             <tr>
-                <th>Date</th>
-                <th>Beneficiaire</th>
-                <th>Medecin</th>
+                <th>Date &amp; heure</th>
+                <th>Bénéficiaire</th>
+                <th>Médecin</th>
                 <th>Prestataire</th>
                 <th>Motif</th>
                 <th>Statut</th>
@@ -53,9 +55,9 @@
         <tbody>
             {% for rdv in rendez_vous %}
             <tr>
-                <td><span class="libelle-mobile">Date</span>{{ rdv.date_heure|date:"d/m/Y H:i" }}</td>
-                <td><span class="libelle-mobile">Beneficiaire</span>{{ rdv.patient }}</td>
-                <td><span class="libelle-mobile">Medecin</span>{{ rdv.medecin }}</td>
+                <td><span class="libelle-mobile">Date</span><strong>{{ rdv.date_heure|date:"d/m/Y H:i" }}</strong></td>
+                <td><span class="libelle-mobile">Bénéficiaire</span>{{ rdv.patient }}</td>
+                <td><span class="libelle-mobile">Médecin</span>Dr. {{ rdv.medecin }}</td>
                 <td><span class="libelle-mobile">Prestataire</span>{{ rdv.prestataire|default:"-" }}</td>
                 <td><span class="libelle-mobile">Motif</span>{{ rdv.motif|default:"-" }}</td>
                 <td>

@@ -6,8 +6,20 @@
 {% block content %}
 <section class="page-title sans-impression">
     <div>
-        <h1>Ordonnance</h1>
-        <p class="subtitle">Aperçu du document tel qu'il sera imprimé, au format A4.</p>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <h1 style="margin:0;">Ordonnance</h1>
+            <span class="code" style="font-size:14px;padding:3px 8px;border-radius:6px;background:var(--surface);border:1px solid var(--border);">{{ ordonnance.code_qr }}</span>
+            {% if ordonnance.est_annulee %}
+            <span class="badge refusee">Annulée</span>
+            {% elif ordonnance.delivrance %}
+            <span class="badge validee">Délivrée le {{ ordonnance.delivrance.date_delivrance|date:"d/m/Y" }}</span>
+            {% elif ordonnance.est_expiree %}
+            <span class="badge refusee">Expirée</span>
+            {% else %}
+            <span class="badge en_attente">Disponible</span>
+            {% endif %}
+        </div>
+        <p class="subtitle">Aperçu de la prescription au format standard A4 pour impression et délivrance.</p>
     </div>
     <div class="actions">
         <a class="button btn" href="{% url retour_url %}">{% icone "chevron-left" %} Retour</a>
@@ -19,30 +31,18 @@
 </section>
 
 {% if ordonnance.est_annulee %}
-<div class="alert alert-danger sans-impression" style="margin-bottom: 1.5rem; border-left: 4px solid var(--danger, #D9534F); padding: 1rem 1.25rem; border-radius: 8px; background: rgba(217, 83, 79, 0.1);">
-    <strong style="color: var(--danger, #D9534F);">Statut : Ordonnance Annulée</strong><br>
+<div class="alert alert-danger sans-impression" style="margin-bottom: 1.5rem; border-left: 4px solid var(--danger); padding: 1rem 1.25rem; border-radius: 10px; background: var(--refus-bg); color: var(--refus-fg);">
+    <strong style="color: var(--danger);">Statut : Prescription annulée</strong><br>
     <span>Cette prescription a été annulée le {{ ordonnance.date_annulation|date:"d/m/Y à H:i" }}.</span><br>
     <span style="font-weight: 500;">Motif indiqué : {{ ordonnance.motif_annulation }}</span>
 </div>
 {% elif ordonnance.est_expiree and not ordonnance.est_delivree %}
-<div class="alert alert-warning sans-impression" style="margin-bottom: 1.5rem; border-left: 4px solid var(--warning, #e0b25f); padding: 1rem 1.25rem; border-radius: 8px; background: var(--attente-bg);">
-    <strong style="color: var(--attente-fg);">Statut : Ordonnance Expirée</strong><br>
+<div class="alert alert-warning sans-impression" style="margin-bottom: 1.5rem; border-left: 4px solid var(--warning); padding: 1rem 1.25rem; border-radius: 10px; background: var(--attente-bg); color: var(--attente-fg);">
+    <strong>Statut : Prescription expirée</strong><br>
     <span>Cette prescription a dépassé sa durée de validité et ne peut plus faire l'objet d'une délivrance en pharmacie.</span>
 </div>
 {% endif %}
 
-
-{% comment %}
-Feuille A4 : la mise en page est la MEME a l'ecran et sur papier, seule
-l'echelle change. On previsualise donc reellement le document, on ne
-decouvre pas sa forme au moment d'imprimer.
-
-Toutes les donnees viennent du modele. Ordonnance.medicaments est UN SEUL
-champ de texte libre : il n'existe en base ni dosage, ni posologie, ni
-duree, ni quantite. Les lignes saisies par le medecin sont donc rendues
-telles quelles, numerotees -- inventer des colonnes reviendrait a fabriquer
-de la donnee medicale.
-{% endcomment %}
 <article class="feuille">
 
     <header class="feuille-entete">
@@ -54,7 +54,7 @@ de la donnee medicale.
             </div>
         </div>
         <div class="feuille-praticien">
-            <p class="feuille-praticien-nom">{{ ordonnance.consultation.medecin }}</p>
+            <p class="feuille-praticien-nom">Dr. {{ ordonnance.consultation.medecin }}</p>
             {% if ordonnance.consultation.medecin.specialite %}
             <p>{{ ordonnance.consultation.medecin.specialite }}</p>
             {% endif %}
@@ -71,13 +71,21 @@ de la donnee medicale.
     </header>
 
     <section class="feuille-patient">
-        <p class="feuille-etiquette">Patient</p>
-        <div class="feuille-patient-lignes">
-            <p class="feuille-patient-nom">{{ ordonnance.consultation.patient.prenom }} {{ ordonnance.consultation.patient.nom }}</p>
-            <p>
-                Né(e) le {{ ordonnance.consultation.patient.date_naissance|date:"d/m/Y" }}
-                · Carte <span class="code">{{ ordonnance.consultation.patient.numero_carte }}</span>
-            </p>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+            <div>
+                <p class="feuille-etiquette">Patient(e)</p>
+                <div class="feuille-patient-lignes">
+                    <p class="feuille-patient-nom">{{ ordonnance.consultation.patient.prenom }} {{ ordonnance.consultation.patient.nom }}</p>
+                    <p>
+                        Né(e) le {{ ordonnance.consultation.patient.date_naissance|date:"d/m/Y" }}
+                        · Carte <span class="code">{{ ordonnance.consultation.patient.numero_carte }}</span>
+                    </p>
+                </div>
+            </div>
+            <div style="text-align:right;font-size:12px;color:var(--muted);line-height:1.5;">
+                <p style="margin:0;"><strong>Référence :</strong> <span class="code">{{ ordonnance.code_qr }}</span></p>
+                <p style="margin:0;">Prescrit le {{ ordonnance.date_creation|date:"d/m/Y" }}</p>
+            </div>
         </div>
     </section>
 
@@ -85,11 +93,6 @@ de la donnee medicale.
 
     <section class="feuille-prescription">
         {% if lignes_structurees %}
-        {% comment %}
-        Ordonnance STRUCTUREE : chaque colonne vient d'un champ reel de
-        LigneOrdonnance. Les champs facultatifs vides affichent un tiret --
-        on ne comble jamais un blanc medical par une valeur inventee.
-        {% endcomment %}
         <table class="feuille-table">
             <thead>
                 <tr>
@@ -113,12 +116,6 @@ de la donnee medicale.
             </tbody>
         </table>
         {% else %}
-        {% comment %}
-        Ordonnance HISTORIQUE, anterieure a LigneOrdonnance : son texte est
-        rendu tel qu'il a ete saisi. Aucune conversion vers le tableau -- le
-        format d'origine est ambigu, le deviner serait inventer une
-        prescription.
-        {% endcomment %}
         <ol class="feuille-lignes">
             {% for ligne in lignes_prescription %}
             <li>{{ ligne }}</li>
@@ -133,46 +130,46 @@ de la donnee medicale.
         <div class="feuille-qr">
             {{ qr_svg|safe }}
             <p class="code">{{ ordonnance.code_qr }}</p>
+            <span style="display:block;font-size:10px;color:var(--muted);letter-spacing:0.04em;margin-top:2px;">QR de vérification</span>
         </div>
         <div class="feuille-signature">
             <p class="feuille-date">
                 Prescrit le {{ ordonnance.date_creation|date:"d/m/Y" }}
             </p>
             <p class="feuille-etiquette">Signature et cachet du médecin</p>
-            <div class="feuille-cadre-signature" style="position:relative;display:flex;align-items:center;justify-content:space-between;padding:8px 14px;min-height:95px;border:1.5px dashed #b8ced4;border-radius:10px;background:rgba(239,244,243,0.35);">
-                <div style="font-size:12px;color:#24424b;line-height:1.4;">
-                    <strong style="font-size:12.5px;">Dr. {{ ordonnance.consultation.medecin }}</strong><br>
+            <div class="feuille-cadre-signature" style="position:relative;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;min-height:90px;border:1.5px dashed #b8ced4;border-radius:10px;background:rgba(239,244,243,0.35);">
+                <div style="font-size:12px;color:#24424b;line-height:1.45;">
+                    <strong style="font-size:13px;">Dr. {{ ordonnance.consultation.medecin }}</strong><br>
                     <span style="font-size:11px;color:#5f6f7d;">{{ ordonnance.consultation.medecin.specialite|default:"Médecine Générale" }}</span><br>
                     <span style="font-size:10.5px;color:#5f6f7d;">Réf. Consultation #{{ ordonnance.consultation.pk }}</span>
                 </div>
-                <!-- Cachet officiel numérique circulaire -->
-                <div class="cachet-officiel" aria-hidden="true" style="width:82px;height:82px;border:2px dashed #0e7c86;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#0e7c86;text-align:center;font-size:7.5px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;transform:rotate(-8deg);opacity:0.85;box-shadow:inset 0 0 0 2px rgba(14,124,134,0.1);">
-                    <span>SantéSN</span>
-                    <span style="font-size:7px;border-top:1px solid #0e7c86;border-bottom:1px solid #0e7c86;padding:1px 0;margin:2px 0;">Certifié</span>
-                    <span>Tiers Payant</span>
+                <div style="font-size:11px;color:var(--muted);text-align:right;font-style:italic;">
+                    Visa praticien
                 </div>
             </div>
         </div>
     </footer>
 
     <p class="feuille-mention">
-        Ordonnance émise par SantéSN · à présenter en pharmacie avec la carte de prise en charge.
+        Prescription générée par SantéSN · Référence : {{ ordonnance.code_qr }} · À présenter en pharmacie avec la carte d'assuré.
         {% if ordonnance.delivrance %}
         Délivrée le {{ ordonnance.delivrance.date_delivrance|date:"d/m/Y" }}.
         {% endif %}
     </p>
+</article>
+
 {% if user.role == 'MEDECIN' and not ordonnance.est_delivree and not ordonnance.est_annulee %}
 <div id="modal-annulation" class="sans-impression" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); align-items:center; justify-content:center; z-index:9999;">
     <div style="background:var(--surface, #ffffff); padding:2rem; border-radius:12px; max-width:480px; width:92%; box-shadow:0 12px 32px rgba(0,0,0,0.25); border:1px solid var(--border, #d0d7de);">
         <h3 style="margin-top:0; color:var(--titre, #132b45); font-size:1.25rem;">Annuler l'ordonnance #{{ ordonnance.code_qr }}</h3>
-        <p style="font-size:0.9rem; color:var(--texte-secondaire, #57606a); line-height:1.45;">
-            Cette action est irréversible. L'ordonnance ne pourra plus être délivrée en pharmacie et le motif sera archivé dans le dossier.
+        <p style="font-size:0.9rem; color:var(--muted); line-height:1.45;">
+            Cette action est irréversible. L'ordonnance ne pourra plus être délivrée en pharmacie et le motif sera consigné dans le dossier.
         </p>
         <form method="POST" action="{% url 'annuler_ordonnance_medecin' ordonnance.pk %}">
             {% csrf_token %}
             <div style="margin-bottom:1.25rem;">
                 <label for="motif_annulation" style="display:block; margin-bottom:0.4rem; font-weight:600; font-size:0.9rem;">Motif d'annulation :</label>
-                <input type="text" id="motif_annulation" name="motif_annulation" required placeholder="Exemple : Erreur de posologie ou changement de traitement" style="width:100%; padding:0.65rem 0.75rem; border-radius:6px; border:1px solid var(--border, #d0d7de); background:var(--fond-input, #ffffff); color:var(--texte, #212529); font-size:0.95rem; box-sizing:border-box;">
+                <input type="text" id="motif_annulation" name="motif_annulation" required placeholder="Exemple : Changement de posologie ou de molécule" style="width:100%; padding:0.65rem 0.75rem; border-radius:6px; border:1px solid var(--border); background:var(--champ-bg); color:var(--titre); font-size:0.95rem; box-sizing:border-box;">
             </div>
             <div style="display:flex; justify-content:flex-end; gap:0.75rem;">
                 <button type="button" class="button btn" onclick="document.getElementById('modal-annulation').style.display='none'">Fermer</button>

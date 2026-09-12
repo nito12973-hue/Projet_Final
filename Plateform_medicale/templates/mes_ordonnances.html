@@ -47,11 +47,11 @@
                 <td>
                     <span class="libelle-mobile">Statut</span>
                     {% if ordonnance.est_annulee %}
-                    <span class="badge" style="background:var(--danger, #D9534F); color:#ffffff;">Annulée</span>
+                    <span class="badge refusee">Annulée</span>
                     {% elif ordonnance.delivrance %}
                     <span class="badge validee">Délivrée</span>
                     {% elif ordonnance.est_expiree %}
-                    <span class="badge" style="background:var(--muted); color:#ffffff;">Expirée</span>
+                    <span class="badge refusee">Expirée</span>
                     {% else %}
                     <span class="badge en_attente">Disponible</span>
                     {% endif %}
