@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load icones %}
+
+{% block title %}Contacter l'administration — SantéSN{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Nouvelle demande d'assistance</h1>
+        <p class="subtitle">Transmettez votre question ou réclamation à l'équipe administrative de SantéSN.</p>
+    </div>
+    <div class="actions">
+        <a class="button btn" href="{% url 'mes_demandes_support' %}">{% icone "chevron-left" %} Mes demandes</a>
+    </div>
+</section>
+
+<section class="panel panel-form" style="border-radius: 16px; box-shadow: var(--ombre-douce); padding: 24px; max-width: 680px;">
+    {% if form.non_field_errors %}
+    <div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        
+        <div style="margin-bottom: 16px;">
+            <label for="{{ form.objet.id_for_label }}" style="font-weight: 600; font-size: 13.5px; margin-bottom: 4px; display: block;">{{ form.objet.label }}</label>
+            {{ form.objet }}
+            {% if form.objet.errors %}<div class="erreurs" role="alert">{{ form.objet.errors }}</div>{% endif %}
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+            <div>
+                <label for="{{ form.categorie.id_for_label }}" style="font-weight: 600; font-size: 13.5px; margin-bottom: 4px; display: block;">{{ form.categorie.label }}</label>
+                {{ form.categorie }}
+                {% if form.categorie.errors %}<div class="erreurs" role="alert">{{ form.categorie.errors }}</div>{% endif %}
+            </div>
+            <div>
+                <label for="{{ form.priorite.id_for_label }}" style="font-weight: 600; font-size: 13.5px; margin-bottom: 4px; display: block;">{{ form.priorite.label }}</label>
+                {{ form.priorite }}
+                {% if form.priorite.errors %}<div class="erreurs" role="alert">{{ form.priorite.errors }}</div>{% endif %}
+            </div>
+        </div>
+
+        <div style="margin-bottom: 18px;">
+            <label for="{{ form.premier_message.id_for_label }}" style="font-weight: 600; font-size: 13.5px; margin-bottom: 4px; display: block;">{{ form.premier_message.label }}</label>
+            {{ form.premier_message }}
+            {% if form.premier_message.help_text %}<p class="aide" style="font-size: 12px; color: var(--muted); margin-top: 4px;">{{ form.premier_message.help_text }}</p>{% endif %}
+            {% if form.premier_message.errors %}<div class="erreurs" role="alert">{{ form.premier_message.errors }}</div>{% endif %}
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+            <a href="{% url 'assistant_sante' %}" class="button btn">{% icone "chat" %} Retour à l'Assistant</a>
+            <button class="button primary" type="submit">Envoyer ma demande à l'administration</button>
+        </div>
+    </form>
+</section>
+{% endblock %}

@@ -131,4 +131,14 @@ urlpatterns = [
     path('notifications/<int:pk>/lue/', views.marquer_notification_lue, name='marquer_notification_lue'),
     path('notifications/tout-marquer-lu/', views.marquer_toutes_notifications_lues, name='marquer_toutes_notifications_lues'),
     path('api/notifications/dernieres/', views.api_dernieres_notifications, name='api_dernieres_notifications'),
+
+    # Assistant SantéSN & Support Assuré
+    path('assure/assistant/', views.assistant_sante, name='assistant_sante'),
+    path('assure/support/', views.mes_demandes_support, name='mes_demandes_support'),
+    path('assure/support/nouvelle/', views.creer_demande_support, name='creer_demande_support'),
+    path('assure/support/<int:pk>/', views.detail_demande_support, name='detail_demande_support'),
+
+    # Support Administrateur
+    path('support/demandes/', views.admin_liste_demandes_support, name='admin_liste_demandes_support'),
+    path('support/demandes/<int:pk>/', views.admin_detail_demande_support, name='admin_detail_demande_support'),
 ]

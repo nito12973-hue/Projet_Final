@@ -20,9 +20,11 @@ from django.utils import timezone
 from .models import (
     Consultation,
     Delivrance,
+    DemandeSupport,
     JournalActivite,
     LigneOrdonnance,
     Medecin,
+    MessageSupport,
     Notification,
     Ordonnance,
     Paiement,
@@ -38,6 +40,7 @@ from .models import (
     User,
     distance_km,
 )
+from .services.assistant import traiter_message_assistant
 from .views import SECTIONS_PARAMETRES as SECTIONS_PARAMETRES_REELLES
 from .views import TAILLE_PAGE_LISTE
 from .services.notifications import emettre_notification
@@ -9379,3 +9382,213 @@ class NotificationAyantDroitP1Tests(TestCase):
         )
         notifier_confirmation_rdv(rdv)
         self.assertTrue(Notification.objects.filter(destinataire=self.user_assure).exists())
+
+
+class AssistantEtSupportTests(TestCase):
+    """Tests complets pour l'Assistant SantéSN et le système de support administratif."""
+
+    def setUp(self):
+        self.user_admin = creer_utilisateur(User.Role.ADMIN, 'admin-support@santesn.sn')
+        self.user_assure = creer_utilisateur(User.Role.ASSURE, 'assure-support@santesn.sn')
+        self.plan = PlanCouverture.objects.create(
+            nom="Plan Confort",
+            taux_couverture=80,
+            plafond_annuel=Decimal('500000.00'),
+        )
+        self.patient = Patient.objects.create(
+            user=self.user_assure,
+            nom="Ndiaye",
+            prenom="Fatou",
+            date_naissance=datetime.date(1992, 5, 10),
+            telephone="771234567",
+            type_beneficiaire=Patient.TypeBeneficiaire.PRINCIPAL,
+            plan_couverture=self.plan,
+        )
+        self.medecin = creer_medecin('dr.support@santesn.sn', specialite='Cardiologie')
+
+    def test_assistant_moteur_urgence(self):
+        """Détection des urgences médicales et rappel immédiat du SAMU 1515."""
+        res = traiter_message_assistant(
+            self.user_assure,
+            "C'est une urgence vitale, je ressens une violente douleur à la poitrine"
+        )
+        self.assertEqual(res["type"], "urgence")
+        self.assertIn("15 15", res["texte"])
+        self.assertIn("SAMU", res["texte"])
+
+    def test_assistant_moteur_refus_diagnostic_et_prescription(self):
+        """Refus clair et bienveillant de poser un diagnostic ou de prescrire un médicament."""
+        res = traiter_message_assistant(
+            self.user_assure,
+            "J'ai mal à la tête et de la fièvre, quel médicament ou antibiotique dois-je prendre ?"
+        )
+        self.assertNotEqual(res["type"], "urgence")
+        self.assertIn("poser de diagnostic", res["texte"])
+        self.assertIn("médecin", res["texte"].lower())
+
+    def test_assistant_moteur_taux_couverture(self):
+        """Consultation dynamique des informations réelles de couverture de l'assuré."""
+        res = traiter_message_assistant(
+            self.user_assure,
+            "Quel est mon taux de prise en charge et mon plafond ?"
+        )
+        self.assertNotEqual(res["type"], "urgence")
+        self.assertIn("80%", res["texte"])
+        self.assertIn("Plan Confort", res["texte"])
+        self.assertIn("500", res["texte"])
+
+    def test_assistant_moteur_rendez_vous(self):
+        """Consultation dynamique des rendez-vous à venir."""
+        rdv = RendezVous.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            date_heure=timezone.now() + datetime.timedelta(days=2),
+            motif="Bilan cardiologique",
+            statut=RendezVous.Statut.CONFIRME,
+        )
+        res = traiter_message_assistant(
+            self.user_assure,
+            "Quels sont mes rendez-vous prévus ?"
+        )
+        self.assertIn("Confirmé", res["texte"])
+        self.assertIn(self.medecin.nom, res["texte"])
+
+    def test_assistant_vue_get(self):
+        """Accès à la vue de l'assistant pour un assuré."""
+        self.client.login(username='assure-support@santesn.sn', password=PASSWORD)
+        res = self.client.get(reverse('assistant_sante'))
+        self.assertEqual(res.status_code, 200)
+        self.assertIn("Assistant SantéSN", res.content.decode('utf-8'))
+
+    def test_assistant_vue_post_ajax(self):
+        """Envoi d'une question à l'assistant via requête AJAX POST."""
+        self.client.login(username='assure-support@santesn.sn', password=PASSWORD)
+        res = self.client.post(
+            reverse('assistant_sante'),
+            json.dumps({'message': "Bonjour, pouvez-vous m'aider ?"}),
+            content_type='application/json',
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data.get('success'))
+        self.assertIn('reponse', data)
+        self.assertNotEqual(data['reponse']['type'], 'urgence')
+
+    def test_assistant_vue_message_vide(self):
+        """Rejet propre d'un message vide envoyé à l'assistant."""
+        self.client.login(username='assure-support@santesn.sn', password=PASSWORD)
+        res = self.client.post(
+            reverse('assistant_sante'),
+            json.dumps({'message': '   '}),
+            content_type='application/json',
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(res.status_code, 400)
+
+    def test_support_creation_ticket_par_assure(self):
+        """L'assuré crée un ticket de support qui notifie les administrateurs."""
+        self.client.login(username='assure-support@santesn.sn', password=PASSWORD)
+        res = self.client.post(reverse('creer_demande_support'), {
+            'categorie': DemandeSupport.Categorie.PRISE_EN_CHARGE,
+            'priorite': DemandeSupport.Priorite.URGENTE,
+            'objet': 'Remboursement non reçu pour ma consultation',
+            'premier_message': "Bonjour, ma prise en charge du 10 mars n'apparaît pas correctement.",
+        })
+        self.assertEqual(res.status_code, 302)
+        ticket = DemandeSupport.objects.filter(auteur=self.user_assure).first()
+        self.assertIsNotNone(ticket)
+        self.assertEqual(ticket.statut, DemandeSupport.Statut.EN_ATTENTE)
+        self.assertEqual(ticket.messages.count(), 1)
+        # Notification créée pour l'admin
+        self.assertTrue(
+            Notification.objects.filter(
+                destinataire=self.user_admin,
+                type_evenement=Notification.TypeEvenement.SUPPORT_DEMANDE
+            ).exists()
+        )
+
+    def test_support_ajout_message_assure(self):
+        """L'assuré peut ajouter un message de suivi à son ticket."""
+        self.client.login(username='assure-support@santesn.sn', password=PASSWORD)
+        ticket = DemandeSupport.objects.create(
+            auteur=self.user_assure,
+            patient=self.patient,
+            objet="Problème carte",
+            categorie=DemandeSupport.Categorie.COMPTE,
+            statut=DemandeSupport.Statut.EN_COURS
+        )
+        MessageSupport.objects.create(demande=ticket, auteur=self.user_assure, message="Message initial")
+        
+        res = self.client.post(reverse('detail_demande_support', kwargs={'pk': ticket.pk}), {
+            'message': "J'ajoute une précision concernant mon numéro de carte.",
+        })
+        self.assertEqual(res.status_code, 302)
+        self.assertEqual(ticket.messages.count(), 2)
+
+    def test_support_isolation_entre_assures(self):
+        """Un assuré ne peut pas consulter le ticket d'un autre assuré."""
+        autre_user = creer_utilisateur(User.Role.ASSURE, 'autre-assure@santesn.sn')
+        ticket = DemandeSupport.objects.create(
+            auteur=self.user_assure,
+            patient=self.patient,
+            objet="Confidentiel",
+            categorie=DemandeSupport.Categorie.AUTRE,
+        )
+        self.client.login(username='autre-assure@santesn.sn', password=PASSWORD)
+        res = self.client.get(reverse('detail_demande_support', kwargs={'pk': ticket.pk}))
+        self.assertEqual(res.status_code, 404)
+
+    def test_support_admin_traitement_et_reponse(self):
+        """L'administrateur répond au ticket, le clôture et notifie l'assuré."""
+        ticket = DemandeSupport.objects.create(
+            auteur=self.user_assure,
+            patient=self.patient,
+            objet="Correction taux",
+            categorie=DemandeSupport.Categorie.PRISE_EN_CHARGE,
+            statut=DemandeSupport.Statut.EN_ATTENTE,
+        )
+        MessageSupport.objects.create(demande=ticket, auteur=self.user_assure, message="Taux incorrect")
+
+        self.client.login(username='admin-support@santesn.sn', password=PASSWORD)
+        # Liste admin
+        res_liste = self.client.get(reverse('admin_liste_demandes_support'))
+        self.assertEqual(res_liste.status_code, 200)
+        self.assertIn("Correction taux", res_liste.content.decode('utf-8'))
+
+        # Réponse admin
+        res_rep = self.client.post(reverse('admin_detail_demande_support', kwargs={'pk': ticket.pk}), {
+            'action': 'repondre',
+            'message': "Nous avons rectifié votre dossier. Votre taux est désormais de 80%.",
+        })
+        self.assertEqual(res_rep.status_code, 302)
+
+        ticket.refresh_from_db()
+        self.assertEqual(ticket.statut, DemandeSupport.Statut.REPONDU)
+        self.assertEqual(ticket.messages.count(), 2)
+
+        # L'assuré a reçu une notification de réponse
+        self.assertTrue(
+            Notification.objects.filter(
+                destinataire=self.user_assure,
+                type_evenement=Notification.TypeEvenement.SUPPORT_REPONSE
+            ).exists()
+        )
+
+        # Changement de statut admin
+        res_ferme = self.client.post(reverse('admin_detail_demande_support', kwargs={'pk': ticket.pk}), {
+            'action': 'changer_statut',
+            'nouveau_statut': DemandeSupport.Statut.FERME,
+        })
+        self.assertEqual(res_ferme.status_code, 302)
+        ticket.refresh_from_db()
+        self.assertEqual(ticket.statut, DemandeSupport.Statut.FERME)
+
+        # Trace dans le Journal d'activité
+        self.assertTrue(
+            JournalActivite.objects.filter(
+                auteur=self.user_admin,
+                action=JournalActivite.Action.MODIFICATION
+            ).exists()
+        )
+

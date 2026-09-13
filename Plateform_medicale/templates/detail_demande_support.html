@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load icones %}
+
+{% block title %}Dossier #{{ demande.numero_dossier }} — SantéSN{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+            <a href="{% url 'mes_demandes_support' %}" class="button btn btn-sm">{% icone "chevron-left" %} Retour</a>
+            <span class="badge {% if demande.statut == 'EN_ATTENTE' %}en_attente{% elif demande.statut == 'REPONDU' %}validee{% elif demande.statut == 'FERME' %}annule{% else %}en_attente{% endif %}">
+                {{ demande.get_statut_display }}
+            </span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--muted);">#{{ demande.numero_dossier }}</span>
+        </div>
+        <h1>{{ demande.objet }}</h1>
+        <p class="subtitle">Catégorie : {{ demande.get_categorie_display }} · Priorité : {{ demande.get_priorite_display }} · Ouvert le {{ demande.date_creation|date:"d/m/Y à H:i" }}</p>
+    </div>
+    <div class="actions">
+        {% if demande.statut != "FERME" %}
+        <form method="post" style="display:inline;margin:0;padding:0;background:transparent;border:none;box-shadow:none;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="cloturer">
+            <button type="submit" class="button btn" onclick="return confirm('Voulez-vous vraiment clôturer cette demande d\'assistance ?');">
+                {% icone "check" %} Clôturer la demande
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Fil de discussion -->
+<div class="panel" style="border-radius:18px;box-shadow:var(--ombre-douce);padding:24px;margin-bottom:24px;">
+    <h3 style="margin:0 0 20px;font-size:16px;color:var(--titre);display:flex;align-items:center;gap:8px;">
+        {% icone "clock-history" %} Historique des échanges ({{ messages_fil.count }})
+    </h3>
+
+    <div style="display:flex;flex-direction:column;gap:16px;">
+        {% for m in messages_fil %}
+        <div style="display:flex;flex-direction:column;gap:6px;padding:16px;border-radius:14px;{% if m.auteur.role == 'ADMIN' %}background:rgba(14, 124, 134, 0.07);border:1px solid rgba(14, 124, 134, 0.2);margin-right:20px;{% else %}background:var(--champ-bg);border:1px solid var(--border);margin-left:20px;{% endif %}">
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;">
+                <strong style="color:{% if m.auteur.role == 'ADMIN' %}var(--primary-strong){% else %}var(--titre){% endif %};">
+                    {% if m.auteur.role == 'ADMIN' %}
+                    🛡️ Administration SantéSN
+                    {% else %}
+                    👤 Vous ({{ m.auteur.get_full_name|default:m.auteur.email }})
+                    {% endif %}
+                </strong>
+                <span style="color:var(--muted);">{{ m.date_envoi|date:"d/m/Y à H:i" }}</span>
+            </div>
+            <div style="font-size:14px;color:var(--texte);line-height:1.55;white-space:pre-wrap;">{{ m.message }}</div>
+        </div>
+        {% empty %}
+        <p style="color:var(--muted);font-size:13.5px;">Aucun message enregistré.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Zone de réponse -->
+{% if demande.statut != "FERME" %}
+<section class="panel panel-form" style="border-radius:16px;box-shadow:var(--ombre-douce);padding:20px;">
+    <h4 style="margin:0 0 12px;font-size:15px;color:var(--titre);">Ajouter un message</h4>
+    <form method="post">
+        {% csrf_token %}
+        <div style="margin-bottom:14px;">
+            {{ form.message }}
+            {% if form.message.errors %}<div class="erreurs" role="alert">{{ form.message.errors }}</div>{% endif %}
+        </div>
+        <div style="display:flex;justify-content:flex-end;">
+            <button class="button primary" type="submit">Envoyer ma réponse</button>
+        </div>
+    </form>
+</section>
+{% else %}
+<div style="background:var(--champ-bg);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;color:var(--muted);font-size:13.5px;">
+    🔒 Cette demande a été clôturée le {{ demande.cloture_le|date:"d/m/Y à H:i"|default:"récemment" }}. Les réponses sont désactivées.
+</div>
+{% endif %}
+{% endblock %}

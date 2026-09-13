@@ -246,3 +246,14 @@ from .notifications import (  # noqa: F401
     marquer_toutes_notifications_lues,
     api_dernieres_notifications,
 )
+
+# Assistant SantéSN & Support
+from .assistant import (  # noqa: F401
+    assistant_sante,
+    creer_demande_support,
+    mes_demandes_support,
+    detail_demande_support,
+    admin_liste_demandes_support,
+    admin_detail_demande_support,
+)
+

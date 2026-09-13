@@ -20,6 +20,7 @@ from django.utils import timezone
 logger = logging.getLogger("Plateform_medicale")
 
 from ..models import (
+    DemandeSupport,
     JournalActivite,
     Paiement,
     PriseEnCharge,
@@ -201,6 +202,7 @@ def compteurs_files_attente(request=None):
         "prises_en_charge_attente": pec_stats["total_attente"] or 0,
         "nb_pec_urgentes_48h": pec_stats["urgentes_48h"] or 0,
         "paiements_non_regles": Paiement.objects.filter(statut=Paiement.Statut.NON_REGLE).count(),
+        "demandes_support_attente": DemandeSupport.objects.filter(statut=DemandeSupport.Statut.EN_ATTENTE).count(),
     }
     if request is not None:
         request._compteurs_files_attente = compteurs
@@ -211,10 +213,8 @@ def user_role(request):
     """Context processor : role, notifications non lues, et compteurs de file
     d'attente pour les pastilles du menu lateral administrateur.
 
-    Les deux compteurs admin portent sur des champs indexes (db_index sur
-    PriseEnCharge.statut et Paiement.statut) et ne sont calcules que pour le
-    role ADMIN : les autres roles n'ont pas ces ecrans. Un visiteur anonyme ne
-    declenche aucune requete (landing, connexion).
+    Les compteurs admin ne sont calcules que pour le role ADMIN : les autres
+    roles n'ont pas ces ecrans. Un visiteur anonyme ne declenche aucune requete.
     """
     user = getattr(request, 'user', None)
     if user is None or not user.is_authenticated:
@@ -229,4 +229,5 @@ def user_role(request):
         compteurs = compteurs_files_attente(request)
         contexte['nb_prises_en_charge_attente'] = compteurs["prises_en_charge_attente"]
         contexte['nb_paiements_non_regles'] = compteurs["paiements_non_regles"]
+        contexte['nb_demandes_support_attente'] = compteurs["demandes_support_attente"]
     return contexte

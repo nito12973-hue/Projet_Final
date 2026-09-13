@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% load icones %}
+
+{% block title %}Demandes d'assistance — Administration SantéSN{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Demandes d'assistance des assurés</h1>
+        <p class="subtitle">Gestion, réponse et suivi des sollicitations des patients et assurés.</p>
+    </div>
+    {% if total_en_attente > 0 %}
+    <span class="badge en_attente" style="font-size:13px;padding:6px 14px;">
+        {{ total_en_attente }} en attente de réponse
+    </span>
+    {% endif %}
+</section>
+
+<!-- Barre de filtres administrateur -->
+<form method="get" class="filtres" style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;margin-bottom:20px;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:14px;">
+    <div style="flex:1;min-width:220px;" class="champ-recherche">
+        <label for="id-recherche" style="font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px;">Recherche</label>
+        <div style="position:relative;">
+            <span class="icone-nav" style="position:absolute;left:12px;top:12px;color:var(--muted);">{% icone "search" %}</span>
+            <input type="text" id="id-recherche" name="q" value="{{ recherche }}" placeholder="N° dossier, objet, patient, email..." style="padding-left:38px;margin-bottom:0;">
+        </div>
+    </div>
+
+    <div style="width:170px;">
+        <label for="id-statut" style="font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px;">Statut</label>
+        <select id="id-statut" name="statut" style="margin-bottom:0;">
+            <option value="">Tous les statuts</option>
+            {% for code, label in statuts %}
+            <option value="{{ code }}" {% if statut_choisi == code %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div style="width:170px;">
+        <label for="id-categorie" style="font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px;">Catégorie</label>
+        <select id="id-categorie" name="categorie" style="margin-bottom:0;">
+            <option value="">Toutes catégories</option>
+            {% for code, label in categories %}
+            <option value="{{ code }}" {% if categorie_choisie == code %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div style="display:flex;gap:8px;">
+        <button type="submit" class="button primary">{% icone "filter" %} Filtrer</button>
+        {% if statut_choisi or categorie_choisie or recherche %}
+        <a href="{% url 'admin_liste_demandes_support' %}" class="button btn">Réinitialiser</a>
+        {% endif %}
+    </div>
+</form>
+
+<div class="panel" style="border-radius:16px;box-shadow:var(--ombre-douce);">
+    {% if demandes %}
+    <table class="table-responsive">
+        <thead>
+            <tr>
+                <th>Dossier</th>
+                <th>Patient / Assuré</th>
+                <th>Objet &amp; Catégorie</th>
+                <th>Priorité</th>
+                <th>Date</th>
+                <th>Statut</th>
+                <th style="text-align:right;">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for d in demandes %}
+            <tr>
+                <td>
+                    <strong style="font-family:'IBM Plex Mono',monospace;color:var(--primary);">#{{ d.numero_dossier }}</strong>
+                </td>
+                <td>
+                    <strong style="display:block;font-size:13.5px;color:var(--titre);">
+                        {% if d.patient %}{{ d.patient.prenom }} {{ d.patient.nom }}{% else %}{{ d.auteur.get_full_name|default:d.auteur.email }}{% endif %}
+                    </strong>
+                    <span style="font-size:12px;color:var(--muted);">{{ d.auteur.email }}</span>
+                </td>
+                <td>
+                    <span style="font-weight:600;color:var(--titre);display:block;">{{ d.objet }}</span>
+                    <span style="font-size:12px;color:var(--muted);">{{ d.get_categorie_display }}</span>
+                </td>
+                <td>
+                    <span class="badge {% if d.priorite == 'URGENTE' %}refusee{% elif d.priorite == 'NORMALE' %}en_attente{% else %}ok{% endif %}" style="font-size:11.5px;">
+                        {{ d.get_priorite_display }}
+                    </span>
+                </td>
+                <td>
+                    <span style="font-size:13px;color:var(--muted);">{{ d.date_creation|date:"d/m/Y H:i" }}</span>
+                </td>
+                <td>
+                    <span class="badge {% if d.statut == 'EN_ATTENTE' %}en_attente{% elif d.statut == 'REPONDU' %}validee{% elif d.statut == 'FERME' %}annule{% else %}en_attente{% endif %}">
+                        {{ d.get_statut_display }}
+                    </span>
+                </td>
+                <td style="text-align:right;">
+                    <a href="{% url 'admin_detail_demande_support' d.pk %}" class="button primary btn-sm">
+                        {% icone "edit-2" %} Traiter
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if demandes.has_other_pages %}
+    <div style="padding:16px;display:flex;justify-content:center;gap:8px;">
+        {% if demandes.has_previous %}
+        <a href="?page={{ demandes.previous_page_number }}{% if statut_choisi %}&statut={{ statut_choisi }}{% endif %}{% if categorie_choisie %}&categorie={{ categorie_choisie }}{% endif %}{% if recherche %}&q={{ recherche }}{% endif %}" class="button btn btn-sm">&laquo; Précédent</a>
+        {% endif %}
+        <span style="padding:6px 12px;font-size:13px;color:var(--muted);">Page {{ demandes.number }} sur {{ demandes.paginator.num_pages }}</span>
+        {% if demandes.has_next %}
+        <a href="?page={{ demandes.next_page_number }}{% if statut_choisi %}&statut={{ statut_choisi }}{% endif %}{% if categorie_choisie %}&categorie={{ categorie_choisie }}{% endif %}{% if recherche %}&q={{ recherche }}{% endif %}" class="button btn btn-sm">Suivant &raquo;</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div style="text-align:center;padding:48px 20px;">
+        <h3 style="margin:0 0 8px;font-size:18px;color:var(--titre);">Aucune demande d'assistance trouvée</h3>
+        <p style="margin:0;color:var(--muted);font-size:13.5px;">Toutes les demandes ont été traitées ou aucun résultat ne correspond aux filtres.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

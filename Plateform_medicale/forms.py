@@ -9,9 +9,11 @@ from django.utils import timezone
 
 from .models import (
     Consultation,
+    DemandeSupport,
     JournalActivite,
     LigneOrdonnance,
     Medecin,
+    MessageSupport,
     Ordonnance,
     Paiement,
     Patient,
@@ -991,4 +993,45 @@ class ActivationCompteForm(forms.Form):
         self.utilisateur.is_active = True
         self.utilisateur.save(update_fields=["password", "is_active"])
         return self.utilisateur
+
+
+class DemandeSupportForm(forms.ModelForm):
+    """Formulaire de création d'un ticket d'assistance par l'assuré."""
+
+    premier_message = forms.CharField(
+        label="Description détaillée de votre demande",
+        widget=forms.Textarea(attrs={
+            "rows": 5,
+            "placeholder": "Expliquez précisément votre demande ou le problème rencontré afin que l'administration puisse vous assister efficacement..."
+        }),
+        help_text="Donnez un maximum de précisions utiles (dates, références de consultation, ordonnance ou nom de médecin si pertinent)."
+    )
+
+    class Meta:
+        model = DemandeSupport
+        fields = ["objet", "categorie", "priorite"]
+        labels = {
+            "objet": "Objet de la demande",
+            "categorie": "Catégorie",
+            "priorite": "Niveau d'urgence",
+        }
+        widgets = {
+            "objet": forms.TextInput(attrs={"placeholder": "Ex. : Demande de clarification sur mon taux de couverture"}),
+        }
+
+
+class ReponseSupportForm(forms.ModelForm):
+    """Formulaire d'ajout d'un message dans le fil de discussion support."""
+
+    class Meta:
+        model = MessageSupport
+        fields = ["message"]
+        labels = {"message": "Votre message"}
+        widgets = {
+            "message": forms.Textarea(attrs={
+                "rows": 3,
+                "placeholder": "Écrivez votre réponse ici..."
+            })
+        }
+
 

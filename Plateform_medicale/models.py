@@ -869,6 +869,8 @@ class Notification(models.Model):
         PEC_REFUSEE = "PEC_REFUSEE", "Prise en charge refusée"
         ORDONNANCE_CREEE = "ORDONNANCE_CREEE", "Nouvelle ordonnance"
         DELIVRANCE_EFFECTUEE = "DELIVRANCE_EFFECTUEE", "Délivrance effectuée"
+        SUPPORT_DEMANDE = "SUPPORT_DEMANDE", "Nouvelle demande d'assistance"
+        SUPPORT_REPONSE = "SUPPORT_REPONSE", "Réponse de l'administration"
         SYSTEME = "SYSTEME", "Notification système"
 
     destinataire = models.ForeignKey(
@@ -1072,3 +1074,108 @@ class JournalActivite(models.Model):
     def __str__(self):
         return (f"{self.date:%d/%m/%Y %H:%M} · {self.auteur_libelle} · "
                 f"{self.get_action_display()} · {self.objet}")
+
+
+class DemandeSupport(models.Model):
+    """Demande d'assistance transmise par un assuré à l'administration SantéSN."""
+
+    class Categorie(models.TextChoices):
+        RENDEZ_VOUS = "RDV", "Rendez-vous"
+        PRISE_EN_CHARGE = "PEC", "Prise en charge & Remboursement"
+        ORDONNANCE = "ORDONNANCE", "Ordonnance & Pharmacie"
+        COMPTE = "COMPTE", "Carte d'assuré & Données du compte"
+        AYANT_DROIT = "AYANT_DROIT", "Ayants droit & Famille"
+        TECHNIQUE = "TECHNIQUE", "Problème technique"
+        AUTRE = "AUTRE", "Autre demande"
+
+    class Priorite(models.TextChoices):
+        BASSE = "BASSE", "Basse"
+        NORMALE = "NORMALE", "Normale"
+        URGENTE = "URGENTE", "Urgente"
+
+    class Statut(models.TextChoices):
+        EN_ATTENTE = "EN_ATTENTE", "En attente"
+        EN_COURS = "EN_COURS", "En cours"
+        REPONDU = "REPONDU", "Réponse envoyée"
+        FERME = "FERME", "Clôturée"
+
+    patient = models.ForeignKey(
+        Patient,
+        on_delete=models.CASCADE,
+        related_name="demandes_support",
+        null=True,
+        blank=True,
+    )
+    auteur = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="demandes_support",
+    )
+    numero_dossier = models.CharField(max_length=20, unique=True, editable=False)
+    objet = models.CharField(max_length=150)
+    categorie = models.CharField(
+        max_length=20,
+        choices=Categorie.choices,
+        default=Categorie.AUTRE,
+        db_index=True,
+    )
+    priorite = models.CharField(
+        max_length=20,
+        choices=Priorite.choices,
+        default=Priorite.NORMALE,
+        db_index=True,
+    )
+    statut = models.CharField(
+        max_length=20,
+        choices=Statut.choices,
+        default=Statut.EN_ATTENTE,
+        db_index=True,
+    )
+    date_creation = models.DateTimeField(auto_now_add=True, db_index=True)
+    date_mise_a_jour = models.DateTimeField(auto_now=True)
+    cloture_le = models.DateTimeField(null=True, blank=True)
+    cloture_par = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+
+    class Meta:
+        verbose_name = "demande de support"
+        verbose_name_plural = "demandes de support"
+        ordering = ["-date_creation"]
+
+    def __str__(self):
+        return f"{self.numero_dossier} · {self.objet} ({self.get_statut_display()})"
+
+    def save(self, *args, **kwargs):
+        if not self.numero_dossier:
+            self.numero_dossier = f"SUP-{uuid.uuid4().hex[:8].upper()}"
+        super().save(*args, **kwargs)
+
+
+class MessageSupport(models.Model):
+    """Message échangé dans le fil d'une demande d'assistance (patient ou administration)."""
+
+    demande = models.ForeignKey(
+        DemandeSupport,
+        on_delete=models.CASCADE,
+        related_name="messages",
+    )
+    auteur = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="messages_support",
+    )
+    message = models.TextField()
+    date_envoi = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "message de support"
+        verbose_name_plural = "messages de support"
+        ordering = ["date_envoi"]
+
+    def __str__(self):
+        return f"Message de {self.auteur} sur {self.demande.numero_dossier} ({self.date_envoi:%d/%m/%Y %H:%M})"
