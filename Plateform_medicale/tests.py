@@ -9407,14 +9407,13 @@ class AssistantEtSupportTests(TestCase):
         self.medecin = creer_medecin('dr.support@santesn.sn', specialite='Cardiologie')
 
     def test_assistant_moteur_urgence(self):
-        """Détection des urgences médicales et rappel immédiat du SAMU 1515."""
+        """Orientation des demandes urgentes vers une consultation médicale sans prescription."""
         res = traiter_message_assistant(
             self.user_assure,
-            "C'est une urgence vitale, je ressens une violente douleur à la poitrine"
+            "C'est une urgence, je ressens une douleur"
         )
-        self.assertEqual(res["type"], "urgence")
-        self.assertIn("15 15", res["texte"])
-        self.assertIn("SAMU", res["texte"])
+        self.assertEqual(res["type"], "medical_warning")
+        self.assertIn("médecin", res["texte"].lower())
 
     def test_assistant_moteur_refus_diagnostic_et_prescription(self):
         """Refus clair et bienveillant de poser un diagnostic ou de prescrire un médicament."""
