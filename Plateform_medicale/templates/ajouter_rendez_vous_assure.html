@@ -17,17 +17,126 @@
     <div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
     {% endif %}
 
-    <form method="post">
+    <form method="post" id="form-nouveau-rdv">
         {% csrf_token %}
         {% for field in form %}
-        <label for="{{ field.id_for_label }}" style="font-weight: 600; font-size: 13.5px; margin-bottom: 4px; display: block;">{{ field.label }}</label>
-        {{ field }}
-        {% if field.help_text %}<p class="aide" style="font-size: 12px; color: var(--muted); margin-top: 4px;">{{ field.help_text }}</p>{% endif %}
-        {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
+        <div class="champ-groupe champ-{{ field.name }}" style="margin-bottom: 16px;">
+            <label for="{{ field.id_for_label }}" style="font-weight: 600; font-size: 13.5px; margin-bottom: 4px; display: block;">{{ field.label }}</label>
+            {{ field }}
+            {% if field.name == "prestataire" %}
+            <p id="indicateur-prestataire-auto" style="display:none;font-size:12px;color:var(--primary);font-weight:600;margin-top:-8px;margin-bottom:8px;">
+                {% icone "check" %} Établissement sélectionné automatiquement d'après le médecin choisi.
+            </p>
+            {% endif %}
+            {% if field.help_text %}<p class="aide" style="font-size: 12px; color: var(--muted); margin-top: 4px;">{{ field.help_text }}</p>{% endif %}
+            {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
+        </div>
         {% endfor %}
         <div style="margin-top: 18px;">
             <button class="button primary" type="submit">Demander le rendez-vous</button>
         </div>
     </form>
 </section>
+
+{{ medecins_map|json_script:"donnees-medecins" }}
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var medecinSelect = document.getElementById('id_medecin');
+    var prestataireSelect = document.getElementById('id_prestataire');
+    var indicateurAuto = document.getElementById('indicateur-prestataire-auto');
+    var donneesElement = document.getElementById('donnees-medecins');
+
+    if (!medecinSelect || !prestataireSelect || !donneesElement) return;
+
+    var medecinsData = {};
+    try {
+        medecinsData = JSON.parse(donneesElement.textContent);
+    } catch (e) {
+        return;
+    }
+
+    // Mémoriser toutes les options d'origine de la liste des médecins
+    var optionsMedecinOriginales = Array.from(medecinSelect.options).map(function (opt) {
+        var mId = opt.value;
+        return {
+            value: opt.value,
+            text: opt.text,
+            prestataireId: (mId && medecinsData[mId]) ? medecinsData[mId].prestataire_id : ""
+        };
+    });
+
+    var timerIndicateur = null;
+    function signalerSelectionAuto() {
+        if (!indicateurAuto) return;
+        indicateurAuto.style.display = 'block';
+        prestataireSelect.style.borderColor = 'var(--primary)';
+        prestataireSelect.style.boxShadow = '0 0 0 3px rgba(14, 124, 134, 0.18)';
+        if (timerIndicateur) clearTimeout(timerIndicateur);
+        timerIndicateur = setTimeout(function () {
+            prestataireSelect.style.borderColor = '';
+            prestataireSelect.style.boxShadow = '';
+            indicateurAuto.style.display = 'none';
+        }, 3200);
+    }
+
+    // 1. SENS MÉDECIN -> PRESTATAIRE
+    // Dès que le patient choisit un médecin, on sélectionne automatiquement son établissement
+    medecinSelect.addEventListener('change', function () {
+        var medecinId = this.value;
+        if (medecinId && medecinsData[medecinId]) {
+            var prestId = medecinsData[medecinId].prestataire_id;
+            if (prestId && prestataireSelect.value !== prestId) {
+                prestataireSelect.value = prestId;
+                signalerSelectionAuto();
+            }
+        }
+    });
+
+    // 2. SENS PRESTATAIRE -> MÉDECINS
+    // Dès que le patient choisit un établissement, on filtre la liste des médecins pour n'afficher que ceux qui y exercent
+    prestataireSelect.addEventListener('change', function () {
+        var prestId = this.value;
+        var medecinActuel = medecinSelect.value;
+        var medecinConserve = false;
+
+        medecinSelect.innerHTML = '';
+
+        optionsMedecinOriginales.forEach(function (optInfo) {
+            if (!optInfo.value) {
+                var optVide = document.createElement('option');
+                optVide.value = '';
+                optVide.textContent = optInfo.text;
+                medecinSelect.appendChild(optVide);
+                return;
+            }
+
+            // Si aucun établissement choisi, ou si le médecin est rattaché à cet établissement, ou s'il n'a pas de structure fixe
+            if (!prestId || !optInfo.prestataireId || optInfo.prestataireId === prestId) {
+                var opt = document.createElement('option');
+                opt.value = optInfo.value;
+                opt.textContent = optInfo.text;
+                if (optInfo.value === medecinActuel) {
+                    opt.selected = true;
+                    medecinConserve = true;
+                }
+                medecinSelect.appendChild(opt);
+            }
+        });
+
+        // Si le médecin qui était sélectionné ne travaille pas dans le nouvel établissement choisi, on remet à zéro
+        if (!medecinConserve && prestId) {
+            medecinSelect.value = '';
+        }
+    });
+
+    // Auto-alignement au chargement initial si un médecin est pré-rempli sans établissement
+    if (medecinSelect.value && !prestataireSelect.value) {
+        var mIdInitial = medecinSelect.value;
+        if (medecinsData[mIdInitial] && medecinsData[mIdInitial].prestataire_id) {
+            prestataireSelect.value = medecinsData[mIdInitial].prestataire_id;
+        }
+    }
+});
+</script>
 {% endblock %}

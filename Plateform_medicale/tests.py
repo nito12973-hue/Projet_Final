@@ -1718,6 +1718,32 @@ class EspaceAssureTests(TestCase):
         rendez_vous.refresh_from_db()
         self.assertEqual(rendez_vous.statut, RendezVous.Statut.ANNULE)
 
+    def test_selection_medecin_auto_assigne_son_prestataire(self):
+        patient = self._completer_profil()
+        prestataire = Prestataire.objects.create(nom="Cabinet Almadies Test", partenaire=True)
+        medecin = creer_medecin("dr.almadies@santesn.sn")
+        medecin.prestataire = prestataire
+        medecin.save()
+        reponse = self.client.get(reverse("ajouter_rendez_vous_assure"))
+        self.assertEqual(reponse.status_code, 200)
+        self.assertIn("medecins_map", reponse.context)
+        self.assertIn(str(medecin.pk), reponse.context["medecins_map"])
+        self.assertEqual(
+            reponse.context["medecins_map"][str(medecin.pk)]["prestataire_id"],
+            str(prestataire.pk),
+        )
+        # Soumission sans sélectionner de prestataire : le backend l'attribue automatiquement d'après le médecin
+        post_resp = self.client.post(reverse("ajouter_rendez_vous_assure"), {
+            "patient": patient.pk,
+            "medecin": medecin.pk,
+            "prestataire": "",
+            "date_heure": (timezone.now() + datetime.timedelta(days=2)).strftime("%Y-%m-%dT%H:%M"),
+            "motif": "Consultation générale de suivi",
+        })
+        self.assertEqual(post_resp.status_code, 302)
+        rdv = RendezVous.objects.get(patient=patient, medecin=medecin)
+        self.assertEqual(rdv.prestataire, prestataire)
+
     def test_ordonnances_et_historique_scopes_a_la_famille(self):
         patient = self._completer_profil()
         medecin = creer_medecin('medecin-rdv4@santesn.sn')

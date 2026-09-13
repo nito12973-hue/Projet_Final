@@ -599,6 +599,12 @@ class RendezVousAssureForm(forms.ModelForm):
         cleaned = super().clean()
         medecin = cleaned.get('medecin')
         prestataire = cleaned.get('prestataire')
+        # Si l'assuré n'a pas sélectionné de prestataire mais que le médecin est rattaché
+        # à une structure, on déduit et affecte automatiquement ce prestataire.
+        if not prestataire and medecin and medecin.prestataire_id is not None:
+            prestataire = medecin.prestataire
+            cleaned['prestataire'] = prestataire
+
         # `medecin.prestataire_id is not None` est indispensable : un medecin
         # sans structure n'est en contradiction avec aucun prestataire. Sans
         # cette condition, il etait refuse partout.
