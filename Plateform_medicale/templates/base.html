@@ -5748,10 +5748,32 @@
                         anciennePastille.remove();
                     }
 
-                    // 2. Mise à jour de la liste déroulante
+                    // 2. Mise à jour de la liste déroulante des notifications
                     var nouvelleListe = doc.querySelector('.menu-notifications-liste');
                     if (nouvelleListe && listeNotif) {
                         listeNotif.innerHTML = nouvelleListe.innerHTML;
+                    }
+
+                    // 3. Synchronisation automatique des tableaux d'activité (Agenda, RDV, Tableaux de bord)
+                    var estSurPageFormulaire = document.querySelector('form.panel-form, .panel-form form');
+                    var elementActif = document.activeElement;
+                    var saisieEnCours = elementActif && ['INPUT', 'TEXTAREA', 'SELECT'].indexOf(elementActif.tagName) !== -1;
+
+                    if (!estSurPageFormulaire && !saisieEnCours) {
+                        var selecteursCibles = [
+                            '#contenu-principal table',
+                            '#contenu-principal .tableau-carte',
+                            '#contenu-principal .table-consultations',
+                            '#contenu-principal .dash-stat'
+                        ];
+
+                        selecteursCibles.forEach(function (sel) {
+                            var actuel = document.querySelector(sel);
+                            var nouveau = doc.querySelector(sel);
+                            if (actuel && nouveau && actuel.innerHTML !== nouveau.innerHTML) {
+                                actuel.innerHTML = nouveau.innerHTML;
+                            }
+                        });
                     }
                 })
                 .catch(function () {});
