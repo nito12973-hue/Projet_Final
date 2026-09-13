@@ -39,11 +39,15 @@
 <section class="panel panel-bloc" style="margin-bottom:22px;">
     <label for="recherche-patients-champ" style="font-weight:700;font-size:13.5px;color:var(--titre);margin-bottom:8px;display:block;">Recherche rapide de patient</label>
     <div class="recherche-patients" style="position:relative;">
-        <input type="search" id="recherche-patients-champ" name="q" autocomplete="off"
-               placeholder="Rechercher par numéro de carte, nom ou prénom..."
-               data-url-recherche="{% url 'rechercher_patients_medecin' %}"
-               aria-expanded="false" aria-controls="recherche-patients-resultats"
-               aria-haspopup="listbox" role="combobox" aria-autocomplete="list">
+        <div class="champ-recherche">
+            {% icone "search" %}
+            <input type="search" id="recherche-patients-champ" name="q" autocomplete="off"
+                   placeholder="Rechercher par numéro de carte, nom ou prénom..."
+                   data-url-recherche="{% url 'rechercher_patients_medecin' %}"
+                   aria-expanded="false" aria-controls="recherche-patients-resultats"
+                   aria-haspopup="listbox" role="combobox" aria-autocomplete="list"
+                   style="margin-bottom:0 !important;height:44px;min-height:44px;">
+        </div>
         <p id="recherche-patients-indice" class="subtitle" style="margin:6px 0 0;" hidden></p>
         <ul id="recherche-patients-resultats" class="recherche-patients-resultats" role="listbox"
             aria-live="polite" hidden></ul>

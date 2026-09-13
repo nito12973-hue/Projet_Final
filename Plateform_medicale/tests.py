@@ -2024,6 +2024,17 @@ class AdminPatientFormTests(TestCase):
         self.assertEqual(len(patients), 1)
         self.assertEqual(patients[0].prenom, 'Petit')
 
+    def test_recherche_liste_patients(self):
+        p1 = creer_patient(nom='Sow', prenom='Amadou')
+        p2 = creer_patient(nom='Fall', prenom='Mariama')
+        response = self.client.get(reverse('liste_patients'), {'q': 'Amadou'})
+        self.assertEqual(response.status_code, 200)
+        patients = list(response.context['patients'])
+        self.assertEqual(len(patients), 1)
+        self.assertEqual(patients[0].pk, p1.pk)
+        self.assertContains(response, 'Amadou')
+        self.assertNotContains(response, 'Mariama')
+
     def test_creation_assure_principal_cree_son_compte(self):
         response = self.client.post(reverse('ajouter_patient'), {
             'nom': 'Ndiaye', 'prenom': 'Fatou', 'date_naissance': '1985-05-05',

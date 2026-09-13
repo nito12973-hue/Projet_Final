@@ -16,17 +16,24 @@
 </section>
 
 <form method="get" class="filtres">
-    <div style="min-width:220px;">
-        <label for="type">Type</label>
+    <div style="min-width:240px;flex:1;">
+        <label for="q">Recherche</label>
+        <div class="champ-recherche">
+            {% icone "search" %}
+            <input id="q" type="text" name="q" placeholder="Nom, prénom, numéro de carte ou téléphone..." value="{{ recherche }}" style="margin-bottom:0;">
+        </div>
+    </div>
+    <div style="min-width:200px;">
+        <label for="type">Type de bénéficiaire</label>
         <select id="type" name="type" style="margin-bottom:0;">
-            <option value="">Tous</option>
+            <option value="">Tous les types</option>
             {% for value, label in types_beneficiaire %}
             <option value="{{ value }}" {% if value == type_selectionne %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
         </select>
     </div>
-    <button type="submit" class="button primary btn">Filtrer</button>
-    {% if type_selectionne %}
+    <button type="submit" class="button primary btn">{% icone "search" %} Filtrer</button>
+    {% if type_selectionne or recherche %}
     <a href="{% url 'liste_patients' %}" class="button btn">Réinitialiser</a>
     {% endif %}
 </form>
@@ -89,8 +96,8 @@
 <div class="etat-vide">
     {% illustration_vide "id-card" %}
     <h3>Aucun assuré trouvé</h3>
-    <p>{% if type_selectionne %}Aucun assuré ne correspond au filtre sélectionné.{% else %}Aucun assuré n'est encore enregistré sur la plateforme.{% endif %}</p>
-    {% if type_selectionne %}
+    <p>{% if type_selectionne or recherche %}Aucun assuré ne correspond à votre recherche ou filtre.{% else %}Aucun assuré n'est encore enregistré sur la plateforme.{% endif %}</p>
+    {% if type_selectionne or recherche %}
     <div class="actions">
         <a href="{% url 'liste_patients' %}" class="button">{% icone "x" %} Réinitialiser les filtres</a>
     </div>

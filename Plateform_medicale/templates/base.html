@@ -5390,6 +5390,8 @@
             form.filtres {
                 padding: 16px !important;
                 gap: 12px !important;
+                flex-direction: column !important;
+                align-items: stretch !important;
             }
 
             form.filtres > div {
@@ -5404,11 +5406,30 @@
                 width: 100% !important;
             }
 
-            form.filtres .button,
-            form.filtres button {
+            form.filtres .filtres-actions,
+            form.filtres .actions {
+                display: flex !important;
+                flex-direction: column !important;
                 width: 100% !important;
+                gap: 8px !important;
+            }
+
+            form.filtres .button,
+            form.filtres button,
+            form.filtres a.button {
+                width: 100% !important;
+                flex: 1 1 100% !important;
                 justify-content: center !important;
                 text-align: center !important;
+            }
+
+            .recherche-patients {
+                max-width: 100% !important;
+                width: 100% !important;
+            }
+
+            .recherche-patients-resultats {
+                max-width: 100% !important;
             }
 
             /* 10. Modale de confirmation responsive */
