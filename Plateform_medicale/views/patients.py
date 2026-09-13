@@ -15,7 +15,17 @@ from .medecin_espace import _medecin_courant
 
 @admin_required
 def liste_patients(request):
-    patients = Patient.objects.select_related("assure_principal", "plan_couverture").all()
+    patients = Patient.objects.select_related("assure_principal", "plan_couverture", "user").all()
+
+    recherche = request.GET.get("q", "").strip()
+    if recherche:
+        patients = patients.filter(
+            Q(nom__icontains=recherche)
+            | Q(prenom__icontains=recherche)
+            | Q(numero_carte__icontains=recherche)
+            | Q(telephone__icontains=recherche)
+            | Q(user__email__icontains=recherche)
+        )
 
     type_beneficiaire = request.GET.get("type", "")
     if type_beneficiaire:
@@ -31,6 +41,7 @@ def liste_patients(request):
         "patients": _paginer(request, patients),
         "types_beneficiaire": Patient.TypeBeneficiaire.choices,
         "type_selectionne": type_beneficiaire,
+        "recherche": recherche,
     }
     return render(request, "liste_patients.html", contexte)
 
