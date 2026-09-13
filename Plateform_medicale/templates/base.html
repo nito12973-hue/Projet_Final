@@ -885,12 +885,14 @@
             width: 100%;
             min-height: 44px;
             margin-bottom: 16px;
-            padding: 10px 13px;
+            padding: 10px 14px;
             border: 1.5px solid var(--border);
-            border-radius: 9px;
+            border-radius: 10px;
             font: inherit;
+            font-size: 14px;
             color: var(--titre);
             background: var(--champ-bg);
+            box-sizing: border-box;
             transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
         }
 
@@ -931,15 +933,15 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
-            min-height: 38px;
-            height: 38px;
-            padding: 0 16px;
-            border-radius: 9px;
+            gap: 8px;
+            min-height: 44px;
+            height: 44px;
+            padding: 0 20px;
+            border-radius: 10px;
             color: var(--titre);
             text-decoration: none;
             font-weight: 600;
-            font-size: 13.5px;
+            font-size: 14px;
             border: 1px solid var(--border);
             background: var(--surface);
             cursor: pointer;
@@ -970,21 +972,21 @@
         }
 
         .button.btn {
-            min-height: 34px;
-            height: 34px;
-            padding: 0 12px;
-            font-size: 13px;
+            min-height: 38px;
+            height: 38px;
+            padding: 0 16px;
+            font-size: 13.5px;
             border-radius: 8px;
             cursor: pointer;
             box-sizing: border-box;
         }
 
         .button.btn-sm {
-            min-height: 30px;
-            height: 30px;
-            padding: 0 10px;
-            font-size: 12px;
-            border-radius: 7px;
+            min-height: 34px;
+            height: 34px;
+            padding: 0 12px;
+            font-size: 12.5px;
+            border-radius: 8px;
             box-sizing: border-box;
         }
 
@@ -1010,10 +1012,12 @@
 
         .page-title .actions .button,
         .page-title a.button {
-            height: 38px;
-            min-height: 38px;
-            padding: 0 16px;
-            font-size: 13.5px;
+            height: 44px;
+            min-height: 44px;
+            padding: 0 20px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 10px;
             box-sizing: border-box;
         }
 
@@ -1041,17 +1045,17 @@
         table td .actions button,
         table td .actions a.button,
         table td .actions form.action-ligne button {
-            height: 30px !important;
-            min-height: 30px !important;
-            max-height: 30px !important;
-            padding: 0 10px !important;
-            font-size: 12px !important;
+            height: 34px !important;
+            min-height: 34px !important;
+            max-height: 34px !important;
+            padding: 0 12px !important;
+            font-size: 12.5px !important;
             font-weight: 600 !important;
-            border-radius: 7px !important;
+            border-radius: 8px !important;
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
-            gap: 5px !important;
+            gap: 6px !important;
             box-sizing: border-box !important;
             white-space: nowrap !important;
             margin: 0 !important;
@@ -1175,19 +1179,19 @@
            formulaire POST "invisible" habillant un seul bouton d'action dans
            une ligne de tableau — classes manquantes, dupliquees en inline. */
         /* Barre de filtres (formulaire GET en ligne, au-dessus d'une liste) :
-           Alignement géométrique strict à 40px pour tous les inputs, selects et boutons. */
+           Alignement géométrique strict à 44px (la norme standard) pour tous les inputs, selects et boutons. */
         form.filtres {
             max-width: none;
-            padding: 16px 20px;
+            padding: 18px 22px;
             display: flex;
-            gap: 12px;
+            gap: 14px;
             flex-wrap: wrap;
             align-items: flex-end;
             background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 14px;
+            border-radius: 16px;
             box-shadow: var(--ombre-douce);
-            margin-bottom: 20px;
+            margin-bottom: 22px;
         }
 
         form.filtres > div {
@@ -1206,37 +1210,47 @@
             letter-spacing: 0.02em;
         }
 
-        /* Tous les inputs et selects dans les filtres ont la même hauteur rigoureuse (40px) */
+        /* Tous les inputs et selects dans les filtres ont la norme stricte de 44px */
         form.filtres input,
         form.filtres select {
             margin-bottom: 0 !important;
-            height: 40px !important;
-            min-height: 40px !important;
-            max-height: 40px !important;
-            padding: 8px 12px !important;
-            font-size: 13px !important;
-            border-radius: 9px !important;
+            height: 44px !important;
+            min-height: 44px !important;
+            max-height: 44px !important;
+            padding: 0 14px !important;
+            font-size: 14px !important;
+            border-radius: 10px !important;
             box-sizing: border-box !important;
-            line-height: 1.3 !important;
+            line-height: 42px !important;
+            border: 1.5px solid var(--border) !important;
+            background: var(--champ-bg) !important;
+            color: var(--titre) !important;
         }
 
-        /* Tous les boutons dans les filtres ont EXACTEMENT la même hauteur que les inputs (40px) */
+        form.filtres input:focus,
+        form.filtres select:focus {
+            border-color: var(--primary) !important;
+            background: var(--surface) !important;
+            box-shadow: 0 0 0 3px rgba(14, 124, 134, 0.14) !important;
+        }
+
+        /* Tous les boutons dans les filtres ont STRICTEMENT la même hauteur que la barre de recherche (44px) */
         form.filtres .button,
         form.filtres button,
         form.filtres a.button {
-            height: 40px !important;
-            min-height: 40px !important;
-            max-height: 40px !important;
-            padding: 0 16px !important;
-            font-size: 13px !important;
+            height: 44px !important;
+            min-height: 44px !important;
+            max-height: 44px !important;
+            padding: 0 20px !important;
+            font-size: 14px !important;
             font-weight: 600 !important;
-            border-radius: 9px !important;
+            border-radius: 10px !important;
             margin-bottom: 0 !important;
             box-sizing: border-box !important;
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
-            gap: 6px !important;
+            gap: 8px !important;
             white-space: nowrap !important;
         }
 
@@ -1251,18 +1265,18 @@
         .champ-recherche .icone-nav,
         .champ-recherche > svg {
             position: absolute;
-            left: 12px;
+            left: 14px;
             top: 50% !important;
             transform: translateY(-50%) !important;
-            width: 16px;
-            height: 16px;
+            width: 18px;
+            height: 18px;
             color: var(--muted);
             pointer-events: none;
             transition: color 0.15s ease;
         }
 
         .champ-recherche input {
-            padding-left: 38px !important;
+            padding-left: 44px !important;
             width: 100%;
             box-sizing: border-box;
         }
@@ -4467,24 +4481,24 @@
         .topbar-recherche .icone-nav,
         .topbar-recherche > svg {
             position: absolute;
-            left: 11px;
+            left: 13px;
             top: 50% !important;
             transform: translateY(-50%) !important;
-            width: 15px;
-            height: 15px;
+            width: 16px;
+            height: 16px;
             color: var(--muted);
             pointer-events: none;
         }
 
         .topbar-recherche input {
             width: 100%;
-            height: 36px !important;
-            min-height: 36px !important;
-            max-height: 36px !important;
+            height: 40px !important;
+            min-height: 40px !important;
+            max-height: 40px !important;
             margin-bottom: 0 !important;
-            padding: 0 12px 0 34px !important;
-            font-size: 13px;
-            border-radius: 10px;
+            padding: 0 14px 0 38px !important;
+            font-size: 13.5px;
+            border-radius: 12px;
             box-sizing: border-box;
         }
 
@@ -4492,11 +4506,11 @@
             position: relative;
             display: grid;
             place-items: center;
-            flex: 0 0 36px;
-            width: 36px;
-            height: 36px;
+            flex: 0 0 40px;
+            width: 40px;
+            height: 40px;
             border: 1px solid var(--border);
-            border-radius: 10px;
+            border-radius: 12px;
             background: var(--surface);
             color: var(--muted);
             box-sizing: border-box;
