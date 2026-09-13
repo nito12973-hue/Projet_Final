@@ -5125,6 +5125,196 @@
                 font-size: 14px !important;
                 box-shadow: 0 10px 30px rgba(11, 32, 39, 0.25) !important;
             }
+
+            /* 5. Anti-débordement horizontal universel */
+            html, body {
+                max-width: 100vw !important;
+                overflow-x: hidden !important;
+                position: relative;
+            }
+
+            .shell {
+                max-width: 100vw !important;
+                overflow-x: hidden !important;
+            }
+
+            .contenu {
+                max-width: 100vw !important;
+                overflow-x: hidden !important;
+                min-width: 0 !important;
+            }
+
+            .contenu main {
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+            }
+
+            /* 6. Prévention auto-zoom iOS Safari sur les champs de formulaire */
+            input:not([type="checkbox"]):not([type="radio"]),
+            select,
+            textarea {
+                font-size: 16px !important;
+            }
+
+            /* 7. Tableaux responsifs et défilement tactile fluide */
+            .table-responsive {
+                width: 100% !important;
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                display: block !important;
+                margin-bottom: 1rem !important;
+            }
+
+            .panel {
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                max-width: 100% !important;
+            }
+
+            .panel table:not(.tableau-carte) {
+                table-layout: auto !important;
+                min-width: 580px;
+            }
+
+            table:not(.tableau-carte) {
+                max-width: 100%;
+            }
+
+            /* 8. Barres d'actions et boutons flexibles */
+            .page-title {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 12px !important;
+            }
+
+            .page-title .actions {
+                display: flex !important;
+                flex-wrap: wrap !important;
+                gap: 8px !important;
+                width: 100% !important;
+            }
+
+            .page-title .actions .button {
+                flex: 1 1 auto !important;
+                justify-content: center !important;
+                text-align: center !important;
+            }
+
+            .actions,
+            .consultation-actions-bar,
+            .barre-actions,
+            .filtres-actions {
+                display: flex !important;
+                flex-wrap: wrap !important;
+                gap: 10px !important;
+                width: 100% !important;
+            }
+
+            /* 9. Adaptation des formulaires de filtres */
+            form.filtres {
+                padding: 16px !important;
+                gap: 12px !important;
+            }
+
+            form.filtres > div {
+                min-width: 0 !important;
+                flex: 1 1 100% !important;
+                width: 100% !important;
+            }
+
+            form.filtres .champ-recherche,
+            form.filtres input,
+            form.filtres select {
+                width: 100% !important;
+            }
+
+            form.filtres .button,
+            form.filtres button {
+                width: 100% !important;
+                justify-content: center !important;
+                text-align: center !important;
+            }
+
+            /* 10. Modale de confirmation responsive */
+            .modale-overlay {
+                padding: 16px !important;
+            }
+
+            .modale-panel {
+                max-width: calc(100vw - 32px) !important;
+                padding: 20px !important;
+                box-sizing: border-box !important;
+            }
+
+            .modale-actions {
+                flex-direction: column-reverse !important;
+                gap: 10px !important;
+            }
+
+            .modale-actions .button {
+                width: 100% !important;
+                justify-content: center !important;
+            }
+
+            /* 11. Tuiles KPI et grilles de cartes */
+            .dash-grid {
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
+                gap: 10px !important;
+            }
+
+            .dash-stat {
+                padding: 14px !important;
+            }
+
+            .dash-stat strong {
+                font-size: 22px !important;
+            }
+        }
+
+        /* ==========================================================================
+           RESPONSIVE MOBILE AVANCÉ — SMARTPHONES TRÈS ÉTROITS (< 480px)
+           ========================================================================== */
+        @media (max-width: 480px) {
+            .contenu main {
+                width: calc(100% - 16px) !important;
+                padding: 16px 0 32px !important;
+            }
+
+            form {
+                padding: 14px 12px !important;
+                border-radius: 12px !important;
+            }
+
+            .dash-hero, .panel {
+                padding: 14px 12px !important;
+                border-radius: 12px !important;
+            }
+
+            .page-title h1 {
+                font-size: 20px !important;
+                line-height: 1.25 !important;
+            }
+
+            .page-title .actions .button {
+                flex: 1 1 100% !important;
+                width: 100% !important;
+            }
+
+            .dash-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            .menu-notifications-panneau,
+            .menu-compte-panneau {
+                left: 8px !important;
+                right: 8px !important;
+                padding: 12px !important;
+            }
+
+            .button {
+                min-height: 44px !important;
+                padding: 10px 14px !important;
+            }
         }
     </style>
 </head>
