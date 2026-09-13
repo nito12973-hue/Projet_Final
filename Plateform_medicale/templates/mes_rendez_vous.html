@@ -9,7 +9,7 @@
         <h1>Mes rendez-vous</h1>
         <p class="subtitle">Vos rendez-vous et ceux de vos ayants droit.</p>
     </div>
-    <a class="button primary" href="{% url 'ajouter_rendez_vous_assure' %}">Nouveau rendez-vous</a>
+    <a class="button primary" href="{% url 'ajouter_rendez_vous_assure' %}">{% icone "plus-circle" %} Prendre un rendez-vous</a>
 </section>
 
 <form method="get" class="filtres" style="background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px 18px; box-shadow: var(--ombre-douce); margin-bottom: 20px;">
@@ -102,7 +102,7 @@
         {% if statut_choisi or periode_choisie %}
         <a href="{% url 'mes_rendez_vous_assure' %}" class="button">{% icone "x" %} Réinitialiser les filtres</a>
         {% endif %}
-        <a class="button primary" href="{% url 'ajouter_rendez_vous_assure' %}">{% icone "plus" %} Nouveau rendez-vous</a>
+        <a class="button primary" href="{% url 'ajouter_rendez_vous_assure' %}">{% icone "plus-circle" %} Prendre un rendez-vous</a>
     </div>
 </div>
 {% endif %}
