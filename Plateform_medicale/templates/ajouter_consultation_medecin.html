@@ -285,4 +285,15 @@
         </div>
     </form>
 </section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var champDate = document.getElementById('{{ form.date_consultation.id_for_label }}');
+    if (champDate && !champDate.value) {
+        var maintenant = new Date();
+        maintenant.setMinutes(maintenant.getMinutes() - maintenant.getTimezoneOffset());
+        champDate.value = maintenant.toISOString().slice(0, 16);
+    }
+});
+</script>
 {% endblock %}
