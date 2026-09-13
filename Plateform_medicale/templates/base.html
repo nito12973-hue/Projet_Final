@@ -655,25 +655,54 @@
             color: var(--muted);
         }
 
-        /* Etat vide illustre (liste sans resultat) : generalise depuis
-           prestataires_proches.html, qui etait jusqu'ici le seul ecran a en
-           avoir un. */
+        /* État vide illustré (liste sans résultat, recherche infructueuse) :
+           affichage net, structuré avec icône, titre explicatif et bouton d'action. */
         .etat-vide {
             text-align: center;
-            padding: 32px 20px;
+            padding: 44px 24px;
+            background: var(--surface);
+            border: 1px dashed var(--border);
+            border-radius: 16px;
+            margin: 20px 0;
+            box-shadow: 0 1px 3px rgba(11, 32, 39, 0.02);
         }
 
         .etat-vide svg {
-            margin-bottom: 12px;
+            width: 48px;
+            height: 48px;
+            margin-bottom: 14px;
+            color: var(--muted);
+            opacity: 0.85;
+        }
+
+        .etat-vide h3 {
+            margin: 0 0 8px;
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--titre);
         }
 
         .etat-vide p {
             color: var(--muted);
-            margin: 0 0 16px;
+            margin: 0 auto 16px;
+            font-size: 13.5px;
+            max-width: 520px;
+            line-height: 1.5;
         }
 
         .etat-vide .actions {
+            display: flex;
             justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .etat-vide .actions .button {
+            height: 38px;
+            min-height: 38px;
+            padding: 0 16px;
+            font-size: 13px;
         }
 
         /* Tableau de donnees replie par defaut (ex. sous un graphique) : evite
@@ -904,8 +933,9 @@
             justify-content: center;
             gap: 6px;
             min-height: 38px;
-            padding: 8px 14px;
-            border-radius: 8px;
+            height: 38px;
+            padding: 0 16px;
+            border-radius: 9px;
             color: var(--titre);
             text-decoration: none;
             font-weight: 600;
@@ -914,6 +944,7 @@
             background: var(--surface);
             cursor: pointer;
             box-shadow: 0 1px 2px rgba(11, 32, 39, 0.04);
+            box-sizing: border-box;
             transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
         }
 
@@ -940,16 +971,21 @@
 
         .button.btn {
             min-height: 34px;
-            padding: 6px 12px;
+            height: 34px;
+            padding: 0 12px;
             font-size: 13px;
             border-radius: 8px;
             cursor: pointer;
+            box-sizing: border-box;
         }
 
         .button.btn-sm {
-            min-height: 28px;
-            padding: 4px 9px;
+            min-height: 30px;
+            height: 30px;
+            padding: 0 10px;
             font-size: 12px;
+            border-radius: 7px;
+            box-sizing: border-box;
         }
 
         .button.btn-danger {
@@ -965,21 +1001,60 @@
             box-shadow: 0 4px 10px rgba(179, 38, 30, 0.3);
         }
 
-        /* wrap plutot que nowrap : depuis l'ajout du bouton "Carte", trois
-           actions cote a cote retendaient la liste des assures au-dela de sa
-           carte, meme en grand ecran (1102 px mesures dans 1076). */
+        /* En-tête de page : boutons d'action alignés */
+        .page-title .actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .page-title .actions .button,
+        .page-title a.button {
+            height: 38px;
+            min-height: 38px;
+            padding: 0 16px;
+            font-size: 13.5px;
+            box-sizing: border-box;
+        }
+
+        /* wrap plutôt que nowrap : gestion responsive des boutons */
         .actions {
             display: flex;
             flex-wrap: wrap;
+            align-items: center;
             gap: 8px;
         }
 
-        /* Les libelles ne se coupent pas : la colonne se dimensionne sur le
-           contenu, et .panel (overflow-x: auto) prend le relais si l'ecran est
-           vraiment trop etroit. Sous 640px on autorise le retour a la ligne :
-           deux boutons cote a cote ne tiennent plus sur un telephone. */
         .actions .button {
             white-space: nowrap;
+        }
+
+        /* Harmonisation stricte de toutes les actions dans les cellules de tableau */
+        table td .actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: nowrap;
+        }
+
+        table td .actions .button,
+        table td .actions button,
+        table td .actions a.button,
+        table td .actions form.action-ligne button {
+            height: 30px !important;
+            min-height: 30px !important;
+            max-height: 30px !important;
+            padding: 0 10px !important;
+            font-size: 12px !important;
+            font-weight: 600 !important;
+            border-radius: 7px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 5px !important;
+            box-sizing: border-box !important;
+            white-space: nowrap !important;
+            margin: 0 !important;
         }
 
         @media (max-width: 640px) {
@@ -1099,35 +1174,101 @@
         /* Barre de filtres (formulaire GET en ligne, au-dessus d'une liste) et
            formulaire POST "invisible" habillant un seul bouton d'action dans
            une ligne de tableau — classes manquantes, dupliquees en inline. */
+        /* Barre de filtres (formulaire GET en ligne, au-dessus d'une liste) :
+           Alignement géométrique strict à 40px pour tous les inputs, selects et boutons. */
         form.filtres {
             max-width: none;
-            padding: 20px;
+            padding: 16px 20px;
             display: flex;
             gap: 12px;
             flex-wrap: wrap;
             align-items: flex-end;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            box-shadow: var(--ombre-douce);
+            margin-bottom: 20px;
         }
 
-        /* Champ de recherche avec icone (barre de filtres) : le conteneur ne
-           doit englober que l'input, pas le label, sinon l'icone se
-           decentre verticalement. */
+        form.filtres > div {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+
+        form.filtres label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--muted);
+            line-height: 1.2;
+            letter-spacing: 0.02em;
+        }
+
+        /* Tous les inputs et selects dans les filtres ont la même hauteur rigoureuse (40px) */
+        form.filtres input,
+        form.filtres select {
+            margin-bottom: 0 !important;
+            height: 40px !important;
+            min-height: 40px !important;
+            max-height: 40px !important;
+            padding: 8px 12px !important;
+            font-size: 13px !important;
+            border-radius: 9px !important;
+            box-sizing: border-box !important;
+            line-height: 1.3 !important;
+        }
+
+        /* Tous les boutons dans les filtres ont EXACTEMENT la même hauteur que les inputs (40px) */
+        form.filtres .button,
+        form.filtres button,
+        form.filtres a.button {
+            height: 40px !important;
+            min-height: 40px !important;
+            max-height: 40px !important;
+            padding: 0 16px !important;
+            font-size: 13px !important;
+            font-weight: 600 !important;
+            border-radius: 9px !important;
+            margin-bottom: 0 !important;
+            box-sizing: border-box !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 6px !important;
+            white-space: nowrap !important;
+        }
+
+        /* Champ de recherche avec icône toujours parfaitement centrée verticalement */
         .champ-recherche {
             position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
         }
 
-        .champ-recherche .icone-nav {
+        .champ-recherche .icone-nav,
+        .champ-recherche > svg {
             position: absolute;
-            left: 13px;
-            top: 13px;
+            left: 12px;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            width: 16px;
+            height: 16px;
             color: var(--muted);
             pointer-events: none;
+            transition: color 0.15s ease;
         }
 
         .champ-recherche input {
-            padding-left: 40px;
+            padding-left: 38px !important;
+            width: 100%;
+            box-sizing: border-box;
         }
 
-        .champ-recherche:focus-within .icone-nav {
+        .champ-recherche:focus-within .icone-nav,
+        .champ-recherche:focus-within > svg {
             color: var(--primary);
         }
 
@@ -4319,24 +4460,32 @@
             border: 0;
             border-radius: 0;
             box-shadow: none;
+            display: flex;
+            align-items: center;
         }
 
-        .topbar-recherche .icone-nav {
+        .topbar-recherche .icone-nav,
+        .topbar-recherche > svg {
             position: absolute;
             left: 11px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 16px;
-            height: 16px;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            width: 15px;
+            height: 15px;
             color: var(--muted);
             pointer-events: none;
         }
 
         .topbar-recherche input {
             width: 100%;
-            margin-bottom: 0;
-            padding-left: 34px;
+            height: 36px !important;
+            min-height: 36px !important;
+            max-height: 36px !important;
+            margin-bottom: 0 !important;
+            padding: 0 12px 0 34px !important;
             font-size: 13px;
+            border-radius: 10px;
+            box-sizing: border-box;
         }
 
         .topbar-bouton {
@@ -4350,6 +4499,7 @@
             border-radius: 10px;
             background: var(--surface);
             color: var(--muted);
+            box-sizing: border-box;
         }
 
         .topbar-bouton:hover {

@@ -87,7 +87,13 @@
 {% else %}
 <div class="etat-vide">
     {% illustration_vide "file-text" %}
-    <p>{% if recherche or action_choisie or date_choisie %}Aucune entrée ne correspond à ces critères.{% else %}Aucune activité enregistrée pour l'instant.{% endif %}</p>
+    <h3>Aucune activité trouvée</h3>
+    <p>{% if recherche or action_choisie or date_choisie %}Aucune entrée ne correspond à vos critères de recherche.{% else %}Aucune activité enregistrée pour l'instant.{% endif %}</p>
+    {% if recherche or action_choisie or date_choisie %}
+    <div class="actions">
+        <a href="{% url 'journal_activite' %}" class="button">{% icone "x" %} Réinitialiser les filtres</a>
+    </div>
+    {% endif %}
 </div>
 {% endif %}
 {% endblock %}

@@ -79,7 +79,13 @@
 {% else %}
 <div class="etat-vide">
     {% illustration_vide "pill" %}
-    <p>{% if delivrance_choisie %}Aucune ordonnance ne correspond à ce filtre.{% else %}Aucune ordonnance disponible.{% endif %}</p>
+    <h3>Aucune ordonnance trouvée</h3>
+    <p>{% if delivrance_choisie %}Aucune ordonnance ne correspond au filtre sélectionné.{% else %}Aucune prescription médicale n'est enregistrée pour le moment.{% endif %}</p>
+    {% if delivrance_choisie %}
+    <div class="actions">
+        <a href="{% url 'mes_ordonnances_assure' %}" class="button">{% icone "x" %} Réinitialiser le filtre</a>
+    </div>
+    {% endif %}
 </div>
 {% endif %}
 {% endblock %}

@@ -96,9 +96,13 @@
 {% else %}
 <div class="etat-vide">
     {% illustration_vide "calendar" %}
-    <p>{% if statut_choisi or periode_choisie %}Aucun rendez-vous ne correspond à ces critères.{% else %}Aucun rendez-vous enregistré.{% endif %}</p>
+    <h3>Aucun rendez-vous trouvé</h3>
+    <p>{% if statut_choisi or periode_choisie %}Aucun rendez-vous ne correspond aux critères sélectionnés.{% else %}Aucun rendez-vous n'est planifié pour le moment.{% endif %}</p>
     <div class="actions">
-        <a class="button primary" href="{% url 'ajouter_rendez_vous_assure' %}">Nouveau rendez-vous</a>
+        {% if statut_choisi or periode_choisie %}
+        <a href="{% url 'mes_rendez_vous_assure' %}" class="button">{% icone "x" %} Réinitialiser les filtres</a>
+        {% endif %}
+        <a class="button primary" href="{% url 'ajouter_rendez_vous_assure' %}">{% icone "plus" %} Nouveau rendez-vous</a>
     </div>
 </div>
 {% endif %}

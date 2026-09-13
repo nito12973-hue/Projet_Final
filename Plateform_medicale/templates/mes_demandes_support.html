@@ -93,9 +93,14 @@
         <div style="width:56px;height:56px;border-radius:50%;background:var(--primary-soft);color:var(--primary);display:grid;place-items:center;margin:0 auto 16px;">
             {% icone "chat" %}
         </div>
-        <h3 style="margin:0 0 8px;font-size:18px;color:var(--titre);">Aucune demande d'assistance enregistrée</h3>
-        <p style="margin:0 0 20px;color:var(--muted);font-size:13.5px;">Si vous rencontrez une difficulté ou avez une question, vous pouvez ouvrir un ticket directement.</p>
-        <a href="{% url 'creer_demande_support' %}" class="button primary">{% icone "plus-circle" %} Créer une demande</a>
+        <h3 style="margin:0 0 8px;font-size:18px;color:var(--titre);">{% if statut_filtre %}Aucune demande avec ce statut{% else %}Aucune demande d'assistance enregistrée{% endif %}</h3>
+        <p style="margin:0 0 20px;color:var(--muted);font-size:13.5px;">{% if statut_filtre %}Aucun dossier ne correspond au statut sélectionné.{% else %}Si vous rencontrez une difficulté ou avez une question, vous pouvez ouvrir un ticket directement.{% endif %}</p>
+        <div class="actions" style="justify-content:center;gap:10px;">
+            {% if statut_filtre %}
+            <a href="{% url 'mes_demandes_support' %}" class="button">{% icone "x" %} Réinitialiser le filtre</a>
+            {% endif %}
+            <a href="{% url 'creer_demande_support' %}" class="button primary">{% icone "plus-circle" %} Créer une demande</a>
+        </div>
     </div>
     {% endif %}
 </div>
