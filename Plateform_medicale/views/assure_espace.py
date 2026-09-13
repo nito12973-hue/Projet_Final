@@ -377,7 +377,22 @@ def ajouter_rendez_vous_assure(request):
         form = RendezVousAssureForm(
             beneficiaires=beneficiaires, prestataire=prestataire, initial=initial
         )
-    return render(request, "ajouter_rendez_vous_assure.html", {"form": form})
+    medecins_map = {
+        str(m.pk): {
+            "nom": str(m),
+            "prestataire_id": str(m.prestataire_id) if m.prestataire_id else "",
+            "prestataire_nom": m.prestataire.nom if m.prestataire else "",
+            "specialite": m.specialite or "",
+        }
+        for m in Medecin.objects.filter(
+            Q(user__is_active=True) | Q(user__isnull=True)
+        ).select_related("prestataire")
+    }
+    return render(
+        request,
+        "ajouter_rendez_vous_assure.html",
+        {"form": form, "medecins_map": medecins_map},
+    )
 
 
 @role_required(User.Role.ASSURE)
