@@ -18,11 +18,11 @@
 
 <!-- Barre de filtres administrateur -->
 <form method="get" class="filtres" style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;margin-bottom:20px;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:14px;">
-    <div style="flex:1;min-width:220px;" class="champ-recherche">
+    <div style="flex:1;min-width:220px;">
         <label for="id-recherche" style="font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px;">Recherche</label>
-        <div style="position:relative;">
-            <span class="icone-nav" style="position:absolute;left:12px;top:12px;color:var(--muted);">{% icone "search" %}</span>
-            <input type="text" id="id-recherche" name="q" value="{{ recherche }}" placeholder="N° dossier, objet, patient, email..." style="padding-left:38px;margin-bottom:0;">
+        <div class="champ-recherche">
+            {% icone "search" %}
+            <input type="text" id="id-recherche" name="q" value="{{ recherche }}" placeholder="N° dossier, objet, patient, email..." style="margin-bottom:0;">
         </div>
     </div>
 
@@ -120,9 +120,15 @@
     {% endif %}
 
     {% else %}
-    <div style="text-align:center;padding:48px 20px;">
-        <h3 style="margin:0 0 8px;font-size:18px;color:var(--titre);">Aucune demande d'assistance trouvée</h3>
-        <p style="margin:0;color:var(--muted);font-size:13.5px;">Toutes les demandes ont été traitées ou aucun résultat ne correspond aux filtres.</p>
+    <div class="etat-vide" style="border:none;box-shadow:none;margin:0;padding:48px 20px;">
+        {% illustration_vide "users" %}
+        <h3>Aucune demande d'assistance trouvée</h3>
+        <p>{% if statut_choisi or categorie_choisie or recherche %}Aucun dossier ne correspond à vos critères de recherche ou de filtre.{% else %}Toutes les demandes ont été traitées ou aucun dossier n'est enregistré.{% endif %}</p>
+        {% if statut_choisi or categorie_choisie or recherche %}
+        <div class="actions">
+            <a href="{% url 'admin_liste_demandes_support' %}" class="button">{% icone "x" %} Réinitialiser les filtres</a>
+        </div>
+        {% endif %}
     </div>
     {% endif %}
 </div>

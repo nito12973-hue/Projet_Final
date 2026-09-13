@@ -105,7 +105,13 @@
 {% else %}
 <div class="etat-vide">
     {% illustration_vide "receipt" %}
-    <p>{% if recherche or statut_choisi %}Aucun paiement ne correspond à ces critères.{% else %}Aucun paiement enregistré.{% endif %}</p>
+    <h3>Aucun paiement trouvé</h3>
+    <p>{% if recherche or statut_choisi %}Aucun paiement ne correspond à vos critères de recherche.{% else %}Aucun paiement n'est encore enregistré sur la plateforme.{% endif %}</p>
+    {% if recherche or statut_choisi %}
+    <div class="actions">
+        <a href="{% url 'liste_paiements' %}" class="button">{% icone "x" %} Réinitialiser les filtres</a>
+    </div>
+    {% endif %}
 </div>
 {% endif %}
 {% endblock %}

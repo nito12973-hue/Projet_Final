@@ -125,7 +125,13 @@ pas un oubli.
 {% else %}
 <div class="etat-vide">
     {% illustration_vide "shield-check" %}
-    <p>{% if statut_choisi %}Aucune prise en charge avec ce statut.{% else %}Aucune prise en charge enregistrée pour vous ou vos ayants droit.{% endif %}</p>
+    <h3>Aucune prise en charge trouvée</h3>
+    <p>{% if statut_choisi %}Aucune demande de prise en charge ne correspond au statut sélectionné.{% else %}Aucune prise en charge enregistrée pour vous ou vos ayants droit.{% endif %}</p>
+    {% if statut_choisi %}
+    <div class="actions">
+        <a href="{% url 'mes_prises_en_charge_assure' %}" class="button">{% icone "x" %} Réinitialiser le filtre</a>
+    </div>
+    {% endif %}
 </div>
 {% endif %}
 {% endblock %}

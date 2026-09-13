@@ -148,17 +148,20 @@
 {% endif %}
 
 {% else %}
-<div class="etat-vide" style="padding:40px 20px;text-align:center;">
+<div class="etat-vide">
     {% illustration_vide "calendar" %}
-    <p style="margin:12px 0 16px;color:var(--muted);font-size:14px;">
+    <h3>Aucun rendez-vous trouvé</h3>
+    <p>
         {% if statut_choisi or periode_choisie %}
-        Aucun rendez-vous ne correspond aux critères de recherche.
+        Aucun rendez-vous ne correspond aux critères de recherche sélectionnés.
         {% else %}
-        Aucun rendez-vous enregistré dans votre agenda.
+        Aucun rendez-vous enregistré dans votre agenda pour le moment.
         {% endif %}
     </p>
     {% if statut_choisi or periode_choisie %}
-    <a href="{% url 'agenda_medecin' %}" class="button btn btn-sm">Réinitialiser les filtres</a>
+    <div class="actions">
+        <a href="{% url 'agenda_medecin' %}" class="button">{% icone "x" %} Réinitialiser les filtres</a>
+    </div>
     {% endif %}
 </div>
 {% endif %}
