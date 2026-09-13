@@ -5713,6 +5713,52 @@
                 requestAnimationFrame(etape);
             });
         })();
+
+        (function () {
+            // Actualisation automatique des notifications en temps réel
+            {% if user.is_authenticated %}
+            var DELAI_POLLING_MS = 15000;
+            function actualiserNotifications() {
+                var boutonNotif = document.querySelector('.menu-notifications summary');
+                var listeNotif = document.querySelector('.menu-notifications-liste');
+                if (!boutonNotif || !listeNotif) { return; }
+
+                fetch(window.location.href, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(function (response) { return response.text(); })
+                .then(function (html) {
+                    var parser = new DOMParser();
+                    var doc = parser.parseFromString(html, 'text/html');
+
+                    // 1. Mise à jour de la pastille sur la cloche
+                    var nouvellePastille = doc.querySelector('.topbar-pastille');
+                    var anciennePastille = boutonNotif.querySelector('.topbar-pastille');
+
+                    if (nouvellePastille) {
+                        if (anciennePastille) {
+                            anciennePastille.textContent = nouvellePastille.textContent;
+                        } else {
+                            var badge = document.createElement('span');
+                            badge.className = 'topbar-pastille';
+                            badge.textContent = nouvellePastille.textContent;
+                            boutonNotif.appendChild(badge);
+                        }
+                    } else if (anciennePastille) {
+                        anciennePastille.remove();
+                    }
+
+                    // 2. Mise à jour de la liste déroulante
+                    var nouvelleListe = doc.querySelector('.menu-notifications-liste');
+                    if (nouvelleListe && listeNotif) {
+                        listeNotif.innerHTML = nouvelleListe.innerHTML;
+                    }
+                })
+                .catch(function () {});
+            }
+            setInterval(actualiserNotifications, DELAI_POLLING_MS);
+            {% endif %}
+        })();
     </script>
 </body>
 </html>
