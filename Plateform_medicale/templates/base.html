@@ -5553,7 +5553,6 @@
                 <a href="{% url 'mes_rendez_vous_assure' %}" aria-label="Mes rendez-vous" data-tooltip="Mes rendez-vous" class="{% if url_name == 'mes_rendez_vous_assure' or url_name == 'ajouter_rendez_vous_assure' %}active{% endif %}">{% icone "calendar" %} <span class="nav-texte">Mes rendez-vous</span></a>
                 <a href="{% url 'mes_ordonnances_assure' %}" aria-label="Mes ordonnances" data-tooltip="Mes ordonnances" class="{% if url_name == 'mes_ordonnances_assure' or url_name == 'voir_ordonnance_assure' %}active{% endif %}">{% icone "pill" %} <span class="nav-texte">Mes ordonnances</span></a>
                 <a href="{% url 'mes_prises_en_charge_assure' %}" aria-label="Mes prises en charge" data-tooltip="Mes prises en charge" class="{% if url_name == 'mes_prises_en_charge_assure' %}active{% endif %}">{% icone "shield-check" %} <span class="nav-texte">Mes prises en charge</span></a>
-                <a href="{% url 'mes_demandes_support' %}" aria-label="Support & Réclamations" data-tooltip="Support & Réclamations" class="{% if url_name == 'mes_demandes_support' or url_name == 'creer_demande_support' or url_name == 'detail_demande_support' %}active{% endif %}">{% icone "chat" %} <span class="nav-texte">Support & Réclamations</span></a>
                 
                 <span class="nav-section">Ma couverture & famille</span>
                 {% if user.patient %}
@@ -6164,7 +6163,7 @@
                 <button type="button" class="btn-chip-assistant" data-query="Quels sont mes rendez-vous prévus ?">Mes rendez-vous</button>
                 <button type="button" class="btn-chip-assistant" data-query="Quel est mon taux de prise en charge ?">Taux de couverture</button>
                 <button type="button" class="btn-chip-assistant" data-query="Où sont mes ordonnances ?">Mes ordonnances</button>
-                <button type="button" class="btn-chip-assistant" data-query="Je souhaite contacter l'administration">Contacter le support</button>
+                <button type="button" class="btn-chip-assistant" data-query="Je souhaite déposer une réclamation">Déposer une réclamation</button>
             </div>
 
             {# Formulaire de saisie #}

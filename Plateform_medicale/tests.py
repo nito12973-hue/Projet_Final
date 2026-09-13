@@ -9485,6 +9485,51 @@ class AssistantEtSupportTests(TestCase):
         )
         self.assertEqual(res.status_code, 400)
 
+    def test_assistant_depot_direct_reclamation(self):
+        """L'assuré transmet une réclamation directement dans le chat, un ticket est créé et les admins notifiés."""
+        self.client.login(username='assure-support@santesn.sn', password=PASSWORD)
+        res = self.client.post(
+            reverse('assistant_sante'),
+            json.dumps({'message': 'Réclamation : anomalie constatée sur mon taux de remboursement'}),
+            content_type='application/json',
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data.get('success'))
+        ticket = DemandeSupport.objects.filter(auteur=self.user_assure).order_by('-date_creation').first()
+        self.assertIsNotNone(ticket)
+        self.assertEqual(ticket.categorie, DemandeSupport.Categorie.PRISE_EN_CHARGE)
+        self.assertIn(ticket.numero_dossier, data['reponse']['texte'])
+        # Vérifier que les admins ont reçu une notification
+        self.assertTrue(
+            Notification.objects.filter(
+                destinataire=self.user_admin,
+                type_evenement=Notification.TypeEvenement.SUPPORT_DEMANDE
+            ).exists()
+        )
+
+    def test_assistant_suivi_reclamations(self):
+        """L'assuré demande le suivi de ses réclamations directement à l'assistant."""
+        ticket = DemandeSupport.objects.create(
+            auteur=self.user_assure,
+            patient=self.patient,
+            objet="Erreur carte",
+            categorie=DemandeSupport.Categorie.COMPTE,
+            statut=DemandeSupport.Statut.EN_COURS
+        )
+        self.client.login(username='assure-support@santesn.sn', password=PASSWORD)
+        res = self.client.post(
+            reverse('assistant_sante'),
+            json.dumps({'message': 'Où en est ma réclamation ?'}),
+            content_type='application/json',
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertIn(ticket.numero_dossier, data['reponse']['texte'])
+        self.assertIn("En cours", data['reponse']['texte'])
+
     def test_support_creation_ticket_par_assure(self):
         """L'assuré crée un ticket de support qui notifie les administrateurs."""
         self.client.login(username='assure-support@santesn.sn', password=PASSWORD)

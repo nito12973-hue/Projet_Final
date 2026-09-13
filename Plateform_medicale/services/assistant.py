@@ -9,7 +9,7 @@ strictement les limites déontologiques et médicales.
 import re
 from django.urls import reverse
 from django.utils import timezone
-from ..models import Patient, RendezVous, Ordonnance, PriseEnCharge
+from ..models import Patient, RendezVous, Ordonnance, PriseEnCharge, User, DemandeSupport, MessageSupport, Notification
 
 
 # Mots-clés de demande médicale, symptômes ou urgences cliniques
@@ -60,7 +60,181 @@ def traiter_message_assistant(user, message_texte):
 
     patient = getattr(user, "patient", None)
 
-    # 3. INTENTION : RENDEZ-VOUS
+    # 3. INTENTION : GESTION DIRECTE DU SUPPORT & DES RÉCLAMATIONS PAR L'ASSISTANT
+    # 3.1. Dépôt direct d'une réclamation / problème / signalement
+    match_prefix = re.match(
+        r'^(?:réclamation|reclamation|plainte|signalement|ticket|problème|probleme|anomalie)\s*[:\-]?\s*(.*)$',
+        texte_brut,
+        re.IGNORECASE
+    )
+    intention_reclamation = any(k in texte_lower for k in [
+        "déposer une réclamation", "deposer une reclamation",
+        "faire une réclamation", "faire une reclamation",
+        "je dépose une réclamation", "je depose une reclamation",
+        "je souhaite déposer une réclamation", "je souhaite deposer une reclamation",
+        "je souhaite faire une réclamation", "je souhaite faire une reclamation"
+    ])
+
+    est_depot_reclamation = False
+    detail_msg = ""
+    if match_prefix:
+        contenu_apres = match_prefix.group(1).strip()
+        if len(contenu_apres) >= 3:
+            est_depot_reclamation = True
+            detail_msg = contenu_apres
+    elif intention_reclamation and len(texte_brut) > 35:
+        est_depot_reclamation = True
+        detail_msg = texte_brut
+
+    if est_depot_reclamation:
+        # Détection de la catégorie
+        detail_lower = detail_msg.lower()
+        if any(w in detail_lower for w in ["remboursement", "pec", "prise en charge", "taux", "plafond"]):
+            categorie = DemandeSupport.Categorie.PRISE_EN_CHARGE
+        elif any(w in detail_lower for w in ["rendez-vous", "rdv", "consultation", "médecin", "medecin"]):
+            categorie = DemandeSupport.Categorie.RENDEZ_VOUS
+        elif any(w in detail_lower for w in ["ordonnance", "médicament", "medicament", "pharmacie"]):
+            categorie = DemandeSupport.Categorie.ORDONNANCE
+        elif any(w in detail_lower for w in ["carte", "matricule", "compte"]):
+            categorie = DemandeSupport.Categorie.COMPTE
+        elif any(w in detail_lower for w in ["ayant droit", "famille", "enfant", "conjoint"]):
+            categorie = DemandeSupport.Categorie.AYANT_DROIT
+        else:
+            categorie = DemandeSupport.Categorie.AUTRE
+
+        priorite = DemandeSupport.Priorite.URGENTE if "urgent" in detail_lower else DemandeSupport.Priorite.NORMALE
+        objet = detail_msg[:80] if len(detail_msg) > 5 else "Réclamation transmise via l'Assistant SantéSN"
+
+        demande = DemandeSupport.objects.create(
+            auteur=user,
+            patient=patient,
+            objet=objet,
+            categorie=categorie,
+            priorite=priorite,
+            statut=DemandeSupport.Statut.EN_ATTENTE
+        )
+        MessageSupport.objects.create(
+            demande=demande,
+            auteur=user,
+            message=texte_brut
+        )
+
+        # Notification en direct des administrateurs SantéSN
+        admins = list(User.objects.filter(role=User.Role.ADMIN, is_active=True))
+        if admins:
+            nom_patient = user.get_full_name() or user.email
+            Notification.objects.bulk_create([
+                Notification(
+                    destinataire=admin,
+                    titre="Nouvelle réclamation via l'Assistant",
+                    message=f"L'assuré {nom_patient} a transmis la réclamation #{demande.numero_dossier} : {demande.objet}.",
+                    type_evenement=Notification.TypeEvenement.SUPPORT_DEMANDE,
+                    url_action=reverse("admin_detail_demande_support", args=[demande.pk]),
+                )
+                for admin in admins
+            ])
+
+        texte = (
+            "**Votre réclamation a été directement enregistrée et transmise à l'administration.**\n\n"
+            f"- **Numéro de dossier** : `#{demande.numero_dossier}`\n"
+            f"- **Catégorie** : {demande.get_categorie_display()}\n"
+            f"- **Statut** : En attente de traitement administratif\n"
+            f"- **Objet enregistré** : {demande.objet}\n\n"
+            "Nos gestionnaires administratifs SantéSN ont été notifiés et examinent votre dossier. "
+            "Vous pourrez consulter l'avancement ou les réponses à tout moment en me demandant simplement : *« Où en est ma réclamation ? »*."
+        )
+
+        return {
+            "type": "support",
+            "texte": texte,
+            "actions": [],
+            "suggestions": [
+                "Suivi de mes réclamations",
+                "Mon taux de couverture",
+                "Prendre un rendez-vous"
+            ]
+        }
+
+    # 3.2. Suivi des réclamations et demandes en cours
+    mots_cles_suivi = [
+        "suivi", "mes demandes", "ma demande", "mes réclamations", "mes reclamations",
+        "ma réclamation", "ma reclamation", "où en est", "ou en est", "consulter ma réclamation",
+        "consulter mes réclamations", "état de ma demande", "etat de ma demande",
+        "état de mes réclamations", "etat de mes reclamations", "statut réclamation",
+        "statut reclamation", "statut de ma réclamation", "statut de ma reclamation",
+        "statut de mon ticket", "mon ticket", "mes tickets", "mes dossiers", "mon dossier"
+    ]
+    if any(k in texte_lower for k in mots_cles_suivi):
+        demandes = DemandeSupport.objects.filter(auteur=user).select_related("patient").prefetch_related("messages").order_by("-date_creation")[:5]
+        if demandes.exists():
+            lignes = []
+            for d in demandes:
+                date_str = d.date_creation.strftime("%d/%m/%Y")
+                statut_label = d.get_statut_display()
+                lignes.append(f"- **#{d.numero_dossier}** : *{d.objet}* · Statut : **{statut_label}** (ouvert le {date_str})")
+                
+                # S'il y a un message de l'administration, afficher le dernier message
+                messages_fil = list(d.messages.all())
+                for m in reversed(messages_fil):
+                    if m.auteur != user:
+                        extrait = (m.message[:110] + '...') if len(m.message) > 110 else m.message
+                        lignes.append(f"  ↳ *Réponse de l'administration :* « {extrait} »")
+                        break
+            
+            texte = (
+                "**Vos dossiers de réclamation et d'assistance :**\n\n"
+                + "\n".join(lignes)
+                + "\n\nPour soumettre une nouvelle réclamation, décrivez simplement votre situation directement ici."
+            )
+        else:
+            texte = (
+                "**Vous n'avez aucun dossier de réclamation ou demande d'assistance en cours.**\n\n"
+                "Si vous constatez une anomalie sur vos remboursements, vos ordonnances ou vos droits, "
+                "décrivez-la directement ici en commençant votre message par exemple par *« Réclamation : ... »*."
+            )
+        return {
+            "type": "support",
+            "texte": texte,
+            "actions": [],
+            "suggestions": [
+                "Déposer une réclamation",
+                "Mon taux de couverture",
+                "Consulter mes ordonnances"
+            ]
+        }
+
+    # 3.3. Guide de dépôt / contact support & réclamations
+    mots_cles_guide_reclamation = [
+        "déposer une réclamation", "deposer une reclamation",
+        "faire une réclamation", "faire une reclamation",
+        "je souhaite déposer une réclamation", "je souhaite deposer une reclamation",
+        "comment faire une réclamation", "comment faire une reclamation",
+        "comment déposer une réclamation", "comment deposer une reclamation",
+        "contacter le support", "contacter l'administration", "contacter administration",
+        "service client", "support administratif", "aide réclamation", "aide reclamation",
+        "réclamation", "reclamation", "plainte"
+    ]
+    if any(k in texte_lower for k in mots_cles_guide_reclamation):
+        return {
+            "type": "support",
+            "texte": (
+                "**Service d'Assistance & Réclamations SantéSN :**\n\n"
+                "Je prends directement en charge vos réclamations et signalements auprès de l'administration SantéSN, "
+                "sans que vous ayez besoin de naviguer dans des formulaires externes.\n\n"
+                "Pour ouvrir immédiatement un dossier, écrivez simplement votre message ici en commençant par exemple par :\n\n"
+                "- *« Réclamation : erreur constatée sur mon taux de prise en charge »*\n"
+                "- *« Problème : mon ordonnance n'apparaît pas en pharmacie »*\n\n"
+                "Je créerai immédiatement votre ticket officiel et le transmettrai à nos équipes administratives."
+            ),
+            "actions": [],
+            "suggestions": [
+                "Suivi de mes réclamations",
+                "Réclamation : anomalie sur prise en charge",
+                "Réclamation : problème de carte"
+            ]
+        }
+
+    # 4. INTENTION : RENDEZ-VOUS
     if any(k in texte_lower for k in ["rendez-vous", "rdv", "consultation", "mon médecin", "prochain rdv"]):
         if not patient:
             return _reponse_sans_profil_patient()
@@ -239,30 +413,6 @@ def traiter_message_assistant(user, message_texte):
             ]
         }
 
-    # 8. INTENTION : CONTACTER L'ADMINISTRATION / RÉCLAMATION / SUPPORT
-    if any(k in texte_lower for k in [
-        "contacter", "administration", "administrateur", "réclamation", "reclamation",
-        "litige", "problème", "probleme", "erreur", "plainte", "bloqué", "bloque", "support", "humain"
-    ]):
-        return {
-            "type": "support",
-            "texte": (
-                "**Service d'Assistance Administrative :**\n\n"
-                "Pour toute question relative à vos remboursements, à votre dossier d'adhésion ou pour signaler une anomalie, "
-                "notre équipe administrative assure le traitement de vos demandes.\n\n"
-                "Vous pouvez ouvrir un dossier d'assistance officiel en quelques clics."
-            ),
-            "actions": [
-                {"libelle": "Ouvrir une demande d'assistance", "url": reverse("creer_demande_support"), "style": "primary"},
-                {"libelle": "Suivre mes demandes", "url": reverse("mes_demandes_support"), "style": "secondary"}
-            ],
-            "suggestions": [
-                "Prendre un rendez-vous",
-                "Mes prises en charge",
-                "Mon taux de couverture"
-            ]
-        }
-
     # 9. INTENTION : ÉTABLISSEMENTS & PRESTATAIRES PROCHES
     if any(k in texte_lower for k in ["hôpital", "hopital", "clinique", "prestataire", "proche", "où aller", "ou aller", "adresse"]):
         return {
@@ -279,7 +429,7 @@ def traiter_message_assistant(user, message_texte):
             "suggestions": [
                 "Prendre un rendez-vous",
                 "Mes ordonnances",
-                "Contacter l'administration"
+                "Déposer une réclamation"
             ]
         }
 
@@ -293,19 +443,18 @@ def traiter_message_assistant(user, message_texte):
             "- **Prescriptions & Pharmacie** : Suivi de vos ordonnances et délivrances.\n"
             "- **Prise en charge & Plafonds** : Consultation de vos droits et garanties.\n"
             "- **Couverture familiale** : Gestion de vos ayants droit rattachés.\n"
-            "- **Assistance administrative** : Ouverture d'un ticket en cas de besoin.\n\n"
+            "- **Assistance & Réclamations** : Dépôt et suivi direct de vos réclamations.\n\n"
             "Que souhaitez-vous consulter aujourd'hui ?"
         ),
         "actions": [
-            {"libelle": "Prendre un rendez-vous", "url": reverse("ajouter_rendez_vous_assure"), "style": "primary"},
-            {"libelle": "Contacter l'administration", "url": reverse("creer_demande_support"), "style": "secondary"}
+            {"libelle": "Prendre un rendez-vous", "url": reverse("ajouter_rendez_vous_assure"), "style": "primary"}
         ],
         "suggestions": [
             "Quels sont mes prochains rendez-vous ?",
             "Quel est mon taux de prise en charge ?",
             "Consulter mes ordonnances",
-            "Mes ayants droit déclarés",
-            "Contacter l'administration"
+            "Déposer une réclamation",
+            "Suivi de mes réclamations"
         ]
     }
 
@@ -321,6 +470,6 @@ def _reponse_sans_profil_patient():
             {"libelle": "Compléter mon profil", "url": reverse("mon_profil_assure"), "style": "primary"}
         ],
         "suggestions": [
-            "Contacter l'administration"
+            "Déposer une réclamation"
         ]
     }
