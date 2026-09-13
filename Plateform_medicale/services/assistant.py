@@ -42,17 +42,17 @@ def traiter_message_assistant(user, message_texte):
             return {
                 "type": "medical_warning",
                 "texte": (
-                    "ℹ️ **Rappel déontologique médical :**\n\n"
+                    "**Rappel déontologique médical :**\n\n"
                     "En tant qu'Assistant SantéSN, **je ne suis pas habilité à poser de diagnostic ni à prescrire un traitement.** "
-                    "Seul un médecin qualifié peut vous examiner et prescrire les soins adaptés à votre état de santé.\n\n"
-                    "👉 Vous pouvez prendre rendez-vous en ligne avec l'un de nos praticiens conventionnés ou consulter la liste des prestataires proches."
+                    "Seul un médecin qualifié peut vous examiner et déterminer la prise en charge adaptée à votre état de santé.\n\n"
+                    "Vous pouvez prendre rendez-vous en ligne avec l'un de nos médecins partenaires ou consulter les établissements conventionnés."
                 ),
                 "actions": [
-                    {"libelle": "Prendre un rendez-vous médical", "url": reverse("ajouter_rendez_vous_assure"), "style": "primary"},
-                    {"libelle": "Trouver un centre de santé", "url": reverse("prestataires_proches"), "style": "secondary"}
+                    {"libelle": "Prendre un rendez-vous", "url": reverse("ajouter_rendez_vous_assure"), "style": "primary"},
+                    {"libelle": "Centres et prestataires partenaires", "url": reverse("prestataires_proches"), "style": "secondary"}
                 ],
                 "suggestions": [
-                    "Comment prendre un rendez-vous ?",
+                    "Prendre un rendez-vous",
                     "Mes ordonnances en cours",
                     "Contacter l'administration"
                 ]
@@ -81,14 +81,14 @@ def traiter_message_assistant(user, message_texte):
                 lignes.append(f"- **{date_str}** : Dr. {med_nom} ({prest_nom}) · Statut : *{statut_lbl}* ({r.patient.prenom})")
             
             texte = (
-                f"📅 **Vos prochains rendez-vous programmés :**\n\n"
+                "**Vos prochains rendez-vous programmés :**\n\n"
                 + "\n".join(lignes)
-                + "\n\nVous pouvez consulter l'historique complet ou demander un nouveau créneau ci-dessous."
+                + "\n\nVous pouvez consulter l'historique complet de vos consultations ou programmer un nouveau créneau ci-dessous."
             )
         else:
             texte = (
-                "📅 **Vous n'avez aucun rendez-vous à venir pour le moment.**\n\n"
-                "Souhaitez-vous programmer une nouvelle consultation avec un médecin conventionné ?"
+                "**Aucun rendez-vous à venir n'est planifié pour le moment.**\n\n"
+                "Souhaitez-vous programmer une nouvelle consultation avec un praticien conventionné ?"
             )
 
         return {
@@ -96,7 +96,7 @@ def traiter_message_assistant(user, message_texte):
             "texte": texte,
             "actions": [
                 {"libelle": "Prendre un rendez-vous", "url": reverse("ajouter_rendez_vous_assure"), "style": "primary"},
-                {"libelle": "Voir tous mes rendez-vous", "url": reverse("mes_rendez_vous_assure"), "style": "secondary"}
+                {"libelle": "Consulter mes rendez-vous", "url": reverse("mes_rendez_vous_assure"), "style": "secondary"}
             ],
             "suggestions": [
                 "Quel est mon taux de prise en charge ?",
@@ -123,14 +123,14 @@ def traiter_message_assistant(user, message_texte):
                 lignes.append(f"- **Réf. {o.code_qr}** du {date_str} (Dr. {med_nom}) · Statut : *{statut_badge}*")
             
             texte = (
-                "💊 **Vos dernières prescriptions médicales :**\n\n"
+                "**Vos dernières prescriptions médicales :**\n\n"
                 + "\n".join(lignes)
-                + "\n\nPrésentez simplement le QR Code de votre ordonnance dans l'une de nos pharmacies partenaires."
+                + "\n\nPrésentez simplement le QR Code de votre ordonnance dans l'une des pharmacies partenaires conventionnées."
             )
         else:
             texte = (
-                "💊 **Aucune ordonnance n'est enregistrée sur votre compte pour l'instant.**\n\n"
-                "Vos ordonnances s'affichent automatiquement ici dès qu'un médecin conventionné vous en prescrit une."
+                "**Aucune prescription médicale n'est enregistrée sur votre compte pour l'instant.**\n\n"
+                "Vos ordonnances seront automatiquement disponibles ici dès qu'un praticien vous en délivrera une."
             )
 
         return {
@@ -156,7 +156,7 @@ def traiter_message_assistant(user, message_texte):
         plafond = patient.titulaire.plan_couverture.plafond_annuel if (patient.titulaire and patient.titulaire.plan_couverture) else None
         
         texte = (
-            f"🛡️ **Votre couverture SantéSN :**\n\n"
+            "**Votre couverture santé SantéSN :**\n\n"
             f"- **Formule active** : {plan_nom}\n"
             f"- **Taux de prise en charge garanti** : **{taux}%** sur les actes et soins conventionnés.\n"
         )
@@ -164,7 +164,7 @@ def traiter_message_assistant(user, message_texte):
             restant = patient.plafond_annuel_restant()
             texte += f"- **Plafond annuel restant** : {restant} FCFA (sur {plafond} FCFA).\n"
         
-        texte += "\nVos démarches et hospitalisations prises en charge sont suivies en temps réel dans votre espace."
+        texte += "\nVos démarches et hospitalisations sont traitées en direct avec le tiers payant."
 
         return {
             "type": "donnees",
@@ -174,7 +174,7 @@ def traiter_message_assistant(user, message_texte):
                 {"libelle": "Ma carte d'assuré", "url": reverse("carte_assure"), "style": "secondary"}
             ],
             "suggestions": [
-                "Qui sont mes ayants droit ?",
+                "Mes ayants droit",
                 "Prendre un rendez-vous",
                 "Contacter l'administration"
             ]
@@ -186,11 +186,11 @@ def traiter_message_assistant(user, message_texte):
             return _reponse_sans_profil_patient()
 
         texte = (
-            f"🪪 **Votre carte dématérialisée SantéSN :**\n\n"
+            "**Votre carte de santé dématérialisée :**\n\n"
             f"- **Numéro de carte** : `{patient.numero_carte}`\n"
             f"- **Titulaire** : {patient.prenom} {patient.nom}\n"
             f"- **Bénéficiaires couverts** : Vous et vos ayants droit rattachés.\n\n"
-            "Votre carte dispose d'un QR Code officiel que vous pouvez présenter aux cliniques, hôpitaux et pharmacies."
+            "Votre carte dispose d'un QR Code sécurisé à présenter lors de chaque visite médicale ou pharmacie."
         )
 
         return {
@@ -215,14 +215,14 @@ def traiter_message_assistant(user, message_texte):
         if ayants_droit:
             noms = [f"- **{ad.prenom} {ad.nom}** ({ad.get_lien_parente_display() or 'Bénéficiaire'}) · Carte : `{ad.numero_carte}`" for ad in ayants_droit]
             texte = (
-                f"👨‍👩‍👧‍👦 **Vos ayants droit rattachés ({len(ayants_droit)}) :**\n\n"
+                f"**Vos ayants droit rattachés ({len(ayants_droit)}) :**\n\n"
                 + "\n".join(noms)
-                + "\n\nIls bénéficient automatiquement du même plan de couverture santé que vous."
+                + "\n\nIls bénéficient automatiquement du même niveau de prise en charge que votre compte principal."
             )
         else:
             texte = (
-                "👨‍👩‍👧‍👦 **Vous n'avez pas encore rattaché d'ayant droit.**\n\n"
-                "Vous pouvez ajouter votre conjoint(e) ou vos enfants pour qu'ils bénéficient de votre prise en charge santé."
+                "**Aucun ayant droit n'est rattaché à votre dossier pour le moment.**\n\n"
+                "Vous pouvez déclarer votre conjoint(e) ou vos enfants pour qu'ils bénéficient de votre couverture santé."
             )
 
         return {
@@ -247,17 +247,17 @@ def traiter_message_assistant(user, message_texte):
         return {
             "type": "support",
             "texte": (
-                "🤝 **Contacter l'Administration SantéSN :**\n\n"
-                "Un problème sur votre dossier, une question administrative ou une réclamation ? "
-                "Notre équipe administrative est à votre disposition pour vous répondre directement dans votre espace.\n\n"
-                "Cliquez sur le bouton ci-dessous pour ouvrir une demande officielle."
+                "**Service d'Assistance Administrative :**\n\n"
+                "Pour toute question relative à vos remboursements, à votre dossier d'adhésion ou pour signaler une anomalie, "
+                "notre équipe administrative assure le traitement de vos demandes.\n\n"
+                "Vous pouvez ouvrir un dossier d'assistance officiel en quelques clics."
             ),
             "actions": [
                 {"libelle": "Ouvrir une demande d'assistance", "url": reverse("creer_demande_support"), "style": "primary"},
-                {"libelle": "Voir mes demandes existantes", "url": reverse("mes_demandes_support"), "style": "secondary"}
+                {"libelle": "Suivre mes demandes", "url": reverse("mes_demandes_support"), "style": "secondary"}
             ],
             "suggestions": [
-                "Comment prendre un rendez-vous ?",
+                "Prendre un rendez-vous",
                 "Mes prises en charge",
                 "Mon taux de couverture"
             ]
@@ -268,17 +268,17 @@ def traiter_message_assistant(user, message_texte):
         return {
             "type": "aide",
             "texte": (
-                "📍 **Établissements & Prestataires partenaires :**\n\n"
-                "SantéSN référence un réseau d'hôpitaux, cliniques et pharmacies conventionnés partout au Sénégal. "
-                "Vous pouvez activer la géolocalisation pour découvrir les centres les plus proches de votre position avec itinéraires GPS."
+                "**Réseau d'établissements et prestataires conventionnés :**\n\n"
+                "SantéSN collabore avec un réseau hospitalier, de cliniques et de pharmacies agréées au Sénégal. "
+                "Vous pouvez localiser les établissements à proximité de votre position et consulter leurs coordonnées."
             ),
             "actions": [
-                {"libelle": "Voir les prestataires proches", "url": reverse("prestataires_proches"), "style": "primary"},
+                {"libelle": "Centres et prestataires partenaires", "url": reverse("prestataires_proches"), "style": "primary"},
                 {"libelle": "Prendre un rendez-vous", "url": reverse("ajouter_rendez_vous_assure"), "style": "secondary"}
             ],
             "suggestions": [
                 "Prendre un rendez-vous",
-                "Mon ordonnance est-elle valable ?",
+                "Mes ordonnances",
                 "Contacter l'administration"
             ]
         }
@@ -287,14 +287,14 @@ def traiter_message_assistant(user, message_texte):
     return {
         "type": "defaut",
         "texte": (
-            "👋 **Bonjour ! Je suis l'Assistant SantéSN.**\n\n"
-            "Je suis là pour vous accompagner dans vos démarches de santé dématérialisées. Voici quelques exemples de ce que je peux faire pour vous :\n\n"
-            "- 📅 **Rendez-vous** : Consulter vos prochains créneaux ou réserver une consultation.\n"
-            "- 💊 **Ordonnances** : Vérifier vos prescriptions et leur validité en pharmacie.\n"
-            "- 🛡️ **Couverture** : Connaître votre taux de prise en charge et votre plafond restant.\n"
-            "- 👨‍👩‍👧‍👦 **Famille** : Suivre vos ayants droit et accéder à vos cartes de santé.\n"
-            "- 🤝 **Support** : Contacter directement l'administration en cas de besoin.\n\n"
-            "*Posez-moi votre question simplement ou utilisez les suggestions ci-dessous !*"
+            "**Bonjour. Je suis l'Assistant SantéSN.**\n\n"
+            "Je suis à votre disposition pour vous orienter et répondre à vos questions sur vos prestations de santé :\n\n"
+            "- **Rendez-vous médicaux** : Vos consultations à venir ou réservation en ligne.\n"
+            "- **Prescriptions & Pharmacie** : Suivi de vos ordonnances et délivrances.\n"
+            "- **Prise en charge & Plafonds** : Consultation de vos droits et garanties.\n"
+            "- **Couverture familiale** : Gestion de vos ayants droit rattachés.\n"
+            "- **Assistance administrative** : Ouverture d'un ticket en cas de besoin.\n\n"
+            "Que souhaitez-vous consulter aujourd'hui ?"
         ),
         "actions": [
             {"libelle": "Prendre un rendez-vous", "url": reverse("ajouter_rendez_vous_assure"), "style": "primary"},
@@ -303,9 +303,9 @@ def traiter_message_assistant(user, message_texte):
         "suggestions": [
             "Quels sont mes prochains rendez-vous ?",
             "Quel est mon taux de prise en charge ?",
-            "Où trouver mon ordonnance ?",
-            "Qui sont mes ayants droit ?",
-            "Je veux contacter l'administration"
+            "Consulter mes ordonnances",
+            "Mes ayants droit déclarés",
+            "Contacter l'administration"
         ]
     }
 
@@ -314,8 +314,8 @@ def _reponse_sans_profil_patient():
     return {
         "type": "aide",
         "texte": (
-            "⚠️ Votre compte utilisateur n'est pas encore associé à un dossier patient actif. "
-            "Veuillez compléter votre profil pour accéder à vos démarches."
+            "Votre compte utilisateur n'est pas encore associé à un dossier d'assuré actif. "
+            "Veuillez compléter vos informations de profil afin d'accéder à l'ensemble des services."
         ),
         "actions": [
             {"libelle": "Compléter mon profil", "url": reverse("mon_profil_assure"), "style": "primary"}
