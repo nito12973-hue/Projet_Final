@@ -12,16 +12,9 @@ from django.utils import timezone
 from ..models import Patient, RendezVous, Ordonnance, PriseEnCharge
 
 
-# Mots-clés de détresse / urgence vitale
-MOTS_CLES_URGENCE = [
-    "urgence", "urgences", "samu", "1515", "pompiers", "18",
-    "douleur thoracique", "infarctus", "avc", "étouffement", "etouffement",
-    "inconscient", "perte de connaissance", "coma", "hémorragie", "hemorragie",
-    "détresse respiratoire", "detresse respiratoire", "convulsion"
-]
-
-# Mots-clés de demande de diagnostic ou de prescription
+# Mots-clés de demande médicale, symptômes ou urgences cliniques
 MOTS_CLES_MEDICAL = [
+    "urgence", "urgences", "douleur", "malade",
     "diagnostic", "diagnostique", "quel médicament", "quel medicament",
     "que prendre", "posologie", "automédication", "automedication",
     "fièvre", "fievre", "maux de tête", "maux de tete", "mal de ventre",
@@ -35,36 +28,13 @@ def traiter_message_assistant(user, message_texte):
     Analyse le message d'un assuré et retourne une réponse structurée :
     {
         "texte": str,
-        "type": "urgence" | "medical_warning" | "donnees" | "aide" | "support" | "defaut",
+        "type": "medical_warning" | "donnees" | "aide" | "support" | "defaut",
         "actions": [ {"libelle": str, "url": str, "style": "primary" | "secondary"} ],
         "suggestions": [str]
     }
     """
     texte_brut = (message_texte or "").strip()
     texte_lower = texte_brut.lower()
-
-    # 1. DÉTECTION URGENCE VITALE (Priorité absolue)
-    for mot in MOTS_CLES_URGENCE:
-        if re.search(r'\b' + re.escape(mot) + r'\b', texte_lower):
-            return {
-                "type": "urgence",
-                "texte": (
-                    "🚨 **SITUATION D'URGENCE MÉDICALE DÉTECTÉE**\n\n"
-                    "L'Assistant SantéSN ne peut pas traiter les urgences vitales. "
-                    "Si vous-même ou un proche êtes en détresse, **contactez immédiatement les secours au Sénégal :**\n\n"
-                    "- 📞 **SAMU National : 15 15** (numéro d'urgence médicale gratuit)\n"
-                    "- 🚒 **Sapeurs-Pompiers : 18**\n"
-                    "- 🏥 Ou présentez-vous sans délai au service d'accueil des urgences le plus proche."
-                ),
-                "actions": [
-                    {"libelle": "Trouver un hôpital proche", "url": reverse("prestataires_proches"), "style": "primary"},
-                ],
-                "suggestions": [
-                    "Quels sont mes prochains rendez-vous ?",
-                    "Où trouver un médecin ?",
-                    "Contacter l'administration"
-                ]
-            }
 
     # 2. DÉTECTION DEMANDE MÉDICALE CLINIQUE (Pas de diagnostic automatisé)
     for mot in MOTS_CLES_MEDICAL:
