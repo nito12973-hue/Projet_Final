@@ -5368,6 +5368,7 @@
                 <a href="{% url 'liste_paiements' %}" aria-label="Paiements" data-tooltip="Paiements" class="{% if url_name == 'liste_paiements' or url_name == 'marquer_paiement_regle' %}active{% endif %}">{% icone "receipt" %} <span class="nav-texte">Paiements</span></a>
                 
                 <span class="nav-section">Analyse & Configuration</span>
+                <a href="{% url 'admin_liste_demandes_support' %}" aria-label="Support & Demandes" data-tooltip="Support & Demandes" class="{% if url_name == 'admin_liste_demandes_support' or url_name == 'admin_detail_demande_support' %}active{% endif %}">{% icone "chat" %} <span class="nav-texte">Support & Demandes</span>{% if nb_demandes_support_attente %} <span class="badge-non-lues">{{ nb_demandes_support_attente }}</span>{% endif %}</a>
                 <a href="{% url 'rapports' %}" aria-label="Rapports" data-tooltip="Rapports" class="{% if url_name == 'rapports' %}active{% endif %}">{% icone "bar-chart" %} <span class="nav-texte">Rapports</span></a>
                 <a href="{% url 'envoyer_notification' %}" aria-label="Notifications" data-tooltip="Notifications" class="{% if url_name == 'envoyer_notification' or url_name == 'liste_notifications_envoyees' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span></a>
                 <a href="{% url 'parametres' %}" aria-label="Paramètres" data-tooltip="Paramètres" class="{% if url_name == 'parametres' or url_name == 'parametres_section' or url_name == 'journal_activite' or url_name == 'mon_compte' or url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "settings" %} <span class="nav-texte">Paramètres</span></a>
@@ -5402,6 +5403,7 @@
                 <a href="{% url 'mes_rendez_vous_assure' %}" aria-label="Mes rendez-vous" data-tooltip="Mes rendez-vous" class="{% if url_name == 'mes_rendez_vous_assure' or url_name == 'ajouter_rendez_vous_assure' %}active{% endif %}">{% icone "calendar" %} <span class="nav-texte">Mes rendez-vous</span></a>
                 <a href="{% url 'mes_ordonnances_assure' %}" aria-label="Mes ordonnances" data-tooltip="Mes ordonnances" class="{% if url_name == 'mes_ordonnances_assure' or url_name == 'voir_ordonnance_assure' %}active{% endif %}">{% icone "pill" %} <span class="nav-texte">Mes ordonnances</span></a>
                 <a href="{% url 'mes_prises_en_charge_assure' %}" aria-label="Mes prises en charge" data-tooltip="Mes prises en charge" class="{% if url_name == 'mes_prises_en_charge_assure' %}active{% endif %}">{% icone "shield-check" %} <span class="nav-texte">Mes prises en charge</span></a>
+                <a href="{% url 'mes_demandes_support' %}" aria-label="Support & Réclamations" data-tooltip="Support & Réclamations" class="{% if url_name == 'mes_demandes_support' or url_name == 'creer_demande_support' or url_name == 'detail_demande_support' %}active{% endif %}">{% icone "chat" %} <span class="nav-texte">Support & Réclamations</span></a>
                 
                 <span class="nav-section">Ma couverture & famille</span>
                 {% if user.patient %}
@@ -5972,6 +5974,220 @@
             {% endif %}
         })();
     </script>
+
+    {% if current_role == "ASSURE" %}
+    {# Widget Flottant Assistant SantéSN #}
+    <div id="widget-assistant-sn" style="position: fixed; bottom: 24px; right: 24px; z-index: 9999; font-family: inherit;">
+        {# Panneau de discussion flottant #}
+        <div id="panneau-flottant-assistant" style="display: none; flex-direction: column; width: 380px; max-width: calc(100vw - 32px); height: 530px; max-height: calc(100vh - 120px); background: var(--surface); border: 1px solid var(--border); border-radius: 20px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.22); margin-bottom: 12px; overflow: hidden; animation: popInAssistant 0.25s ease-out;">
+            {# En-tête du widget #}
+            <div style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-strong, #0b6169) 100%); color: #fff; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center;">
+                        {% icone "chat" %}
+                    </div>
+                    <div>
+                        <strong style="font-size: 14.5px; display: block; line-height: 1.2;">Assistant SantéSN</strong>
+                        <span style="font-size: 11.5px; opacity: 0.9; display: flex; align-items: center; gap: 4px;">
+                            <span style="width: 6px; height: 6px; border-radius: 50%; background: #4ade80; display: inline-block;"></span> En ligne
+                        </span>
+                    </div>
+                </div>
+                <button type="button" id="btn-fermer-assistant" aria-label="Fermer" style="background: transparent; border: none; color: #fff; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; border-radius: 6px; opacity: 0.85;">
+                    {% icone "x" %}
+                </button>
+            </div>
+
+            {# Corps des messages défilable #}
+            <div id="corps-messages-assistant" style="flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 12px; background: var(--champ-bg, #f8fafc);">
+                {# Message d'accueil par défaut #}
+                <div class="bulle-assistant" style="align-self: flex-start; max-width: 90%; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; border-top-left-radius: 4px; padding: 12px 14px; font-size: 13px; line-height: 1.45; color: var(--titre); box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
+                    Bonjour ! Je suis l'<strong>Assistant SantéSN</strong>. Comment puis-je vous aider aujourd'hui ?
+                    <div style="margin-top: 8px; font-size: 11px; color: var(--muted);">Sélectionnez une question ou saisissez votre message ci-dessous.</div>
+                </div>
+            </div>
+
+            {# Raccourcis de suggestions #}
+            <div id="chips-suggestions-assistant" style="padding: 8px 12px; background: var(--surface); border-top: 1px solid var(--border); display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
+                <button type="button" class="btn-chip-assistant" data-query="Quels sont mes rendez-vous prévus ?" style="background: var(--primary-soft); color: var(--primary-strong); border: 1px solid transparent; border-radius: 999px; padding: 4px 10px; font-size: 11.5px; font-weight: 600; cursor: pointer; white-space: nowrap; flex-shrink: 0;">📅 Rendez-vous</button>
+                <button type="button" class="btn-chip-assistant" data-query="Quel est mon taux de prise en charge ?" style="background: var(--primary-soft); color: var(--primary-strong); border: 1px solid transparent; border-radius: 999px; padding: 4px 10px; font-size: 11.5px; font-weight: 600; cursor: pointer; white-space: nowrap; flex-shrink: 0;">🛡️ Couverture</button>
+                <button type="button" class="btn-chip-assistant" data-query="Où sont mes ordonnances ?" style="background: var(--primary-soft); color: var(--primary-strong); border: 1px solid transparent; border-radius: 999px; padding: 4px 10px; font-size: 11.5px; font-weight: 600; cursor: pointer; white-space: nowrap; flex-shrink: 0;">💊 Ordonnances</button>
+                <button type="button" class="btn-chip-assistant" data-query="Je souhaite contacter l'administration" style="background: var(--primary-soft); color: var(--primary-strong); border: 1px solid transparent; border-radius: 999px; padding: 4px 10px; font-size: 11.5px; font-weight: 600; cursor: pointer; white-space: nowrap; flex-shrink: 0;">💬 Support</button>
+            </div>
+
+            {# Formulaire de saisie #}
+            <form id="form-assistant-flottant" style="padding: 10px 12px; background: var(--surface); border-top: 1px solid var(--border); display: flex; gap: 8px; align-items: center;">
+                {% csrf_token %}
+                <input type="text" id="input-assistant-flottant" placeholder="Posez une question..." required autocomplete="off" style="flex: 1; height: 38px; padding: 0 12px; border-radius: 20px; border: 1px solid var(--border); background: var(--champ-bg); color: var(--titre); font-size: 13px; outline: none;">
+                <button type="submit" id="btn-envoyer-assistant-flottant" style="width: 38px; height: 38px; border-radius: 50%; background: var(--primary); color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 8px rgba(14, 124, 134, 0.3);">
+                    {% icone "chat" %}
+                </button>
+            </form>
+        </div>
+
+        {# Bouton Rond Déclencheur Flottant #}
+        <div style="display: flex; justify-content: flex-end;">
+            <button type="button" id="btn-declencheur-assistant" aria-label="Assistant SantéSN" title="Besoin d'aide ? Échangez avec l'Assistant SantéSN" style="width: 52px; height: 52px; border-radius: 50%; background: var(--primary); color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 20px rgba(14, 124, 134, 0.4); transition: transform 0.2s, box-shadow 0.2s;">
+                <span id="icone-ouvre-assistant" style="display: flex;">{% icone "chat" %}</span>
+                <span id="icone-ferme-assistant" style="display: none;">{% icone "x" %}</span>
+            </button>
+        </div>
+    </div>
+
+    <style>
+        @keyframes popInAssistant {
+            from { opacity: 0; transform: translateY(12px) scale(0.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        #btn-declencheur-assistant:hover {
+            transform: scale(1.08);
+            box-shadow: 0 8px 24px rgba(14, 124, 134, 0.5);
+        }
+        .btn-chip-assistant:hover {
+            opacity: 0.85;
+            transform: translateY(-1px);
+        }
+    </style>
+
+    <script>
+    (function () {
+        var declencheur = document.getElementById('btn-declencheur-assistant');
+        var panneau = document.getElementById('panneau-flottant-assistant');
+        var btnFermer = document.getElementById('btn-fermer-assistant');
+        var iconeOuvre = document.getElementById('icone-ouvre-assistant');
+        var iconeFerme = document.getElementById('icone-ferme-assistant');
+        var form = document.getElementById('form-assistant-flottant');
+        var input = document.getElementById('input-assistant-flottant');
+        var corps = document.getElementById('corps-messages-assistant');
+        var chips = document.querySelectorAll('.btn-chip-assistant');
+
+        if (!declencheur || !panneau) return;
+
+        function toggleAssistant() {
+            var estOuvert = panneau.style.display === 'flex';
+            if (estOuvert) {
+                panneau.style.display = 'none';
+                iconeOuvre.style.display = 'flex';
+                iconeFerme.style.display = 'none';
+            } else {
+                panneau.style.display = 'flex';
+                iconeOuvre.style.display = 'none';
+                iconeFerme.style.display = 'flex';
+                setTimeout(function () { input.focus(); }, 100);
+            }
+        }
+
+        declencheur.addEventListener('click', toggleAssistant);
+        if (btnFermer) btnFermer.addEventListener('click', toggleAssistant);
+
+        function scrollToBottom() {
+            corps.scrollTop = corps.scrollHeight;
+        }
+
+        function ajouterMessage(texte, expediteur, type, actions) {
+            var bulle = document.createElement('div');
+            var estPatient = expediteur === 'patient';
+            bulle.style.alignSelf = estPatient ? 'flex-end' : 'flex-start';
+            bulle.style.maxWidth = '90%';
+            bulle.style.fontSize = '13px';
+            bulle.style.lineHeight = '1.45';
+            bulle.style.padding = '10px 14px';
+            bulle.style.borderRadius = '14px';
+
+            if (estPatient) {
+                bulle.style.background = 'var(--primary)';
+                bulle.style.color = '#fff';
+                bulle.style.borderBottomRightRadius = '4px';
+                bulle.textContent = texte;
+            } else {
+                bulle.style.background = 'var(--surface)';
+                bulle.style.color = 'var(--titre)';
+                bulle.style.border = '1px solid var(--border)';
+                bulle.style.borderTopLeftRadius = '4px';
+                bulle.style.boxShadow = '0 2px 6px rgba(0,0,0,0.04)';
+                
+                var htmlFormate = texte
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\n/g, '<br>');
+                bulle.innerHTML = htmlFormate;
+
+                if (actions && actions.length) {
+                    var actionsDiv = document.createElement('div');
+                    actionsDiv.style.marginTop = '8px';
+                    actionsDiv.style.display = 'flex';
+                    actionsDiv.style.flexDirection = 'column';
+                    actionsDiv.style.gap = '4px';
+                    actions.forEach(function (act) {
+                        var a = document.createElement('a');
+                        a.href = act.url;
+                        a.textContent = act.libelle + ' →';
+                        a.style.fontSize = '12px';
+                        a.style.color = 'var(--primary)';
+                        a.style.fontWeight = '600';
+                        a.style.textDecoration = 'none';
+                        actionsDiv.appendChild(a);
+                    });
+                    bulle.appendChild(actionsDiv);
+                }
+            }
+
+            corps.appendChild(bulle);
+            scrollToBottom();
+        }
+
+        function envoyerMessage(messageTexte) {
+            if (!messageTexte || !messageTexte.trim()) return;
+            var txt = messageTexte.trim();
+            ajouterMessage(txt, 'patient');
+            input.value = '';
+
+            var loader = document.createElement('div');
+            loader.id = 'assistant-loader';
+            loader.style.alignSelf = 'flex-start';
+            loader.style.fontSize = '12px';
+            loader.style.color = 'var(--muted)';
+            loader.style.padding = '6px 12px';
+            loader.textContent = "L'assistant rédige sa réponse...";
+            corps.appendChild(loader);
+            scrollToBottom();
+
+            fetch("{% url 'assistant_sante' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('#form-assistant-flottant [name=csrfmiddlewaretoken]').value,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ message: txt })
+            })
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                var l = document.getElementById('assistant-loader');
+                if (l) l.remove();
+                if (data.reponse) {
+                    ajouterMessage(data.reponse.texte, 'assistant', data.reponse.type, data.reponse.actions);
+                }
+            })
+            .catch(function () {
+                var l = document.getElementById('assistant-loader');
+                if (l) l.remove();
+                ajouterMessage("Une erreur de connexion est survenue. Veuillez réessayer.", 'assistant');
+            });
+        }
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            envoyerMessage(input.value);
+        });
+
+        chips.forEach(function (chip) {
+            chip.addEventListener('click', function () {
+                envoyerMessage(chip.getAttribute('data-query'));
+            });
+        });
+    })();
+    </script>
+    {% endif %}
 </body>
 </html>
 

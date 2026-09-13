@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+{% load icones %}
+
+{% block title %}Assistant SantéSN{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:38px;height:38px;border-radius:10px;background:var(--primary);color:#fff;display:grid;place-items:center;">
+                {% icone "chat" %}
+            </div>
+            <div>
+                <h1 style="margin:0;font-size:24px;">Assistant SantéSN</h1>
+                <p class="subtitle" style="margin:0;">Votre conseiller interactif pour vos démarches de santé et votre couverture.</p>
+            </div>
+        </div>
+    </div>
+    <div class="actions">
+        <a href="{% url 'creer_demande_support' %}" class="button btn">
+            {% icone "plus-circle" %} Contacter l'administration
+        </a>
+        <a href="{% url 'assistant_sante' %}?action=reset" class="button btn" title="Effacer la conversation">
+            {% icone "trash-2" %} Réinitialiser
+        </a>
+    </div>
+</section>
+
+<!-- Avertissement déontologique médical sobre -->
+<div style="background:var(--primary-soft);border:1px solid rgba(14, 124, 134, 0.2);border-radius:12px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;gap:12px;">
+    <span style="color:var(--primary);flex-shrink:0;">{% icone "shield-check" %}</span>
+    <span style="font-size:13px;color:var(--primary-dark);line-height:1.4;">
+        <strong>Information confidentielle & sécurisée :</strong> Cet assistant vous guide dans vos démarches administratives SantéSN. 
+        En cas d'urgence médicale vitale, contactez directement le <strong>SAMU (15 15)</strong> ou les <strong>Sapeurs-Pompiers (18)</strong>.
+    </span>
+</div>
+
+<!-- Fenêtre conversationnelle principale -->
+<div class="panel" style="border-radius:18px;box-shadow:var(--ombre-douce);padding:0;overflow:hidden;display:flex;flex-direction:column;height:65vh;min-height:480px;">
+    
+    <!-- Zone de défilement des messages -->
+    <div id="zone-messages-assistant" style="flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:18px;background:var(--champ-bg);">
+        {% for msg in conversation %}
+            {% if msg.expediteur == "assistant" %}
+                <!-- Message Assistant -->
+                <div style="display:flex;align-items:flex-start;gap:12px;max-width:85%;">
+                    <div style="width:34px;height:34px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;flex-shrink:0;margin-top:2px;">
+                        {% icone "chat" %}
+                    </div>
+                    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;border-top-left-radius:4px;padding:16px 18px;box-shadow:0 2px 8px rgba(11,32,39,0.04);">
+                        <div style="font-size:14px;color:var(--titre);line-height:1.55;white-space:pre-wrap;">{{ msg.texte }}</div>
+                        
+                        {% if msg.actions %}
+                        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;">
+                            {% for act in msg.actions %}
+                            <a href="{{ act.url }}" class="button {% if act.style == 'primary' %}primary{% else %}btn btn-sm{% endif %}" style="font-size:13px;padding:6px 14px;">
+                                {{ act.libelle }} &rarr;
+                            </a>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        <span style="display:block;margin-top:8px;font-size:11px;color:var(--muted);text-align:right;">{{ msg.date }}</span>
+                    </div>
+                </div>
+            {% else %}
+                <!-- Message Patient -->
+                <div style="display:flex;align-items:flex-start;justify-content:flex-end;gap:12px;margin-left:auto;max-width:80%;">
+                    <div style="background:var(--primary-strong);color:#ffffff;border-radius:16px;border-top-right-radius:4px;padding:14px 18px;box-shadow:0 2px 8px rgba(9,80,89,0.15);">
+                        <div style="font-size:14px;line-height:1.5;white-space:pre-wrap;">{{ msg.texte }}</div>
+                        <span style="display:block;margin-top:6px;font-size:11px;color:rgba(255,255,255,0.7);text-align:right;">{{ msg.date }}</span>
+                    </div>
+                    <div style="width:34px;height:34px;border-radius:50%;background:var(--border);color:var(--titre);display:grid;place-items:center;flex-shrink:0;margin-top:2px;">
+                        {% icone "user-circle" %}
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+
+        <div id="indicateur-chargement-assistant" style="display:none;align-items:center;gap:10px;color:var(--muted);font-size:13px;padding:6px 12px;">
+            <div style="width:16px;height:16px;border:2px solid var(--primary);border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+            L'Assistant SantéSN recherche vos informations...
+        </div>
+    </div>
+
+    <!-- Puces de suggestions rapides -->
+    <div id="barre-suggestions" style="padding:10px 18px;background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap;">
+        <span style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-right:4px;">Suggestions :</span>
+        <button type="button" class="btn-suggestion" data-texte="Quels sont mes prochains rendez-vous ?">📅 Mes prochains rendez-vous</button>
+        <button type="button" class="btn-suggestion" data-texte="Quel est mon taux de prise en charge ?">🛡️ Mon taux de remboursement</button>
+        <button type="button" class="btn-suggestion" data-texte="Où trouver mes ordonnances ?">💊 Mes ordonnances</button>
+        <button type="button" class="btn-suggestion" data-texte="Qui sont mes ayants droit ?">👨‍👩‍👧‍👦 Mes ayants droit</button>
+        <button type="button" class="btn-suggestion" data-texte="Je veux contacter l'administration">🤝 Contacter l'administration</button>
+    </div>
+
+    <!-- Formulaire de saisie -->
+    <form id="form-assistant" method="post" style="margin:0;max-width:none;border:none;border-top:1px solid var(--border);border-radius:0;padding:14px 18px;background:var(--surface);display:flex;gap:10px;align-items:center;box-shadow:none;">
+        {% csrf_token %}
+        <input type="text" id="champ-question-assistant" name="message" placeholder="Posez une question sur vos rendez-vous, votre carte, vos remboursements..." required autocomplete="off" style="margin-bottom:0;flex:1;min-height:46px;font-size:15px;padding-left:16px;border-radius:12px;">
+        <button type="submit" id="btn-envoyer-assistant" class="button primary" style="min-height:46px;padding:0 22px;border-radius:12px;gap:8px;font-weight:700;flex-shrink:0;">
+            <span>Envoyer</span> {% icone "chevron-right" %}
+        </button>
+    </form>
+</div>
+
+<style>
+@keyframes spin { 100% { transform: rotate(360deg); } }
+.btn-suggestion {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    background: var(--champ-bg);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--titre);
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+.btn-suggestion:hover {
+    background: var(--primary-soft);
+    border-color: var(--primary);
+    color: var(--primary-strong);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var zoneMessages = document.getElementById('zone-messages-assistant');
+    var formAssistant = document.getElementById('form-assistant');
+    var champQuestion = document.getElementById('champ-question-assistant');
+    var btnEnvoyer = document.getElementById('btn-envoyer-assistant');
+    var indicateur = document.getElementById('indicateur-chargement-assistant');
+
+    function scrollerBas() {
+        if (zoneMessages) {
+            zoneMessages.scrollTop = zoneMessages.scrollHeight;
+        }
+    }
+    scrollerBas();
+
+    // Remplir le champ et soumettre au clic sur une suggestion
+    document.querySelectorAll('.btn-suggestion').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            champQuestion.value = this.getAttribute('data-texte');
+            formAssistant.dispatchEvent(new Event('submit'));
+        });
+    });
+
+    // Envoi AJAX asynchrone sans rechargement de page
+    formAssistant.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var texte = champQuestion.value.trim();
+        if (!texte) return;
+
+        // Ajouter immédiatement le message du patient dans le DOM
+        var divPatient = document.createElement('div');
+        divPatient.style.cssText = 'display:flex;align-items:flex-start;justify-content:flex-end;gap:12px;margin-left:auto;max-width:80%;';
+        divPatient.innerHTML = '<div style="background:var(--primary-strong);color:#ffffff;border-radius:16px;border-top-right-radius:4px;padding:14px 18px;box-shadow:0 2px 8px rgba(9,80,89,0.15);">'
+            + '<div style="font-size:14px;line-height:1.5;white-space:pre-wrap;">' + escapeHtml(texte) + '</div>'
+            + '<span style="display:block;margin-top:6px;font-size:11px;color:rgba(255,255,255,0.7);text-align:right;">À l\'instant</span>'
+            + '</div>'
+            + '<div style="width:34px;height:34px;border-radius:50%;background:var(--border);color:var(--titre);display:grid;place-items:center;flex-shrink:0;margin-top:2px;">'
+            + '{% icone "user-circle" %}'
+            + '</div>';
+        
+        zoneMessages.insertBefore(divPatient, indicateur);
+        champQuestion.value = '';
+        indicateur.style.display = 'flex';
+        btnEnvoyer.disabled = true;
+        scrollerBas();
+
+        var formData = new FormData(formAssistant);
+        formData.append('message', texte);
+
+        fetch("{% url 'assistant_sante' %}", {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+            indicateur.style.display = 'none';
+            btnEnvoyer.disabled = false;
+            if (data.success && data.reponse) {
+                var rep = data.reponse;
+                var divAssistant = document.createElement('div');
+                divAssistant.style.cssText = 'display:flex;align-items:flex-start;gap:12px;max-width:85%;';
+                
+                var actionsHtml = '';
+                if (rep.actions && rep.actions.length > 0) {
+                    actionsHtml = '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;">';
+                    rep.actions.forEach(function (act) {
+                        var cls = act.style === 'primary' ? 'primary' : 'btn btn-sm';
+                        actionsHtml += '<a href="' + act.url + '" class="button ' + cls + '" style="font-size:13px;padding:6px 14px;">' + escapeHtml(act.libelle) + ' &rarr;</a>';
+                    });
+                    actionsHtml += '</div>';
+                }
+
+                divAssistant.innerHTML = '<div style="width:34px;height:34px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;flex-shrink:0;margin-top:2px;">'
+                    + '{% icone "chat" %}'
+                    + '</div>'
+                    + '<div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;border-top-left-radius:4px;padding:16px 18px;box-shadow:0 2px 8px rgba(11,32,39,0.04);">'
+                    + '<div style="font-size:14px;color:var(--titre);line-height:1.55;white-space:pre-wrap;">' + escapeHtml(rep.texte) + '</div>'
+                    + actionsHtml
+                    + '<span style="display:block;margin-top:8px;font-size:11px;color:var(--muted);text-align:right;">' + data.date + '</span>'
+                    + '</div>';
+
+                zoneMessages.insertBefore(divAssistant, indicateur);
+                scrollerBas();
+                champQuestion.focus();
+            }
+        })
+        .catch(function () {
+            indicateur.style.display = 'none';
+            btnEnvoyer.disabled = false;
+            // Repli en cas d'erreur de réseau
+            var divErr = document.createElement('div');
+            divErr.style.cssText = 'color:var(--danger);font-size:13px;padding:8px;';
+            divErr.textContent = 'Une erreur est survenue lors de l\'échange. Veuillez réessayer.';
+            zoneMessages.insertBefore(divErr, indicateur);
+            scrollerBas();
+        });
+    });
+
+    function escapeHtml(string) {
+        return String(string).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% load icones %}
+
+{% block title %}Mes demandes d'assistance — SantéSN{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Mes demandes d'assistance</h1>
+        <p class="subtitle">Historique de vos échanges avec le service administratif et réclamations de SantéSN.</p>
+    </div>
+    <div class="actions">
+        <a class="button primary" href="{% url 'creer_demande_support' %}">{% icone "plus-circle" %} Nouvelle demande</a>
+        <a class="button btn" href="{% url 'assistant_sante' %}">{% icone "chat" %} Assistant SantéSN</a>
+    </div>
+</section>
+
+<!-- Barre de filtres par statut -->
+<form method="get" class="filtres" style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:14px;">
+    <div style="flex:1;min-width:200px;">
+        <select name="statut" onchange="this.form.submit();" style="margin-bottom:0;">
+            <option value="">Tous les statuts</option>
+            {% for code, label in statuts %}
+            <option value="{{ code }}" {% if statut_filtre == code %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    {% if statut_filtre %}
+    <a href="{% url 'mes_demandes_support' %}" class="button btn btn-sm">Réinitialiser</a>
+    {% endif %}
+</form>
+
+<div class="panel" style="border-radius:16px;box-shadow:var(--ombre-douce);">
+    {% if demandes %}
+    <table class="tableau-carte">
+        <thead>
+            <tr>
+                <th>Dossier</th>
+                <th>Objet &amp; Catégorie</th>
+                <th>Date d'ouverture</th>
+                <th>Statut</th>
+                <th style="text-align:right;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for d in demandes %}
+            <tr>
+                <td>
+                    <span class="libelle-mobile">Dossier</span>
+                    <strong style="font-family:'IBM Plex Mono',monospace;color:var(--primary);font-size:13px;">#{{ d.numero_dossier }}</strong>
+                </td>
+                <td>
+                    <span class="libelle-mobile">Demande</span>
+                    <div>
+                        <strong style="display:block;font-size:14px;color:var(--titre);">{{ d.objet }}</strong>
+                        <span style="font-size:12px;color:var(--muted);">{{ d.get_categorie_display }} · Priorité {{ d.get_priorite_display }}</span>
+                    </div>
+                </td>
+                <td>
+                    <span class="libelle-mobile">Date</span>
+                    <span style="font-size:13px;color:var(--muted);">{{ d.date_creation|date:"d/m/Y à H:i" }}</span>
+                </td>
+                <td>
+                    <span class="libelle-mobile">Statut</span>
+                    <span class="badge {% if d.statut == 'EN_ATTENTE' %}en_attente{% elif d.statut == 'REPONDU' %}validee{% elif d.statut == 'FERME' %}annule{% else %}en_attente{% endif %}">
+                        {{ d.get_statut_display }}
+                    </span>
+                </td>
+                <td style="text-align:right;">
+                    <a href="{% url 'detail_demande_support' d.pk %}" class="button btn btn-sm">
+                        {% icone "eye" %} Voir l'échange
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if demandes.has_other_pages %}
+    <div style="padding:16px;display:flex;justify-content:center;gap:8px;">
+        {% if demandes.has_previous %}
+        <a href="?page={{ demandes.previous_page_number }}{% if statut_filtre %}&statut={{ statut_filtre }}{% endif %}" class="button btn btn-sm">&laquo; Précédent</a>
+        {% endif %}
+        <span style="padding:6px 12px;font-size:13px;color:var(--muted);">Page {{ demandes.number }} sur {{ demandes.paginator.num_pages }}</span>
+        {% if demandes.has_next %}
+        <a href="?page={{ demandes.next_page_number }}{% if statut_filtre %}&statut={{ statut_filtre }}{% endif %}" class="button btn btn-sm">Suivant &raquo;</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div style="text-align:center;padding:48px 20px;">
+        <div style="width:56px;height:56px;border-radius:50%;background:var(--primary-soft);color:var(--primary);display:grid;place-items:center;margin:0 auto 16px;">
+            {% icone "chat" %}
+        </div>
+        <h3 style="margin:0 0 8px;font-size:18px;color:var(--titre);">Aucune demande d'assistance enregistrée</h3>
+        <p style="margin:0 0 20px;color:var(--muted);font-size:13.5px;">Si vous rencontrez une difficulté ou avez une question, vous pouvez ouvrir un ticket directement.</p>
+        <a href="{% url 'creer_demande_support' %}" class="button primary">{% icone "plus-circle" %} Créer une demande</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
