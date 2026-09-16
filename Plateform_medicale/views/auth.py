@@ -305,14 +305,6 @@ def parametres(request, section="general"):
                         extra_tags="succes-critique",
                     )
                     return redirect(f"{reverse('parametres_section', args=['securite'])}#retention-donnees")
-                elif action == "reinitialiser_demo":
-                    purger_donnees_obsoletes(jours=30, purger_sessions=True, purger_notifs=True, purger_tentatives=True, reinitialiser_demo=True)
-                    messages.success(
-                        request,
-                        "Données de démonstration réinitialisées avec succès.",
-                        extra_tags="succes-critique",
-                    )
-                    return redirect(f"{reverse('parametres_section', args=['securite'])}#retention-donnees")
 
             contexte["total_journal"] = JournalActivite.objects.count()
             contexte["metriques_retention"] = obtenir_metriques_retention(jours=30)
