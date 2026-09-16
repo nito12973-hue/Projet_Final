@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Service de rétention et de maintenance automatique des données (Cycle 30 jours / 1 mois).
-Purger les sessions expirées, les anciennes notifications lues, les tentatives obsolètes
-et réinitialiser de façon idempotente les comptes et données de test locaux.
+Purge des sessions expirées, des anciennes notifications lues et des tentatives obsolètes.
 """
 
 import datetime
@@ -58,7 +57,6 @@ def purger_donnees_obsoletes(
     purger_sessions=True,
     purger_notifs=True,
     purger_tentatives=True,
-    reinitialiser_demo=False,
     dry_run=False,
 ):
     """
@@ -73,7 +71,6 @@ def purger_donnees_obsoletes(
         "sessions": 0,
         "notifications": 0,
         "tentatives": 0,
-        "demo_reinitialisee": False,
         "dry_run": dry_run,
     }
 
@@ -103,15 +100,6 @@ def purger_donnees_obsoletes(
         if not dry_run and resultats["tentatives"] > 0:
             qs_tentatives.delete()
 
-    # 4. Réinitialisation des données de test
-    if reinitialiser_demo and not dry_run:
-        try:
-            from django.core.management import call_command
-            call_command("seed_demo")
-            resultats["demo_reinitialisee"] = True
-        except Exception as exc:
-            logger.error("Erreur lors de la reinitialisation demo : %s", exc)
-
     if not dry_run:
         horodatage = maintenant.strftime("%d/%m/%Y à %H:%M")
         cache.set(CLE_CACHE_DERNIERE_PURGE, horodatage, timeout=None)
@@ -138,7 +126,6 @@ def verifier_et_executer_auto_purge(jours=30):
             purger_sessions=True,
             purger_notifs=True,
             purger_tentatives=True,
-            reinitialiser_demo=False,
             dry_run=False,
         )
     except Exception as exc:

@@ -368,15 +368,6 @@
                             {% icone "trash-2" %} Purger les données obsolètes
                         </button>
                     </form>
-                    <form method="post" action="{% url 'parametres_section' 'securite' %}"
-                          data-confirmation="Cette action va réinitialiser les comptes et données de test locaux (@santesn.sn). Voulez-vous continuer ?"
-                          data-confirmation-action="Oui, réinitialiser la démo">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="reinitialiser_demo">
-                        <button type="submit" class="button btn btn-secondary">
-                            {% icone "refresh-cw" %} Réinitialiser les données de démo
-                        </button>
-                    </form>
                 </div>
             </div>
         </section>
