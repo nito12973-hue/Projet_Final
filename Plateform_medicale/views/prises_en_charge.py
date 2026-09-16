@@ -58,6 +58,40 @@ def liste_prises_en_charge(request):
                 messages.warning(request, "Aucune demande en attente sélectionnée.")
         return redirect("liste_prises_en_charge")
 
+    prises_en_charge = PriseEnCharge.objects.select_related("patient")
+
+    recherche = request.GET.get("q", "").strip()
+    if recherche:
+        prises_en_charge = prises_en_charge.filter(
+            Q(patient__nom__icontains=recherche) | Q(patient__prenom__icontains=recherche)
+        )
+
+    statut = request.GET.get("statut", "")
+    urgent = request.GET.get("urgent", "")
+
+    if urgent == "1":
+        from django.utils import timezone
+        import datetime
+        il_y_a_48h = timezone.now() - datetime.timedelta(hours=48)
+        prises_en_charge = prises_en_charge.filter(statut="en_attente", date_demande__lte=il_y_a_48h)
+    elif statut:
+        prises_en_charge = prises_en_charge.filter(statut=statut)
+
+    prises_en_charge = _trier(
+        request, prises_en_charge, ["patient__nom", "date_demande", "statut"], "-date_demande",
+    )
+    return render(
+        request,
+        "liste_prises_en_charge.html",
+        {
+            "prises_en_charge": _paginer(request, prises_en_charge),
+            "recherche": recherche,
+            "statut_choisi": statut,
+            "statuts": PriseEnCharge.STATUT_CHOICES,
+            "urgent": urgent,
+        },
+    )
+
 
 @admin_required
 def valider_prise_en_charge(request, pk):
@@ -115,40 +149,6 @@ def refuser_prise_en_charge(request, pk):
         )
         messages.warning(request, f"La prise en charge de {prise_en_charge.patient} a été refusée.")
     return redirect("liste_prises_en_charge")
-
-    prises_en_charge = PriseEnCharge.objects.select_related("patient")
-
-    recherche = request.GET.get("q", "").strip()
-    if recherche:
-        prises_en_charge = prises_en_charge.filter(
-            Q(patient__nom__icontains=recherche) | Q(patient__prenom__icontains=recherche)
-        )
-
-    statut = request.GET.get("statut", "")
-    urgent = request.GET.get("urgent", "")
-
-    if urgent == "1":
-        from django.utils import timezone
-        import datetime
-        il_y_a_48h = timezone.now() - datetime.timedelta(hours=48)
-        prises_en_charge = prises_en_charge.filter(statut="en_attente", date_demande__lte=il_y_a_48h)
-    elif statut:
-        prises_en_charge = prises_en_charge.filter(statut=statut)
-
-    prises_en_charge = _trier(
-        request, prises_en_charge, ["patient__nom", "date_demande", "statut"], "-date_demande",
-    )
-    return render(
-        request,
-        "liste_prises_en_charge.html",
-        {
-            "prises_en_charge": _paginer(request, prises_en_charge),
-            "recherche": recherche,
-            "statut_choisi": statut,
-            "statuts": PriseEnCharge.STATUT_CHOICES,
-            "urgent": urgent,
-        },
-    )
 
 
 @admin_required
