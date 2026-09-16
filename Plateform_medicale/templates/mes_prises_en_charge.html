@@ -9,6 +9,7 @@
         <h1>Mes prises en charge</h1>
         <p class="subtitle">Vos demandes de couverture et celles de vos ayants droit.</p>
     </div>
+    <a class="button primary" href="{% url 'demander_prise_en_charge_assure' %}">{% icone "plus-circle" %} Demander une prise en charge</a>
 </section>
 
 <form method="get" class="filtres">
@@ -39,7 +40,10 @@ pas un oubli.
     <div class="pec-entete" style="background: var(--surface-alt); padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
         <span class="pec-titre">
             <strong style="font-size: 16px; color: var(--titre);">{{ ligne.prise.motif }}</strong>
-            <span style="font-size: 13px; color: var(--muted); display: block; margin-top: 2px;">{{ ligne.prise.patient }} · Demandée le {{ ligne.prise.date_demande|date:"d/m/Y" }}</span>
+            <span style="font-size: 13px; color: var(--muted); display: block; margin-top: 2px;">
+                {{ ligne.prise.patient }} · Demandée le {{ ligne.prise.date_demande|date:"d/m/Y" }}
+                {% if ligne.prise.date_validation %} · {% if ligne.prise.statut == 'validee' %}Validée{% else %}Traitée{% endif %} le {{ ligne.prise.date_validation|date:"d/m/Y à H:i" }}{% endif %}
+            </span>
         </span>
         <span class="badge {{ ligne.prise.statut }}">{{ ligne.prise.get_statut_display }}</span>
     </div>
@@ -52,11 +56,17 @@ pas un oubli.
             n'est pas validée, les consultations liées restent à votre charge.
         </p>
         {% elif ligne.prise.statut == "refusee" %}
-        <p class="pec-message pec-message-refus" style="margin: 0 0 16px; padding: 12px 16px; border-radius: 10px; font-size: 13px;">
+        <div class="pec-message pec-message-refus" style="margin: 0 0 16px; padding: 12px 16px; border-radius: 10px; font-size: 13px; display: flex; align-items: flex-start; gap: 10px;">
             {% icone "alert-triangle" %}
-            Cette demande a été refusée : les soins concernés restent à votre
-            charge. Contactez l'administration pour en connaître la raison.
-        </p>
+            <div>
+                <strong>Cette demande a été refusée.</strong>
+                {% if ligne.prise.motif_refus %}
+                <div style="margin-top: 4px;">Motif notifié : <em>{{ ligne.prise.motif_refus }}</em></div>
+                {% else %}
+                <div style="margin-top: 4px;">Contactez l'administration pour toute précision complémentaire.</div>
+                {% endif %}
+            </div>
+        </div>
         {% endif %}
 
         {% if ligne.consultations %}

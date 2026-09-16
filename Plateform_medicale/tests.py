@@ -9729,5 +9729,132 @@ class PreLaunchAuditAndLegalPagesTests(TestCase):
         self.assertNotIn("form.filtres input,\n        form.filtres select {\n            margin-bottom: 0 !important;\n            height: 44px !important;\n            min-height: 44px !important;\n            max-height: 44px !important;\n            padding: 0 14px !important;", base_html)
 
 
+class TestAmeliorationsPlateformeSN(TestCase):
+    """Tests unitaires et d'intégration pour les 4 composants majeurs ajoutés."""
+
+    def setUp(self):
+        self.client = Client()
+        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin-test-sn@santesn.sn')
+        self.medecin = creer_medecin('dr-test-sn@santesn.sn')
+        self.assure_user = creer_utilisateur(User.Role.ASSURE, 'assure-test-sn@santesn.sn')
+        self.patient = Patient.objects.create(
+            user=self.assure_user,
+            nom='Diallo',
+            prenom='Fatou',
+            date_naissance=datetime.date(1995, 5, 10),
+            telephone='771234567',
+        )
+        self.agent = creer_utilisateur(User.Role.ADMIN, 'agent-test-sn@santesn.sn')
+
+    def test_prescription_champs_distincts(self):
+        """Vérifie que la ligne d'ordonnance sépare le médicament de son dosage et posologie."""
+        consultation = Consultation.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            date_consultation=timezone.now(),
+            diagnostic="Infection respiratoire",
+        )
+        ordo = Ordonnance.objects.create(
+            consultation=consultation,
+        )
+        ligne = LigneOrdonnance.objects.create(
+            ordonnance=ordo,
+            medicament="Amoxicilline",
+            dosage="500 mg",
+            posologie="1 gélule 3 fois par jour",
+            duree="7 jours",
+            quantite="2 boîtes",
+        )
+        self.assertEqual(ligne.medicament, "Amoxicilline")
+        self.assertEqual(ligne.dosage, "500 mg")
+        self.assertEqual(ligne.posologie, "1 gélule 3 fois par jour")
+        self.assertEqual(ligne.duree, "7 jours")
+        self.assertEqual(ligne.quantite, "2 boîtes")
+
+    def test_demande_et_validation_prise_en_charge(self):
+        """L'assuré demande une prise en charge, l'agent la valide avec traçabilité."""
+        # Demande par l'assuré
+        self.client.force_login(self.assure_user)
+        url_demande = reverse('demander_prise_en_charge_assure')
+        resp_demande = self.client.post(url_demande, {
+            'patient': self.patient.pk,
+            'motif': 'Demande urgente de prise en charge pour soins',
+        })
+        self.assertEqual(resp_demande.status_code, 302)
+        pec = PriseEnCharge.objects.filter(patient=self.patient).first()
+        self.assertIsNotNone(pec)
+        self.assertEqual(pec.statut, "en_attente")
+
+        # Validation par l'agent / admin
+        self.client.force_login(self.agent)
+        url_valider = reverse('valider_prise_en_charge', args=[pec.pk])
+        resp_valider = self.client.post(url_valider)
+        self.assertEqual(resp_valider.status_code, 302)
+
+        pec.refresh_from_db()
+        self.assertEqual(pec.statut, "validee")
+        self.assertEqual(pec.valide_par, self.agent)
+        self.assertIsNotNone(pec.date_validation)
+
+    def test_refus_prise_en_charge_avec_motif(self):
+        """L'agent refuse une prise en charge en enregistrant le motif."""
+        pec = PriseEnCharge.objects.create(
+            patient=self.patient,
+            motif="Soins dentaires",
+            statut="en_attente",
+        )
+        self.client.force_login(self.agent)
+        url_refuser = reverse('refuser_prise_en_charge', args=[pec.pk])
+        resp = self.client.post(url_refuser, {'motif_refus': 'Plafond annuel de garantie atteint'})
+        self.assertEqual(resp.status_code, 302)
+
+        pec.refresh_from_db()
+        self.assertEqual(pec.statut, "refusee")
+        self.assertEqual(pec.valide_par, self.agent)
+        self.assertEqual(pec.motif_refus, 'Plafond annuel de garantie atteint')
+
+    def test_service_retention_purge(self):
+        """Vérifie la purge des données de plus de 30 jours."""
+        from Plateform_medicale.services.retention import purger_donnees_obsoletes
+        date_ancienne = timezone.now() - datetime.timedelta(days=40)
+
+        notif_ancienne = Notification.objects.create(
+            destinataire=self.admin,
+            message="Ancienne notification",
+            lue=True,
+        )
+        Notification.objects.filter(pk=notif_ancienne.pk).update(date_creation=date_ancienne)
+
+        tentative_ancienne = TentativeConnexion.objects.create(
+            email="hacker@test.sn",
+            tentatives=5,
+        )
+        TentativeConnexion.objects.filter(pk=tentative_ancienne.pk).update(dernier_echec=date_ancienne)
+
+        resultats = purger_donnees_obsoletes(jours=30, purger_sessions=True, purger_notifs=True, purger_tentatives=True)
+        self.assertGreaterEqual(resultats["notifications"], 1)
+        self.assertGreaterEqual(resultats["tentatives"], 1)
+        self.assertFalse(Notification.objects.filter(pk=notif_ancienne.pk).exists())
+        self.assertFalse(TentativeConnexion.objects.filter(pk=tentative_ancienne.pk).exists())
+
+    def test_api_dernieres_notifications_temps_reel(self):
+        """Vérifie que l'endpoint temps réel renvoie le bon payload JSON."""
+        Notification.objects.create(
+            destinataire=self.assure_user,
+            titre="Nouvelle ordonnance",
+            message="Le Dr Awa Ndiaye a émis une ordonnance",
+            lue=False,
+            url_action="/assure/ordonnances/",
+        )
+        self.client.force_login(self.assure_user)
+        resp = self.client.get(reverse('api_dernieres_notifications'))
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertIn("non_lues_count", data)
+        self.assertGreaterEqual(data["non_lues_count"], 1)
+        self.assertTrue(any(n["titre"] == "Nouvelle ordonnance" for n in data["notifications"]))
+
+
+
 
 

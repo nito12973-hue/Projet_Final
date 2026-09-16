@@ -66,6 +66,8 @@ urlpatterns = [
     path('carte/<str:numero>/', views.carte_scan, name='carte_scan'),
     path('prises-en-charge/', views.liste_prises_en_charge, name='liste_prises_en_charge'),
     path('prises-en-charge/ajouter/', views.ajouter_prise_en_charge, name='ajouter_prise_en_charge'),
+    path('prises-en-charge/<int:pk>/valider/', views.valider_prise_en_charge, name='valider_prise_en_charge'),
+    path('prises-en-charge/<int:pk>/refuser/', views.refuser_prise_en_charge, name='refuser_prise_en_charge'),
     path('prises-en-charge/<int:pk>/modifier/', views.modifier_prise_en_charge, name='modifier_prise_en_charge'),
     path('prises-en-charge/<int:pk>/supprimer/', views.supprimer_prise_en_charge, name='supprimer_prise_en_charge'),
 
@@ -125,6 +127,7 @@ urlpatterns = [
     path('assure/ordonnances/', views.mes_ordonnances_assure, name='mes_ordonnances_assure'),
     path('assure/ordonnances/<int:pk>/', views.voir_ordonnance_assure, name='voir_ordonnance_assure'),
     path('assure/prises-en-charge/', views.mes_prises_en_charge_assure, name='mes_prises_en_charge_assure'),
+    path('assure/prises-en-charge/demander/', views.demander_prise_en_charge_assure, name='demander_prise_en_charge_assure'),
     path('assure/historique/', views.mon_historique_assure, name='mon_historique_assure'),
 
     path('notifications/envoyer/', views.envoyer_notification, name='envoyer_notification'),

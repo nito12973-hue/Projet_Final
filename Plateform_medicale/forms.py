@@ -823,10 +823,37 @@ class PriseEnChargeForm(forms.ModelForm):
 
     class Meta:
         model = PriseEnCharge
-        fields = ['patient', 'motif', 'statut']
+        fields = ['patient', 'motif', 'statut', 'motif_refus']
         widgets = {
             'motif': forms.Textarea(attrs={'rows': 3}),
+            'motif_refus': forms.TextInput(attrs={'placeholder': 'Motif obligatoire en cas de refus'}),
         }
+
+
+class DemandePriseEnChargeAssureForm(forms.ModelForm):
+    """Demande de prise en charge soumise par un assure pour lui ou ses ayants droit."""
+
+    class Meta:
+        model = PriseEnCharge
+        fields = ['patient', 'motif']
+        labels = {
+            'patient': "Bénéficiaire des soins",
+            'motif': "Description et motif des soins",
+        }
+        widgets = {
+            'motif': forms.Textarea(attrs={
+                'rows': 4,
+                'placeholder': 'Précisez la nature des soins (ex : Hospitalisation, Chirurgie, Bilan biologique spécialisé, etc.).'
+            }),
+        }
+
+    def __init__(self, *args, assure_patient=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if assure_patient:
+            membres = [assure_patient.pk] + list(assure_patient.ayants_droit.values_list('pk', flat=True))
+            self.fields['patient'].queryset = Patient.objects.filter(pk__in=membres)
+            self.fields['patient'].empty_label = None
+
 
 
 class PlanCouvertureForm(forms.ModelForm):

@@ -110,23 +110,23 @@ clonage — c'est la convention des formsets Django.
 </template>
 
 <datalist id="medicaments-sn">
-    <option value="Artemether / Lumefantrine 20/120mg (Coartem)">
-    <option value="Artesunate / Amodiaquine 100/270mg (Camoquin)">
-    <option value="Amoxicilline 500mg Gelule">
-    <option value="Amoxicilline + Acide Clavulanique 1g/125mg (Augmentin)">
-    <option value="Ciprofloxacine 500mg Comprime">
-    <option value="Azithromycine 500mg Comprime (Zithromax)">
-    <option value="Paracetamol 1g Comprime (Doliprane)">
-    <option value="Paracetamol 500mg Sirop (Efferalgan)">
-    <option value="Ibuprofene 400mg Comprime (Advil)">
-    <option value="Diclofenac 50mg Comprime (Voltarene)">
-    <option value="Omeprazole 20mg Gelule (Mopral)">
-    <option value="Metronidazole 500mg Comprime (Flagyl)">
-    <option value="Amlodipine 5mg Comprime (Amlor)">
-    <option value="Losartan 50mg Comprime (Cozaar)">
-    <option value="Metformine 850mg Comprime (Glucophage)">
-    <option value="Cetirizine 10mg Comprime (Zyrtec)">
-    <option value="Salbutamol 100ug Aerosol (Ventoline)">
+    <option value="Paracétamol 1g" label="Paracétamol 1g — 1 cp toutes les 8h">
+    <option value="Paracétamol 500mg" label="Paracétamol 500mg — 1 cp 3x/jour">
+    <option value="Amoxicilline 500mg" label="Amoxicilline 500mg — 1 gélule 3x/jour (7j)">
+    <option value="Amoxicilline + Acide Clavulanique (Augmentin) 1g/125mg" label="Augmentin 1g/125mg — 1 sachet 2x/jour (7j)">
+    <option value="Artéméther / Luméfantrine (Coartem) 20/120mg" label="Coartem 20/120mg — 4 cp matin et soir (3j)">
+    <option value="Artésunate / Amodiaquine (Camoquin) 100/270mg" label="Camoquin 100/270mg — 1 cp par jour (3j)">
+    <option value="Ibuprofène 400mg" label="Ibuprofène 400mg — 1 cp 3x/jour repas (5j)">
+    <option value="Diclofénac (Voltarène) 50mg" label="Diclofénac 50mg — 1 cp 2x/jour repas (5j)">
+    <option value="Oméprazole 20mg" label="Oméprazole 20mg — 1 gélule le matin à jeun (14j)">
+    <option value="Métronidazole (Flagyl) 500mg" label="Flagyl 500mg — 1 cp 3x/jour repas (7j)">
+    <option value="Ciprofloxacine 500mg" label="Ciprofloxacine 500mg — 1 cp matin et soir (7j)">
+    <option value="Azithromycine (Zithromax) 500mg" label="Zithromax 500mg — 1 cp par jour (3j)">
+    <option value="Amlodipine 5mg" label="Amlodipine 5mg — 1 cp le matin (30j)">
+    <option value="Losartan 50mg" label="Losartan 50mg — 1 cp le matin (30j)">
+    <option value="Metformine (Glucophage) 850mg" label="Glucophage 850mg — 1 cp 2x/jour repas (30j)">
+    <option value="Cétirizine 10mg" label="Cétirizine 10mg — 1 cp le soir (10j)">
+    <option value="Salbutamol (Ventoline) 100µg" label="Ventoline 100µg — 1 à 2 bouffées si besoin">
 </datalist>
 
 <script>
@@ -137,12 +137,78 @@ clonage — c'est la convention des formsets Django.
         var total = document.getElementById('id_{{ formset.prefix }}-TOTAL_FORMS');
         if (!conteneur || !gabarit || !ajouter || !total) { return; }
 
+        var CATALOGUE_MEDICAMENTS = [
+            { cle: "Paracétamol 1g", nom: "Paracétamol", dosage: "1 g", posologie: "1 comprimé toutes les 8h si douleur", duree: "5 jours", quantite: "1 boîte" },
+            { cle: "Paracétamol 500mg", nom: "Paracétamol", dosage: "500 mg", posologie: "1 comprimé 3 fois par jour", duree: "5 jours", quantite: "1 boîte" },
+            { cle: "Amoxicilline 500mg", nom: "Amoxicilline", dosage: "500 mg", posologie: "1 gélule 3 fois par jour", duree: "7 jours", quantite: "2 boîtes" },
+            { cle: "Amoxicilline + Acide Clavulanique (Augmentin) 1g/125mg", nom: "Amoxicilline + Acide Clavulanique (Augmentin)", dosage: "1 g / 125 mg", posologie: "1 sachet 2 fois par jour au milieu des repas", duree: "7 jours", quantite: "1 boîte" },
+            { cle: "Artéméther / Luméfantrine (Coartem) 20/120mg", nom: "Artéméther / Luméfantrine (Coartem)", dosage: "20 / 120 mg", posologie: "4 comprimés matin et soir au cours d'un repas", duree: "3 jours", quantite: "1 boîte" },
+            { cle: "Artésunate / Amodiaquine (Camoquin) 100/270mg", nom: "Artésunate / Amodiaquine (Camoquin)", dosage: "100 / 270 mg", posologie: "1 comprimé par jour", duree: "3 jours", quantite: "1 boîte" },
+            { cle: "Ibuprofène 400mg", nom: "Ibuprofène", dosage: "400 mg", posologie: "1 comprimé 3 fois par jour au cours des repas", duree: "5 jours", quantite: "1 boîte" },
+            { cle: "Diclofénac (Voltarène) 50mg", nom: "Diclofénac (Voltarène)", dosage: "50 mg", posologie: "1 comprimé matin et soir au milieu des repas", duree: "5 jours", quantite: "1 boîte" },
+            { cle: "Oméprazole 20mg", nom: "Oméprazole", dosage: "20 mg", posologie: "1 gélule le matin à jeun", duree: "14 jours", quantite: "1 boîte" },
+            { cle: "Métronidazole (Flagyl) 500mg", nom: "Métronidazole (Flagyl)", dosage: "500 mg", posologie: "1 comprimé 3 fois par jour au cours des repas", duree: "7 jours", quantite: "1 boîte" },
+            { cle: "Ciprofloxacine 500mg", nom: "Ciprofloxacine", dosage: "500 mg", posologie: "1 comprimé matin et soir", duree: "7 jours", quantite: "1 boîte" },
+            { cle: "Azithromycine (Zithromax) 500mg", nom: "Azithromycine (Zithromax)", dosage: "500 mg", posologie: "1 comprimé par jour", duree: "3 jours", quantite: "1 boîte" },
+            { cle: "Amlodipine 5mg", nom: "Amlodipine", dosage: "5 mg", posologie: "1 comprimé le matin", duree: "30 jours", quantite: "1 boîte" },
+            { cle: "Losartan 50mg", nom: "Losartan", dosage: "50 mg", posologie: "1 comprimé le matin", duree: "30 jours", quantite: "1 boîte" },
+            { cle: "Metformine (Glucophage) 850mg", nom: "Metformine (Glucophage)", dosage: "850 mg", posologie: "1 comprimé 2 fois par jour au cours des repas", duree: "30 jours", quantite: "2 boîtes" },
+            { cle: "Cétirizine 10mg", nom: "Cétirizine", dosage: "10 mg", posologie: "1 comprimé le soir au coucher", duree: "10 jours", quantite: "1 boîte" },
+            { cle: "Salbutamol (Ventoline) 100µg", nom: "Salbutamol (Ventoline)", dosage: "100 µg", posologie: "1 à 2 bouffées en cas de crise d'asthme", duree: "Selon besoin", quantite: "1 flacon" }
+        ];
+
+        function autoRemplirLigne(champMedicament) {
+            var val = (champMedicament.value || '').trim();
+            if (!val) return;
+            var ligne = champMedicament.closest('.ligne-medicament');
+            if (!ligne) return;
+
+            var med = CATALOGUE_MEDICAMENTS.find(function (m) {
+                return m.cle.toLowerCase() === val.toLowerCase() ||
+                       m.nom.toLowerCase() === val.toLowerCase();
+            });
+
+            if (!med) {
+                med = CATALOGUE_MEDICAMENTS.find(function (m) {
+                    return val.toLowerCase().indexOf(m.cle.toLowerCase()) !== -1;
+                });
+            }
+
+            if (med) {
+                // Place uniquement le nom du médicament dans le champ Médicament
+                champMedicament.value = med.nom;
+
+                var champDosage = ligne.querySelector('input[name$="-dosage"]');
+                if (champDosage) { champDosage.value = med.dosage; }
+
+                var champPosologie = ligne.querySelector('input[name$="-posologie"]');
+                if (champPosologie) { champPosologie.value = med.posologie; }
+
+                var champDuree = ligne.querySelector('input[name$="-duree"]');
+                if (champDuree) { champDuree.value = med.duree; }
+
+                var champQuantite = ligne.querySelector('input[name$="-quantite"]');
+                if (champQuantite) { champQuantite.value = med.quantite; }
+            }
+        }
+
         function appliquerDatalist() {
             var champs = document.querySelectorAll('input[name$="-medicament"]');
             champs.forEach(function (c) {
                 if (!c.getAttribute('list')) {
                     c.setAttribute('list', 'medicaments-sn');
                     c.setAttribute('autocomplete', 'off');
+                }
+                if (!c.dataset.ecouteurAttache) {
+                    c.dataset.ecouteurAttache = '1';
+                    c.addEventListener('change', function () { autoRemplirLigne(this); });
+                    c.addEventListener('input', function () {
+                        var v = (this.value || '').trim();
+                        var exact = CATALOGUE_MEDICAMENTS.some(function (m) {
+                            return m.cle.toLowerCase() === v.toLowerCase();
+                        });
+                        if (exact) { autoRemplirLigne(this); }
+                    });
                 }
             });
         }
@@ -157,7 +223,6 @@ clonage — c'est la convention des formsets Django.
             boutons.forEach(function (b) { b.hidden = lignes.length <= 1; });
             appliquerDatalist();
         }
-
 
         document.addEventListener('click', function (e) {
             var raccourci = e.target.closest('.btn-posologie-raccourci');

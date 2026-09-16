@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load icones %}
+
+{% block title %}Demander une prise en charge — SantéSN{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Demande de prise en charge</h1>
+        <p class="subtitle">Transmettez votre demande pour vous-même ou l'un de vos ayants droit enregistrés.</p>
+    </div>
+    <a class="button btn" href="{% url 'mes_prises_en_charge_assure' %}">{% icone "chevron-left" %} Mes prises en charge</a>
+</section>
+
+<section class="panel panel-form" style="max-width: 680px;">
+    {% if form.non_field_errors %}
+    <div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div style="margin-bottom: 16px;">
+            <label for="{{ form.patient.id_for_label }}"><strong>{{ form.patient.label }}</strong> *</label>
+            {{ form.patient }}
+            {% if form.patient.errors %}
+            <div class="erreurs" role="alert">{{ form.patient.errors }}</div>
+            {% endif %}
+            <span class="champ-aide" style="display:block;font-size:12px;color:var(--muted);margin-top:4px;">
+                Sélectionnez le bénéficiaire concerné par les soins dans votre foyer.
+            </span>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label for="{{ form.motif.id_for_label }}"><strong>{{ form.motif.label }}</strong> *</label>
+            {{ form.motif }}
+            {% if form.motif.errors %}
+            <div class="erreurs" role="alert">{{ form.motif.errors }}</div>
+            {% endif %}
+            <span class="champ-aide" style="display:block;font-size:12px;color:var(--muted);margin-top:4px;">
+                Décrivez la nature de l'acte ou de l'hospitalisation (motif médical, établissement pressenti, etc.).
+            </span>
+        </div>
+
+        <div class="actions" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+            <button class="button primary" type="submit">{% icone "send" %} Soumettre la demande</button>
+            <a class="button btn" href="{% url 'mes_prises_en_charge_assure' %}">Annuler</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

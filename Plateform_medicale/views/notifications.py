@@ -107,6 +107,11 @@ def marquer_toutes_notifications_lues(request):
 @login_required
 def api_dernieres_notifications(request):
     from django.http import JsonResponse
+    from ..services.retention import verifier_et_executer_auto_purge
+
+    # Déclencher la purge automatique transparente (cycle 30 jours, vérification 24h)
+    verifier_et_executer_auto_purge(jours=30)
+
     notifications = request.user.notifications.all()[:5]
     non_lues = request.user.notifications.filter(lue=False).count()
     data = {

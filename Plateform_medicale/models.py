@@ -461,6 +461,15 @@ class PriseEnCharge(models.Model):
         default="en_attente",
         db_index=True,
     )
+    valide_par = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="prises_en_charge_validees",
+    )
+    date_validation = models.DateTimeField(null=True, blank=True)
+    motif_refus = models.CharField("motif de refus", max_length=255, blank=True)
 
     def __str__(self):
         return f"Prise en charge de {self.patient} - {self.statut}"

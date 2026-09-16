@@ -15,6 +15,7 @@ from django.views.decorators.http import require_POST
 
 from ..forms import (
     AyantDroitForm,
+    DemandePriseEnChargeAssureForm,
     ProfilAssureForm,
     RendezVousAssureForm,
     aligner_patient_vers_user,
@@ -519,6 +520,36 @@ def mes_prises_en_charge_assure(request):
         "statut_choisi": statut,
         "statuts": PriseEnCharge.STATUT_CHOICES,
     })
+
+
+@role_required(User.Role.ASSURE)
+def demander_prise_en_charge_assure(request):
+    """Permet a l assure de soumettre en ligne une demande de prise en charge pour lui ou ses ayants droit."""
+    patient = _patient_principal(request)
+    if patient is None:
+        return redirect("mon_profil_assure")
+
+    if request.method == "POST":
+        form = DemandePriseEnChargeAssureForm(request.POST, assure_patient=patient)
+        if form.is_valid():
+            demande = form.save(commit=False)
+            demande.statut = "en_attente"
+            demande.save()
+            from ..services.notifications import notifier_demande_prise_en_charge
+            notifier_demande_prise_en_charge(demande)
+            messages.success(
+                request,
+                "Votre demande de prise en charge a été enregistrée avec succès. Elle est en cours d'examen par l'administration.",
+            )
+            return redirect("mes_prises_en_charge_assure")
+    else:
+        form = DemandePriseEnChargeAssureForm(assure_patient=patient)
+
+    return render(
+        request,
+        "demander_prise_en_charge.html",
+        {"form": form, "patient": patient},
+    )
 
 
 @role_required(User.Role.ASSURE)

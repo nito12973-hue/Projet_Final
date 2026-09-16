@@ -298,6 +298,88 @@
                 </div>
             </div>
         </section>
+
+        <section class="panel param-carte" id="retention-donnees">
+            <div class="panel-header">
+                <div>
+                    <h2>Cycle de vie et rétention des données (30 jours)</h2>
+                    <p class="subtitle">
+                        Purge automatique et maintenance des données temporaires (> 30 jours / 1 mois) pour optimiser les performances et la base de données.
+                    </p>
+                </div>
+                <span class="badge {% if metriques_retention.total_a_purger > 0 %}en_attente{% else %}validee{% endif %}">
+                    {% if metriques_retention.total_a_purger > 0 %}{{ metriques_retention.total_a_purger }} élément{{ metriques_retention.total_a_purger|pluralize }} éligible{{ metriques_retention.total_a_purger|pluralize }}{% else %}Base optimisée{% endif %}
+                </span>
+            </div>
+            <div class="param-corps">
+                <div class="param-ligne">
+                    <span class="param-txt">
+                        <strong>Règle de rétention automatique</strong>
+                        <span>Les sessions expirées, notifications lues de plus d'un mois et échecs anciens sont purgés.</span>
+                    </span>
+                    <span class="param-fin">
+                        <span class="param-fige">30 jours (automatique)</span>
+                    </span>
+                </div>
+                <div class="param-ligne">
+                    <span class="param-txt">
+                        <strong>Dernière purge exécutée</strong>
+                        <span>Horodatage enregistré de la dernière opération de maintenance.</span>
+                    </span>
+                    <span class="param-fin">
+                        <span class="param-fige">{{ metriques_retention.derniere_purge|default:"Planifiée (cycle 24h)" }}</span>
+                    </span>
+                </div>
+                <div class="param-ligne">
+                    <span class="param-txt">
+                        <strong>Sessions expirées en attente</strong>
+                        <span>{{ metriques_retention.sessions_expirees }} session{{ metriques_retention.sessions_expirees|pluralize }} prête{{ metriques_retention.sessions_expirees|pluralize }} à être effacée{{ metriques_retention.sessions_expirees|pluralize }}.</span>
+                    </span>
+                    <span class="param-fin">
+                        <span class="badge">{{ metriques_retention.sessions_expirees }}</span>
+                    </span>
+                </div>
+                <div class="param-ligne">
+                    <span class="param-txt">
+                        <strong>Notifications lues de plus de 30 jours</strong>
+                        <span>{{ metriques_retention.notifications_anciennes }} notification{{ metriques_retention.notifications_anciennes|pluralize }} archivée{{ metriques_retention.notifications_anciennes|pluralize }}.</span>
+                    </span>
+                    <span class="param-fin">
+                        <span class="badge">{{ metriques_retention.notifications_anciennes }}</span>
+                    </span>
+                </div>
+                <div class="param-ligne">
+                    <span class="param-txt">
+                        <strong>Tentatives de connexion obsolètes</strong>
+                        <span>{{ metriques_retention.tentatives_obsoletes }} tentative{{ metriques_retention.tentatives_obsoletes|pluralize }} ancienne{{ metriques_retention.tentatives_obsoletes|pluralize }}.</span>
+                    </span>
+                    <span class="param-fin">
+                        <span class="badge">{{ metriques_retention.tentatives_obsoletes }}</span>
+                    </span>
+                </div>
+
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1.5rem; justify-content: flex-end;">
+                    <form method="post" action="{% url 'parametres_section' 'securite' %}"
+                          data-confirmation="Voulez-vous lancer immédiatement la purge des sessions et données temporaires de plus de 30 jours ?"
+                          data-confirmation-action="Oui, purger maintenant">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="purger_donnees">
+                        <button type="submit" class="button btn">
+                            {% icone "trash-2" %} Purger les données obsolètes
+                        </button>
+                    </form>
+                    <form method="post" action="{% url 'parametres_section' 'securite' %}"
+                          data-confirmation="Cette action va réinitialiser les comptes et données de test locaux (@santesn.sn). Voulez-vous continuer ?"
+                          data-confirmation-action="Oui, réinitialiser la démo">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="reinitialiser_demo">
+                        <button type="submit" class="button btn btn-secondary">
+                            {% icone "refresh-cw" %} Réinitialiser les données de démo
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
         {% endif %}
 
         <section class="panel param-carte param-sensible">
