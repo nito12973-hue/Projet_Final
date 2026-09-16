@@ -41,9 +41,9 @@
             <div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;">
                 <strong style="color:{% if m.auteur.role == 'ADMIN' %}var(--primary-strong){% else %}var(--titre){% endif %};">
                     {% if m.auteur.role == 'ADMIN' %}
-                    🛡️ Administration SantéSN
+                    Administration SantéSN
                     {% else %}
-                    👤 Vous ({{ m.auteur.get_full_name|default:m.auteur.email }})
+                    Vous ({{ m.auteur.get_full_name|default:m.auteur.email }})
                     {% endif %}
                 </strong>
                 <span style="color:var(--muted);">{{ m.date_envoi|date:"d/m/Y à H:i" }}</span>
@@ -67,13 +67,13 @@
             {% if form.message.errors %}<div class="erreurs" role="alert">{{ form.message.errors }}</div>{% endif %}
         </div>
         <div style="display:flex;justify-content:flex-end;">
-            <button class="button primary" type="submit">Envoyer ma réponse</button>
+            <button class="button primary" type="submit">{% icone "mail" %} Envoyer ma réponse</button>
         </div>
     </form>
 </section>
 {% else %}
-<div style="background:var(--champ-bg);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;color:var(--muted);font-size:13.5px;">
-    🔒 Cette demande a été clôturée le {{ demande.cloture_le|date:"d/m/Y à H:i"|default:"récemment" }}. Les réponses sont désactivées.
+<div style="background:var(--champ-bg);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;color:var(--muted);font-size:13.5px;display:flex;align-items:center;justify-content:center;gap:8px;">
+    {% icone "lock" %} Cette demande a été clôturée le {{ demande.cloture_le|date:"d/m/Y à H:i"|default:"récemment" }}. Les réponses sont désactivées.
 </div>
 {% endif %}
 {% endblock %}
