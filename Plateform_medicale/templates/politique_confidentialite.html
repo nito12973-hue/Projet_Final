@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% load icones %}
+
+{% block title %}Politique de Confidentialité & Données Personnelles{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto; padding: 20px 0 60px;">
+    <div style="margin-bottom: 30px;">
+        <a href="{% url 'landing' %}" class="button btn btn-sm" style="margin-bottom: 16px;">
+            {% icone "chevron-left" %} Retour à l'accueil
+        </a>
+        <h1 style="font-size: 28px; margin-bottom: 8px;">Politique de Confidentialité & Protection des Données</h1>
+        <p class="subtitle">Conformité à la Loi sénégalaise n° 2008-12 relative à la protection des données à caractère personnel et aux standards internationaux de sécurité en santé numérique.</p>
+    </div>
+
+    <div class="avis" style="border-left: 4px solid var(--primary); background: var(--surface); margin-bottom: 28px; padding: 18px 22px;">
+        <div class="avis-titre" style="color: var(--primary-strong); margin-bottom: 6px;">
+            {% icone "shield-check" %} Information Juridique Préalable
+        </div>
+        <p style="margin: 0; font-size: 13.5px; color: var(--muted); line-height: 1.55;">
+            Ce document expose l'architecture de protection des données, les finalités de traitement et les mesures de sécurité mises en œuvre sur la plateforme SantéSN. Il est destiné aux usagers (assurés, médecins, pharmaciens, gestionnaires IPM) et doit faire l'objet d'une validation juridique définitive par le Délégué à la Protection des Données (DPO) de l'établissement gestionnaire conformément aux prescriptions de la <strong>Commission de Protection des Données Personnelles du Sénégal (CDP)</strong>.
+        </p>
+    </div>
+
+    <article class="panel" style="padding: 32px; display: flex; flex-direction: column; gap: 28px; line-height: 1.65; color: var(--text);">
+        <section>
+            <h2 style="font-size: 20px; color: var(--titre); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                {% icone "building" %} 1. Responsable du Traitement
+            </h2>
+            <p>
+                Le traitement des données à caractère personnel et des données médicales est opéré sous la responsabilité institutionnelle de la plateforme <strong>SantéSN</strong>, en coordination avec les Institutions de Prévoyance Maladie (IPM), mutuelles partenaires, établissements de soins conventionnés et officines pharmaceutiques agréées de la République du Sénégal.
+            </p>
+            <p><strong>Contact Protection des Données :</strong> <code>dpo@santesn.sn</code> · Dakar, Sénégal.</p>
+        </section>
+
+        <section>
+            <h2 style="font-size: 20px; color: var(--titre); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                {% icone "database" %} 2. Données Traitées & Origine
+            </h2>
+            <p>La plateforme collecte et traite strictement les données nécessaires à la prise en charge médicale et à la dématérialisation du tiers payant :</p>
+            <ul style="padding-left: 20px; margin-top: 8px; display: flex; flex-direction: column; gap: 6px;">
+                <li><strong>Données d'identification civile :</strong> Nom, prénom, date de naissance, numéro d'identification nationale (NIN), matricule d'assurance, matricule IPM.</li>
+                <li><strong>Coordonnées de contact :</strong> Adresse email, numéro de téléphone portable (notamment pour les notifications sécurisées).</li>
+                <li><strong>Données d'assurance maladie :</strong> Formule de souscription, taux de couverture IPM (ex. 80%), statut de la carte de tiers payant, lien de parenté des ayants droit.</li>
+                <li><strong>Données de santé confidentielles :</strong> Historique des consultations, diagnostics portés par les praticiens, prescriptions médicamenteuses sécurisées, enregistrements de délivrance en pharmacie.</li>
+                <li><strong>Traces techniques d'accès et d'audit :</strong> Horodatage des connexions, adresse IP d'origine, journal des opérations administratives et financières scellé dans <code>JournalActivite</code>.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2 style="font-size: 20px; color: var(--titre); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                {% icone "check" %} 3. Finalités du Traitement & Base Légale
+            </h2>
+            <p>Les données collectées répondent à des finalités sanitaires et médico-administratives explicites :</p>
+            <ul style="padding-left: 20px; margin-top: 8px; display: flex; flex-direction: column; gap: 6px;">
+                <li>Vérification des droits ouverts et application instantanée du mécanisme de tiers payant en officine et cabinet médical.</li>
+                <li>Sécurisation intégrale de la prescription via un QR Code vectoriel unique <code>RX-XXXXXXXXXX</code>, interdisant toute altération ou falsification.</li>
+                <li>Délivrance contrôlée des médicaments en pharmacie et verrouillage informatique empêchant toute double réutilisation.</li>
+                <li>Tenue du dossier patient informatisé (DPI) par le corps soignant dans le respect du secret médical.</li>
+                <li>Gestion comptable des règlements, ventilation de la part IPM versus ticket modérateur à la charge du patient, et émission de reçus légaux.</li>
+            </ul>
+            <p style="margin-top: 10px;">
+                <strong>Bases légales :</strong> Respect des obligations légales du Code de la Santé publique sénégalais, exécution des conventions de tiers payant IPM, et consentement explicite recueilli lors de l'enrôlement de l'assuré.
+            </p>
+        </section>
+
+        <section>
+            <h2 style="font-size: 20px; color: var(--titre); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                {% icone "lock" %} 4. Sécurité & Confidentialité Technique
+            </h2>
+            <p>
+                Conformément aux directives de l'Agence de l'Informatique de l'État (ADIE / Sénégal Numérique) et aux exigences de la CDP, des mesures techniques rigoureuses protègent l'intégrité des informations :
+            </p>
+            <ul style="padding-left: 20px; margin-top: 8px; display: flex; flex-direction: column; gap: 6px;">
+                <li><strong>Chiffrement de bout en bout :</strong> Flux réseau protégés en HTTPS avec protocole TLS 1.3 forcé et en-têtes HTTP de sécurité renforcés (HSTS, X-Content-Type-Options, X-Frame-Options DENY).</li>
+                <li><strong>Isolation des rôles (RBAC) :</strong> Étanchéité absolue entre profils. L'administrateur système ne dispose d'aucun accès aux diagnostics médicaux rédigés par les médecins.</li>
+                <li><strong>Protection cryptographique des mots de passe :</strong> Hachage robuste avec dérivation PBKDF2 et sel cryptographique individuel.</li>
+                <li><strong>Verrouillage anti-brute-force :</strong> Verrouillage temporaire de tout compte après 5 tentatives consécutives infructueuses de connexion.</li>
+                <li><strong>Traçabilité inaltérable :</strong> Scellement systématique de chaque action sensible dans un journal d'activité non modifiable.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2 style="font-size: 20px; color: var(--titre); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                {% icone "sliders" %} 5. Politique Relative aux Cookies
+            </h2>
+            <p>
+                SantéSN applique une politique stricte de respect de la vie privée :
+            </p>
+            <ul style="padding-left: 20px; margin-top: 8px; display: flex; flex-direction: column; gap: 6px;">
+                <li><strong>Cookies exclusivement techniques :</strong> Seuls deux cookies indispensables sont générés lors de votre navigation : <code>sessionid</code> (maintien de votre session sécurisée pendant 8 heures, en mode <code>HttpOnly</code> et <code>SameSite=Lax</code>) et <code>csrftoken</code> (protection cryptographique contre les attaques CSRF).</li>
+                <li><strong>Zéro traceur publicitaire :</strong> Aucun cookie tiers, aucun pixel de suivi commercial (Google Ads, Meta Pixel, etc.) ni script de profilage n'est injecté sur la plateforme.</li>
+                <li><strong>Exemption de consentement :</strong> En vertu des directives internationales et de la CDP, ces cookies purement fonctionnels ne nécessitent aucun bandeau d'acceptation intrusif.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2 style="font-size: 20px; color: var(--titre); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                {% icone "clock-history" %} 6. Durées de Conservation
+            </h2>
+            <p>
+                Les dossiers médicaux et prescriptions sont archivés conformément aux délais légaux applicables aux archives hospitalières et de santé publique (10 ans minimum). Les journaux de connexion et d'audit technique sont conservés pour une durée glissante de 12 mois.
+            </p>
+        </section>
+
+        <section>
+            <h2 style="font-size: 20px; color: var(--titre); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                {% icone "users" %} 7. Vos Droits & Voies de Recours
+            </h2>
+            <p>
+                Chaque patient et professionnel de santé dispose de droits consacrés par la Loi 2008-12 :
+            </p>
+            <ul style="padding-left: 20px; margin-top: 8px; display: flex; flex-direction: column; gap: 6px;">
+                <li><strong>Droit d'accès et de rectification :</strong> Consultation de l'ensemble de votre dossier depuis votre espace personnel ou demande de correction de données inexactes.</li>
+                <li><strong>Droit à la limitation du traitement et d'opposition :</strong> Dans les conditions prévues par la législation médicale en vigueur.</li>
+                <li><strong>Exercice des droits :</strong> Par courrier électronique adressé à <code>support@santesn.sn</code> ou auprès du DPO de votre IPM.</li>
+                <li><strong>Recours auprès de l'autorité de contrôle :</strong> Tout usager s'estimant lésé peut introduire une réclamation officielle auprès de la <strong>Commission de Protection des Données Personnelles du Sénégal (CDP)</strong> : <em>www.cdp.sn</em>.</li>
+            </ul>
+        </section>
+    </article>
+</div>
+{% endblock %}

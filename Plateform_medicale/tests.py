@@ -9647,3 +9647,52 @@ class AssistantEtSupportTests(TestCase):
             ).exists()
         )
 
+
+class PreLaunchAuditAndLegalPagesTests(TestCase):
+    """Vérifications de conformité pré-lancement : pages légales, robots.txt, sitemap et uploads."""
+
+    def test_politique_confidentialite_accessible_publiquement(self):
+        resp = self.client.get(reverse('politique_confidentialite'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Politique de Confidentialité")
+        self.assertContains(resp, "Loi sénégalaise n° 2008-12")
+        self.assertContains(resp, "Commission de Protection des Données Personnelles")
+
+    def test_cgu_accessible_publiquement(self):
+        resp = self.client.get(reverse('cgu'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Conditions Générales d'Utilisation")
+        self.assertContains(resp, "RX-")
+
+    def test_robots_txt_protege_les_donnees_de_sante(self):
+        resp = self.client.get(reverse('robots_txt'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp['Content-Type'], 'text/plain; charset=utf-8')
+        contenu = resp.content.decode('utf-8')
+        self.assertIn("Disallow: /admin/", contenu)
+        self.assertIn("Disallow: /medecin/", contenu)
+        self.assertIn("Disallow: /assure/", contenu)
+        self.assertIn("Disallow: /pharmacien/", contenu)
+        self.assertIn("Disallow: /paiements/", contenu)
+        self.assertIn("Allow: /politique-confidentialite/$", contenu)
+        self.assertIn("Allow: /cgu/$", contenu)
+        self.assertIn("Sitemap:", contenu)
+
+    def test_sitemap_xml_expose_les_pages_legales(self):
+        resp = self.client.get(reverse('sitemap_xml'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("application/xml", resp['Content-Type'])
+        contenu = resp.content.decode('utf-8')
+        self.assertIn("<urlset", contenu)
+        self.assertIn("/politique-confidentialite/", contenu)
+        self.assertIn("/cgu/", contenu)
+
+    def test_import_excel_rejette_fichier_non_xlsx(self):
+        admin = creer_utilisateur(User.Role.ADMIN, 'admin-audit@santesn.sn')
+        self.client.login(username='admin-audit@santesn.sn', password=PASSWORD)
+        fichier_invalide = SimpleUploadedFile('test.pdf', b'%PDF-1.4 test content', content_type='application/pdf')
+        resp = self.client.post(reverse('importer_utilisateurs_excel'), {'fichier': fichier_invalide})
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Format non pris en charge")
+
+
