@@ -44,8 +44,22 @@ _allowed_hosts_config = config(
     cast=Csv(),
 )
 ALLOWED_HOSTS = list(_allowed_hosts_config)
-if 'testserver' not in ALLOWED_HOSTS:
-    ALLOWED_HOSTS.append('testserver')
+# Garantir la présence des hôtes de production Vercel et de la plateforme
+for host in [
+    '.vercel.app',
+    'projet-final-bice.vercel.app',
+    'projet-final.vercel.app',
+    'santesn.sn',
+    'www.santesn.sn',
+    '.santesn.sn',
+    '.onrender.com',
+    '.railway.app',
+    'localhost',
+    '127.0.0.1',
+    'testserver',
+]:
+    if host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(host)
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True
@@ -56,6 +70,7 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:8000',
     'https://*.vercel.app',
     'http://*.vercel.app',
+    'https://projet-final-bice.vercel.app',
     'https://santesn.sn',
     'http://santesn.sn',
     'https://www.santesn.sn',
