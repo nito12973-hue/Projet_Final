@@ -11,11 +11,11 @@ from openpyxl.utils import get_column_letter
 from reportlab.graphics.charts.barcharts import VerticalBarChart
 from reportlab.graphics.charts.legends import Legend
 from reportlab.graphics.charts.piecharts import Pie
-from reportlab.graphics.shapes import Drawing, Line, Rect, String
+from reportlab.graphics.shapes import Drawing, String
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
-from reportlab.platypus import HRFlowable, KeepTogether, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from django.db.models import Case, Count, IntegerField, Q, Sum, Value, When
 from django.db.models.functions import TruncDate, TruncMonth, TruncYear
@@ -26,7 +26,6 @@ from django.utils import timezone
 from ..models import (
     Consultation,
     Delivrance,
-    JournalActivite,
     Medecin,
     Ordonnance,
     Paiement,
@@ -42,8 +41,6 @@ from .utils import (
     MOIS_ABREGES,
     admin_required,
     compteurs_files_attente,
-    _paginer,
-    _trier,
 )
 
 

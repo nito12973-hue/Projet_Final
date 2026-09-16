@@ -7,13 +7,11 @@ et la gestion complète des tickets de support côté administrateur.
 """
 
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from django.views.decorators.http import require_POST
 
 from ..forms import DemandeSupportForm, ReponseSupportForm
 from ..models import DemandeSupport, JournalActivite, MessageSupport, Notification, User

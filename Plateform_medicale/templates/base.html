@@ -240,6 +240,27 @@
             grid-template-columns: 84px minmax(0, 1fr);
         }
 
+        /* Mode sans barre laterale (pages publiques sans menu, utilisateur non connecte) */
+        .shell.shell--sans-sidebar,
+        body.sans-sidebar .shell {
+            display: block;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 16px;
+        }
+
+        .shell.shell--sans-sidebar .contenu,
+        body.sans-sidebar .shell .contenu {
+            width: 100%;
+        }
+
+        .shell.shell--sans-sidebar .contenu main,
+        body.sans-sidebar .shell .contenu main {
+            width: min(1120px, 100%);
+            margin: 0 auto;
+            padding: 24px 0 64px;
+        }
+
         /* Selecteur d'ID (#barre-laterale), pas l'element aside seul : 4
            templates (dashboard.html, rapports.html, voir_ordonnance.html,
            scanner_ordonnance.html) ont un second <aside class="governance-card">
@@ -5526,8 +5547,11 @@
 </head>
 <body>
     <a href="#contenu-principal" class="lien-evitement">Aller au contenu</a>
+    {% if user.is_authenticated and current_role and not sans_sidebar %}
     <div id="fond-sidebar" class="sidebar-overlay"></div>
-    <div class="shell">
+    {% endif %}
+    <div class="shell{% if not user.is_authenticated or not current_role or sans_sidebar %} shell--sans-sidebar{% endif %}">
+        {% if user.is_authenticated and current_role and not sans_sidebar %}
         <aside id="barre-laterale">
             <button type="button" id="bouton-fermer-menu-mobile" class="sidebar-toggle" aria-label="Fermer le menu"
                     style="position:absolute;top:14px;right:14px;">
@@ -5538,14 +5562,11 @@
                     {% logo_marque taille=36 fond="sombre" %}
                     <span class="brand-texte">Santé<span style="color: var(--primary-light);">SN</span></span>
                 </a>
-                {% if user.is_authenticated %}
                 <button type="button" id="btn-reduire-menu" class="btn-reduire" aria-pressed="false" aria-label="Réduire le menu" aria-controls="barre-laterale">
                     {% icone "chevron-left" %}
                 </button>
-                {% endif %}
             </div>
 
-            {% if user.is_authenticated %}
             <div class="user-card">
                 <strong>{{ user.get_full_name|default:user.email }}</strong>
                 <span>{{ current_role_label }}</span>
@@ -5624,13 +5645,12 @@
                 {% endwith %}
                 {% endif %}
             </nav>
-
-            {% endif %}
         </aside>
+        {% endif %}
 
         <section class="contenu">
             <main id="contenu-principal">
-                {% if user.is_authenticated %}
+                {% if user.is_authenticated and current_role and not sans_sidebar %}
                 {% comment %}
                 Barre superieure : le bouton du tiroir mobile y est deplace
                 (un seul bouton dans le DOM, meme gestionnaire JS).
@@ -5743,6 +5763,17 @@
                                 </form>
                             </div>
                         </details>
+                    </div>
+                </header>
+                {% else %}
+                <header class="public-topbar" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; margin-bottom: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                    <a class="brand" href="{% url 'landing' %}" style="display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: var(--titre); font-weight: 700; font-size: 18px;">
+                        {% logo_marque taille=32 fond="clair" %}
+                        <span class="brand-texte">Santé<span style="color: var(--primary);">SN</span></span>
+                    </a>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <a href="{% url 'landing' %}" class="button btn btn-sm btn-outline" style="text-decoration: none;">Accueil</a>
+                        <a href="{% url 'login' %}" class="button btn btn-sm btn-primary" style="text-decoration: none;">Connexion</a>
                     </div>
                 </header>
                 {% endif %}

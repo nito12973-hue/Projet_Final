@@ -6,7 +6,6 @@ ordonnances et profil.
 import datetime
 
 from django.contrib import messages
-from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Case, IntegerField, Q, Value, When
 from django.http import JsonResponse
@@ -23,7 +22,6 @@ from ..forms import (
 from ..models import (
     Consultation,
     JournalActivite,
-    Medecin,
     Ordonnance,
     Paiement,
     Patient,
@@ -31,7 +29,6 @@ from ..models import (
     User,
 )
 from .utils import _filtrer_rendez_vous, _paginer, journaliser, role_required
-from .dashboard import _consultations_par_jour
 
 
 def _medecin_courant(request):

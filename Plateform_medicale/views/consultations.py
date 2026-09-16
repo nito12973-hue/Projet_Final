@@ -2,7 +2,7 @@ import datetime
 from django.db.models import Q
 from django.shortcuts import render
 
-from ..models import Consultation, JournalActivite, Ordonnance, PriseEnCharge
+from ..models import Consultation, JournalActivite
 from .utils import _paginer, _trier, admin_required
 
 

@@ -19,8 +19,6 @@ from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
-from django.contrib import messages
-
 from ..forms import (
     LoginForm,
     MonCompteForm,
@@ -33,7 +31,7 @@ from ..models import (
     TentativeConnexion,
     User,
 )
-from .utils import admin_required, journaliser, role_required
+from .utils import admin_required, journaliser
 
 
 # ---------------------------------------------------------------------------

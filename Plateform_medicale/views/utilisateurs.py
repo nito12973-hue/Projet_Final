@@ -21,7 +21,6 @@ from django.views.decorators.http import require_POST
 from ..forms import (
     UtilisateurCreationForm,
     UtilisateurModificationForm,
-    generer_mot_de_passe,
     lier_fiche_medecin,
     lier_fiche_pharmacien,
 )
