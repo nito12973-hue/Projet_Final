@@ -36,10 +36,13 @@
     {% if form.email.errors %}<div class="erreurs" role="alert">{{ form.email.errors }}</div>{% endif %}
 
     <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
-    <div style="position: relative;">
+    <div style="position: relative; display: flex; align-items: center;">
         {{ form.password }}
-        <button type="button" id="btn-toggle-mdp" onclick="toggleMdp()" style="position: absolute; right: 12px; top: 12px; background: none; border: none; cursor: pointer; color: var(--muted); font-size: 16px; padding: 0;" title="Afficher/masquer">
-            👁️
+        <button type="button" id="btn-toggle-mdp" onclick="toggleMdp()" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; color: var(--muted); padding: 4px; display: inline-flex; align-items: center;" title="Afficher/masquer" aria-label="Afficher ou masquer le mot de passe">
+            <svg id="icone-oeil" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/>
+                <circle cx="12" cy="12" r="2.5"/>
+            </svg>
         </button>
     </div>
     {% if form.password.errors %}<div class="erreurs" role="alert">{{ form.password.errors }}</div>{% endif %}
@@ -50,14 +53,14 @@
 <script>
 function toggleMdp() {
     var passInput = document.getElementById("{{ form.password.id_for_label }}");
-    var btn = document.getElementById("btn-toggle-mdp");
-    if (passInput) {
+    var svg = document.getElementById("icone-oeil");
+    if (passInput && svg) {
         if (passInput.type === "password") {
             passInput.type = "text";
-            btn.textContent = "🙈";
+            svg.innerHTML = '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="2.5"/><line x1="3" y1="3" x2="21" y2="21"/>';
         } else {
             passInput.type = "password";
-            btn.textContent = "👁️";
+            svg.innerHTML = '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="2.5"/>';
         }
     }
 }

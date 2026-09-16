@@ -34,9 +34,9 @@
                 <div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;margin-bottom:6px;">
                     <strong style="color:{% if m.auteur.role == 'ADMIN' %}var(--primary-strong){% else %}var(--titre){% endif %};">
                         {% if m.auteur.role == 'ADMIN' %}
-                        🛡️ Administration SantéSN ({{ m.auteur.get_full_name|default:m.auteur.email }})
+                        Administration SantéSN ({{ m.auteur.get_full_name|default:m.auteur.email }})
                         {% else %}
-                        👤 Assuré : {{ m.auteur.get_full_name|default:m.auteur.email }}
+                        Assuré : {{ m.auteur.get_full_name|default:m.auteur.email }}
                         {% endif %}
                     </strong>
                     <span style="color:var(--muted);">{{ m.date_envoi|date:"d/m/Y à H:i" }}</span>
