@@ -54,7 +54,7 @@
                         <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;">
                             {% for act in msg.actions %}
                             <a href="{{ act.url }}" class="button {% if act.style == 'primary' %}primary{% else %}btn btn-sm{% endif %}" style="font-size:13px;padding:6px 14px;">
-                                {{ act.libelle }} &rarr;
+                                {% icone "chevron-right" %} {{ act.libelle }}
                             </a>
                             {% endfor %}
                         </div>
@@ -195,7 +195,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     actionsHtml = '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;">';
                     rep.actions.forEach(function (act) {
                         var cls = act.style === 'primary' ? 'primary' : 'btn btn-sm';
-                        actionsHtml += '<a href="' + act.url + '" class="button ' + cls + '" style="font-size:13px;padding:6px 14px;">' + escapeHtml(act.libelle) + ' &rarr;</a>';
+                        actionsHtml += '<a href="' + act.url + '" class="button ' + cls + '" style="font-size:13px;padding:6px 14px;display:inline-flex;align-items:center;gap:6px;">'
+                            + '<svg class="icone-nav" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg> '
+                            + escapeHtml(act.libelle) + '</a>';
                     });
                     actionsHtml += '</div>';
                 }
