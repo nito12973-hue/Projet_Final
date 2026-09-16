@@ -120,8 +120,8 @@
             <a href="{% url 'ajouter_rendez_vous_assure' %}" style="color:var(--primary);font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
                 {% icone "plus-circle" %} Prendre un rendez-vous
             </a>
-            <a href="{% url 'mes_rendez_vous_assure' %}" style="color:var(--muted);text-decoration:none;">
-                Historique des RDV &rarr;
+            <a href="{% url 'mes_rendez_vous_assure' %}" style="color:var(--muted);text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
+                {% icone "calendar" %} Historique des RDV
             </a>
         </div>
     </div>
@@ -135,7 +135,7 @@
             <p class="subtitle" style="margin:2px 0 0;">Ordonnances récentes et prises en charge</p>
         </div>
         <a href="{% url 'mon_historique_assure' %}" class="button btn btn-sm">
-            Historique complet &rarr;
+            {% icone "clock-history" %} Historique complet
         </a>
     </div>
 
