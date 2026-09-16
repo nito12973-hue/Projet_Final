@@ -9721,5 +9721,13 @@ class PreLaunchAuditAndLegalPagesTests(TestCase):
         self.assertNotIn('class="hero-visuel"', contenu)
         self.assertNotIn("Rendez-vous du jour", contenu)
 
+    def test_champ_recherche_css_icone_et_padding(self):
+        with open('Plateform_medicale/templates/base.html', 'r', encoding='utf-8') as f:
+            base_html = f.read()
+        self.assertIn("form.filtres .champ-recherche input", base_html)
+        self.assertIn("padding-left: 44px !important;", base_html)
+        self.assertNotIn("form.filtres input,\n        form.filtres select {\n            margin-bottom: 0 !important;\n            height: 44px !important;\n            min-height: 44px !important;\n            max-height: 44px !important;\n            padding: 0 14px !important;", base_html)
+
+
 
 

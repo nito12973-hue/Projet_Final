@@ -1259,7 +1259,7 @@
             height: 44px !important;
             min-height: 44px !important;
             max-height: 44px !important;
-            padding: 0 14px !important;
+            padding: 0 14px;
             font-size: 14px !important;
             border-radius: 10px !important;
             box-sizing: border-box !important;
@@ -1296,7 +1296,7 @@
             white-space: nowrap !important;
         }
 
-        /* Champ de recherche avec icône toujours parfaitement centrée verticalement */
+        /* Champ de recherche avec icone toujours parfaitement centree verticalement et sans chevauchement */
         .champ-recherche {
             position: relative;
             display: flex;
@@ -1307,25 +1307,31 @@
         .champ-recherche .icone-nav,
         .champ-recherche > svg {
             position: absolute;
-            left: 14px;
+            left: 14px !important;
             top: 50% !important;
             transform: translateY(-50%) !important;
-            width: 18px;
-            height: 18px;
-            color: var(--muted);
-            pointer-events: none;
+            width: 18px !important;
+            height: 18px !important;
+            color: var(--muted) !important;
+            pointer-events: none !important;
+            z-index: 2 !important;
             transition: color 0.15s ease;
         }
 
-        .champ-recherche input {
+        /* Haute specificite CSS pour garantir un degagement parfait de l icone loupe (14px + 18px + 12px = 44px) */
+        form.filtres .champ-recherche input,
+        form .champ-recherche input,
+        .champ-recherche input,
+        .champ-recherche > input {
             padding-left: 44px !important;
-            width: 100%;
-            box-sizing: border-box;
+            padding-right: 14px !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
         }
 
         .champ-recherche:focus-within .icone-nav,
         .champ-recherche:focus-within > svg {
-            color: var(--primary);
+            color: var(--primary) !important;
         }
 
         form.action-ligne {
