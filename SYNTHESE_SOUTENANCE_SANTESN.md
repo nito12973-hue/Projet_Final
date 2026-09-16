@@ -1,9 +1,9 @@
-# 🎓 GUIDE DE SYNTHÈSE & OVERVIEW TECHNIQUE — SANTÉSN
+# GUIDE DE SYNTHÈSE & OVERVIEW TECHNIQUE — SANTÉSN
 **Plateforme de Dématérialisation du Tiers Payant et de l'Ordonnance Médicale au Sénégal**
 
 ---
 
-## 📊 1. Fiche Technique Globale & Chiffres Clés
+## 1. Fiche Technique Globale & Chiffres Clés
 
 | Composant / Métrique | Technologie / Valeur | Rôle & Justification Métier |
 | :--- | :--- | :--- |
@@ -17,7 +17,7 @@
 
 ---
 
-## ⚡ 2. Capacité de Charge & Multi-Utilisateurs
+## 2. Capacité de Charge & Multi-Utilisateurs
 
 * **Palier Actuel Neon Cloud (Free Tier) :** **100 à 300 utilisateurs simultanés** (jusqu'à 10 000 requêtes/jour sans aucun ralentissement).
 * **Palier Neon Pro / Scale (Autoscaling) :** **5 000 à 20 000 requêtes/seconde** pour une couverture nationale complète.
@@ -28,7 +28,7 @@
 
 ---
 
-## 📁 3. Arborescence du Projet & Rôle des Fichiers
+## 3. Arborescence du Projet & Rôle des Fichiers
 
 | Dossier / Fichier | Contenu & Responsabilité |
 | :--- | :--- |
@@ -41,11 +41,29 @@
 | **Plateform_medicale/views/assure_espace.py** | Carte numérique avec QR Code vectoriel SVG, ayants droit, rendez-vous, GPS |
 | **Plateform_medicale/views/paiements.py** | Encaissements, calcul automatique de la part IPM vs Ticket modérateur, reçu A5 |
 | **Plateform_medicale/templates/** | 84 gabarits HTML avec style responsive mobile, thème sombre et impression print |
-| **seed_demo.py** | Commande d'initialisation automatique des comptes et données de test démo |
+| **Plateform_medicale/management/commands/seed_demo.py** | Commande d'initialisation automatique des comptes et données de test démo |
 
 ---
 
-## 🔄 4. Le Parcours Médical Étape par Étape
+## 4. Comptes de Test & Démonstration Locale
+
+Pour tester la plateforme ou faire une démonstration complète en soutenance, initialisez les comptes de test via :
+```bash
+python manage.py seed_demo
+```
+
+Tous les comptes utilisent le mot de passe unifié : `Passer123!`
+
+| Rôle | Email d'accès | Mot de passe | Profil & Données de démonstration associées |
+| :--- | :--- | :--- | :--- |
+| **Administrateur** | `admin@santesn.sn` | `Passer123!` | Superuser complet : KPIs financiers, validation IPM, gestion utilisateurs, journal d'activité. |
+| **Médecin** | `medecin@santesn.sn` | `Passer123!` | Dr. Ibrahima Ndiaye (Cardiologie - Hôpital Principal) : agenda, DPI, prescriptions QR Code. |
+| **Pharmacien** | `pharmacien@santesn.sn` | `Passer123!` | Awa Sow (Grande Pharmacie Dakaroise) : scan QR Code, contrôle authenticité, délivrance. |
+| **Assuré** | `assure@santesn.sn` | `Passer123!` | Moussa Diop (Plan IPM 80%) : carte numérique QR SVG, ayants droit, RDV, géolocalisation. |
+
+---
+
+## 5. Le Parcours Médical Étape par Étape
 
 1. **Adhésion & Carte Numérique (Admin/Assuré) :** Création du contrat IPM (ex: 80%), émission de la carte avec QR code vectoriel SVG et rattachement des ayants droit.
 2. **Accord Préalable (Assuré/Admin) :** Dépôt de la demande de prise en charge et validation instantanée par l'IPM.
@@ -56,7 +74,7 @@
 
 ---
 
-## 🌐 5. Guide d'Intégration de Neon PostgreSQL (Les 5 Étapes)
+## 6. Guide d'Intégration de Neon PostgreSQL (Les 5 Étapes)
 
 * **Étape 1 :** Récupération de l'URI Cloud sécurisée dans la console Neon (avec pooler AWS et `sslmode=require`).
 * **Étape 2 :** Configuration du fichier `.env` à la racine du projet avec `DATABASE_URL`.
@@ -66,7 +84,7 @@
 
 ---
 
-## 🎯 6. Les Questions Clés du Jury & Vos Réponses
+## 7. Les Questions Clés du Jury & Vos Réponses
 
 | Question Probable du Jury | Votre Réponse Recommandée |
 | :--- | :--- |

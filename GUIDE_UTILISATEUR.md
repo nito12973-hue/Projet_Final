@@ -8,6 +8,7 @@ Ce guide explique comment utiliser la plateforme SantéSN au quotidien, écran p
 ## Sommaire
 
 - [Se connecter](#se-connecter)
+- [Comptes de démonstration & tests locaux](#comptes-de-démonstration--tests-locaux)
 - [Fonctions communes à tous les rôles](#fonctions-communes-à-tous-les-rôles)
 - [Administrateur](#administrateur)
 - [Assuré](#assuré)
@@ -33,6 +34,23 @@ Si l'application vient d'être installée et qu'aucun administrateur n'existe
 encore, un assistant de configuration guide la création du tout premier
 compte admin — cet écran ne réapparaît plus une fois un admin créé.
 
+## Comptes de démonstration & tests locaux
+
+Pour tester immédiatement les 4 espaces ou préparer une soutenance, une commande dédiée initialise les comptes et jeux d'essai :
+
+```bash
+python manage.py seed_demo
+```
+
+Tous les comptes de démonstration utilisent le mot de passe unifié : `Passer123!`
+
+| Rôle | Email | Mot de passe | Description de l'espace & données incluses |
+| :--- | :--- | :--- | :--- |
+| **Administrateur** | `admin@santesn.sn` | `Passer123!` | Superuser complet : KPIs financiers, validation IPM, gestion utilisateurs, journal d'activité. |
+| **Médecin** | `medecin@santesn.sn` | `Passer123!` | Dr. Ibrahima Ndiaye (Cardiologue, Hôpital Principal) : agenda, DPI, prescriptions QR Code. |
+| **Pharmacien** | `pharmacien@santesn.sn` | `Passer123!` | Awa Sow (Grande Pharmacie Dakaroise) : scanner QR Code ordonnance, délivrance. |
+| **Assuré** | `assure@santesn.sn` | `Passer123!` | Moussa Diop (Plan IPM 80%) : carte numérique QR SVG, ayants droit, RDV, géolocalisation. |
+
 ## Fonctions communes à tous les rôles
 
 Ces trois éléments sont accessibles depuis le menu latéral, quel que soit
@@ -46,7 +64,7 @@ votre rôle :
 - **Réduire le menu** (desktop uniquement, chevron en haut du menu) : bascule
   le menu latéral en mode icônes seules pour gagner de la place à l'écran ;
   votre préférence est mémorisée d'une visite à l'autre. Sur mobile, le menu
-  s'ouvre en tiroir via l'icône ☰.
+  s'ouvre en tiroir via l'icône de menu (hamburger).
 
 ## Administrateur
 
