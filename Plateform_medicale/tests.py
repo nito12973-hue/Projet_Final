@@ -9695,4 +9695,31 @@ class PreLaunchAuditAndLegalPagesTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "Format non pris en charge")
 
+    def test_page_publique_masque_barre_laterale_vide(self):
+        resp = self.client.get(reverse('cgu'))
+        self.assertEqual(resp.status_code, 200)
+        contenu = resp.content.decode('utf-8')
+        self.assertNotIn('id="barre-laterale"', contenu)
+        self.assertIn('class="shell shell--sans-sidebar"', contenu)
+        self.assertIn("public-topbar", contenu)
+
+    def test_page_authentifiee_affiche_barre_laterale(self):
+        admin = creer_utilisateur(User.Role.ADMIN, 'admin-nav@santesn.sn')
+        self.client.force_login(admin)
+        resp = self.client.get(reverse('dashboard'))
+        self.assertEqual(resp.status_code, 200)
+        contenu = resp.content.decode('utf-8')
+        self.assertIn('id="barre-laterale"', contenu)
+        self.assertNotIn('class="shell shell--sans-sidebar"', contenu)
+
+    def test_landing_page_hero_institutionnel_sans_visuel_ia(self):
+        resp = self.client.get(reverse('landing'))
+        self.assertEqual(resp.status_code, 200)
+        contenu = resp.content.decode('utf-8')
+        self.assertIn("hero-centre", contenu)
+        self.assertIn("pilule-institutionnelle", contenu)
+        self.assertNotIn('class="hero-visuel"', contenu)
+        self.assertNotIn("Rendez-vous du jour", contenu)
+
+
 
