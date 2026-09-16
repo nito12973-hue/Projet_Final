@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 
-from ..forms import MedecinForm, generer_mot_de_passe, lier_fiche_medecin
+from ..forms import MedecinForm, generer_mot_de_passe
 from ..models import JournalActivite, Medecin, Ordonnance, Paiement, User
 from .utils import _avertissement_cascade, _paginer, _trier, admin_required, journaliser
 
