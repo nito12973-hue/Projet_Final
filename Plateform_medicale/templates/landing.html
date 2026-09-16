@@ -275,20 +275,46 @@
             50%      { transform: scale(1.18); opacity: 1; }
         }
 
-        .hero-grille {
-            display: grid;
-            grid-template-columns: 1.1fr 0.9fr;
-            gap: 48px;
+        .hero-centre {
+            max-width: 860px;
+            margin: 0 auto;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
             align-items: center;
+        }
+
+        .pilule-institutionnelle {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(14, 124, 134, 0.08);
+            border: 1px solid rgba(14, 124, 134, 0.22);
+            padding: 7px 18px;
+            border-radius: 999px;
+            margin-bottom: 24px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--primary-strong);
+            letter-spacing: 0.2px;
+            animation: entree 0.6s ease-out both;
+        }
+
+        .pastille-point {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary);
+            box-shadow: 0 0 0 3px rgba(14, 124, 134, 0.25);
         }
 
         .hero h1 {
             font-family: 'Manrope', 'Public Sans', 'Segoe UI', Arial, sans-serif;
-            font-size: clamp(32px, 4.6vw, 52px);
+            font-size: clamp(34px, 5vw, 54px);
             font-weight: 800;
-            line-height: 1.14;
+            line-height: 1.15;
             color: #0b1220;
-            margin-bottom: 18px;
+            margin-bottom: 20px;
             animation: entree 0.7s ease-out both;
         }
 
@@ -302,16 +328,23 @@
         .hero .slogan {
             font-size: 19px;
             color: var(--muted);
-            max-width: 520px;
-            margin-bottom: 30px;
+            max-width: 680px;
+            margin: 0 auto 34px;
+            line-height: 1.65;
             animation: entree 0.7s ease-out 0.12s both;
         }
 
         .hero .cta {
             display: flex;
             flex-wrap: wrap;
+            justify-content: center;
             gap: 14px;
             animation: entree 0.7s ease-out 0.24s both;
+        }
+
+        .hero .badges-confiance {
+            justify-content: center;
+            margin-top: 36px;
         }
 
         @keyframes entree {
@@ -1279,13 +1312,17 @@
         <span class="croix c3" aria-hidden="true"></span>
         <span class="croix c4" aria-hidden="true"></span>
 
-        <div class="conteneur hero-grille">
-            <div>
+        <div class="conteneur">
+            <div class="hero-centre">
+                <div class="pilule-institutionnelle">
+                    <span class="pastille-point"></span>
+                    Portail Officiel • Dématérialisation du Tiers Payant & Ordonnance Médicale au Sénégal
+                </div>
                 <h1>La santé, <span class="accent">connectée</span><br>— du premier clic au remboursement.</h1>
                 <p class="slogan">
-                    SantéSN réunit rendez-vous, consultations, ordonnances sécurisées par
-                    QR Code et remboursement d'assurance dans un seul espace — pensé pour
-                    les assurés, les médecins et les pharmacies du Sénégal.
+                    SantéSN réunit rendez-vous, consultations médicales, ordonnances sécurisées par
+                    QR Code et prise en charge d'assurance dans un écosystème numérique unifié — pensé pour
+                    les assurés, les médecins et les officines de pharmacie du Sénégal.
                 </p>
                 <div class="cta">
                     <a class="btn btn-plein" href="{% url 'login' %}">Accéder à mon espace</a>
@@ -1293,49 +1330,8 @@
                 </div>
                 <div class="badges-confiance">
                     <span class="badge-confiance">{% icone "shield-check" %} Ordonnances infalsifiables</span>
-                    <span class="badge-confiance">{% icone "lock" %} Données sécurisées</span>
-                    <span class="badge-confiance">{% icone "zap" %} Suivi en temps réel</span>
-                </div>
-            </div>
-
-            <div class="hero-visuel" aria-hidden="true">
-                <span class="forme-organique forme-1"></span>
-                <span class="forme-organique forme-2"></span>
-
-                <div class="carte-demo" style="width: 100%; max-width: 440px; position: relative; z-index: 1;">
-                    <div class="entete-carte">
-                        <span class="pastille">{% icone "stethoscope" %}</span>
-                        <div>
-                            <h3>Rendez-vous du jour</h3>
-                            <span class="sous">Dr Ndiaye — Cardiologie (Dakar)</span>
-                        </div>
-                    </div>
-                    <div class="ligne-rdv">
-                        <span class="heure">08h30</span>
-                        <div>
-                            <div class="nom">Moussa Diop</div>
-                            <div class="detail">IPM Salarié · Couverture 80%</div>
-                        </div>
-                        <span class="etiquette">Confirmé</span>
-                    </div>
-                    <div class="ligne-rdv">
-                        <span class="heure">09h15</span>
-                        <div>
-                            <div class="nom">Fatou Diop</div>
-                            <div class="detail">Ayant droit · Épouse</div>
-                        </div>
-                        <span class="etiquette">Confirmé</span>
-                    </div>
-                    <div class="mini-stats">
-                        <div class="mini-stat">
-                            <span class="mini-stat-icon">{% icone "shield-check" %}</span>
-                            <div><strong>100%</strong><span>Tiers Payant</span></div>
-                        </div>
-                        <div class="mini-stat">
-                            <span class="mini-stat-icon">{% icone "qr-scan" %}</span>
-                            <div><strong>Sécurisé</strong><span>QR Code</span></div>
-                        </div>
-                    </div>
+                    <span class="badge-confiance">{% icone "lock" %} Données de santé protégées (CDP)</span>
+                    <span class="badge-confiance">{% icone "zap" %} Tiers payant automatisé</span>
                 </div>
             </div>
         </div>
