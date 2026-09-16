@@ -33,6 +33,7 @@ Thumbs.db
 .worktrees/
 .superpowers/
 .claude/
+.kilo/
 
 # Logs applicatifs
 logs/*.log

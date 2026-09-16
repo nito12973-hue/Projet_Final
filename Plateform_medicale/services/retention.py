@@ -81,10 +81,11 @@ def purger_donnees_obsoletes(
     if purger_sessions:
         try:
             from django.contrib.sessions.models import Session
-            qs_sessions = Session.objects.filter(expire_date__lt=maintenant)
-            resultats["sessions"] = qs_sessions.count()
-            if not dry_run and resultats["sessions"] > 0:
-                qs_sessions.delete()
+            from django.core.management import call_command
+            nb_sessions = Session.objects.filter(expire_date__lt=maintenant).count()
+            resultats["sessions"] = nb_sessions
+            if not dry_run and nb_sessions > 0:
+                call_command("clearsessions")
         except Exception as exc:
             logger.warning("Erreur lors de la purge des sessions expirees : %s", exc)
 
