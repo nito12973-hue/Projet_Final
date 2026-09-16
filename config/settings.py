@@ -32,7 +32,20 @@ SECRET_KEY = str(_raw_secret_key).strip()
 
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = ['*']
+if not DEBUG and SECRET_KEY == DEFAULT_SECRET_KEY:
+    from django.core.exceptions import ImproperlyConfigured
+    raise ImproperlyConfigured(
+        "En production (DEBUG=False), une clé secrète SECRET_KEY unique et robuste doit être définie dans l'environnement."
+    )
+
+_allowed_hosts_config = config(
+    'ALLOWED_HOSTS',
+    default='*' if DEBUG else 'localhost,127.0.0.1,santesn.sn,www.santesn.sn,.santesn.sn,.vercel.app,.onrender.com,.railway.app',
+    cast=Csv(),
+)
+ALLOWED_HOSTS = list(_allowed_hosts_config)
+if 'testserver' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append('testserver')
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True
@@ -332,15 +345,26 @@ LOGGING = {
 }
 
 
+# Sécurité globale
+X_FRAME_OPTIONS = 'DENY'
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Lax'
+
 # Sécurité production
 # Ces réglages ne s'activent qu'une fois DEBUG=False (ne changent rien en local).
 # https://docs.djangoproject.com/en/6.0/topics/security/
 
 if not DEBUG:
-    SECURE_SSL_REDIRECT = False  # Vercel et les plateformes Cloud gèrent le SSL au niveau Edge
+    SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=False, cast=bool)
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_REFERRER_POLICY = 'same-origin'
+    if SECURE_SSL_REDIRECT:
+        SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=31536000, cast=int)
+        SECURE_HSTS_INCLUDE_SUBDOMAINS = config('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=True, cast=bool)
+        SECURE_HSTS_PRELOAD = config('SECURE_HSTS_PRELOAD', default=True, cast=bool)
 
 
 # Règle métier : durée de validité d'une ordonnance (en jours, paramétrable)

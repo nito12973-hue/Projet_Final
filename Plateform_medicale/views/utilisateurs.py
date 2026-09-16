@@ -347,6 +347,10 @@ def importer_utilisateurs_excel(request):
         fichier = request.FILES.get("fichier")
         if not fichier:
             erreurs.append("Choisissez un fichier Excel (.xlsx) a importer.")
+        elif not getattr(fichier, "name", "").lower().endswith(".xlsx"):
+            erreurs.append("Format non pris en charge : seul le format Excel (.xlsx) est accepté.")
+        elif getattr(fichier, "size", 0) > 5 * 1024 * 1024:
+            erreurs.append("Le fichier dépasse la taille maximale autorisée (5 Mo).")
         else:
             try:
                 classeur = openpyxl.load_workbook(fichier, data_only=True)

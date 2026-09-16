@@ -50,6 +50,14 @@
     <button type="submit" class="btn-principal">Se connecter</button>
 </form>
 
+<div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+    <span>Plateforme sécurisée SantéSN</span>
+    <div style="display: flex; gap: 12px;">
+        <a href="{% url 'cgu' %}" style="color: var(--muted); text-decoration: none;">CGU</a>
+        <a href="{% url 'politique_confidentialite' %}" style="color: var(--muted); text-decoration: none;">Confidentialité</a>
+    </div>
+</div>
+
 <script>
 function toggleMdp() {
     var passInput = document.getElementById("{{ form.password.id_for_label }}");

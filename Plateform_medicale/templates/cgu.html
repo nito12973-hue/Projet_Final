@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load icones %}
+
+{% block title %}Conditions Générales d'Utilisation (CGU){% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto; padding: 20px 0 60px;">
+    <div style="margin-bottom: 30px;">
+        <a href="{% url 'landing' %}" class="button btn btn-sm" style="margin-bottom: 16px;">
+            {% icone "chevron-left" %} Retour à l'accueil
+        </a>
+        <h1 style="font-size: 28px; margin-bottom: 8px;">Conditions Générales d'Utilisation (CGU)</h1>
+        <p class="subtitle">Règles d'utilisation, engagements déontologiques et cadre juridique de la plateforme SantéSN.</p>
+    </div>
+
+    <div class="avis" style="border-left: 4px solid var(--primary); background: var(--surface); margin-bottom: 28px; padding: 18px 22px;">
+        <div class="avis-titre" style="color: var(--primary-strong); margin-bottom: 6px;">
+            {% icone "file-text" %} Cadre Conventionnel & Légal
+        </div>
+        <p style="margin: 0; font-size: 13.5px; color: var(--muted); line-height: 1.55;">
+            L'utilisation de la plateforme SantéSN emporte acceptation pleine et entière des présentes Conditions Générales d'Utilisation. Les règles ci-après précisent les droits et devoirs des acteurs de l'écosystème de santé (Assurés, Praticiens soignants, Pharmaciens d'officine et Gestionnaires d'assurance). Ce document est soumis à validation juridique régulière par les autorités de tutelle.
+        </p>
+    </div>
+
+    <article class="panel" style="padding: 32px; display: flex; flex-direction: column; gap: 28px; line-height: 1.65; color: var(--text);">
+        <section>
+            <h2 style="font-size: 20px; color: var(--titre); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                {% icone "shield-check" %} 1. Objet du Service
+            </h2>
+            <p>
+                SantéSN est une infrastructure logicielle nationale dédiée à la dématérialisation et à la fiabilisation de la chaîne de soins au Sénégal. Elle assure l'interconnexion sécurisée entre les bénéficiaires d'assurance santé, les professionnels de santé prescripteurs, les officines de pharmacie dispensatrices et les caisses de prévoyance (IPM / mutuelles).
+            </p>
+        </section>
+
+        <section>
+            <h2 style="font-size: 20px; color: var(--titre); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                {% icone "users" %} 2. Modalités d'Accès & Attribution des Comptes
+            </h2>
+            <p>
+                L'accès à SantéSN est strictement nominatif et encadré par les règles suivantes :
+            </p>
+            <ul style="padding-left: 20px; margin-top: 8px; display: flex; flex-direction: column; gap: 6px;">
+                <li><strong>Absence d'auto-inscription libre :</strong> Les comptes sont exclusivement créés et habilités par l'administrateur institutionnel ou l'IPM de rattachement, après vérification de l'identité ou de l'inscription à l'Ordre professionnel compétent.</li>
+                <li><strong>Confidentialité des identifiants :</strong> Tout titulaire de compte est responsable exclusif de la préservation de son mot de passe. Tout acte accompli depuis une session authentifiée est réputé émaner de son titulaire légitime.</li>
+                <li><strong>Sécurité des sessions :</strong> La déconnexion doit être opérée systématiquement à l'issue de chaque session de consultation ou de délivrance, en particulier sur poste partagé en cabinet ou officine.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2 style="font-size: 20px; color: var(--titre); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                {% icone "stethoscope" %} 3. Engagements Spécifiques par Rôle
+            </h2>
+            <div style="display: flex; flex-direction: column; gap: 16px; margin-top: 10px;">
+                <div style="background: var(--champ-bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px;">
+                    <strong style="color: var(--titre); display: block; margin-bottom: 4px;">Médecins & Professionnels de santé prescripteurs</strong>
+                    <span style="font-size: 13.5px; color: var(--text);">
+                        Le praticien engage sa responsabilité ordinale et déontologique lors de la rédaction de chaque diagnostic et ordonnance. Il s'engage à vérifier l'identité du patient et la cohérence des antécédents médicaux avant toute prescription électronique.
+                    </span>
+                </div>
+                <div style="background: var(--champ-bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px;">
+                    <strong style="color: var(--titre); display: block; margin-bottom: 4px;">Pharmaciens d'officine & Équipes de dispensation</strong>
+                    <span style="font-size: 13.5px; color: var(--text);">
+                        Le pharmacien procède obligatoirement au contrôle d'authenticité par scan du QR Code sécurisé ou saisie du code unique <code>RX-XXXXXXXXXX</code>. La validation de délivrance emporte obligation de remise physique des médicaments prescrits et verrouille définitivement l'ordonnance en base.
+                    </span>
+                </div>
+                <div style="background: var(--champ-bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px;">
+                    <strong style="color: var(--titre); display: block; margin-bottom: 4px;">Assurés sociaux & Bénéficiaires</strong>
+                    <span style="font-size: 13.5px; color: var(--text);">
+                        L'assuré veille à la régularité de sa couverture et présente sa carte numérique ou physique lors des soins. Il s'interdit toute cession ou tentative d'utilisation frauduleuse de ses droits ou de ceux de ses ayants droit.
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2 style="font-size: 20px; color: var(--titre); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                {% icone "qr-scan" %} 4. Valeur Probante de l'Ordonnance Numérique
+            </h2>
+            <p>
+                Toute ordonnance émise via SantéSN est pourvue d'un identifiant cryptographique unique (code <code>RX</code>) et d'un QR Code vectoriel indélébile. Conformément aux dispositions sur la dématérialisation des actes au Sénégal, cette ordonnance numérique fait foi devant les autorités sanitaires, organismes d'assurance et juridictions compétentes.
+            </p>
+            <p style="margin-top: 8px;">
+                <strong>Durée de validité :</strong> Par défaut, sauf mention expresse du médecin prescripteur, une ordonnance est valable pour une durée de 90 jours à compter de sa date de création. Une fois délivrée, son statut passe irrévocablement à « Délivrée » et interdit toute délivrance subséquente.
+            </p>
+        </section>
+
+        <section>
+            <h2 style="font-size: 20px; color: var(--titre); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                {% icone "lock" %} 5. Disponibilité, Maintenance & Responsabilité
+            </h2>
+            <p>
+                L'exploitant s'efforce d'assurer une disponibilité du service 24h/24 et 7j/7, avec un taux de disponibilité cible supérieur à 99,5%. Des interruptions ponctuelles pour maintenance évolutive ou corrective peuvent intervenir sous réserve d'information préalable.
+            </p>
+            <p style="margin-top: 8px;">
+                SantéSN ne saurait être tenue pour responsable en cas de force majeure, d'interruption des réseaux de télécommunication tiers ou de déclarations erronées saisies par un utilisateur de la plateforme.
+            </p>
+        </section>
+
+        <section>
+            <h2 style="font-size: 20px; color: var(--titre); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                {% icone "building" %} 6. Loi Applicable & Juridiction Compétente
+            </h2>
+            <p>
+                Les présentes CGU sont régies par le droit en vigueur en République du Sénégal. Tout litige relatif à leur interprétation ou à leur exécution relève de la compétence exclusive des juridictions de Dakar, après tentative de conciliation préalable.
+            </p>
+        </section>
+    </article>
+</div>
+{% endblock %}

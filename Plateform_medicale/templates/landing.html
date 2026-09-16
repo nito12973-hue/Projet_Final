@@ -1852,8 +1852,12 @@
                     </ul>
                 </div>
             </div>
-            <div class="copyright">
-                © 2026 SantéSN — La santé connectée au service de tous.
+            <div class="copyright" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px;">
+                <span>© 2026 SantéSN — La santé connectée au service de tous.</span>
+                <div style="display: flex; gap: 16px;">
+                    <a href="{% url 'cgu' %}" style="color: inherit; text-decoration: none; opacity: 0.85;">CGU</a>
+                    <a href="{% url 'politique_confidentialite' %}" style="color: inherit; text-decoration: none; opacity: 0.85;">Politique de Confidentialité</a>
+                </div>
             </div>
         </div>
     </footer>

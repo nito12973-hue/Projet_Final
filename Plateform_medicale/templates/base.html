@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Plateforme medicale{% endblock %}</title>
+    <meta name="description" content="SantéSN : plateforme digitale de dématérialisation du tiers payant et de l'ordonnance médicale au Sénégal.">
+    <meta property="og:site_name" content="SantéSN">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="SantéSN — Plateforme Médicale & Tiers Payant">
+    <meta property="og:description" content="Rendez-vous, consultations, ordonnances QR, pharmacies et assurance santé au Sénégal.">
+    <meta property="og:locale" content="fr_SN">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="SantéSN — Plateforme Médicale">
+    <meta name="twitter:description" content="Plateforme digitale de prise en charge médicale au Sénégal.">
     <meta name="theme-color" content="#0b2027">
     <meta name="color-scheme" content="light dark">
     <script>
@@ -5751,6 +5760,14 @@
                 </div>
                 {% endif %}
                 {% block content %}{% endblock %}
+
+                <footer class="pied-de-page-app" style="margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 12.5px; color: var(--muted); display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px;">
+                    <div>© 2026 SantéSN — Dématérialisation du tiers payant et de l'ordonnance médicale au Sénégal.</div>
+                    <div style="display: flex; gap: 16px;">
+                        <a href="{% url 'cgu' %}" style="color: var(--muted); text-decoration: none;">CGU</a>
+                        <a href="{% url 'politique_confidentialite' %}" style="color: var(--muted); text-decoration: none;">Confidentialité & Données</a>
+                    </div>
+                </footer>
             </main>
         </section>
     </div>

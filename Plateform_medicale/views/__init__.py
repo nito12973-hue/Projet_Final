@@ -66,6 +66,8 @@ from .auth import (  # noqa: F401
 # Pages publiques
 from .public import (  # noqa: F401
     landing,
+    politique_confidentialite,
+    cgu,
     robots_txt,
     sitemap_xml,
 )
