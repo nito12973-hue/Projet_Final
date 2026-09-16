@@ -9813,6 +9813,13 @@ class TestAmeliorationsPlateformeSN(TestCase):
         self.assertEqual(pec.valide_par, self.agent)
         self.assertEqual(pec.motif_refus, 'Plafond annuel de garantie atteint')
 
+    def test_liste_prises_en_charge_get_ok(self):
+        """Vérifie que la page liste des prises en charge répond 200 en GET sans ValueError."""
+        self.client.force_login(self.admin)
+        resp = self.client.get(reverse('liste_prises_en_charge'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Prises en charge")
+
     def test_service_retention_purge(self):
         """Vérifie la purge des données de plus de 30 jours."""
         from Plateform_medicale.services.retention import purger_donnees_obsoletes
