@@ -293,7 +293,29 @@ def parametres(request, section="general"):
     elif section == "securite":
         contexte["duree_session_heures"] = settings.SESSION_COOKIE_AGE // 3600
         if request.user.role == User.Role.ADMIN:
+            from ..services.retention import obtenir_metriques_retention, purger_donnees_obsoletes
+            if request.method == "POST":
+                action = request.POST.get("action")
+                if action == "purger_donnees":
+                    res = purger_donnees_obsoletes(jours=30, purger_sessions=True, purger_notifs=True, purger_tentatives=True)
+                    tot = res["sessions"] + res["notifications"] + res["tentatives"]
+                    messages.success(
+                        request,
+                        f"Purge réussie : {tot} élément(s) obsolète(s) nettoyé(s) (Sessions : {res['sessions']}, Notifications : {res['notifications']}, Tentatives : {res['tentatives']}).",
+                        extra_tags="succes-critique",
+                    )
+                    return redirect(f"{reverse('parametres_section', args=['securite'])}#retention-donnees")
+                elif action == "reinitialiser_demo":
+                    purger_donnees_obsoletes(jours=30, purger_sessions=True, purger_notifs=True, purger_tentatives=True, reinitialiser_demo=True)
+                    messages.success(
+                        request,
+                        "Données de démonstration réinitialisées avec succès.",
+                        extra_tags="succes-critique",
+                    )
+                    return redirect(f"{reverse('parametres_section', args=['securite'])}#retention-donnees")
+
             contexte["total_journal"] = JournalActivite.objects.count()
+            contexte["metriques_retention"] = obtenir_metriques_retention(jours=30)
             comptes, role_choisi, recherche = _comptes_bloques(request)
             contexte.update({
                 "comptes_bloques": comptes,

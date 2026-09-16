@@ -123,6 +123,8 @@ from .prises_en_charge import (  # noqa: F401
     ajouter_prise_en_charge,
     modifier_prise_en_charge,
     supprimer_prise_en_charge,
+    valider_prise_en_charge,
+    refuser_prise_en_charge,
 )
 
 # Paiements
@@ -235,6 +237,7 @@ from .assure_espace import (  # noqa: F401
     mes_ordonnances_assure,
     voir_ordonnance_assure,
     mes_prises_en_charge_assure,
+    demander_prise_en_charge_assure,
     mon_historique_assure,
     carte_assure,
 )

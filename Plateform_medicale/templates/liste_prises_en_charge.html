@@ -67,8 +67,15 @@
                     <td class="col-optionnelle">{{ prise.motif }}</td>
                     <td><span class="badge {{ prise.statut }}">{{ prise.get_statut_display }}</span></td>
                     <td>
-                        <div class="actions">
-                            <a href="{% url 'modifier_prise_en_charge' prise.pk %}" class="button primary btn btn-sm">{% icone "edit-2" %} Modifier</a>
+                        <div class="actions" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                            {% if prise.statut == 'en_attente' %}
+                            <form method="post" action="{% url 'valider_prise_en_charge' prise.pk %}" style="display:inline;margin:0;padding:0;background:none;border:none;box-shadow:none;">
+                                {% csrf_token %}
+                                <button type="submit" class="button primary btn btn-sm" title="Valider cette prise en charge" style="padding:4px 10px;font-size:12px;">{% icone "check" %} Valider</button>
+                            </form>
+                            <button type="button" class="button btn btn-danger btn-sm" title="Refuser cette prise en charge" style="padding:4px 10px;font-size:12px;" onclick="ouvrirRefus('{{ prise.pk }}', '{{ prise.patient|escapejs }}')">{% icone "x" %} Refuser</button>
+                            {% endif %}
+                            <a href="{% url 'modifier_prise_en_charge' prise.pk %}" class="button btn btn-sm">{% icone "edit-2" %} Modifier</a>
                             <a href="{% url 'supprimer_prise_en_charge' prise.pk %}" class="button btn btn-danger btn-sm">{% icone "trash-2" %} Supprimer</a>
                         </div>
                     </td>
@@ -78,6 +85,33 @@
         </table>
     </section>
 </form>
+
+<dialog id="modal-refus-pec" style="border:1px solid var(--border);border-radius:12px;padding:24px;box-shadow:var(--shadow-lg);max-width:480px;background:var(--surface);color:var(--titre);">
+    <form method="post" id="form-refus-pec">
+        {% csrf_token %}
+        <h3 style="margin-top:0;font-size:17px;">Refuser la prise en charge</h3>
+        <p id="refus-pec-patient" style="font-size:13px;color:var(--muted);margin-bottom:14px;"></p>
+        <label for="id-motif-refus" style="font-size:13px;font-weight:700;display:block;margin-bottom:6px;">Motif notifié à l'assuré *</label>
+        <input type="text" id="id-motif-refus" name="motif_refus" required placeholder="Ex. : Soins hors convention, plafond annuel atteint..." style="margin-bottom:16px;">
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+            <button type="button" class="button btn" onclick="document.getElementById('modal-refus-pec').close()">Annuler</button>
+            <button type="submit" class="button btn btn-danger">Confirmer le refus</button>
+        </div>
+    </form>
+</dialog>
+<script>
+function ouvrirRefus(pk, patient) {
+    var modal = document.getElementById('modal-refus-pec');
+    var form = document.getElementById('form-refus-pec');
+    var txt = document.getElementById('refus-pec-patient');
+    if (modal && form) {
+        form.action = '/prises-en-charge/' + pk + '/refuser/';
+        if (txt) { txt.textContent = 'Bénéficiaire : ' + patient; }
+        modal.showModal();
+    }
+}
+</script>
+
 {% if prises_en_charge.paginator.num_pages > 1 %}
 <nav class="pagination" aria-label="Pagination">
     {% if prises_en_charge.has_previous %}

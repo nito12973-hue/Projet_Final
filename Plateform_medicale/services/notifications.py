@@ -287,7 +287,7 @@ def notifier_demande_prise_en_charge(prise_en_charge):
         emettre_notification(
             destinataire=admin,
             titre="Nouvelle demande de prise en charge",
-            message=f"Une demande de PEC de  pour {prise_en_charge.patient} est en attente de validation.",
+            message=f"Une demande de prise en charge pour {prise_en_charge.patient} ({prise_en_charge.motif}) est en attente de validation.",
             type_evenement=Notification.TypeEvenement.PEC_DEMANDE,
             url_action=reverse("liste_prises_en_charge"),
             template_email="emails/pec_demande_admin.html",
@@ -303,7 +303,7 @@ def notifier_validation_prise_en_charge(prise_en_charge):
         emettre_notification(
             destinataire=assure_user,
             titre="Prise en charge accordée",
-            message=f"Votre prise en charge de  a été accordée par l'IPM.",
+            message=f"Votre demande de prise en charge ({prise_en_charge.motif}) a été accordée par l'administration.",
             type_evenement=Notification.TypeEvenement.PEC_VALIDEE,
             url_action=reverse("mes_prises_en_charge_assure"),
             template_email="emails/pec_validee.html",

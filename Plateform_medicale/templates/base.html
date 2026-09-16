@@ -5549,9 +5549,107 @@
                 padding: 10px 14px !important;
             }
         }
+
+        /* Toasts interactifs temps reel - synchronisation multi-roles */
+        .conteneur-toasts-temps-reel {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 10050;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            pointer-events: none;
+            max-width: 400px;
+            width: calc(100vw - 32px);
+        }
+        .toast-notification-sn {
+            pointer-events: auto;
+            background: var(--surface, #ffffff);
+            color: var(--text, #1e293b);
+            border: 1px solid var(--border, #e2e8f0);
+            border-left: 4px solid var(--primary, #12885a);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.16);
+            padding: 14px 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            transform: translateX(110%);
+            opacity: 0;
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+        }
+        .toast-notification-sn.visible {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        .toast-icone {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            background: rgba(18, 136, 90, 0.1);
+            color: var(--primary, #12885a);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .toast-contenu {
+            flex: 1;
+            min-width: 0;
+        }
+        .toast-titre {
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1.3;
+            margin-bottom: 4px;
+            color: var(--text, #0f172a);
+        }
+        .toast-msg {
+            font-size: 13px;
+            color: var(--text-muted, #475569);
+            line-height: 1.4;
+            margin-bottom: 8px;
+        }
+        .toast-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .toast-btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 6px;
+            text-decoration: none;
+            background: var(--primary, #12885a);
+            color: #ffffff !important;
+            transition: filter 0.15s ease;
+        }
+        .toast-btn:hover {
+            filter: brightness(1.1);
+        }
+        .toast-fermer {
+            background: none;
+            border: none;
+            color: var(--text-muted, #94a3b8);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.15s ease;
+        }
+        .toast-fermer:hover {
+            color: var(--text, #0f172a);
+        }
     </style>
 </head>
 <body>
+    <div id="toasts-temps-reel" class="conteneur-toasts-temps-reel" aria-live="polite" aria-atomic="true"></div>
     <a href="#contenu-principal" class="lien-evitement">Aller au contenu</a>
     {% if user.is_authenticated and current_role and not sans_sidebar %}
     <div id="fond-sidebar" class="sidebar-overlay"></div>
@@ -6157,70 +6255,164 @@
         })();
 
         (function () {
-            // Actualisation automatique des notifications en temps réel
+            // Actualisation automatique et synchronisation multi-rôles en temps réel
             {% if user.is_authenticated %}
-            var DELAI_POLLING_MS = 15000;
-            function actualiserNotifications() {
-                var boutonNotif = document.querySelector('.menu-notifications summary');
-                var listeNotif = document.querySelector('.menu-notifications-liste');
-                if (!boutonNotif || !listeNotif) { return; }
+            var DELAI_POLLING_MS = 8000;
+            var notifsConnues = null;
+            var dernierNonLuesCount = null;
+
+            function echapperTexte(str) {
+                if (!str) return '';
+                return String(str)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;');
+            }
+
+            function afficherToastNotification(notif) {
+                var conteneur = document.getElementById('toasts-temps-reel');
+                if (!conteneur) { return; }
+
+                var toast = document.createElement('div');
+                toast.className = 'toast-notification-sn';
+                toast.setAttribute('role', 'alert');
+
+                var iconeSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>';
+                var titrePropre = echapperTexte(notif.titre || 'Nouvelle notification');
+                var msgPropre = echapperTexte(notif.message || '');
+                var urlAction = notif.url_action ? notif.url_action : '#';
+
+                toast.innerHTML = 
+                    '<div class="toast-icone">' + iconeSvg + '</div>' +
+                    '<div class="toast-contenu">' +
+                        '<div class="toast-titre">' + titrePropre + '</div>' +
+                        '<div class="toast-msg">' + msgPropre + '</div>' +
+                        '<div class="toast-actions">' +
+                            '<a href="' + urlAction + '" class="toast-btn">Consulter</a>' +
+                        '</div>' +
+                    '</div>' +
+                    '<button type="button" class="toast-fermer" aria-label="Fermer">' +
+                        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>' +
+                    '</button>';
+
+                var btnFermer = toast.querySelector('.toast-fermer');
+                btnFermer.addEventListener('click', function () {
+                    toast.classList.remove('visible');
+                    setTimeout(function () { toast.remove(); }, 380);
+                });
+
+                conteneur.appendChild(toast);
+                requestAnimationFrame(function () {
+                    toast.classList.add('visible');
+                });
+
+                setTimeout(function () {
+                    if (toast.parentNode) {
+                        toast.classList.remove('visible');
+                        setTimeout(function () { toast.remove(); }, 380);
+                    }
+                }, 7000);
+            }
+
+            function actualiserDonneesEtTables() {
+                var estSurPageFormulaire = document.querySelector('form.panel-form, .panel-form form');
+                var elementActif = document.activeElement;
+                var saisieEnCours = elementActif && ['INPUT', 'TEXTAREA', 'SELECT'].indexOf(elementActif.tagName) !== -1;
+                if (estSurPageFormulaire || saisieEnCours) { return; }
 
                 fetch(window.location.href, {
                     headers: { 'X-Requested-With': 'XMLHttpRequest' }
                 })
-                .then(function (response) { return response.text(); })
+                .then(function (res) { return res.text(); })
                 .then(function (html) {
                     var parser = new DOMParser();
                     var doc = parser.parseFromString(html, 'text/html');
 
-                    // 1. Mise à jour de la pastille sur la cloche
-                    var nouvellePastille = doc.querySelector('.topbar-pastille');
-                    var anciennePastille = boutonNotif.querySelector('.topbar-pastille');
-
-                    if (nouvellePastille) {
-                        if (anciennePastille) {
-                            anciennePastille.textContent = nouvellePastille.textContent;
-                        } else {
-                            var badge = document.createElement('span');
-                            badge.className = 'topbar-pastille';
-                            badge.textContent = nouvellePastille.textContent;
-                            boutonNotif.appendChild(badge);
+                    // Synchronisation du contenu des listes, tableaux et cartes de stats
+                    var selecteursCibles = [
+                        '#contenu-principal table',
+                        '#contenu-principal .tableau-carte',
+                        '#contenu-principal .table-consultations',
+                        '#contenu-principal .dash-stat',
+                        '#contenu-principal .dash-hero'
+                    ];
+                    selecteursCibles.forEach(function (sel) {
+                        var actuel = document.querySelector(sel);
+                        var nouveau = doc.querySelector(sel);
+                        if (actuel && nouveau && actuel.innerHTML !== nouveau.innerHTML) {
+                            actuel.innerHTML = nouveau.innerHTML;
                         }
-                    } else if (anciennePastille) {
-                        anciennePastille.remove();
-                    }
+                    });
 
-                    // 2. Mise à jour de la liste déroulante des notifications
+                    // Synchronisation de la liste déroulante des notifications
+                    var listeNotif = document.querySelector('.menu-notifications-liste');
                     var nouvelleListe = doc.querySelector('.menu-notifications-liste');
-                    if (nouvelleListe && listeNotif) {
+                    if (listeNotif && nouvelleListe) {
                         listeNotif.innerHTML = nouvelleListe.innerHTML;
-                    }
-
-                    // 3. Synchronisation automatique des tableaux d'activité (Agenda, RDV, Tableaux de bord)
-                    var estSurPageFormulaire = document.querySelector('form.panel-form, .panel-form form');
-                    var elementActif = document.activeElement;
-                    var saisieEnCours = elementActif && ['INPUT', 'TEXTAREA', 'SELECT'].indexOf(elementActif.tagName) !== -1;
-
-                    if (!estSurPageFormulaire && !saisieEnCours) {
-                        var selecteursCibles = [
-                            '#contenu-principal table',
-                            '#contenu-principal .tableau-carte',
-                            '#contenu-principal .table-consultations',
-                            '#contenu-principal .dash-stat'
-                        ];
-
-                        selecteursCibles.forEach(function (sel) {
-                            var actuel = document.querySelector(sel);
-                            var nouveau = doc.querySelector(sel);
-                            if (actuel && nouveau && actuel.innerHTML !== nouveau.innerHTML) {
-                                actuel.innerHTML = nouveau.innerHTML;
-                            }
-                        });
                     }
                 })
                 .catch(function () {});
             }
-            setInterval(actualiserNotifications, DELAI_POLLING_MS);
+
+            function verifierNotifications() {
+                fetch('{% url "api_dernieres_notifications" %}', {
+                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(function (response) { return response.json(); })
+                .then(function (data) {
+                    var boutonNotif = document.querySelector('.menu-notifications summary');
+                    var count = data.non_lues_count || 0;
+
+                    // 1. Mise à jour de la pastille sur la cloche
+                    if (boutonNotif) {
+                        var anciennePastille = boutonNotif.querySelector('.topbar-pastille');
+                        if (count > 0) {
+                            if (anciennePastille) {
+                                anciennePastille.textContent = count;
+                            } else {
+                                var badge = document.createElement('span');
+                                badge.className = 'topbar-pastille';
+                                badge.textContent = count;
+                                boutonNotif.appendChild(badge);
+                            }
+                        } else if (anciennePastille) {
+                            anciennePastille.remove();
+                        }
+                    }
+
+                    // 2. Gestion des alertes Toasts en temps réel
+                    var notifications = data.notifications || [];
+                    if (notifsConnues === null) {
+                        // Initialisation silencieuse sur la session en cours
+                        notifsConnues = new Set();
+                        notifications.forEach(function (n) { notifsConnues.add(n.id); });
+                        dernierNonLuesCount = count;
+                    } else {
+                        var aNouvelleNotif = false;
+                        notifications.forEach(function (n) {
+                            if (!notifsConnues.has(n.id)) {
+                                notifsConnues.add(n.id);
+                                if (!n.lue) {
+                                    afficherToastNotification(n);
+                                    aNouvelleNotif = true;
+                                }
+                            }
+                        });
+
+                        // 3. Si nouvelle notification ou changement de volume, actualiser l'interface
+                        if (aNouvelleNotif || (dernierNonLuesCount !== null && dernierNonLuesCount !== count)) {
+                            actualiserDonneesEtTables();
+                        }
+                        dernierNonLuesCount = count;
+                    }
+                })
+                .catch(function () {});
+            }
+
+            setInterval(verifierNotifications, DELAI_POLLING_MS);
+            // Vérification initiale rapide
+            setTimeout(verifierNotifications, 2000);
             {% endif %}
         })();
     </script>

@@ -21,6 +21,7 @@ def liste_prises_en_charge(request):
             count = modifiees.count()
             if count > 0:
                 from django.utils import timezone
+                from ..models import Paiement
                 from ..services.notifications import (
                     notifier_refus_prise_en_charge,
                     notifier_validation_prise_en_charge,
@@ -35,6 +36,14 @@ def liste_prises_en_charge(request):
                     item.statut = nouveau_statut
                     if nouveau_statut == "validee":
                         notifier_validation_prise_en_charge(item)
+                        # Recalcul de la part assurance pour les consultations rattachées
+                        for c in item.consultation_set.all():
+                            if hasattr(c, "paiement"):
+                                p_calc = Paiement.calculer_pour(c)
+                                c.paiement.montant_part_assurance = p_calc.montant_part_assurance
+                                c.paiement.montant_part_patient = p_calc.montant_part_patient
+                                c.paiement.taux_applique = p_calc.taux_applique
+                                c.paiement.save()
                     elif nouveau_statut == "refusee":
                         notifier_refus_prise_en_charge(item)
 
@@ -48,6 +57,64 @@ def liste_prises_en_charge(request):
             else:
                 messages.warning(request, "Aucune demande en attente sélectionnée.")
         return redirect("liste_prises_en_charge")
+
+
+@admin_required
+def valider_prise_en_charge(request, pk):
+    """Validation unitaire rapide d une prise en charge par l administration."""
+    prise_en_charge = get_object_or_404(PriseEnCharge, pk=pk)
+    if request.method == "POST":
+        from django.utils import timezone
+        from ..models import Paiement
+        from ..services.notifications import notifier_validation_prise_en_charge
+        prise_en_charge.statut = "validee"
+        prise_en_charge.valide_par = request.user
+        prise_en_charge.date_validation = timezone.now()
+        prise_en_charge.save()
+
+        # Recalculer les paiements des consultations rattachées
+        for c in prise_en_charge.consultation_set.all():
+            if hasattr(c, "paiement"):
+                p_calc = Paiement.calculer_pour(c)
+                c.paiement.montant_part_assurance = p_calc.montant_part_assurance
+                c.paiement.montant_part_patient = p_calc.montant_part_patient
+                c.paiement.taux_applique = p_calc.taux_applique
+                c.paiement.save()
+
+        notifier_validation_prise_en_charge(prise_en_charge)
+        journaliser(
+            request,
+            JournalActivite.Action.DECISION,
+            f"Prise en charge validée : {prise_en_charge.patient}",
+            f"Motif : {prise_en_charge.motif}",
+        )
+        messages.success(request, f"La prise en charge de {prise_en_charge.patient} a été validée avec succès.")
+    return redirect("liste_prises_en_charge")
+
+
+@admin_required
+def refuser_prise_en_charge(request, pk):
+    """Refus unitaire rapide avec motif d une prise en charge."""
+    prise_en_charge = get_object_or_404(PriseEnCharge, pk=pk)
+    if request.method == "POST":
+        from django.utils import timezone
+        from ..services.notifications import notifier_refus_prise_en_charge
+        motif_refus = request.POST.get("motif_refus", "").strip() or "Non conforme aux critères de couverture"
+        prise_en_charge.statut = "refusee"
+        prise_en_charge.motif_refus = motif_refus
+        prise_en_charge.valide_par = request.user
+        prise_en_charge.date_validation = timezone.now()
+        prise_en_charge.save()
+
+        notifier_refus_prise_en_charge(prise_en_charge)
+        journaliser(
+            request,
+            JournalActivite.Action.DECISION,
+            f"Prise en charge refusée : {prise_en_charge.patient}",
+            f"Motif du refus : {motif_refus}",
+        )
+        messages.warning(request, f"La prise en charge de {prise_en_charge.patient} a été refusée.")
+    return redirect("liste_prises_en_charge")
 
     prises_en_charge = PriseEnCharge.objects.select_related("patient")
 
@@ -117,13 +184,28 @@ def modifier_prise_en_charge(request, pk):
             nouveau_statut = prise_en_charge.get_statut_display()
 
             if nouveau_statut_code != ancien_statut_code:
+                from django.utils import timezone
+                from ..models import Paiement
                 from ..services.notifications import (
                     notifier_refus_prise_en_charge,
                     notifier_validation_prise_en_charge,
                 )
                 if nouveau_statut_code == "validee":
+                    prise_en_charge.valide_par = request.user
+                    prise_en_charge.date_validation = timezone.now()
+                    prise_en_charge.save(update_fields=["valide_par", "date_validation"])
+                    for c in prise_en_charge.consultation_set.all():
+                        if hasattr(c, "paiement"):
+                            p_calc = Paiement.calculer_pour(c)
+                            c.paiement.montant_part_assurance = p_calc.montant_part_assurance
+                            c.paiement.montant_part_patient = p_calc.montant_part_patient
+                            c.paiement.taux_applique = p_calc.taux_applique
+                            c.paiement.save()
                     notifier_validation_prise_en_charge(prise_en_charge)
                 elif nouveau_statut_code == "refusee":
+                    prise_en_charge.valide_par = request.user
+                    prise_en_charge.date_validation = timezone.now()
+                    prise_en_charge.save(update_fields=["valide_par", "date_validation"])
                     notifier_refus_prise_en_charge(prise_en_charge)
 
             journaliser(
