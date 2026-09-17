@@ -5896,6 +5896,7 @@
                 {% endif %}
                 {% block content %}{% endblock %}
 
+                {% if not user.is_authenticated %}
                 <footer class="pied-de-page-app" style="margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 12.5px; color: var(--muted); display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px;">
                     <div>© 2026 SantéSN — Dématérialisation du tiers payant et de l'ordonnance médicale au Sénégal.</div>
                     <div style="display: flex; gap: 16px;">
@@ -5903,6 +5904,7 @@
                         <a href="{% url 'politique_confidentialite' %}" style="color: var(--muted); text-decoration: none;">Confidentialité & Données</a>
                     </div>
                 </footer>
+                {% endif %}
             </main>
         </section>
     </div>

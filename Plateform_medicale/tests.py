@@ -9702,6 +9702,7 @@ class PreLaunchAuditAndLegalPagesTests(TestCase):
         self.assertNotIn('id="barre-laterale"', contenu)
         self.assertIn('class="shell shell--sans-sidebar"', contenu)
         self.assertIn("public-topbar", contenu)
+        self.assertIn("pied-de-page-app", contenu)
 
     def test_page_authentifiee_affiche_barre_laterale(self):
         admin = creer_utilisateur(User.Role.ADMIN, 'admin-nav@santesn.sn')
@@ -9711,6 +9712,7 @@ class PreLaunchAuditAndLegalPagesTests(TestCase):
         contenu = resp.content.decode('utf-8')
         self.assertIn('id="barre-laterale"', contenu)
         self.assertNotIn('class="shell shell--sans-sidebar"', contenu)
+        self.assertNotIn("pied-de-page-app", contenu)
 
     def test_landing_page_hero_institutionnel_sans_visuel_ia(self):
         resp = self.client.get(reverse('landing'))
