@@ -141,12 +141,14 @@
                     </div>
                 </div>
                 <div style="display:flex;align-items:center;gap:10px;">
-                    <span class="dash-pill {% if rdv.statut == 'CONFIRME' or rdv.statut == 'TERMINE' %}ok{% elif rdv.statut == 'ANNULE' or rdv.statut == 'REFUSE' %}danger{% else %}attente{% endif %}">
-                        {{ rdv.get_statut_display }}
-                    </span>
                     {% if rdv.statut == 'TERMINE' %}
                     <span class="dash-pill ok" style="font-size:12px;">Consulté</span>
-                    {% elif rdv.statut == 'CONFIRME' %}
+                    {% else %}
+                    <span class="dash-pill {% if rdv.statut == 'CONFIRME' %}ok{% elif rdv.statut == 'ANNULE' or rdv.statut == 'REFUSE' %}danger{% else %}attente{% endif %}">
+                        {{ rdv.get_statut_display }}
+                    </span>
+                    {% endif %}
+                    {% if rdv.statut == 'CONFIRME' %}
                     <a href="{% url 'ajouter_consultation_medecin' %}?rdv_id={{ rdv.pk }}" class="button primary btn-sm">
                         Démarrer
                     </a>

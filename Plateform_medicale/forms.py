@@ -312,6 +312,33 @@ class ConsultationForm(forms.ModelForm):
         if 'service' in self.fields:
             self.fields['service'].error_messages['invalid_choice'] = "Ce service médical n'appartient pas à votre établissement."
 
+        patient_cible = None
+        if rdv and getattr(rdv, "patient", None):
+            patient_cible = rdv.patient
+        elif 'patient' in self.initial:
+            p_val = self.initial['patient']
+            if isinstance(p_val, Patient):
+                patient_cible = p_val
+            elif str(p_val).isdigit():
+                patient_cible = Patient.objects.filter(pk=p_val).first()
+        elif getattr(self.instance, "patient_id", None):
+            patient_cible = self.instance.patient
+        elif self.data and self.data.get('patient'):
+            p_id = self.data.get('patient')
+            if str(p_id).isdigit():
+                patient_cible = Patient.objects.filter(pk=p_id).first()
+
+        if 'prise_en_charge' in self.fields and patient_cible:
+            qs = PriseEnCharge.objects.filter(
+                patient=patient_cible,
+                statut__in=["validee", "en_attente"],
+            ).order_by("-date_demande")
+            self.fields['prise_en_charge'].queryset = qs
+            if not self.is_bound and not self.initial.get('prise_en_charge'):
+                pec_validee = qs.filter(statut="validee").first()
+                if pec_validee:
+                    self.fields['prise_en_charge'].initial = pec_validee.pk
+
     def clean_service(self):
         service = self.cleaned_data.get('service')
         prestataire_effectif = (self.medecin.prestataire if self.medecin else None) or (self.rdv.prestataire if self.rdv else None)

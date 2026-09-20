@@ -516,6 +516,11 @@ class PriseEnCharge(models.Model):
 
 
 class Consultation(models.Model):
+    class TypeAdmission(models.TextChoices):
+        RDV = "RDV", "Sur rendez-vous"
+        SPONTANE = "SPONTANE", "Passage spontané"
+        URGENCE = "URGENCE", "Urgence médicale"
+
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
     medecin = models.ForeignKey(Medecin, on_delete=models.CASCADE)
     service = models.ForeignKey(ServiceMedical, on_delete=models.SET_NULL, null=True, blank=True)
@@ -524,6 +529,13 @@ class Consultation(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
+    )
+    type_admission = models.CharField(
+        "type d'admission",
+        max_length=20,
+        choices=TypeAdmission.choices,
+        default=TypeAdmission.RDV,
+        db_index=True,
     )
     date_consultation = models.DateTimeField()
     diagnostic = models.TextField()

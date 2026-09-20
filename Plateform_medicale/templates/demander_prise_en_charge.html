@@ -12,6 +12,11 @@
     <a class="button btn" href="{% url 'mes_prises_en_charge_assure' %}">{% icone "chevron-left" %} Mes prises en charge</a>
 </section>
 
+<div style="background:var(--primary-soft);border:1px solid var(--border);border-left:4px solid var(--primary);border-radius:12px;padding:14px 18px;margin-bottom:20px;font-size:13px;line-height:1.5;">
+    <strong style="color:var(--primary-strong);display:block;margin-bottom:4px;">💡 Bon à savoir :</strong>
+    Pour vos consultations, analyses et médicaments en pharmacie, <strong>aucune demande préalable n'est requise</strong>. Présentez simplement votre <strong>carte d'assuré numérique (QR Code)</strong> au guichet du prestataire conventionné pour bénéficier automatiquement du tiers payant. Ce formulaire est réservé aux accords préalables exceptionnels (ex : chirurgie lourde, hospitalisation programmée).
+</div>
+
 <section class="panel panel-form" style="max-width: 680px;">
     {% if form.non_field_errors %}
     <div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>

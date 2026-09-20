@@ -345,6 +345,7 @@ def ajouter_consultation_medecin(request):
                 consultation = form.save(commit=False)
                 consultation.medecin = medecin
                 consultation.patient = rdv.patient
+                consultation.type_admission = Consultation.TypeAdmission.RDV
                 consultation.save()
                 Paiement.calculer_pour(consultation).save()
                 rdv.statut = RendezVous.Statut.TERMINE
@@ -375,11 +376,15 @@ def ajouter_consultation_medecin(request):
             if form.is_valid():
                 consultation = form.save(commit=False)
                 consultation.medecin = medecin
+                contexte = form.cleaned_data.get("contexte_admission")
+                consultation.type_admission = (
+                    Consultation.TypeAdmission.URGENCE
+                    if contexte == "URGENCE"
+                    else Consultation.TypeAdmission.SPONTANE
+                )
                 # Le diagnostic reste purement le texte clinique saisi par le praticien
                 consultation.save()
                 Paiement.calculer_pour(consultation).save()
-
-                contexte = form.cleaned_data.get("contexte_admission")
                 contexte_label = "Urgence médicale" if contexte == "URGENCE" else "Passage spontané non programmé"
                 carte = form.cleaned_data.get("numero_carte")
                 etablissement = str(medecin.prestataire) if medecin.prestataire else "Non rattaché"

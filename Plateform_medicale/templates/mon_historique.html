@@ -21,7 +21,7 @@
                 <th>Médecin</th>
                 <th>Diagnostic</th>
                 <th>Traitement</th>
-                <th>Part à ma charge</th>
+                <th>Part patient &amp; IPM</th>
                 <th>Règlement</th>
             </tr>
         </thead>
@@ -33,7 +33,16 @@
                 <td>Dr. {{ consultation.medecin }}</td>
                 <td>{{ consultation.diagnostic }}</td>
                 <td>{{ consultation.traitement|default:"-" }}</td>
-                <td class="code">{{ consultation.paiement.montant_part_patient|franc_cfa|default:"-" }}</td>
+                <td>
+                    {% if consultation.paiement %}
+                    <strong style="color:var(--titre);display:block;font-size:13px;">{{ consultation.paiement.montant_part_patient|franc_cfa }}</strong>
+                    {% if consultation.paiement.montant_part_assurance > 0 %}
+                    <span style="font-size:11.5px;color:var(--primary);display:block;">Pris en charge : {{ consultation.paiement.montant_part_assurance|franc_cfa }}</span>
+                    {% endif %}
+                    {% else %}
+                    <span style="color:var(--muted);">&mdash;</span>
+                    {% endif %}
+                </td>
                 <td>
                     {% if consultation.paiement %}
                     <div style="display:flex;align-items:center;gap:8px;">
