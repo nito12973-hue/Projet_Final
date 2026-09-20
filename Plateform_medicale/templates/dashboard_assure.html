@@ -171,8 +171,8 @@
                     {% icone "shield-check" %}
                 </span>
                 <div>
-                    <strong style="font-size:13.5px;color:var(--titre);display:block;">Demande de prise en charge</strong>
-                    <span style="font-size:12px;color:var(--muted);">Déposée le {{ pec.date_demande|date:"d F Y" }} · {{ pec.prestataire|default:"Prestataire agréé" }}</span>
+                    <strong style="font-size:13.5px;color:var(--titre);display:block;">Prise en charge médicale</strong>
+                    <span style="font-size:12px;color:var(--muted);">Enregistrée le {{ pec.date_demande|date:"d F Y" }} · {{ pec.motif|default:"Soins et actes conventionnés"|truncatechars:40 }}</span>
                 </div>
             </div>
             <div style="display:flex;align-items:center;gap:10px;">

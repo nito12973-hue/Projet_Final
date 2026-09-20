@@ -66,16 +66,25 @@
                 </td>
                 <td>
                     <span class="libelle-mobile">Actions</span>
-                    {% if rdv.statut == 'DEMANDE' or rdv.statut == 'CONFIRME' %}
-                    <form method="post" action="{% url 'annuler_rendez_vous_assure' rdv.pk %}" class="action-ligne"
-                          data-confirmation="Annuler le rendez-vous du {{ rdv.date_heure|date:'d/m/Y à H:i' }} ? Le créneau sera libéré et devra être redemandé."
-                          data-confirmation-action="Oui, annuler le rendez-vous">
-                        {% csrf_token %}
-                        <button type="submit" class="button btn btn-danger btn-sm">Annuler</button>
-                    </form>
-                    {% else %}
-                    -
-                    {% endif %}
+                    <div style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                        {% if rdv.statut == 'CONFIRME' %}
+                        <a href="{% url 'telecharger_ics_rendez_vous' rdv.pk %}" class="button btn btn-sm" title="Ajouter à votre agenda (Google / Apple Calendar)" style="gap:4px;padding:5px 9px;">
+                            {% icone "calendar" %} Agenda
+                        </a>
+                        {% endif %}
+                        {% if rdv.statut == 'DEMANDE' or rdv.statut == 'CONFIRME' %}
+                        <form method="post" action="{% url 'annuler_rendez_vous_assure' rdv.pk %}" class="action-ligne"
+                              data-confirmation="Annuler le rendez-vous du {{ rdv.date_heure|date:'d/m/Y à H:i' }} ? Le créneau sera libéré et devra être redemandé."
+                              data-confirmation-action="Oui, annuler le rendez-vous">
+                            {% csrf_token %}
+                            <button type="submit" class="button btn btn-danger btn-sm">Annuler</button>
+                        </form>
+                        {% elif rdv.statut == 'TERMINE' %}
+                        <span style="font-size:12px;color:var(--muted);font-style:italic;">Effectué</span>
+                        {% else %}
+                        <span style="color:var(--muted);">&mdash;</span>
+                        {% endif %}
+                    </div>
                 </td>
             </tr>
             {% endfor %}

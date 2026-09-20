@@ -163,12 +163,12 @@ class LigneOrdonnanceInline(admin.TabularInline):
 
 @admin.register(Consultation)
 class ConsultationAdmin(SuppressionGereeParLAppMixin, admin.ModelAdmin):
-    list_display = ["date_consultation", "patient", "medecin", "service", "prise_en_charge"]
-    list_filter = ["date_consultation", "service"]
+    list_display = ["date_consultation", "patient", "medecin", "type_admission", "service", "prise_en_charge"]
+    list_filter = ["type_admission", "date_consultation", "service"]
     search_fields = ["patient__nom", "patient__prenom", "medecin__nom", "medecin__prenom"]
     # Secret médical : les données cliniques confidentielles sont strictement exclues de l'administration
     exclude = ["diagnostic", "traitement"]
-    readonly_fields = ["date_consultation", "patient", "medecin", "service", "prise_en_charge"]
+    readonly_fields = ["date_consultation", "patient", "medecin", "type_admission", "service", "prise_en_charge"]
 
     def has_add_permission(self, request):
         # Une consultation médicale se crée exclusivement dans l'application par le médecin traitant
@@ -180,8 +180,9 @@ class OrdonnanceAdmin(SuppressionGereeParLAppMixin, admin.ModelAdmin):
     list_display = ["code_qr", "consultation", "date_creation", "statut"]
     list_filter = ["statut"]
     search_fields = ["code_qr"]
+    # Secret médical : les données de prescription médicamenteuse sont exclues de l'administration
+    exclude = ["medicaments"]
     readonly_fields = ["code_qr", "consultation", "date_creation", "statut", "motif_annulation", "date_annulation"]
-    inlines = [LigneOrdonnanceInline]
 
     def has_add_permission(self, request):
         # Une ordonnance se crée exclusivement dans le flux de consultation médicale

@@ -35,22 +35,14 @@
             <div id="panneau-scan-camera" hidden style="position:relative;max-width:340px;margin:14px auto 0;border-radius:16px;overflow:hidden;background:#0b2027;box-shadow:0 12px 32px rgba(11,32,39,0.35);">
                 <video id="video-scan-camera" autoplay muted playsinline aria-hidden="true" style="width:100%;display:block;aspect-ratio:1/1;object-fit:cover;"></video>
                 <canvas id="canvas-scan-camera" style="display:none;"></canvas>
-                <!-- Cadre de visée laser avec coins renforcés -->
-                <div aria-hidden="true" style="position:absolute;inset:18%;border:2px dashed rgba(79,184,174,0.6);border-radius:14px;pointer-events:none;box-shadow:0 0 0 9999px rgba(11,32,39,0.5);">
-                    <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#4fb8ae,transparent);box-shadow:0 0 8px #4fb8ae;animation:balayage-laser 2.2s ease-in-out infinite;"></div>
+                <!-- Cadre de visée sobre pour lecture optique du QR code -->
+                <div aria-hidden="true" style="position:absolute;inset:18%;border:2px solid rgba(255,255,255,0.85);border-radius:12px;pointer-events:none;box-shadow:0 0 0 9999px rgba(11,32,39,0.55);">
                 </div>
                 <button type="button" id="bouton-fermer-scan-camera" class="button btn btn-sm" style="position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.9);padding:6px 12px;font-size:12px;">Fermer</button>
             </div>
         </div>
     </form>
 </section>
-
-<style>
-@keyframes balayage-laser {
-    0%, 100% { top: 4%; opacity: 0.3; }
-    50% { top: 94%; opacity: 1; }
-}
-</style>
 
 {% comment %}
 Repli quand le code est inutilisable (QR froisse, impression pale, code mal

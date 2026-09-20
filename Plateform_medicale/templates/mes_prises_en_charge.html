@@ -7,9 +7,8 @@
 <section class="page-title">
     <div>
         <h1>Mes prises en charge</h1>
-        <p class="subtitle">Vos demandes de couverture et celles de vos ayants droit.</p>
+        <p class="subtitle">Suivi en direct de vos couvertures médicales et de celles de vos ayants droit.</p>
     </div>
-    <a class="button primary" href="{% url 'demander_prise_en_charge_assure' %}">{% icone "plus-circle" %} Demander une prise en charge</a>
 </section>
 
 <form method="get" class="filtres">
@@ -59,11 +58,9 @@ pas un oubli.
         <div class="pec-message pec-message-refus" style="margin: 0 0 16px; padding: 12px 16px; border-radius: 10px; font-size: 13px; display: flex; align-items: flex-start; gap: 10px;">
             {% icone "alert-triangle" %}
             <div>
-                <strong>Cette demande a été refusée.</strong>
+                <strong>Cette prise en charge a été refusée.</strong> Les frais de consultation restent à votre charge.
                 {% if ligne.prise.motif_refus %}
                 <div style="margin-top: 4px;">Motif notifié : <em>{{ ligne.prise.motif_refus }}</em></div>
-                {% else %}
-                <div style="margin-top: 4px;">Contactez l'administration pour toute précision complémentaire.</div>
                 {% endif %}
             </div>
         </div>

@@ -5736,9 +5736,6 @@
                 <a href="{% url 'mes_prises_en_charge_assure' %}" aria-label="Mes prises en charge" data-tooltip="Mes prises en charge" class="{% if url_name == 'mes_prises_en_charge_assure' %}active{% endif %}">{% icone "shield-check" %} <span class="nav-texte">Mes prises en charge</span></a>
                 
                 <span class="nav-section">Ma couverture & famille</span>
-                {% if user.patient %}
-                <a href="{% url 'carte_assure' %}" aria-label="Ma carte d'assuré" data-tooltip="Ma carte d'assuré" class="{% if url_name == 'carte_assure' or url_name == 'carte_assure_detail' %}active{% endif %}">{% icone "id-card" %} <span class="nav-texte">Ma carte d'assuré</span></a>
-                {% endif %}
                 <a href="{% url 'mon_profil_assure' %}" aria-label="Mes informations" data-tooltip="Mes informations" class="{% if url_name == 'mon_profil_assure' %}active{% endif %}">{% icone "user-circle" %} <span class="nav-texte">Mes informations</span></a>
                 <a href="{% url 'liste_ayants_droit' %}" aria-label="Mes ayants droit" data-tooltip="Mes ayants droit" class="{% if url_name == 'liste_ayants_droit' or url_name == 'ajouter_ayant_droit' or url_name == 'modifier_ayant_droit' %}active{% endif %}">{% icone "users" %} <span class="nav-texte">Mes ayants droit</span></a>
                 <a href="{% url 'prestataires_proches' %}" aria-label="Prestataires proches" data-tooltip="Prestataires proches" class="{% if url_name == 'prestataires_proches' %}active{% endif %}">{% icone "map-pin" %} <span class="nav-texte">Prestataires proches</span></a>

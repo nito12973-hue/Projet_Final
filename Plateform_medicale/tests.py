@@ -9864,6 +9864,111 @@ class TestAmeliorationsPlateformeSN(TestCase):
         self.assertTrue(any(n["titre"] == "Nouvelle ordonnance" for n in data["notifications"]))
 
 
+class AuditCorrectionsTests(TestCase):
+    def setUp(self):
+        self.admin_user = creer_utilisateur(User.Role.ADMIN, 'admin_audit@santesn.sn')
+        self.medecin = creer_medecin('medecin_audit@santesn.sn')
+        self.patient = creer_patient('Fall', 'Ibrahima')
+        self.service = ServiceMedical.objects.create(nom="Consultation Générale", prix=Decimal("15000.00"))
+
+    def test_type_admission_rdv_et_spontane(self):
+        # Consultation RDV
+        rdv = RendezVous.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            date_heure=timezone.now(),
+            statut=RendezVous.Statut.CONFIRME,
+        )
+        self.client.force_login(self.medecin.user)
+        date_str = timezone.now().strftime('%Y-%m-%dT%H:%M')
+        resp = self.client.post(reverse('ajouter_consultation_medecin'), {
+            'rdv_id': rdv.pk,
+            'patient': self.patient.pk,
+            'service': self.service.pk,
+            'date_consultation': date_str,
+            'diagnostic': 'Paludisme simple',
+        })
+        form_errors = resp.context['form'].errors if resp.context and 'form' in resp.context else None
+        self.assertEqual(resp.status_code, 302, f"Form errors: {form_errors}")
+        consultation = Consultation.objects.filter(patient=self.patient).latest('id')
+        self.assertEqual(consultation.type_admission, Consultation.TypeAdmission.RDV)
+
+        # Consultation spontanée
+        resp_spontane = self.client.post(reverse('ajouter_consultation_medecin'), {
+            'mode': 'spontane',
+            'patient': self.patient.pk,
+            'numero_carte': self.patient.numero_carte,
+            'contexte_admission': 'PASSAGE_SPONTANE',
+            'service': self.service.pk,
+            'date_consultation': date_str,
+            'diagnostic': 'Contrôle de tension',
+        })
+        self.assertEqual(resp_spontane.status_code, 302)
+        c_spontanee = Consultation.objects.filter(patient=self.patient).latest('id')
+        self.assertEqual(c_spontanee.type_admission, Consultation.TypeAdmission.SPONTANE)
+
+        # Consultation urgence
+        resp_urgence = self.client.post(reverse('ajouter_consultation_medecin'), {
+            'mode': 'spontane',
+            'patient': self.patient.pk,
+            'numero_carte': self.patient.numero_carte,
+            'contexte_admission': 'URGENCE',
+            'service': self.service.pk,
+            'date_consultation': date_str,
+            'diagnostic': 'Crise asthmatique',
+        })
+        self.assertEqual(resp_urgence.status_code, 302)
+        c_urgence = Consultation.objects.filter(patient=self.patient).latest('id')
+        self.assertEqual(c_urgence.type_admission, Consultation.TypeAdmission.URGENCE)
+
+    def test_validation_pec_retroactive_preserve_paiement_regle(self):
+        plan = PlanCouverture.objects.create(nom="Plan 80%", taux_couverture=Decimal("80.00"), plafond_annuel=Decimal("500000.00"))
+        self.patient.plan_couverture = plan
+        self.patient.save()
+
+        pec = PriseEnCharge.objects.create(
+            patient=self.patient,
+            motif="Prise en charge 80%",
+            statut="en_attente",
+        )
+        consultation = Consultation.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            service=self.service,
+            prise_en_charge=pec,
+            date_consultation=timezone.now(),
+            diagnostic="Test finance",
+        )
+        paiement = Paiement.objects.create(
+            consultation=consultation,
+            montant_total=Decimal("15000.00"),
+            montant_part_patient=Decimal("15000.00"),
+            montant_part_assurance=Decimal("0.00"),
+            statut=Paiement.Statut.REGLE,
+            date_reglement=timezone.now(),
+        )
+
+        self.client.force_login(self.admin_user)
+        resp = self.client.post(reverse('valider_prise_en_charge', args=[pec.pk]))
+        self.assertEqual(resp.status_code, 302)
+
+        # Vérifier que le paiement réglé n'a PAS été écrasé
+        paiement.refresh_from_db()
+        self.assertEqual(paiement.montant_part_patient, Decimal("15000.00"))
+        self.assertEqual(paiement.statut, Paiement.Statut.REGLE)
+
+        # Vérifier qu'une régularisation a été inscrite au journal d'audit
+        self.assertTrue(JournalActivite.objects.filter(
+            action=JournalActivite.Action.MODIFICATION,
+            objet__contains=f"Paiement #{paiement.pk}"
+        ).exists())
+
+    def test_ordonnance_admin_secret_medical(self):
+        from .admin import OrdonnanceAdmin
+        self.assertIn("medicaments", OrdonnanceAdmin.exclude)
+
+
+
 
 
 

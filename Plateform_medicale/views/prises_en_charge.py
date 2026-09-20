@@ -36,14 +36,26 @@ def liste_prises_en_charge(request):
                     item.statut = nouveau_statut
                     if nouveau_statut == "validee":
                         notifier_validation_prise_en_charge(item)
-                        # Recalcul de la part assurance pour les consultations rattachées
                         for c in item.consultation_set.all():
                             if hasattr(c, "paiement"):
-                                p_calc = Paiement.calculer_pour(c)
-                                c.paiement.montant_part_assurance = p_calc.montant_part_assurance
-                                c.paiement.montant_part_patient = p_calc.montant_part_patient
-                                c.paiement.taux_applique = p_calc.taux_applique
-                                c.paiement.save()
+                                if c.paiement.statut == Paiement.Statut.NON_REGLE:
+                                    p_calc = Paiement.calculer_pour(c)
+                                    c.paiement.montant_part_assurance = p_calc.montant_part_assurance
+                                    c.paiement.montant_part_patient = p_calc.montant_part_patient
+                                    c.paiement.taux_applique = p_calc.taux_applique
+                                    c.paiement.save()
+                                else:
+                                    paiement_id = c.paiement.pk
+                                    part_patient_actuelle = c.paiement.montant_part_patient
+                                    p_calc = Paiement.calculer_pour(c)
+                                    trop_percu = part_patient_actuelle - p_calc.montant_part_patient
+                                    if trop_percu > 0:
+                                        journaliser(
+                                            request,
+                                            JournalActivite.Action.MODIFICATION,
+                                            f"Régularisation comptable — Paiement #{paiement_id} ({c.patient})",
+                                            f"Prise en charge #{item.pk} validée a posteriori. Trop-perçu constaté à rembourser : {trop_percu} FCFA (nouvelle part assurance : {p_calc.montant_part_assurance} FCFA)",
+                                        )
                     elif nouveau_statut == "refusee":
                         notifier_refus_prise_en_charge(item)
 
@@ -109,11 +121,24 @@ def valider_prise_en_charge(request, pk):
         # Recalculer les paiements des consultations rattachées
         for c in prise_en_charge.consultation_set.all():
             if hasattr(c, "paiement"):
-                p_calc = Paiement.calculer_pour(c)
-                c.paiement.montant_part_assurance = p_calc.montant_part_assurance
-                c.paiement.montant_part_patient = p_calc.montant_part_patient
-                c.paiement.taux_applique = p_calc.taux_applique
-                c.paiement.save()
+                if c.paiement.statut == Paiement.Statut.NON_REGLE:
+                    p_calc = Paiement.calculer_pour(c)
+                    c.paiement.montant_part_assurance = p_calc.montant_part_assurance
+                    c.paiement.montant_part_patient = p_calc.montant_part_patient
+                    c.paiement.taux_applique = p_calc.taux_applique
+                    c.paiement.save()
+                else:
+                    paiement_id = c.paiement.pk
+                    part_patient_actuelle = c.paiement.montant_part_patient
+                    p_calc = Paiement.calculer_pour(c)
+                    trop_percu = part_patient_actuelle - p_calc.montant_part_patient
+                    if trop_percu > 0:
+                        journaliser(
+                            request,
+                            JournalActivite.Action.MODIFICATION,
+                            f"Régularisation comptable — Paiement #{paiement_id} ({c.patient})",
+                            f"Prise en charge validée a posteriori. Trop-perçu constaté à rembourser : {trop_percu} FCFA (nouvelle part assurance : {p_calc.montant_part_assurance} FCFA)",
+                        )
 
         notifier_validation_prise_en_charge(prise_en_charge)
         journaliser(
@@ -196,11 +221,24 @@ def modifier_prise_en_charge(request, pk):
                     prise_en_charge.save(update_fields=["valide_par", "date_validation"])
                     for c in prise_en_charge.consultation_set.all():
                         if hasattr(c, "paiement"):
-                            p_calc = Paiement.calculer_pour(c)
-                            c.paiement.montant_part_assurance = p_calc.montant_part_assurance
-                            c.paiement.montant_part_patient = p_calc.montant_part_patient
-                            c.paiement.taux_applique = p_calc.taux_applique
-                            c.paiement.save()
+                            if c.paiement.statut == Paiement.Statut.NON_REGLE:
+                                p_calc = Paiement.calculer_pour(c)
+                                c.paiement.montant_part_assurance = p_calc.montant_part_assurance
+                                c.paiement.montant_part_patient = p_calc.montant_part_patient
+                                c.paiement.taux_applique = p_calc.taux_applique
+                                c.paiement.save()
+                            else:
+                                paiement_id = c.paiement.pk
+                                part_patient_actuelle = c.paiement.montant_part_patient
+                                p_calc = Paiement.calculer_pour(c)
+                                trop_percu = part_patient_actuelle - p_calc.montant_part_patient
+                                if trop_percu > 0:
+                                    journaliser(
+                                        request,
+                                        JournalActivite.Action.MODIFICATION,
+                                        f"Régularisation comptable — Paiement #{paiement_id} ({c.patient})",
+                                        f"Prise en charge #{prise_en_charge.pk} validée a posteriori. Trop-perçu constaté à rembourser : {trop_percu} FCFA (nouvelle part assurance : {p_calc.montant_part_assurance} FCFA)",
+                                    )
                     notifier_validation_prise_en_charge(prise_en_charge)
                 elif nouveau_statut_code == "refusee":
                     prise_en_charge.valide_par = request.user
