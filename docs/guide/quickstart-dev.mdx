@@ -1,0 +1,227 @@
+# Guide de démarrage rapide pour développeurs SantéSN
+
+> Installez et lancez SantéSN en local en moins de 10 minutes : environnement virtuel, migrations, superutilisateur et serveur de développement.
+
+Ce guide s'adresse aux développeurs et étudiants en informatique qui souhaitent installer SantéSN sur leur machine locale, explorer le code source et présenter le projet à un encadrant ou un jury. À l'issue de ces étapes, vous disposerez d'une instance fonctionnelle avec un accès complet à l'interface d'administration Django.
+
+## Prérequis
+
+Avant de commencer, assurez-vous que votre poste dispose des éléments suivants :
+
+<CardGroup cols={3}>
+  <Card title="Python 3.10+" icon="python" href="https://www.python.org/downloads/">
+    Vérifiez avec `python --version`. Téléchargez sur [python.org](https://www.python.org/downloads/) si nécessaire.
+  </Card>
+
+  <Card title="Git" icon="code-branch" href="https://git-scm.com/">
+    Vérifiez avec `git --version`. Disponible sur [git-scm.com](https://git-scm.com/).
+  </Card>
+
+  <Card title="Connexion Internet" icon="wifi" href="https://www.python.org/downloads/">
+    Nécessaire pour cloner le dépôt et installer les dépendances via pip.
+  </Card>
+</CardGroup>
+
+## Installation pas à pas
+
+<Steps>
+  ### Cloner le dépôt
+
+  Ouvrez un terminal et clonez le dépôt GitHub du projet dans le dossier de votre choix :
+
+  ```bash theme={null}
+  git clone https://github.com/votre-organisation/santesn.git
+  cd santesn
+  ```
+
+  <Note>
+    Remplacez l'URL par l'adresse réelle du dépôt communiquée par votre équipe ou votre responsable de projet.
+  </Note>
+
+  ### Créer et activer un environnement virtuel
+
+  Un environnement virtuel isole les dépendances du projet de votre installation Python globale. Créez-le à la racine du projet :
+
+  ```bash theme={null}
+  # Créer l'environnement
+  python -m venv venv
+  ```
+
+  Activez-le selon votre système d'exploitation :
+
+  <Tabs>
+    <Tab title="Windows (PowerShell)">
+      ```powershell theme={null}
+      venv\Scripts\Activate.ps1
+      ```
+    </Tab>
+
+    <Tab title="Windows (cmd)">
+      ```cmd theme={null}
+      venv\Scripts\activate.bat
+      ```
+    </Tab>
+
+    <Tab title="macOS / Linux">
+      ```bash theme={null}
+      source venv/bin/activate
+      ```
+    </Tab>
+  </Tabs>
+
+  Une fois activé, votre invite de commande affiche le préfixe `(venv)`.
+
+  ### Installer les dépendances
+
+  Installez toutes les bibliothèques Python requises en une seule commande :
+
+  ```bash theme={null}
+  pip install -r requirements.txt
+  ```
+
+  Cette commande installe notamment Django, les connecteurs de base de données, les bibliothèques de génération de QR Code et tous les autres paquets listés dans `requirements.txt`.
+
+  ### Configurer le fichier `.env`
+
+  SantéSN utilise un fichier `.env` pour stocker les paramètres sensibles. Copiez le fichier d'exemple fourni dans le dépôt :
+
+  ```bash theme={null}
+  cp .env.example .env
+  ```
+
+  Ouvrez `.env` dans votre éditeur et renseignez les variables minimales pour un environnement local :
+
+  ```ini theme={null}
+  # .env — Configuration locale
+  SECRET_KEY=une-cle-secrete-longue-et-aleatoire
+  DEBUG=True
+  ALLOWED_HOSTS=localhost,127.0.0.1
+
+  # Base de données locale (SQLite par défaut en développement)
+  DATABASE_URL=sqlite:///db.sqlite3
+  ```
+
+  <Warning>
+    Ne committez jamais votre fichier `.env` dans Git. Vérifiez qu'il est bien listé dans `.gitignore` avant tout `git push`.
+  </Warning>
+
+  ### Appliquer les migrations de base de données
+
+  Django gère le schéma de la base de données via des migrations. Exécutez-les pour créer toutes les tables nécessaires :
+
+  ```bash theme={null}
+  python manage.py migrate
+  ```
+
+  Vous verrez défiler la liste des migrations appliquées. Le message `OK` en face de chacune confirme leur bon déroulement.
+
+  ### Créer un superutilisateur
+
+  Le superutilisateur est le compte administrateur principal qui donne accès à l'interface Django admin (`/admin/`). Créez-en un en suivant les invites :
+
+  ```bash theme={null}
+  python manage.py createsuperuser
+  ```
+
+  Django vous demande successivement :
+
+  ```
+  Nom d'utilisateur (email) : admin@santesn.sn
+  Mot de passe : ••••••••••••
+  Mot de passe (confirmation) : ••••••••••••
+  ```
+
+  <Note>
+    SantéSN ne permet pas l'auto-inscription publique. Tous les comptes utilisateurs (assurés, médecins, pharmaciens) doivent être créés par un administrateur via l'interface Django admin. Pour tester les différents rôles, créez un compte de test pour chaque profil — **assuré**, **médecin** et **pharmacien** — directement depuis `/admin/` après avoir démarré le serveur.
+  </Note>
+
+  ### Lancer le serveur de développement
+
+  Démarrez le serveur Django intégré :
+
+  ```bash theme={null}
+  python manage.py runserver
+  ```
+
+  La sortie attendue ressemble à :
+
+  ```
+  Watching for file changes with StatReloader
+  Performing system checks...
+
+  System check identified no issues (0 silenced).
+  Django version 4.x, using settings 'config.settings'
+  Starting development server at http://127.0.0.1:8000/
+  Quit the server with CONTROL-C.
+  ```
+
+  ### Accéder à l'application
+
+  Ouvrez votre navigateur et rendez-vous sur les URLs suivantes :
+
+  | URL                                                                              | Description                       |
+  | -------------------------------------------------------------------------------- | --------------------------------- |
+  | [http://localhost:8000/](http://localhost:8000/)                                 | Page d'accueil publique           |
+  | [http://localhost:8000/connexion/](http://localhost:8000/connexion/)             | Page de connexion (multi-rôle)    |
+  | [http://localhost:8000/tableau-de-bord/](http://localhost:8000/tableau-de-bord/) | Tableau de bord (après connexion) |
+  | [http://localhost:8000/admin/](http://localhost:8000/admin/)                     | Interface d'administration Django |
+
+  Connectez-vous à `/admin/` avec les identifiants du superutilisateur créé à l'étape précédente pour commencer à gérer les utilisateurs et les données.
+</Steps>
+
+## Créer des utilisateurs de test par rôle
+
+Pour tester l'ensemble des fonctionnalités de SantéSN, créez un compte de démonstration pour chaque rôle depuis l'interface Django admin :
+
+<CardGroup cols={2}>
+  <Card title="Assuré" icon="user" href="/fonctionnalites/roles-permissions">
+    Représente un patient inscrit. Peut prendre des rendez-vous, consulter ses ordonnances et gérer ses ayants droit.
+  </Card>
+
+  <Card title="Médecin" icon="stethoscope" href="/fonctionnalites/consultations">
+    Rédige des consultations et émet des ordonnances sécurisées avec QR Code au format `RX-XXXXXXXXXX`.
+  </Card>
+
+  <Card title="Pharmacien" icon="pills" href="/fonctionnalites/ordonnances">
+    Scanne et vérifie les ordonnances, confirme la délivrance et déclenche le calcul du tiers payant.
+  </Card>
+
+  <Card title="Administrateur" icon="shield" href="/fonctionnalites/roles-permissions">
+    Gère les organisations, les utilisateurs et les partenaires. N'a pas accès aux diagnostics médicaux.
+  </Card>
+</CardGroup>
+
+<Tip>
+  **Recommandation VS Code** : installez l'extension officielle [Python](https://marketplace.visualstudio.com/items?itemName=ms-python.python) de Microsoft. Elle détecte automatiquement votre environnement virtuel `venv`, offre l'autocomplétion pour Django, le débogage intégré (F5) et la mise en évidence des erreurs en temps réel. Ajoutez également l'extension [Django](https://marketplace.visualstudio.com/items?itemName=batisteo.vscode-django) pour la coloration syntaxique des templates Django.
+</Tip>
+
+## Structure du projet
+
+Voici un aperçu rapide de l'arborescence principale pour vous repérer dans le code :
+
+```
+santesn/
+├── config/                  # Paramètres Django (settings, urls, wsgi)
+├── apps/
+│   ├── users/               # Gestion des utilisateurs et des rôles
+│   ├── ordonnances/         # Prescriptions et QR Codes
+│   ├── rendez_vous/         # Prise de rendez-vous
+│   ├── tiers_payant/        # Calcul du tiers payant
+│   └── journal/             # Journal d'activité immuable
+├── templates/               # Templates HTML Django
+├── static/                  # Fichiers statiques (CSS, JS, images)
+├── requirements.txt         # Dépendances Python
+├── manage.py                # Point d'entrée Django
+└── .env.example             # Modèle de configuration
+```
+
+## Commandes utiles
+
+| Commande                           | Description                                                     |
+| ---------------------------------- | --------------------------------------------------------------- |
+| `python manage.py makemigrations`  | Génère les fichiers de migration après modification d'un modèle |
+| `python manage.py migrate`         | Applique les migrations à la base de données                    |
+| `python manage.py createsuperuser` | Crée un compte administrateur                                   |
+| `python manage.py collectstatic`   | Rassemble les fichiers statiques pour la production             |
+| `python manage.py shell`           | Ouvre un shell Python interactif avec le contexte Django        |
+| `python manage.py test`            | Lance la suite de tests automatisés                             |

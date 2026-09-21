@@ -1,0 +1,87 @@
+﻿{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "almond",
+  "name": "SantéSN",
+  "description": "Documentation technique de la plateforme SantéSN — Digitalisation du tiers payant et ordonnances sécurisées au Sénégal",
+  "colors": {
+    "primary": "#0E7C86",
+    "light": "#4FB8AE",
+    "dark": "#095059"
+  },
+  "logo": {
+    "light": "https://projet-final-bice.vercel.app/logo-light.svg",
+    "dark": "https://projet-final-bice.vercel.app/logo-dark.svg",
+    "href": "https://projet-final-bice.vercel.app"
+  },
+  "favicon": "https://projet-final-bice.vercel.app/favicon.svg",
+  "navbar": {
+    "links": [
+      {
+        "href": "https://wa.me/221789576145",
+        "label": "Contact"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Se connecter",
+      "href": "https://projet-final-bice.vercel.app/connexion/"
+    }
+  },
+  "footer": {
+    "socials": {}
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Présentation",
+            "pages": [
+              "introduction",
+              "architecture",
+              "technologies"
+            ]
+          },
+          {
+            "group": "Installation",
+            "pages": [
+              "installation/prerequis",
+              "installation/configuration",
+              "installation/base-de-donnees"
+            ]
+          },
+          {
+            "group": "Fonctionnalités",
+            "pages": [
+              "fonctionnalites/authentification",
+              "fonctionnalites/roles-permissions",
+              "fonctionnalites/rendez-vous",
+              "fonctionnalites/consultations",
+              "fonctionnalites/ordonnances",
+              "fonctionnalites/prise-en-charge",
+              "fonctionnalites/ayants-droit"
+            ]
+          },
+          {
+            "group": "Technique",
+            "pages": [
+              "technique/routes-urls",
+              "technique/securite",
+              "technique/fichiers-medias",
+              "technique/variables-environnement"
+            ]
+          },
+          {
+            "group": "Guide Développeur",
+            "pages": [
+              "guide/quickstart-dev",
+              "guide/deploiement",
+              "guide/evolutions"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

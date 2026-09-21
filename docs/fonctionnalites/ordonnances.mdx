@@ -1,0 +1,65 @@
+# Ordonnances numériques et vérification QR Code SantéSN
+
+> SantéSN sécurise vos ordonnances avec un code RX unique, un QR Code infalsifiable et un verrou anti-double délivrance actif dès la première dispensation.
+
+Les ordonnances numériques de SantéSN remplacent les prescriptions papier par un document sécurisé, horodaté et infalsifiable. Chaque ordonnance est identifiée par un code unique au format `RX-XXXXXXXXXX` et associée à un QR Code généré cryptographiquement, ce qui garantit son authenticité à chaque étape du parcours de soin.
+
+## Cycle de vie d'une ordonnance
+
+<Steps>
+  <Step title="Création par le médecin">
+    À l'issue d'une consultation, le médecin rédige l'ordonnance directement dans SantéSN. Le système génère automatiquement un identifiant unique (ex. `RX-0042817653`) et un QR Code associé. L'ordonnance est immédiatement visible par le patient dans son tableau de bord sous le statut **Active**.
+  </Step>
+
+  <Step title="Accès patient et présentation en pharmacie">
+    Le patient consulte son ordonnance depuis son tableau de bord à l'adresse `/ordonnances/`. Il peut afficher le QR Code sur son écran ou le présenter imprimé. L'ordonnance reste valide pendant **90 jours** à compter de sa date de création.
+  </Step>
+
+  <Step title="Scan et vérification par le pharmacien">
+    Le pharmacien scanne le QR Code à l'aide de l'interface SantéSN ou saisit manuellement le code `RX-XXXXXXXXXX`. Le système vérifie en temps réel la validité de l'ordonnance : identité du patient, date d'expiration, et statut de délivrance. L'opération est horodatée et consignée dans le journal d'activité.
+  </Step>
+
+  <Step title="Délivrance et verrouillage définitif">
+    Dès que le pharmacien confirme la délivrance, le statut de l'ordonnance bascule vers **Délivrée**. Ce changement est irréversible : toute tentative de second scan déclenche un refus automatique du système, empêchant toute double délivrance.
+  </Step>
+</Steps>
+
+## Statuts d'une ordonnance
+
+<CardGroup cols={3}>
+  <Card title="Active" icon="circle-check" href="https://projet-final-bice.vercel.app/ordonnances/">
+    L'ordonnance a été créée par le médecin et n'a pas encore été délivrée. Elle est présentable en pharmacie tant que sa date de validité n'est pas dépassée.
+  </Card>
+
+  <Card title="Délivrée" icon="lock" href="https://projet-final-bice.vercel.app/ordonnances/">
+    La délivrance a été confirmée par un pharmacien. L'ordonnance est définitivement verrouillée et ne peut plus être utilisée.
+  </Card>
+
+  <Card title="Expirée" icon="clock" href="https://projet-final-bice.vercel.app/ordonnances/">
+    La période de validité de 90 jours est écoulée sans que l'ordonnance ait été délivrée. Elle ne peut plus être acceptée en pharmacie.
+  </Card>
+</CardGroup>
+
+## Protection contre les fraudes
+
+Le QR Code est généré à partir de l'identifiant `RX-XXXXXXXXXX` de l'ordonnance via un algorithme cryptographique. Il est impossible de le reproduire ou de le falsifier sans accès au système. Toute tentative de présentation d'un QR Code modifié ou d'un code inconnu est rejetée immédiatement.
+
+<Warning>
+  **Attention à la date d'expiration.** Une ordonnance expire **90 jours** après sa date de création, même si elle n'a jamais été présentée en pharmacie. Passé ce délai, le statut passe à **Expirée** et aucune délivrance n'est possible. Si votre ordonnance a expiré, consultez votre médecin pour obtenir un renouvellement.
+</Warning>
+
+<Note>
+  Conformément aux **Conditions Générales d'Utilisation** de SantéSN, les pharmaciens ont l'obligation de scanner ou de saisir le code `RX-XXXXXXXXXX` dans le système **avant toute délivrance**. Dispenser des médicaments sans vérification préalable constitue une violation des CGU et engage la responsabilité du professionnel de santé.
+</Note>
+
+## Saisie manuelle du code RX
+
+Si la caméra du terminal n'est pas disponible, le pharmacien peut saisir manuellement le code `RX-XXXXXXXXXX` indiqué sur l'ordonnance. La vérification est identique à celle effectuée par scan : le résultat est instantané et la délivrance est verrouillée de la même manière.
+
+<Tip>
+  Encouragez votre patient à avoir son ordonnance affichée sur son téléphone avant d'arriver au comptoir. Cela accélère la vérification et réduit les files d'attente.
+</Tip>
+
+## Accès à vos ordonnances
+
+Connectez-vous à votre compte SantéSN et rendez-vous sur `/ordonnances/` pour consulter la liste complète de vos prescriptions, leur statut actuel et les détails de chaque délivrance.

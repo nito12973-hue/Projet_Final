@@ -1,0 +1,171 @@
+# Les quatre rôles et permissions utilisateurs SantéSN
+
+> Les quatre rôles SantéSN — Admin, Assuré, Médecin, Pharmacien — leurs permissions et l'isolation RBAC garante de la confidentialité médicale.
+
+SantéSN applique un contrôle d'accès basé sur les rôles (RBAC — Role-Based Access Control). Chaque utilisateur se voit attribuer un rôle unique à la création de son compte, et ce rôle détermine précisément les fonctionnalités auxquelles il a accès. La détection est automatique à la connexion : aucun écran de sélection de rôle n'est présenté à l'utilisateur.
+
+<Note>
+  **Isolation des rôles et confidentialité médicale.** Le cloisonnement strict des rôles n'est pas uniquement une contrainte technique : il découle des obligations légales de confidentialité médicale et de la loi sénégalaise n° 2008-12 sur la protection des données personnelles. Un administrateur ne peut pas accéder aux diagnostics médicaux. Un pharmacien ne peut pas créer d'ordonnances. Ce design garantit que chaque acteur de la chaîne de soins n'accède qu'aux informations strictement nécessaires à sa mission.
+</Note>
+
+## Les quatre rôles de la plateforme
+
+<Tabs>
+  <Tab title="Administrateur">
+    L'administrateur gère la structure organisationnelle de la plateforme. Il ne participe pas à l'acte de soin et n'a délibérément accès à aucune donnée médicale (diagnostics, ordonnances, résultats).
+
+    **Ce que l'Administrateur peut faire :**
+
+    <CardGroup cols={2}>
+      <Card title="Gestion des utilisateurs" icon="users" href="/fonctionnalites/authentification">
+        Créer, modifier et désactiver les comptes de tous les utilisateurs (assurés, médecins, pharmaciens). Attribuer et modifier les rôles.
+      </Card>
+
+      <Card title="Gestion des prestataires" icon="hospital" href="https://projet-final-bice.vercel.app/tableau-de-bord/">
+        Enregistrer et administrer les établissements de soins (cliniques, cabinets, pharmacies) partenaires de l'IPM.
+      </Card>
+
+      <Card title="Plans de couverture" icon="shield" href="/fonctionnalites/prise-en-charge">
+        Configurer les plans d'assurance, les taux de prise en charge, et les règles de calcul du tiers payant pour chaque catégorie d'assurés.
+      </Card>
+
+      <Card title="Statistiques globales" icon="chart-bar" href="https://projet-final-bice.vercel.app/tableau-de-bord/">
+        Consulter les tableaux de bord agrégés : nombre de consultations, volume d'ordonnances, taux d'utilisation par prestataire.
+      </Card>
+
+      <Card title="Gestion des ayants droit" icon="family" href="/fonctionnalites/ayants-droit">
+        Rattacher les dépendants (conjoint, enfants) aux comptes des assurés principaux et gérer leurs droits de couverture.
+      </Card>
+
+      <Card title="Journal d'activité" icon="list" href="https://projet-final-bice.vercel.app/tableau-de-bord/">
+        Consulter le journal d'activité pour auditer les actions sensibles effectuées sur la plateforme et assurer la traçabilité complète des opérations.
+      </Card>
+    </CardGroup>
+
+    **Ce que l'Administrateur ne peut PAS faire :**
+
+    * Accéder aux diagnostics médicaux ou au contenu des consultations
+    * Lire ou modifier le contenu des ordonnances médicales
+    * Effectuer des actes médicaux ou valider des prescriptions
+  </Tab>
+
+  <Tab title="Assuré">
+    L'assuré est le patient couvert par une IPM ou une compagnie d'assurance. Il utilise SantéSN pour gérer sa relation avec les prestataires de soins et suivre ses dossiers médicaux numériques.
+
+    **Ce que l'Assuré peut faire :**
+
+    <CardGroup cols={2}>
+      <Card title="Prise de rendez-vous" icon="calendar" href="/fonctionnalites/rendez-vous">
+        Réserver un rendez-vous auprès d'un prestataire et d'un médecin de son choix, en sélectionnant la date et le créneau horaire disponible.
+      </Card>
+
+      <Card title="Consultation des ordonnances" icon="file-medical" href="/fonctionnalites/ordonnances">
+        Accéder à la liste de ses ordonnances numériques sécurisées, identifiées par leur code `RX-XXXXXXXXXX` et leur QR Code.
+      </Card>
+
+      <Card title="Gestion des ayants droit" icon="users" href="/fonctionnalites/ayants-droit">
+        Consulter les profils de ses dépendants (conjoint, enfants) rattachés à son compte principal.
+      </Card>
+
+      <Card title="Suivi du tiers payant" icon="receipt" href="/fonctionnalites/prise-en-charge">
+        Visualiser la part prise en charge par l'assurance et la part restant à sa charge pour chaque acte médical.
+      </Card>
+
+      <Card title="Historique des consultations" icon="history" href="/fonctionnalites/consultations">
+        Consulter l'historique de ses consultations passées et les comptes rendus accessibles dans son tableau de bord.
+      </Card>
+    </CardGroup>
+
+    **Ce que l'Assuré ne peut PAS faire :**
+
+    * Créer, modifier ou annuler une ordonnance
+    * Accéder aux dossiers d'autres patients
+    * Valider une ordonnance en pharmacie
+    * Modifier ses informations de couverture
+  </Tab>
+
+  <Tab title="Médecin">
+    Le médecin est l'acteur central de l'acte de soin sur SantéSN. Il gère son agenda, réalise les consultations et génère les ordonnances numériques sécurisées.
+
+    **Ce que le Médecin peut faire :**
+
+    <CardGroup cols={2}>
+      <Card title="Gestion de l'agenda" icon="calendar-days" href="/fonctionnalites/rendez-vous">
+        Consulter ses rendez-vous à venir, confirmer ou annuler des créneaux, et suivre l'état de son planning quotidien.
+      </Card>
+
+      <Card title="Rédaction de consultations" icon="stethoscope" href="/fonctionnalites/consultations">
+        Saisir le diagnostic, le traitement et les prescriptions médicamenteuses lors d'une consultation patient.
+      </Card>
+
+      <Card title="Génération d'ordonnances" icon="file-prescription" href="/fonctionnalites/ordonnances">
+        Créer des ordonnances numériques associées à un patient, identifiées par un code `RX-XXXXXXXXXX` unique et sécurisé par QR Code.
+      </Card>
+
+      <Card title="Dossier patient" icon="folder-open" href="/fonctionnalites/consultations">
+        Accéder à l'historique des consultations de ses propres patients pour assurer la continuité des soins.
+      </Card>
+    </CardGroup>
+
+    **Ce que le Médecin ne peut PAS faire :**
+
+    * Valider ou dispenser une ordonnance en pharmacie
+    * Modifier les informations de couverture d'assurance d'un patient
+    * Accéder aux dossiers de patients suivis par d'autres médecins (hors partage explicite)
+    * Créer ou supprimer des comptes utilisateurs
+  </Tab>
+
+  <Tab title="Pharmacien">
+    Le pharmacien intervient en bout de chaîne pour vérifier, valider et dispenser les ordonnances numériques. Son rôle est conçu pour éliminer les risques de falsification et de double délivrance.
+
+    **Ce que le Pharmacien peut faire :**
+
+    <CardGroup cols={2}>
+      <Card title="Scan d'ordonnances" icon="qrcode" href="/fonctionnalites/ordonnances">
+        Scanner le QR Code d'une ordonnance pour vérifier instantanément son authenticité, sa validité et l'identité du patient.
+      </Card>
+
+      <Card title="Validation et délivrance" icon="check-circle" href="/fonctionnalites/ordonnances">
+        Confirmer la délivrance des médicaments prescrits et enregistrer l'acte dans le système pour activer le verrou anti-double délivrance.
+      </Card>
+
+      <Card title="Calcul du tiers payant" icon="calculator" href="/fonctionnalites/prise-en-charge">
+        Consulter automatiquement la répartition entre la part assurance et la part patient pour chaque ordonnance validée.
+      </Card>
+
+      <Card title="File d'ordonnances" icon="list-check" href="/fonctionnalites/ordonnances">
+        Accéder à la liste des ordonnances en attente de validation dans son établissement.
+      </Card>
+    </CardGroup>
+
+    **Ce que le Pharmacien ne peut PAS faire :**
+
+    * Créer ou modifier une ordonnance
+    * Accéder au diagnostic ou au contenu médical de la consultation
+    * Délivrer une ordonnance déjà dispensée (verrou anti-double délivrance actif)
+    * Accéder aux données personnelles d'assurance au-delà de ce qui est nécessaire à la délivrance
+  </Tab>
+</Tabs>
+
+## Tableau récapitulatif des permissions
+
+| Action                              | Administrateur |     Assuré    | Médecin | Pharmacien |
+| ----------------------------------- | :------------: | :-----------: | :-----: | :--------: |
+| Créer des comptes utilisateurs      |        ✅       |       ❌       |    ❌    |      ❌     |
+| Gérer les prestataires              |        ✅       |       ❌       |    ❌    |      ❌     |
+| Prendre un rendez-vous              |        ❌       |       ✅       |    ❌    |      ❌     |
+| Rédiger une consultation            |        ❌       |       ❌       |    ✅    |      ❌     |
+| Créer une ordonnance                |        ❌       |       ❌       |    ✅    |      ❌     |
+| Scanner / valider une ordonnance    |        ❌       |       ❌       |    ❌    |      ✅     |
+| Consulter ses propres ordonnances   |        ❌       |       ✅       |    ❌    |      ❌     |
+| Accéder aux diagnostics médicaux    |        ❌       |       ❌       |    ✅    |      ❌     |
+| Consulter les statistiques globales |        ✅       |       ❌       |    ❌    |      ❌     |
+| Gérer les ayants droit              |        ✅       | ✅ (les siens) |    ❌    |      ❌     |
+
+## Attribution et modification des rôles
+
+Le rôle est attribué **une seule fois**, lors de la création du compte par un administrateur. Un utilisateur ne peut pas modifier son propre rôle. Si votre rôle doit être changé (par exemple, un médecin qui prend un rôle d'administration dans une nouvelle structure), contactez l'administrateur de votre organisation pour qu'il procède à la modification dans le système.
+
+<Tip>
+  Si vous pensez avoir accès à des fonctionnalités que vous ne voyez pas dans votre tableau de bord, vérifiez d'abord votre rôle auprès de votre administrateur. Il est possible que votre compte ait été créé avec un rôle incorrect ou incomplet.
+</Tip>
