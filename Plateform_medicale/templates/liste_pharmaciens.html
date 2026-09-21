@@ -26,8 +26,8 @@
         <tbody>
             {% for pharmacien in pharmaciens %}
             <tr>
-                <td>{{ pharmacien.user.get_full_name|default:"-" }}</td>
-                <td class="col-optionnelle">{{ pharmacien.user.email }}</td>
+                <td>{% if pharmacien.user %}{{ pharmacien.user.get_full_name|default:pharmacien.user.email }}{% else %}{{ pharmacien }}{% endif %}</td>
+                <td class="col-optionnelle">{% if pharmacien.user %}{{ pharmacien.user.email }}{% else %}—{% endif %}</td>
                 <td>{{ pharmacien.prestataire|default:"Non affecté" }}</td>
                 <td>
                     <a href="{% url 'modifier_pharmacien' pharmacien.pk %}" class="button primary btn btn-sm">{% icone "edit-2" %} Affecter une pharmacie</a>

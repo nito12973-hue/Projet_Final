@@ -419,6 +419,18 @@ class Pharmacien(models.Model):
             return self.user.get_full_name() or self.user.email
         return f"Pharmacien #{self.pk}"
 
+    @property
+    def nom_complet(self):
+        if self.user:
+            return self.user.get_full_name() or self.user.email
+        return f"Pharmacien #{self.pk}"
+
+    @property
+    def email(self):
+        if self.user:
+            return self.user.email
+        return ""
+
 
 class ServiceMedical(models.Model):
     nom = models.CharField(max_length=100)
