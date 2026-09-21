@@ -2803,6 +2803,26 @@ class PharmacienSuppressionCompteTests(TestCase):
         pharmacien.refresh_from_db()
         self.assertIsNone(pharmacien.user)
 
+    def test_acces_pages_pharmacien_sans_compte_utilisateur(self):
+        admin = creer_utilisateur(User.Role.ADMIN, 'admin_pharma@santesn.sn')
+        pharmacien = creer_pharmacien('pharma_orphelin@santesn.sn')
+        pharmacien.user.delete()
+        pharmacien.refresh_from_db()
+        self.assertIsNone(pharmacien.user)
+
+        self.client.login(username='admin_pharma@santesn.sn', password=PASSWORD)
+
+        # La page de modification d'affectation ne doit pas crasher avec VariableDoesNotExist
+        response_mod = self.client.get(reverse('modifier_pharmacien', args=[pharmacien.pk]))
+        self.assertEqual(response_mod.status_code, 200)
+        self.assertContains(response_mod, f"Pharmacien #{pharmacien.pk}")
+        self.assertContains(response_mod, "Aucun compte utilisateur associé")
+
+        # La liste des pharmaciens doit également s'afficher sans erreur
+        response_liste = self.client.get(reverse('liste_pharmaciens'))
+        self.assertEqual(response_liste.status_code, 200)
+        self.assertContains(response_liste, f"Pharmacien #{pharmacien.pk}")
+
 
 class ValidationFormulairesTests(TestCase):
     def setUp(self):

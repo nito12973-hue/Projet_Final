@@ -5,8 +5,8 @@
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>{{ pharmacien.user.get_full_name|default:pharmacien.user.email }}</h1>
-        <p class="subtitle">{{ pharmacien.user.email }}</p>
+        <h1>{% if pharmacien.user %}{{ pharmacien.user.get_full_name|default:pharmacien.user.email }}{% else %}{{ pharmacien }}{% endif %}</h1>
+        <p class="subtitle">{% if pharmacien.user %}{{ pharmacien.user.email }}{% else %}Aucun compte utilisateur associé{% endif %}</p>
     </div>
     <a class="button" href="{% url 'liste_pharmaciens' %}">Retour</a>
 </section>
