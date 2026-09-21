@@ -417,13 +417,17 @@ class Pharmacien(models.Model):
     def __str__(self):
         if self.user:
             return self.user.get_full_name() or self.user.email
-        return f"Pharmacien #{self.pk}"
+        if self.prestataire:
+            return f"Pharmacien – {self.prestataire.nom}"
+        return "Pharmacien (compte non assigné)"
 
     @property
     def nom_complet(self):
         if self.user:
             return self.user.get_full_name() or self.user.email
-        return f"Pharmacien #{self.pk}"
+        if self.prestataire:
+            return f"Pharmacien – {self.prestataire.nom}"
+        return "Pharmacien (compte non assigné)"
 
     @property
     def email(self):

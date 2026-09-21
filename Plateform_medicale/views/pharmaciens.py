@@ -23,8 +23,11 @@ def modifier_pharmacien(request, pk):
     if request.method == "POST":
         form = PharmacienAffectationForm(request.POST, instance=pharmacien)
         if form.is_valid():
-            form.save()
-            messages.success(request, "Pharmacien modifié.")
+            pharmacien = form.save()
+            if pharmacien.prestataire:
+                messages.success(request, f"L'affectation à l'officine « {pharmacien.prestataire.nom} » a été enregistrée avec succès.")
+            else:
+                messages.success(request, "L'affectation du pharmacien a été enregistrée avec succès.")
             return redirect("liste_pharmaciens")
     else:
         form = PharmacienAffectationForm(instance=pharmacien)

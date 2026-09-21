@@ -272,7 +272,7 @@ def notifier_delivrance_effectuee(delivrance):
         emettre_notification(
             destinataire=assure_user,
             titre="Médicaments délivrés",
-            message=f"Vos médicaments de l'ordonnance #{ordonnance.pk} ont été délivrés par la pharmacie {nom_ph}.",
+            message=f"Vos médicaments de l'ordonnance du {ordonnance.date_creation:%d/%m/%Y} ont été délivrés par la pharmacie {nom_ph}.",
             type_evenement=Notification.TypeEvenement.DELIVRANCE_EFFECTUEE,
             url_action=reverse("voir_ordonnance_assure", args=[ordonnance.pk]),
             template_email="emails/delivrance_effectuee.html",

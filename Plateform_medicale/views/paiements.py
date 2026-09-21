@@ -114,7 +114,7 @@ def marquer_paiement_regle(request, pk):
                 f"Paiement #{paiement.pk} · {paiement.consultation.patient}",
                 f"{paiement.montant_part_patient} F CFA · {paiement.get_mode_reglement_display()}",
             )
-            messages.success(request, f"Paiement #{paiement.pk} marqué comme réglé.")
+            messages.success(request, f"Le règlement pour {paiement.consultation.patient} a été enregistré avec succès.")
             return redirect("liste_paiements")
     else:
         form = PaiementReglementForm(instance=paiement)

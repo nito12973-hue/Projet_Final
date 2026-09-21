@@ -141,7 +141,7 @@
                 <div style="font-size:12px;color:#24424b;line-height:1.45;">
                     <strong style="font-size:13px;">Dr. {{ ordonnance.consultation.medecin }}</strong><br>
                     <span style="font-size:11px;color:#5f6f7d;">{{ ordonnance.consultation.medecin.specialite|default:"Médecine Générale" }}</span><br>
-                    <span style="font-size:10.5px;color:#5f6f7d;">Réf. Consultation #{{ ordonnance.consultation.pk }}</span>
+                    <span style="font-size:10.5px;color:#5f6f7d;">Réf. Consultation : {{ ordonnance.consultation.pk }}</span>
                 </div>
                 <div style="font-size:11px;color:var(--muted);text-align:right;font-style:italic;">
                     Visa praticien
@@ -161,7 +161,7 @@
 {% if user.role == 'MEDECIN' and not ordonnance.est_delivree and not ordonnance.est_annulee %}
 <div id="modal-annulation" class="sans-impression" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); align-items:center; justify-content:center; z-index:9999;">
     <div style="background:var(--surface, #ffffff); padding:2rem; border-radius:12px; max-width:480px; width:92%; box-shadow:0 12px 32px rgba(0,0,0,0.25); border:1px solid var(--border, #d0d7de);">
-        <h3 style="margin-top:0; color:var(--titre, #132b45); font-size:1.25rem;">Annuler l'ordonnance #{{ ordonnance.code_qr }}</h3>
+        <h3 style="margin-top:0; color:var(--titre, #132b45); font-size:1.25rem;">Annuler l'ordonnance (Réf. {{ ordonnance.code_qr }})</h3>
         <p style="font-size:0.9rem; color:var(--muted); line-height:1.45;">
             Cette action est irréversible. L'ordonnance ne pourra plus être délivrée en pharmacie et le motif sera consigné dans le dossier.
         </p>
