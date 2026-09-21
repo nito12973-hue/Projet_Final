@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load icones %}
 
-{% block title %}Dossier #{{ demande.numero_dossier }} — SantéSN{% endblock %}
+{% block title %}Dossier {{ demande.numero_dossier }} — SantéSN{% endblock %}
 
 {% block content %}
 <section class="page-title">
@@ -11,7 +11,7 @@
             <span class="badge {% if demande.statut == 'EN_ATTENTE' %}en_attente{% elif demande.statut == 'REPONDU' %}validee{% elif demande.statut == 'FERME' %}annule{% else %}en_attente{% endif %}">
                 {{ demande.get_statut_display }}
             </span>
-            <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--muted);">#{{ demande.numero_dossier }}</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--muted);">Dossier N° {{ demande.numero_dossier }}</span>
         </div>
         <h1>{{ demande.objet }}</h1>
         <p class="subtitle">Catégorie : {{ demande.get_categorie_display }} · Priorité : {{ demande.get_priorite_display }} · Ouvert le {{ demande.date_creation|date:"d/m/Y à H:i" }}</p>

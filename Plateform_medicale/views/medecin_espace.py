@@ -566,7 +566,7 @@ def annuler_ordonnance_medecin(request, pk):
         details=f"Annulation par le médecin. Motif : {motif}",
     )
 
-    messages.success(request, f"Ordonnance #{ordonnance.code_qr} annulée.")
+    messages.success(request, f"L'ordonnance du patient {ordonnance.consultation.patient} a été annulée avec succès.")
     return redirect("voir_ordonnance_medecin", pk=pk)
 
 

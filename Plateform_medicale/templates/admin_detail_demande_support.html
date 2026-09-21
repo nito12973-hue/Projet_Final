@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load icones %}
 
-{% block title %}Traitement demande #{{ demande.numero_dossier }} — SantéSN{% endblock %}
+{% block title %}Traitement du dossier {{ demande.numero_dossier }} — SantéSN{% endblock %}
 
 {% block content %}
 <section class="page-title">
@@ -16,7 +16,7 @@
             </span>
         </div>
         <h1>{{ demande.objet }}</h1>
-        <p class="subtitle">Dossier #{{ demande.numero_dossier }} · Catégorie : {{ demande.get_categorie_display }} · Ouvert le {{ demande.date_creation|date:"d/m/Y à H:i" }}</p>
+        <p class="subtitle">Dossier N° {{ demande.numero_dossier }} · Catégorie : {{ demande.get_categorie_display }} · Ouvert le {{ demande.date_creation|date:"d/m/Y à H:i" }}</p>
     </div>
 </section>
 

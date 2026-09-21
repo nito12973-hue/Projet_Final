@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}Modifier {{ pharmacien }}{% endblock %}
+{% block title %}Affectation du pharmacien{% endblock %}
 
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>{% if pharmacien.user %}{{ pharmacien.user.get_full_name|default:pharmacien.user.email }}{% else %}{{ pharmacien }}{% endif %}</h1>
-        <p class="subtitle">{% if pharmacien.user %}{{ pharmacien.user.email }}{% else %}Aucun compte utilisateur associé{% endif %}</p>
+        <h1>{% if pharmacien.user %}{{ pharmacien.user.get_full_name|default:pharmacien.user.email }}{% elif pharmacien.prestataire %}Pharmacien — {{ pharmacien.prestataire.nom }}{% else %}Fiche pharmacien{% endif %}</h1>
+        <p class="subtitle">{% if pharmacien.user %}{{ pharmacien.user.email }}{% else %}Compte utilisateur non assigné{% endif %}</p>
     </div>
     <a class="button" href="{% url 'liste_pharmaciens' %}">Retour</a>
 </section>

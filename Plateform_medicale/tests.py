@@ -2815,13 +2815,14 @@ class PharmacienSuppressionCompteTests(TestCase):
         # La page de modification d'affectation ne doit pas crasher avec VariableDoesNotExist
         response_mod = self.client.get(reverse('modifier_pharmacien', args=[pharmacien.pk]))
         self.assertEqual(response_mod.status_code, 200)
-        self.assertContains(response_mod, f"Pharmacien #{pharmacien.pk}")
-        self.assertContains(response_mod, "Aucun compte utilisateur associé")
+        self.assertContains(response_mod, "Fiche pharmacien")
+        self.assertContains(response_mod, "Compte utilisateur non assigné")
 
         # La liste des pharmaciens doit également s'afficher sans erreur
         response_liste = self.client.get(reverse('liste_pharmaciens'))
         self.assertEqual(response_liste.status_code, 200)
-        self.assertContains(response_liste, f"Pharmacien #{pharmacien.pk}")
+        self.assertContains(response_liste, "Pharmacien (non assigné)")
+        self.assertContains(response_liste, "Compte non assigné")
 
 
 class ValidationFormulairesTests(TestCase):

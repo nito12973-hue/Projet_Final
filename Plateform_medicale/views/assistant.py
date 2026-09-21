@@ -132,7 +132,7 @@ def creer_demande_support(request):
                     Notification(
                         destinataire=admin,
                         titre="Nouvelle demande d'assistance",
-                        message=f"L'assuré {nom_patient} a ouvert le ticket #{demande.numero_dossier} : {demande.objet}.",
+                        message=f"L'assuré {nom_patient} a ouvert une demande d'assistance (dossier {demande.numero_dossier}) : {demande.objet}.",
                         type_evenement=Notification.TypeEvenement.SUPPORT_DEMANDE,
                         url_action=reverse("admin_detail_demande_support", args=[demande.pk]),
                     )
@@ -141,7 +141,7 @@ def creer_demande_support(request):
 
             messages.success(
                 request,
-                f"Votre demande #{demande.numero_dossier} a été transmise avec succès à l'administration.",
+                f"Votre demande d'assistance (dossier {demande.numero_dossier}) a été transmise avec succès à l'administration.",
                 extra_tags="succes-critique"
             )
             return redirect("detail_demande_support", pk=demande.pk)
@@ -185,7 +185,7 @@ def detail_demande_support(request, pk):
             demande.cloture_le = timezone.now()
             demande.cloture_par = request.user
             demande.save(update_fields=["statut", "cloture_le", "cloture_par", "date_mise_a_jour"])
-            messages.success(request, f"La demande #{demande.numero_dossier} a été clôturée.")
+            messages.success(request, f"La demande d'assistance (dossier {demande.numero_dossier}) a été clôturée avec succès.")
             return redirect("detail_demande_support", pk=demande.pk)
 
         # Ajout d'un nouveau message
@@ -208,7 +208,7 @@ def detail_demande_support(request, pk):
                     Notification(
                         destinataire=admin,
                         titre="Nouveau message sur demande support",
-                        message=f"{nom_patient} a répondu sur le ticket #{demande.numero_dossier}.",
+                        message=f"{nom_patient} a répondu sur la demande d'assistance (dossier {demande.numero_dossier}).",
                         type_evenement=Notification.TypeEvenement.SUPPORT_DEMANDE,
                         url_action=reverse("admin_detail_demande_support", args=[demande.pk]),
                     )
@@ -293,7 +293,7 @@ def admin_detail_demande_support(request, pk):
                 Notification.objects.create(
                     destinataire=demande.auteur,
                     titre="Réponse de l'administration SantéSN",
-                    message=f"L'administration a répondu à votre demande #{demande.numero_dossier} ({demande.objet}).",
+                    message=f"L'administration a répondu à votre demande (dossier {demande.numero_dossier} : {demande.objet}).",
                     type_evenement=Notification.TypeEvenement.SUPPORT_REPONSE,
                     url_action=reverse("detail_demande_support", args=[demande.pk]),
                 )
@@ -301,11 +301,11 @@ def admin_detail_demande_support(request, pk):
                 journaliser(
                     request,
                     JournalActivite.Action.DECISION,
-                    f"Support #{demande.numero_dossier}",
+                    f"Support — Dossier {demande.numero_dossier}",
                     details=f"Réponse apportée à {demande.auteur.email}"
                 )
 
-                messages.success(request, f"Réponse transmise à l'assuré pour la demande #{demande.numero_dossier}.")
+                messages.success(request, f"Votre réponse a été transmise avec succès à l'assuré (dossier {demande.numero_dossier}).")
                 return redirect("admin_detail_demande_support", pk=demande.pk)
 
         elif action == "changer_statut":

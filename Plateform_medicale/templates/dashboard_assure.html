@@ -148,7 +148,7 @@
                     {% icone "pill" %}
                 </span>
                 <div>
-                    <strong style="font-size:13.5px;color:var(--titre);display:block;">Ordonnance #{{ derniere_ordonnance.code_qr }}</strong>
+                    <strong style="font-size:13.5px;color:var(--titre);display:block;">Ordonnance médicale · Réf. {{ derniere_ordonnance.code_qr }}</strong>
                     <span style="font-size:12px;color:var(--muted);">Émise le {{ derniere_ordonnance.date_creation|date:"d F Y" }} par Dr. {{ derniere_ordonnance.consultation.medecin }}</span>
                 </div>
             </div>
