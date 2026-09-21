@@ -1,0 +1,68 @@
+# Tiers payant automatique et prise en charge SantéSN
+
+> Comprenez comment SantéSN calcule automatiquement la part assurance et la part patient pour chaque acte de soin, sans avance de frais pour l'assuré.
+
+Le tiers payant est le mécanisme central de SantéSN : il dispense l'assuré d'avancer les frais de santé en faisant prendre en charge directement par l'IPM ou la compagnie d'assurance la part qui lui revient. À chaque acte de soin, SantéSN calcule automatiquement la répartition entre la part assurance et la part patient, en fonction du taux configuré par votre organisation.
+
+## Fonctionnement du calcul automatique
+
+Lorsqu'un acte de soin est enregistré par le prestataire (consultation, délivrance d'ordonnance, examen), SantéSN applique immédiatement le taux de prise en charge défini par l'IPM pour calculer le montant dû par chaque partie.
+
+### Exemple de répartition
+
+| Élément                       | Montant         |
+| ----------------------------- | --------------- |
+| Coût total de la consultation | 20 000 FCFA     |
+| Taux de prise en charge IPM   | 90 %            |
+| **Part assurance (IPM)**      | **18 000 FCFA** |
+| **Part patient**              | **2 000 FCFA**  |
+
+Dans cet exemple, le patient ne règle que **2 000 FCFA** directement au prestataire. L'IPM reçoit une demande de remboursement de **18 000 FCFA** générée automatiquement par le système.
+
+<Note>
+  Le taux de prise en charge est configuré par votre **IPM ou compagnie d'assurance** au moment de la création de votre compte institutionnel. Ce taux ne peut pas être modifié par l'assuré. Pour toute question sur votre taux de couverture, contactez votre service des ressources humaines ou votre gestionnaire IPM.
+</Note>
+
+## Consultation de votre couverture
+
+Les informations relatives à votre prise en charge sont accessibles depuis votre tableau de bord après connexion :
+
+* **Taux de couverture** applicable à votre contrat
+* **Répartition estimée** pour chaque type de prestation
+* **Historique des actes** pris en charge avec les montants détaillés
+
+Vos ayants droit bénéficient du même taux de couverture que vous. Leur prise en charge est calculée selon les mêmes règles.
+
+## Visibilité pour le prestataire et l'assuré
+
+La répartition financière est affichée en temps réel pour les deux parties concernées :
+
+<CardGroup cols={2}>
+  <Card title="Côté assuré" icon="user" href="https://projet-final-bice.vercel.app/tableau-de-bord/">
+    Vous voyez dans votre tableau de bord le montant total de l'acte, la part prise en charge par votre IPM, et le montant exact que vous devez régler au prestataire.
+  </Card>
+
+  <Card title="Côté prestataire" icon="hospital" href="https://projet-final-bice.vercel.app/tableau-de-bord/">
+    Le médecin ou le prestataire voit la même répartition et sait immédiatement quel montant facturer au patient et quel montant sera réglé par l'IPM.
+  </Card>
+</CardGroup>
+
+## Génération des justificatifs comptables
+
+À chaque acte de soin pris en charge, SantéSN génère automatiquement un reçu légal. Ce document précise :
+
+* L'identité du patient et du prestataire
+* La nature et le coût de l'acte
+* La part prise en charge par l'IPM
+* La part réglée par le patient
+* La date et l'heure de l'opération
+
+Ces reçus servent de base à la **régularisation financière** entre l'IPM et le prestataire de soins. Toutes les transactions sont consignées dans le journal d'activité immuable de la plateforme.
+
+## Règlement entre IPM et prestataires
+
+La combinaison d'une ordonnance délivrée et d'un acte de soin validé déclenche un événement de règlement entre l'IPM et le prestataire concerné. Ce processus est entièrement traçable via le tableau de bord des gestionnaires de soins et les rapports d'activité disponibles dans l'interface d'administration.
+
+<Info>
+  Si vous constatez une anomalie dans le calcul de votre prise en charge (montant incorrect, taux erroné), contactez immédiatement votre administrateur IPM. Ne réglez pas un montant que vous estimez incorrect avant d'avoir obtenu une vérification.
+</Info>

@@ -86,3 +86,58 @@ def sitemap_xml(request):
     )
     return HttpResponse(corps, content_type="application/xml; charset=utf-8")
 
+
+def logo_dark_svg(request):
+    """Logo officiel SantéSN (texte sombre pour fond clair)."""
+    svg = (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 36" fill="none">'
+        '<g transform="translate(0, 2)">'
+        '<rect x="12" y="4" width="8" height="24" rx="3" fill="#0E7C86"/>'
+        '<rect x="4" y="12" width="24" height="8" rx="3" fill="#0E7C86"/>'
+        '<path d="M4 16H9.3L11.3 10.7L14 21.3L16.7 12.7L18.3 16H28" fill="none" '
+        'stroke="#E0824F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'
+        '</g>'
+        '<text x="38" y="24" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" '
+        'font-size="20" font-weight="800" fill="#0B2027" letter-spacing="-0.4">'
+        'Santé<tspan fill="#0E7C86">SN</tspan></text>'
+        '</svg>'
+    )
+    resp = HttpResponse(svg, content_type="image/svg+xml; charset=utf-8")
+    resp["Cache-Control"] = "public, max-age=86400"
+    return resp
+
+
+def logo_light_svg(request):
+    """Logo officiel SantéSN (texte clair pour fond sombre)."""
+    svg = (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 36" fill="none">'
+        '<g transform="translate(0, 2)">'
+        '<rect x="12" y="4" width="8" height="24" rx="3" fill="#4FB8AE"/>'
+        '<rect x="4" y="12" width="24" height="8" rx="3" fill="#4FB8AE"/>'
+        '<path d="M4 16H9.3L11.3 10.7L14 21.3L16.7 12.7L18.3 16H28" fill="none" '
+        'stroke="#E0824F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'
+        '</g>'
+        '<text x="38" y="24" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" '
+        'font-size="20" font-weight="800" fill="#FFFFFF" letter-spacing="-0.4">'
+        'Santé<tspan fill="#4FB8AE">SN</tspan></text>'
+        '</svg>'
+    )
+    resp = HttpResponse(svg, content_type="image/svg+xml; charset=utf-8")
+    resp["Cache-Control"] = "public, max-age=86400"
+    return resp
+
+
+def favicon_svg(request):
+    """Favicon SVG officiel de SantéSN."""
+    svg = (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">'
+        '<rect x="18" y="6" width="12" height="36" rx="4" fill="#0E7C86"/>'
+        '<rect x="6" y="18" width="36" height="12" rx="4" fill="#0E7C86"/>'
+        '<path d="M6 24H14L17 16L21 32L25 19L27.5 24H42" fill="none" '
+        'stroke="#E0824F" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>'
+        '</svg>'
+    )
+    resp = HttpResponse(svg, content_type="image/svg+xml; charset=utf-8")
+    resp["Cache-Control"] = "public, max-age=86400"
+    return resp
+

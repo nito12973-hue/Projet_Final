@@ -70,6 +70,9 @@ from .public import (  # noqa: F401
     cgu,
     robots_txt,
     sitemap_xml,
+    logo_dark_svg,
+    logo_light_svg,
+    favicon_svg,
 )
 
 # Dashboard et rapports administrateur

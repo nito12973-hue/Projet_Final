@@ -1,0 +1,59 @@
+# SantéSN — Documentation technique de la plateforme de santé
+
+> Référence complète de SantéSN : architecture, fonctionnalités métier, installation et guides développeur pour la plateforme de santé numérique sénégalaise.
+
+Bienvenue dans la documentation technique de **SantéSN**, la plateforme SaaS sénégalaise de digitalisation du tiers payant et des ordonnances médicales. SantéSN connecte les assurés, les médecins, les pharmaciens et les gestionnaires d'assurance autour d'un dossier de soins sécurisé et traçable. Cette documentation couvre l'ensemble du cycle de vie de la plateforme : de l'installation locale jusqu'aux détails techniques des routes, de la sécurité et de la conformité réglementaire.
+
+## Explorer la documentation
+
+<CardGroup cols={2}>
+  <Card title="Présentation" icon="hospital" href="/introduction">
+    Découvrez SantéSN, ses objectifs, ses acteurs et le contexte réglementaire sénégalais dans lequel il s'inscrit.
+  </Card>
+
+  <Card title="Architecture" icon="sitemap" href="/architecture">
+    Vue d'ensemble de l'architecture technique : backend Django, déploiement Vercel, RBAC et système d'ordonnances QR Code.
+  </Card>
+
+  <Card title="Installation" icon="wrench" href="/installation/prerequis">
+    Prérequis, configuration de l'environnement local et mise en route de votre instance de développement.
+  </Card>
+
+  <Card title="Fonctionnalités" icon="gears" href="/fonctionnalites/authentification">
+    Détail de chaque fonctionnalité métier : authentification multi-rôle, rendez-vous, ordonnances, tiers payant et tableaux de bord.
+  </Card>
+
+  <Card title="Guide Développeur" icon="rocket" href="/guide/quickstart-dev">
+    Démarrez rapidement : clone du dépôt, variables d'environnement, migrations et lancement du serveur local.
+  </Card>
+
+  <Card title="Référence Technique" icon="code" href="/technique/routes-urls">
+    Inventaire complet des routes URL, des modèles de données et des points d'extension de la plateforme.
+  </Card>
+</CardGroup>
+
+## Démarrer en tant que nouveau développeur
+
+Suivez ces étapes pour prendre en main SantéSN le plus rapidement possible.
+
+<Steps>
+  <Step title="Lire la présentation et l'architecture">
+    Commencez par les pages **Présentation** et **Architecture** pour comprendre les acteurs du système, les flux métier et les choix techniques structurants avant d'écrire une seule ligne de code.
+  </Step>
+
+  <Step title="Installer l'environnement local">
+    Suivez le guide **Installation → Prérequis** pour configurer Python, les dépendances Django, la base de données et les variables d'environnement nécessaires à l'exécution locale de la plateforme.
+  </Step>
+
+  <Step title="Explorer les fonctionnalités par rôle">
+    Parcourez la section **Fonctionnalités** en vous plaçant dans la perspective de chaque acteur (assuré, médecin, pharmacien, administrateur) afin de comprendre les règles métier que le code implémente.
+  </Step>
+
+  <Step title="Consulter la référence technique">
+    Utilisez la section **Référence Technique** comme référence au quotidien : routes URL, formats d'identifiants (ex. `RX-XXXXXXXXXX` pour les ordonnances), durées de session et contraintes de sécurité.
+  </Step>
+</Steps>
+
+<Note>
+  Les comptes utilisateurs ne sont pas créés par auto-inscription publique. Ils sont provisionnés par les administrateurs institutionnels (IPM, compagnie d'assurance). Si vous avez besoin d'un compte de test, contactez l'administrateur de votre organisation.
+</Note>
