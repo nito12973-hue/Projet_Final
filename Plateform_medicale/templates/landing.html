@@ -1997,6 +1997,217 @@
             background: var(--primary-dark);
         }
 
+        /* ===== STYLES HERO PRODUIT SAAS (DEUX COLONNES) ===== */
+        .hero-produit-grid {
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 40px;
+            align-items: center;
+            text-align: left;
+        }
+        @media (max-width: 980px) {
+            .hero-produit-grid {
+                grid-template-columns: 1fr;
+                text-align: center;
+                gap: 32px;
+            }
+        }
+        .hero-produit-texte .slogan {
+            margin: 18px 0 28px;
+            font-size: clamp(15px, 1.8vw, 17px);
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.88);
+            max-width: 580px;
+        }
+        @media (max-width: 980px) {
+            .hero-produit-texte .slogan {
+                margin-left: auto;
+                margin-right: auto;
+            }
+        }
+        .hero-produit-visuel {
+            width: 100%;
+        }
+        .app-window-mockup {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.15);
+            overflow: hidden;
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            color: var(--text);
+            text-align: left;
+        }
+        .app-window-chrome {
+            background: #0f172a;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .app-window-dots {
+            display: flex;
+            gap: 6px;
+        }
+        .app-window-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        .app-window-dot.r { background: #ef4444; }
+        .app-window-dot.y { background: #f59e0b; }
+        .app-window-dot.g { background: #10b981; }
+        .app-window-tab {
+            font-size: 11.5px;
+            color: #cbd5e1;
+            font-family: 'IBM Plex Mono', monospace;
+            background: rgba(255, 255, 255, 0.06);
+            padding: 3px 10px;
+            border-radius: 6px;
+        }
+        .app-window-body {
+            padding: 16px;
+            background: #f8fafc;
+        }
+
+        /* Bandeau Mode Démonstration */
+        .badge-mode-demo-persistent {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fde68a;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        /* Grille Sélecteur de Rôles Étape 1 */
+        .role-chooser-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+        @media (max-width: 880px) {
+            .role-chooser-grid { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 520px) {
+            .role-chooser-grid { grid-template-columns: 1fr; }
+        }
+        .role-card-select {
+            background: #ffffff;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .role-card-select:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(14, 124, 134, 0.12);
+        }
+        .role-card-select.active {
+            border-color: var(--primary);
+            background: #f0fdf4;
+            box-shadow: 0 0 0 2px rgba(14, 124, 134, 0.25);
+        }
+        .role-card-select-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: #e8f4f3;
+            color: var(--primary-strong);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            margin-bottom: 12px;
+        }
+        .role-card-select h4 {
+            margin: 0 0 6px;
+            font-size: 14.5px;
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+        .role-card-select p {
+            margin: 0;
+            font-size: 12px;
+            color: var(--muted);
+            line-height: 1.45;
+        }
+
+        /* Pipeline Workflow en 7 Étapes */
+        .workflow-7steps-track {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+        @media (max-width: 900px) {
+            .workflow-7steps-track {
+                display: flex;
+                overflow-x: auto;
+                padding-bottom: 8px;
+            }
+        }
+        .workflow-step-pill {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 10px 8px;
+            font-size: 11.5px;
+            font-weight: 600;
+            color: #475569;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .workflow-step-pill:hover {
+            background: #e2e8f0;
+            color: var(--primary-dark);
+        }
+        .workflow-step-pill.active {
+            background: var(--primary-strong);
+            color: #ffffff;
+            border-color: var(--primary-strong);
+            box-shadow: 0 4px 12px rgba(14, 124, 134, 0.25);
+        }
+        .workflow-step-num {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10px;
+            opacity: 0.85;
+        }
+        .workflow-stage-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(11, 32, 39, 0.05);
+        }
+        .workflow-stage-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 24px;
+            align-items: center;
+        }
+        @media (max-width: 840px) {
+            .workflow-stage-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -2035,28 +2246,78 @@
         <span class="croix c4" aria-hidden="true"></span>
 
         <div class="conteneur">
-            <div class="hero-centre">
-                <div class="pilule-institutionnelle">
-                    <span class="pastille-point"></span>
-                    Portail Officiel • Dématérialisation du Tiers Payant & Ordonnance Médicale au Sénégal
+            <div class="hero-produit-grid">
+                <div class="hero-produit-texte">
+                    <div class="pilule-institutionnelle">
+                        <span class="pastille-point"></span>
+                        Plateforme Médicale &amp; IPM au Sénégal
+                    </div>
+                    <h1>La gestion des soins et de la couverture, <span class="accent">réunie au même endroit.</span></h1>
+                    <p class="slogan">
+                        De la prise de rendez-vous jusqu'au tiers payant en pharmacie : SantéSN connecte assurés, praticiens, officines et gestionnaires d'assurance dans un flux médical traçable, transparent et infalsifiable.
+                    </p>
+                    <div class="cta">
+                        <button type="button" class="btn btn-plein btn-cta-demo" id="btn-ouvrir-demo" onclick="ouvrirDemoModal()">
+                            <span class="pulse-icon-demo" aria-hidden="true"></span>
+                            {% icone "play" %} Voir la démo interactive
+                        </button>
+                        <a class="btn btn-contour" href="#dashboards">Découvrir la plateforme</a>
+                    </div>
+                    <div class="badges-confiance">
+                        <span class="badge-confiance">{% icone "shield-check" %} Ordonnances QR infalsifiables</span>
+                        <span class="badge-confiance">{% icone "zap" %} Tiers payant automatisé</span>
+                        <span class="badge-confiance">{% icone "lock" %} Données de santé protégées (CDP)</span>
+                    </div>
                 </div>
-                <h1>La santé, <span class="accent">connectée</span><br>du premier clic au remboursement.</h1>
-                <p class="slogan">
-                    SantéSN réunit rendez-vous, consultations médicales, ordonnances sécurisées par
-                    QR Code et prise en charge d'assurance dans un écosystème numérique unifié — pensé pour
-                    les assurés, les médecins et les officines de pharmacie du Sénégal.
-                </p>
-                <div class="cta">
-                    <a class="btn btn-plein" href="{% url 'login' %}">Accéder à mon espace</a>
-                    <button type="button" class="btn btn-contour btn-cta-demo" id="btn-ouvrir-demo" onclick="ouvrirDemoModal()">
-                        <span class="pulse-icon-demo" aria-hidden="true"></span>
-                        {% icone "play" %} Voir la démo interactive
-                    </button>
-                </div>
-                <div class="badges-confiance">
-                    <span class="badge-confiance">{% icone "shield-check" %} Ordonnances infalsifiables</span>
-                    <span class="badge-confiance">{% icone "lock" %} Données de santé protégées (CDP)</span>
-                    <span class="badge-confiance">{% icone "zap" %} Tiers payant automatisé</span>
+
+                <div class="hero-produit-visuel" aria-hidden="true">
+                    <div class="app-window-mockup">
+                        <div class="app-window-chrome">
+                            <div class="app-window-dots">
+                                <span class="app-window-dot r"></span>
+                                <span class="app-window-dot y"></span>
+                                <span class="app-window-dot g"></span>
+                            </div>
+                            <span class="app-window-tab">santesn.sn/espace-medecin/cabinet</span>
+                            <span style="font-size:10px;color:#10b981;font-weight:700;display:flex;align-items:center;gap:4px;">
+                                <span style="width:6px;height:6px;border-radius:50%;background:#10b981;display:inline-block;"></span> EN DIRECT
+                            </span>
+                        </div>
+                        <div class="app-window-body">
+                            <!-- Live interactive mini preview of the doctor's active consultation -->
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #e2e8f0;">
+                                <div style="display:flex;align-items:center;gap:10px;">
+                                    <div style="width:34px;height:34px;border-radius:50%;background:#0e7c86;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;">FS</div>
+                                    <div>
+                                        <div style="font-weight:700;font-size:13px;color:#0b2027;">Dr. Fatou Sow</div>
+                                        <div style="font-size:11px;color:#64748b;">Médecin Généraliste · Polyclinique Médina</div>
+                                    </div>
+                                </div>
+                                <span style="font-size:11px;background:#ecfdf5;color:#065f46;padding:3px 8px;border-radius:6px;font-weight:700;">Consultation #CS-4401</span>
+                            </div>
+                            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px;margin-bottom:12px;">
+                                <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">
+                                    <strong style="color:#0b2027;">Mamadou L. Diop (34 ans)</strong>
+                                    <span style="color:#0e7c86;font-weight:700;">Couverture IPM : 80%</span>
+                                </div>
+                                <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+                                    <span style="font-size:10.5px;background:#f1f5f9;padding:2px 6px;border-radius:4px;color:#475569;">Tension : 12/8</span>
+                                    <span style="font-size:10.5px;background:#f1f5f9;padding:2px 6px;border-radius:4px;color:#475569;">Pouls : 72 bpm</span>
+                                    <span style="font-size:10.5px;background:#f1f5f9;padding:2px 6px;border-radius:4px;color:#475569;">Temp : 37.4°C</span>
+                                </div>
+                                <div style="font-size:11.5px;color:#334155;background:#f8fafc;padding:6px 8px;border-radius:6px;border-left:3px solid #0e7c86;">
+                                    Prescription certifiée : Amoxicilline 500mg (2 btes) + Paracétamol 1g
+                                </div>
+                            </div>
+                            <div style="display:flex;justify-content:space-between;align-items:center;background:#0f172a;color:#fff;border-radius:8px;padding:8px 12px;font-size:11.5px;">
+                                <span style="display:flex;align-items:center;gap:6px;">
+                                    <span style="width:7px;height:7px;border-radius:50%;background:#10b981;display:inline-block;"></span>
+                                    QR Code infalsifiable généré
+                                </span>
+                                <span style="font-family:'IBM Plex Mono',monospace;color:#38bdf8;">ORD-2026-8841</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2326,34 +2587,363 @@
         </div>
     </section>
 
-    <!-- ===== PARCOURS ===== -->
+    <!-- ===== WORKFLOW INTERACTIF EN 7 ÉTAPES ===== -->
     <section class="bloc alterne" id="parcours">
-        <div class="conteneur">
+        <div class="conteneur" id="workflow-interactif">
             <div class="titre-section revele">
-                <span class="sur-titre">Comment ça marche</span>
-                <h2>Un parcours de soins en 5 étapes</h2>
-                <p>De la prise de rendez-vous à la pharmacie, tout est fluide et traçable.</p>
+                <span class="sur-titre">Flux Opérationnel</span>
+                <h2>Voyez SantéSN en action</h2>
+                <p>Découvrez pas à pas comment les 4 acteurs collaborent de manière fluide, de la réservation au remboursement garanti.</p>
             </div>
-            <div class="parcours">
-                <div class="etape revele">
-                    <h3>Je prends rendez-vous</h3>
-                    <p>Prestataire → médecin → date → heure. Validation en un clic.</p>
+
+            <!-- Pipeline des 7 étapes cliquables -->
+            <div class="workflow-7steps-track revele" role="tablist" aria-label="Étapes du workflow médical">
+                <button type="button" class="workflow-step-pill active" id="wf-pill-1" onclick="afficherEtapeWorkflow(1)" role="tab" aria-selected="true">
+                    <span class="workflow-step-num">ÉTAPE 01</span>
+                    <span>RDV Assuré</span>
+                </button>
+                <button type="button" class="workflow-step-pill" id="wf-pill-2" onclick="afficherEtapeWorkflow(2)" role="tab" aria-selected="false">
+                    <span class="workflow-step-num">ÉTAPE 02</span>
+                    <span>Réception Médecin</span>
+                </button>
+                <button type="button" class="workflow-step-pill" id="wf-pill-3" onclick="afficherEtapeWorkflow(3)" role="tab" aria-selected="false">
+                    <span class="workflow-step-num">ÉTAPE 03</span>
+                    <span>Consultation</span>
+                </button>
+                <button type="button" class="workflow-step-pill" id="wf-pill-4" onclick="afficherEtapeWorkflow(4)" role="tab" aria-selected="false">
+                    <span class="workflow-step-num">ÉTAPE 04</span>
+                    <span>Ordonnance QR</span>
+                </button>
+                <button type="button" class="workflow-step-pill" id="wf-pill-5" onclick="afficherEtapeWorkflow(5)" role="tab" aria-selected="false">
+                    <span class="workflow-step-num">ÉTAPE 05</span>
+                    <span>Scan Pharmacie</span>
+                </button>
+                <button type="button" class="workflow-step-pill" id="wf-pill-6" onclick="afficherEtapeWorkflow(6)" role="tab" aria-selected="false">
+                    <span class="workflow-step-num">ÉTAPE 06</span>
+                    <span>Délivrance Scellée</span>
+                </button>
+                <button type="button" class="workflow-step-pill" id="wf-pill-7" onclick="afficherEtapeWorkflow(7)" role="tab" aria-selected="false">
+                    <span class="workflow-step-num">ÉTAPE 07</span>
+                    <span>Tiers-Payant &amp; IPM</span>
+                </button>
+            </div>
+
+            <!-- Conteneur des 7 panneaux détaillés -->
+            <div class="workflow-stage-card revele">
+                <!-- Étape 1 : RDV Assuré -->
+                <div class="workflow-stage-panel" id="wf-panel-1" style="display:block;">
+                    <div class="workflow-stage-grid">
+                        <div class="app-window-mockup">
+                            <div class="app-window-chrome">
+                                <div class="app-window-dots"><span class="app-window-dot r"></span><span class="app-window-dot y"></span><span class="app-window-dot g"></span></div>
+                                <span class="app-window-tab">santesn.sn/assure/rendez-vous</span>
+                                <span style="font-size:10px;color:#10b981;font-weight:700;">ESPACE ASSURÉ</span>
+                            </div>
+                            <div class="app-window-body">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                                    <strong>Réservation de consultation</strong>
+                                    <span style="font-size:11px;background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:4px;font-weight:700;">En direct</span>
+                                </div>
+                                <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin-bottom:10px;">
+                                    <div style="font-size:12px;color:#64748b;">Praticien sélectionné</div>
+                                    <div style="font-size:14px;font-weight:700;color:#0b2027;margin-top:2px;">Dr. Fatou Sow — Polyclinique de la Médina</div>
+                                    <div style="font-size:12px;color:#0e7c86;margin-top:4px;">Spécialité : Médecine générale · Dakar</div>
+                                </div>
+                                <div style="display:flex;gap:8px;font-size:12px;margin-bottom:10px;">
+                                    <span style="background:#f1f5f9;padding:6px 10px;border-radius:6px;font-weight:600;">Date : Aujourd'hui à 15h30</span>
+                                    <span style="background:#ecfdf5;color:#065f46;padding:6px 10px;border-radius:6px;font-weight:600;">Prise en charge IPM : 80%</span>
+                                </div>
+                                <div style="background:#0e7c86;color:#fff;text-align:center;padding:8px;border-radius:6px;font-size:12px;font-weight:700;">
+                                    ✓ Créneau confirmé — Envoi instantané au praticien
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <span style="font-size:12px;background:#e0f2fe;color:#0369a1;padding:3px 10px;border-radius:20px;font-weight:700;">01. Réservation Assuré</span>
+                            <h3 style="margin:12px 0 8px;font-size:20px;color:var(--primary-dark);">L'assuré réserve son créneau en quelques clics</h3>
+                            <p style="font-size:14px;color:var(--text);line-height:1.55;margin-bottom:14px;">
+                                Fini les longues files d'attente à la clinique. L'assuré choisit son établissement conventionné, son médecin et son heure de consultation directement depuis son smartphone ou ordinateur.
+                            </p>
+                            <div style="background:#f8fafc;border-left:3px solid #0e7c86;padding:10px 14px;border-radius:6px;font-size:13px;color:#475569;">
+                                <strong>Bénéfice clé :</strong> Les droits de l'assuré (matricule, IPM, taux de couverture) sont vérifiés automatiquement avant même la consultation.
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="etape revele">
-                    <h3>Le médecin me consulte</h3>
-                    <p>Diagnostic, traitement et médicaments enregistrés dans mon dossier.</p>
+
+                <!-- Étape 2 : Réception Médecin -->
+                <div class="workflow-stage-panel" id="wf-panel-2" style="display:none;">
+                    <div class="workflow-stage-grid">
+                        <div class="app-window-mockup">
+                            <div class="app-window-chrome">
+                                <div class="app-window-dots"><span class="app-window-dot r"></span><span class="app-window-dot y"></span><span class="app-window-dot g"></span></div>
+                                <span class="app-window-tab">santesn.sn/medecin/agenda</span>
+                                <span style="font-size:10px;color:#0284c7;font-weight:700;">ESPACE MÉDECIN</span>
+                            </div>
+                            <div class="app-window-body">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                                    <strong>Agenda du cabinet — Dr. Fatou Sow</strong>
+                                    <span style="font-size:11px;background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:4px;font-weight:700;">Synchronisé</span>
+                                </div>
+                                <div style="background:#fff;border:1px solid #0e7c86;border-radius:8px;padding:12px;margin-bottom:8px;">
+                                    <div style="display:flex;justify-content:space-between;">
+                                        <span style="font-weight:700;color:#0e7c86;font-size:13px;">15h30 — Nouveau Patient</span>
+                                        <span style="font-size:11px;background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:4px;font-weight:600;">En salle d'attente</span>
+                                    </div>
+                                    <div style="font-size:13px;color:#0b2027;font-weight:600;margin-top:4px;">Mamadou Lamine Diop (34 ans)</div>
+                                    <div style="font-size:11.5px;color:#64748b;">Motif : Fièvre modérée, toux sèche · IPM Sonatel</div>
+                                </div>
+                                <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px;opacity:0.75;font-size:12px;">
+                                    16h15 — Aïcha Ba · Consultation de suivi cardiologie
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <span style="font-size:12px;background:#e0f2fe;color:#0369a1;padding:3px 10px;border-radius:20px;font-weight:700;">02. Notification Cabinet</span>
+                            <h3 style="margin:12px 0 8px;font-size:20px;color:var(--primary-dark);">Le praticien reçoit et organise ses consultations</h3>
+                            <p style="font-size:14px;color:var(--text);line-height:1.55;margin-bottom:14px;">
+                                L'agenda du médecin est mis à jour en temps réel. Le praticien et son secrétariat visualisent la salle d'attente numérique et accèdent aux antécédents médicaux sans dossier papier encombrant.
+                            </p>
+                            <div style="background:#f8fafc;border-left:3px solid #0e7c86;padding:10px 14px;border-radius:6px;font-size:13px;color:#475569;">
+                                <strong>Bénéfice clé :</strong> Zéro ressaisie administrative. Le médecin peut se concentrer à 100% sur l'acte médical et l'écoute du patient.
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="etape revele">
-                    <h3>Je reçois mon ordonnance</h3>
-                    <p>Ordonnance sécurisée avec QR Code unique, disponible immédiatement.</p>
+
+                <!-- Étape 3 : Consultation -->
+                <div class="workflow-stage-panel" id="wf-panel-3" style="display:none;">
+                    <div class="workflow-stage-grid">
+                        <div class="app-window-mockup">
+                            <div class="app-window-chrome">
+                                <div class="app-window-dots"><span class="app-window-dot r"></span><span class="app-window-dot y"></span><span class="app-window-dot g"></span></div>
+                                <span class="app-window-tab">santesn.sn/medecin/consultation/4401</span>
+                                <span style="font-size:10px;color:#0284c7;font-weight:700;">DOSSIER ACTIF</span>
+                            </div>
+                            <div class="app-window-body">
+                                <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+                                    <strong>Examen clinique en cours</strong>
+                                    <span style="font-size:11px;color:#0e7c86;font-weight:700;">Dossier #CS-4401</span>
+                                </div>
+                                <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
+                                    <span style="background:#fff;border:1px solid #cbd5e1;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;">TA : 12/8</span>
+                                    <span style="background:#fff;border:1px solid #cbd5e1;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;">Pouls : 72</span>
+                                    <span style="background:#fff;border:1px solid #cbd5e1;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;">T° : 37.4°C</span>
+                                    <span style="background:#fff;border:1px solid #cbd5e1;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;">Poids : 74 kg</span>
+                                </div>
+                                <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px;margin-bottom:8px;font-size:12px;">
+                                    <strong style="color:#0b2027;">Diagnostic posé :</strong> Rhinopharyngite aiguë saisonnière fébrile
+                                </div>
+                                <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 10px;font-size:11.5px;color:#166534;">
+                                    ✓ Traitement défini : Amoxicilline 500mg (2 boîtes) + Paracétamol 1g
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <span style="font-size:12px;background:#e0f2fe;color:#0369a1;padding:3px 10px;border-radius:20px;font-weight:700;">03. Examen Clinique</span>
+                            <h3 style="margin:12px 0 8px;font-size:20px;color:var(--primary-dark);">Diagnostic et prescription dans un dossier sécurisé</h3>
+                            <p style="font-size:14px;color:var(--text);line-height:1.55;margin-bottom:14px;">
+                                Le médecin enregistre les constantes vitales, précise le diagnostic clinique et choisit les molécules médicamenteuses avec posologies claires et contrôlées.
+                            </p>
+                            <div style="background:#f8fafc;border-left:3px solid #0e7c86;padding:10px 14px;border-radius:6px;font-size:13px;color:#475569;">
+                                <strong>Bénéfice clé :</strong> Lisibilité totale des prescriptions. Élimination complète des risques d'erreurs médicamenteuses liées à l'écriture manuscrite.
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="etape revele">
-                    <h3>La pharmacie scanne</h3>
-                    <p>Le pharmacien vérifie l'ordonnance et valide la délivrance.</p>
+
+                <!-- Étape 4 : Ordonnance QR Certifiée -->
+                <div class="workflow-stage-panel" id="wf-panel-4" style="display:none;">
+                    <div class="workflow-stage-grid">
+                        <div class="app-window-mockup">
+                            <div class="app-window-chrome">
+                                <div class="app-window-dots"><span class="app-window-dot r"></span><span class="app-window-dot y"></span><span class="app-window-dot g"></span></div>
+                                <span class="app-window-tab">santesn.sn/ordonnances/ORD-2026-8841</span>
+                                <span style="font-size:10px;color:#10b981;font-weight:700;">SÉCURITÉ QR</span>
+                            </div>
+                            <div class="app-window-body">
+                                <div style="display:flex;justify-content:space-between;align-items:center;background:#0f172a;color:#fff;padding:12px;border-radius:8px;margin-bottom:12px;">
+                                    <div>
+                                        <div style="font-size:11px;color:#94a3b8;text-transform:uppercase;">Ordonnance Électronique</div>
+                                        <div style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:700;color:#38bdf8;">ORD-2026-8841</div>
+                                    </div>
+                                    <div style="background:#fff;padding:4px;border-radius:6px;">
+                                        <svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="#0b2027" stroke-width="2">
+                                            <rect x="3" y="3" width="7" height="7" rx="1"/>
+                                            <rect x="14" y="3" width="7" height="7" rx="1"/>
+                                            <rect x="3" y="14" width="7" height="7" rx="1"/>
+                                            <rect x="14" y="14" width="3" height="3"/>
+                                            <rect x="18" y="14" width="3" height="7"/>
+                                            <rect x="14" y="18" width="3" height="3"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div style="font-size:11.5px;color:#475569;background:#fff;border:1px solid #e2e8f0;padding:10px;border-radius:8px;">
+                                    <div><strong>Signature :</strong> Dr. Fatou Sow (Certifiée conforme)</div>
+                                    <div style="margin-top:3px;"><strong>Horodatage :</strong> 22/09/2026 à 15h42 · Dakar</div>
+                                    <div style="margin-top:3px;color:#0e7c86;font-weight:600;">Statut : Prête pour scan officine · Usage unique</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <span style="font-size:12px;background:#e0f2fe;color:#0369a1;padding:3px 10px;border-radius:20px;font-weight:700;">04. Certification Cryptographique</span>
+                            <h3 style="margin:12px 0 8px;font-size:20px;color:var(--primary-dark);">Génération d'un QR Code infalsifiable à usage unique</h3>
+                            <p style="font-size:14px;color:var(--text);line-height:1.55;margin-bottom:14px;">
+                                Dès sa validation, l'ordonnance est scellée par une signature cryptographique. Le QR Code généré encode un jeton sécurisé vérifiable instantanément et non duplicable.
+                            </p>
+                            <div style="background:#f8fafc;border-left:3px solid #0e7c86;padding:10px 14px;border-radius:6px;font-size:13px;color:#475569;">
+                                <strong>Bénéfice clé :</strong> Fini le trafic de fausses ordonnances papier et les ordonnances recyclées dans plusieurs pharmacies différentes.
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="etape revele">
-                    <h3>L'assurance rembourse</h3>
-                    <p>Part assurance et part patient calculées automatiquement.</p>
+
+                <!-- Étape 5 : Scan Pharmacie -->
+                <div class="workflow-stage-panel" id="wf-panel-5" style="display:none;">
+                    <div class="workflow-stage-grid">
+                        <div class="app-window-mockup">
+                            <div class="app-window-chrome">
+                                <div class="app-window-dots"><span class="app-window-dot r"></span><span class="app-window-dot y"></span><span class="app-window-dot g"></span></div>
+                                <span class="app-window-tab">santesn.sn/pharmacien/scan</span>
+                                <span style="font-size:10px;color:#0e7c86;font-weight:700;">ESPACE OFFICINE</span>
+                            </div>
+                            <div class="app-window-body">
+                                <div style="background:#0b2027;color:#fff;border-radius:8px;padding:14px;text-align:center;margin-bottom:12px;">
+                                    <span style="font-size:11px;color:#38bdf8;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">Scan Optique Réussi</span>
+                                    <div style="font-size:16px;font-weight:800;margin:6px 0;color:#10b981;">✓ Ordonnance Authentifiée</div>
+                                    <div style="font-size:12px;color:#cbd5e1;">Rapprochement immédiat avec la base nationale de santé</div>
+                                </div>
+                                <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px;font-size:12px;">
+                                    <div style="display:flex;justify-content:space-between;">
+                                        <strong>Patient : Mamadou L. Diop</strong>
+                                        <span style="color:#0e7c86;font-weight:700;">IPM : 80%</span>
+                                    </div>
+                                    <div style="margin-top:4px;color:#64748b;">Prescription : 2 boîtes Amoxicilline 500mg, 1 boîte Paracétamol 1g</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <span style="font-size:12px;background:#e0f2fe;color:#0369a1;padding:3px 10px;border-radius:20px;font-weight:700;">05. Contrôle au Comptoir</span>
+                            <h3 style="margin:12px 0 8px;font-size:20px;color:var(--primary-dark);">Le pharmacien scanne et vérifie la validité en 1 seconde</h3>
+                            <p style="font-size:14px;color:var(--text);line-height:1.55;margin-bottom:14px;">
+                                Le pharmacien utilise sa douchette ou caméra de comptoir. Le système interroge le registre centralisé et confirme que l'ordonnance est valide, active et n'a jamais été délivrée ailleurs.
+                            </p>
+                            <div style="background:#f8fafc;border-left:3px solid #0e7c86;padding:10px 14px;border-radius:6px;font-size:13px;color:#475569;">
+                                <strong>Bénéfice clé :</strong> Contrôle d'authenticité ultra-rapide sans coupure de flux au comptoir, même en période de forte affluence.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Étape 6 : Délivrance Scellée -->
+                <div class="workflow-stage-panel" id="wf-panel-6" style="display:none;">
+                    <div class="workflow-stage-grid">
+                        <div class="app-window-mockup">
+                            <div class="app-window-chrome">
+                                <div class="app-window-dots"><span class="app-window-dot r"></span><span class="app-window-dot y"></span><span class="app-window-dot g"></span></div>
+                                <span class="app-window-tab">santesn.sn/pharmacien/delivrance</span>
+                                <span style="font-size:10px;color:#10b981;font-weight:700;">DÉLIVRANCE VALIDÉE</span>
+                            </div>
+                            <div class="app-window-body">
+                                <div style="background:#ecfdf5;border:1.5px solid #10b981;border-radius:8px;padding:12px;margin-bottom:12px;">
+                                    <div style="display:flex;align-items:center;gap:8px;">
+                                        <span style="font-size:18px;">🔒</span>
+                                        <div>
+                                            <strong style="color:#065f46;font-size:13px;">Ordonnance Scellée &amp; Clôturée</strong>
+                                            <div style="font-size:11.5px;color:#047857;">Tout réemploi dans une autre officine est désormais impossible</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px;font-size:12px;">
+                                    <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                                        <span>Médicaments délivrés :</span>
+                                        <strong>Conforme à 100%</strong>
+                                    </div>
+                                    <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                                        <span>Horodatage délivrance :</span>
+                                        <span>22/09/2026 à 16h10</span>
+                                    </div>
+                                    <div style="display:flex;justify-content:space-between;color:#0e7c86;font-weight:700;">
+                                        <span>Officine :</span>
+                                        <span>Pharmacie de la Corniche, Dakar</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <span style="font-size:12px;background:#e0f2fe;color:#0369a1;padding:3px 10px;border-radius:20px;font-weight:700;">06. Clôture Anti-Fraude</span>
+                            <h3 style="margin:12px 0 8px;font-size:20px;color:var(--primary-dark);">Délivrance scellée et verrouillage immédiat du réemploi</h3>
+                            <p style="font-size:14px;color:var(--text);line-height:1.55;margin-bottom:14px;">
+                                Lorsque le pharmacien remet les médicaments, l'ordonnance passe automatiquement au statut « Délivrée ». Elle est instantanément verrouillée sur l'ensemble du territoire sénégalais.
+                            </p>
+                            <div style="background:#f8fafc;border-left:3px solid #0e7c86;padding:10px 14px;border-radius:6px;font-size:13px;color:#475569;">
+                                <strong>Bénéfice clé :</strong> Sécurité juridique et financière totale pour les IPM et assureurs contre la surfacturation et la double délivrance.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Étape 7 : Tiers-Payant & IPM -->
+                <div class="workflow-stage-panel" id="wf-panel-7" style="display:none;">
+                    <div class="workflow-stage-grid">
+                        <div class="app-window-mockup">
+                            <div class="app-window-chrome">
+                                <div class="app-window-dots"><span class="app-window-dot r"></span><span class="app-window-dot y"></span><span class="app-window-dot g"></span></div>
+                                <span class="app-window-tab">santesn.sn/assurance/bordereaux</span>
+                                <span style="font-size:10px;color:#7c3aed;font-weight:700;">TIERS-PAYANT IPM</span>
+                            </div>
+                            <div class="app-window-body">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                                    <strong>Décompte financier automatisé</strong>
+                                    <span style="font-size:11px;background:#ede9fe;color:#6d28d9;padding:2px 8px;border-radius:4px;font-weight:700;">Bordereau #BD-2026-902</span>
+                                </div>
+                                <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin-bottom:10px;font-size:12.5px;">
+                                    <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f1f5f9;">
+                                        <span>Total consultation &amp; ordonnance :</span>
+                                        <strong>12 500 FCFA</strong>
+                                    </div>
+                                    <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f1f5f9;color:#0e7c86;font-weight:700;">
+                                        <span>Part IPM garantie (80%) :</span>
+                                        <strong>10 000 FCFA</strong>
+                                    </div>
+                                    <div style="display:flex;justify-content:space-between;padding:4px 0;color:#d97706;font-weight:700;">
+                                        <span>Ticket modérateur patient (20%) :</span>
+                                        <strong>2 500 FCFA</strong>
+                                    </div>
+                                </div>
+                                <div style="background:#0f172a;color:#fff;text-align:center;padding:8px;border-radius:6px;font-size:11.5px;">
+                                    ✓ Télétransmission bancaire prête · Paiement certifié
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <span style="font-size:12px;background:#e0f2fe;color:#0369a1;padding:3px 10px;border-radius:20px;font-weight:700;">07. Télétransmission &amp; Remboursement</span>
+                            <h3 style="margin:12px 0 8px;font-size:20px;color:var(--primary-dark);">Tiers-payant ventilé et remboursement instantané</h3>
+                            <p style="font-size:14px;color:var(--text);line-height:1.55;margin-bottom:14px;">
+                                Le calcul de la part assurance (IPM) et de la part patient est opéré automatiquement. Le prestataire est garanti d'être remboursé sans litige ni dossier papier à envoyer par coursier.
+                            </p>
+                            <div style="background:#f8fafc;border-left:3px solid #0e7c86;padding:10px 14px;border-radius:6px;font-size:13px;color:#475569;">
+                                <strong>Bénéfice clé :</strong> Réduction des délais de règlement de 45 jours à quelques clics automatisés pour les prestataires de santé.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Boutons de commande du flux -->
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;flex-wrap:wrap;gap:12px;" class="revele">
+                <div style="display:flex;gap:8px;">
+                    <button type="button" class="btn btn-contour" id="btn-wf-prev" onclick="naviguerWorkflow(-1)" style="font-size:13px;padding:8px 16px;">
+                        &larr; Étape précédente
+                    </button>
+                    <button type="button" class="btn btn-contour" id="btn-wf-next" onclick="naviguerWorkflow(1)" style="font-size:13px;padding:8px 16px;">
+                        Étape suivante &rarr;
+                    </button>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-plein" onclick="ouvrirDemoModal()" style="font-size:13px;padding:9px 18px;">
+                        {% icone "play" %} Lancer la démonstration interactive complète
+                    </button>
                 </div>
             </div>
         </div>
@@ -2572,7 +3162,44 @@
                     <span class="demo-browser-tag">● Démo Interactive</span>
                 </div>
                 <div class="demo-browser-actions">
+                    <span class="badge-mode-demo-persistent" style="margin-right:10px;">
+                        MODE DÉMONSTRATION · DONNÉES FICTIVES
+                    </span>
                     <button type="button" class="demo-btn-close-window" onclick="fermerDemoModal()" aria-label="Fermer la démo">&times;</button>
+                </div>
+            </div>
+
+            <!-- Sélecteur rapide d'espace Étape 1 -->
+            <div style="padding: 12px 20px 0 20px; background: #ffffff; border-bottom: 1px solid #e2e8f0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: #64748b;">
+                        Étape 1 — Choisissez un espace pour explorer :
+                    </span>
+                    <span class="badge-mode-demo-persistent">
+                        ● SIMULATEUR D'ÉCOSYSTÈME
+                    </span>
+                </div>
+                <div class="role-chooser-grid" style="margin-bottom: 12px;">
+                    <div class="role-card-select active" id="chooser-assure" onclick="changerDemoTab('assure', 1)">
+                        <div class="role-card-select-icon">{% icone "id-card" %}</div>
+                        <h4>1. Espace Assuré</h4>
+                        <p>Mamadou L. Diop · Carte IPM biométrique &amp; prise de RDV</p>
+                    </div>
+                    <div class="role-card-select" id="chooser-medecin" onclick="changerDemoTab('medecin', 2)">
+                        <div class="role-card-select-icon">{% icone "stethoscope" %}</div>
+                        <h4>2. Espace Médecin</h4>
+                        <p>Dr. Fatou Sow · Consultation clinique &amp; ordonnance signée QR</p>
+                    </div>
+                    <div class="role-card-select" id="chooser-pharmacien" onclick="changerDemoTab('pharmacien', 3)">
+                        <div class="role-card-select-icon">{% icone "pill" %}</div>
+                        <h4>3. Espace Pharmacie</h4>
+                        <p>Pharmacie de la Corniche · Scan optique &amp; tiers-payant scellé</p>
+                    </div>
+                    <div class="role-card-select" id="chooser-assurance" onclick="changerDemoTab('assurance', 4)">
+                        <div class="role-card-select-icon">{% icone "shield-check" %}</div>
+                        <h4>4. Espace IPM / Direction</h4>
+                        <p>IPM Transports &amp; Télécoms · Accord préalable (PEC) &amp; Risques</p>
+                    </div>
                 </div>
             </div>
 
@@ -3176,6 +3803,11 @@
                 etapeCouranteDemo = etapesNoms.indexOf(nomRole) + 1;
             }
 
+            // Mise à jour des cartes de sélection d'espace
+            document.querySelectorAll('.role-card-select').forEach(c => c.classList.remove('active'));
+            const chooserActif = document.getElementById('chooser-' + nomRole);
+            if (chooserActif) chooserActif.classList.add('active');
+
             // Mise à jour de l'URL du faux navigateur
             const urlEl = document.getElementById('demo-browser-url');
             if (urlEl && etapesUrls[etapeCouranteDemo - 1]) {
@@ -3207,6 +3839,39 @@
             const nouvelleEtape = etapeCouranteDemo + direction;
             if (nouvelleEtape >= 1 && nouvelleEtape <= 4) {
                 changerDemoTab(etapesNoms[nouvelleEtape - 1], nouvelleEtape);
+            }
+        }
+
+        // ===== LOGIQUE DU WORKFLOW INTERACTIF EN 7 ÉTAPES =====
+        let workflowEtapeCourante = 1;
+
+        function afficherEtapeWorkflow(etapeNum) {
+            document.querySelectorAll('.workflow-step-pill').forEach((pill, idx) => {
+                if (idx + 1 === etapeNum) {
+                    pill.classList.add('active');
+                    pill.setAttribute('aria-selected', 'true');
+                } else {
+                    pill.classList.remove('active');
+                    pill.setAttribute('aria-selected', 'false');
+                }
+            });
+            for (let i = 1; i <= 7; i++) {
+                const panel = document.getElementById('wf-panel-' + i);
+                if (panel) {
+                    panel.style.display = (i === etapeNum) ? 'block' : 'none';
+                }
+            }
+            workflowEtapeCourante = etapeNum;
+            const btnPrev = document.getElementById('btn-wf-prev');
+            const btnNext = document.getElementById('btn-wf-next');
+            if (btnPrev) btnPrev.disabled = (etapeNum === 1);
+            if (btnNext) btnNext.disabled = (etapeNum === 7);
+        }
+
+        function naviguerWorkflow(delta) {
+            const nouvelle = workflowEtapeCourante + delta;
+            if (nouvelle >= 1 && nouvelle <= 7) {
+                afficherEtapeWorkflow(nouvelle);
             }
         }
 
