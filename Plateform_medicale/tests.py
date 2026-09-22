@@ -206,6 +206,9 @@ class LandingTests(TestCase):
         self.assertContains(response, "tab-btn-medecin")
         self.assertContains(response, "tab-btn-pharmacien")
         self.assertContains(response, "tab-btn-assurance")
+        self.assertContains(response, "demo-browser-chrome")
+        self.assertContains(response, "demo-guide-banner")
+        self.assertContains(response, "demo-tour-stepper-bar")
 
     def test_page_publique_affiche_la_faq(self):
         response = self.client.get(reverse('landing'))

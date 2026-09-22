@@ -1279,12 +1279,13 @@
         }
 
         /* ===== MODAL DÉMO INTERACTIVE ===== */
+        /* ===== MODAL DÉMO INTERACTIVE SAAS — CADRE PRODUIT HAUTE FIDÉLITÉ ===== */
         .modal-demo-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(11, 32, 39, 0.82);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            background: rgba(11, 32, 39, 0.88);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             z-index: 99999;
             display: none;
             align-items: center;
@@ -1292,7 +1293,7 @@
             padding: 16px;
             overflow-y: auto;
             opacity: 0;
-            transition: opacity 0.25s ease;
+            transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .modal-demo-overlay.active {
             display: flex;
@@ -1300,157 +1301,439 @@
         }
         .modal-demo-fenetre {
             background: #ffffff;
-            border-radius: 20px;
+            border-radius: 18px;
             width: 100%;
-            max-width: 960px;
-            max-height: 90vh;
+            max-width: 1120px;
+            max-height: 92vh;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 24px 60px rgba(11, 32, 39, 0.35);
-            border: 1px solid rgba(217, 226, 234, 0.8);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
             overflow: hidden;
-            transform: scale(0.96);
-            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            transform: scale(0.96) translateY(12px);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .modal-demo-overlay.active .modal-demo-fenetre {
-            transform: scale(1);
+            transform: scale(1) translateY(0);
         }
-        .modal-demo-header {
-            background: #0b2027;
-            color: #ffffff;
-            padding: 18px 24px;
+
+        /* En-tête Faux Navigateur Web (Chrome macOS) */
+        .demo-browser-chrome {
+            background: #0f172a;
+            color: #94a3b8;
+            padding: 12px 18px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+            justify-content: space-between;
+            gap: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            user-select: none;
         }
-        .modal-demo-titres {
+        .demo-browser-dots {
             display: flex;
-            flex-direction: column;
-            gap: 4px;
+            align-items: center;
+            gap: 8px;
         }
-        .modal-demo-titres-ligne {
+        .demo-browser-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .demo-browser-dot.red { background: #ef4444; }
+        .demo-browser-dot.yellow { background: #f59e0b; }
+        .demo-browser-dot.green { background: #10b981; }
+
+        .demo-browser-url-bar {
+            flex: 1;
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 6px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12.5px;
+            color: #cbd5e1;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        .demo-browser-url-text {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .demo-browser-url-text svg {
+            width: 14px;
+            height: 14px;
+            color: #10b981;
+            flex-shrink: 0;
+        }
+        .demo-browser-tag {
+            font-size: 11px;
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-weight: 600;
+        }
+        .demo-browser-actions {
             display: flex;
             align-items: center;
             gap: 12px;
+        }
+        .demo-btn-close-window {
+            background: rgba(255, 255, 255, 0.08);
+            border: none;
+            color: #ffffff;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.2s ease;
+        }
+        .demo-btn-close-window:hover {
+            background: rgba(239, 68, 68, 0.85);
+            color: #ffffff;
+        }
+
+        /* Barre de Navigation du Tour Produit (Stepper SaaS) */
+        .demo-tour-stepper-bar {
+            background: #ffffff;
+            border-bottom: 1px solid var(--border);
+            padding: 14px 20px 0;
+            position: relative;
+        }
+        .modal-demo-tabs {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        @media (max-width: 820px) {
+            .modal-demo-tabs {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+        }
+        .demo-tab-btn {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-bottom: 3px solid transparent;
+            padding: 10px 14px;
+            border-radius: 10px 10px 0 0;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .demo-tab-btn:hover {
+            background: #f1f5f9;
+        }
+        .demo-tab-btn.active {
+            background: #ffffff;
+            border-color: #cbd5e1;
+            border-bottom-color: var(--primary);
+            box-shadow: 0 -2px 10px rgba(14, 124, 134, 0.08);
+        }
+        .demo-tab-num {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            color: #475569;
+            font-size: 12px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+        .demo-tab-btn.active .demo-tab-num {
+            background: var(--primary);
+            color: #ffffff;
+        }
+        .demo-tab-labels {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .demo-tab-titre {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text);
+            white-space: nowrap;
+        }
+        .demo-tab-btn.active .demo-tab-titre {
+            color: var(--primary-strong);
+        }
+        .demo-tab-desc {
+            font-size: 11px;
+            color: var(--muted);
+            white-space: nowrap;
+        }
+
+        /* Barre d'orientation du Tour (Hotspot guide banner) */
+        .demo-guide-banner {
+            background: linear-gradient(90deg, #f0fdf4 0%, #ecfeff 100%);
+            border-bottom: 1px solid #cbf3db;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
             flex-wrap: wrap;
         }
-        .modal-demo-titres h3 {
-            font-size: 19px;
-            font-weight: 800;
-            margin: 0;
-            color: #ffffff;
-            letter-spacing: -0.2px;
+        .demo-guide-text {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: #065f46;
+            font-weight: 500;
         }
-        .badge-live-demo {
-            background: rgba(16, 185, 129, 0.16);
-            color: #34d399;
-            border: 1px solid rgba(16, 185, 129, 0.4);
-            font-size: 10.5px;
-            font-weight: 700;
-            padding: 3px 10px;
-            border-radius: 999px;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
+        .demo-pulse-point {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            animation: pulseDemo 1.8s infinite;
+            flex-shrink: 0;
+        }
+        .demo-guide-nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .demo-btn-nav-step {
+            background: #ffffff;
+            border: 1px solid #d1fae5;
+            color: #065f46;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
             display: inline-flex;
             align-items: center;
             gap: 6px;
         }
-        .modal-demo-titres p {
-            font-size: 13px;
-            color: rgba(255, 255, 255, 0.72);
-            margin: 0;
-        }
-        .modal-demo-close {
-            background: rgba(255, 255, 255, 0.12);
-            border: none;
+        .demo-btn-nav-step:hover:not(:disabled) {
+            background: #0e7c86;
             color: #ffffff;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.2s ease, transform 0.2s ease;
-            flex-shrink: 0;
+            border-color: #0e7c86;
         }
-        .modal-demo-close:hover {
-            background: rgba(255, 255, 255, 0.25);
-            transform: rotate(90deg);
+        .demo-btn-nav-step:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
         }
-        .modal-demo-tabs {
-            display: flex;
-            background: #f4f7f8;
-            border-bottom: 1px solid var(--border);
-            padding: 0 16px;
-            overflow-x: auto;
-            gap: 4px;
-        }
-        .demo-tab-btn {
-            padding: 13px 16px;
-            border: none;
-            background: none;
-            font-size: 13.5px;
-            font-weight: 600;
-            color: var(--muted);
-            cursor: pointer;
-            border-bottom: 3px solid transparent;
-            transition: all 0.2s ease;
-            white-space: nowrap;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .demo-tab-btn:hover {
-            color: var(--primary-strong);
-        }
-        .demo-tab-btn.active {
-            color: var(--primary-strong);
-            border-bottom-color: var(--primary);
-            background: #ffffff;
-            border-top-left-radius: 8px;
-            border-top-right-radius: 8px;
-        }
+
+        /* Corps de la Modale — Structure Application Réaliste */
         .modal-demo-corps {
-            padding: 24px;
+            background: #f8fafc;
             overflow-y: auto;
             flex: 1;
-            background: #fafcfc;
+            padding: 0;
         }
         .demo-vue-panel {
             display: none;
         }
         .demo-vue-panel.active {
             display: block;
-            animation: fadeInTab 0.25s ease;
+            animation: fadeInTab 0.3s ease;
         }
-        .demo-grille-2col {
+        @keyframes fadeInTab {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Mise en page Application avec Sidebar Réelle */
+        .demo-app-layout {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 240px 1fr;
+            min-height: 520px;
+        }
+        @media (max-width: 900px) {
+            .demo-app-layout {
+                grid-template-columns: 1fr;
+            }
+            .demo-app-sidebar {
+                display: none;
+            }
+        }
+        .demo-app-sidebar {
+            background: #0b2027;
+            color: #e2e8f0;
+            padding: 20px 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .demo-sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .demo-sidebar-brand strong {
+            font-size: 15px;
+            color: #ffffff;
+            letter-spacing: -0.2px;
+        }
+        .demo-sidebar-brand span {
+            font-size: 11px;
+            color: #38bdf8;
+            background: rgba(56, 189, 248, 0.15);
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 4px;
+        }
+        .demo-sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .demo-sidebar-item {
+            padding: 9px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .demo-sidebar-item:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .demo-sidebar-item.active {
+            background: var(--primary);
+            color: #ffffff;
+            font-weight: 600;
+        }
+        .demo-sidebar-item svg {
+            width: 16px;
+            height: 16px;
+            opacity: 0.9;
+        }
+        .demo-sidebar-profile {
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .demo-user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #0e7c86;
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            flex-shrink: 0;
+        }
+        .demo-user-meta {
+            overflow: hidden;
+        }
+        .demo-user-name {
+            font-size: 12.5px;
+            font-weight: 700;
+            color: #ffffff;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            display: block;
+        }
+        .demo-user-role-badge {
+            font-size: 10.5px;
+            color: #34d399;
+            display: block;
+        }
+
+        /* Zone de Contenu Principal dans l'App Miniaturisée */
+        .demo-app-main {
+            padding: 20px 24px;
+            display: flex;
+            flex-direction: column;
             gap: 20px;
         }
-        @media (max-width: 768px) {
-            .demo-grille-2col { grid-template-columns: 1fr; }
-        }
-        .demo-box-interactif {
-            background: #ffffff;
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 20px;
-            box-shadow: 0 4px 16px rgba(11, 32, 39, 0.04);
-        }
-        .demo-box-titre {
+        .demo-app-topbar {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 14px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #edf2f5;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #e2e8f0;
+            flex-wrap: wrap;
+            gap: 12px;
         }
-        .demo-box-titre h4 {
-            font-size: 14.5px;
+        .demo-app-breadcrumb {
+            font-size: 13px;
+            color: var(--muted);
+        }
+        .demo-app-breadcrumb strong {
+            color: var(--primary-dark);
+        }
+        .demo-app-live-status {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .demo-badge-session {
+            background: #ecfdf5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 11.5px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Cartes & Éléments Interactifs Haute Résolution */
+        .demo-card-stage {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(11, 32, 39, 0.03);
+        }
+        .demo-card-stage-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .demo-card-stage-header h4 {
+            font-size: 15px;
             font-weight: 700;
             color: var(--primary-dark);
             margin: 0;
@@ -1458,112 +1741,172 @@
             align-items: center;
             gap: 8px;
         }
-        .demo-carte-assure-visuel {
-            background: linear-gradient(135deg, #0b2027 0%, #0e7c86 100%);
-            border-radius: 14px;
+
+        /* Carte Biométrique Assuré Réaliste */
+        .demo-carte-assure-pro {
+            background: linear-gradient(135deg, #0b2027 0%, #0e7c86 70%, #17a2b8 100%);
+            border-radius: 16px;
             color: #ffffff;
-            padding: 20px;
-            box-shadow: 0 10px 25px rgba(14, 124, 134, 0.25);
+            padding: 22px 24px;
+            box-shadow: 0 12px 30px rgba(14, 124, 134, 0.28);
             position: relative;
             overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.15);
         }
-        .demo-carte-assure-visuel::before {
+        .demo-carte-assure-pro::before {
             content: "";
             position: absolute;
-            top: -40px;
-            right: -40px;
-            width: 140px;
-            height: 140px;
-            background: radial-gradient(circle, rgba(255,255,255,0.15), transparent 70%);
+            top: -50px;
+            right: -50px;
+            width: 180px;
+            height: 180px;
+            background: radial-gradient(circle, rgba(255,255,255,0.18), transparent 70%);
             border-radius: 50%;
         }
-        .demo-carte-entete {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 16px;
+        .demo-carte-emv-chip {
+            width: 40px;
+            height: 30px;
+            background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+            border-radius: 6px;
+            position: relative;
+            margin-bottom: 14px;
+            box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.4), 0 2px 4px rgba(0,0,0,0.15);
         }
-        .demo-carte-entete span {
+        .demo-carte-emv-chip::after {
+            content: "";
+            position: absolute;
+            inset: 4px;
+            border: 1px solid rgba(0, 0, 0, 0.2);
+            border-radius: 3px;
+        }
+
+        /* Prescription Sheet Médecin */
+        .demo-prescription-sheet {
+            background: #ffffff;
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 16px 20px;
+            position: relative;
+        }
+        .demo-prescription-stamp {
+            position: absolute;
+            bottom: 14px;
+            right: 18px;
+            border: 2px solid #10b981;
+            color: #065f46;
             font-size: 11px;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 6px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            color: rgba(255, 255, 255, 0.85);
-            font-weight: 700;
-        }
-        .demo-carte-corps {
+            transform: rotate(-4deg);
+            background: rgba(16, 185, 129, 0.08);
             display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
+            align-items: center;
+            gap: 6px;
         }
-        .demo-carte-info h5 {
-            font-size: 17px;
-            font-weight: 800;
-            margin: 0 0 4px;
+
+        /* Viseur Scanner Pharmacie */
+        .demo-scanner-box {
+            background: #0b2027;
+            border-radius: 14px;
+            padding: 24px;
             color: #ffffff;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 24px rgba(0,0,0,0.5);
         }
-        .demo-carte-info p {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.8);
-            margin: 0;
-            font-family: 'IBM Plex Mono', monospace;
-        }
-        .demo-carte-taux {
-            display: inline-block;
-            margin-top: 10px;
-            padding: 4px 10px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 700;
-            color: #ffffff;
-        }
-        .demo-qr-mini {
-            background: #ffffff;
-            padding: 6px;
-            border-radius: 8px;
+        .demo-scanner-viewfinder {
+            width: 170px;
+            height: 170px;
+            margin: 0 auto 16px;
+            border: 2px dashed #38bdf8;
+            border-radius: 14px;
+            position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            background: rgba(15, 23, 42, 0.6);
+            transition: all 0.3s ease;
         }
-        .demo-qr-mini svg {
-            width: 56px;
-            height: 56px;
+        .demo-scanner-laser {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #ef4444;
+            box-shadow: 0 0 10px #ef4444;
+            animation: scanLaser 2s ease-in-out infinite;
         }
-        .demo-form-champ {
-            margin-bottom: 12px;
+        @keyframes scanLaser {
+            0% { top: 10%; }
+            50% { top: 85%; }
+            100% { top: 10%; }
         }
-        .demo-form-champ label {
-            display: block;
-            font-size: 12.5px;
-            font-weight: 600;
-            color: var(--text);
-            margin-bottom: 5px;
-        }
-        .demo-form-champ select,
-        .demo-form-champ input {
+
+        /* Tableau Tiers-Payant Décomposé */
+        .demo-table-tiers-payant {
             width: 100%;
-            padding: 9px 12px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            font-size: 13.5px;
-            font-family: inherit;
-            background: #ffffff;
-            color: var(--text);
-            box-sizing: border-box;
-            outline: none;
+            border-collapse: collapse;
+            font-size: 13px;
+            margin: 14px 0;
         }
-        .demo-form-champ select:focus,
-        .demo-form-champ input:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(14, 124, 134, 0.15);
+        .demo-table-tiers-payant th {
+            text-align: left;
+            padding: 8px 10px;
+            background: #f1f5f9;
+            color: #475569;
+            font-weight: 600;
+            border-bottom: 1px solid #e2e8f0;
         }
-        .demo-btn-action {
+        .demo-table-tiers-payant td {
+            padding: 10px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        /* KPIs Assurance */
+        .demo-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+        @media (max-width: 800px) {
+            .demo-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        .demo-kpi-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 14px;
+        }
+        .demo-kpi-card-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .demo-kpi-card-val {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--primary-dark);
+            margin: 4px 0 2px;
+        }
+        .demo-kpi-card-trend {
+            font-size: 11px;
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        /* Boutons d'Action & Feedback Réalistes */
+        .demo-btn-action-pro {
             width: 100%;
             background: var(--primary-strong);
             color: #ffffff;
             border: none;
-            padding: 10px 16px;
+            padding: 11px 18px;
             border-radius: 8px;
             font-size: 13.5px;
             font-weight: 700;
@@ -1573,18 +1916,25 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
+            box-shadow: 0 4px 12px rgba(14, 124, 134, 0.2);
         }
-        .demo-btn-action:hover {
+        .demo-btn-action-pro:hover {
             background: var(--primary-dark);
             transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(14, 124, 134, 0.3);
+        }
+        .demo-btn-action-pro:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+            transform: none !important;
         }
         .demo-feedback-box {
             margin-top: 14px;
-            padding: 12px 14px;
+            padding: 12px 16px;
             border-radius: 10px;
-            background: #eef8f6;
-            border: 1px solid #bce4dc;
-            color: #08524b;
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            color: #065f46;
             font-size: 13px;
             display: none;
             animation: fadeInTab 0.3s ease;
@@ -1592,10 +1942,12 @@
         .demo-feedback-box.active {
             display: block;
         }
+
+        /* Pied de Modale */
         .modal-demo-footer {
-            background: #f4f7f8;
+            background: #ffffff;
             border-top: 1px solid var(--border);
-            padding: 16px 24px;
+            padding: 14px 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -1614,7 +1966,7 @@
         }
         .btn-demo-contact {
             background: #ffffff;
-            border: 1px solid var(--border);
+            border: 1px solid #cbd5e1;
             color: var(--text);
             padding: 8px 14px;
             border-radius: 8px;
@@ -1644,6 +1996,7 @@
         .btn-demo-connexion:hover {
             background: var(--primary-dark);
         }
+
     </style>
 </head>
 <body>
@@ -2197,59 +2550,359 @@
                 </div>
             </div>
         </div>
-    <!-- ===== MODAL DÉMO INTERACTIVE SANTÉSN ===== -->
+    </footer>
+    <!-- ===== MODAL DÉMO INTERACTIVE SANTÉSN (STYLE PRODUCT TOUR SAAS) ===== -->
     <div id="modal-demo-interactive" class="modal-demo-overlay" role="dialog" aria-modal="true" aria-labelledby="titre-modal-demo">
         <div class="modal-demo-fenetre">
-            <div class="modal-demo-header">
-                <div class="modal-demo-titres">
-                    <div class="modal-demo-titres-ligne">
-                        <h3 id="titre-modal-demo">{% icone "play" %} Démonstration interactive de SantéSN</h3>
-                        <span class="badge-live-demo"><span class="pulse-icon-demo" aria-hidden="true"></span> Simulateur en direct</span>
-                    </div>
-                    <p>Découvrez les interfaces réelles d'un assuré, d'un médecin praticien et d'une officine de pharmacie.</p>
+            <!-- 1. En-tête Faux Navigateur Web (Chrome macOS) -->
+            <div class="demo-browser-chrome">
+                <div class="demo-browser-dots" aria-hidden="true">
+                    <span class="demo-browser-dot red"></span>
+                    <span class="demo-browser-dot yellow"></span>
+                    <span class="demo-browser-dot green"></span>
                 </div>
-                <button type="button" class="modal-demo-close" onclick="fermerDemoModal()" aria-label="Fermer la démo">&times;</button>
+                <div class="demo-browser-url-bar">
+                    <div class="demo-browser-url-text">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                        <span id="demo-browser-url">https://app.santesn.sn/tour-demo/assure</span>
+                    </div>
+                    <span class="demo-browser-tag">● Démo Interactive</span>
+                </div>
+                <div class="demo-browser-actions">
+                    <button type="button" class="demo-btn-close-window" onclick="fermerDemoModal()" aria-label="Fermer la démo">&times;</button>
+                </div>
             </div>
 
-            <div class="modal-demo-tabs" role="tablist">
-                <button type="button" class="demo-tab-btn active" role="tab" id="tab-btn-assure" onclick="changerDemoTab('assure')">
-                    {% icone "user" %} Espace Assuré
-                </button>
-                <button type="button" class="demo-tab-btn" role="tab" id="tab-btn-medecin" onclick="changerDemoTab('medecin')">
-                    {% icone "stethoscope" %} Espace Médecin
-                </button>
-                <button type="button" class="demo-tab-btn" role="tab" id="tab-btn-pharmacien" onclick="changerDemoTab('pharmacien')">
-                    {% icone "pill" %} Espace Pharmacie
-                </button>
-                <button type="button" class="demo-tab-btn" role="tab" id="tab-btn-assurance" onclick="changerDemoTab('assurance')">
-                    {% icone "shield-check" %} Espace Assurance & IPM
-                </button>
+            <!-- 2. Stepper de Navigation du Tour Produit -->
+            <div class="demo-tour-stepper-bar">
+                <div class="modal-demo-tabs" role="tablist">
+                    <button type="button" class="demo-tab-btn active" role="tab" id="tab-btn-assure" onclick="changerDemoTab('assure', 1)">
+                        <span class="demo-tab-num">1</span>
+                        <div class="demo-tab-labels">
+                            <span class="demo-tab-titre">Espace Assuré</span>
+                            <span class="demo-tab-desc">Carte IPM &amp; RDV</span>
+                        </div>
+                    </button>
+                    <button type="button" class="demo-tab-btn" role="tab" id="tab-btn-medecin" onclick="changerDemoTab('medecin', 2)">
+                        <span class="demo-tab-num">2</span>
+                        <div class="demo-tab-labels">
+                            <span class="demo-tab-titre">Espace Médecin</span>
+                            <span class="demo-tab-desc">Consultation &amp; Ordonnance</span>
+                        </div>
+                    </button>
+                    <button type="button" class="demo-tab-btn" role="tab" id="tab-btn-pharmacien" onclick="changerDemoTab('pharmacien', 3)">
+                        <span class="demo-tab-num">3</span>
+                        <div class="demo-tab-labels">
+                            <span class="demo-tab-titre">Espace Pharmacie</span>
+                            <span class="demo-tab-desc">Scan &amp; Tiers-Payant</span>
+                        </div>
+                    </button>
+                    <button type="button" class="demo-tab-btn" role="tab" id="tab-btn-assurance" onclick="changerDemoTab('assurance', 4)">
+                        <span class="demo-tab-num">4</span>
+                        <div class="demo-tab-labels">
+                            <span class="demo-tab-titre">Espace Assurance</span>
+                            <span class="demo-tab-desc">Agrément &amp; Pilotage</span>
+                        </div>
+                    </button>
+                </div>
             </div>
 
+            <!-- 3. Bannière d'Orientation Guidée (Hotspot Guide) -->
+            <div class="demo-guide-banner">
+                <div class="demo-guide-text">
+                    <span class="demo-pulse-point" aria-hidden="true"></span>
+                    <span id="demo-guide-texte"><strong>Étape 1 sur 4 :</strong> L'assuré accède à sa carte de tiers-payant biométrique et réserve un créneau chez un praticien à Dakar.</span>
+                </div>
+                <div class="demo-guide-nav">
+                    <button type="button" class="demo-btn-nav-step" id="btn-demo-prev-step" onclick="naviguerEtapeDemo(-1)" disabled>
+                        &larr; Précédent
+                    </button>
+                    <button type="button" class="demo-btn-nav-step" id="btn-demo-next-step" onclick="naviguerEtapeDemo(1)">
+                        Suivant &rarr;
+                    </button>
+                </div>
+            </div>
+
+            <!-- 4. Corps de la Démo — Vues Réalistes des 4 Rôles -->
             <div class="modal-demo-corps">
-                <!-- 1. VUE ASSURÉ -->
+                <!-- ÉTAPE 1 : ASSURÉ -->
                 <div id="panel-demo-assure" class="demo-vue-panel active" role="tabpanel">
-                    <div class="demo-grille-2col">
-                        <!-- Carte Assuré -->
-                        <div>
-                            <div class="demo-box-interactif">
-                                <div class="demo-box-titre">
-                                    <h4>{% icone "id-card" %} Carte biométrique de tiers payant</h4>
-                                    <span style="font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace;">ACTIVE</span>
+                    <div class="demo-app-layout">
+                        <!-- Sidebar Assuré -->
+                        <div class="demo-app-sidebar">
+                            <div>
+                                <div class="demo-sidebar-brand">
+                                    {% icone "activity" %}
+                                    <strong>SantéSN Assuré</strong>
+                                    <span>Portail</span>
                                 </div>
-                                <div class="demo-carte-assure-visuel">
-                                    <div class="demo-carte-entete">
-                                        <span>SantéSN • République du Sénégal</span>
-                                        <span style="background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:4px;">IPM</span>
+                                <ul class="demo-sidebar-menu">
+                                    <li class="demo-sidebar-item active">{% icone "home" %} Tableau de bord</li>
+                                    <li class="demo-sidebar-item">{% icone "calendar" %} Mes Rendez-vous</li>
+                                    <li class="demo-sidebar-item">{% icone "file-text" %} Mes Ordonnances</li>
+                                    <li class="demo-sidebar-item">{% icone "id-card" %} Ma Carte IPM</li>
+                                    <li class="demo-sidebar-item">{% icone "shield-check" %} Mes Remboursements</li>
+                                </ul>
+                            </div>
+                            <div class="demo-sidebar-profile">
+                                <div class="demo-user-avatar">MD</div>
+                                <div class="demo-user-meta">
+                                    <span class="demo-user-name">Mamadou L. Diop</span>
+                                    <span class="demo-user-role-badge">Assuré Principal (80%)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contenu Assuré -->
+                        <div class="demo-app-main">
+                            <div class="demo-app-topbar">
+                                <div class="demo-app-breadcrumb">
+                                    SantéSN Assuré &gt; <strong>Carte Biométrique &amp; Prise de Rendez-vous</strong>
+                                </div>
+                                <div class="demo-app-live-status">
+                                    <span class="demo-badge-session">● Session Active · IPM Sonatel</span>
+                                </div>
+                            </div>
+
+                            <div style="display:grid;grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));gap:20px;">
+                                <!-- Carte Biométrique Pro -->
+                                <div class="demo-card-stage">
+                                    <div class="demo-card-stage-header">
+                                        <h4>{% icone "id-card" %} Carte Dématérialisée de Tiers-Payant</h4>
+                                        <span style="font-size:11px;background:#e0f2fe;color:#0369a1;padding:3px 8px;border-radius:4px;font-weight:700;">VALIDE 2026</span>
                                     </div>
-                                    <div class="demo-carte-corps">
-                                        <div class="demo-carte-info">
-                                            <h5>Mamadou Lamine Diop</h5>
-                                            <p>N° SN-2026-98741</p>
-                                            <span class="demo-carte-taux">Taux garanti : 80% (IPM Transports)</span>
+                                    <div class="demo-carte-assure-pro">
+                                        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+                                            <div>
+                                                <span style="font-size:11px;letter-spacing:0.5px;text-transform:uppercase;opacity:0.85;display:block;">République du Sénégal</span>
+                                                <strong style="font-size:14px;letter-spacing:0.2px;">CARTE DE SANTÉ NATIONALE</strong>
+                                            </div>
+                                            <span style="background:rgba(255,255,255,0.22);padding:3px 10px;border-radius:6px;font-size:12px;font-weight:700;">IPM</span>
                                         </div>
-                                        <div class="demo-qr-mini" title="QR Code de tiers payant infalsifiable">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="#0b2027" stroke-width="2">
+                                        <div class="demo-carte-emv-chip"></div>
+                                        <div style="display:flex;justify-content:space-between;align-items:flex-end;">
+                                            <div>
+                                                <h5 style="margin:0 0 4px;font-size:17px;font-weight:800;">Mamadou Lamine Diop</h5>
+                                                <p style="margin:0;font-size:12px;opacity:0.85;font-family:'IBM Plex Mono',monospace;">N° SN-2026-98741-A</p>
+                                                <div style="margin-top:10px;display:inline-block;background:rgba(255,255,255,0.2);padding:4px 10px;border-radius:6px;font-size:12px;font-weight:700;">
+                                                    Couverture Tiers-Payant : 80%
+                                                </div>
+                                            </div>
+                                            <div style="background:#ffffff;padding:6px;border-radius:8px;box-shadow:0 4px 10px rgba(0,0,0,0.15);">
+                                                <svg viewBox="0 0 24 24" width="56" height="56" fill="none" stroke="#0b2027" stroke-width="2">
+                                                    <rect x="3" y="3" width="7" height="7" rx="1"/>
+                                                    <rect x="14" y="3" width="7" height="7" rx="1"/>
+                                                    <rect x="3" y="14" width="7" height="7" rx="1"/>
+                                                    <rect x="14" y="14" width="3" height="3"/>
+                                                    <rect x="18" y="14" width="3" height="7"/>
+                                                    <rect x="14" y="18" width="3" height="3"/>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p style="font-size:12px;color:var(--muted);margin-top:14px;line-height:1.5;">
+                                        Présentée chez le médecin ou à la pharmacie, cette carte certifie l'identité biométrique et applique immédiatement la dispense d'avance de frais.
+                                    </p>
+                                </div>
+
+                                <!-- Formulaire Prise de RDV Interactif -->
+                                <div class="demo-card-stage">
+                                    <div class="demo-card-stage-header">
+                                        <h4>{% icone "calendar" %} Planifier une consultation médicale</h4>
+                                        <span style="font-size:11px;color:var(--primary-strong);font-weight:700;">En temps réel</span>
+                                    </div>
+                                    <div class="demo-form-champ">
+                                        <label for="demo-spe">Spécialité requise :</label>
+                                        <select id="demo-spe" onchange="actualiserPraticiensDemo()">
+                                            <option value="Médecine générale">Médecine générale</option>
+                                            <option value="Cardiologie">Cardiologie</option>
+                                            <option value="Pédiatrie">Pédiatrie</option>
+                                            <option value="Ophtalmologie">Ophtalmologie</option>
+                                        </select>
+                                    </div>
+                                    <div class="demo-form-champ">
+                                        <label for="demo-med">Praticien conventionné (Dakar) :</label>
+                                        <select id="demo-med">
+                                            <option value="Dr. Fatou Sow — Polyclinique de la Médina">Dr. Fatou Sow — Polyclinique de la Médina, Dakar</option>
+                                            <option value="Dr. Cheikh Tidiane Ndiaye — Hôpital Principal">Dr. Cheikh Tidiane Ndiaye — Hôpital Principal</option>
+                                            <option value="Dr. Aïssatou Diallo — Clinique Pasteur">Dr. Aïssatou Diallo — Clinique Pasteur, Dakar</option>
+                                        </select>
+                                    </div>
+                                    <div class="demo-form-champ">
+                                        <label for="demo-creneau">Créneau horaire disponible :</label>
+                                        <select id="demo-creneau">
+                                            <option>Aujourd'hui à 15h30 (Cabinet médical)</option>
+                                            <option>Aujourd'hui à 16h45 (Cabinet médical)</option>
+                                            <option>Demain à 10h00 (Cabinet médical)</option>
+                                        </select>
+                                    </div>
+                                    <button type="button" class="demo-btn-action-pro" onclick="simulerPriseRDV()" id="btn-valider-rdv">
+                                        {% icone "check" %} Confirmer le rendez-vous
+                                    </button>
+                                    <div id="demo-feedback-rdv" class="demo-feedback-box">
+                                        <strong>{% icone "check" %} Rendez-vous confirmé avec succès !</strong><br>
+                                        <span>Votre consultation avec <strong id="demo-feedback-praticien-nom">Dr. Fatou Sow</strong> est enregistrée. Une notification de confirmation est instantanément synchronisée sur votre WhatsApp et votre agenda.</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ÉTAPE 2 : MÉDECIN -->
+                <div id="panel-demo-medecin" class="demo-vue-panel" role="tabpanel">
+                    <div class="demo-app-layout">
+                        <!-- Sidebar Médecin -->
+                        <div class="demo-app-sidebar">
+                            <div>
+                                <div class="demo-sidebar-brand">
+                                    {% icone "stethoscope" %}
+                                    <strong>SantéSN Praticien</strong>
+                                    <span>Médical</span>
+                                </div>
+                                <ul class="demo-sidebar-menu">
+                                    <li class="demo-sidebar-item active">{% icone "user-check" %} Consultation en cours</li>
+                                    <li class="demo-sidebar-item">{% icone "calendar" %} Agenda du cabinet</li>
+                                    <li class="demo-sidebar-item">{% icone "file-text" %} Ordonnances délivrées</li>
+                                    <li class="demo-sidebar-item">{% icone "database" %} Dossiers médicaux</li>
+                                    <li class="demo-sidebar-item">{% icone "bar-chart" %} Statistiques &amp; Actes</li>
+                                </ul>
+                            </div>
+                            <div class="demo-sidebar-profile">
+                                <div class="demo-user-avatar" style="background:#0284c7;">FS</div>
+                                <div class="demo-user-meta">
+                                    <span class="demo-user-name">Dr. Fatou Sow</span>
+                                    <span class="demo-user-role-badge">Médecin Généraliste</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contenu Médecin -->
+                        <div class="demo-app-main">
+                            <div class="demo-app-topbar">
+                                <div class="demo-app-breadcrumb">
+                                    Espace Praticien &gt; <strong>Acte Clinique &amp; Prescription Certifiée</strong>
+                                </div>
+                                <div class="demo-app-live-status">
+                                    <span class="demo-badge-session" style="background:#f0f9ff;color:#0369a1;border-color:#bae6fd;">
+                                        ● Dossier n° CS-2026-4401 · Prise en charge 80%
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div style="display:grid;grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));gap:20px;">
+                                <!-- Examen Clinique & Constantes -->
+                                <div class="demo-card-stage">
+                                    <div class="demo-card-stage-header">
+                                        <h4>{% icone "stethoscope" %} Examen Médical du Patient</h4>
+                                        <span style="font-size:11px;background:#ecfdf5;color:#065f46;padding:3px 8px;border-radius:4px;font-weight:700;">CONFORME</span>
+                                    </div>
+                                    <div style="background:#f8fafc;border-radius:10px;padding:14px;border:1px solid #e2e8f0;margin-bottom:14px;">
+                                        <strong style="font-size:14px;color:var(--primary-dark);display:block;">Patient : Mamadou Lamine Diop (34 ans)</strong>
+                                        <span style="font-size:12px;color:var(--muted);display:block;margin-top:2px;">Matricule : SN-2026-98741-A · Couverture IPM : 80%</span>
+                                        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+                                            <span style="font-size:11.5px;background:#ffffff;border:1px solid #cbd5e1;padding:3px 8px;border-radius:6px;font-weight:600;">Tension : 12/8</span>
+                                            <span style="font-size:11.5px;background:#ffffff;border:1px solid #cbd5e1;padding:3px 8px;border-radius:6px;font-weight:600;">Pouls : 72 bpm</span>
+                                            <span style="font-size:11.5px;background:#ffffff;border:1px solid #cbd5e1;padding:3px 8px;border-radius:6px;font-weight:600;">Température : 37.4°C</span>
+                                            <span style="font-size:11.5px;background:#ffffff;border:1px solid #cbd5e1;padding:3px 8px;border-radius:6px;font-weight:600;">Poids : 74 kg</span>
+                                        </div>
+                                    </div>
+                                    <p style="font-size:13px;color:var(--text);margin-bottom:6px;">
+                                        <strong>Diagnostic :</strong> Rhinopharyngite aiguë saisonnière accompagnée d'un état fébrile modéré.
+                                    </p>
+                                    <p style="font-size:12px;color:var(--muted);line-height:1.45;">
+                                        L'ordonnance électronique ci-contre génère une clé cryptographique unique assurant qu'elle ne pourra être délivrée qu'une seule fois en officine.
+                                    </p>
+                                </div>
+
+                                <!-- Rédacteur d'Ordonnance Sécurisée -->
+                                <div class="demo-card-stage">
+                                    <div class="demo-card-stage-header">
+                                        <h4>{% icone "file-text" %} Ordonnance Électronique Certifiée</h4>
+                                        <span style="font-size:11px;color:var(--primary-strong);font-weight:700;">Signature Électronique</span>
+                                    </div>
+                                    <div class="demo-form-champ">
+                                        <label for="demo-medoc">Traitement médicamenteux prescrit :</label>
+                                        <select id="demo-medoc">
+                                            <option value="Amoxicilline 500mg (2 boîtes) + Paracétamol 1g (1 boîte)">Amoxicilline 500mg (2 boîtes) + Paracétamol 1g</option>
+                                            <option value="Ibuprofène 400mg (1 boîte) + Sirop antitussif (1 flacon)">Ibuprofène 400mg + Sirop antitussif</option>
+                                            <option value="Azithromycine 250mg (1 boîte) + Vitamine C 500mg">Azithromycine 250mg + Vitamine C</option>
+                                        </select>
+                                    </div>
+                                    <div class="demo-form-champ">
+                                        <label for="demo-poso">Posologie et durée :</label>
+                                        <input type="text" id="demo-poso" value="1 comprimé matin et soir pendant 6 jours avec un verre d'eau" readonly>
+                                    </div>
+                                    <button type="button" class="demo-btn-action-pro" onclick="simulerGenerationOrdonnance()" id="btn-certifier-ordo">
+                                        {% icone "qr-scan" %} Certifier &amp; Générer l'ordonnance QR
+                                    </button>
+                                    <div id="demo-feedback-ordo" class="demo-feedback-box">
+                                        <strong>{% icone "check" %} Ordonnance certifiée avec succès !</strong><br>
+                                        <span id="demo-feedback-ordo-texte">Traitement certifié : Amoxicilline 500mg + Paracétamol 1g.</span>
+                                        <div style="margin-top:8px;font-size:11.5px;color:#047857;display:flex;align-items:center;gap:6px;">
+                                            <span>Réf. ORD-2026-8841 · Clé SHA-256 scellée · Prête pour scan officine.</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ÉTAPE 3 : PHARMACIEN -->
+                <div id="panel-demo-pharmacien" class="demo-vue-panel" role="tabpanel">
+                    <div class="demo-app-layout">
+                        <!-- Sidebar Pharmacien -->
+                        <div class="demo-app-sidebar">
+                            <div>
+                                <div class="demo-sidebar-brand">
+                                    {% icone "pill" %}
+                                    <strong>SantéSN Pharmacie</strong>
+                                    <span>Officine</span>
+                                </div>
+                                <ul class="demo-sidebar-menu">
+                                    <li class="demo-sidebar-item active">{% icone "qr-scan" %} Comptoir de délivrance</li>
+                                    <li class="demo-sidebar-item">{% icone "check-circle" %} Ordonnances délivrées</li>
+                                    <li class="demo-sidebar-item">{% icone "dollar-sign" %} Tiers-Payant à percevoir</li>
+                                    <li class="demo-sidebar-item">{% icone "file-text" %} Bordereaux de télétransmission</li>
+                                </ul>
+                            </div>
+                            <div class="demo-sidebar-profile">
+                                <div class="demo-user-avatar" style="background:#059669;">PC</div>
+                                <div class="demo-user-meta">
+                                    <span class="demo-user-name">Pharmacie de la Corniche</span>
+                                    <span class="demo-user-role-badge">Officine Conventionnée</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contenu Pharmacien -->
+                        <div class="demo-app-main">
+                            <div class="demo-app-topbar">
+                                <div class="demo-app-breadcrumb">
+                                    Comptoir Officine &gt; <strong>Lecture Optique &amp; Décomposition Tiers-Payant</strong>
+                                </div>
+                                <div class="demo-app-live-status">
+                                    <span class="demo-badge-session" style="background:#f0fdf4;color:#15803d;border-color:#bbf7d0;">
+                                        ● Lecteur Optique Prêt · Télétransmission Directe
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div style="display:grid;grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));gap:20px;">
+                                <!-- Viseur Scanner Optique -->
+                                <div class="demo-card-stage">
+                                    <div class="demo-card-stage-header">
+                                        <h4>{% icone "qr-scan" %} Scanner au Comptoir</h4>
+                                        <span style="font-size:11px;background:#fef3c7;color:#92400e;padding:3px 8px;border-radius:4px;font-weight:700;">CAMÉRA OPTIQUE</span>
+                                    </div>
+                                    <div class="demo-scanner-box">
+                                        <div class="demo-scanner-viewfinder" id="demo-viseur-scan">
+                                            <div class="demo-scanner-laser"></div>
+                                            <svg viewBox="0 0 24 24" width="70" height="70" fill="none" stroke="#38bdf8" stroke-width="1.8">
                                                 <rect x="3" y="3" width="7" height="7" rx="1"/>
                                                 <rect x="14" y="3" width="7" height="7" rx="1"/>
                                                 <rect x="3" y="14" width="7" height="7" rx="1"/>
@@ -2258,266 +2911,173 @@
                                                 <rect x="14" y="18" width="3" height="3"/>
                                             </svg>
                                         </div>
+                                        <span style="font-size:12.5px;color:#94a3b8;display:block;margin-bottom:12px;">Pointez le QR Code de l'ordonnance ou de la carte de l'assuré</span>
+                                        <button type="button" class="demo-btn-action-pro" onclick="simulerScanPharmacie()" id="btn-demo-scanner" style="background:#0e7c86;">
+                                            {% icone "zap" %} Simuler le scan optique au comptoir
+                                        </button>
                                     </div>
                                 </div>
-                                <p style="font-size:12px;color:var(--muted);margin-top:12px;line-height:1.4;">
-                                    Présentée chez le médecin ou en pharmacie, cette carte certifie l'identité et applique immédiatement le tiers payant sans avance de frais.
-                                </p>
-                            </div>
-                        </div>
 
-                        <!-- Simulateur Prise de RDV -->
-                        <div>
-                            <div class="demo-box-interactif">
-                                <div class="demo-box-titre">
-                                    <h4>{% icone "calendar" %} Prendre un rendez-vous médical</h4>
-                                    <span style="font-size:11px;color:var(--primary-strong);font-weight:700;">Simulateur direct</span>
-                                </div>
-                                <div class="demo-form-champ">
-                                    <label for="demo-spe">Spécialité médicale :</label>
-                                    <select id="demo-spe" onchange="actualiserPraticiensDemo()">
-                                        <option value="Médecine générale">Médecine générale</option>
-                                        <option value="Cardiologie">Cardiologie</option>
-                                        <option value="Pédiatrie">Pédiatrie</option>
-                                        <option value="Ophtalmologie">Ophtalmologie</option>
-                                    </select>
-                                </div>
-                                <div class="demo-form-champ">
-                                    <label for="demo-med">Praticien & Établissement conventionné :</label>
-                                    <select id="demo-med">
-                                        <option value="Dr. Fatou Sow — Polyclinique de la Médina">Dr. Fatou Sow — Polyclinique de la Médina, Dakar</option>
-                                        <option value="Dr. Cheikh Tidiane Ndiaye — Hôpital Principal">Dr. Cheikh Tidiane Ndiaye — Hôpital Principal</option>
-                                        <option value="Dr. Aïssatou Diallo — Clinique Pasteur">Dr. Aïssatou Diallo — Clinique Pasteur, Dakar</option>
-                                    </select>
-                                </div>
-                                <div class="demo-form-champ">
-                                    <label for="demo-creneau">Créneau horaire disponible :</label>
-                                    <select id="demo-creneau">
-                                        <option>Aujourd'hui à 15h30</option>
-                                        <option>Aujourd'hui à 16h45</option>
-                                        <option>Demain à 10h00</option>
-                                    </select>
-                                </div>
-                                <button type="button" class="demo-btn-action" onclick="simulerPriseRDV()">
-                                    {% icone "check" %} Confirmer le rendez-vous
-                                </button>
-                                <div id="demo-feedback-rdv" class="demo-feedback-box">
-                                    <strong>{% icone "check" %} Rendez-vous confirmé avec succès !</strong><br>
-                                    <span style="font-size:12px;">Votre consultation avec <span id="demo-feedback-praticien-nom">Dr. Fatou Sow</span> est enregistrée. Une confirmation instantanée est simulée vers votre WhatsApp et votre agenda.</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                                <!-- Décomposition Tiers-Payant & Validation Délivrance -->
+                                <div class="demo-card-stage">
+                                    <div class="demo-card-stage-header">
+                                        <h4>{% icone "file-text" %} Rapprochement &amp; Tiers-Payant</h4>
+                                        <span style="font-size:11px;color:var(--primary-strong);font-weight:700;">Calcul Automatisé</span>
+                                    </div>
 
-                <!-- 2. VUE MÉDECIN -->
-                <div id="panel-demo-medecin" class="demo-vue-panel" role="tabpanel">
-                    <div class="demo-grille-2col">
-                        <!-- Dossier Patient en Consultation -->
-                        <div class="demo-box-interactif">
-                            <div class="demo-box-titre">
-                                <h4>{% icone "stethoscope" %} Consultation en cours</h4>
-                                <span style="font-size:11px;background:#e8f4f3;color:#0e7c86;padding:3px 8px;border-radius:6px;font-weight:700;">Dr. Fatou Sow</span>
-                            </div>
-                            <div style="background:#f8fafb;border-radius:10px;padding:14px;border:1px solid #edf2f5;margin-bottom:14px;">
-                                <strong style="font-size:14px;color:var(--primary-dark);display:block;">Patient : Mamadou Lamine Diop (34 ans)</strong>
-                                <span style="font-size:12px;color:var(--muted);display:block;margin-top:2px;">Matricule : SN-2026-98741 · Prise en charge IPM : 80%</span>
-                                <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
-                                    <span style="font-size:11px;background:#ffffff;border:1px solid #d9e2ea;padding:2px 6px;border-radius:4px;">TA : 12/8</span>
-                                    <span style="font-size:11px;background:#ffffff;border:1px solid #d9e2ea;padding:2px 6px;border-radius:4px;">Pouls : 72 bpm</span>
-                                    <span style="font-size:11px;background:#ffffff;border:1px solid #d9e2ea;padding:2px 6px;border-radius:4px;">Poids : 74 kg</span>
-                                </div>
-                            </div>
-                            <p style="font-size:12.5px;color:var(--text);margin-bottom:10px;">
-                                <strong>Diagnostic clinique :</strong> Rhinopharyngite aiguë et état fébrile modéré.
-                            </p>
-                            <p style="font-size:12px;color:var(--muted);">
-                                Rédigez l'ordonnance ci-contre pour générer le QR Code infalsifiable sécurisé contre la fraude.
-                            </p>
-                        </div>
+                                    <div id="demo-pharma-attente" style="text-align:center;padding:36px 16px;color:var(--muted);">
+                                        <span style="font-size:32px;display:block;margin-bottom:8px;">⏳</span>
+                                        <p style="font-size:13px;margin:0;">Cliquez sur « Simuler le scan optique » à gauche pour charger l'ordonnance et décomposer le tiers payant.</p>
+                                    </div>
 
-                        <!-- Générateur d'Ordonnance QR -->
-                        <div class="demo-box-interactif">
-                            <div class="demo-box-titre">
-                                <h4>{% icone "file-text" %} Rédiger l'ordonnance sécurisée</h4>
-                                <span style="font-size:11px;color:var(--primary-strong);font-weight:700;">Signature numérique</span>
-                            </div>
-                            <div class="demo-form-champ">
-                                <label for="demo-medoc">Traitement médicamenteux :</label>
-                                <select id="demo-medoc">
-                                    <option value="Amoxicilline 500mg (gélules) + Paracétamol 1000mg">Amoxicilline 500mg (2 boîtes) + Paracétamol 1g</option>
-                                    <option value="Ibuprofène 400mg + Sirop antitussif">Ibuprofène 400mg + Sirop antitussif</option>
-                                    <option value="Azithromycine 250mg + Vitamine C 500mg">Azithromycine 250mg + Vitamine C 500mg</option>
-                                </select>
-                            </div>
-                            <div class="demo-form-champ">
-                                <label for="demo-posologie">Posologie recommandée :</label>
-                                <input type="text" id="demo-posologie" value="1 gélule 3 fois par jour au cours des repas pendant 6 jours">
-                            </div>
-                            <button type="button" class="demo-btn-action" onclick="simulerGenerationOrdonnance()">
-                                {% icone "zap" %} Générer l'ordonnance QR infalsifiable
-                            </button>
-                            <div id="demo-feedback-ordo" class="demo-feedback-box">
-                                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-                                    <strong>{% icone "check" %} Ordonnance certifiée avec succès</strong>
-                                    <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;">Réf. SN-ORD-2026-7814</span>
-                                </div>
-                                <span style="font-size:12px;display:block;margin-bottom:8px;" id="demo-feedback-ordo-texte">Traitement : Amoxicilline 500mg + Paracétamol 1g</span>
-                                <div style="background:#ffffff;padding:8px 12px;border-radius:6px;border:1px solid #bce4dc;font-size:11.5px;color:#0b2027;display:flex;align-items:center;gap:10px;">
-                                    <span style="font-size:20px;">🛡️</span>
-                                    <span>QR Code cryptographique horodaté. Immédiatement visible dans l'officine de pharmacie au comptoir.</span>
+                                    <div id="demo-pharma-details" style="display:none;">
+                                        <div style="background:#f8fafc;border-radius:8px;padding:12px;border:1px solid #e2e8f0;margin-bottom:12px;">
+                                            <div style="display:flex;justify-content:space-between;align-items:center;">
+                                                <strong style="font-size:13px;color:var(--primary-dark);">Ordonnance n° ORD-2026-8841</strong>
+                                                <span style="font-size:11px;background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:4px;font-weight:700;">AUTHENTIFIÉE</span>
+                                            </div>
+                                            <span style="font-size:12px;color:var(--text);display:block;margin-top:4px;">Émise par : Dr. Fatou Sow · Patient : Mamadou L. Diop</span>
+                                        </div>
+
+                                        <table class="demo-table-tiers-payant">
+                                            <thead>
+                                                <tr>
+                                                    <th>Poste comptable</th>
+                                                    <th style="text-align:right;">Montant (FCFA)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>Total pharmacie (Amoxicilline + Paracétamol)</td>
+                                                    <td style="text-align:right;font-weight:600;">12 500 FCFA</td>
+                                                </tr>
+                                                <tr style="color:#0e7c86;font-weight:700;">
+                                                    <td>Part Prise en Charge IPM (80%)</td>
+                                                    <td style="text-align:right;">10 000 FCFA</td>
+                                                </tr>
+                                                <tr style="color:var(--primary-dark);font-weight:800;border-top:2px solid #e2e8f0;">
+                                                    <td>Ticket modérateur patient (20%)</td>
+                                                    <td style="text-align:right;color:#d97706;">2 500 FCFA</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+
+                                        <button type="button" class="demo-btn-action-pro" onclick="simulerDelivrancePharmacie()" id="btn-valider-delivrance">
+                                            {% icone "check-circle" %} Valider la délivrance &amp; Sceller l'ordonnance
+                                        </button>
+                                    </div>
+
+                                    <div id="demo-feedback-delivrance" class="demo-feedback-box">
+                                        <strong>{% icone "check" %} Délivrance scellée et enregistrée !</strong><br>
+                                        <span>L'ordonnance a été clôturée dans le registre national de santé. Tout réemploi est immédiatement bloqué. Le montant de 10 000 FCFA est télétransmis à l'IPM pour remboursement garanti.</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 3. VUE PHARMACIEN -->
-                <div id="panel-demo-pharmacien" class="demo-vue-panel" role="tabpanel">
-                    <div class="demo-grille-2col">
-                        <!-- Scanner au Comptoir -->
-                        <div class="demo-box-interactif">
-                            <div class="demo-box-titre">
-                                <h4>{% icone "camera" %} Scanner d'ordonnance en officine</h4>
-                                <span style="font-size:11px;background:#eef6f5;color:#0e7c86;padding:3px 8px;border-radius:6px;font-weight:700;">Grande Pharmacie Dakaroise</span>
-                            </div>
-                            <div style="text-align:center;padding:24px 16px;background:#0b2027;color:#ffffff;border-radius:12px;margin-bottom:16px;position:relative;overflow:hidden;">
-                                <div style="display:inline-block;padding:16px;border:2px dashed #4fb8ae;border-radius:12px;background:rgba(255,255,255,0.05);margin-bottom:12px;" id="demo-viseur-scan">
-                                    <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#4fb8ae" stroke-width="1.8">
-                                        <path d="M3 7V5a2 2 0 0 1 2-2h2"/>
-                                        <path d="M17 3h2a2 2 0 0 1 2 2v2"/>
-                                        <path d="M21 17v2a2 2 0 0 1-2 2h-2"/>
-                                        <path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
-                                        <rect x="7" y="7" width="10" height="10" rx="1"/>
-                                    </svg>
-                                </div>
-                                <p style="font-size:13px;color:rgba(255,255,255,0.85);margin:0;">Visez le QR Code présenté sur le smartphone de l'assuré ou sur papier.</p>
-                            </div>
-                            <button type="button" class="demo-btn-action" onclick="simulerScanPharmacie()" id="btn-demo-scanner">
-                                {% icone "scan" %} Simuler le scan optique de l'ordonnance
-                            </button>
-                        </div>
-
-                        <!-- Décomposition Tiers Payant & Validation -->
-                        <div class="demo-box-interactif">
-                            <div class="demo-box-titre">
-                                <h4>{% icone "calculator" %} Tiers payant & Délivrance</h4>
-                                <span style="font-size:11px;color:var(--primary-strong);font-weight:700;">Calcul instantané</span>
-                            </div>
-                            <div id="demo-pharma-details" style="display:none;animation:fadeInTab 0.3s ease;">
-                                <div style="background:#f8fafb;border-radius:10px;padding:14px;border:1px solid #edf2f5;margin-bottom:14px;">
-                                    <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-                                        <span style="font-size:12.5px;color:var(--muted);">Ordonnance certifiée :</span>
-                                        <strong style="font-size:12.5px;color:var(--titre);">Dr. Fatou Sow</strong>
-                                    </div>
-                                    <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-                                        <span style="font-size:12.5px;color:var(--muted);">Assuré bénéficiaire :</span>
-                                        <strong style="font-size:12.5px;color:var(--titre);">Mamadou Lamine Diop</strong>
-                                    </div>
-                                    <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-                                        <span style="font-size:12.5px;color:var(--muted);">Organisme garant :</span>
-                                        <span style="font-size:12px;background:#e8f4f3;color:#0e7c86;font-weight:700;padding:2px 6px;border-radius:4px;">IPM Transports (80%)</span>
-                                    </div>
-                                </div>
-
-                                <div style="border:1px solid #edf2f5;border-radius:10px;padding:12px;margin-bottom:14px;">
-                                    <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px;">
-                                        <span>Total médicaments prescrits :</span>
-                                        <strong>10 000 FCFA</strong>
-                                    </div>
-                                    <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px;color:#0e7c86;">
-                                        <span>Prise en charge IPM (80%) :</span>
-                                        <strong>- 8 000 FCFA</strong>
-                                    </div>
-                                    <div style="display:flex;justify-content:space-between;padding-top:6px;border-top:1px solid #edf2f5;font-size:15px;color:var(--primary-dark);">
-                                        <strong>Reste à charge patient :</strong>
-                                        <strong style="color:#e0824f;">2 000 FCFA</strong>
-                                    </div>
-                                </div>
-
-                                <button type="button" class="demo-btn-action" onclick="simulerDelivrancePharmacie()" id="btn-valider-delivrance">
-                                    {% icone "check" %} Enregistrer la délivrance des molécules
-                                </button>
-                            </div>
-
-                            <div id="demo-pharma-attente" style="text-align:center;padding:36px 16px;color:var(--muted);">
-                                <span style="font-size:32px;display:block;margin-bottom:8px;">⏳</span>
-                                <p style="font-size:13px;margin:0;">Cliquez sur « Simuler le scan optique » à gauche pour charger et décomposer le tiers payant.</p>
-                            </div>
-
-                            <div id="demo-feedback-delivrance" class="demo-feedback-box" style="margin-top:14px;">
-                                <strong>{% icone "check" %} Délivrance enregistrée et verrouillée !</strong><br>
-                                <span style="font-size:12px;">L'ordonnance a été clôturée dans le registre national. Tout re-scan ultérieur sera immédiatement bloqué. Le remboursement de 8 000 FCFA est crédité sur le compte de l'officine.</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 4. VUE ASSURANCE & IPM -->
+                <!-- ÉTAPE 4 : ASSURANCE & IPM -->
                 <div id="panel-demo-assurance" class="demo-vue-panel" role="tabpanel">
-                    <div class="demo-grille-2col">
-                        <!-- Chiffres Clés -->
-                        <div class="demo-box-interactif">
-                            <div class="demo-box-titre">
-                                <h4>{% icone "bar-chart" %} Pilotage & Maîtrise des coûts</h4>
-                                <span style="font-size:11px;background:#eef6f5;color:#0e7c86;padding:3px 8px;border-radius:6px;font-weight:700;">IPM Transports & Énergie</span>
+                    <div class="demo-app-layout">
+                        <!-- Sidebar Assurance -->
+                        <div class="demo-app-sidebar">
+                            <div>
+                                <div class="demo-sidebar-brand">
+                                    {% icone "shield-check" %}
+                                    <strong>SantéSN IPM</strong>
+                                    <span>Gestionnaire</span>
+                                </div>
+                                <ul class="demo-sidebar-menu">
+                                    <li class="demo-sidebar-item active">{% icone "bar-chart" %} Tableau de bord Risques</li>
+                                    <li class="demo-sidebar-item">{% icone "check-square" %} Accords préalables (PEC)</li>
+                                    <li class="demo-sidebar-item">{% icone "dollar-sign" %} Règlements prestataires</li>
+                                    <li class="demo-sidebar-item">{% icone "users" %} Bénéficiaires &amp; Ayants droit</li>
+                                </ul>
                             </div>
-                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
-                                <div style="background:#f8fafb;padding:12px;border-radius:8px;border:1px solid #edf2f5;">
-                                    <span style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;">Assurés couverts</span>
-                                    <strong style="font-size:20px;color:var(--primary-dark);display:block;margin-top:2px;">1 240</strong>
-                                </div>
-                                <div style="background:#f8fafb;padding:12px;border-radius:8px;border:1px solid #edf2f5;">
-                                    <span style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;">Tiers payant auto</span>
-                                    <strong style="font-size:20px;color:#0e7c86;display:block;margin-top:2px;">98.4%</strong>
-                                </div>
-                                <div style="background:#f8fafb;padding:12px;border-radius:8px;border:1px solid #edf2f5;">
-                                    <span style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;">Délai règlement</span>
-                                    <strong style="font-size:20px;color:var(--primary-dark);display:block;margin-top:2px;">&lt; 48h</strong>
-                                </div>
-                                <div style="background:#f8fafb;padding:12px;border-radius:8px;border:1px solid #edf2f5;">
-                                    <span style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;">Fraude ordonnance</span>
-                                    <strong style="font-size:20px;color:#10b981;display:block;margin-top:2px;">0 cas</strong>
+                            <div class="demo-sidebar-profile">
+                                <div class="demo-user-avatar" style="background:#7c3aed;">IPM</div>
+                                <div class="demo-user-meta">
+                                    <span class="demo-user-name">IPM Transports &amp; Télécoms</span>
+                                    <span class="demo-user-role-badge">Superviseur Général</span>
                                 </div>
                             </div>
-                            <p style="font-size:12px;color:var(--muted);margin:0;line-height:1.45;">
-                                Zéro papier, zéro facture égarée : les feuilles de soins et quittances sont télétransmises et rapprochées automatiquement avec les prestataires agréés.
-                            </p>
                         </div>
 
-                        <!-- Validation d'une Prise en Charge en 1 clic -->
-                        <div class="demo-box-interactif">
-                            <div class="demo-box-titre">
-                                <h4>{% icone "shield-check" %} Accord de prise en charge</h4>
-                                <span style="font-size:11px;color:var(--primary-strong);font-weight:700;">Validation temps réel</span>
-                            </div>
-                            <div style="background:#f8fafb;border-radius:10px;padding:14px;border:1px solid #edf2f5;margin-bottom:14px;">
-                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                                    <strong style="font-size:13.5px;color:var(--primary-dark);">Demande d'accord préalable #PEC-5591</strong>
-                                    <span id="badge-statut-pec" style="font-size:11px;background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:4px;font-weight:700;">EN ATTENTE</span>
+                        <!-- Contenu Assurance -->
+                        <div class="demo-app-main">
+                            <div class="demo-app-topbar">
+                                <div class="demo-app-breadcrumb">
+                                    Pilotage Financier &gt; <strong>Maîtrise du Risque &amp; Accords Préalables (PEC)</strong>
                                 </div>
-                                <span style="font-size:12px;color:var(--text);display:block;">Assuré : Mamadou Lamine Diop · Réf. Hôpital Principal</span>
-                                <span style="font-size:12px;color:var(--muted);display:block;margin-top:2px;">Acte médical : Bilan biologique et analyse de sang (35 000 FCFA)</span>
+                                <div class="demo-app-live-status">
+                                    <span class="demo-badge-session" style="background:#faf5ff;color:#6b21a8;border-color:#e9d5ff;">
+                                        ● Portefeuille : 1 240 Bénéficiaires Actifs
+                                    </span>
+                                </div>
                             </div>
-                            <button type="button" class="demo-btn-action" onclick="simulerValidationPEC()" id="btn-valider-pec">
-                                {% icone "check" %} Valider l'accord de prise en charge (80%)
-                            </button>
-                            <div id="demo-feedback-pec" class="demo-feedback-box">
-                                <strong>{% icone "check" %} Prise en charge validée instantanément !</strong><br>
-                                <span style="font-size:12px;">L'accord à 80% (28 000 FCFA) est transmis au laboratoire partenaire. Le patient et l'établissement reçoivent une notification en temps réel.</span>
+
+                            <div style="display:flex;flex-direction:column;gap:18px;">
+                                <!-- 4 KPIs de Direction -->
+                                <div class="demo-kpi-grid">
+                                    <div class="demo-kpi-card">
+                                        <span class="demo-kpi-card-label">Taux Sinistralité (S/P)</span>
+                                        <div class="demo-kpi-card-val" style="color:#0e7c86;">68.2%</div>
+                                        <span class="demo-kpi-card-trend">✓ Sous le seuil cible (&lt; 75%)</span>
+                                    </div>
+                                    <div class="demo-kpi-card">
+                                        <span class="demo-kpi-card-label">Sinistres / Factures</span>
+                                        <div class="demo-kpi-card-val">1 428</div>
+                                        <span class="demo-kpi-card-trend">+12% ce mois</span>
+                                    </div>
+                                    <div class="demo-kpi-card">
+                                        <span class="demo-kpi-card-label">Tiers-Payant Engagé</span>
+                                        <div class="demo-kpi-card-val">18,45 M FCFA</div>
+                                        <span class="demo-kpi-card-trend">Télétransmis à 100%</span>
+                                    </div>
+                                    <div class="demo-kpi-card">
+                                        <span class="demo-kpi-card-label">Fraude Ordonnance</span>
+                                        <div class="demo-kpi-card-val" style="color:#10b981;">0 cas</div>
+                                        <span class="demo-kpi-card-trend">Contrôle QR inviolable</span>
+                                    </div>
+                                </div>
+
+                                <!-- Validation Accord Préalable -->
+                                <div class="demo-card-stage">
+                                    <div class="demo-card-stage-header">
+                                        <h4>{% icone "shield-check" %} Accord Préalable de Prise en Charge en 1 Clic</h4>
+                                        <span style="font-size:11px;background:#fef3c7;color:#92400e;padding:3px 8px;border-radius:4px;font-weight:700;">DÉCISION EN ATTENTE</span>
+                                    </div>
+                                    <div style="background:#f8fafc;border-radius:10px;padding:14px;border:1px solid #e2e8f0;margin-bottom:14px;">
+                                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                                            <strong style="font-size:13.5px;color:var(--primary-dark);">Demande d'accord n° PEC-2026-074</strong>
+                                            <span id="badge-statut-pec" style="font-size:11px;background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:4px;font-weight:700;">EN ATTENTE</span>
+                                        </div>
+                                        <span style="font-size:12.5px;color:var(--text);display:block;">Bénéficiaire : Aïcha Ba · Clinique conventionnée : Clinique de la Madeleine, Dakar</span>
+                                        <span style="font-size:12px;color:var(--muted);display:block;margin-top:2px;">Acte médical prescrit : IRM Cérébrale avec injection (Montant devis : 150 000 FCFA · Taux : 80%)</span>
+                                    </div>
+                                    <button type="button" class="demo-btn-action-pro" onclick="simulerValidationPEC()" id="btn-valider-pec">
+                                        {% icone "check" %} Accorder la prise en charge (80% = 120 000 FCFA)
+                                    </button>
+                                    <div id="demo-feedback-pec" class="demo-feedback-box">
+                                        <strong>{% icone "check" %} Prise en charge validée instantanément !</strong><br>
+                                        <span>L'accord de 120 000 FCFA est immédiatement transmis au système informatique de la Clinique de la Madeleine. Le patient reçoit son bon de prise en charge dématérialisé sans aucun délai administratif.</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <!-- 5. Pied de Modale avec Liens Directs & Navigation -->
             <div class="modal-demo-footer">
                 <div class="modal-demo-footer-info">
-                    <strong>Besoin d'un déploiement personnalisé pour votre organisation ?</strong>
+                    <strong>Prêt à équiper votre organisation avec SantéSN ?</strong>
                 </div>
                 <div class="modal-demo-footer-actions">
                     <a href="https://wa.me/221789576145" target="_blank" rel="noopener" class="btn-demo-contact">
-                        {% icone "message-circle" %} Échanger sur WhatsApp
+                        {% icone "message-circle" %} Échanger sur WhatsApp (+221 78 957 61 45)
                     </a>
                     <a href="{% url 'login' %}" class="btn-demo-connexion">
                         Accéder à mon espace {% icone "arrow-right" %}
@@ -2540,7 +3100,22 @@
 
         document.querySelectorAll('.revele').forEach((el) => observateur.observe(el));
 
-        // ===== LOGIQUE MODALE DÉMO INTERACTIVE =====
+        // ===== LOGIQUE DU PRODUCT TOUR SAAS INTERACTIF =====
+        let etapeCouranteDemo = 1;
+        const etapesNoms = ['assure', 'medecin', 'pharmacien', 'assurance'];
+        const etapesUrls = [
+            'https://app.santesn.sn/tour-demo/assure',
+            'https://app.santesn.sn/tour-demo/medecin',
+            'https://app.santesn.sn/tour-demo/pharmacien',
+            'https://app.santesn.sn/tour-demo/assurance'
+        ];
+        const etapesGuides = [
+            '<strong>Étape 1 sur 4 :</strong> L\'assuré accède à sa carte de tiers-payant biométrique et réserve un créneau chez un praticien à Dakar.',
+            '<strong>Étape 2 sur 4 :</strong> Le praticien consulte le dossier patient et certifie l\'ordonnance par QR Code unique infalsifiable.',
+            '<strong>Étape 3 sur 4 :</strong> L\'officine scanne le QR code : le tiers payant IPM (80%) se déduit immédiatement au comptoir.',
+            '<strong>Étape 4 sur 4 :</strong> L\'IPM audite les dépenses de santé et valide les accords préalables en un clic.'
+        ];
+
         function ouvrirDemoModal() {
             const modal = document.getElementById('modal-demo-interactive');
             if (modal) {
@@ -2557,10 +3132,17 @@
             }
         }
 
-        // Fermeture avec la touche Échap
+        // Fermeture avec la touche Échap et navigation clavier
         document.addEventListener('keydown', function(event) {
+            const modal = document.getElementById('modal-demo-interactive');
+            if (!modal || !modal.classList.contains('active')) return;
+
             if (event.key === 'Escape') {
                 fermerDemoModal();
+            } else if (event.key === 'ArrowRight') {
+                naviguerEtapeDemo(1);
+            } else if (event.key === 'ArrowLeft') {
+                naviguerEtapeDemo(-1);
             }
         });
 
@@ -2574,8 +3156,8 @@
             });
         }
 
-        // Gestion des onglets de la démo
-        function changerDemoTab(nomRole) {
+        // Gestion des étapes et onglets de la démo
+        function changerDemoTab(nomRole, numEtape) {
             const tabs = document.querySelectorAll('.demo-tab-btn');
             const panels = document.querySelectorAll('.demo-vue-panel');
             tabs.forEach(t => t.classList.remove('active'));
@@ -2586,6 +3168,45 @@
             if (btnActif && panelActif) {
                 btnActif.classList.add('active');
                 panelActif.classList.add('active');
+            }
+
+            if (numEtape) {
+                etapeCouranteDemo = numEtape;
+            } else {
+                etapeCouranteDemo = etapesNoms.indexOf(nomRole) + 1;
+            }
+
+            // Mise à jour de l'URL du faux navigateur
+            const urlEl = document.getElementById('demo-browser-url');
+            if (urlEl && etapesUrls[etapeCouranteDemo - 1]) {
+                urlEl.textContent = etapesUrls[etapeCouranteDemo - 1];
+            }
+
+            // Mise à jour de la bannière guide
+            const guideEl = document.getElementById('demo-guide-texte');
+            if (guideEl && etapesGuides[etapeCouranteDemo - 1]) {
+                guideEl.innerHTML = etapesGuides[etapeCouranteDemo - 1];
+            }
+
+            // Mise à jour des boutons précédent/suivant
+            const btnPrev = document.getElementById('btn-demo-prev-step');
+            const btnNext = document.getElementById('btn-demo-next-step');
+            if (btnPrev) btnPrev.disabled = (etapeCouranteDemo === 1);
+            if (btnNext) {
+                if (etapeCouranteDemo === 4) {
+                    btnNext.innerHTML = 'Terminer &rarr;';
+                    btnNext.onclick = function() { fermerDemoModal(); };
+                } else {
+                    btnNext.innerHTML = 'Suivant &rarr;';
+                    btnNext.onclick = function() { naviguerEtapeDemo(1); };
+                }
+            }
+        }
+
+        function naviguerEtapeDemo(direction) {
+            const nouvelleEtape = etapeCouranteDemo + direction;
+            if (nouvelleEtape >= 1 && nouvelleEtape <= 4) {
+                changerDemoTab(etapesNoms[nouvelleEtape - 1], nouvelleEtape);
             }
         }
 
@@ -2637,7 +3258,7 @@
                 const attente = document.getElementById('demo-pharma-attente');
                 if (details) details.style.display = 'block';
                 if (attente) attente.style.display = 'none';
-            }, 500);
+            }, 450);
         }
 
         function simulerDelivrancePharmacie() {
@@ -2645,7 +3266,7 @@
             if (btn) {
                 btn.disabled = true;
                 btn.style.opacity = '0.7';
-                btn.textContent = '✓ Molécules délivrées';
+                btn.textContent = '✓ Délivrance scellée';
             }
             const fb = document.getElementById('demo-feedback-delivrance');
             if (fb) fb.classList.add('active');
@@ -2656,7 +3277,7 @@
             const badge = document.getElementById('badge-statut-pec');
             const btn = document.getElementById('btn-valider-pec');
             if (badge) {
-                badge.textContent = 'VALIDÉE (80%)';
+                badge.textContent = 'ACCORDÉE (80%)';
                 badge.style.background = '#d1fae5';
                 badge.style.color = '#065f46';
             }
