@@ -196,7 +196,16 @@ class LandingTests(TestCase):
         self.assertContains(response, "Prenez contact")
         self.assertContains(response, "Nous configurons votre espace")
         self.assertContains(response, "Vous êtes opérationnel")
-        self.assertContains(response, "aucune certification formelle")
+        self.assertContains(response, "standards de sécurité")
+
+    def test_bouton_et_modal_demo_interactive_presents(self):
+        response = self.client.get(reverse('landing'))
+        self.assertContains(response, "Voir la démo interactive")
+        self.assertContains(response, "modal-demo-interactive")
+        self.assertContains(response, "tab-btn-assure")
+        self.assertContains(response, "tab-btn-medecin")
+        self.assertContains(response, "tab-btn-pharmacien")
+        self.assertContains(response, "tab-btn-assurance")
 
     def test_page_publique_affiche_la_faq(self):
         response = self.client.get(reverse('landing'))
