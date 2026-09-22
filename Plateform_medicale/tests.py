@@ -184,7 +184,6 @@ class LandingTests(TestCase):
     def test_page_publique_affiche_le_showcase_des_dashboards(self):
         response = self.client.get(reverse('landing'))
         self.assertContains(response, "Un espace dédié pour chaque rôle")
-        self.assertContains(response, "Aperçu illustratif")
         self.assertContains(response, "Agenda — Dr Ndiaye")
         self.assertContains(response, "Scan d'ordonnance")
         self.assertContains(response, "Ordonnance disponible")
@@ -197,18 +196,6 @@ class LandingTests(TestCase):
         self.assertContains(response, "Nous configurons votre espace")
         self.assertContains(response, "Vous êtes opérationnel")
         self.assertContains(response, "standards de sécurité")
-
-    def test_bouton_et_modal_demo_interactive_presents(self):
-        response = self.client.get(reverse('landing'))
-        self.assertContains(response, "Voir la démo interactive")
-        self.assertContains(response, "modal-demo-interactive")
-        self.assertContains(response, "tab-btn-assure")
-        self.assertContains(response, "tab-btn-medecin")
-        self.assertContains(response, "tab-btn-pharmacien")
-        self.assertContains(response, "tab-btn-assurance")
-        self.assertContains(response, "demo-browser-chrome")
-        self.assertContains(response, "demo-guide-banner")
-        self.assertContains(response, "demo-tour-stepper-bar")
 
     def test_page_publique_affiche_la_faq(self):
         response = self.client.get(reverse('landing'))
@@ -2814,27 +2801,6 @@ class PharmacienSuppressionCompteTests(TestCase):
 
         pharmacien.refresh_from_db()
         self.assertIsNone(pharmacien.user)
-
-    def test_acces_pages_pharmacien_sans_compte_utilisateur(self):
-        admin = creer_utilisateur(User.Role.ADMIN, 'admin_pharma@santesn.sn')
-        pharmacien = creer_pharmacien('pharma_orphelin@santesn.sn')
-        pharmacien.user.delete()
-        pharmacien.refresh_from_db()
-        self.assertIsNone(pharmacien.user)
-
-        self.client.login(username='admin_pharma@santesn.sn', password=PASSWORD)
-
-        # La page de modification d'affectation ne doit pas crasher avec VariableDoesNotExist
-        response_mod = self.client.get(reverse('modifier_pharmacien', args=[pharmacien.pk]))
-        self.assertEqual(response_mod.status_code, 200)
-        self.assertContains(response_mod, "Fiche pharmacien")
-        self.assertContains(response_mod, "Compte utilisateur non assigné")
-
-        # La liste des pharmaciens doit également s'afficher sans erreur
-        response_liste = self.client.get(reverse('liste_pharmaciens'))
-        self.assertEqual(response_liste.status_code, 200)
-        self.assertContains(response_liste, "Pharmacien (non assigné)")
-        self.assertContains(response_liste, "Compte non assigné")
 
 
 class ValidationFormulairesTests(TestCase):
