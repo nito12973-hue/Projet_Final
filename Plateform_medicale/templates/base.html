@@ -6106,23 +6106,6 @@
                         <button type="button" class="toast-fermer" aria-label="Fermer">{% icone "x" %}</button>
                     </div>
                     {% endfor %}
-                </div>
-                <script>
-                    (function() {
-                        try {
-                            var lienWa = document.querySelector('.lien-auto-whatsapp');
-                            if (lienWa && lienWa.href) {
-                                var clef = 'wa_auto_open_' + encodeURIComponent(lienWa.href);
-                                if (!sessionStorage.getItem(clef)) {
-                                    sessionStorage.setItem(clef, '1');
-                                    setTimeout(function() {
-                                        window.open(lienWa.href, '_blank');
-                                    }, 300);
-                                }
-                            }
-                        } catch (e) { /* ignore */ }
-                    })();
-                </script>
                 {% endif %}
                 {% block content %}{% endblock %}
 

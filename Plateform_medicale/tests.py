@@ -10111,7 +10111,7 @@ class AuditCorrectionsTests(TestCase):
         self.assertRedirects(resp, reverse('liste_utilisateurs'))
         content = resp.content.decode('utf-8')
         self.assertIn("Le lien d'activation", content)
-        self.assertIn("Transmettre sur WhatsApp", content)
+        self.assertNotIn("Transmettre sur WhatsApp", content)
 
 
 
