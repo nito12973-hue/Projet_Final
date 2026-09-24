@@ -7,7 +7,7 @@
 <section class="page-title">
     <div>
         <h1>{% if action == "creation" %}Utilisateur créé{% else %}Lien d'activation généré{% endif %}</h1>
-        <p class="subtitle">Le compte a été créé avec succès pour <strong>{{ utilisateur.email }}</strong>.</p>
+        <p class="subtitle">{% if action == "creation" %}Le compte a été créé avec succès{% else %}Le lien d'activation sécurisé a été généré{% endif %} pour <strong>{{ utilisateur.email }}</strong>.</p>
     </div>
 </section>
 
@@ -18,6 +18,9 @@
             {% icone "check" %} Le lien d'activation a été envoyé par <strong>WhatsApp</strong> au numéro enregistré.
             {% elif email_envoye %}
             {% icone "check" %} Le lien d'activation a été envoyé par <strong>Email</strong> à <strong>{{ utilisateur.email }}</strong>.
+            <span style="font-size: 12px; color: var(--muted); display: block; margin-top: 4px;">
+                (Si vous ne le voyez pas dans votre boîte principale, vérifiez le dossier <strong>Spam / Courrier indésirable</strong>).
+            </span>
             {% else %}
             {% icone "alert-triangle" %} Aucun canal d'expédition n'était disponible. Veuillez transmettre le lien manuellement.
             {% endif %}
@@ -35,11 +38,11 @@
 
     <div style="margin-top: 16px; border-top: 1px solid var(--border); padding-top: 16px;">
         <label for="champ-lien-activation" style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--titre);">
-            Lien d'activation direct (valable 24 heures)
+            {% if lien_activation %}Lien d'activation direct (valable 24 heures){% else %}Mot de passe initial généré{% endif %}
         </label>
         <div style="display: flex; align-items: center; gap: 10px; background: var(--champ-bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; flex-wrap: wrap;">
-            <input type="text" readonly value="{{ lien_activation }}" style="flex: 1; min-width: 220px; border: none; background: transparent; font-family: monospace; font-size: 13px; color: var(--titre); outline: none;" id="champ-lien-activation">
-            <button type="button" class="button btn btn-sm" data-copier="{{ lien_activation }}">{% icone "copy" %} Copier le lien</button>
+            <input type="text" readonly value="{{ lien_activation|default:mot_de_passe }}" style="flex: 1; min-width: 220px; border: none; background: transparent; font-family: monospace; font-size: 13px; color: var(--titre); outline: none;" id="champ-lien-activation">
+            <button type="button" class="button btn btn-sm" data-copier="{{ lien_activation|default:mot_de_passe }}">{% icone "copy" %} Copier</button>
             {% if whatsapp_direct_url %}
             <a href="{{ whatsapp_direct_url }}" target="_blank" rel="noopener" class="button btn btn-sm" style="background-color: #25D366; color: #FFFFFF; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; border: none;">
                 {% icone "share-2" %} Transmettre sur WhatsApp
