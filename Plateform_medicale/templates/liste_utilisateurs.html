@@ -101,7 +101,12 @@
                 <td class="col-optionnelle">{{ utilisateur.email }}</td>
                 <td class="col-optionnelle">
                     {% if utilisateur.phone_number %}
-                    <span>{{ utilisateur.phone_number }}</span>
+                    <span style="display: inline-flex; align-items: center; gap: 6px;">
+                        <span>{{ utilisateur.phone_number }}</span>
+                        <a href="https://wa.me/{{ utilisateur.phone_number|cut:' '|cut:'+'|cut:'-' }}" target="_blank" rel="noopener" title="Échanger sur WhatsApp avec {{ utilisateur }}" style="display: inline-flex; align-items: center; color: #25D366; text-decoration: none;">
+                            {% icone "chat" %}
+                        </a>
+                    </span>
                     {% else %}
                     <span style="color:var(--muted);">-</span>
                     {% endif %}

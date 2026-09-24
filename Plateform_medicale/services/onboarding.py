@@ -53,10 +53,19 @@ def construire_bilan_onboarding(statut, utilisateur, action="creation"):
 
     prefixe_creation = "Compte créé avec succès. " if action == "creation" else ""
 
+    wa_direct = statut.get("whatsapp_direct_url", "")
+    bouton_wa = ""
+    if wa_direct:
+        bouton_wa = (
+            f" <a href=\"{wa_direct}\" target=\"_blank\" rel=\"noopener\" class=\"lien-auto-whatsapp\" "
+            f"style=\"display: inline-flex; align-items: center; gap: 4px; background: #25D366; color: #FFFFFF !important; padding: 2px 10px; border-radius: 6px; font-weight: 700; text-decoration: none; font-size: 12px; margin-left: 8px; vertical-align: middle;\">"
+            f"Ouvrir sur WhatsApp</a>"
+        )
+
     # CAS 1 : WhatsApp envoyé avec succès
     if whatsapp_envoye:
         texte_dest = f" au {telephone}" if telephone else ""
-        texte_flash = mark_safe(f"{prefixe_creation}Le lien d'activation a été envoyé automatiquement par WhatsApp{texte_dest}.")
+        texte_flash = mark_safe(f"{prefixe_creation}Le lien d'activation a été envoyé automatiquement par WhatsApp{texte_dest}.{bouton_wa}")
         titre = "Activation envoyée par WhatsApp"
         note = "Le lien d'activation a été transmis sur le numéro WhatsApp de l'utilisateur."
         niveau = "success"
@@ -73,11 +82,11 @@ def construire_bilan_onboarding(statut, utilisateur, action="creation"):
         niveau = "success"
         canal = "Email"
 
-    # CAS 3 : Bascule Email automatique (100% sans bouton)
+    # CAS 3 : Bascule Email automatique avec raccourci WhatsApp
     elif email_envoye:
         texte_dest = f" à {email}" if email else ""
         texte_flash = mark_safe(
-            f"{prefixe_creation}Le lien d'activation a été envoyé automatiquement par email{texte_dest} (pensez à vérifier la boîte principale et le dossier Spam / Courrier indésirable)."
+            f"{prefixe_creation}Le lien d'activation a été envoyé automatiquement par email{texte_dest} (pensez à vérifier la boîte principale et le dossier Spam / Courrier indésirable).{bouton_wa}"
         )
         titre = "Activation envoyée par Email"
         note = "Le lien d'activation a été transmis par email à l'adresse de l'utilisateur."
