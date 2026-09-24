@@ -78,8 +78,8 @@ def construire_bilan_onboarding(statut, utilisateur, action="creation"):
         bouton_wa = ""
         if wa_direct:
             bouton_wa = (
-                f" <a href=\"{wa_direct}\" target=\"_blank\" rel=\"noopener\" "
-                f"style=\"display: inline-flex; align-items: center; gap: 4px; background: #25D366; color: #FFFFFF !important; padding: 2px 10px; border-radius: 6px; font-weight: 700; text-decoration: none; font-size: 12.5px; margin-left: 8px; vertical-align: middle;\">"
+                f" <a href=\"{wa_direct}\" target=\"_blank\" rel=\"noopener\" class=\"lien-auto-whatsapp\" "
+                f"style=\"display: inline-flex; align-items: center; gap: 5px; background: #25D366; color: #FFFFFF !important; padding: 2px 10px; border-radius: 6px; font-weight: 700; text-decoration: none; font-size: 12.5px; margin-left: 8px; vertical-align: middle;\">"
                 f"Transmettre sur WhatsApp</a>"
             )
         texte_flash = mark_safe(
