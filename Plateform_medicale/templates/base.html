@@ -2496,32 +2496,208 @@
         }
 
         @media print {
-            /* On imprime UNE CARTE, pas la page. Tout le decor applicatif
-               disparait : menu, barre du haut, boutons, explications. */
-            /* #barre-laterale est un ID, pas une classe : le selecteur de
-               classe ne masquait rien et le menu sortait sur la feuille.
-               Constate au rendu d'impression, pas devine. */
+            /* 1. Masquage strict du décor applicatif, de la navigation et des éléments interactifs */
             #barre-laterale,
             #barre-chargement,
+            #fond-sidebar,
             #modale-confirmation,
+            #modal-annulation,
             .topbar,
             .toasts,
+            .conteneur-toasts-temps-reel,
+            .lien-evitement,
             .carte-sans-impression,
-            .sans-impression {
+            .sans-impression,
+            .pied-de-page-app,
+            footer,
+            .breadcrumb,
+            .fil-ariane {
                 display: none !important;
             }
 
-            /* Ordonnance : la feuille devient la page. Ni ombre, ni bordure,
-               ni marge propre -- c'est @page qui porte les marges du papier,
-               sinon elles s'additionnent et le document se decale. */
+            /* 2. Format de page standard A4 */
+            @page {
+                size: A4 portrait;
+                margin: 10mm 12mm 10mm 12mm;
+            }
+
+            html,
+            body,
+            .shell,
+            .contenu,
+            .contenu main,
+            #contenu-principal {
+                background: #ffffff !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                display: block !important;
+                animation: none !important;
+            }
+
+            /* =========================================================
+               CARTE D'ASSURÉ : PLANCHE D'IMPRESSION SUR UNE SEULE PAGE A4
+               Dimensions officielles ISO 7810 ID-1 : 85.6mm x 54mm
+               Recto et Verso côte-à-côte avec repères de découpe
+               ========================================================= */
+            .planche-guide-impression {
+                display: block !important;
+                margin: 5mm auto 10mm auto !important;
+                text-align: center !important;
+            }
+
+            .carte-planche {
+                display: flex !important;
+                flex-direction: row !important;
+                flex-wrap: wrap !important;
+                justify-content: center !important;
+                align-items: center !important;
+                gap: 12mm !important;
+                margin: 15mm auto 0 auto !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+
+            .carte-face {
+                page-break-after: avoid !important;
+                break-after: avoid !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                border: 1px dashed #94a3b8 !important;
+                border-radius: 3.5mm !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+            }
+
+            .carte-face:last-child {
+                page-break-after: auto;
+                break-after: auto;
+            }
+
+            .carte-assure {
+                width: 85.6mm !important;
+                height: 54mm !important;
+                max-width: 85.6mm !important;
+                max-height: 54mm !important;
+                box-sizing: border-box !important;
+                aspect-ratio: auto !important;
+                border-radius: 3mm !important;
+                box-shadow: none !important;
+                padding: 3mm 4mm !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
+                overflow: hidden !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .carte-assure * {
+                box-sizing: border-box !important;
+            }
+
+            /* Typographie et espacements du Recto à l'échelle d'impression */
+            .carte-assure .carte-assure-entete {
+                margin: 0 !important;
+            }
+
+            .carte-assure-puce {
+                width: 7mm !important;
+                height: 5mm !important;
+            }
+
+            .carte-assure-label {
+                margin: 1mm 0 0 0 !important;
+                font-size: 7.5px !important;
+                line-height: 1 !important;
+            }
+
+            .carte-assure-numero {
+                font-size: 13.5px !important;
+                margin: 0.5mm 0 0 0 !important;
+                line-height: 1.1 !important;
+                letter-spacing: 0.05em !important;
+            }
+
+            .btn-copier-carte {
+                display: none !important;
+            }
+
+            .carte-assure-pied {
+                margin-top: 1mm !important;
+                font-size: 8.5px !important;
+                line-height: 1.15 !important;
+            }
+
+            .carte-assure-nom {
+                font-size: 10px !important;
+                font-weight: 700 !important;
+            }
+
+            .carte-assure-type {
+                font-size: 8px !important;
+            }
+
+            .carte-assure-couverture strong {
+                font-size: 11px !important;
+            }
+
+            .carte-assure-couverture span {
+                font-size: 7.5px !important;
+            }
+
+            /* Verso en impression */
+            .carte-verso {
+                padding: 2.5mm !important;
+                gap: 1.5mm !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: center !important;
+                align-items: center !important;
+                background: #f8fafc !important;
+            }
+
+            .carte-verso-qr {
+                background: #ffffff !important;
+                padding: 1.5mm !important;
+                border-radius: 2mm !important;
+                line-height: 0 !important;
+            }
+
+            .carte-verso-qr svg {
+                width: 32mm !important;
+                height: 32mm !important;
+                display: block !important;
+            }
+
+            .carte-verso-mention {
+                font-size: 6.5px !important;
+                color: #1e293b !important;
+                margin: 1mm 0 0 0 !important;
+                letter-spacing: 0.04em !important;
+            }
+
+            /* =========================================================
+               ORDONNANCE MÉDICALE : FORMAT A4 PORTRAIT GARANTI 1 PAGE
+               ========================================================= */
             .feuille {
                 display: block !important;
-                max-width: none;
-                margin: 0;
-                padding: 0;
-                border: none;
-                border-radius: 0;
-                box-shadow: none;
+                max-width: 100% !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                border: none !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                page-break-after: avoid !important;
+                break-after: avoid !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
             }
 
             .feuille-entete {
@@ -2529,18 +2705,68 @@
                 flex-direction: row !important;
                 justify-content: space-between !important;
                 align-items: flex-start !important;
+                padding-bottom: 3mm !important;
+                margin-bottom: 3mm !important;
+                border-bottom: 2px solid #0e7c86 !important;
+            }
+
+            .feuille-marque-nom {
+                font-size: 18px !important;
+                color: #0e7c86 !important;
             }
 
             .feuille-patient {
-                /* Les fonds sont supprimes par defaut a l'impression. */
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
+                margin-top: 3mm !important;
+                padding: 3mm 4mm !important;
+                border-radius: 4px !important;
+                border: 1px solid #e2e8f0 !important;
+                background: #f8fafc !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
 
-            /* Un tableau de prescription ne doit pas se couper : si la liste
-               deborde, elle passe entiere a la page suivante plutot que d'etre
-               tranchee au milieu d'une posologie. */
+            .feuille-patient-nom {
+                font-size: 14px !important;
+            }
+
+            .feuille-titre {
+                margin: 4mm 0 3mm 0 !important;
+                font-size: 14px !important;
+                letter-spacing: 0.12em !important;
+                text-align: center !important;
+                color: #0e7c86 !important;
+            }
+
+            .feuille-prescription {
+                margin-bottom: 4mm !important;
+            }
+
+            .feuille-table,
+            .feuille-lignes {
+                min-height: auto !important;
+                margin-bottom: 3mm !important;
+            }
+
+            .feuille-table th {
+                padding: 2mm 2.5mm !important;
+                font-size: 9.5px !important;
+                border-bottom: 1.5px solid #0e7c86 !important;
+            }
+
+            .feuille-table td {
+                padding: 2.5mm 2.5mm !important;
+                font-size: 11px !important;
+                line-height: 1.35 !important;
+                border-bottom: 1px dashed #cbd5e1 !important;
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+
             .feuille-lignes li {
+                padding: 2mm 0 !important;
+                font-size: 11.5px !important;
+                line-height: 1.4 !important;
+                border-bottom: 1px dashed #cbd5e1 !important;
                 break-inside: avoid;
                 page-break-inside: avoid;
             }
@@ -2550,8 +2776,9 @@
                 flex-direction: row !important;
                 justify-content: space-between !important;
                 align-items: flex-end !important;
-                break-inside: avoid;
-                page-break-inside: avoid;
+                margin-top: 4mm !important;
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
             }
 
             .feuille-qr {
@@ -2561,62 +2788,52 @@
                 background: transparent !important;
                 border: none !important;
                 box-shadow: none !important;
+                text-align: center !important;
+                flex: 0 0 auto !important;
+            }
+
+            .feuille-qr svg {
+                width: 24mm !important;
+                height: 24mm !important;
+                display: block !important;
+            }
+
+            .feuille-qr .code {
+                font-size: 9px !important;
+                margin-top: 1mm !important;
             }
 
             .feuille-signature {
                 order: unset !important;
                 text-align: right !important;
-                max-width: 70mm !important;
+                max-width: 75mm !important;
+                flex: 1 !important;
             }
 
-            body,
-            .contenu,
-            .contenu main {
-                background: #ffffff;
-                margin: 0;
-                padding: 0;
-                width: auto;
-                display: block;
-                animation: none;
+            .feuille-date {
+                margin: 0 0 1.5mm 0 !important;
+                font-size: 11px !important;
             }
 
-            /* Dimensions reelles ISO 7810 ID-1 : 85,6 x 54 mm. La largeur en
-               millimetres remplace le ratio, pour que la carte sorte a la
-               taille d'une carte bancaire quelle que soit l'imprimante. */
-            .carte-planche {
-                display: block;
+            .feuille-cadre-signature {
+                min-height: 18mm !important;
+                height: auto !important;
+                padding: 2.5mm 3.5mm !important;
+                border: 1.5px dashed #94a3b8 !important;
+                border-radius: 6px !important;
+                background: #f8fafc !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
 
-            .carte-face {
-                page-break-after: always;
-                break-after: page;
-            }
-
-            .carte-face:last-child {
-                page-break-after: auto;
-                break-after: auto;
-            }
-
-            .carte-assure {
-                width: 85.6mm;
-                height: 54mm;
-                max-width: none;
-                aspect-ratio: auto;
-                border-radius: 3mm;
-                box-shadow: none;
-                /* Les fonds sont supprimes par defaut a l'impression : sans
-                   cette regle la carte sortirait blanche, texte blanc
-                   compris, donc illisible. */
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-
-            /* A4 explicite : sans size, le navigateur retombe sur le format
-               par defaut de l'imprimante (Letter aux Etats-Unis), et la
-               feuille se decale. */
-            @page {
-                size: A4;
-                margin: 14mm;
+            .feuille-mention {
+                margin: 3mm 0 0 0 !important;
+                padding-top: 2mm !important;
+                font-size: 8px !important;
+                line-height: 1.4 !important;
+                border-top: 1px solid #cbd5e1 !important;
+                text-align: center !important;
+                color: #64748b !important;
             }
         }
 
