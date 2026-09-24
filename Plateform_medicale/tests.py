@@ -7441,12 +7441,16 @@ class WhatsAppServiceTests(TestCase):
                 self.assertIn('succès', res['message'])
 
     def test_onboarding_resilience_panne_whatsapp(self):
+        from unittest.mock import patch
+        import urllib.error
         from Plateform_medicale.services.onboarding import envoyer_activation_utilisateur
-        user = User.objects.create_user(email='test-resilience@santesn.sn', phone_number='770001122')
-        statut = envoyer_activation_utilisateur(user)
-        self.assertIn('http', statut['lien_activation'])
-        self.assertFalse(statut['whatsapp_envoye'])
-        self.assertIn(statut['whatsapp_statut'], ['NON_CONFIGURE', 'ECHEC'])
+        with self.settings(WHATSAPP_ENABLED=True, WHATSAPP_API_TOKEN='test-token', WHATSAPP_PHONE_NUMBER_ID='12345'):
+            with patch('urllib.request.urlopen', side_effect=urllib.error.HTTPError('https://graph.facebook.com', 400, 'Bad Request', {}, None)):
+                user = User.objects.create_user(email='test-resilience@santesn.sn', phone_number='770001122')
+                statut = envoyer_activation_utilisateur(user)
+                self.assertIn('http', statut['lien_activation'])
+                self.assertFalse(statut['whatsapp_envoye'])
+                self.assertIn(statut['whatsapp_statut'], ['NON_CONFIGURE', 'ECHEC'])
 
 
 class RapportsKpiEtPdfTests(TestCase):
