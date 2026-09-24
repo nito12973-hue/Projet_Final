@@ -132,14 +132,10 @@ def envoyer_activation_utilisateur(utilisateur, request=None):
         elif hasattr(utilisateur, "pharmacien") and getattr(utilisateur.pharmacien, "telephone", ""):
             telephone = utilisateur.pharmacien.telephone
 
-    # 1. Tentative WhatsApp en premier (Canal Principal)
+    # 1. Tentative WhatsApp en premier (Format SMS simple)
     whatsapp_texte = (
-        f"Bonjour {prenom},\n\n"
-        f"Votre compte SantéSN a été créé.\n\n"
-        f"Activez votre compte et définissez votre mot de passe :\n"
-        f"{lien_activation}\n\n"
-        f"Ce lien est valable 24 heures.\n\n"
-        f"SantéSN"
+        f"SantéSN : Bonjour {prenom}, activez votre compte et définissez votre mot de passe via ce lien sécurisé (valable 24h) :\n"
+        f"{lien_activation}"
     )
     template_nom = getattr(settings, "WHATSAPP_TEMPLATE_NAME", None)
     template_params = [prenom, lien_activation] if template_nom else None
