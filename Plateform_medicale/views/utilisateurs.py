@@ -586,12 +586,22 @@ def renvoyer_activation(request, pk):
         "Renvoi du lien d'activation sécurisé",
     )
     bilan = construire_bilan_onboarding(statut, utilisateur, action="renvoi")
-    if bilan["niveau"] == "success":
-        messages.success(request, bilan["texte_flash"])
-    else:
-        messages.warning(request, bilan["texte_flash"])
-
-    return redirect("liste_utilisateurs")
+    return render(
+        request,
+        "mot_de_passe_genere.html",
+        {
+            "utilisateur": utilisateur,
+            "lien_activation": statut["lien_activation"],
+            "whatsapp_direct_url": statut.get("whatsapp_direct_url", ""),
+            "email_envoye": statut["email_envoye"],
+            "whatsapp_envoye": statut["whatsapp_envoye"],
+            "whatsapp_statut": statut["whatsapp_statut"],
+            "whatsapp_message": statut["whatsapp_message"],
+            "whatsapp_erreur": statut["whatsapp_erreur"],
+            "bilan": bilan,
+            "action": "renvoi",
+        },
+    )
 
 
 @admin_required
