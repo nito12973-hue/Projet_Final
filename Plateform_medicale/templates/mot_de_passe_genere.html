@@ -62,23 +62,4 @@
 </div>
 
 <a class="button primary" href="{% url 'liste_utilisateurs' %}">Retour à la liste des utilisateurs</a>
-
-{% if whatsapp_direct_url %}
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        try {
-            var btn = document.getElementById("btn-transmettre-whatsapp");
-            if (btn && btn.href) {
-                var clef = "wa_auto_open_" + encodeURIComponent(btn.href);
-                if (!sessionStorage.getItem(clef)) {
-                    sessionStorage.setItem(clef, "1");
-                    setTimeout(function() {
-                        window.open(btn.href, "_blank");
-                    }, 400);
-                }
-            }
-        } catch (e) {}
-    });
-</script>
-{% endif %}
 {% endblock %}
