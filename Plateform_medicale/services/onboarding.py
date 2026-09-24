@@ -39,75 +39,45 @@ def generer_lien_activation(utilisateur, request=None):
 
 def construire_bilan_onboarding(statut, utilisateur, action="creation"):
     """
-    Construit un bilan clair et concis pour la stratégie Mono-Canal :
-    - Canal Principal : WhatsApp
-    - Canal de Secours : Email
+    Construit un bilan clair et direct pour l'envoi automatique (WhatsApp / Email) :
+    1. Si WhatsApp envoyé : confirmation immédiate avec le numéro.
+    2. Si Email envoyé : confirmation immédiate avec l'adresse email et mention de vérifier les spams.
+    3. Si échec : notification claire.
     """
-    email = utilisateur.email
+    email = getattr(utilisateur, "email", "") or ""
+    telephone = getattr(utilisateur, "phone_number", "") or ""
     email_envoye = statut.get("email_envoye", False)
     ws = statut.get("whatsapp_statut", "NON_CONFIGURE")
     whatsapp_envoye = statut.get("whatsapp_envoye", False)
 
-    prefixe_creation = "Compte créé avec succès." if action == "creation" else ""
+    prefixe_creation = "Compte créé avec succès. " if action == "creation" else ""
 
-    # CAS 1 : WhatsApp configuré + numéro valide -> WhatsApp uniquement
+    # CAS 1 : WhatsApp envoyé avec succès
     if whatsapp_envoye:
-        if action == "creation":
-            texte_flash = "Compte créé avec succès. Le lien d'activation a été envoyé par WhatsApp."
-        else:
-            texte_flash = "Le lien d'activation a été envoyé par WhatsApp."
+        texte_dest = f" au {telephone}" if telephone else ""
+        texte_flash = f"{prefixe_creation}Le lien d'activation a été envoyé automatiquement par WhatsApp{texte_dest}."
         titre = "Activation envoyée par WhatsApp"
         note = "Le lien d'activation a été transmis sur le numéro WhatsApp de l'utilisateur."
         niveau = "success"
         canal = "WhatsApp"
 
-    # CAS 2 : WhatsApp non configuré -> Email standard
-    elif ws == "NON_CONFIGURE" and email_envoye:
-        if action == "creation":
-            texte_flash = "Compte créé avec succès. Le lien d'activation a été envoyé par email."
-        else:
-            texte_flash = "Le lien d'activation a été envoyé par email avec succès."
+    # CAS 2 : Email envoyé avec succès (soit canal principal soit relais)
+    elif email_envoye:
+        texte_dest = f" à {email}" if email else ""
+        texte_flash = f"{prefixe_creation}Le lien d'activation a été envoyé automatiquement par email{texte_dest} (pensez à vérifier la boîte principale et le dossier Spam / Courrier indésirable)."
         titre = "Activation envoyée par Email"
         note = "Le lien d'activation a été transmis par email à l'adresse de l'utilisateur."
         niveau = "success"
         canal = "Email"
 
-    # CAS 3 : Numéro WhatsApp invalide ou absent -> Email standard
-    elif ws in ("SANS_TELEPHONE", "NUMERO_INVALIDE") and email_envoye:
-        if action == "creation":
-            texte_flash = "Compte créé avec succès. Le lien d'activation a été envoyé par email."
-        else:
-            texte_flash = "Le lien d'activation a été envoyé par email avec succès."
-        titre = "Activation envoyée par Email"
-        note = "Le lien d'activation a été transmis par email à l'adresse de l'utilisateur."
-        niveau = "success"
-        canal = "Email"
-
-    # CAS 4 : WhatsApp configuré mais API en panne -> Email de secours
-    elif ws == "ECHEC" and email_envoye:
-        if action == "creation":
-            texte_flash = "Compte créé avec succès. Échec de l'envoi WhatsApp. Le lien d'activation a été envoyé par email en secours."
-        else:
-            texte_flash = "Échec de l'envoi WhatsApp. Le lien d'activation a été envoyé par email en secours."
-        titre = "Activation envoyée par Email (Secours)"
-        note = "Une erreur est survenue lors de l'envoi WhatsApp. Le lien a été envoyé par email en secours."
-        niveau = "warning"
-        canal = "Email (Secours)"
-
-    # CAS 5 : Aucun canal disponible (WhatsApp échoué/absent ET Email échoué)
+    # CAS 3 : Aucun canal n'a pu délivrer le message
     else:
-        if action == "creation":
-            texte_flash = (
-                "Compte créé, mais aucun canal d'activation n'est disponible. "
-                "Veuillez configurer un moyen de contact ou renvoyer l'activation ultérieurement."
-            )
-        else:
-            texte_flash = (
-                "Échec de l'envoi : aucun canal d'activation n'est disponible. "
-                "Veuillez configurer un moyen de contact ou réessayer ultérieurement."
-            )
-        titre = "Aucun canal d'activation disponible"
-        note = "Veuillez vérifier les coordonnées de l'utilisateur ou copier directement le lien sécurisé ci-dessous."
+        texte_flash = (
+            f"{prefixe_creation}Échec de l'envoi automatique : aucun message n'a pu être délivré par WhatsApp ni par Email. "
+            "Veuillez vérifier les coordonnées de l'utilisateur."
+        )
+        titre = "Échec de l'envoi automatique"
+        note = "Veuillez vérifier les coordonnées de l'utilisateur."
         niveau = "error"
         canal = "Aucun"
 
@@ -196,10 +166,13 @@ def envoyer_activation_utilisateur(utilisateur, request=None):
                 except Exception:
                     corps_html = None
 
+                from_addr = getattr(settings, "DEFAULT_FROM_EMAIL", None) or getattr(settings, "EMAIL_HOST_USER", None) or "noreply@santesn.sn"
+                from_header = f"SantéSN <{from_addr}>" if ("<" not in from_addr and "@" in from_addr) else from_addr
+
                 msg = EmailMultiAlternatives(
                     subject=sujet,
                     body=corps_texte,
-                    from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@santesn.sn"),
+                    from_email=from_header,
                     to=[email],
                 )
                 if corps_html:
