@@ -61,25 +61,25 @@ def construire_bilan_onboarding(statut, utilisateur, action="creation"):
         niveau = "success"
         canal = "WhatsApp"
 
-    # CAS 2 : WhatsApp non configuré -> Email de secours
+    # CAS 2 : WhatsApp non configuré -> Email standard
     elif ws == "NON_CONFIGURE" and email_envoye:
         if action == "creation":
-            texte_flash = "Compte créé avec succès. WhatsApp n'est pas configuré. Le lien d'activation a été envoyé par email."
+            texte_flash = "Compte créé avec succès. Le lien d'activation a été envoyé par email."
         else:
-            texte_flash = "WhatsApp n'est pas configuré. Le lien d'activation a été envoyé par email."
+            texte_flash = "Le lien d'activation a été envoyé par email avec succès."
         titre = "Activation envoyée par Email"
-        note = "WhatsApp n'est pas configuré sur cette plateforme. L'activation a été transmise par email."
+        note = "Le lien d'activation a été transmis par email à l'adresse de l'utilisateur."
         niveau = "success"
         canal = "Email"
 
-    # CAS 3 : Numéro WhatsApp invalide ou absent -> Email de secours
+    # CAS 3 : Numéro WhatsApp invalide ou absent -> Email standard
     elif ws in ("SANS_TELEPHONE", "NUMERO_INVALIDE") and email_envoye:
         if action == "creation":
-            texte_flash = "Compte créé avec succès. Le numéro WhatsApp n'est pas disponible. Le lien d'activation a été envoyé par email."
+            texte_flash = "Compte créé avec succès. Le lien d'activation a été envoyé par email."
         else:
-            texte_flash = "Le numéro WhatsApp n'est pas disponible. Le lien d'activation a été envoyé par email."
+            texte_flash = "Le lien d'activation a été envoyé par email avec succès."
         titre = "Activation envoyée par Email"
-        note = "Le numéro WhatsApp n'est pas disponible. Le lien d'activation a été envoyé par email."
+        note = "Le lien d'activation a été transmis par email à l'adresse de l'utilisateur."
         niveau = "success"
         canal = "Email"
 
