@@ -61,7 +61,16 @@ def construire_bilan_onboarding(statut, utilisateur, action="creation"):
         niveau = "success"
         canal = "WhatsApp"
 
-    # CAS 2 : Email envoyé avec succès (soit canal principal soit relais)
+    # CAS 2 : Numéro WhatsApp absent ou incorrect -> Bascule Email automatique
+    elif ws in ("SANS_TELEPHONE", "NUMERO_INVALIDE") and email_envoye:
+        texte_dest = f" à {email}" if email else ""
+        texte_flash = f"{prefixe_creation}Numéro WhatsApp manquant ou incorrect. Le lien d'activation a été envoyé automatiquement par email{texte_dest} (pensez à vérifier la boîte principale et le dossier Spam / Courrier indésirable)."
+        titre = "Activation envoyée par Email"
+        note = "Numéro WhatsApp incorrect. Le lien a été envoyé par email."
+        niveau = "success"
+        canal = "Email"
+
+    # CAS 3 : Bascule Email automatique (WhatsApp indisponible)
     elif email_envoye:
         texte_dest = f" à {email}" if email else ""
         texte_flash = f"{prefixe_creation}Le lien d'activation a été envoyé automatiquement par email{texte_dest} (pensez à vérifier la boîte principale et le dossier Spam / Courrier indésirable)."
@@ -70,7 +79,7 @@ def construire_bilan_onboarding(statut, utilisateur, action="creation"):
         niveau = "success"
         canal = "Email"
 
-    # CAS 3 : Aucun canal n'a pu délivrer le message
+    # CAS 4 : Aucun canal n'a pu délivrer le message
     else:
         texte_flash = (
             f"{prefixe_creation}Échec de l'envoi automatique : aucun message n'a pu être délivré par WhatsApp ni par Email. "
@@ -115,6 +124,13 @@ def envoyer_activation_utilisateur(utilisateur, request=None):
     prenom = utilisateur.first_name or "Bonjour"
     email = utilisateur.email
     telephone = getattr(utilisateur, "phone_number", "") or ""
+    if not telephone:
+        if hasattr(utilisateur, "medecin") and getattr(utilisateur.medecin, "telephone", ""):
+            telephone = utilisateur.medecin.telephone
+        elif hasattr(utilisateur, "patient") and getattr(utilisateur.patient, "telephone", ""):
+            telephone = utilisateur.patient.telephone
+        elif hasattr(utilisateur, "pharmacien") and getattr(utilisateur.pharmacien, "telephone", ""):
+            telephone = utilisateur.pharmacien.telephone
 
     # 1. Tentative WhatsApp en premier (Canal Principal)
     whatsapp_texte = (
