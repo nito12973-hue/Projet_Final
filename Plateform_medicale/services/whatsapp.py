@@ -48,7 +48,10 @@ def envoyer_message_whatsapp(numero_telephone, texte_message, template_nom=None,
     numero_nettoye = "".join(filter(str.isdigit, str(numero_telephone)))
     if numero_nettoye.startswith("00"):
         numero_nettoye = numero_nettoye[2:]
-    elif not numero_nettoye.startswith("221") and len(numero_nettoye) == 9:
+    elif numero_nettoye.startswith("0") and len(numero_nettoye) == 10:
+        numero_nettoye = numero_nettoye[1:]
+
+    if not numero_nettoye.startswith("221") and len(numero_nettoye) == 9:
         numero_nettoye = f"221{numero_nettoye}"
 
     if len(numero_nettoye) < 8:
@@ -58,7 +61,16 @@ def envoyer_message_whatsapp(numero_telephone, texte_message, template_nom=None,
             "message": f"Numéro de téléphone invalide : {numero_telephone}",
         }
 
-    url = f"https://graph.facebook.com/v19.0/{phone_number_id}/messages"
+    # Meta interdit à un compte WhatsApp Business d'envoyer des messages vers son propre numéro
+    if numero_nettoye in ("221789576145", "789576145"):
+        logger.warning("Tentative d'envoi WhatsApp vers le numéro expéditeur officiel (%s). Non autorisé par Meta.", numero_nettoye)
+        return {
+            "succes": False,
+            "statut": "ECHEC",
+            "message": "Le numéro destinataire est identique au numéro expéditeur officiel (+221 78 957 61 45). Meta interdit l'envoi vers soi-même.",
+        }
+
+    url = f"https://graph.facebook.com/v21.0/{phone_number_id}/messages"
     if template_nom:
         components = []
         if template_params:
@@ -82,45 +94,53 @@ def envoyer_message_whatsapp(numero_telephone, texte_message, template_nom=None,
             "text": {"preview_url": False, "body": texte_message},
         }
 
-    try:
-        donnees = json.dumps(payload).encode("utf-8")
-        requete = urllib.request.Request(
-            url,
-            data=donnees,
-            headers={
-                "Authorization": f"Bearer {token}",
-                "Content-Type": "application/json",
-            },
-            method="POST",
-        )
-        with urllib.request.urlopen(requete, timeout=5) as reponse:
-            corps = json.loads(reponse.read().decode("utf-8"))
-            msg_id = corps.get("messages", [{}])[0].get("id", "")
-            logger.info("Message WhatsApp envoyé avec succès au %s (ID: %s)", numero_nettoye, msg_id)
-            return {
-                "succes": True,
-                "statut": "ENVOYE",
-                "message": "Envoyé avec succès via WhatsApp Cloud API",
-            }
-    except urllib.error.HTTPError as err:
-        erreur_msg = f"Erreur API WhatsApp ({err.code})"
+    import time
+    dernier_err = None
+    for tentative in range(2):
         try:
-            details = json.loads(err.read().decode("utf-8"))
-            detail_txt = details.get("error", {}).get("message", "")
-            if detail_txt:
-                erreur_msg += f" : {detail_txt}"
-        except Exception:
-            pass
-        logger.warning("Échec d'envoi WhatsApp au %s : %s", numero_nettoye, erreur_msg)
-        return {
-            "succes": False,
-            "statut": "ECHEC",
-            "message": erreur_msg,
-        }
-    except Exception as exc:
-        logger.warning("Échec de connexion API WhatsApp au %s : %s", numero_nettoye, exc)
-        return {
-            "succes": False,
-            "statut": "ECHEC",
-            "message": f"Échec de connexion API WhatsApp : {exc}",
-        }
+            donnees = json.dumps(payload).encode("utf-8")
+            requete = urllib.request.Request(
+                url,
+                data=donnees,
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json",
+                },
+                method="POST",
+            )
+            with urllib.request.urlopen(requete, timeout=12) as reponse:
+                corps = json.loads(reponse.read().decode("utf-8"))
+                msg_id = corps.get("messages", [{}])[0].get("id", "")
+                logger.info("Message WhatsApp envoyé avec succès au %s (ID: %s)", numero_nettoye, msg_id)
+                return {
+                    "succes": True,
+                    "statut": "ENVOYE",
+                    "message": "Envoyé avec succès via WhatsApp Cloud API",
+                    "message_id": msg_id,
+                }
+        except urllib.error.HTTPError as err:
+            erreur_msg = f"Erreur API WhatsApp ({err.code})"
+            try:
+                details = json.loads(err.read().decode("utf-8"))
+                detail_txt = details.get("error", {}).get("message", "")
+                if detail_txt:
+                    erreur_msg += f" : {detail_txt}"
+            except Exception:
+                pass
+            logger.warning("Échec d'envoi WhatsApp au %s : %s", numero_nettoye, erreur_msg)
+            return {
+                "succes": False,
+                "statut": "ECHEC",
+                "message": erreur_msg,
+            }
+        except Exception as exc:
+            dernier_err = exc
+            logger.warning("Tentative %s/2 échouée pour envoi WhatsApp au %s : %s", tentative + 1, numero_nettoye, exc)
+            if tentative == 0:
+                time.sleep(1)
+
+    return {
+        "succes": False,
+        "statut": "ECHEC",
+        "message": f"Échec de connexion API WhatsApp après 2 tentatives : {dernier_err}",
+    }
