@@ -56,7 +56,7 @@ def construire_bilan_onboarding(statut, utilisateur, action="creation"):
     # CAS 1 : WhatsApp envoyé avec succès
     if whatsapp_envoye:
         texte_dest = f" au {telephone}" if telephone else ""
-        texte_flash = f"{prefixe_creation}Le lien d'activation a été envoyé automatiquement par WhatsApp{texte_dest}."
+        texte_flash = mark_safe(f"{prefixe_creation}Le lien d'activation a été envoyé automatiquement par WhatsApp{texte_dest}.")
         titre = "Activation envoyée par WhatsApp"
         note = "Le lien d'activation a été transmis sur le numéro WhatsApp de l'utilisateur."
         niveau = "success"
@@ -65,25 +65,19 @@ def construire_bilan_onboarding(statut, utilisateur, action="creation"):
     # CAS 2 : Numéro WhatsApp absent ou incorrect -> Bascule Email automatique
     elif ws in ("SANS_TELEPHONE", "NUMERO_INVALIDE") and email_envoye:
         texte_dest = f" à {email}" if email else ""
-        texte_flash = f"{prefixe_creation}Numéro de téléphone non renseigné ou incorrect. Le lien d'activation a été envoyé automatiquement par email{texte_dest} (pensez à vérifier la boîte principale et le dossier Spam / Courrier indésirable)."
+        texte_flash = mark_safe(
+            f"{prefixe_creation}Numéro de téléphone non renseigné ou incorrect. Le lien d'activation a été envoyé automatiquement par email{texte_dest} (pensez à vérifier la boîte principale et le dossier Spam / Courrier indésirable)."
+        )
         titre = "Activation envoyée par Email"
         note = "Numéro WhatsApp incorrect. Le lien a été envoyé par email."
         niveau = "success"
         canal = "Email"
 
-    # CAS 3 : Bascule Email automatique + raccourci WhatsApp direct en 1 clic
+    # CAS 3 : Bascule Email automatique (100% sans bouton)
     elif email_envoye:
         texte_dest = f" à {email}" if email else ""
-        wa_direct = statut.get("whatsapp_direct_url", "")
-        bouton_wa = ""
-        if wa_direct:
-            bouton_wa = (
-                f" <a href=\"{wa_direct}\" target=\"_blank\" rel=\"noopener\" class=\"lien-auto-whatsapp\" "
-                f"style=\"display: inline-flex; align-items: center; gap: 5px; background: #25D366; color: #FFFFFF !important; padding: 2px 10px; border-radius: 6px; font-weight: 700; text-decoration: none; font-size: 12.5px; margin-left: 8px; vertical-align: middle;\">"
-                f"Transmettre sur WhatsApp</a>"
-            )
         texte_flash = mark_safe(
-            f"{prefixe_creation}Le lien d'activation a été envoyé automatiquement par email{texte_dest} (pensez à vérifier la boîte principale et le dossier Spam / Courrier indésirable).{bouton_wa}"
+            f"{prefixe_creation}Le lien d'activation a été envoyé automatiquement par email{texte_dest} (pensez à vérifier la boîte principale et le dossier Spam / Courrier indésirable)."
         )
         titre = "Activation envoyée par Email"
         note = "Le lien d'activation a été transmis par email à l'adresse de l'utilisateur."
@@ -92,7 +86,7 @@ def construire_bilan_onboarding(statut, utilisateur, action="creation"):
 
     # CAS 4 : Aucun canal n'a pu délivrer le message
     else:
-        texte_flash = (
+        texte_flash = mark_safe(
             f"{prefixe_creation}Échec de l'envoi automatique : aucun message n'a pu être délivré par WhatsApp ni par Email. "
             "Veuillez vérifier les coordonnées de l'utilisateur."
         )
