@@ -211,8 +211,20 @@ def envoyer_activation_utilisateur(utilisateur, request=None):
                 email_erreur = str(exc)
                 logger.warning("Échec d'envoi d'email de secours pour %s : %s", email, exc)
 
+    import urllib.parse
+    numero_nettoye = "".join(filter(str.isdigit, str(telephone)))
+    if numero_nettoye.startswith("00"):
+        numero_nettoye = numero_nettoye[2:]
+    elif not numero_nettoye.startswith("221") and len(numero_nettoye) == 9:
+        numero_nettoye = f"221{numero_nettoye}"
+
+    whatsapp_direct_url = ""
+    if len(numero_nettoye) >= 8:
+        whatsapp_direct_url = f"https://api.whatsapp.com/send?phone={numero_nettoye}&text={urllib.parse.quote(whatsapp_texte)}"
+
     statut = {
         "lien_activation": lien_activation,
+        "whatsapp_direct_url": whatsapp_direct_url,
         "email_envoye": email_envoye,
         "email_statut": "ENVOYE" if email_envoye else ("NON_ENVOYE" if whatsapp_res["succes"] else "ECHEC"),
         "email_erreur": email_erreur,

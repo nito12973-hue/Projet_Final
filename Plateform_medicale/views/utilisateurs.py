@@ -469,6 +469,7 @@ def ajouter_utilisateur(request):
                 {
                     "utilisateur": utilisateur,
                     "lien_activation": statut_onboarding["lien_activation"],
+                    "whatsapp_direct_url": statut_onboarding.get("whatsapp_direct_url", ""),
                     "email_envoye": statut_onboarding["email_envoye"],
                     "whatsapp_envoye": statut_onboarding["whatsapp_envoye"],
                     "whatsapp_statut": statut_onboarding["whatsapp_statut"],
@@ -560,6 +561,7 @@ def reinitialiser_mot_de_passe(request, pk):
             {
                 "utilisateur": utilisateur,
                 "lien_activation": statut_onboarding["lien_activation"],
+                "whatsapp_direct_url": statut_onboarding.get("whatsapp_direct_url", ""),
                 "email_envoye": statut_onboarding["email_envoye"],
                 "whatsapp_envoye": statut_onboarding["whatsapp_envoye"],
                 "whatsapp_statut": statut_onboarding["whatsapp_statut"],
