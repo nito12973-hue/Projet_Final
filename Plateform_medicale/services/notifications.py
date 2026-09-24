@@ -94,8 +94,8 @@ def emettre_notification(
         try:
             texte_wa = f"[{titre}]\n\n{message}"
             if url_action:
-                site_url = getattr(settings, "SITE_URL", "http://localhost:8000")
-                lien_complet = url_action if url_action.startswith("http") else f"{site_url.rstrip('/')}{url_action}"
+                site_url = getattr(settings, "SITE_URL", "https://projet-final-bice.vercel.app").rstrip("/")
+                lien_complet = url_action if url_action.startswith("http") else f"{site_url}{url_action}"
                 texte_wa += f"\n\nConsulter : {lien_complet}"
 
             res_wa = envoyer_message_whatsapp(telephone, texte_wa)
@@ -110,16 +110,22 @@ def emettre_notification(
     if not whatsapp_succes and envoyer_email and destinataire.email:
         try:
             sujet = sujet_email or f"[SantéSN] {titre}"
+            site_url = getattr(settings, "SITE_URL", "https://projet-final-bice.vercel.app").rstrip("/")
+            lien_action = (
+                url_action if url_action and url_action.startswith("http")
+                else f"{site_url}{url_action}" if url_action
+                else None
+            )
             ctx = contexte_email or {}
             ctx.update({
                 "user": destinataire,
                 "titre": titre,
                 "message": message,
-                "url_action": url_action,
+                "url_action": lien_action,
+                "site_url": site_url,
             })
 
-            site_url = getattr(settings, "SITE_URL", "http://localhost:8000")
-            texte_brut = f"{titre}\n\n{message}\n\nAccéder à SantéSN : {url_action or site_url}"
+            texte_brut = f"{titre}\n\n{message}\n\nAccéder à SantéSN : {lien_action or site_url}"
 
             if template_email:
                 try:

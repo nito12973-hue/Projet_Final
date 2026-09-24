@@ -82,10 +82,10 @@ CSRF_TRUSTED_ORIGINS = [
     'https://*.railway.app',
 ]
 
-
-
-
-
+SITE_URL = config(
+    'SITE_URL',
+    default='https://projet-final-bice.vercel.app' if not DEBUG else 'http://127.0.0.1:8000',
+).rstrip('/')
 
 # Application definition
 
