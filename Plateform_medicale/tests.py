@@ -10105,7 +10105,10 @@ class AuditCorrectionsTests(TestCase):
 
         resp = self.client.post(reverse('renvoyer_activation', args=[utilisateur_test.pk]), follow=True)
         self.assertRedirects(resp, reverse('liste_utilisateurs'))
-        self.assertContains(resp, "Le lien d&#x27;activation")
+        content = resp.content.decode('utf-8')
+        self.assertIn("Le lien d'activation", content)
+        self.assertIn("Transmettre sur WhatsApp", content)
+
 
 
 

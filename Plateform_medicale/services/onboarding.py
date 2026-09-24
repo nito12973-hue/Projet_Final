@@ -13,6 +13,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
+from django.utils.safestring import mark_safe
 
 from .whatsapp import envoyer_message_whatsapp
 
@@ -64,16 +65,26 @@ def construire_bilan_onboarding(statut, utilisateur, action="creation"):
     # CAS 2 : Numéro WhatsApp absent ou incorrect -> Bascule Email automatique
     elif ws in ("SANS_TELEPHONE", "NUMERO_INVALIDE") and email_envoye:
         texte_dest = f" à {email}" if email else ""
-        texte_flash = f"{prefixe_creation}Numéro WhatsApp manquant ou incorrect. Le lien d'activation a été envoyé automatiquement par email{texte_dest} (pensez à vérifier la boîte principale et le dossier Spam / Courrier indésirable)."
+        texte_flash = f"{prefixe_creation}Numéro de téléphone non renseigné ou incorrect. Le lien d'activation a été envoyé automatiquement par email{texte_dest} (pensez à vérifier la boîte principale et le dossier Spam / Courrier indésirable)."
         titre = "Activation envoyée par Email"
         note = "Numéro WhatsApp incorrect. Le lien a été envoyé par email."
         niveau = "success"
         canal = "Email"
 
-    # CAS 3 : Bascule Email automatique (WhatsApp indisponible)
+    # CAS 3 : Bascule Email automatique + raccourci WhatsApp direct en 1 clic
     elif email_envoye:
         texte_dest = f" à {email}" if email else ""
-        texte_flash = f"{prefixe_creation}Le lien d'activation a été envoyé automatiquement par email{texte_dest} (pensez à vérifier la boîte principale et le dossier Spam / Courrier indésirable)."
+        wa_direct = statut.get("whatsapp_direct_url", "")
+        bouton_wa = ""
+        if wa_direct:
+            bouton_wa = (
+                f" <a href=\"{wa_direct}\" target=\"_blank\" rel=\"noopener\" "
+                f"style=\"display: inline-flex; align-items: center; gap: 4px; background: #25D366; color: #FFFFFF !important; padding: 2px 10px; border-radius: 6px; font-weight: 700; text-decoration: none; font-size: 12.5px; margin-left: 8px; vertical-align: middle;\">"
+                f"Transmettre sur WhatsApp</a>"
+            )
+        texte_flash = mark_safe(
+            f"{prefixe_creation}Le lien d'activation a été envoyé automatiquement par email{texte_dest} (pensez à vérifier la boîte principale et le dossier Spam / Courrier indésirable).{bouton_wa}"
+        )
         titre = "Activation envoyée par Email"
         note = "Le lien d'activation a été transmis par email à l'adresse de l'utilisateur."
         niveau = "success"
