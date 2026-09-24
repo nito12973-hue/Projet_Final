@@ -37,9 +37,14 @@
         <label for="champ-lien-activation" style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--titre);">
             Lien d'activation direct (valable 24 heures)
         </label>
-        <div style="display: flex; align-items: center; gap: 10px; background: var(--champ-bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; margin-bottom: 12px;">
-            <input type="text" readonly value="{{ lien_activation }}" style="flex: 1; border: none; background: transparent; font-family: monospace; font-size: 13px; color: var(--titre); outline: none;" id="champ-lien-activation">
+        <div style="display: flex; align-items: center; gap: 10px; background: var(--champ-bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; flex-wrap: wrap;">
+            <input type="text" readonly value="{{ lien_activation }}" style="flex: 1; min-width: 220px; border: none; background: transparent; font-family: monospace; font-size: 13px; color: var(--titre); outline: none;" id="champ-lien-activation">
             <button type="button" class="button btn btn-sm" data-copier="{{ lien_activation }}">{% icone "copy" %} Copier le lien</button>
+            {% if whatsapp_direct_url %}
+            <a href="{{ whatsapp_direct_url }}" target="_blank" rel="noopener" class="button btn btn-sm" style="background-color: #25D366; color: #FFFFFF; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; border: none;">
+                {% icone "share-2" %} Transmettre sur WhatsApp
+            </a>
+            {% endif %}
         </div>
 
         <p style="font-size: 12.5px; color: var(--muted); margin: 0;">
