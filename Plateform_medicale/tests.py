@@ -10101,17 +10101,18 @@ class AuditCorrectionsTests(TestCase):
         from .admin import OrdonnanceAdmin
         self.assertIn("medicaments", OrdonnanceAdmin.exclude)
 
-    def test_renvoyer_activation_automatique_sans_bouton(self):
+    def test_renvoyer_activation_affiche_page_mot_de_passe_genere(self):
         self.client.force_login(self.admin_user)
         utilisateur_test = creer_utilisateur(User.Role.MEDECIN, 'dr.test.activation@santesn.sn')
         utilisateur_test.phone_number = "221704872319"
         utilisateur_test.save()
 
-        resp = self.client.post(reverse('renvoyer_activation', args=[utilisateur_test.pk]), follow=True)
-        self.assertRedirects(resp, reverse('liste_utilisateurs'))
+        resp = self.client.post(reverse('renvoyer_activation', args=[utilisateur_test.pk]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertTemplateUsed(resp, 'mot_de_passe_genere.html')
         content = resp.content.decode('utf-8')
-        self.assertIn("Le lien d'activation", content)
-        self.assertNotIn("Transmettre sur WhatsApp", content)
+        self.assertIn("Transmettre sur WhatsApp", content)
+        self.assertIn("wa_auto_open_", content)
 
 
 
