@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from ..forms import MedecinForm, generer_mot_de_passe
 from ..models import JournalActivite, Medecin, Ordonnance, Paiement, User
+from ..services.onboarding import construire_bilan_onboarding, envoyer_activation_utilisateur
 from .utils import _avertissement_cascade, _paginer, _trier, admin_required, journaliser
 
 
@@ -48,11 +49,14 @@ def ajouter_medecin(request):
             )
             medecin.user = utilisateur
             medecin.save()
-            return render(
-                request,
-                "mot_de_passe_genere.html",
-                {"utilisateur": utilisateur, "mot_de_passe": mot_de_passe, "action": "creation"},
-            )
+            statut_onboarding = envoyer_activation_utilisateur(utilisateur, request=request)
+            journaliser(request, JournalActivite.Action.CREATION, f"Médecin {utilisateur.email}", f"Dr {medecin.prenom} {medecin.nom}")
+            bilan = statut_onboarding.get("bilan") or construire_bilan_onboarding(statut_onboarding, utilisateur, action="creation")
+            if bilan["niveau"] == "success":
+                messages.success(request, bilan["texte_flash"])
+            else:
+                messages.warning(request, bilan["texte_flash"])
+            return redirect("liste_medecins")
     else:
         form = MedecinForm()
     return render(request, "ajouter_medecin.html", {"form": form})
