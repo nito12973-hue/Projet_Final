@@ -78,10 +78,19 @@ def emettre_notification(
         return notification
 
     telephone = getattr(destinataire, "phone_number", "") or ""
-    whatsapp_succes = False
+    if not telephone:
+        if hasattr(destinataire, "medecin") and getattr(destinataire.medecin, "telephone", ""):
+            telephone = destinataire.medecin.telephone
+        elif hasattr(destinataire, "patient") and getattr(destinataire.patient, "telephone", ""):
+            telephone = destinataire.patient.telephone
+        elif hasattr(destinataire, "telephone") and getattr(destinataire, "telephone", ""):
+            telephone = destinataire.telephone
 
-    # 1. Tentative WhatsApp prioritaire
-    if telephone and getattr(settings, "WHATSAPP_ENABLED", False):
+    whatsapp_succes = False
+    whatsapp_active = getattr(settings, "WHATSAPP_ENABLED", False)
+
+    # 1. Tentative WhatsApp prioritaire (stratégie mono-canal)
+    if whatsapp_active and telephone:
         try:
             texte_wa = f"[{titre}]\n\n{message}"
             if url_action:
@@ -93,8 +102,7 @@ def emettre_notification(
             if res_wa.get("succes"):
                 whatsapp_succes = True
                 notification.whatsapp_envoye = True
-                # WhatsApp reussi in-memory
-                logger.info("Notification %s envoyée via WhatsApp à %s", notification.pk, destinataire.email)
+                logger.info("Notification %s envoyée via WhatsApp à %s", notification.pk, getattr(destinataire, "email", telephone))
         except Exception as exc:
             logger.warning("Échec tentative WhatsApp pour la notification %s : %s", notification.pk, exc)
 
@@ -146,26 +154,51 @@ def emettre_notification(
 
 def notifier_demande_rdv(rendez_vous):
     """Déclenché lorsqu'un assuré réserve un rendez-vous."""
-    medecin_user = rendez_vous.medecin.user
+    medecin = rendez_vous.medecin
+    medecin_user = getattr(medecin, "user", None) if medecin else None
     patient = rendez_vous.patient
     date_str = rendez_vous.date_heure.strftime("%d/%m/%Y à %H:%M")
+    prestataire_nom = f" à {rendez_vous.prestataire.nom}" if rendez_vous.prestataire else ""
+
+    titre_medecin = "Nouvelle demande de rendez-vous"
+    message_medecin = f"Le patient {patient} a réservé un rendez-vous pour le {date_str}{prestataire_nom}."
+    if rendez_vous.motif:
+        message_medecin += f"\nMotif : {rendez_vous.motif}"
 
     if medecin_user:
         emettre_notification(
             destinataire=medecin_user,
-            titre="Nouvelle demande de rendez-vous",
-            message=f"Le patient {patient} a demandé un rendez-vous le {date_str}.",
+            titre=titre_medecin,
+            message=message_medecin,
             type_evenement=Notification.TypeEvenement.RDV_DEMANDE,
             url_action=reverse("agenda_medecin"),
             template_email="emails/rdv_demande_admin.html",
             contexte_email={"rendez_vous": rendez_vous, "patient": patient, "date_str": date_str},
         )
-    else:
-        logger.info("Pas de notification médecin pour le RDV %s : le médecin %s n'a pas de compte utilisateur.", rendez_vous.pk, rendez_vous.medecin)
+    elif medecin:
+        logger.info("Notification directe praticien sans compte user pour RDV %s (%s)", rendez_vous.pk, medecin)
+        tel = getattr(medecin, "telephone", "")
+        email = getattr(medecin, "email", "")
+        texte_wa = f"[{titre_medecin}]\n\n{message_medecin}"
+        wa_envoye = False
+        whatsapp_active = getattr(settings, "WHATSAPP_ENABLED", False)
+        if whatsapp_active and tel:
+            res_wa = envoyer_message_whatsapp(tel, texte_wa)
+            wa_envoye = res_wa.get("succes", False)
+        if not wa_envoye and email:
+            try:
+                msg = EmailMultiAlternatives(
+                    subject=f"[SantéSN] {titre_medecin}",
+                    body=f"{titre_medecin}\n\n{message_medecin}",
+                    from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@santesn.sn"),
+                    to=[email],
+                )
+                msg.send(fail_silently=False)
+            except Exception as exc:
+                logger.warning("Échec d'envoi d'email au médecin sans user : %s", exc)
 
     assure_user = _obtenir_utilisateur_assure(patient)
     if assure_user:
-        assure_user = _obtenir_utilisateur_assure(patient)
         emettre_notification(
             destinataire=assure_user,
             titre="Demande de rendez-vous enregistrée",
@@ -181,68 +214,105 @@ def notifier_confirmation_rdv(rendez_vous):
     """Déclenché lorsqu'un médecin confirme un rendez-vous."""
     patient = rendez_vous.patient
     assure_user = _obtenir_utilisateur_assure(patient)
+    date_str = rendez_vous.date_heure.strftime("%d/%m/%Y à %H:%M")
+    prestataire_nom = f" à {rendez_vous.prestataire.nom}" if rendez_vous.prestataire else ""
+
+    titre_patient = "Rendez-vous confirmé"
+    message_patient = f"Votre rendez-vous avec le Dr {rendez_vous.medecin} pour le {date_str}{prestataire_nom} a été validé et confirmé."
+
     if assure_user:
-        date_str = rendez_vous.date_heure.strftime("%d/%m/%Y à %H:%M")
         emettre_notification(
             destinataire=assure_user,
-            titre="Rendez-vous confirmé",
-            message=f"Votre rendez-vous avec le Dr {rendez_vous.medecin} du {date_str} a été confirmé.",
+            titre=titre_patient,
+            message=message_patient,
             type_evenement=Notification.TypeEvenement.RDV_CONFIRME,
             url_action=reverse("mes_rendez_vous_assure"),
             template_email="emails/rdv_confirme.html",
             contexte_email={"rendez_vous": rendez_vous, "patient": patient, "date_str": date_str},
         )
+    elif patient:
+        tel = getattr(patient, "telephone", "")
+        whatsapp_active = getattr(settings, "WHATSAPP_ENABLED", False)
+        if whatsapp_active and tel:
+            envoyer_message_whatsapp(tel, f"[{titre_patient}]\n\n{message_patient}")
 
 
 def notifier_refus_rdv(rendez_vous):
     """Déclenché lorsqu'un médecin refuse un rendez-vous."""
     patient = rendez_vous.patient
     assure_user = _obtenir_utilisateur_assure(patient)
+    date_str = rendez_vous.date_heure.strftime("%d/%m/%Y à %H:%M")
+
+    titre_patient = "Rendez-vous non disponible"
+    message_patient = f"Votre demande de rendez-vous avec le Dr {rendez_vous.medecin} pour le {date_str} n'a pas pu être retenue par le praticien."
+
     if assure_user:
-        date_str = rendez_vous.date_heure.strftime("%d/%m/%Y à %H:%M")
         emettre_notification(
             destinataire=assure_user,
-            titre="Rendez-vous non disponible",
-            message=f"Votre demande de rendez-vous avec le Dr {rendez_vous.medecin} pour le {date_str} n'a pas pu être retenue.",
+            titre=titre_patient,
+            message=message_patient,
             type_evenement=Notification.TypeEvenement.RDV_REFUSE,
             url_action=reverse("mes_rendez_vous_assure"),
             template_email="emails/rdv_refuse.html",
             contexte_email={"rendez_vous": rendez_vous, "patient": patient, "date_str": date_str},
         )
+    elif patient:
+        tel = getattr(patient, "telephone", "")
+        whatsapp_active = getattr(settings, "WHATSAPP_ENABLED", False)
+        if whatsapp_active and tel:
+            envoyer_message_whatsapp(tel, f"[{titre_patient}]\n\n{message_patient}")
 
 
 def notifier_annulation_rdv_par_medecin(rendez_vous):
     """Déclenché lorsqu'un médecin annule un rendez-vous déjà confirmé."""
     patient = rendez_vous.patient
     assure_user = _obtenir_utilisateur_assure(patient)
+    date_str = rendez_vous.date_heure.strftime("%d/%m/%Y à %H:%M")
+
+    titre_patient = "Rendez-vous annulé par le médecin"
+    message_patient = f"Le Dr {rendez_vous.medecin} a dû annuler le rendez-vous prévu le {date_str}."
+
     if assure_user:
-        date_str = rendez_vous.date_heure.strftime("%d/%m/%Y à %H:%M")
         emettre_notification(
             destinataire=assure_user,
-            titre="Rendez-vous annulé par le médecin",
-            message=f"Le Dr {rendez_vous.medecin} a dû annuler le rendez-vous prévu le {date_str} (annulé par le praticien).",
+            titre=titre_patient,
+            message=message_patient,
             type_evenement=Notification.TypeEvenement.RDV_ANNULE,
             url_action=reverse("mes_rendez_vous_assure"),
             template_email="emails/rdv_annule.html",
             contexte_email={"rendez_vous": rendez_vous, "patient": patient, "date_str": date_str, "annule_par": "le médecin"},
         )
+    elif patient:
+        tel = getattr(patient, "telephone", "")
+        whatsapp_active = getattr(settings, "WHATSAPP_ENABLED", False)
+        if whatsapp_active and tel:
+            envoyer_message_whatsapp(tel, f"[{titre_patient}]\n\n{message_patient}")
 
 
 def notifier_annulation_rdv_par_assure(rendez_vous):
     """Déclenché lorsqu'un assuré annule un rendez-vous."""
-    medecin_user = rendez_vous.medecin.user
+    medecin = rendez_vous.medecin
+    medecin_user = getattr(medecin, "user", None) if medecin else None
     date_str = rendez_vous.date_heure.strftime("%d/%m/%Y à %H:%M")
+
+    titre_medecin = "Rendez-vous annulé par le patient"
+    message_medecin = f"Le patient {rendez_vous.patient} a annulé son rendez-vous du {date_str}."
 
     if medecin_user:
         emettre_notification(
             destinataire=medecin_user,
-            titre="Rendez-vous annulé par le patient",
-            message=f"Le patient {rendez_vous.patient} a annulé son rendez-vous du {date_str} (annulé par le patient).",
+            titre=titre_medecin,
+            message=message_medecin,
             type_evenement=Notification.TypeEvenement.RDV_ANNULE,
             url_action=reverse("agenda_medecin"),
             template_email="emails/rdv_annule.html",
             contexte_email={"rendez_vous": rendez_vous, "patient": rendez_vous.patient, "date_str": date_str, "annule_par": "le patient"},
         )
+    elif medecin:
+        tel = getattr(medecin, "telephone", "")
+        whatsapp_active = getattr(settings, "WHATSAPP_ENABLED", False)
+        if whatsapp_active and tel:
+            envoyer_message_whatsapp(tel, f"[{titre_medecin}]\n\n{message_medecin}")
 
 
 def notifier_ordonnance_creee(ordonnance):

@@ -2364,6 +2364,137 @@ class NotificationsTests(TestCase):
         self.assertNotContains(response, 'Reunion demain')
 
 
+class RendezVousNotificationsTests(TestCase):
+    def setUp(self):
+        self.medecin_user = creer_utilisateur(User.Role.MEDECIN, 'dr.fall@santesn.sn')
+        self.medecin_user.phone_number = '771234567'
+        self.medecin_user.save()
+        self.medecin = Medecin.objects.create(
+            user=self.medecin_user,
+            nom='Fall',
+            prenom='Ibrahima',
+            specialite='Cardiologie',
+            telephone='771234567',
+            email='dr.fall@santesn.sn',
+        )
+
+        self.assure_user = creer_utilisateur(User.Role.ASSURE, 'patient.diallo@santesn.sn')
+        self.assure_user.phone_number = '778901234'
+        self.assure_user.save()
+        self.patient = Patient.objects.create(
+            user=self.assure_user,
+            nom='Diallo',
+            prenom='Mariama',
+            date_naissance=datetime.date(1995, 5, 12),
+            telephone='778901234',
+        )
+
+        self.rdv = RendezVous.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            date_heure=timezone.now() + datetime.timedelta(days=2),
+            motif='Consultation de contrôle cardiologique',
+        )
+
+    @override_settings(WHATSAPP_ENABLED=True)
+    @patch('Plateform_medicale.services.notifications.envoyer_message_whatsapp')
+    @patch('Plateform_medicale.services.notifications.EmailMultiAlternatives.send')
+    def test_notification_demande_rdv_medecin_whatsapp(self, mock_email_send, mock_wa_send):
+        from .services.notifications import notifier_demande_rdv
+
+        mock_wa_send.return_value = {'succes': True, 'statut': 'ENVOYE', 'message': 'OK'}
+        notifier_demande_rdv(self.rdv)
+
+        wa_appels = [call[0][0] for call in mock_wa_send.call_args_list]
+        self.assertIn('771234567', wa_appels)
+        self.assertFalse(mock_email_send.called)
+
+    @override_settings(WHATSAPP_ENABLED=True)
+    @patch('Plateform_medicale.services.notifications.envoyer_message_whatsapp')
+    @patch('Plateform_medicale.services.notifications.EmailMultiAlternatives.send')
+    def test_notification_demande_rdv_medecin_email_fallback(self, mock_email_send, mock_wa_send):
+        from .services.notifications import notifier_demande_rdv
+
+        mock_wa_send.return_value = {'succes': False, 'statut': 'ECHEC', 'message': 'Erreur API'}
+        notifier_demande_rdv(self.rdv)
+
+        self.assertTrue(mock_wa_send.called)
+        self.assertTrue(mock_email_send.called)
+
+    @override_settings(WHATSAPP_ENABLED=True)
+    @patch('Plateform_medicale.services.notifications.envoyer_message_whatsapp')
+    @patch('Plateform_medicale.services.notifications.EmailMultiAlternatives.send')
+    def test_notification_demande_rdv_medecin_sans_user_direct(self, mock_email_send, mock_wa_send):
+        from .services.notifications import notifier_demande_rdv
+
+        medecin_externe = Medecin.objects.create(
+            user=None,
+            nom='Sarr',
+            prenom='Abdou',
+            specialite='Pédiatrie',
+            telephone='765554433',
+            email='sarr.externe@santesn.sn',
+        )
+        rdv_externe = RendezVous.objects.create(
+            patient=self.patient,
+            medecin=medecin_externe,
+            date_heure=timezone.now() + datetime.timedelta(days=1),
+            motif='Visite pédiatrique',
+        )
+        mock_wa_send.return_value = {'succes': True, 'statut': 'ENVOYE'}
+        notifier_demande_rdv(rdv_externe)
+
+        wa_appels = [call[0][0] for call in mock_wa_send.call_args_list]
+        self.assertIn('765554433', wa_appels)
+
+    @override_settings(WHATSAPP_ENABLED=True)
+    @patch('Plateform_medicale.services.notifications.envoyer_message_whatsapp')
+    @patch('Plateform_medicale.services.notifications.EmailMultiAlternatives.send')
+    def test_notification_confirmation_rdv_patient_whatsapp(self, mock_email_send, mock_wa_send):
+        from .services.notifications import notifier_confirmation_rdv
+
+        mock_wa_send.return_value = {'succes': True, 'statut': 'ENVOYE', 'message': 'OK'}
+        self.rdv.statut = RendezVous.Statut.CONFIRME
+        self.rdv.save()
+
+        notifier_confirmation_rdv(self.rdv)
+
+        wa_appels = [call[0][0] for call in mock_wa_send.call_args_list]
+        self.assertIn('778901234', wa_appels)
+        self.assertFalse(mock_email_send.called)
+
+    @override_settings(WHATSAPP_ENABLED=True)
+    @patch('Plateform_medicale.services.notifications.envoyer_message_whatsapp')
+    @patch('Plateform_medicale.services.notifications.EmailMultiAlternatives.send')
+    def test_notification_confirmation_rdv_patient_email_fallback(self, mock_email_send, mock_wa_send):
+        from .services.notifications import notifier_confirmation_rdv
+
+        mock_wa_send.return_value = {'succes': False, 'statut': 'ECHEC'}
+        self.rdv.statut = RendezVous.Statut.CONFIRME
+        self.rdv.save()
+
+        notifier_confirmation_rdv(self.rdv)
+
+        self.assertTrue(mock_wa_send.called)
+        self.assertTrue(mock_email_send.called)
+
+    @override_settings(WHATSAPP_ENABLED=True)
+    @patch('Plateform_medicale.services.notifications.envoyer_message_whatsapp')
+    def test_changement_statut_medecin_confirme_declenche_notification(self, mock_wa_send):
+        mock_wa_send.return_value = {'succes': True, 'statut': 'ENVOYE'}
+        self.client.login(username='dr.fall@santesn.sn', password=PASSWORD)
+
+        response = self.client.post(
+            reverse('changer_statut_rendez_vous', args=[self.rdv.pk]),
+            {'statut': 'CONFIRME'},
+        )
+        self.assertRedirects(response, reverse('agenda_medecin'))
+        self.rdv.refresh_from_db()
+        self.assertEqual(self.rdv.statut, RendezVous.Statut.CONFIRME)
+        wa_appels = [call[0][0] for call in mock_wa_send.call_args_list]
+        self.assertIn('778901234', wa_appels)
+
+
 class RapportsTests(TestCase):
     def setUp(self):
         self.admin = creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
