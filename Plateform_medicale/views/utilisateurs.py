@@ -280,7 +280,7 @@ def _analyser_ligne_import_utilisateurs(numero_ligne, valeurs):
 
 def _creer_comptes_import_utilisateurs(lignes_validees, request=None):
     """Cree en une transaction tous les comptes (et fiches metier) valides par l'import et genere l'onboarding."""
-    resultats = []
+    comptes_crees = []
     with transaction.atomic():
         for donnees in lignes_validees:
             utilisateur = User.objects.create_user(
@@ -312,23 +312,26 @@ def _creer_comptes_import_utilisateurs(lignes_validees, request=None):
                     type_beneficiaire=Patient.TypeBeneficiaire.PRINCIPAL,
                     plan_couverture=donnees["plan_couverture"],
                 )
+            comptes_crees.append((utilisateur, donnees))
 
-            # Envoi du lien d'activation sécurisé (Email / WhatsApp)
-            statut = envoyer_activation_utilisateur(utilisateur, request=request)
-            bilan = statut.get("bilan") or construire_bilan_onboarding(statut, utilisateur, action="creation")
-            resultats.append({
-                "numero_ligne": donnees.get("numero_ligne", "-"),
-                "email": utilisateur.email,
-                "nom_complet": f"{utilisateur.first_name} {utilisateur.last_name}",
-                "role": utilisateur.get_role_display(),
-                "compte_cree": True,
-                "email_envoye": statut["email_envoye"],
-                "email_erreur": statut["email_erreur"],
-                "whatsapp_envoye": statut["whatsapp_envoye"],
-                "whatsapp_statut": statut["whatsapp_statut"],
-                "whatsapp_message": statut["whatsapp_message"],
-                "bilan": bilan,
-            })
+    # Envoi automatique du lien d'activation (WhatsApp prioritaire, secours Email) pour chaque utilisateur créé
+    resultats = []
+    for utilisateur, donnees in comptes_crees:
+        statut = envoyer_activation_utilisateur(utilisateur, request=request)
+        bilan = statut.get("bilan") or construire_bilan_onboarding(statut, utilisateur, action="creation")
+        resultats.append({
+            "numero_ligne": donnees.get("numero_ligne", "-"),
+            "email": utilisateur.email,
+            "nom_complet": f"{utilisateur.first_name} {utilisateur.last_name}",
+            "role": utilisateur.get_role_display(),
+            "compte_cree": True,
+            "email_envoye": statut["email_envoye"],
+            "email_erreur": statut["email_erreur"],
+            "whatsapp_envoye": statut["whatsapp_envoye"],
+            "whatsapp_statut": statut["whatsapp_statut"],
+            "whatsapp_message": statut["whatsapp_message"],
+            "bilan": bilan,
+        })
     return resultats
 
 
