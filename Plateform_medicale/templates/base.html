@@ -602,8 +602,11 @@
             box-shadow: var(--ombre-douce);
         }
 
-        .panel {
+        .panel,
+        .table-responsive,
+        .details-tableau {
             overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         table {
@@ -1104,8 +1107,10 @@
         }
 
         @media (max-width: 640px) {
-            .actions {
+            .actions,
+            table td .actions {
                 flex-wrap: wrap;
+                gap: 4px;
             }
         }
 
@@ -1500,29 +1505,37 @@
             gap: 10px;
         }
 
-        /* Toasts pour les messages Django : flottants, empilables et
-           refermables (bouton + auto-disparition), remplacent le bandeau
-           statique qui restait en haut de page indefiniment. */
+        /* Toasts pour les messages Django et temps réel : design unifié SaaS
+           institutionnel, flottants, empilables, avec trait d'accentuation
+           latéral (border-left), badge icône vectoriel et barre de progression. */
         .toasts {
             position: fixed;
             top: 20px;
             right: 20px;
-            z-index: 300;
+            z-index: 10050;
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            max-width: 420px;
+            gap: 12px;
+            max-width: 440px;
+            width: calc(100vw - 32px);
+            pointer-events: none;
         }
 
         .toast {
+            pointer-events: auto;
+            position: relative;
+            overflow: hidden;
             display: flex;
             align-items: flex-start;
-            gap: 10px;
-            padding: 14px 16px;
-            border-radius: 10px;
-            font-weight: 600;
-            box-shadow: 0 10px 30px rgba(11, 32, 39, 0.18);
-            animation: toast-glisse 0.25s ease-out both;
+            gap: 12px;
+            padding: 14px 16px 16px;
+            border-radius: 12px;
+            background: var(--surface, #ffffff);
+            color: var(--text, #1e293b);
+            border: 1px solid var(--border, #e2e8f0);
+            box-shadow: 0 10px 30px rgba(11, 32, 39, 0.16);
+            animation: toast-glisse 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+            border-left: 5px solid var(--primary, #0e7c86);
         }
 
         /* Fermeture (bouton ou auto-disparition) : classe posee par le JS
@@ -1532,7 +1545,7 @@
         }
 
         @keyframes toast-glisse {
-            from { opacity: 0; transform: translateX(32px); }
+            from { opacity: 0; transform: translateX(36px); }
             to   { opacity: 1; transform: translateX(0); }
         }
 
@@ -1556,8 +1569,9 @@
             to { transform: rotate(360deg); }
         }
 
-        .toast span {
+        .toast-corps {
             flex: 1;
+            min-width: 0;
         }
 
         /* Micro-interaction sur les actions critiques (ordonnance creee,
@@ -1588,23 +1602,137 @@
         }
 
         .toast-fermer {
-            flex-shrink: 0;
-            display: flex;
-            padding: 2px;
-            border: 0;
             background: none;
-            color: inherit;
+            border: none;
+            color: var(--muted, #94a3b8);
             cursor: pointer;
+            padding: 4px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: background 0.15s ease, color 0.15s ease;
+            margin-top: -2px;
+            margin-right: -4px;
         }
-
+        .toast-fermer:hover {
+            background: var(--bg-hover, rgba(0, 0, 0, 0.05));
+            color: var(--titre, #0f172a);
+        }
         .toast-fermer .icone-nav {
             width: 16px;
             height: 16px;
         }
 
-        .toast-error { background: var(--refus-bg); color: var(--danger); border: 1px solid #fecdca; }
-        .toast-success { background: var(--ok-bg); color: #167a46; border: 1px solid var(--ok-bg); }
-        .toast-info, .toast-warning, .toast-debug { background: #eef2f6; color: #40515f; border: 1px solid #d9e2ea; }
+        /* Trait indicateur latéral selon le niveau de criticité */
+        .toast.toast-success {
+            border-left-color: var(--success, #059669);
+        }
+        .toast.toast-error, .toast.toast-danger {
+            border-left-color: var(--danger, #dc2626);
+        }
+        .toast.toast-warning {
+            border-left-color: var(--warning, #d97706);
+        }
+        .toast.toast-info {
+            border-left-color: var(--primary, #0e7c86);
+        }
+
+        /* Badge d'icône vectoriel élégant */
+        .toast-icone-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(14, 124, 134, 0.1);
+            color: var(--primary, #0e7c86);
+            margin-top: 1px;
+        }
+        .toast-icone-badge .icone-nav {
+            width: 17px;
+            height: 17px;
+        }
+        .toast.toast-success .toast-icone-badge {
+            background: rgba(5, 150, 105, 0.12);
+            color: #059669;
+        }
+        .toast.toast-error .toast-icone-badge, .toast.toast-danger .toast-icone-badge {
+            background: rgba(220, 38, 38, 0.12);
+            color: #dc2626;
+        }
+        .toast.toast-warning .toast-icone-badge {
+            background: rgba(217, 119, 6, 0.12);
+            color: #d97706;
+        }
+
+        .toast-titre {
+            font-size: 13.5px;
+            font-weight: 700;
+            line-height: 1.3;
+            margin-bottom: 2px;
+            color: var(--titre, #0f172a);
+        }
+        .toast-message {
+            font-size: 13px;
+            line-height: 1.45;
+            color: var(--muted, #475569);
+            font-weight: 500;
+            word-break: break-word;
+        }
+
+        .toast-actions {
+            margin-top: 8px;
+        }
+        .toast-btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 6px;
+            text-decoration: none;
+            background: var(--primary, #0e7c86);
+            color: #ffffff !important;
+            transition: filter 0.15s ease;
+        }
+        .toast-btn:hover {
+            filter: brightness(1.1);
+        }
+
+        /* Trait de progression de durée (auto-dismiss indicator) */
+        .toast-barre-progression {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            width: 100%;
+            background: rgba(14, 124, 134, 0.25);
+            transform-origin: left;
+            animation: toast-decompte 6s linear forwards;
+        }
+        .toast.toast-success .toast-barre-progression {
+            background: rgba(5, 150, 105, 0.4);
+        }
+        .toast.toast-error .toast-barre-progression, .toast.toast-danger .toast-barre-progression {
+            background: rgba(220, 38, 38, 0.4);
+        }
+        .toast.toast-warning .toast-barre-progression {
+            background: rgba(217, 119, 6, 0.4);
+        }
+
+        /* Pause du compte à rebours au survol souris */
+        .toast:hover .toast-barre-progression {
+            animation-play-state: paused;
+        }
+
+        @keyframes toast-decompte {
+            from { transform: scaleX(1); }
+            to   { transform: scaleX(0); }
+        }
 
         /* Contenu reserve aux lecteurs d'ecran (ex. legende de tableau) :
            visible pour les technologies d'assistance, retire du rendu visuel. */
@@ -2031,12 +2159,14 @@
            Constate au rendu. */
         .carte-face {
             margin: 0;
-            flex: 0 0 auto;
-            width: 340px;
+            flex: 0 1 auto;
+            width: min(340px, 100%);
+            max-width: 100%;
         }
 
         .carte-face .carte-assure {
-            max-width: none;
+            width: 100%;
+            max-width: 340px;
         }
 
         .carte-face figcaption {
@@ -2508,7 +2638,6 @@
             .lien-evitement,
             .carte-sans-impression,
             .sans-impression,
-            .pied-de-page-app,
             footer,
             .breadcrumb,
             .fil-ariane {
@@ -2518,7 +2647,7 @@
             /* 2. Format de page standard A4 */
             @page {
                 size: A4 portrait;
-                margin: 10mm 12mm 10mm 12mm;
+                margin: 12mm 10mm;
             }
 
             html,
@@ -2543,18 +2672,18 @@
                ========================================================= */
             .planche-guide-impression {
                 display: block !important;
-                margin: 5mm auto 10mm auto !important;
+                margin: 4mm auto 8mm auto !important;
                 text-align: center !important;
             }
 
             .carte-planche {
                 display: flex !important;
                 flex-direction: row !important;
-                flex-wrap: wrap !important;
+                flex-wrap: nowrap !important;
                 justify-content: center !important;
                 align-items: center !important;
-                gap: 12mm !important;
-                margin: 15mm auto 0 auto !important;
+                gap: 8mm !important;
+                margin: 8mm auto 0 auto !important;
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
             }
@@ -2673,7 +2802,7 @@
                 display: block !important;
             }
 
-            .carte-verso-mention {
+            .carte-verso-mention[class] {
                 font-size: 6.5px !important;
                 color: #1e293b !important;
                 margin: 1mm 0 0 0 !important;
@@ -5150,12 +5279,19 @@
                 align-items: stretch;
             }
 
+            .panel {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
             .panel table {
-                table-layout: fixed;
+                table-layout: auto;
+                min-width: 100%;
             }
 
             .panel td {
-                overflow-wrap: anywhere;
+                overflow-wrap: normal;
+                word-break: normal;
             }
 
             th, td {
@@ -5766,107 +5902,44 @@
                 padding: 10px 14px !important;
             }
         }
-
-        /* Toasts interactifs temps reel - synchronisation multi-roles */
-        .conteneur-toasts-temps-reel {
-            position: fixed;
-            top: 24px;
-            right: 24px;
-            z-index: 10050;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            pointer-events: none;
-            max-width: 400px;
-            width: calc(100vw - 32px);
-        }
-        .toast-notification-sn {
-            pointer-events: auto;
-            background: var(--surface, #ffffff);
-            color: var(--text, #1e293b);
-            border: 1px solid var(--border, #e2e8f0);
-            border-left: 4px solid var(--primary, #12885a);
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.16);
-            padding: 14px 16px;
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            transform: translateX(110%);
-            opacity: 0;
-            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
-        }
-        .toast-notification-sn.visible {
-            transform: translateX(0);
-            opacity: 1;
-        }
-        .toast-icone {
-            width: 34px;
-            height: 34px;
-            border-radius: 8px;
-            background: rgba(18, 136, 90, 0.1);
-            color: var(--primary, #12885a);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-        .toast-contenu {
-            flex: 1;
-            min-width: 0;
-        }
-        .toast-titre {
-            font-size: 14px;
-            font-weight: 600;
-            line-height: 1.3;
-            margin-bottom: 4px;
-            color: var(--text, #0f172a);
-        }
-        .toast-msg {
-            font-size: 13px;
-            color: var(--text-muted, #475569);
-            line-height: 1.4;
-            margin-bottom: 8px;
-        }
-        .toast-actions {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .toast-btn {
-            display: inline-flex;
-            align-items: center;
-            padding: 5px 12px;
-            font-size: 12px;
-            font-weight: 600;
-            border-radius: 6px;
-            text-decoration: none;
-            background: var(--primary, #12885a);
-            color: #ffffff !important;
-            transition: filter 0.15s ease;
-        }
-        .toast-btn:hover {
-            filter: brightness(1.1);
-        }
-        .toast-fermer {
-            background: none;
-            border: none;
-            color: var(--text-muted, #94a3b8);
-            cursor: pointer;
-            padding: 4px;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: color 0.15s ease;
-        }
-        .toast-fermer:hover {
-            color: var(--text, #0f172a);
-        }
     </style>
 </head>
 <body>
-    <div id="toasts-temps-reel" class="conteneur-toasts-temps-reel" aria-live="polite" aria-atomic="true"></div>
+    <div id="toasts" class="toasts" aria-live="polite" aria-atomic="true">
+        {% if messages %}
+        {% for message in messages %}
+        <div class="toast toast-{{ message.tags|default:'info' }}" role="status">
+            <div class="toast-icone-badge">
+                {% if "error" in message.tags or "danger" in message.tags %}
+                    {% icone "alert-circle" %}
+                {% elif "warning" in message.tags %}
+                    {% icone "alert-triangle" %}
+                {% elif "success" in message.tags %}
+                    {% icone "check" %}
+                {% else %}
+                    {% icone "info" %}
+                {% endif %}
+            </div>
+            <div class="toast-corps">
+                <div class="toast-titre">
+                    {% if "error" in message.tags or "danger" in message.tags %}
+                        Erreur
+                    {% elif "warning" in message.tags %}
+                        Attention
+                    {% elif "success" in message.tags %}
+                        Succès
+                    {% else %}
+                        Information
+                    {% endif %}
+                </div>
+                <div class="toast-message">{{ message|linebreaksbr }}</div>
+            </div>
+            <button type="button" class="toast-fermer" aria-label="Fermer">{% icone "x" %}</button>
+            <div class="toast-barre-progression"></div>
+        </div>
+        {% endfor %}
+        {% endif %}
+    </div>
     <a href="#contenu-principal" class="lien-evitement">Aller au contenu</a>
     {% if user.is_authenticated and current_role and not sans_sidebar %}
     <div id="fond-sidebar" class="sidebar-overlay"></div>
@@ -5916,9 +5989,9 @@
                 <a href="{% url 'liste_paiements' %}" aria-label="Paiements" data-tooltip="Paiements" class="{% if url_name == 'liste_paiements' or url_name == 'marquer_paiement_regle' %}active{% endif %}">{% icone "receipt" %} <span class="nav-texte">Paiements</span></a>
                 
                 <span class="nav-section">Analyse & Configuration</span>
+                <a href="{% url 'envoyer_notification' %}" aria-label="Notifications" data-tooltip="Notifications" class="{% if url_name == 'envoyer_notification' or url_name == 'liste_notifications_envoyees' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span></a>
                 <a href="{% url 'admin_liste_demandes_support' %}" aria-label="Support & Demandes" data-tooltip="Support & Demandes" class="{% if url_name == 'admin_liste_demandes_support' or url_name == 'admin_detail_demande_support' %}active{% endif %}">{% icone "chat" %} <span class="nav-texte">Support & Demandes</span>{% if nb_demandes_support_attente %} <span class="badge-non-lues">{{ nb_demandes_support_attente }}</span>{% endif %}</a>
                 <a href="{% url 'rapports' %}" aria-label="Rapports" data-tooltip="Rapports" class="{% if url_name == 'rapports' %}active{% endif %}">{% icone "bar-chart" %} <span class="nav-texte">Rapports</span></a>
-                <a href="{% url 'envoyer_notification' %}" aria-label="Notifications" data-tooltip="Notifications" class="{% if url_name == 'envoyer_notification' or url_name == 'liste_notifications_envoyees' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span></a>
                 <a href="{% url 'parametres' %}" aria-label="Paramètres" data-tooltip="Paramètres" class="{% if url_name == 'parametres' or url_name == 'parametres_section' or url_name == 'journal_activite' or url_name == 'mon_compte' or url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "settings" %} <span class="nav-texte">Paramètres</span></a>
                 {% endwith %}
                 {% elif current_role == "MEDECIN" %}
@@ -5928,10 +6001,6 @@
                 <a href="{% url 'agenda_medecin' %}" aria-label="Agenda & RDV" data-tooltip="Agenda & RDV" class="{% if url_name == 'agenda_medecin' %}active{% endif %}">{% icone "calendar" %} <span class="nav-texte">Agenda & RDV</span></a>
                 <a href="{% url 'mes_patients' %}" aria-label="Patients" data-tooltip="Patients" class="{% if url_name == 'mes_patients' or url_name == 'fiche_patient_medecin' %}active{% endif %}">{% icone "users" %} <span class="nav-texte">Patients</span></a>
                 <a href="{% url 'historique_consultations' %}" aria-label="Consultations" data-tooltip="Consultations" class="{% if url_name == 'historique_consultations' or url_name == 'ajouter_consultation_medecin' or url_name == 'ajouter_ordonnance_medecin' or url_name == 'voir_ordonnance_medecin' %}active{% endif %}">{% icone "clipboard-list" %} <span class="nav-texte">Consultations</span></a>
-                
-                <span class="nav-section">Mon compte</span>
-                <a href="{% url 'modifier_profil_medecin' %}" aria-label="Mon profil" data-tooltip="Mon profil" class="{% if url_name == 'modifier_profil_medecin' %}active{% endif %}">{% icone "user-circle" %} <span class="nav-texte">Mon profil</span></a>
-                <a href="{% url 'mes_notifications' %}" aria-label="Notifications" data-tooltip="Notifications" class="{% if url_name == 'mes_notifications' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span>{% if notifications_non_lues %} <span class="badge-non-lues">{{ notifications_non_lues }}</span>{% endif %}</a>
                 {% endwith %}
                 {% elif current_role == "PHARMACIEN" %}
                 {% with url_name=request.resolver_match.url_name %}
@@ -5939,27 +6008,19 @@
                 <a href="{% url 'dashboard_pharmacien' %}" aria-label="Tableau de bord" data-tooltip="Tableau de bord" class="{% if url_name == 'dashboard_pharmacien' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord</span></a>
                 <a href="{% url 'scanner_ordonnance' %}" aria-label="Scanner / Vérifier" data-tooltip="Scanner / Vérifier" class="{% if url_name == 'scanner_ordonnance' %}active{% endif %}">{% icone "qr-scan" %} <span class="nav-texte">Scanner / Vérifier</span></a>
                 <a href="{% url 'historique_delivrances' %}" aria-label="Historique" data-tooltip="Historique" class="{% if url_name == 'historique_delivrances' %}active{% endif %}">{% icone "clock-history" %} <span class="nav-texte">Historique</span></a>
-                
-                <span class="nav-section">Mon compte</span>
-                <a href="{% url 'mes_notifications' %}" aria-label="Notifications" data-tooltip="Notifications" class="{% if url_name == 'mes_notifications' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span>{% if notifications_non_lues %} <span class="badge-non-lues">{{ notifications_non_lues }}</span>{% endif %}</a>
                 {% endwith %}
                 {% elif current_role == "ASSURE" %}
                 {% with url_name=request.resolver_match.url_name %}
+                <span class="nav-section">Espace santé</span>
                 <a href="{% url 'dashboard_assure' %}" aria-label="Tableau de bord" data-tooltip="Tableau de bord" class="{% if url_name == 'dashboard_assure' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord</span></a>
-                
-                <span class="nav-section">Mes soins & démarches</span>
                 <a href="{% url 'mes_rendez_vous_assure' %}" aria-label="Mes rendez-vous" data-tooltip="Mes rendez-vous" class="{% if url_name == 'mes_rendez_vous_assure' or url_name == 'ajouter_rendez_vous_assure' %}active{% endif %}">{% icone "calendar" %} <span class="nav-texte">Mes rendez-vous</span></a>
                 <a href="{% url 'mes_ordonnances_assure' %}" aria-label="Mes ordonnances" data-tooltip="Mes ordonnances" class="{% if url_name == 'mes_ordonnances_assure' or url_name == 'voir_ordonnance_assure' %}active{% endif %}">{% icone "pill" %} <span class="nav-texte">Mes ordonnances</span></a>
                 <a href="{% url 'mes_prises_en_charge_assure' %}" aria-label="Mes prises en charge" data-tooltip="Mes prises en charge" class="{% if url_name == 'mes_prises_en_charge_assure' %}active{% endif %}">{% icone "shield-check" %} <span class="nav-texte">Mes prises en charge</span></a>
                 
-                <span class="nav-section">Ma couverture & famille</span>
-                <a href="{% url 'mon_profil_assure' %}" aria-label="Mes informations" data-tooltip="Mes informations" class="{% if url_name == 'mon_profil_assure' %}active{% endif %}">{% icone "user-circle" %} <span class="nav-texte">Mes informations</span></a>
+                <span class="nav-section">Réseau & Foyer</span>
+                <a href="{% url 'prestataires_proches' %}" aria-label="Prestataires conventionnés" data-tooltip="Prestataires conventionnés" class="{% if url_name == 'prestataires_proches' %}active{% endif %}">{% icone "map-pin" %} <span class="nav-texte">Prestataires conventionnés</span></a>
                 <a href="{% url 'liste_ayants_droit' %}" aria-label="Mes ayants droit" data-tooltip="Mes ayants droit" class="{% if url_name == 'liste_ayants_droit' or url_name == 'ajouter_ayant_droit' or url_name == 'modifier_ayant_droit' %}active{% endif %}">{% icone "users" %} <span class="nav-texte">Mes ayants droit</span></a>
-                <a href="{% url 'prestataires_proches' %}" aria-label="Prestataires proches" data-tooltip="Prestataires proches" class="{% if url_name == 'prestataires_proches' %}active{% endif %}">{% icone "map-pin" %} <span class="nav-texte">Prestataires proches</span></a>
-                
-                <span class="nav-section">Mon compte</span>
-                <a href="{% url 'mon_historique_assure' %}" aria-label="Mon historique" data-tooltip="Mon historique" class="{% if url_name == 'mon_historique_assure' %}active{% endif %}">{% icone "clock-history" %} <span class="nav-texte">Mon historique</span></a>
-                <a href="{% url 'mes_notifications' %}" aria-label="Notifications" data-tooltip="Notifications" class="{% if url_name == 'mes_notifications' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span>{% if notifications_non_lues %} <span class="badge-non-lues">{{ notifications_non_lues }}</span>{% endif %}</a>
+                <a href="{% url 'mon_profil_assure' %}" aria-label="Mon profil" data-tooltip="Mon profil" class="{% if url_name == 'mon_profil_assure' %}active{% endif %}">{% icone "user" %} <span class="nav-texte">Mon profil</span></a>
                 {% endwith %}
                 {% endif %}
             </nav>
@@ -6095,19 +6156,7 @@
                     </div>
                 </header>
                 {% endif %}
-                {% if messages %}
-                <div class="toasts" id="toasts" aria-live="polite" aria-atomic="true">
-                    {% for message in messages %}
-                    <div class="toast toast-{{ message.tags|default:'info' }}" role="status">
-                        {% if "succes-critique" in message.tags %}
-                        <span class="toast-icone-succes" aria-hidden="true">{% icone "check" %}</span>
-                        {% endif %}
-                        <span>{{ message|linebreaksbr }}</span>
-                        <button type="button" class="toast-fermer" aria-label="Fermer">{% icone "x" %}</button>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% endif %}
+
                 {% block content %}{% endblock %}
 
                 {% if not user.is_authenticated %}
@@ -6268,25 +6317,50 @@
             });
         })();
 
-        (function () {
-            // Toasts (messages Django) : fermeture manuelle (bouton) ou
-            // automatique apres quelques secondes.
-            var DUREE_AFFICHAGE = 6000;
+        function fermerToast(toast) {
+            if (!toast || toast.classList.contains('toast-sortie')) return;
+            toast.classList.add('toast-sortie');
+            toast.addEventListener('animationend', function () { toast.remove(); }, { once: true });
+            setTimeout(function () { if (toast.parentNode) toast.remove(); }, 300);
+        }
 
-            function fermerToast(toast) {
-                toast.classList.add('toast-sortie');
-                toast.addEventListener('animationend', function () { toast.remove(); }, { once: true });
+        function configurerGestionToast(toast, dureeMs) {
+            dureeMs = dureeMs || 6000;
+            var tempsRestant = dureeMs;
+            var dateDebut = Date.now();
+            var minuteur = null;
+
+            function demarrer() {
+                dateDebut = Date.now();
+                minuteur = window.setTimeout(function () {
+                    fermerToast(toast);
+                }, tempsRestant);
             }
 
-            document.querySelectorAll('.toast').forEach(function (toast) {
-                var minuteur = window.setTimeout(function () { fermerToast(toast); }, DUREE_AFFICHAGE);
-                var bouton = toast.querySelector('.toast-fermer');
-                if (bouton) {
-                    bouton.addEventListener('click', function () {
-                        window.clearTimeout(minuteur);
-                        fermerToast(toast);
-                    });
-                }
+            function suspendre() {
+                window.clearTimeout(minuteur);
+                tempsRestant -= (Date.now() - dateDebut);
+                if (tempsRestant < 500) { tempsRestant = 500; }
+            }
+
+            toast.addEventListener('mouseenter', suspendre);
+            toast.addEventListener('mouseleave', demarrer);
+
+            var bouton = toast.querySelector('.toast-fermer');
+            if (bouton) {
+                bouton.addEventListener('click', function () {
+                    window.clearTimeout(minuteur);
+                    fermerToast(toast);
+                });
+            }
+
+            demarrer();
+        }
+
+        (function () {
+            // Initialisation des toasts Django présents au chargement
+            document.querySelectorAll('#toasts .toast').forEach(function (toast) {
+                configurerGestionToast(toast, 6000);
             });
         })();
 
@@ -6487,48 +6561,37 @@
             }
 
             function afficherToastNotification(notif) {
-                var conteneur = document.getElementById('toasts-temps-reel');
+                var conteneur = document.getElementById('toasts');
                 if (!conteneur) { return; }
 
                 var toast = document.createElement('div');
-                toast.className = 'toast-notification-sn';
+                toast.className = 'toast toast-info';
                 toast.setAttribute('role', 'alert');
 
-                var iconeSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>';
+                var iconeSvg = '<svg class="icone-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 10a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6z"></path><path d="M10 20a2 2 0 0 0 4 0"></path></svg>';
                 var titrePropre = echapperTexte(notif.titre || 'Nouvelle notification');
                 var msgPropre = echapperTexte(notif.message || '');
-                var urlAction = notif.url_action ? notif.url_action : '#';
+                var urlAction = notif.url_action ? notif.url_action : '';
+
+                var actionHtml = '';
+                if (urlAction && urlAction !== '#' && urlAction !== 'javascript:void(0)') {
+                    actionHtml = '<div class="toast-actions"><a href="' + urlAction + '" class="toast-btn">Consulter</a></div>';
+                }
 
                 toast.innerHTML = 
-                    '<div class="toast-icone">' + iconeSvg + '</div>' +
-                    '<div class="toast-contenu">' +
+                    '<div class="toast-icone-badge">' + iconeSvg + '</div>' +
+                    '<div class="toast-corps">' +
                         '<div class="toast-titre">' + titrePropre + '</div>' +
-                        '<div class="toast-msg">' + msgPropre + '</div>' +
-                        '<div class="toast-actions">' +
-                            '<a href="' + urlAction + '" class="toast-btn">Consulter</a>' +
-                        '</div>' +
+                        '<div class="toast-message">' + msgPropre + '</div>' +
+                        actionHtml +
                     '</div>' +
                     '<button type="button" class="toast-fermer" aria-label="Fermer">' +
-                        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>' +
-                    '</button>';
-
-                var btnFermer = toast.querySelector('.toast-fermer');
-                btnFermer.addEventListener('click', function () {
-                    toast.classList.remove('visible');
-                    setTimeout(function () { toast.remove(); }, 380);
-                });
+                        '<svg class="icone-nav" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line></svg>' +
+                    '</button>' +
+                    '<div class="toast-barre-progression" style="animation-duration: 7s;"></div>';
 
                 conteneur.appendChild(toast);
-                requestAnimationFrame(function () {
-                    toast.classList.add('visible');
-                });
-
-                setTimeout(function () {
-                    if (toast.parentNode) {
-                        toast.classList.remove('visible');
-                        setTimeout(function () { toast.remove(); }, 380);
-                    }
-                }, 7000);
+                configurerGestionToast(toast, 7000);
             }
 
             function actualiserDonneesEtTables() {

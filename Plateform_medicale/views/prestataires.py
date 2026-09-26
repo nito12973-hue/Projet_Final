@@ -11,7 +11,8 @@ import urllib.request
 
 from django.contrib import messages
 from django.core.cache import cache
-from django.db.models import Q
+from django.db import transaction
+from django.db.models import ProtectedError, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
@@ -245,10 +246,16 @@ def modifier_prestataire(request, pk):
 def supprimer_prestataire(request, pk):
     prestataire = get_object_or_404(Prestataire, pk=pk)
     if request.method == "POST":
-        journaliser(request, JournalActivite.Action.SUPPRESSION, f"Prestataire : {prestataire}")
-        prestataire.delete()
-        messages.success(request, "Prestataire supprimé.")
-        return redirect("liste_prestataires")
+        try:
+            with transaction.atomic():
+                nom_prestataire = str(prestataire)
+                prestataire.delete()
+                journaliser(request, JournalActivite.Action.SUPPRESSION, f"Prestataire : {nom_prestataire}")
+                messages.success(request, "Prestataire supprimé.")
+                return redirect("liste_prestataires")
+        except ProtectedError:
+            messages.error(request, "Impossible de supprimer ce prestataire : des éléments protégés y sont rattachés.")
+            return redirect("liste_prestataires")
     return render(request, "confirmer_suppression.html", {"objet": prestataire, "type": "Prestataire"})
 
 
@@ -293,11 +300,22 @@ def modifier_plan_couverture(request, pk):
 def supprimer_plan_couverture(request, pk):
     plan = get_object_or_404(PlanCouverture, pk=pk)
     if request.method == "POST":
-        journaliser(request, JournalActivite.Action.SUPPRESSION, f"Plan de couverture : {plan}",
-                    f"{plan.beneficiaires.count()} bénéficiaire(s) perdent ce plan")
-        plan.delete()
-        messages.success(request, "Plan de couverture supprimé.")
-        return redirect("liste_plans_couverture")
+        try:
+            with transaction.atomic():
+                nom_plan = str(plan)
+                nb_beneficiaires = plan.beneficiaires.count()
+                plan.delete()
+                journaliser(
+                    request,
+                    JournalActivite.Action.SUPPRESSION,
+                    f"Plan de couverture : {nom_plan}",
+                    f"{nb_beneficiaires} bénéficiaire(s) perdent ce plan",
+                )
+                messages.success(request, "Plan de couverture supprimé.")
+                return redirect("liste_plans_couverture")
+        except ProtectedError:
+            messages.error(request, "Impossible de supprimer ce plan de couverture : des éléments protégés y sont rattachés.")
+            return redirect("liste_plans_couverture")
     avertissement = _avertissement_cascade({"assuré(s)/ayant(s) droit rattachés (plan retiré, pas supprimés)": plan.beneficiaires.count()})
     return render(
         request,

@@ -1,6 +1,8 @@
 """CRUD Services médicaux (liste, ajout, modification, suppression)."""
 
 from django.contrib import messages
+from django.db import transaction
+from django.db.models import ProtectedError
 from django.shortcuts import get_object_or_404, redirect, render
 
 from ..forms import ServiceMedicalForm
@@ -45,8 +47,14 @@ def modifier_service(request, pk):
 def supprimer_service(request, pk):
     service = get_object_or_404(ServiceMedical, pk=pk)
     if request.method == "POST":
-        journaliser(request, JournalActivite.Action.SUPPRESSION, f"Service médical : {service}")
-        service.delete()
-        messages.success(request, "Service médical supprimé.")
-        return redirect("liste_services")
+        try:
+            with transaction.atomic():
+                nom_service = str(service)
+                service.delete()
+                journaliser(request, JournalActivite.Action.SUPPRESSION, f"Service médical : {nom_service}")
+                messages.success(request, "Service médical supprimé.")
+                return redirect("liste_services")
+        except ProtectedError:
+            messages.error(request, "Impossible de supprimer ce service médical : des consultations protégées y sont rattachées.")
+            return redirect("liste_services")
     return render(request, "confirmer_suppression.html", {"objet": service, "type": "Service"})

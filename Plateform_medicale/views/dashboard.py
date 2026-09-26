@@ -195,11 +195,19 @@ def dashboard(request):
         ).count(),
         "prestataires_par_type": prestataires_par_type,
         "nb_comptes_bloques": nb_comptes_bloques,
+        "nb_ayants_droit_en_attente": Patient.objects.filter(
+            type_beneficiaire=Patient.TypeBeneficiaire.AYANT_DROIT,
+            statut_validation=Patient.StatutValidation.EN_ATTENTE,
+        ).count(),
         "file_totale": (
             total_prises_en_charge_attente
             + rdv_a_confirmer
             + ordonnances_non_delivrees
             + paiements_non_regles_nb
+            + Patient.objects.filter(
+                type_beneficiaire=Patient.TypeBeneficiaire.AYANT_DROIT,
+                statut_validation=Patient.StatutValidation.EN_ATTENTE,
+            ).count()
         ),
     }
     return render(request, "dashboard.html", contexte)

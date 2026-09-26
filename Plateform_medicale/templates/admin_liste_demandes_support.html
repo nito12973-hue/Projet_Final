@@ -46,7 +46,7 @@
         </select>
     </div>
 
-    <div style="display:flex;gap:8px;">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button type="submit" class="button primary">{% icone "filter" %} Filtrer</button>
         {% if statut_choisi or categorie_choisie or recherche %}
         <a href="{% url 'admin_liste_demandes_support' %}" class="button btn">Réinitialiser</a>

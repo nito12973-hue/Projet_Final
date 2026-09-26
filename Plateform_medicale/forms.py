@@ -3,6 +3,7 @@ import secrets
 import string
 
 from django import forms
+from django.conf import settings
 from django.contrib.auth import authenticate, password_validation
 from django.db.models import Q
 from django.utils import timezone
@@ -125,6 +126,19 @@ def aligner_medecin_vers_user(medecin):
             user.save(update_fields=modifs)
 
 
+from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
+
+
+class MotDePasseReinitialiserForm(FormControlMixin, SetPasswordForm):
+    """Formulaire de définition du nouveau mot de passe avec styling form-control."""
+    pass
+
+
+class ChangerMotDePasseForm(FormControlMixin, PasswordChangeForm):
+    """Formulaire de changement de mot de passe connecté avec styling form-control."""
+    pass
+
+
 class LoginForm(forms.Form):
     """Connexion : email + mot de passe uniquement. Aucun choix de rôle."""
 
@@ -178,18 +192,6 @@ class LoginForm(forms.Form):
                         )
                 raise forms.ValidationError(
                     'Email ou mot de passe incorrect.'
-                )
-            if not self.user.is_active:
-                # Filet de securite, aujourd'hui INATTEIGNABLE : le backend par
-                # defaut (ModelBackend.user_can_authenticate) rejette deja les
-                # comptes inactifs, donc authenticate() a renvoye None plus haut
-                # et l'utilisateur a vu le message generique. C'est le
-                # comportement souhaitable -- annoncer "ce compte est desactive"
-                # confirmerait a un inconnu que l'adresse existe. Conserve au
-                # cas ou un backend autorisant les comptes inactifs serait
-                # branche un jour.
-                raise forms.ValidationError(
-                    "Ce compte est désactivé. Contactez l'administration."
                 )
             TentativeConnexion.reussite(email)
         return cleaned_data
@@ -512,6 +514,14 @@ class ProfilAssureForm(forms.ModelForm):
         fields = ['nom', 'prenom', 'date_naissance', 'telephone', 'adresse']
         widgets = {
             'date_naissance': forms.DateInput(attrs={'type': 'date'}),
+            'adresse': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Adresse de résidence (ex: Médina, Dakar)'}),
+        }
+        labels = {
+            'nom': 'Nom de famille',
+            'prenom': 'Prénom(s)',
+            'date_naissance': 'Date de naissance',
+            'telephone': 'Numéro de téléphone',
+            'adresse': 'Adresse de résidence',
         }
 
     def clean_date_naissance(self):
@@ -535,10 +545,23 @@ class AyantDroitForm(forms.ModelForm):
 
     class Meta:
         model = Patient
-        fields = ['nom', 'prenom', 'date_naissance', 'telephone', 'adresse', 'lien_parente']
+        fields = [
+            'nom', 'prenom', 'date_naissance', 'telephone', 'adresse',
+            'lien_parente', 'document_justificatif'
+        ]
         widgets = {
             'date_naissance': forms.DateInput(attrs={'type': 'date'}),
         }
+        labels = {
+            'document_justificatif': 'Pièce justificative officielle (Extrait de naissance, acte de mariage - PDF/Image)',
+        }
+        help_texts = {
+            'document_justificatif': 'Document requis pour la validation administrative par l\'IPM (taille max: 10 Mo).',
+        }
+
+    def __init__(self, *args, assure_principal=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.assure_principal = assure_principal or getattr(self.instance, 'assure_principal', None)
 
     def clean_date_naissance(self):
         """La date de naissance ne peut pas être dans le futur."""
@@ -548,6 +571,51 @@ class AyantDroitForm(forms.ModelForm):
                 "La date de naissance ne peut pas être dans le futur."
             )
         return date_naissance
+
+    def clean_document_justificatif(self):
+        doc = self.cleaned_data.get('document_justificatif')
+        if doc and hasattr(doc, 'size') and doc.size > 10 * 1024 * 1024:
+            raise forms.ValidationError("Le document justificatif ne doit pas dépasser 10 Mo.")
+        return doc
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if not self.assure_principal:
+            return cleaned_data
+
+        lien_parente = cleaned_data.get('lien_parente')
+        max_total = getattr(settings, 'MAX_AYANTS_DROIT_PAR_ASSURE', 6)
+        max_conjoints = getattr(settings, 'MAX_CONJOINTS_PAR_ASSURE', 4)
+        max_enfants = getattr(settings, 'MAX_ENFANTS_PAR_ASSURE', 6)
+
+        # Verification du quota total lors de l'ajout d'un nouvel ayant droit
+        if not self.instance.pk:
+            nb_actuel = self.assure_principal.ayants_droit.count()
+            if nb_actuel >= max_total:
+                raise forms.ValidationError(
+                    f"Quota atteint : Vous ne pouvez pas inscrire plus de {max_total} ayants droit sous votre contrat IPM. "
+                    "Veuillez contacter le gestionnaire IPM pour toute dérogation."
+                )
+
+        # Verification des quotas par catégorie
+        if lien_parente == Patient.LienParente.CONJOINT:
+            qs_conjoints = self.assure_principal.ayants_droit.filter(lien_parente=Patient.LienParente.CONJOINT)
+            if self.instance.pk:
+                qs_conjoints = qs_conjoints.exclude(pk=self.instance.pk)
+            if qs_conjoints.count() >= max_conjoints:
+                raise forms.ValidationError(
+                    f"Limite atteinte : Le nombre maximal de conjoints déclarés est de {max_conjoints} (selon le Code de la famille)."
+                )
+        elif lien_parente == Patient.LienParente.ENFANT:
+            qs_enfants = self.assure_principal.ayants_droit.filter(lien_parente=Patient.LienParente.ENFANT)
+            if self.instance.pk:
+                qs_enfants = qs_enfants.exclude(pk=self.instance.pk)
+            if qs_enfants.count() >= max_enfants:
+                raise forms.ValidationError(
+                    f"Limite atteinte : Le nombre maximal d'enfants déclarés sous ce contrat est de {max_enfants}."
+                )
+
+        return cleaned_data
 
 
 class RendezVousAssureForm(forms.ModelForm):
@@ -611,10 +679,28 @@ class RendezVousAssureForm(forms.ModelForm):
                 'prestataire'
             ).order_by('nom', 'prenom')
 
+    def clean_patient(self):
+        patient = self.cleaned_data.get('patient')
+        if patient and not patient.est_valide:
+            raise forms.ValidationError(
+                "Ce bénéficiaire est en cours d'instruction administrative. Seuls les bénéficiaires validés par l'IPM peuvent prendre rendez-vous."
+            )
+        return patient
+
     def clean_date_heure(self):
         date_heure = self.cleaned_data['date_heure']
         if date_heure < timezone.now():
             raise forms.ValidationError("La date et l'heure du rendez-vous ne peuvent pas être dans le passé.")
+
+        heure_locale = timezone.localtime(date_heure) if timezone.is_aware(date_heure) else date_heure
+        if heure_locale.weekday() == 6:
+            raise forms.ValidationError(
+                "Les prises de rendez-vous en ligne ne sont pas assurées le dimanche (fermeture des consultations programmées). En cas d'urgence, veuillez vous présenter directement au service d'accueil."
+            )
+        if heure_locale.hour < 8 or (heure_locale.hour >= 19 and (heure_locale.minute > 0 or heure_locale.hour > 19)):
+            raise forms.ValidationError(
+                "Les rendez-vous sont planifiables uniquement pendant les heures d'ouverture (de 08h00 à 19h00)."
+            )
         return date_heure
 
     def clean(self):
@@ -877,9 +963,21 @@ class DemandePriseEnChargeAssureForm(forms.ModelForm):
     def __init__(self, *args, assure_patient=None, **kwargs):
         super().__init__(*args, **kwargs)
         if assure_patient:
-            membres = [assure_patient.pk] + list(assure_patient.ayants_droit.values_list('pk', flat=True))
-            self.fields['patient'].queryset = Patient.objects.filter(pk__in=membres)
+            membres_valides = [assure_patient.pk] + list(
+                assure_patient.ayants_droit.filter(
+                    statut_validation=Patient.StatutValidation.VALIDE
+                ).values_list('pk', flat=True)
+            )
+            self.fields['patient'].queryset = Patient.objects.filter(pk__in=membres_valides)
             self.fields['patient'].empty_label = None
+
+    def clean_patient(self):
+        patient = self.cleaned_data.get('patient')
+        if patient and not patient.est_valide:
+            raise forms.ValidationError(
+                "Ce bénéficiaire est en attente de validation par l'administration IPM et ne peut pas faire l'objet d'une prise en charge."
+            )
+        return patient
 
 
 

@@ -61,6 +61,10 @@ from .auth import (  # noqa: F401
     _comptes_bloques,
     debloquer_compte,
     activer_compte,
+    mot_de_passe_oublie,
+    mot_de_passe_oublie_envoye,
+    mot_de_passe_reinitialisation_confirm,
+    mot_de_passe_reinitialisation_termine,
 )
 
 # Pages publiques
@@ -96,6 +100,8 @@ from .patients import (  # noqa: F401
     supprimer_patient,
     carte_patient,
     carte_scan,
+    valider_ayant_droit,
+    refuser_ayant_droit,
 )
 
 # Médecins
@@ -243,6 +249,7 @@ from .assure_espace import (  # noqa: F401
     demander_prise_en_charge_assure,
     mon_historique_assure,
     carte_assure,
+    attestation_droits_assure,
 )
 
 # Notifications

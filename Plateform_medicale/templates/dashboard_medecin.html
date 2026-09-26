@@ -140,18 +140,26 @@
                         <span style="font-size:12px;color:var(--muted);">{{ rdv.motif|default:"Consultation générale" }}</span>
                     </div>
                 </div>
-                <div style="display:flex;align-items:center;gap:10px;">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                     {% if rdv.statut == 'TERMINE' %}
                     <span class="dash-pill ok" style="font-size:12px;">Consulté</span>
                     {% else %}
-                    <span class="dash-pill {% if rdv.statut == 'CONFIRME' %}ok{% elif rdv.statut == 'ANNULE' or rdv.statut == 'REFUSE' %}danger{% else %}attente{% endif %}">
+                    <span class="dash-pill {% if rdv.statut == 'CONFIRME' %}ok{% elif rdv.statut == 'ANNULE' or rdv.statut == 'REFUSE' or rdv.statut == 'ABSENT' %}danger{% else %}attente{% endif %}">
                         {{ rdv.get_statut_display }}
                     </span>
                     {% endif %}
                     {% if rdv.statut == 'CONFIRME' %}
                     <a href="{% url 'ajouter_consultation_medecin' %}?rdv_id={{ rdv.pk }}" class="button primary btn-sm">
-                        Démarrer
+                        Démarrer &rarr;
                     </a>
+                    <form method="post" action="{% url 'changer_statut_rendez_vous' rdv.pk %}" style="display:inline;margin:0;">
+                        {% csrf_token %}
+                        <input type="hidden" name="statut" value="ABSENT">
+                        <input type="hidden" name="next" value="{% url 'dashboard_medecin' %}">
+                        <button type="submit" class="button btn btn-sm" onclick="return confirm('Confirmer l\'absence du patient {{ rdv.patient|escapejs }} ?');" title="Patient ne s'est pas présenté" style="color:var(--muted);">
+                            Absent
+                        </button>
+                    </form>
                     {% elif rdv.statut == 'DEMANDE' %}
                     <a href="{% url 'agenda_medecin' %}?statut=DEMANDE" class="button btn-sm">
                         Traiter

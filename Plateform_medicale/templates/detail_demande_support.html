@@ -18,10 +18,10 @@
     </div>
     <div class="actions">
         {% if demande.statut != "FERME" %}
-        <form method="post" style="display:inline;margin:0;padding:0;background:transparent;border:none;box-shadow:none;">
+        <form method="post" style="display:inline;margin:0;padding:0;background:transparent;border:none;box-shadow:none;" data-confirmation="Voulez-vous vraiment clôturer cette demande d'assistance ?" data-confirmation-action="Oui, clôturer">
             {% csrf_token %}
             <input type="hidden" name="action" value="cloturer">
-            <button type="submit" class="button btn" onclick="return confirm('Voulez-vous vraiment clôturer cette demande d\'assistance ?');">
+            <button type="submit" class="button btn">
                 {% icone "check" %} Clôturer la demande
             </button>
         </form>

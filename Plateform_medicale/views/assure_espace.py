@@ -6,6 +6,7 @@ prises en charge, historique et navigation vers prestataires/médecins.
 import urllib.parse
 from decimal import Decimal
 
+from django.conf import settings
 from django.contrib import messages
 from django.db.models import Prefetch, Q
 from django.shortcuts import get_object_or_404, redirect, render
@@ -30,6 +31,7 @@ from ..models import (
     PriseEnCharge,
     RendezVous,
     User,
+    distance_km,
 )
 from .utils import _filtrer_rendez_vous, _paginer, journaliser, role_required
 
@@ -38,23 +40,16 @@ def _patient_principal(request):
     return getattr(request.user, "patient", None)
 
 
-def _beneficiaires(patient):
-    return Patient.objects.filter(
+def _beneficiaires(patient, uniquement_valides=False):
+    qs = Patient.objects.filter(
         Q(pk=patient.pk) | Q(assure_principal=patient)
     ).order_by("nom", "prenom")
-
-
-def _distance_km(lat1, lon1, lat2, lon2):
-    """Formule de Haversine : distance en km entre deux points GPS."""
-    import math
-    r = 6371.0
-    dlat = math.radians(lat2 - lat1)
-    dlon = math.radians(lon2 - lon1)
-    a = (
-        math.sin(dlat / 2) ** 2
-        + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2
-    )
-    return r * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    if uniquement_valides:
+        qs = qs.filter(
+            Q(type_beneficiaire=Patient.TypeBeneficiaire.PRINCIPAL)
+            | Q(statut_validation=Patient.StatutValidation.VALIDE)
+        )
+    return qs
 
 
 @role_required(User.Role.ASSURE)
@@ -89,7 +84,7 @@ def prestataires_proches(request):
     if localisation_active:
         prestataires_tries = sorted(
             (
-                (prestataire, round(_distance_km(
+                (prestataire, round(distance_km(
                     lat_utilisateur, lng_utilisateur,
                     float(prestataire.latitude), float(prestataire.longitude),
                 ), 1))
@@ -175,7 +170,7 @@ def dashboard_assure(request):
 
     qr_svg = patient.qr_svg(
         request.build_absolute_uri(reverse("carte_scan", args=[patient.numero_carte])),
-        taille_mm=75,
+        taille_mm=40,
     )
 
     dernieres_prises_en_charge = PriseEnCharge.objects.filter(
@@ -190,6 +185,13 @@ def dashboard_assure(request):
         rendez_vous_a_venir.select_related("medecin", "prestataire", "patient").order_by("date_heure")[:5]
     )
 
+    plan_couverture = patient.titulaire.plan_couverture if patient else None
+    plafond_annuel = plan_couverture.plafond_annuel if (plan_couverture and plan_couverture.plafond_annuel and plan_couverture.plafond_annuel > 0) else None
+    consommation_annuelle = patient.consommation_annuelle_assurance() if patient else Decimal("0")
+    plafond_restant = patient.plafond_annuel_restant() if patient else None
+    pourcentage_plafond = patient.pourcentage_plafond_consomme() if patient else 0.0
+    annee_civile = timezone.now().year
+
     contexte = {
         "patient": patient,
         "qr_svg": qr_svg,
@@ -200,6 +202,12 @@ def dashboard_assure(request):
         "prochains_rendez_vous": prochains_rdv,
         "dernieres_prises_en_charge": dernieres_prises_en_charge,
         "derniere_ordonnance": derniere_ordonnance,
+        "plan_couverture": plan_couverture,
+        "plafond_annuel": plafond_annuel,
+        "consommation_annuelle": consommation_annuelle,
+        "plafond_restant": plafond_restant,
+        "pourcentage_plafond": pourcentage_plafond,
+        "annee_civile": annee_civile,
     }
     return render(request, "dashboard_assure.html", contexte)
 
@@ -243,10 +251,18 @@ def liste_ayants_droit(request):
     patient = _patient_principal(request)
     if patient is None:
         return redirect("mon_profil_assure")
+    ayants = patient.ayants_droit.all().order_by("nom", "prenom")
+    max_total = getattr(settings, "MAX_AYANTS_DROIT_PAR_ASSURE", 6)
+    nb_ayants = ayants.count()
     return render(
         request,
         "liste_ayants_droit.html",
-        {"ayants_droit": patient.ayants_droit.all().order_by("nom", "prenom")},
+        {
+            "ayants_droit": ayants,
+            "quota_max": max_total,
+            "nb_ayants_droit": nb_ayants,
+            "quota_atteint": nb_ayants >= max_total,
+        },
     )
 
 
@@ -256,18 +272,61 @@ def ajouter_ayant_droit(request):
     if patient is None:
         return redirect("mon_profil_assure")
 
+    max_total = getattr(settings, "MAX_AYANTS_DROIT_PAR_ASSURE", 6)
+    nb_ayants = patient.ayants_droit.count()
+    if nb_ayants >= max_total:
+        messages.error(
+            request,
+            f"Quota atteint : Vous ne pouvez pas inscrire plus de {max_total} ayants droit sous votre contrat IPM. "
+            "Veuillez contacter le gestionnaire IPM de votre entreprise pour toute dérogation.",
+        )
+        return redirect("liste_ayants_droit")
+
     if request.method == "POST":
-        form = AyantDroitForm(request.POST)
+        form = AyantDroitForm(request.POST, request.FILES, assure_principal=patient)
         if form.is_valid():
             ayant_droit = form.save(commit=False)
             ayant_droit.type_beneficiaire = Patient.TypeBeneficiaire.AYANT_DROIT
             ayant_droit.assure_principal = patient
+            ayant_droit.statut_validation = Patient.StatutValidation.EN_ATTENTE
+            ayant_droit.motif_refus = ""
             ayant_droit.save()
-            messages.success(request, "Ayant droit ajouté.")
+
+            # Notification administrative automatique
+            from ..models import Notification, User
+            from ..services.notifications import emettre_notification
+            admins = User.objects.filter(role=User.Role.ADMIN, is_active=True)
+            for admin in admins:
+                emettre_notification(
+                    destinataire=admin,
+                    type_evenement=Notification.TypeEvenement.AYANT_DROIT_SOUMIS,
+                    titre="Nouvelle demande d'ayant droit",
+                    message=(
+                        f"L'assuré {patient.prenom} {patient.nom} a déclaré un nouvel ayant droit : "
+                        f"{ayant_droit.prenom} {ayant_droit.nom} ({ayant_droit.get_lien_parente_display()}). "
+                        "Veuillez vérifier les pièces justificatives et statuer sur cette demande."
+                    ),
+                    url_action=reverse("liste_patients") + "?type=AYANT_DROIT&statut=EN_ATTENTE",
+                )
+
+            messages.success(
+                request,
+                f"L'ayant droit {ayant_droit.prenom} {ayant_droit.nom} a été enregistré. "
+                "Son dossier a été transmis à l'administration IPM pour validation.",
+            )
             return redirect("liste_ayants_droit")
     else:
-        form = AyantDroitForm()
-    return render(request, "ajouter_ayant_droit.html", {"form": form})
+        form = AyantDroitForm(assure_principal=patient)
+    return render(
+        request,
+        "ajouter_ayant_droit.html",
+        {
+            "form": form,
+            "quota_max": max_total,
+            "nb_ayants_droit": nb_ayants,
+            "places_restantes": max(0, max_total - nb_ayants),
+        },
+    )
 
 
 @role_required(User.Role.ASSURE)
@@ -278,13 +337,30 @@ def modifier_ayant_droit(request, pk):
     ayant_droit = get_object_or_404(Patient, pk=pk, assure_principal=patient)
 
     if request.method == "POST":
-        form = AyantDroitForm(request.POST, instance=ayant_droit)
+        form = AyantDroitForm(request.POST, request.FILES, instance=ayant_droit, assure_principal=patient)
         if form.is_valid():
-            form.save()
-            messages.success(request, "Ayant droit modifié.")
+            ad = form.save(commit=False)
+            if ad.statut_validation == Patient.StatutValidation.REFUSE:
+                ad.statut_validation = Patient.StatutValidation.EN_ATTENTE
+                ad.motif_refus = ""
+                from ..models import Notification, User
+                from ..services.notifications import emettre_notification
+                for admin in User.objects.filter(role=User.Role.ADMIN, is_active=True):
+                    emettre_notification(
+                        destinataire=admin,
+                        type_evenement=Notification.TypeEvenement.AYANT_DROIT_SOUMIS,
+                        titre="Dossier ayant droit corrigé",
+                        message=(
+                            f"L'assuré {patient.prenom} {patient.nom} a complété/corrigé le dossier de "
+                            f"{ad.prenom} {ad.nom}. Le dossier est prêt pour ré-examen."
+                        ),
+                        url_action=reverse("liste_patients") + "?type=AYANT_DROIT&statut=EN_ATTENTE",
+                    )
+            ad.save()
+            messages.success(request, "Les informations et pièces de l'ayant droit ont été mises à jour.")
             return redirect("liste_ayants_droit")
     else:
-        form = AyantDroitForm(instance=ayant_droit)
+        form = AyantDroitForm(instance=ayant_droit, assure_principal=patient)
     return render(request, "modifier_ayant_droit.html", {"form": form, "ayant_droit": ayant_droit})
 
 
@@ -334,7 +410,7 @@ def ajouter_rendez_vous_assure(request):
     patient = _patient_principal(request)
     if patient is None:
         return redirect("mon_profil_assure")
-    beneficiaires = _beneficiaires(patient)
+    beneficiaires = _beneficiaires(patient, uniquement_valides=True)
 
     def _prestataire_demande(source):
         """Prestataire retenu, deduit du medecin s'il est fourni.
@@ -567,7 +643,7 @@ def mon_historique_assure(request):
 
 @role_required(User.Role.ASSURE)
 def carte_assure(request, pk=None):
-    """Carte de prise en charge dématérialisée pour l'assuré et ses ayants droit."""
+    """Carte de prise en charge 100% dématérialisée pour l'assuré et ses ayants droit."""
     patient_assure = _patient_principal(request)
     if patient_assure is None:
         return redirect("mon_profil_assure")
@@ -586,12 +662,19 @@ def carte_assure(request, pk=None):
         reverse("carte_scan", args=[patient.numero_carte])
     )
 
-    journaliser(request, JournalActivite.Action.CARTE, f"Carte de {patient}",
-                f"n° {patient.numero_carte}")
+    journaliser(request, JournalActivite.Action.CARTE, str(patient),
+                f"Consultation carte dématérialisée n° {patient.numero_carte}")
 
-    return render(request, "carte_patient.html", {
+    return render(request, "carte_assure.html", {
         "patient": patient,
         "qr_svg": patient.qr_svg(url_scan),
         "url_scan": url_scan,
     })
+
+
+@role_required(User.Role.ASSURE)
+def attestation_droits_assure(request):
+    """L'attestation papier A4 a été retirée : redirection directe vers la carte dématérialisée."""
+    return redirect("carte_assure")
+
 

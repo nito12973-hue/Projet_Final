@@ -1,0 +1,34 @@
+{% extends "base_auth.html" %}
+{% load icones %}
+
+{% block title %}Mot de passe oublié — SantéSN{% endblock %}
+
+{% block content %}
+<a href="{% url 'login' %}" class="lien-retour-accueil">{% icone "chevron-left" %} Retour à la connexion</a>
+<h1>Mot de passe oublié</h1>
+<p class="sous-titre">Saisissez l'adresse email liée à votre compte SantéSN pour recevoir un lien sécurisé de réinitialisation.</p>
+
+{% if form.non_field_errors %}
+<div class="erreurs" role="alert">
+    {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+</div>
+{% endif %}
+
+<form method="post" novalidate>
+    {% csrf_token %}
+
+    <label for="{{ form.email.id_for_label }}">Adresse email</label>
+    {{ form.email }}
+    {% if form.email.errors %}
+    <div class="erreurs" role="alert">{{ form.email.errors }}</div>
+    {% endif %}
+
+    <button type="submit" class="btn-principal" style="margin-top: 4px;">
+        {% icone "send" %} Envoyer les instructions
+    </button>
+</form>
+
+<div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 13px; color: var(--muted); text-align: center;">
+    Vous vous souvenez de votre mot de passe ? <a href="{% url 'login' %}" style="color: var(--primary); text-decoration: none; font-weight: 600;">Se connecter</a>
+</div>
+{% endblock %}

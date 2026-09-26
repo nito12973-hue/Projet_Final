@@ -11,7 +11,7 @@ from django.conf import settings
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator, RegexValidator
+from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
 from django.utils import timezone
 
@@ -252,12 +252,39 @@ class Patient(models.Model):
     telephone = models.CharField(max_length=20, blank=True, validators=[valider_telephone])
     adresse = models.TextField(blank=True)
 
+    class StatutValidation(models.TextChoices):
+        VALIDE = "VALIDE", "Validé"
+        EN_ATTENTE = "EN_ATTENTE", "En attente de validation"
+        REFUSE = "REFUSE", "Refusé"
+
     type_beneficiaire = models.CharField(
         max_length=20,
         choices=TypeBeneficiaire.choices,
         default=TypeBeneficiaire.PRINCIPAL,
         db_index=True,
     )
+    statut_validation = models.CharField(
+        "statut de validation IPM",
+        max_length=20,
+        choices=StatutValidation.choices,
+        default=StatutValidation.VALIDE,
+        db_index=True,
+    )
+    document_justificatif = models.FileField(
+        "pièce justificative (état civil / scolarité)",
+        upload_to="justificatifs_ayants_droit/",
+        blank=True,
+        null=True,
+    )
+    date_decision = models.DateTimeField("date de décision", null=True, blank=True)
+    valide_par = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="ayants_droit_valides",
+    )
+    motif_refus = models.CharField("motif de refus", max_length=255, blank=True, default="")
     assure_principal = models.ForeignKey(
         "self",
         on_delete=models.CASCADE,
@@ -326,6 +353,13 @@ class Patient(models.Model):
         return self.type_beneficiaire == self.TypeBeneficiaire.AYANT_DROIT
 
     @property
+    def est_valide(self):
+        """Un assuré principal est toujours valide ; un ayant droit doit être approuvé par l'IPM."""
+        if self.type_beneficiaire == self.TypeBeneficiaire.PRINCIPAL:
+            return True
+        return self.statut_validation == self.StatutValidation.VALIDE
+
+    @property
     def titulaire(self):
         """Le beneficiaire porteur du plan de couverture (soi-meme si principal)."""
         return self.assure_principal if self.est_ayant_droit and self.assure_principal_id else self
@@ -336,17 +370,28 @@ class Patient(models.Model):
         return plan.taux_couverture if plan else None
 
     def consommation_annuelle_assurance(self, annee=None):
-        """Total des remboursements (parts assurance) consommés par le foyer sur l'année civile."""
+        """Total des remboursements (parts assurance) consommés par le foyer sur l'année civile (consultations + pharmacie)."""
+        from django.apps import apps
         from django.db.models import Sum
         if annee is None:
             annee = timezone.now().year
         titulaire = self.titulaire
         membres_foyer = [titulaire.pk] + list(titulaire.ayants_droit.values_list("pk", flat=True))
-        total = Paiement.objects.filter(
+
+        PaiementModel = apps.get_model("Plateform_medicale", "Paiement")
+        DelivranceModel = apps.get_model("Plateform_medicale", "Delivrance")
+
+        total_consultations = PaiementModel.objects.filter(
             consultation__patient_id__in=membres_foyer,
             consultation__date_consultation__year=annee,
-        ).aggregate(total=Sum("montant_part_assurance"))["total"]
-        return total or Decimal("0")
+        ).aggregate(total=Sum("montant_part_assurance"))["total"] or Decimal("0")
+
+        total_pharmacie = DelivranceModel.objects.filter(
+            ordonnance__consultation__patient_id__in=membres_foyer,
+            date_delivrance__year=annee,
+        ).aggregate(total=Sum("montant_part_assurance"))["total"] or Decimal("0")
+
+        return total_consultations + total_pharmacie
 
     def plafond_annuel_restant(self, annee=None):
         """Montant restant sous le plafond annuel pour l'année civile (None si illimité)."""
@@ -355,6 +400,15 @@ class Patient(models.Model):
             return None
         consomme = self.consommation_annuelle_assurance(annee=annee)
         return max(Decimal("0"), Decimal(str(plan.plafond_annuel)) - Decimal(str(consomme)))
+
+    def pourcentage_plafond_consomme(self, annee=None):
+        """Pourcentage de consommation du plafond annuel (0.0 si illimité ou nul)."""
+        plan = self.titulaire.plan_couverture
+        if not plan or plan.plafond_annuel is None or plan.plafond_annuel <= 0:
+            return 0.0
+        consomme = self.consommation_annuelle_assurance(annee=annee)
+        ratio = (Decimal(str(consomme)) / Decimal(str(plan.plafond_annuel))) * 100
+        return min(100.0, float(round(ratio, 1)))
 
 
 
@@ -392,6 +446,10 @@ class Medecin(models.Model):
 
     def __str__(self):
         return f"Dr {self.prenom} {self.nom}"
+
+    @property
+    def nom_complet(self):
+        return f"{self.prenom} {self.nom}".strip()
 
 
 class Pharmacien(models.Model):
@@ -468,7 +526,7 @@ class PriseEnCharge(models.Model):
         ("terminee", "Terminée"),
     ]
 
-    patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
+    patient = models.ForeignKey(Patient, on_delete=models.PROTECT)
     date_demande = models.DateTimeField(auto_now_add=True)
     motif = models.TextField()
     statut = models.CharField(
@@ -537,8 +595,8 @@ class Consultation(models.Model):
         SPONTANE = "SPONTANE", "Passage spontané"
         URGENCE = "URGENCE", "Urgence médicale"
 
-    patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
-    medecin = models.ForeignKey(Medecin, on_delete=models.CASCADE)
+    patient = models.ForeignKey(Patient, on_delete=models.PROTECT)
+    medecin = models.ForeignKey(Medecin, on_delete=models.PROTECT)
     service = models.ForeignKey(ServiceMedical, on_delete=models.SET_NULL, null=True, blank=True)
     prise_en_charge = models.ForeignKey(
         PriseEnCharge,
@@ -631,7 +689,10 @@ class Paiement(models.Model):
         la part assurance au reliquat budgétaire annuel disponible pour le foyer.
         """
         from django.db.models import Sum
-        montant_total = consultation.service.prix if consultation.service_id else Decimal("0")
+        if hasattr(consultation, "paiement") and consultation.paiement.montant_total and consultation.paiement.montant_total > Decimal("0"):
+            montant_total = consultation.paiement.montant_total
+        else:
+            montant_total = consultation.service.prix if consultation.service_id else Decimal("0")
         taux = Decimal("0")
         prise_en_charge = consultation.prise_en_charge
         if prise_en_charge is not None and prise_en_charge.statut == "validee":
@@ -796,6 +857,7 @@ class RendezVous(models.Model):
         CONFIRME = "CONFIRME", "Confirmé"
         REFUSE = "REFUSE", "Refusé"
         ANNULE = "ANNULE", "Annulé"
+        ABSENT = "ABSENT", "Absent (non venu)"
         TERMINE = "TERMINE", "Terminé"
 
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name="rendez_vous")
@@ -835,11 +897,11 @@ class RendezVous(models.Model):
             # creneau chez le MEME medecin -- le systeme acceptait, et les
             # deux se presentaient.
             #
-            # Les rendez-vous ANNULES et REFUSES sont exclus : annuler ou refuser
-            # doit liberer le creneau pour un autre patient.
+            # Les rendez-vous ANNULES, REFUSES et ABSENTS sont exclus : annuler, refuser
+            # ou constater l'absence libere le creneau pour un autre patient.
             models.UniqueConstraint(
                 fields=["medecin", "date_heure"],
-                condition=~models.Q(statut__in=["ANNULE", "REFUSE"]),
+                condition=~models.Q(statut__in=["ANNULE", "REFUSE", "ABSENT"]),
                 name="rdv_creneau_unique_par_medecin",
                 violation_error_message=(
                     "Ce créneau est déjà réservé pour ce médecin. "
@@ -858,11 +920,11 @@ class RendezVous(models.Model):
         super().clean()
         if self.medecin_id is None or self.date_heure is None:
             return
-        if self.statut in (self.Statut.ANNULE, self.Statut.REFUSE):
+        if self.statut in (self.Statut.ANNULE, self.Statut.REFUSE, self.Statut.ABSENT):
             return
         conflit = RendezVous.objects.filter(
             medecin_id=self.medecin_id, date_heure=self.date_heure
-        ).exclude(statut__in=[self.Statut.ANNULE, self.Statut.REFUSE])
+        ).exclude(statut__in=[self.Statut.ANNULE, self.Statut.REFUSE, self.Statut.ABSENT])
         if self.pk:
             conflit = conflit.exclude(pk=self.pk)
         if conflit.exists():
@@ -881,8 +943,37 @@ class Delivrance(models.Model):
     """Delivrance d'une ordonnance par un pharmacien (une seule par ordonnance)."""
 
     ordonnance = models.OneToOneField(Ordonnance, on_delete=models.CASCADE, related_name="delivrance")
-    pharmacien = models.ForeignKey(Pharmacien, on_delete=models.CASCADE, related_name="delivrances")
+    pharmacien = models.ForeignKey(Pharmacien, on_delete=models.PROTECT, related_name="delivrances")
     date_delivrance = models.DateTimeField(auto_now_add=True)
+
+    montant_total = models.DecimalField(
+        "Montant total des médicaments (FCFA)",
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        validators=[MinValueValidator(Decimal("0.00"))],
+    )
+    taux_couverture = models.DecimalField(
+        "Taux de prise en charge appliqué (%)",
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        validators=[MinValueValidator(Decimal("0.00")), MaxValueValidator(Decimal("100.00"))],
+    )
+    montant_part_assurance = models.DecimalField(
+        "Part prise en charge / IPM (FCFA)",
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        validators=[MinValueValidator(Decimal("0.00"))],
+    )
+    montant_part_patient = models.DecimalField(
+        "Part payée par le patient / Ticket modérateur (FCFA)",
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        validators=[MinValueValidator(Decimal("0.00"))],
+    )
 
     class Meta:
         verbose_name = "delivrance"
@@ -891,6 +982,17 @@ class Delivrance(models.Model):
 
     def __str__(self):
         return f"Delivrance de {self.ordonnance} par {self.pharmacien}"
+
+    def calculer_partages(self):
+        """Calcule la part assurance et le ticket modérateur selon le montant total et le taux de couverture."""
+        total = self.montant_total or Decimal("0.00")
+        taux = self.taux_couverture or Decimal("0.00")
+        if total > Decimal("0.00") and taux > Decimal("0.00"):
+            self.montant_part_assurance = (total * taux / Decimal("100")).quantize(Decimal("1"))
+            self.montant_part_patient = total - self.montant_part_assurance
+        else:
+            self.montant_part_assurance = Decimal("0.00")
+            self.montant_part_patient = total
 
 
 class Notification(models.Model):
@@ -908,6 +1010,9 @@ class Notification(models.Model):
         DELIVRANCE_EFFECTUEE = "DELIVRANCE_EFFECTUEE", "Délivrance effectuée"
         SUPPORT_DEMANDE = "SUPPORT_DEMANDE", "Nouvelle demande d'assistance"
         SUPPORT_REPONSE = "SUPPORT_REPONSE", "Réponse de l'administration"
+        AYANT_DROIT_SOUMIS = "AYANT_DROIT_SOUMIS", "Demande d'ayant droit soumise"
+        AYANT_DROIT_VALIDE = "AYANT_DROIT_VALIDE", "Ayant droit validé par l'IPM"
+        AYANT_DROIT_REFUSE = "AYANT_DROIT_REFUSE", "Ayant droit refusé par l'IPM"
         SYSTEME = "SYSTEME", "Notification système"
 
     destinataire = models.ForeignKey(

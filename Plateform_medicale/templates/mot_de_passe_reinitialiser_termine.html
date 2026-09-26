@@ -1,0 +1,20 @@
+{% extends "base_auth.html" %}
+{% load icones %}
+
+{% block title %}Mot de passe réinitialisé — SantéSN{% endblock %}
+
+{% block content %}
+<div style="text-align: center; margin-bottom: 24px;">
+    <div class="cercle-statut">
+        {% icone "check" %}
+    </div>
+    <h1 style="margin-bottom: 8px;">Mot de passe réinitialisé !</h1>
+    <p class="sous-titre" style="margin-bottom: 0;">
+        Votre mot de passe a été mis à jour avec succès. Vous pouvez désormais vous connecter avec vos nouveaux identifiants.
+    </p>
+</div>
+
+<a href="{% url 'login' %}" class="btn-principal">
+    {% icone "lock" %} Se connecter
+</a>
+{% endblock %}

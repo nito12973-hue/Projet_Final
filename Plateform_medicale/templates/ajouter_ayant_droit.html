@@ -7,17 +7,21 @@
 <section class="page-title">
     <div>
         <h1>Ajouter un ayant droit</h1>
-        <p class="subtitle">Une carte de prise en charge sera générée automatiquement.</p>
+        <p class="subtitle">Une carte de prise en charge sera générée automatiquement &bull; Place(s) restante(s) sur votre contrat : <strong>{{ places_restantes }}</strong> ({{ nb_ayants_droit }}/{{ quota_max }} inscrits).</p>
     </div>
     <a class="button btn" href="{% url 'liste_ayants_droit' %}">{% icone "chevron-left" %} Retour</a>
 </section>
 
 <section class="panel panel-form" style="border-radius: 16px; box-shadow: var(--ombre-douce); padding: 24px;">
+    <div style="background: var(--surface-alt); border-left: 4px solid var(--primary); padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; color: var(--texte); line-height: 1.5;">
+        <strong>Procédure de vérification administrative :</strong> Conformément aux règles d'affiliation IPM et aux contrôles anti-fraude, toute nouvelle déclaration d'ayant droit est examinée par l'administration. Veuillez joindre une pièce justificative officielle (extrait de naissance pour un enfant, acte de mariage pour un conjoint). Les droits de tiers payant seront activés dès validation.
+    </div>
+
     {% if form.non_field_errors %}
     <div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
     {% endif %}
 
-    <form method="post">
+    <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {% for field in form %}
         <label for="{{ field.id_for_label }}" style="font-weight: 600; font-size: 13.5px; margin-bottom: 4px; display: block;">{{ field.label }}</label>

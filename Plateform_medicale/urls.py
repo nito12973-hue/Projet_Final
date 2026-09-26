@@ -18,6 +18,13 @@ urlpatterns = [
 
     path('connexion/', views.login_view, name='login'),
     path('deconnexion/', views.logout_view, name='logout'),
+    path('mot-de-passe-oublie/', views.mot_de_passe_oublie, name='mot_de_passe_oublie'),
+    path('mot-de-passe-oublie/envoye/', views.mot_de_passe_oublie_envoye, name='mot_de_passe_oublie_envoye'),
+    path('mot-de-passe-reinitialisation/<uidb64>/<token>/', views.mot_de_passe_reinitialisation_confirm, name='password_reset_confirm'),
+    path('mot-de-passe-reinitialisation/<uidb64>/<token>/', views.mot_de_passe_reinitialisation_confirm, name='mot_de_passe_reinitialisation_confirm'),
+    path('mot-de-passe-reinitialisation/termine/', views.mot_de_passe_reinitialisation_termine, name='password_reset_complete'),
+    path('mot-de-passe-reinitialisation/termine/', views.mot_de_passe_reinitialisation_termine, name='mot_de_passe_reinitialisation_termine'),
+    path('mot-de-passe-reinitialisation/termine/', views.mot_de_passe_reinitialisation_termine, name='mot_de_passe_reinitialiser_termine'),
     path('activer-compte/<uidb64>/<token>/', views.activer_compte, name='activer_compte'),
     path('redirection/', views.post_login_redirect, name='post_login_redirect'),
     path('installation/', views.setup_wizard, name='setup_wizard'),
@@ -48,6 +55,8 @@ urlpatterns = [
     path('patients/ajouter/', views.ajouter_patient, name='ajouter_patient'),
     path('patients/<int:pk>/modifier/', views.modifier_patient, name='modifier_patient'),
     path('patients/<int:pk>/supprimer/', views.supprimer_patient, name='supprimer_patient'),
+    path('patients/<int:pk>/valider/', views.valider_ayant_droit, name='valider_ayant_droit'),
+    path('patients/<int:pk>/refuser/', views.refuser_ayant_droit, name='refuser_ayant_droit'),
 
     path('medecins/', views.liste_medecins, name='liste_medecins'),
     path('medecins/ajouter/', views.ajouter_medecin, name='ajouter_medecin'),
@@ -116,6 +125,7 @@ urlpatterns = [
 
     path('assure/carte/', views.carte_assure, name='carte_assure'),
     path('assure/carte/<int:pk>/', views.carte_assure, name='carte_assure_detail'),
+    path('assure/attestation-droits/', views.attestation_droits_assure, name='attestation_droits_assure'),
     path('assure/profil/', views.mon_profil_assure, name='mon_profil_assure'),
     path('assure/ayants-droit/', views.liste_ayants_droit, name='liste_ayants_droit'),
     path('assure/ayants-droit/ajouter/', views.ajouter_ayant_droit, name='ajouter_ayant_droit'),

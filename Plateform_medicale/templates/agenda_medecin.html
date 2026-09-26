@@ -101,7 +101,7 @@
                     <span style="font-size:13px;color:var(--text);">{{ rdv.motif|default:"Consultation générale" }}</span>
                 </td>
                 <td>
-                    <span class="badge {% if rdv.statut == 'DEMANDE' %}en_attente{% elif rdv.statut == 'CONFIRME' %}confirme{% elif rdv.statut == 'ANNULE' or rdv.statut == 'REFUSE' %}refusee{% elif rdv.statut == 'TERMINE' %}terminee{% endif %}">
+                    <span class="badge {% if rdv.statut == 'DEMANDE' %}en_attente{% elif rdv.statut == 'CONFIRME' %}confirme{% elif rdv.statut == 'ANNULE' or rdv.statut == 'REFUSE' or rdv.statut == 'ABSENT' %}refusee{% elif rdv.statut == 'TERMINE' %}terminee{% endif %}">
                         {{ rdv.get_statut_display }}
                     </span>
                 </td>
@@ -117,6 +117,13 @@
                             {% csrf_token %}
                             <input type="hidden" name="statut" value="ANNULE">
                             <button type="submit" class="button btn btn-danger btn-sm" title="Annuler le rendez-vous">Annuler</button>
+                        </form>
+                        <form method="post" action="{% url 'changer_statut_rendez_vous' rdv.pk %}" class="action-ligne" style="margin:0;display:inline;"
+                              data-confirmation="Déclarer le patient {{ rdv.patient }} absent (non venu) ?"
+                              data-confirmation-action="Oui, déclarer absent">
+                            {% csrf_token %}
+                            <input type="hidden" name="statut" value="ABSENT">
+                            <button type="submit" class="button btn btn-sm" style="border:1px solid var(--border);color:var(--text);background:var(--surface);" title="Signaler patient absent (no-show)">Absent</button>
                         </form>
                         {% elif rdv.statut == 'DEMANDE' %}
                         <form method="post" action="{% url 'changer_statut_rendez_vous' rdv.pk %}" class="action-ligne" style="margin:0;display:inline;">

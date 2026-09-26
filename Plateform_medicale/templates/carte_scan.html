@@ -14,8 +14,19 @@
             · ayant droit de {{ patient.assure_principal }}
             {% endif %}
         </p>
-    </div>
 </section>
+
+{% if carte_inactive %}
+<div class="message-banner danger" style="background: rgba(239, 68, 68, 0.1); border: 2px solid var(--danger); padding: 18px 20px; border-radius: 12px; margin-bottom: 24px;">
+    <h3 style="color: var(--danger); margin: 0 0 6px; font-size: 16px; font-weight: 700;">
+        {% icone "alert-triangle" %} CARTE INACTIVE &bull; PRISE EN CHARGE REFUSÉE
+    </h3>
+    <p style="margin: 0; font-size: 13.5px; color: var(--texte); line-height: 1.5;">
+        Ce bénéficiaire est actuellement <strong>{{ statut_validation }}</strong> auprès de l'IPM. Les droits au tiers payant ne sont pas validés.
+        Aucune prise en charge directe ni délivrance conventionnée ne peut être enregistrée sur ce numéro de carte.
+    </p>
+</div>
+{% endif %}
 
 <section class="panel panel-bloc" style="margin-bottom:18px;">
     <div class="param-grille">
@@ -61,6 +72,9 @@ donc pas l'historique medical du patient.
                 <th scope="col">Médecin</th>
                 <th scope="col">Médicaments</th>
                 <th scope="col">État</th>
+                {% if user.role == 'PHARMACIEN' %}
+                <th scope="col" style="text-align:right;">Action</th>
+                {% endif %}
             </tr>
         </thead>
         <tbody>
@@ -91,10 +105,29 @@ donc pas l'historique medical du patient.
                 <td>
                     {% if ordonnance.delivrance %}
                     <span class="badge validee">Délivrée le {{ ordonnance.delivrance.date_delivrance|date:"d/m/Y" }}</span>
+                    {% elif ordonnance.est_annulee %}
+                    <span class="badge refusee">Annulée</span>
+                    {% elif ordonnance.est_expiree %}
+                    <span class="badge refusee">Expirée</span>
                     {% else %}
                     <span class="badge en_attente">À délivrer</span>
                     {% endif %}
                 </td>
+                {% if user.role == 'PHARMACIEN' %}
+                <td style="text-align:right;">
+                    {% if not ordonnance.delivrance and not ordonnance.est_annulee and not ordonnance.est_expiree %}
+                    <form method="post" action="{% url 'scanner_ordonnance' %}" style="display:inline-block;margin:0;">
+                        {% csrf_token %}
+                        <input type="hidden" name="code_qr" value="{{ ordonnance.code_qr }}">
+                        <button type="submit" class="button primary btn btn-sm">
+                            {% icone "check" %} Délivrer
+                        </button>
+                    </form>
+                    {% else %}
+                    <span style="color:var(--text-muted);font-size:12.5px;">—</span>
+                    {% endif %}
+                </td>
+                {% endif %}
             </tr>
             {% endfor %}
         </tbody>

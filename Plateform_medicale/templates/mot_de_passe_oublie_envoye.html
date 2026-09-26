@@ -1,0 +1,24 @@
+{% extends "base_auth.html" %}
+{% load icones %}
+
+{% block title %}Email envoyé — SantéSN{% endblock %}
+
+{% block content %}
+<div style="text-align: center; margin-bottom: 24px;">
+    <div class="cercle-statut">
+        {% icone "mail" %}
+    </div>
+    <h1 style="margin-bottom: 8px;">Vérifiez votre boîte de réception</h1>
+    <p class="sous-titre" style="margin-bottom: 0;">
+        Si un compte actif correspond à cette adresse email, un message contenant les instructions et un lien sécurisé de réinitialisation vient de vous être envoyé.
+    </p>
+</div>
+
+<div class="avis-info" style="margin-bottom: 24px;">
+    {% icone "info" %} <span>Par mesure de sécurité, ce lien est à usage unique et expire dans 24 heures. Pensez également à vérifier vos courriers indésirables (spams).</span>
+</div>
+
+<a href="{% url 'login' %}" class="btn-principal">
+    {% icone "chevron-left" %} Retour à la page de connexion
+</a>
+{% endblock %}

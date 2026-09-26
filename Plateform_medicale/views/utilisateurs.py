@@ -13,7 +13,7 @@ from openpyxl.utils import get_column_letter
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import ProtectedError, Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
@@ -36,14 +36,14 @@ from ..models import (
     valider_telephone,
 )
 from ..services.onboarding import construire_bilan_onboarding, envoyer_activation_utilisateur
-from .utils import _cellule_csv, _paginer, _trier, admin_required, journaliser
-
-
-def _normaliser_texte_import(valeur):
-    """Normalise une valeur de cellule pour une comparaison insensible aux accents/majuscules."""
-    texte = "" if valeur is None else str(valeur).strip()
-    texte = unicodedata.normalize("NFKD", texte).encode("ascii", "ignore").decode("ascii")
-    return texte.upper()
+from .utils import (
+    _cellule_csv,
+    _normaliser_texte_import,
+    _paginer,
+    _trier,
+    admin_required,
+    journaliser,
+)
 
 
 def _filtrer_utilisateurs(request):
@@ -582,13 +582,26 @@ def supprimer_utilisateur(request, pk):
         return redirect("liste_utilisateurs")
 
     if request.method == "POST":
-        # Journalise AVANT delete() : apres, l'objet n'a plus d'email a citer.
-        # L'entree, elle, survit -- elle ne porte que du texte fige.
-        journaliser(request, JournalActivite.Action.SUPPRESSION, f"Utilisateur {utilisateur.email}",
-                    f"role : {utilisateur.get_role_display()}")
-        utilisateur.delete()
-        messages.success(request, "Utilisateur supprimé.")
-        return redirect("liste_utilisateurs")
+        email_utilisateur = utilisateur.email
+        role_libelle = utilisateur.get_role_display()
+        try:
+            with transaction.atomic():
+                utilisateur.delete()
+                journaliser(
+                    request,
+                    JournalActivite.Action.SUPPRESSION,
+                    f"Utilisateur {email_utilisateur}",
+                    f"role : {role_libelle}",
+                )
+                messages.success(request, f"Utilisateur {email_utilisateur} supprimé avec succès.")
+                return redirect("liste_utilisateurs")
+        except ProtectedError:
+            messages.error(
+                request,
+                f"Impossible de supprimer le compte {email_utilisateur} : des dossiers médicaux ou profils protégés lui sont associés. "
+                "Veuillez plutôt désactiver ce compte utilisateur.",
+            )
+            return redirect("liste_utilisateurs")
     return render(
         request,
         "confirmer_suppression.html",
