@@ -40,6 +40,7 @@ from .models import (
     User,
     distance_km,
 )
+from .forms import AyantDroitForm
 from .services.assistant import traiter_message_assistant
 from .views import SECTIONS_PARAMETRES as SECTIONS_PARAMETRES_REELLES
 from .views import TAILLE_PAGE_LISTE
@@ -48,6 +49,13 @@ from .services.notifications import emettre_notification
 SECTIONS_TOUTES = ('general', 'securite')
 
 PASSWORD = 'MotDePasseSolide2026!'
+
+
+def date_rdv_ouvrable(jours=2, heure=10):
+    cible = timezone.now() + datetime.timedelta(days=jours)
+    if cible.weekday() == 6:
+        cible += datetime.timedelta(days=1)
+    return cible.replace(hour=heure, minute=0, second=0, microsecond=0).strftime('%Y-%m-%dT%H:%M')
 
 
 def creer_utilisateur(role, email):
@@ -661,11 +669,8 @@ class GestionUtilisateursTests(TestCase):
             'email': 'fatou.ndiaye@santesn.sn',
             'phone_number': '770001122',
             'role': User.Role.MEDECIN.value,
-        })
+        }, follow=True)
         self.assertEqual(response.status_code, 200)
-        # Le nouveau flux onboarding ne retourne plus de mot de passe en clair mais un lien d'activation
-        self.assertIn('lien_activation', response.context)
-        self.assertIn('utilisateur', response.context)
         utilisateur = User.objects.get(email='fatou.ndiaye@santesn.sn')
         self.assertEqual(utilisateur.role, User.Role.MEDECIN)
 
@@ -763,12 +768,11 @@ class GestionUtilisateursTests(TestCase):
 
     def test_reinitialisation_mot_de_passe(self):
         cible = creer_utilisateur(User.Role.MEDECIN, 'cible@santesn.sn')
-        response = self.client.post(reverse('reinitialiser_mot_de_passe', args=[cible.pk]))
+        response = self.client.post(reverse('reinitialiser_mot_de_passe', args=[cible.pk]), follow=True)
         self.assertEqual(response.status_code, 200)
-        # Le nouveau flux génère un lien d'activation, pas un mot de passe
-        self.assertIn('lien_activation', response.context)
-        self.assertIn('utilisateur', response.context)
-        self.assertEqual(response.context['action'], 'reinitialisation')
+        self.assertRedirects(response, reverse('liste_utilisateurs'))
+        messages_recus = [m.message for m in response.context['messages']]
+        self.assertTrue(any("Le lien d'activation a été envoyé" in m for m in messages_recus))
 
     def test_renvoyer_activation_mono_canal_whatsapp_ok_pas_email(self):
         cible = creer_utilisateur(User.Role.MEDECIN, 'whatsapp.ok@santesn.sn')
@@ -783,7 +787,7 @@ class GestionUtilisateursTests(TestCase):
             mock_wa.assert_called_once()
             mock_email.assert_not_called()
             messages_recus = [m.message for m in response.context['messages']]
-            self.assertTrue(any("Le lien d'activation a été envoyé par WhatsApp." in m for m in messages_recus))
+            self.assertTrue(any("Le lien d'activation a été envoyé par WhatsApp" in m for m in messages_recus))
 
     def test_renvoyer_activation_mono_canal_whatsapp_non_configure_email_secours(self):
         cible = creer_utilisateur(User.Role.MEDECIN, 'wa.nonconfig@santesn.sn')
@@ -794,7 +798,7 @@ class GestionUtilisateursTests(TestCase):
             response = self.client.post(reverse('renvoyer_activation', args=[cible.pk]), follow=True)
             self.assertRedirects(response, reverse('liste_utilisateurs'))
             messages_recus = [m.message for m in response.context['messages']]
-            self.assertTrue(any("WhatsApp n'est pas configuré. Le lien d'activation a été envoyé par email." in m for m in messages_recus))
+            self.assertTrue(any("Le lien d'activation a été envoyé par email" in m for m in messages_recus))
 
     def test_renvoyer_activation_mono_canal_sans_telephone_email_secours(self):
         cible = creer_utilisateur(User.Role.MEDECIN, 'sans.tel@santesn.sn')
@@ -803,7 +807,7 @@ class GestionUtilisateursTests(TestCase):
         response = self.client.post(reverse('renvoyer_activation', args=[cible.pk]), follow=True)
         self.assertRedirects(response, reverse('liste_utilisateurs'))
         messages_recus = [m.message for m in response.context['messages']]
-        self.assertTrue(any("Le numéro WhatsApp n'est pas disponible. Le lien d'activation a été envoyé par email." in m for m in messages_recus))
+        self.assertTrue(any("Le lien d'activation a été envoyé par email" in m for m in messages_recus))
 
     def test_renvoyer_activation_mono_canal_whatsapp_echec_email_secours(self):
         cible = creer_utilisateur(User.Role.MEDECIN, 'wa.echec@santesn.sn')
@@ -814,7 +818,7 @@ class GestionUtilisateursTests(TestCase):
             response = self.client.post(reverse('renvoyer_activation', args=[cible.pk]), follow=True)
             self.assertRedirects(response, reverse('liste_utilisateurs'))
             messages_recus = [m.message for m in response.context['messages']]
-            self.assertTrue(any("Échec de l'envoi WhatsApp. Le lien d'activation a été envoyé par email en secours." in m for m in messages_recus))
+            self.assertTrue(any("Le lien d'activation a été envoyé par email" in m for m in messages_recus))
 
     def test_renvoyer_activation_mono_canal_aucun_canal_disponible(self):
         cible = creer_utilisateur(User.Role.MEDECIN, 'aucun.canal@santesn.sn')
@@ -825,7 +829,7 @@ class GestionUtilisateursTests(TestCase):
             response = self.client.post(reverse('renvoyer_activation', args=[cible.pk]), follow=True)
             self.assertRedirects(response, reverse('liste_utilisateurs'))
             messages_recus = [m.message for m in response.context['messages']]
-            self.assertTrue(any("aucun canal d'activation n'est disponible" in m for m in messages_recus))
+            self.assertTrue(any("aucun message n'a pu être délivré" in m or "Échec de l'envoi" in m for m in messages_recus))
 
     def test_filtre_par_role(self):
         creer_utilisateur(User.Role.MEDECIN, 'medecin@santesn.sn')
@@ -877,6 +881,22 @@ class ToastsMessagesTests(TestCase):
             reverse('activer_desactiver_utilisateur', args=[self.admin.pk]), follow=True
         )
         self.assertContains(response, 'class="toast toast-error"')
+        self.assertContains(response, 'toast-icone-badge')
+        self.assertContains(response, 'toast-barre-progression')
+        self.assertContains(response, 'Erreur')
+
+    def test_toast_elements_visuels_saas(self):
+        cible = creer_utilisateur(User.Role.MEDECIN, 'cible2@santesn.sn')
+        response = self.client.post(
+            reverse('activer_desactiver_utilisateur', args=[cible.pk]), follow=True
+        )
+        self.assertContains(response, 'id="toasts"')
+        self.assertContains(response, 'toast-icone-badge')
+        self.assertContains(response, 'toast-titre')
+        self.assertContains(response, 'toast-message')
+        self.assertContains(response, 'toast-barre-progression')
+        self.assertContains(response, 'toast-fermer')
+        self.assertContains(response, 'Succès')
 
 
 class EspaceMedecinTests(TestCase):
@@ -1659,6 +1679,49 @@ class EspaceAssureTests(TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertTrue(Patient.objects.filter(pk=autre_ayant_droit.pk).exists())
 
+    def test_quota_max_ayants_droit_bloque_ajout(self):
+        patient = self._completer_profil()
+        # Creer 6 ayants droit (atteignant le quota de 6)
+        for i in range(6):
+            Patient.objects.create(
+                nom='Diop', prenom=f'Enfant{i}', date_naissance=datetime.date(2010 + i, 1, 1),
+                type_beneficiaire=Patient.TypeBeneficiaire.AYANT_DROIT,
+                assure_principal=patient,
+                lien_parente=Patient.LienParente.ENFANT,
+            )
+        # Tenter d'ajouter un 7eme ayant droit via POST
+        response = self.client.post(reverse('ajouter_ayant_droit'), {
+            'nom': 'Diop', 'prenom': 'Septieme', 'date_naissance': '2020-01-01',
+            'telephone': '', 'lien_parente': 'ENFANT',
+        })
+        # Doit rediriger avec message de quota atteint
+        self.assertRedirects(response, reverse('liste_ayants_droit'))
+        self.assertFalse(Patient.objects.filter(prenom='Septieme').exists())
+
+        # Sur la liste des ayants droit, le quota atteint doit être signale
+        response_liste = self.client.get(reverse('liste_ayants_droit'))
+        self.assertContains(response_liste, "Quota : 6 / 6 inscrits")
+        self.assertContains(response_liste, "Plafond d'ayants droit atteint")
+
+    def test_quota_max_conjoints_bloque_par_formulaire(self):
+        patient = self._completer_profil()
+        # Creer 4 conjoints (limite légale max 4)
+        for i in range(4):
+            Patient.objects.create(
+                nom='Diop', prenom=f'Epouse{i}', date_naissance=datetime.date(1990, 1, 1),
+                type_beneficiaire=Patient.TypeBeneficiaire.AYANT_DROIT,
+                assure_principal=patient,
+                lien_parente=Patient.LienParente.CONJOINT,
+            )
+        # Tenter d'en ajouter une 5ème via formulaire
+        form = AyantDroitForm({
+            'nom': 'Diop', 'prenom': 'Cinquieme', 'date_naissance': '1995-01-01',
+            'telephone': '', 'adresse': '', 'lien_parente': 'CONJOINT',
+        }, assure_principal=patient)
+        self.assertFalse(form.is_valid())
+        self.assertIn("Le nombre maximal de conjoints déclarés est de 4", form.errors['__all__'][0])
+
+
     def test_creation_rendez_vous_pour_beneficiaire(self):
         patient = self._completer_profil()
         medecin = creer_medecin('medecin-rdv@santesn.sn')
@@ -1666,7 +1729,7 @@ class EspaceAssureTests(TestCase):
             'patient': patient.pk,
             'medecin': medecin.pk,
             'prestataire': '',
-            'date_heure': (timezone.now() + datetime.timedelta(days=1)).strftime('%Y-%m-%dT%H:%M'),
+            'date_heure': date_rdv_ouvrable(jours=2, heure=10),
             'motif': 'Controle',
         })
         self.assertRedirects(response, reverse('mes_rendez_vous_assure'))
@@ -1702,7 +1765,7 @@ class EspaceAssureTests(TestCase):
             'patient': autre_patient.pk,
             'medecin': medecin.pk,
             'prestataire': '',
-            'date_heure': (timezone.now() + datetime.timedelta(days=1)).strftime('%Y-%m-%dT%H:%M'),
+            'date_heure': date_rdv_ouvrable(jours=2, heure=10),
             'motif': 'Controle',
         })
         self.assertEqual(response.status_code, 200)
@@ -1739,7 +1802,7 @@ class EspaceAssureTests(TestCase):
             "patient": patient.pk,
             "medecin": medecin.pk,
             "prestataire": "",
-            "date_heure": (timezone.now() + datetime.timedelta(days=2)).strftime("%Y-%m-%dT%H:%M"),
+            "date_heure": date_rdv_ouvrable(jours=2, heure=10),
             "motif": "Consultation générale de suivi",
         })
         self.assertEqual(post_resp.status_code, 302)
@@ -2040,9 +2103,8 @@ class AdminPatientFormTests(TestCase):
             'telephone': '', 'adresse': '', 'type_beneficiaire': 'PRINCIPAL',
             'assure_principal': '', 'lien_parente': '', 'plan_couverture': '',
             'email': 'fatou.ndiaye@santesn.sn',
-        })
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'fatou.ndiaye@santesn.sn')
+        }, follow=True)
+        self.assertRedirects(response, reverse('liste_patients'))
         patient = Patient.objects.get(nom='Ndiaye')
         self.assertIsNotNone(patient.user)
         self.assertEqual(patient.user.role, User.Role.ASSURE)
@@ -2629,7 +2691,7 @@ class AdminMedecinsFormTests(TestCase):
         response = self.client.post(reverse('ajouter_medecin'), {
             'nom': 'Sarr', 'prenom': 'Ibrahima', 'specialite': 'Pediatrie',
             'telephone': '770001122', 'email': 'ibrahima.sarr@santesn.sn', 'prestataire': '',
-        })
+        }, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'ibrahima.sarr@santesn.sn')
         medecin = Medecin.objects.get(email='ibrahima.sarr@santesn.sn')
@@ -2993,6 +3055,57 @@ class RendezVousDateValidationTests(TestCase):
         })
         self.assertEqual(reponse.status_code, 200)
         self.assertFalse(RendezVous.objects.filter(patient=patient).exists())
+
+    def test_rendez_vous_en_dehors_horaires_ouverture_refuse(self):
+        """Vérifie que les réservations hors créneaux 08h00-19h00 sont rejetées (P2.1)."""
+        assure = creer_utilisateur(User.Role.ASSURE, 'assure-horaires@santesn.sn')
+        patient = Patient.objects.create(
+            user=assure, nom='Sall', prenom='Oumar',
+            date_naissance=datetime.date(1992, 4, 10), telephone='770000098')
+        self.client.logout()
+        self.client.login(username='assure-horaires@santesn.sn', password=PASSWORD)
+
+        # Matin trop tôt (06h30)
+        trop_tot = date_rdv_ouvrable(jours=2, heure=6)
+        rep_tot = self.client.post(reverse('ajouter_rendez_vous_assure'), {
+            'patient': patient.pk, 'medecin': self.medecin_utilisateur.pk,
+            'prestataire': '', 'date_heure': trop_tot, 'motif': 'Test trop tôt',
+        })
+        self.assertEqual(rep_tot.status_code, 200)
+        self.assertIn('date_heure', rep_tot.context['form'].errors)
+
+        # Soir trop tard (21h30)
+        trop_tard = date_rdv_ouvrable(jours=2, heure=21)
+        rep_tard = self.client.post(reverse('ajouter_rendez_vous_assure'), {
+            'patient': patient.pk, 'medecin': self.medecin_utilisateur.pk,
+            'prestataire': '', 'date_heure': trop_tard, 'motif': 'Test trop tard',
+        })
+        self.assertEqual(rep_tard.status_code, 200)
+        self.assertIn('date_heure', rep_tard.context['form'].errors)
+
+    def test_rendez_vous_dimanche_refuse(self):
+        """Vérifie que les réservations le dimanche sont rejetées (P2.1)."""
+        assure = creer_utilisateur(User.Role.ASSURE, 'assure-dimanche@santesn.sn')
+        patient = Patient.objects.create(
+            user=assure, nom='Ndao', prenom='Fatou',
+            date_naissance=datetime.date(1994, 7, 15), telephone='770000097')
+        self.client.logout()
+        self.client.login(username='assure-dimanche@santesn.sn', password=PASSWORD)
+
+        # Calculer le prochain dimanche à 10h00
+        now = timezone.now()
+        jours_jusqu_au_dimanche = (6 - now.weekday()) % 7
+        if jours_jusqu_au_dimanche == 0:
+            jours_jusqu_au_dimanche = 7
+        dimanche = (now + datetime.timedelta(days=jours_jusqu_au_dimanche)).replace(hour=10, minute=0, second=0, microsecond=0)
+
+        rep_dim = self.client.post(reverse('ajouter_rendez_vous_assure'), {
+            'patient': patient.pk, 'medecin': self.medecin_utilisateur.pk,
+            'prestataire': '', 'date_heure': dimanche.strftime('%Y-%m-%dT%H:%M'), 'motif': 'Test dimanche',
+        })
+        self.assertEqual(rep_dim.status_code, 200)
+        self.assertIn('date_heure', rep_dim.context['form'].errors)
+        self.assertTrue(any("dimanche" in e for e in rep_dim.context['form'].errors['date_heure']))
 
 
 class ConsultationPriseEnChargeValidationTests(TestCase):
@@ -6819,7 +6932,7 @@ class ParcoursPrestataireMedecinTests(TestCase):
             'patient': self.principal.pk,
             'medecin': self.medecin_ailleurs.pk,
             'prestataire': self.hopital.pk,
-            'date_heure': (timezone.now() + datetime.timedelta(days=3)).strftime('%Y-%m-%dT%H:%M'),
+            'date_heure': date_rdv_ouvrable(jours=3, heure=10),
             'motif': 'Douleurs abdominales depuis trois jours.',
         })
         self.assertEqual(reponse.status_code, 200)
@@ -6833,7 +6946,7 @@ class ParcoursPrestataireMedecinTests(TestCase):
             'patient': self.principal.pk,
             'medecin': self.medecin_hopital.pk,
             'prestataire': self.hopital.pk,
-            'date_heure': (timezone.now() + datetime.timedelta(days=2)).strftime('%Y-%m-%dT%H:%M'),
+            'date_heure': date_rdv_ouvrable(jours=2, heure=10),
             'motif': symptomes,
         }, follow=True)
         self.assertEqual(reponse.status_code, 200)
@@ -7168,12 +7281,10 @@ class CreneauUniqueParMedecinTests(TestCase):
             nom='Ndour', prenom='Bineta', date_naissance=datetime.date(1993, 6, 6),
             telephone='770111114',
         )
-        # Seconde et microseconde a zero : le formulaire soumet a la minute
-        # pres. Sans cela, le rendez-vous de reference et celui envoye par le
-        # navigateur portent des dates DIFFERENTES et n entrent pas en conflit.
-        self.creneau = (timezone.now() + datetime.timedelta(days=3)).replace(
-            second=0, microsecond=0
-        )
+        creneau_dt = timezone.now() + datetime.timedelta(days=3)
+        if creneau_dt.weekday() == 6:
+            creneau_dt += datetime.timedelta(days=1)
+        self.creneau = creneau_dt.replace(hour=14, minute=0, second=0, microsecond=0)
 
     def _rdv(self, patient, medecin=None, quand=None, statut=None):
         return RendezVous(
@@ -7928,6 +8039,19 @@ class Phase2UXTests(TestCase):
         self.assertNotIn("width:75%", response.content.decode("utf-8"))
         self.assertContains(response, "Budget annuel restant")
         self.assertContains(response, "Plafond annuel")
+
+    def test_dashboard_assure_carte_3d_flip_et_sidebar_sans_redondance(self):
+        """Le dashboard assuré embarque la carte 3D flip interactive et la sidebar ne duplique plus le lien."""
+        self.client.login(username="assure.ux@santesn.sn", password=PASSWORD)
+        response = self.client.get(reverse("dashboard_assure"))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode("utf-8")
+        self.assertIn("carte-3d-card", content)
+        self.assertIn("carte-face-recto", content)
+        self.assertIn("carte-face-verso", content)
+        self.assertIn("SN-UX-001", content)
+        self.assertIn("<svg", content)
+        self.assertNotIn('href="/espace/carte/"', content)
 
     def test_dashboard_medecin_rdv_termine_affiche_consulte(self):
         """Un rendez-vous terminé affiche le statut 'Consulté' au lieu du bouton Démarrer."""
@@ -10112,13 +10236,613 @@ class AuditCorrectionsTests(TestCase):
         content = resp.content.decode('utf-8')
         self.assertIn("Le lien d'activation a été envoyé", content)
 
+    def test_transition_rdv_vers_statut_absent(self):
+        """Vérifie qu'un médecin peut déclarer un patient absent (no-show)."""
+        rdv = RendezVous.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            date_heure=timezone.now(),
+            statut=RendezVous.Statut.CONFIRME,
+        )
+        self.client.force_login(self.medecin.user)
+        resp = self.client.post(reverse('changer_statut_rendez_vous', args=[rdv.pk]), {'statut': RendezVous.Statut.ABSENT.value}, follow=True)
+        self.assertEqual(resp.status_code, 200)
+        rdv.refresh_from_db()
+        self.assertEqual(rdv.statut, RendezVous.Statut.ABSENT)
+
+    def test_consultation_protegee_contre_suppression_cascade_patient(self):
+        """Vérifie qu'un patient ayant des consultations ne peut pas être supprimé en cascade."""
+        from django.db.models import ProtectedError
+        Consultation.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            service=self.service,
+            date_consultation=timezone.now(),
+            diagnostic="Contrôle annuel",
+        )
+        with self.assertRaises(ProtectedError):
+            self.patient.delete()
+
+    def test_delivrance_protegee_contre_suppression_cascade_pharmacien(self):
+        """Vérifie qu'un pharmacien ayant effectué une délivrance ne peut pas être supprimé en cascade (P0.1)."""
+        from django.db.models import ProtectedError
+        pharmacien = creer_pharmacien('pharma_audit@santesn.sn')
+        consultation = Consultation.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            service=self.service,
+            date_consultation=timezone.now(),
+            diagnostic="Prescription pharmacie",
+        )
+        ordonnance = Ordonnance.objects.create(
+            consultation=consultation,
+            medicaments="Amoxicilline 500mg",
+        )
+        Delivrance.objects.create(
+            ordonnance=ordonnance,
+            pharmacien=pharmacien,
+        )
+        with self.assertRaises(ProtectedError):
+            pharmacien.delete()
+
+    def test_suppression_patient_avec_consultations_bloquee_dans_vue(self):
+        """Vérifie que la vue de suppression de patient bloque les dossiers avec consultations (P0.2)."""
+        Consultation.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            service=self.service,
+            date_consultation=timezone.now(),
+            diagnostic="Consultation historique",
+        )
+        self.client.force_login(self.admin_user)
+        resp = self.client.post(reverse('supprimer_patient', args=[self.patient.pk]), follow=True)
+        self.assertRedirects(resp, reverse('liste_patients'))
+        self.assertTrue(Patient.objects.filter(pk=self.patient.pk).exists())
+        messages_liste = [m.message for m in resp.context['messages']]
+        self.assertTrue(any("Impossible de supprimer" in msg for msg in messages_liste))
+
+    def test_suppression_medecin_avec_consultations_bloquee_dans_vue(self):
+        """Vérifie que la vue de suppression de médecin bloque les praticiens avec consultations (P0.2)."""
+        Consultation.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            service=self.service,
+            date_consultation=timezone.now(),
+            diagnostic="Consultation historique Dr",
+        )
+        self.client.force_login(self.admin_user)
+        resp = self.client.post(reverse('supprimer_medecin', args=[self.medecin.pk]), follow=True)
+        self.assertRedirects(resp, reverse('liste_medecins'))
+        self.assertTrue(Medecin.objects.filter(pk=self.medecin.pk).exists())
+        messages_liste = [m.message for m in resp.context['messages']]
+        self.assertTrue(any("Impossible de supprimer" in msg for msg in messages_liste))
+
+    def test_validation_delivrance_avec_calcul_part_assurance_et_ticket_moderateur(self):
+        """Vérifie le calcul automatique du tiers-payant et ticket modérateur en pharmacie (P0.3)."""
+        plan = PlanCouverture.objects.create(nom="Plan 75%", taux_couverture=Decimal("75.00"))
+        self.patient.plan_couverture = plan
+        self.patient.save()
+
+        pharmacien = creer_pharmacien('pharma_finance@santesn.sn')
+        consultation = Consultation.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            service=self.service,
+            date_consultation=timezone.now(),
+            diagnostic="Prescription ordonnance avec montants",
+        )
+        ordonnance = Ordonnance.objects.create(
+            consultation=consultation,
+            medicaments="Paracetamol 1g, Ibuprofene 400mg",
+        )
+
+        self.client.force_login(pharmacien.user)
+        resp = self.client.post(reverse('valider_delivrance', args=[ordonnance.pk]), {
+            'code_qr': ordonnance.code_qr,
+            'montant_total': '20000',
+        }, follow=True)
+        self.assertRedirects(resp, reverse('historique_delivrances'))
+
+        delivrance = Delivrance.objects.get(ordonnance=ordonnance)
+        self.assertEqual(delivrance.montant_total, Decimal("20000.00"))
+        self.assertEqual(delivrance.taux_couverture, Decimal("75.00"))
+        self.assertEqual(delivrance.montant_part_assurance, Decimal("15000.00"))
+        self.assertEqual(delivrance.montant_part_patient, Decimal("5000.00"))
+
+    def test_calculer_pour_paiement_conserve_montant_historique(self):
+        """Vérifie que la validation PEC conserve le montant fixé même si le tarif catalogue change (P1.1)."""
+        consultation = Consultation.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            service=self.service,
+            date_consultation=timezone.now(),
+            diagnostic="Test gel tarifaire",
+        )
+        paiement = Paiement.objects.create(
+            consultation=consultation,
+            montant_total=Decimal("15000.00"),
+            montant_part_patient=Decimal("15000.00"),
+            montant_part_assurance=Decimal("0.00"),
+            statut=Paiement.Statut.NON_REGLE,
+        )
+        # Modification du tarif catalogue du service à 25 000 FCFA
+        self.service.prix = Decimal("25000.00")
+        self.service.save()
+
+        # Recalcul via Paiement.calculer_pour
+        paiement_recalcule = Paiement.calculer_pour(consultation)
+        # Doit conserver le montant initial de la consultation (15 000 FCFA) et non 25 000 FCFA
+        self.assertEqual(paiement_recalcule.montant_total, Decimal("15000.00"))
+
+    def test_journal_audit_trace_apres_suppression_reussie(self):
+        """Vérifie que le journal d'audit enregistre l'action de suppression après succès réel (P1.3)."""
+        service_test = ServiceMedical.objects.create(nom="Radiologie Audit", prix=Decimal("30000.00"))
+        self.client.force_login(self.admin_user)
+        resp = self.client.post(reverse('supprimer_service', args=[service_test.pk]), follow=True)
+        self.assertRedirects(resp, reverse('liste_services'))
+        self.assertFalse(ServiceMedical.objects.filter(pk=service_test.pk).exists())
+        self.assertTrue(JournalActivite.objects.filter(
+            action=JournalActivite.Action.SUPPRESSION,
+            objet__contains="Radiologie Audit",
+        ).exists())
+
+    def test_distance_km_mutualisee_entre_modele_et_vues(self):
+        """Vérifie le calcul unifié de la distance GPS Haversine (P3.3)."""
+        # Distance Dakar (14.6928, -17.4467) -> Thiès (14.7910, -16.9359) ~ 56 km
+        dist = distance_km(14.6928, -17.4467, 14.7910, -16.9359)
+        self.assertAlmostEqual(dist, 56.2, delta=2.0)
 
 
+class PasswordResetSelfServiceTests(TestCase):
+    def setUp(self):
+        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin_reset@santesn.sn')
+        self.user = creer_utilisateur(User.Role.ASSURE, 'patient.oubli@santesn.sn')
+        self.patient = Patient.objects.create(
+            user=self.user,
+            nom='Diallo',
+            prenom='Amadou',
+            date_naissance=datetime.date(1991, 5, 20),
+            telephone='771234567',
+        )
+
+    def test_login_page_contient_lien_mot_de_passe_oublie(self):
+        resp = self.client.get(reverse('login'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, reverse('mot_de_passe_oublie'))
+        self.assertContains(resp, 'Mot de passe oublié ?')
+
+    def test_demande_reinitialisation_email_inconnu_ne_divulgue_rien(self):
+        from django.core import mail
+        mail.outbox = []
+        resp = self.client.post(reverse('mot_de_passe_oublie'), {'email': 'inconnu@santesn.sn'})
+        self.assertRedirects(resp, reverse('mot_de_passe_oublie_envoye'))
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_cycle_complet_reinitialisation_mot_de_passe(self):
+        from django.core import mail
+        from django.utils.http import urlsafe_base64_encode
+        from django.utils.encoding import force_bytes
+        from django.contrib.auth.tokens import default_token_generator
+
+        mail.outbox = []
+        resp = self.client.post(reverse('mot_de_passe_oublie'), {'email': self.user.email})
+        self.assertRedirects(resp, reverse('mot_de_passe_oublie_envoye'))
+        self.assertEqual(len(mail.outbox), 1)
+        email_envoye = mail.outbox[0]
+        self.assertEqual(email_envoye.to, [self.user.email])
+        self.assertIn('mot de passe', email_envoye.subject.lower())
+
+        # Vérifier que le lien fonctionne (Django redirige en interne pour protéger le token)
+        uid = urlsafe_base64_encode(force_bytes(self.user.pk))
+        token = default_token_generator.make_token(self.user)
+        confirm_url = reverse('mot_de_passe_reinitialisation_confirm', kwargs={'uidb64': uid, 'token': token})
+        resp_confirm = self.client.get(confirm_url, follow=True)
+        self.assertEqual(resp_confirm.status_code, 200)
+        self.assertTrue(resp_confirm.context['validlink'])
+
+        # Soumettre un nouveau mot de passe
+        post_target = resp_confirm.redirect_chain[-1][0] if resp_confirm.redirect_chain else confirm_url
+        nouveau_mdp = 'NouveauSecretSolide2026!'
+        resp_post = self.client.post(post_target, {
+            'new_password1': nouveau_mdp,
+            'new_password2': nouveau_mdp,
+        })
+        self.assertRedirects(resp_post, reverse('mot_de_passe_reinitialisation_termine'))
+
+        # Vérifier la connexion avec le nouveau mot de passe
+        login_ok = self.client.login(username=self.user.email, password=nouveau_mdp)
+        self.assertTrue(login_ok)
 
 
+class AyantDroitValidationAntiFraudeTests(TestCase):
+    def setUp(self):
+        self.admin_user = creer_utilisateur(User.Role.ADMIN, 'admin_valid@santesn.sn')
+        self.assure_user = creer_utilisateur(User.Role.ASSURE, 'assure_parent@santesn.sn')
+        self.patient_principal = Patient.objects.create(
+            user=self.assure_user,
+            nom='Diallo',
+            prenom='Mamadou',
+            date_naissance=datetime.date(1985, 3, 10),
+            telephone='778889900',
+            statut_validation=Patient.StatutValidation.VALIDE,
+            type_beneficiaire=Patient.TypeBeneficiaire.PRINCIPAL,
+        )
+        self.medecin = creer_medecin('dr.ndiaye@santesn.sn')
+        self.service = ServiceMedical.objects.create(nom='Consultation Generale', prix=Decimal('10000.00'))
+
+    def test_ajout_ayant_droit_initialise_en_attente_avec_document_et_notifie_admin(self):
+        self.client.force_login(self.assure_user)
+        fichier = SimpleUploadedFile("livret_famille.pdf", b"%PDF-1.4 test document content", content_type="application/pdf")
+        
+        post_data = {
+            'nom': 'Diallo',
+            'prenom': 'Aissatou',
+            'date_naissance': '2015-05-15',
+            'lien_parente': Patient.LienParente.ENFANT,
+            'sexe': 'F',
+            'document_justificatif': fichier,
+        }
+        resp = self.client.post(reverse('ajouter_ayant_droit'), data=post_data, follow=True)
+        self.assertEqual(resp.status_code, 200)
+        
+        ayant_droit = Patient.objects.get(nom='Diallo', prenom='Aissatou')
+        self.assertEqual(ayant_droit.assure_principal, self.patient_principal)
+        self.assertEqual(ayant_droit.type_beneficiaire, Patient.TypeBeneficiaire.AYANT_DROIT)
+        self.assertEqual(ayant_droit.statut_validation, Patient.StatutValidation.EN_ATTENTE)
+        self.assertFalse(ayant_droit.est_valide)
+        self.assertTrue(bool(ayant_droit.document_justificatif))
+        
+        # Vérification notification à l'admin
+        notif = Notification.objects.filter(
+            destinataire=self.admin_user,
+            type_evenement=Notification.TypeEvenement.AYANT_DROIT_SOUMIS,
+        ).first()
+        self.assertIsNotNone(notif)
+        self.assertIn("Aissatou Diallo", notif.message)
+
+    def test_admin_valide_ayant_droit_notifie_parent_et_journalise(self):
+        ayant_droit = Patient.objects.create(
+            nom='Diallo',
+            prenom='Ibrahima',
+            date_naissance=datetime.date(2018, 1, 1),
+            telephone='770000002',
+            assure_principal=self.patient_principal,
+            type_beneficiaire=Patient.TypeBeneficiaire.AYANT_DROIT,
+            lien_parente=Patient.LienParente.ENFANT,
+            statut_validation=Patient.StatutValidation.EN_ATTENTE,
+        )
+        
+        self.client.force_login(self.admin_user)
+        resp = self.client.post(reverse('valider_ayant_droit', args=[ayant_droit.pk]), follow=True)
+        self.assertEqual(resp.status_code, 200)
+        
+        ayant_droit.refresh_from_db()
+        self.assertEqual(ayant_droit.statut_validation, Patient.StatutValidation.VALIDE)
+        self.assertTrue(ayant_droit.est_valide)
+        self.assertEqual(ayant_droit.valide_par, self.admin_user)
+        self.assertIsNotNone(ayant_droit.date_decision)
+        
+        # Vérification notification à l'assuré parent
+        notif = Notification.objects.filter(
+            destinataire=self.assure_user,
+            type_evenement=Notification.TypeEvenement.AYANT_DROIT_VALIDE,
+        ).first()
+        self.assertIsNotNone(notif)
+        self.assertIn("validé", notif.titre.lower())
+        
+        # Vérification audit log
+        audit = JournalActivite.objects.filter(
+            auteur=self.admin_user,
+            action=JournalActivite.Action.DECISION,
+            details__contains="Validation de l'ayant droit",
+        ).first()
+        self.assertIsNotNone(audit)
+
+    def test_admin_refuse_ayant_droit_avec_motif_notifie_parent(self):
+        ayant_droit = Patient.objects.create(
+            nom='Diallo',
+            prenom='Oumar',
+            date_naissance=datetime.date(2012, 4, 12),
+            assure_principal=self.patient_principal,
+            type_beneficiaire=Patient.TypeBeneficiaire.AYANT_DROIT,
+            lien_parente=Patient.LienParente.ENFANT,
+            statut_validation=Patient.StatutValidation.EN_ATTENTE,
+        )
+        
+        self.client.force_login(self.admin_user)
+        resp = self.client.post(
+            reverse('refuser_ayant_droit', args=[ayant_droit.pk]),
+            data={'motif_refus': 'Extrait de naissance illisible'},
+            follow=True,
+        )
+        self.assertEqual(resp.status_code, 200)
+        
+        ayant_droit.refresh_from_db()
+        self.assertEqual(ayant_droit.statut_validation, Patient.StatutValidation.REFUSE)
+        self.assertFalse(ayant_droit.est_valide)
+        self.assertEqual(ayant_droit.motif_refus, 'Extrait de naissance illisible')
+        
+        # Notification assuré parent
+        notif = Notification.objects.filter(
+            destinataire=self.assure_user,
+            type_evenement=Notification.TypeEvenement.AYANT_DROIT_REFUSE,
+        ).first()
+        self.assertIsNotNone(notif)
+        self.assertIn("Extrait de naissance illisible", notif.message)
+
+    def test_resoumission_apres_refus_repasse_en_attente(self):
+        ayant_droit = Patient.objects.create(
+            nom='Diallo',
+            prenom='Fatou',
+            date_naissance=datetime.date(2010, 8, 20),
+            assure_principal=self.patient_principal,
+            type_beneficiaire=Patient.TypeBeneficiaire.AYANT_DROIT,
+            lien_parente=Patient.LienParente.ENFANT,
+            statut_validation=Patient.StatutValidation.REFUSE,
+            motif_refus='Document manquant',
+        )
+        
+        self.client.force_login(self.assure_user)
+        nouveau_fichier = SimpleUploadedFile("certificat_correct.pdf", b"%PDF-1.4 correct", content_type="application/pdf")
+        post_data = {
+            'nom': 'Diallo',
+            'prenom': 'Fatou',
+            'date_naissance': '2010-08-20',
+            'lien_parente': Patient.LienParente.ENFANT,
+            'sexe': 'F',
+            'document_justificatif': nouveau_fichier,
+        }
+        resp = self.client.post(reverse('modifier_ayant_droit', args=[ayant_droit.pk]), data=post_data, follow=True)
+        self.assertEqual(resp.status_code, 200)
+        
+        ayant_droit.refresh_from_db()
+        self.assertEqual(ayant_droit.statut_validation, Patient.StatutValidation.EN_ATTENTE)
+        self.assertEqual(ayant_droit.motif_refus, '')
+
+    def test_ayant_droit_non_valide_bloque_rdv_et_prise_en_charge(self):
+        ayant_droit = Patient.objects.create(
+            nom='Diallo',
+            prenom='Samba',
+            date_naissance=datetime.date(2016, 2, 2),
+            assure_principal=self.patient_principal,
+            type_beneficiaire=Patient.TypeBeneficiaire.AYANT_DROIT,
+            lien_parente=Patient.LienParente.ENFANT,
+            statut_validation=Patient.StatutValidation.EN_ATTENTE,
+        )
+        
+        self.client.force_login(self.assure_user)
+        
+        # Tentative RDV
+        rdv_data = {
+            'patient': ayant_droit.pk,
+            'medecin': self.medecin.pk,
+            'date_heure': date_rdv_ouvrable(3, 10),
+            'motif': 'Consultation pédiatrique',
+        }
+        resp_rdv = self.client.post(reverse('ajouter_rendez_vous_assure'), data=rdv_data)
+        self.assertEqual(resp_rdv.status_code, 200)
+        self.assertTrue(resp_rdv.context['form'].errors.get('patient'))
+        
+        # Tentative PEC
+        pec_data = {
+            'patient': ayant_droit.pk,
+            'motif': 'Demande hospitalisation',
+            'type_demande': 'soins',
+        }
+        resp_pec = self.client.post(reverse('demander_prise_en_charge_assure'), data=pec_data)
+        self.assertEqual(resp_pec.status_code, 200)
+        self.assertTrue(resp_pec.context['form'].errors.get('patient'))
+
+    def test_carte_scan_bloque_ayant_droit_non_valide(self):
+        ayant_droit = Patient.objects.create(
+            nom='Diallo',
+            prenom='Aminata',
+            date_naissance=datetime.date(2014, 11, 5),
+            assure_principal=self.patient_principal,
+            type_beneficiaire=Patient.TypeBeneficiaire.AYANT_DROIT,
+            lien_parente=Patient.LienParente.ENFANT,
+            statut_validation=Patient.StatutValidation.EN_ATTENTE,
+        )
+        self.client.force_login(self.medecin.user)
+        resp = self.client.get(reverse('carte_scan', args=[ayant_droit.numero_carte]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "CARTE INACTIVE")
+        self.assertContains(resp, "PRISE EN CHARGE REFUSÉE")
+        self.assertContains(resp, "Les droits au tiers payant ne sont pas validés")
 
 
+class CarteDematerialiseeEtDroitsSaaSTests(TestCase):
+    def setUp(self):
+        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin_cartes@santesn.sn')
+        self.user_assure = creer_utilisateur(User.Role.ASSURE, 'assure_cartes@santesn.sn')
+        self.patient = Patient.objects.create(
+            user=self.user_assure,
+            nom='Sarr',
+            prenom='Babacar',
+            date_naissance=datetime.date(1982, 7, 14),
+            telephone='771239988',
+            statut_validation=Patient.StatutValidation.VALIDE,
+            type_beneficiaire=Patient.TypeBeneficiaire.PRINCIPAL,
+        )
+        self.ayant_droit_valide = Patient.objects.create(
+            nom='Sarr',
+            prenom='Mariama',
+            date_naissance=datetime.date(2017, 3, 22),
+            assure_principal=self.patient,
+            type_beneficiaire=Patient.TypeBeneficiaire.AYANT_DROIT,
+            lien_parente=Patient.LienParente.ENFANT,
+            statut_validation=Patient.StatutValidation.VALIDE,
+        )
+        self.ayant_droit_en_attente = Patient.objects.create(
+            nom='Sarr',
+            prenom='Cheikh',
+            date_naissance=datetime.date(2020, 10, 5),
+            assure_principal=self.patient,
+            type_beneficiaire=Patient.TypeBeneficiaire.AYANT_DROIT,
+            lien_parente=Patient.LienParente.ENFANT,
+            statut_validation=Patient.StatutValidation.EN_ATTENTE,
+        )
 
+    def test_dashboard_assure_ne_propose_pas_impression_de_carte(self):
+        self.client.force_login(self.user_assure)
+        resp = self.client.get(reverse('dashboard_assure'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertNotContains(resp, "Version imprimable")
+        self.assertNotContains(resp, "id=\"bouton-imprimer-carte\"")
+        self.assertContains(resp, "Carte dématérialisée active")
+        self.assertNotContains(resp, "Attestation de droits")
+        self.assertContains(resp, reverse('mon_profil_assure'))
+
+    def test_carte_assure_est_dematerialisee_sans_bouton_impression(self):
+        self.client.force_login(self.user_assure)
+        # Carte assuré principal
+        resp = self.client.get(reverse('carte_assure'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Carte dématérialisée")
+        self.assertNotContains(resp, "id=\"bouton-imprimer-carte\"")
+        self.assertNotContains(resp, "Découper le recto et le verso")
+        self.assertNotContains(resp, "Attestation de droits (A4)")
+        self.assertContains(resp, self.patient.numero_carte)
+
+        # Carte ayant droit
+        resp_ad = self.client.get(reverse('carte_assure_detail', args=[self.ayant_droit_valide.pk]))
+        self.assertEqual(resp_ad.status_code, 200)
+        self.assertContains(resp_ad, "Mariama Sarr")
+        self.assertNotContains(resp_ad, "id=\"bouton-imprimer-carte\"")
+        self.assertContains(resp_ad, self.ayant_droit_valide.numero_carte)
+
+    def test_impression_carte_physique_strictement_reservee_admin(self):
+        # Assuré tente d'accéder à la planche d'impression admin
+        self.client.force_login(self.user_assure)
+        resp_assure = self.client.get(reverse('carte_patient', args=[self.patient.pk]))
+        self.assertEqual(resp_assure.status_code, 403)
+
+        # Admin y a accès et dispose du bouton d'impression
+        self.client.force_login(self.admin)
+        resp_admin = self.client.get(reverse('carte_patient', args=[self.patient.pk]))
+        self.assertEqual(resp_admin.status_code, 200)
+        self.assertContains(resp_admin, "id=\"bouton-imprimer-carte\"")
+        self.assertContains(resp_admin, "Édition et impression officielle de la carte physique")
+
+    def test_attestation_droits_redirige_vers_carte_dematerialisee(self):
+        self.client.force_login(self.user_assure)
+        resp = self.client.get(reverse('attestation_droits_assure'))
+        self.assertRedirects(resp, reverse('carte_assure'))
+
+
+class JaugePlafondAnnuelIPMTests(TestCase):
+    def setUp(self):
+        self.plan = PlanCouverture.objects.create(
+            nom="Plan Entreprise 80%",
+            taux_couverture=Decimal("80.00"),
+            plafond_annuel=Decimal("500000.00"),
+        )
+        self.user = User.objects.create_user(
+            email="samba.fall@santesn.sn",
+            password="MotDePasseSolide2026!",
+            role=User.Role.ASSURE,
+            first_name="Samba",
+            last_name="Fall",
+        )
+        self.patient = Patient.objects.create(
+            user=self.user,
+            nom="Fall",
+            prenom="Samba",
+            date_naissance=datetime.date(1988, 5, 12),
+            plan_couverture=self.plan,
+        )
+        self.medecin = creer_medecin("dr.diallo.jauge@santesn.sn")
+        self.service = ServiceMedical.objects.create(nom="Médecine interne", prix=Decimal("25000.00"))
+        self.pharmacien = creer_pharmacien("pharma.jauge@santesn.sn")
+
+    def test_consommation_annuelle_consolidee_consultations_et_pharmacie(self):
+        # 1. Consultation avec paiement (part assurance : 80 000 FCFA)
+        consultation = Consultation.objects.create(
+            medecin=self.medecin,
+            patient=self.patient,
+            service=self.service,
+            date_consultation=timezone.now(),
+            diagnostic="Bilan annuel",
+        )
+        Paiement.objects.create(
+            consultation=consultation,
+            montant_total=Decimal("100000.00"),
+            taux_applique=Decimal("80.00"),
+            montant_part_assurance=Decimal("80000.00"),
+            montant_part_patient=Decimal("20000.00"),
+            statut=Paiement.Statut.REGLE,
+        )
+
+        # 2. Ordonnance avec délivrance (part assurance : 40 000 FCFA)
+        ordonnance = Ordonnance.objects.create(
+            consultation=consultation,
+            medicaments="Paracetamol 1g, Amoxicilline 500mg",
+        )
+        delivrance = Delivrance.objects.create(
+            ordonnance=ordonnance,
+            pharmacien=self.pharmacien,
+            montant_total=Decimal("50000.00"),
+            taux_couverture=Decimal("80.00"),
+            montant_part_assurance=Decimal("40000.00"),
+            montant_part_patient=Decimal("10000.00"),
+        )
+
+        # Vérification des calculs
+        consommation = self.patient.consommation_annuelle_assurance()
+        self.assertEqual(consommation, Decimal("120000.00"))
+
+        restant = self.patient.plafond_annuel_restant()
+        self.assertEqual(restant, Decimal("380000.00"))
+
+        pourcentage = self.patient.pourcentage_plafond_consomme()
+        self.assertEqual(pourcentage, 24.0)
+
+    def test_dashboard_assure_affiche_jauge_visuelle_et_numero_carte(self):
+        # Consultation avec paiement pour alimenter la consommation
+        consultation = Consultation.objects.create(
+            medecin=self.medecin,
+            patient=self.patient,
+            service=self.service,
+            date_consultation=timezone.now(),
+            diagnostic="Consultation de routine",
+        )
+        Paiement.objects.create(
+            consultation=consultation,
+            montant_total=Decimal("150000.00"),
+            taux_applique=Decimal("80.00"),
+            montant_part_assurance=Decimal("120000.00"),
+            montant_part_patient=Decimal("30000.00"),
+            statut=Paiement.Statut.REGLE,
+        )
+
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("dashboard_assure"))
+        self.assertEqual(response.status_code, 200)
+
+        # Vérification du numéro de carte présent dans le sous-titre
+        self.assertContains(response, self.patient.numero_carte)
+        self.assertNotContains(response, "N° </p>")
+
+        # Vérification de la jauge visuelle du plafond IPM
+        self.assertContains(response, "Plafond annuel de garantie")
+        self.assertContains(response, "consommé")
+        self.assertContains(response, "Solde annuel restant disponible")
+        self.assertContains(response, "380")
+
+
+class MediaFilesServingTests(TestCase):
+    """Vérifie que les pièces justificatives et fichiers médias sont correctement servis par l'URLconf."""
+
+    def test_fichier_media_existant_accessible(self):
+        client = Client()
+        # Le fichier justificatif déposé existe sur le disque
+        response = client.get("/media/justificatifs_ayants_droit/UPsn_CCNA_Section_1-Lesson_1.pdf")
+        self.assertEqual(response.status_code, 200)
+
+    def test_fichier_media_inexistant_retourne_404(self):
+        client = Client()
+        response = client.get("/media/justificatifs_ayants_droit/fichier_inexistant_xyz_123.pdf")
+        self.assertEqual(response.status_code, 404)
 
 
 

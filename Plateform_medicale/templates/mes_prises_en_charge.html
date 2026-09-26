@@ -9,6 +9,11 @@
         <h1>Mes prises en charge</h1>
         <p class="subtitle">Suivi en direct de vos couvertures médicales et de celles de vos ayants droit.</p>
     </div>
+    {% if lignes %}
+    <div class="actions">
+        <a class="button primary btn" href="{% url 'demander_prise_en_charge_assure' %}">{% icone "plus-circle" %} Nouvelle demande</a>
+    </div>
+    {% endif %}
 </section>
 
 <form method="get" class="filtres">
@@ -67,6 +72,7 @@ pas un oubli.
         {% endif %}
 
         {% if ligne.consultations %}
+        <div class="table-responsive">
         <table class="pec-table">
             <thead>
                 <tr>
@@ -100,6 +106,7 @@ pas un oubli.
                 {% endfor %}
             </tbody>
         </table>
+        </div>
 
         <div class="pec-total" style="display: flex; gap: 16px; justify-content: flex-end; align-items: center; margin-top: 16px; flex-wrap: wrap;">
             <div style="background: var(--primary-soft); padding: 8px 14px; border-radius: 10px; font-size: 13px;">
@@ -134,11 +141,12 @@ pas un oubli.
     {% illustration_vide "shield-check" %}
     <h3>Aucune prise en charge trouvée</h3>
     <p>{% if statut_choisi %}Aucune prise en charge avec ce statut.{% else %}Aucune prise en charge enregistrée pour vous ou vos ayants droit.{% endif %}</p>
-    {% if statut_choisi %}
     <div class="actions">
+        {% if statut_choisi %}
         <a href="{% url 'mes_prises_en_charge_assure' %}" class="button">{% icone "x" %} Réinitialiser le filtre</a>
+        {% endif %}
+        <a class="button primary" href="{% url 'demander_prise_en_charge_assure' %}">{% icone "plus-circle" %} Demander une prise en charge</a>
     </div>
-    {% endif %}
 </div>
 {% endif %}
 {% endblock %}

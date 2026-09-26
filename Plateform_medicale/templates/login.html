@@ -35,22 +35,27 @@
     {{ form.email }}
     {% if form.email.errors %}<div class="erreurs" role="alert">{{ form.email.errors }}</div>{% endif %}
 
-    <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
-    <div style="position: relative; display: flex; align-items: center;">
-        {{ form.password }}
-        <button type="button" id="btn-toggle-mdp" onclick="toggleMdp()" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; color: var(--muted); padding: 4px; display: inline-flex; align-items: center;" title="Afficher/masquer" aria-label="Afficher ou masquer le mot de passe">
-            <svg id="icone-oeil" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/>
-                <circle cx="12" cy="12" r="2.5"/>
-            </svg>
-        </button>
+    <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 14px; margin-bottom: 6px;">
+        <label for="{{ form.password.id_for_label }}" style="margin: 0;">{{ form.password.label }}</label>
+        <a href="{% url 'mot_de_passe_oublie' %}" style="font-size: 12.5px; color: var(--primary); text-decoration: none; font-weight: 600;">Mot de passe oublié ?</a>
+    </div>
+    <div style="position: relative; margin-bottom: 0;">
+        <div style="position: relative; display: flex; align-items: center;">
+            {{ form.password }}
+            <button type="button" id="btn-toggle-mdp" onclick="toggleMdp()" style="position: absolute; right: 12px; top: 11px; background: none; border: none; cursor: pointer; color: var(--muted); padding: 4px; display: inline-flex; align-items: center; border-radius: 6px;" title="Afficher/masquer" aria-label="Afficher ou masquer le mot de passe">
+                <svg id="icone-oeil" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/>
+                    <circle cx="12" cy="12" r="2.5"/>
+                </svg>
+            </button>
+        </div>
     </div>
     {% if form.password.errors %}<div class="erreurs" role="alert">{{ form.password.errors }}</div>{% endif %}
 
-    <button type="submit" class="btn-principal">Se connecter</button>
+    <button type="submit" class="btn-principal" style="margin-top: 4px;">{% icone "lock" %} Se connecter</button>
 </form>
 
-<div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+<div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
     <span>Plateforme sécurisée SantéSN</span>
     <div style="display: flex; gap: 12px;">
         <a href="{% url 'cgu' %}" style="color: var(--muted); text-decoration: none;">CGU</a>

@@ -62,12 +62,20 @@ def envoyer_message_whatsapp(numero_telephone, texte_message, template_nom=None,
         }
 
     # Meta interdit à un compte WhatsApp Business d'envoyer des messages vers son propre numéro
-    if numero_nettoye in ("221789576145", "789576145"):
+    sender_phone = str(getattr(settings, "WHATSAPP_SENDER_PHONE", "221789576145")).strip()
+    sender_nettoye = "".join(filter(str.isdigit, sender_phone))
+    numeros_expediteur = {sender_nettoye}
+    if sender_nettoye.startswith("221"):
+        numeros_expediteur.add(sender_nettoye[3:])
+    else:
+        numeros_expediteur.add(f"221{sender_nettoye}")
+
+    if numero_nettoye in numeros_expediteur:
         logger.warning("Tentative d'envoi WhatsApp vers le numéro expéditeur officiel (%s). Non autorisé par Meta.", numero_nettoye)
         return {
             "succes": False,
             "statut": "ECHEC",
-            "message": "Le numéro destinataire est identique au numéro expéditeur officiel (+221 78 957 61 45). Meta interdit l'envoi vers soi-même.",
+            "message": f"Le numéro destinataire est identique au numéro expéditeur officiel ({sender_phone}). Meta interdit l'envoi vers soi-même.",
         }
 
     url = f"https://graph.facebook.com/v21.0/{phone_number_id}/messages"

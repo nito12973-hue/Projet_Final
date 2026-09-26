@@ -28,7 +28,7 @@
             {% if form.objet.errors %}<div class="erreurs" role="alert">{{ form.objet.errors }}</div>{% endif %}
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 16px;">
             <div>
                 <label for="{{ form.categorie.id_for_label }}" style="font-weight: 600; font-size: 13.5px; margin-bottom: 4px; display: block;">{{ form.categorie.label }}</label>
                 {{ form.categorie }}
@@ -48,7 +48,7 @@
             {% if form.premier_message.errors %}<div class="erreurs" role="alert">{{ form.premier_message.errors }}</div>{% endif %}
         </div>
 
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);flex-wrap:wrap;">
             <a href="{% url 'assistant_sante' %}" class="button btn">{% icone "chat" %} Retour à l'Assistant</a>
             <button class="button primary" type="submit">Envoyer ma demande à l'administration</button>
         </div>

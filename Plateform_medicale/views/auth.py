@@ -7,21 +7,23 @@ comptes bloqués et déblocage.
 """
 
 from django.contrib import messages
-from django.contrib.auth import login, logout, update_session_auth_hash
+from django.contrib.auth import login, logout, update_session_auth_hash, views as auth_views
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.sessions.models import Session
 from django.conf import settings
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from ..forms import (
+    ChangerMotDePasseForm,
     LoginForm,
     MonCompteForm,
+    MotDePasseReinitialiserForm,
     PreferenceNotificationForm,
     SetupWizardForm,
 )
@@ -170,14 +172,14 @@ def changer_mot_de_passe(request):
     ici, l'utilisateur doit connaitre son mot de passe actuel.
     """
     if request.method == 'POST':
-        form = PasswordChangeForm(user=request.user, data=request.POST)
+        form = ChangerMotDePasseForm(user=request.user, data=request.POST)
         if form.is_valid():
             form.save()
             update_session_auth_hash(request, form.user)
             messages.success(request, 'Mot de passe modifié avec succès.')
             return redirect('post_login_redirect')
     else:
-        form = PasswordChangeForm(user=request.user)
+        form = ChangerMotDePasseForm(user=request.user)
     return render(request, 'changer_mot_de_passe.html', {'form': form})
 
 
@@ -196,11 +198,17 @@ def deconnecter_partout(request):
     message ajoute avant serait perdu.
     """
     identifiant = str(request.user.pk)
-    fermees = 0
-    for session in Session.objects.filter(expire_date__gte=timezone.now()):
-        if session.get_decoded().get("_auth_user_id") == identifiant:
-            session.delete()
-            fermees += 1
+    cles_sessions = []
+    for session in Session.objects.filter(expire_date__gte=timezone.now()).iterator(chunk_size=1000):
+        try:
+            if session.get_decoded().get("_auth_user_id") == identifiant:
+                cles_sessions.append(session.session_key)
+        except Exception:
+            continue
+
+    fermees = len(cles_sessions)
+    if cles_sessions:
+        Session.objects.filter(session_key__in=cles_sessions).delete()
 
     logout(request)
     messages.success(
@@ -430,3 +438,38 @@ def activer_compte(request, uidb64, token):
         "activer_compte.html",
         {"form": form, "utilisateur": utilisateur},
     )
+
+
+# ---------------------------------------------------------------------------
+# Réinitialisation de mot de passe en libre-service (Mot de passe oublié)
+# ---------------------------------------------------------------------------
+
+class MotDePasseOublieView(auth_views.PasswordResetView):
+    """Demande d'envoi du lien de réinitialisation par email."""
+    template_name = "mot_de_passe_oublie.html"
+    email_template_name = "registration/password_reset_email.html"
+    subject_template_name = "registration/password_reset_subject.txt"
+    success_url = reverse_lazy("mot_de_passe_oublie_envoye")
+
+
+class MotDePasseOublieEnvoyeView(auth_views.PasswordResetDoneView):
+    """Confirmation que les instructions ont été expédiées."""
+    template_name = "mot_de_passe_oublie_envoye.html"
+
+
+class MotDePasseReinitialiserConfirmView(auth_views.PasswordResetConfirmView):
+    """Saisie du nouveau mot de passe via jeton à usage unique."""
+    form_class = MotDePasseReinitialiserForm
+    template_name = "mot_de_passe_reinitialiser.html"
+    success_url = reverse_lazy("mot_de_passe_reinitialiser_termine")
+
+
+class MotDePasseReinitialiserTermineView(auth_views.PasswordResetCompleteView):
+    """Confirmation finale de mise à jour du mot de passe."""
+    template_name = "mot_de_passe_reinitialiser_termine.html"
+
+
+mot_de_passe_oublie = MotDePasseOublieView.as_view()
+mot_de_passe_oublie_envoye = MotDePasseOublieEnvoyeView.as_view()
+mot_de_passe_reinitialisation_confirm = MotDePasseReinitialiserConfirmView.as_view()
+mot_de_passe_reinitialisation_termine = MotDePasseReinitialiserTermineView.as_view()

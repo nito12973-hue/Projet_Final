@@ -30,7 +30,7 @@
             {% endfor %}
         </select>
     </div>
-    <div style="display:flex;align-items:flex-end;gap:8px;">
+    <div style="display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap;">
         <button type="submit" class="button primary btn">{% icone "filter" %} Filtrer</button>
         {% if statut_choisi or periode_choisie %}
         <a href="{% url 'mes_rendez_vous_assure' %}" class="button btn">Réinitialiser</a>

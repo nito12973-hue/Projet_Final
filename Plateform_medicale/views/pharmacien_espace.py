@@ -4,10 +4,11 @@ historique des délivrances.
 """
 
 import datetime
+from decimal import Decimal
 
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, Sum
 from django.http import Http404
 from django.shortcuts import redirect, render
 from django.utils import timezone
@@ -36,11 +37,20 @@ def dashboard_pharmacien(request):
         "ordonnance__consultation__medecin",
     ).order_by("-date_delivrance")
 
+    stats_financieres = delivrances_du_jour.aggregate(
+        total=Sum("montant_total"),
+        part_assurance=Sum("montant_part_assurance"),
+        part_patient=Sum("montant_part_patient"),
+    )
+
     contexte = {
         "pharmacien": pharmacien,
         "delivrances_du_jour": delivrances_du_jour,
         "total_delivrances_jour": delivrances_du_jour.count(),
         "total_delivrances_global": delivrances.count(),
+        "montant_total_jour": stats_financieres["total"] or Decimal("0.00"),
+        "part_assurance_jour": stats_financieres["part_assurance"] or Decimal("0.00"),
+        "part_patient_jour": stats_financieres["part_patient"] or Decimal("0.00"),
         "dernieres_delivrances": delivrances.select_related(
             "ordonnance__consultation__patient",
             "ordonnance__consultation__medecin",
@@ -170,13 +180,59 @@ def valider_delivrance(request, pk):
                 "Cette ordonnance a dépassé sa durée de validité et ne peut plus être délivrée."
             )
         else:
-            delivrance = Delivrance.objects.create(ordonnance=ordonnance, pharmacien=pharmacien)
+            montant_str = request.POST.get("montant_total", "").strip().replace(",", ".")
+            try:
+                montant_total = Decimal(montant_str) if montant_str else Decimal("0.00")
+                if montant_total < Decimal("0.00"):
+                    montant_total = Decimal("0.00")
+            except (ValueError, ArithmeticError):
+                montant_total = Decimal("0.00")
+
+            patient = ordonnance.consultation.patient
+            taux = patient.taux_couverture or Decimal("0.00")
+
+            delivrance = Delivrance(
+                ordonnance=ordonnance,
+                pharmacien=pharmacien,
+                montant_total=montant_total,
+                taux_couverture=taux,
+            )
+            delivrance.calculer_partages()
+            delivrance.save()
+
             ordonnance.statut = Ordonnance.Statut.DELIVRE
             ordonnance.save(update_fields=["statut"])
             from ..services.notifications import notifier_delivrance_effectuee
             notifier_delivrance_effectuee(delivrance)
-            messages.success(request, "Délivrance validée.", extra_tags="succes-critique")
 
+            lignes_servies = request.POST.getlist("lignes_servies")
+            total_lignes = ordonnance.lignes.count()
+            est_partiel = (total_lignes > 0 and len(lignes_servies) < total_lignes)
+
+            if montant_total > Decimal("0.00"):
+                detail_partage = (
+                    f"Total : {delivrance.montant_total:,.0f} FCFA "
+                    f"(Prise en charge IPM : {delivrance.montant_part_assurance:,.0f} FCFA | "
+                    f"Ticket modérateur : {delivrance.montant_part_patient:,.0f} FCFA)."
+                )
+                if est_partiel:
+                    messages.success(
+                        request,
+                        f"Délivrance partielle validée ({len(lignes_servies)}/{total_lignes} médicaments servis). {detail_partage}",
+                        extra_tags="succes-critique",
+                    )
+                else:
+                    messages.success(
+                        request,
+                        f"Délivrance complète validée. {detail_partage}",
+                        extra_tags="succes-critique",
+                    )
+            else:
+                messages.success(request, "Délivrance validée.", extra_tags="succes-critique")
+
+    next_url = request.POST.get("next")
+    if next_url and next_url.startswith("/"):
+        return redirect(next_url)
     return redirect("historique_delivrances")
 
 

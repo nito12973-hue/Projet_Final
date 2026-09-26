@@ -31,7 +31,7 @@ mene a une liste filtree qui existe reellement.
     <h2 class="file-titre">{% icone "clock-history" %} À traiter maintenant</h2>
 
     {% if nb_pec_urgentes_48h %}
-    <a href="{% url 'liste_prises_en_charge' %}?statut=en_attente&urgent=1" style="display:flex;align-items:center;gap:10px;background:var(--refus-bg);color:var(--refus-fg);border:1px solid var(--danger);padding:10px 16px;border-radius:8px;margin-bottom:14px;text-decoration:none;font-weight:600;font-size:13.5px;">
+    <a href="{% url 'liste_prises_en_charge' %}?statut=en_attente&urgent=1" style="display:flex;align-items:center;flex-wrap:wrap;gap:10px;background:var(--refus-bg);color:var(--refus-fg);border:1px solid var(--danger);padding:10px 16px;border-radius:8px;margin-bottom:14px;text-decoration:none;font-weight:600;font-size:13.5px;">
         <span style="color:var(--danger);" aria-hidden="true">{% icone "alert-triangle" %}</span>
         <span>{{ nb_pec_urgentes_48h }} prise{{ nb_pec_urgentes_48h|pluralize }} en charge en attente depuis plus de 48 h</span>
         <span style="margin-left:auto;font-size:12.5px;text-decoration:underline;">Traiter en priorité &rarr;</span>
@@ -60,6 +60,14 @@ mene a une liste filtree qui existe reellement.
             <strong class="file-nombre code">{{ ordonnances_non_delivrees }}</strong>
             <span class="file-libelle">Ordonnances non délivrées</span>
             <span class="file-note">{{ total_delivrances }} délivrées sur {{ total_ordonnances }}</span>
+        </a>
+        <a class="file-tuile{% if nb_ayants_droit_en_attente %} urgent{% endif %}"
+           href="{% url 'liste_patients' %}?type=AYANT_DROIT&statut=EN_ATTENTE"
+           aria-label="Ayants droit en attente de validation : {{ nb_ayants_droit_en_attente }}">
+            <span class="file-entete">{% icone "users" %} Ayants droit</span>
+            <strong class="file-nombre code">{{ nb_ayants_droit_en_attente }}</strong>
+            <span class="file-libelle">En attente de validation IPM</span>
+            <span class="file-note">Contrôle anti-fraude</span>
         </a>
         <a class="file-tuile" href="{% url 'liste_paiements' %}?statut=non_regle"
            aria-label="Règlements en attente : {{ paiements_non_regles_nb }}, soit {{ montant_non_regle|franc_cfa }}">

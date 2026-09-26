@@ -2,12 +2,16 @@
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
+from django.db import transaction
+from django.db.models import ProtectedError, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from ..forms import PatientCreationForm, PatientForm, generer_mot_de_passe
-from ..models import JournalActivite, Patient, User
+from ..models import JournalActivite, Notification, Patient, User
+from ..services.notifications import emettre_notification
 from ..services.onboarding import construire_bilan_onboarding, envoyer_activation_utilisateur
 from .utils import _avertissement_cascade, _paginer, _trier, admin_required, journaliser
 from .medecin_espace import _medecin_courant
@@ -31,9 +35,18 @@ def liste_patients(request):
     if type_beneficiaire:
         patients = patients.filter(type_beneficiaire=type_beneficiaire)
 
+    statut_validation = request.GET.get("statut", "")
+    if statut_validation:
+        patients = patients.filter(statut_validation=statut_validation)
+
+    nb_en_attente = Patient.objects.filter(
+        type_beneficiaire=Patient.TypeBeneficiaire.AYANT_DROIT,
+        statut_validation=Patient.StatutValidation.EN_ATTENTE,
+    ).count()
+
     patients = _trier(
         request, patients,
-        ["id", "nom", "type_beneficiaire", "assure_principal__nom", "numero_carte", "plan_couverture__nom"],
+        ["id", "nom", "type_beneficiaire", "assure_principal__nom", "numero_carte", "plan_couverture__nom", "statut_validation"],
         ["nom", "prenom"],
     )
 
@@ -41,6 +54,9 @@ def liste_patients(request):
         "patients": _paginer(request, patients),
         "types_beneficiaire": Patient.TypeBeneficiaire.choices,
         "type_selectionne": type_beneficiaire,
+        "statuts_validation": Patient.StatutValidation.choices,
+        "statut_selectionne": statut_validation,
+        "nb_en_attente": nb_en_attente,
         "recherche": recherche,
     }
     return render(request, "liste_patients.html", contexte)
@@ -51,30 +67,32 @@ def ajouter_patient(request):
     if request.method == "POST":
         form = PatientCreationForm(request.POST)
         if form.is_valid():
-            patient = form.save(commit=False)
-            if patient.type_beneficiaire == Patient.TypeBeneficiaire.PRINCIPAL:
-                mot_de_passe = generer_mot_de_passe()
-                utilisateur = User.objects.create_user(
-                    email=form.cleaned_data['email'],
-                    password=mot_de_passe,
-                    role=User.Role.ASSURE,
-                    first_name=patient.prenom,
-                    last_name=patient.nom,
-                    phone_number=patient.telephone,
-                )
-                patient.user = utilisateur
+            with transaction.atomic():
+                patient = form.save(commit=False)
+                if patient.type_beneficiaire == Patient.TypeBeneficiaire.PRINCIPAL:
+                    mot_de_passe = generer_mot_de_passe()
+                    utilisateur = User.objects.create_user(
+                        email=form.cleaned_data['email'],
+                        password=mot_de_passe,
+                        role=User.Role.ASSURE,
+                        first_name=patient.prenom,
+                        last_name=patient.nom,
+                        phone_number=patient.telephone,
+                    )
+                    patient.user = utilisateur
+                    patient.save()
+                    statut_onboarding = envoyer_activation_utilisateur(utilisateur, request=request)
+                    journaliser(request, JournalActivite.Action.CREATION, f"Assuré {utilisateur.email}", f"{patient.prenom} {patient.nom}")
+                    bilan = statut_onboarding.get("bilan") or construire_bilan_onboarding(statut_onboarding, utilisateur, action="creation")
+                    if bilan["niveau"] == "success":
+                        messages.success(request, bilan["texte_flash"])
+                    else:
+                        messages.warning(request, bilan["texte_flash"])
+                    return redirect("liste_patients")
                 patient.save()
-                statut_onboarding = envoyer_activation_utilisateur(utilisateur, request=request)
-                journaliser(request, JournalActivite.Action.CREATION, f"Assuré {utilisateur.email}", f"{patient.prenom} {patient.nom}")
-                bilan = statut_onboarding.get("bilan") or construire_bilan_onboarding(statut_onboarding, utilisateur, action="creation")
-                if bilan["niveau"] == "success":
-                    messages.success(request, bilan["texte_flash"])
-                else:
-                    messages.warning(request, bilan["texte_flash"])
+                journaliser(request, JournalActivite.Action.CREATION, f"Ayant droit {patient}", f"Rattaché à {patient.assure_principal}")
+                messages.success(request, "Assuré ajouté.")
                 return redirect("liste_patients")
-            patient.save()
-            messages.success(request, "Assuré ajouté.")
-            return redirect("liste_patients")
     else:
         form = PatientCreationForm()
     return render(request, "ajouter_patient.html", {"form": form})
@@ -97,31 +115,67 @@ def modifier_patient(request, pk):
 @admin_required
 def supprimer_patient(request, pk):
     patient = get_object_or_404(Patient, pk=pk)
+    nb_consultations = patient.consultation_set.count()
+    nb_prises_en_charge = patient.priseencharge_set.count()
+    est_protege = (nb_consultations > 0 or nb_prises_en_charge > 0)
+
     if request.method == "POST":
-        # Le User (assure principal uniquement, jamais un ayant droit) doit
-        # etre desactive : sinon la fiche disparait mais le compte de
-        # connexion reste actif, et mon_profil_assure se recree tout seul
-        # une fiche Patient a la prochaine connexion.
-        if patient.user:
-            patient.user.is_active = False
-            patient.user.save(update_fields=["is_active"])
-        journaliser(
-            request, JournalActivite.Action.SUPPRESSION, f"Assuré : {patient}",
-            "compte de connexion désactivé" if patient.user else "sans compte de connexion",
-        )
-        patient.delete()
-        messages.success(request, "Assuré supprimé.")
-        return redirect("liste_patients")
+        if est_protege:
+            messages.error(
+                request,
+                f"Impossible de supprimer le dossier de {patient} : {nb_consultations} consultation(s) "
+                f"et {nb_prises_en_charge} prise(s) en charge y sont associées. "
+                "Conformément à la réglementation sur la santé et la traçabilité des soins, un dossier comportant un historique médical actif ne peut pas être supprimé.",
+            )
+            return redirect("liste_patients")
+
+        try:
+            with transaction.atomic():
+                user_associe = patient.user
+                nom_patient = str(patient)
+                details_journal = "compte de connexion désactivé" if user_associe else "sans compte de connexion"
+
+                if user_associe:
+                    user_associe.is_active = False
+                    user_associe.save(update_fields=["is_active"])
+
+                patient.delete()
+
+                # Journalisation APRES la suppression effective
+                journaliser(
+                    request,
+                    JournalActivite.Action.SUPPRESSION,
+                    f"Assuré : {nom_patient}",
+                    details_journal,
+                )
+                messages.success(request, f"Assuré {nom_patient} supprimé avec succès.")
+                return redirect("liste_patients")
+        except ProtectedError:
+            messages.error(
+                request,
+                f"Impossible de supprimer le dossier de {patient} : des actes médicaux protégés y sont rattachés.",
+            )
+            return redirect("liste_patients")
+
     avertissement = _avertissement_cascade({
         "ayant(s) droit": patient.ayants_droit.count(),
-        "consultation(s)": patient.consultation_set.count(),
-        "prise(s) en charge": patient.priseencharge_set.count(),
+        "consultation(s)": nb_consultations,
+        "prise(s) en charge": nb_prises_en_charge,
         "rendez-vous": patient.rendez_vous.count(),
     })
     return render(
         request,
         "confirmer_suppression.html",
-        {"objet": patient, "type": "Patient", "avertissement": avertissement},
+        {
+            "objet": patient,
+            "type": "Patient",
+            "avertissement": avertissement,
+            "est_protege": est_protege,
+            "motif_blocage": (
+                "Ce patient possède des consultations médicales ou des prises en charge enregistrées. "
+                "Pour garantir la traçabilité médico-légale et la conformité CDP, la suppression de ce dossier est bloquée."
+            ) if est_protege else None,
+        },
     )
 
 
@@ -172,6 +226,15 @@ def carte_scan(request, numero):
         Patient.objects.select_related("assure_principal", "plan_couverture"),
         numero_carte=numero)
 
+    # Sécurité Anti-Fraude : carte inactive si en attente de validation ou refusée
+    if not patient.est_valide:
+        return render(request, "carte_scan.html", {
+            "patient": patient,
+            "ordonnances": [],
+            "carte_inactive": True,
+            "statut_validation": patient.get_statut_validation_display(),
+        })
+
     ordonnances = (
         Ordonnance.objects
         .filter(consultation__patient=patient)
@@ -193,4 +256,82 @@ def carte_scan(request, numero):
         "patient": patient,
         "ordonnances": _paginer(request, ordonnances),
         "portee": portee,
+        "carte_inactive": False,
     })
+
+
+@admin_required
+@require_POST
+def valider_ayant_droit(request, pk):
+    ayant_droit = get_object_or_404(
+        Patient.objects.select_related("assure_principal__user"),
+        pk=pk,
+        type_beneficiaire=Patient.TypeBeneficiaire.AYANT_DROIT,
+    )
+    ayant_droit.statut_validation = Patient.StatutValidation.VALIDE
+    ayant_droit.date_decision = timezone.now()
+    ayant_droit.valide_par = request.user
+    ayant_droit.motif_refus = ""
+    ayant_droit.save(update_fields=["statut_validation", "date_decision", "valide_par", "motif_refus"])
+
+    journaliser(
+        request,
+        JournalActivite.Action.DECISION,
+        str(ayant_droit),
+        f"Validation de l'ayant droit {ayant_droit} (assuré : {ayant_droit.assure_principal})",
+    )
+
+    if ayant_droit.assure_principal and ayant_droit.assure_principal.user:
+        emettre_notification(
+            destinataire=ayant_droit.assure_principal.user,
+            type_evenement=Notification.TypeEvenement.AYANT_DROIT_VALIDE,
+            titre="Ayant droit validé par l'IPM",
+            message=(
+                f"La demande de rattachement pour {ayant_droit.prenom} {ayant_droit.nom} "
+                f"a été validée par l'administration IPM. Sa carte de prise en charge ({ayant_droit.numero_carte}) est désormais active."
+            ),
+            url_action=reverse("liste_ayants_droit"),
+        )
+
+    messages.success(request, f"L'ayant droit {ayant_droit.prenom} {ayant_droit.nom} a été validé avec succès.")
+    return redirect(request.META.get("HTTP_REFERER") or "liste_patients")
+
+
+@admin_required
+@require_POST
+def refuser_ayant_droit(request, pk):
+    ayant_droit = get_object_or_404(
+        Patient.objects.select_related("assure_principal__user"),
+        pk=pk,
+        type_beneficiaire=Patient.TypeBeneficiaire.AYANT_DROIT,
+    )
+    motif = (request.POST.get("motif_refus") or request.POST.get("motif") or "").strip() or "Pièce justificative non conforme ou informations incomplètes"
+    ayant_droit.statut_validation = Patient.StatutValidation.REFUSE
+    ayant_droit.date_decision = timezone.now()
+    ayant_droit.valide_par = request.user
+    ayant_droit.motif_refus = motif
+    ayant_droit.save(update_fields=["statut_validation", "date_decision", "valide_par", "motif_refus"])
+
+    journaliser(
+        request,
+        JournalActivite.Action.DECISION,
+        str(ayant_droit),
+        f"Refus de l'ayant droit {ayant_droit} : {motif}",
+    )
+
+    if ayant_droit.assure_principal and ayant_droit.assure_principal.user:
+        emettre_notification(
+            destinataire=ayant_droit.assure_principal.user,
+            type_evenement=Notification.TypeEvenement.AYANT_DROIT_REFUSE,
+            titre="Demande d'ayant droit refusée",
+            message=(
+                f"La demande de rattachement pour {ayant_droit.prenom} {ayant_droit.nom} "
+                f"a été refusée par l'administration IPM. Motif : {motif}. "
+                "Vous pouvez mettre à jour son dossier et joindre une pièce justificative conforme depuis votre espace."
+            ),
+            url_action=reverse("modifier_ayant_droit", args=[ayant_droit.pk]),
+        )
+
+    messages.warning(request, f"L'ayant droit {ayant_droit.prenom} {ayant_droit.nom} a été refusé.")
+    return redirect(request.META.get("HTTP_REFERER") or "liste_patients")
+

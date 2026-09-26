@@ -276,7 +276,7 @@ def notifier_annulation_rdv_par_medecin(rendez_vous):
     date_str = rendez_vous.date_heure.strftime("%d/%m/%Y à %H:%M")
 
     titre_patient = "Rendez-vous annulé par le médecin"
-    message_patient = f"Le Dr {rendez_vous.medecin} a dû annuler le rendez-vous prévu le {date_str}."
+    message_patient = f"Le rendez-vous prévu le {date_str} avec le Dr {rendez_vous.medecin} a été annulé par le praticien."
 
     if assure_user:
         emettre_notification(
@@ -302,7 +302,7 @@ def notifier_annulation_rdv_par_assure(rendez_vous):
     date_str = rendez_vous.date_heure.strftime("%d/%m/%Y à %H:%M")
 
     titre_medecin = "Rendez-vous annulé par le patient"
-    message_medecin = f"Le patient {rendez_vous.patient} a annulé son rendez-vous du {date_str}."
+    message_medecin = f"Le rendez-vous du {date_str} a été annulé par le patient ({rendez_vous.patient})."
 
     if medecin_user:
         emettre_notification(

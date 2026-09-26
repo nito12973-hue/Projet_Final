@@ -1,0 +1,51 @@
+{% extends "base_auth.html" %}
+{% load icones %}
+
+{% block title %}Nouveau mot de passe — SantéSN{% endblock %}
+
+{% block content %}
+{% if validlink %}
+    <h1>Définir un nouveau mot de passe</h1>
+    <p class="sous-titre">Choisissez un nouveau mot de passe robuste pour votre compte SantéSN.</p>
+
+    {% if form.non_field_errors %}
+    <div class="erreurs" role="alert">
+        {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        {% for field in form %}
+        <div style="margin-bottom: 16px;">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}
+            <p style="font-size: 12px; color: var(--muted); margin: 4px 0 0 0;">{{ field.help_text }}</p>
+            {% endif %}
+            {% if field.errors %}
+            <div class="erreurs" role="alert">{{ field.errors }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <button type="submit" class="btn-principal" style="margin-top: 12px;">
+            {% icone "check" %} Enregistrer le nouveau mot de passe
+        </button>
+    </form>
+{% else %}
+    <div style="text-align: center; margin-bottom: 24px;">
+        <div class="cercle-statut danger">
+            {% icone "alert-triangle" %}
+        </div>
+        <h1>Lien expiré ou invalide</h1>
+        <p class="sous-titre">
+            Ce lien de réinitialisation a déjà été utilisé ou sa période de validité de 24 heures a expiré.
+        </p>
+    </div>
+    <a href="{% url 'mot_de_passe_oublie' %}" class="btn-principal">
+        {% icone "chevron-left" %} Demander un nouveau lien
+    </a>
+{% endif %}
+{% endblock %}

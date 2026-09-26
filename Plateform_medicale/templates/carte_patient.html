@@ -8,23 +8,12 @@
     <div>
         <h1>Carte de prise en charge</h1>
         <p class="subtitle">
-            {% if user.role == "ADMIN" %}
-            {{ patient }} — aperçu officiel avant impression, recto et verso.
-            {% else %}
-            {{ patient }} — carte dématérialisée et QR code de présentation au guichet.
-            {% endif %}
+            {{ patient }} — Édition et impression officielle de la carte physique (PVC / Plastique ISO 7810 ID-1).
         </p>
     </div>
     <div class="actions">
-        {% if user.role == "ADMIN" %}
-        <a class="button btn" href="{% url 'liste_patients' %}">{% icone "chevron-left" %} Assurés</a>
-        <button type="button" class="button primary" id="bouton-imprimer-carte">{% icone "printer" %} Imprimer la carte</button>
-        {% elif user.role == "ASSURE" %}
-        <a class="button btn" href="{% url 'dashboard_assure' %}">{% icone "chevron-left" %} Mon tableau de bord</a>
-        <span class="badge ok" style="padding:7px 14px;font-size:13px;">{% icone "shield-check" %} Carte active &amp; vérifiée</span>
-        {% else %}
-        <a class="button btn" href="{% url 'post_login_redirect' %}">{% icone "chevron-left" %} Retour</a>
-        {% endif %}
+        <a class="button btn" href="{% url 'liste_patients' %}">{% icone "chevron-left" %} Liste des assurés</a>
+        <button type="button" class="button primary" id="bouton-imprimer-carte">{% icone "printer" %} Imprimer la carte physique (A4)</button>
     </div>
 </section>
 
@@ -62,7 +51,6 @@ ISO 7810 ID-1 (ratio 1.586), et non une seconde carte a maintenir.
                 <span style="background: rgba(255, 255, 255, 0.15); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.3); font-size: 8.5px; font-weight: 700; padding: 2px 7px; border-radius: 4px; letter-spacing: 0.5px;">SANTÉSN</span>
             </div>
             <div class="carte-assure-entete">
-                <span class="carte-assure-puce" aria-hidden="true"></span>
                 {% logo_marque taille=26 fond="sombre" %}
             </div>
             <div>

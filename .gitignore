@@ -44,4 +44,5 @@ logs/*.log
 .env*
 !.env.example
 db.sqlite3.sauvegarde-*
+maquette_*.html
 

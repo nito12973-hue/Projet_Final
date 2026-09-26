@@ -40,20 +40,17 @@ if not DEBUG and SECRET_KEY == DEFAULT_SECRET_KEY:
 
 _allowed_hosts_config = config(
     'ALLOWED_HOSTS',
-    default='*' if DEBUG else 'localhost,127.0.0.1,santesn.sn,www.santesn.sn,.santesn.sn,.vercel.app,.onrender.com,.railway.app',
+    default='*' if DEBUG else 'localhost,127.0.0.1,projet-final-bice.vercel.app,projet-final.vercel.app,santesn.sn,www.santesn.sn,.santesn.sn',
     cast=Csv(),
 )
 ALLOWED_HOSTS = list(_allowed_hosts_config)
-# Garantir la présence des hôtes de production Vercel et de la plateforme
+# Garantir la présence des hôtes de production et de test
 for host in [
-    '.vercel.app',
     'projet-final-bice.vercel.app',
     'projet-final.vercel.app',
     'santesn.sn',
     'www.santesn.sn',
     '.santesn.sn',
-    '.onrender.com',
-    '.railway.app',
     'localhost',
     '127.0.0.1',
     'testserver',
@@ -68,18 +65,11 @@ USE_X_FORWARDED_PORT = True
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'http://127.0.0.1:8000',
-    'https://*.vercel.app',
-    'http://*.vercel.app',
     'https://projet-final-bice.vercel.app',
+    'https://projet-final.vercel.app',
     'https://santesn.sn',
-    'http://santesn.sn',
     'https://www.santesn.sn',
-    'http://www.santesn.sn',
     'https://*.santesn.sn',
-    'http://*.santesn.sn',
-    'https://*.onrender.com',
-    'http://*.onrender.com',
-    'https://*.railway.app',
 ]
 
 SITE_URL = config(
@@ -237,7 +227,7 @@ STORAGES = {
 # En développement, config/urls.py expose /media/ automatiquement (voir urls.py).
 # En production, c'est le serveur web qui sert ce répertoire.
 
-MEDIA_URL = 'media/'
+MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 
@@ -280,9 +270,15 @@ SERVER_EMAIL = DEFAULT_FROM_EMAIL  # Adresse des mails d'erreur Django (ADMINS)
 
 # Configuration WhatsApp Business (Meta Cloud API / Passerelle SMS-WhatsApp)
 WHATSAPP_ENABLED = config('WHATSAPP_ENABLED', default=False, cast=bool)
-WHATSAPP_API_TOKEN = config('WHATSAPP_API_TOKEN', default=None)
-WHATSAPP_PHONE_NUMBER_ID = config('WHATSAPP_PHONE_NUMBER_ID', default=None)
+WHATSAPP_API_TOKEN = config('WHATSAPP_API_TOKEN', default='')
+WHATSAPP_PHONE_NUMBER_ID = config('WHATSAPP_PHONE_NUMBER_ID', default='')
 WHATSAPP_TEMPLATE_NAME = config('WHATSAPP_TEMPLATE_NAME', default=None)
+WHATSAPP_SENDER_PHONE = config('WHATSAPP_SENDER_PHONE', default='221789576145')
+
+# En environnement de test, désactiver systématiquement les envois réels vers Meta Graph API
+# (les tests spécifiques utilisent explicitement @override_settings et @patch)
+if 'test' in sys.argv:
+    WHATSAPP_ENABLED = False
 
 
 # Logging
@@ -384,5 +380,20 @@ if not DEBUG:
 
 # Règle métier : durée de validité d'une ordonnance (en jours, paramétrable)
 DELAI_VALIDITE_ORDONNANCE_JOURS = config('DELAI_VALIDITE_ORDONNANCE_JOURS', default=90, cast=int)
+
+# Passerelle WhatsApp Cloud API : configurée ci-dessus (lignes 271-280) avec protection tests
+
+# Configuration Emails
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='SantéSN <no-reply@santesn.sn>')
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
+EMAIL_BACKEND = config(
+    'EMAIL_BACKEND',
+    default='django.core.mail.backends.console.EmailBackend' if DEBUG else 'django.core.mail.backends.smtp.EmailBackend',
+)
+
+# Quotas et limites réglementaires IPM (Sénégal)
+MAX_AYANTS_DROIT_PAR_ASSURE = config('MAX_AYANTS_DROIT_PAR_ASSURE', default=6, cast=int)
+MAX_CONJOINTS_PAR_ASSURE = config('MAX_CONJOINTS_PAR_ASSURE', default=4, cast=int)
+MAX_ENFANTS_PAR_ASSURE = config('MAX_ENFANTS_PAR_ASSURE', default=6, cast=int)
 
 

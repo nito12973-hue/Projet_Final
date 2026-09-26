@@ -15,6 +15,18 @@
     </div>
 </section>
 
+{% if nb_en_attente > 0 %}
+<div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-left: 4px solid #d97706; padding: 12px 18px; border-radius: 10px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+    <div>
+        <strong style="color: #b45309; font-size: 14px;">Contrôle anti-fraude &bull; {{ nb_en_attente }} demande(s) d'ayant(s) droit en attente d'instruction</strong>
+        <p style="margin: 3px 0 0; font-size: 12.5px; color: var(--texte);">Des déclarations d'ayants droit nécessitent la vérification des pièces justificatives d'état civil avant activation de leurs cartes.</p>
+    </div>
+    <a href="?type=AYANT_DROIT&statut=EN_ATTENTE" class="button btn btn-sm" style="background: #d97706; color: white; border: none; font-weight: 600;">
+        Voir les demandes à instruire ({{ nb_en_attente }}) &rarr;
+    </a>
+</div>
+{% endif %}
+
 <form method="get" class="filtres">
     <div style="min-width:240px;flex:1;">
         <label for="q">Recherche</label>
@@ -23,7 +35,7 @@
             <input id="q" type="text" name="q" placeholder="Nom, prénom, numéro de carte ou téléphone..." value="{{ recherche }}" style="margin-bottom:0;">
         </div>
     </div>
-    <div style="min-width:200px;">
+    <div style="min-width:180px;">
         <label for="type">Type de bénéficiaire</label>
         <select id="type" name="type" style="margin-bottom:0;">
             <option value="">Tous les types</option>
@@ -32,8 +44,17 @@
             {% endfor %}
         </select>
     </div>
+    <div style="min-width:180px;">
+        <label for="statut">Statut IPM</label>
+        <select id="statut" name="statut" style="margin-bottom:0;">
+            <option value="">Tous les statuts</option>
+            {% for value, label in statuts_validation %}
+            <option value="{{ value }}" {% if value == statut_selectionne %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
     <button type="submit" class="button primary btn">{% icone "search" %} Filtrer</button>
-    {% if type_selectionne or recherche %}
+    {% if type_selectionne or statut_selectionne or recherche %}
     <a href="{% url 'liste_patients' %}" class="button btn">Réinitialiser</a>
     {% endif %}
 </form>
@@ -46,10 +67,10 @@
                 {% entete_tri request.GET "id" "N°" "col-optionnelle" %}
                 {% entete_tri request.GET "nom" "Nom complet" %}
                 {% entete_tri request.GET "type_beneficiaire" "Type" %}
+                <th>Statut &amp; Pièce</th>
                 {% entete_tri request.GET "assure_principal__nom" "Assuré principal" "col-optionnelle" %}
                 {% entete_tri request.GET "numero_carte" "Numéro de carte" "col-optionnelle" %}
                 {% entete_tri request.GET "plan_couverture__nom" "Plan de couverture" "col-optionnelle" %}
-                <th class="col-optionnelle">Téléphone</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -57,23 +78,51 @@
             {% for patient in patients %}
             <tr>
                 <td class="col-optionnelle">{{ patient.id }}</td>
-                <td>{{ patient.prenom }} {{ patient.nom }}</td>
+                <td>
+                    <strong>{{ patient.prenom }} {{ patient.nom }}</strong>
+                    {% if patient.lien_parente %}<span style="font-size: 11px; color: var(--muted); display: block;">({{ patient.get_lien_parente_display }})</span>{% endif %}
+                </td>
                 <td>{{ patient.get_type_beneficiaire_display }}</td>
+                <td>
+                    {% if patient.statut_validation == "VALIDE" %}
+                    <span class="badge" style="background: rgba(16, 185, 129, 0.12); color: #059669; border: 1px solid rgba(16, 185, 129, 0.25); font-size: 11px; font-weight: 600;">
+                        ● Validé
+                    </span>
+                    {% elif patient.statut_validation == "EN_ATTENTE" %}
+                    <span class="badge" style="background: rgba(245, 158, 11, 0.12); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.25); font-size: 11px; font-weight: 600;">
+                        ● En attente
+                    </span>
+                    {% elif patient.statut_validation == "REFUSE" %}
+                    <span class="badge" style="background: rgba(239, 68, 68, 0.12); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.25); font-size: 11px; font-weight: 600;" title="{{ patient.motif_refus }}">
+                        ● Refusé
+                    </span>
+                    {% endif %}
+
+                    {% if patient.document_justificatif %}
+                    <a href="{{ patient.document_justificatif.url }}" target="_blank" style="display: block; font-size: 11px; color: var(--primary); text-decoration: underline; margin-top: 4px;">
+                        {% icone "file-text" %} Pièce jointe &nearr;
+                    </a>
+                    {% endif %}
+                </td>
                 <td class="col-optionnelle">{{ patient.assure_principal|default:"-" }}</td>
                 <td class="code col-optionnelle">{{ patient.numero_carte }}</td>
-                <td class="col-optionnelle">{{ patient.plan_couverture|default:"Non attribue" }}</td>
-                <td class="col-optionnelle">{{ patient.telephone|default:"-" }}</td>
+                <td class="col-optionnelle">{{ patient.plan_couverture|default:"Non attribué" }}</td>
                 <td>
-                    <div class="actions">
-                        {% comment %}
-                        La carte vit ici, avec les beneficiaires : numero_carte
-                        est porte par Patient, jamais par User. Un ayant droit a
-                        une carte sans avoir de compte -- la placer dans
-                        Utilisateurs l'aurait exclu.
-                        {% endcomment %}
+                    <div class="actions" style="gap: 4px; flex-wrap: wrap;">
+                        {% if patient.type_beneficiaire == "AYANT_DROIT" and patient.statut_validation == "EN_ATTENTE" %}
+                        <form method="post" action="{% url 'valider_ayant_droit' patient.pk %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="button btn btn-sm" style="background: #059669; color: white; border: none; padding: 4px 8px;" title="Valider cet ayant droit">
+                                {% icone "check" %} Valider
+                            </button>
+                        </form>
+                        <button type="button" class="button btn btn-danger btn-sm" style="padding: 4px 8px;" title="Refuser avec motif" onclick="ouvrirRefusAyantDroit('{{ patient.pk }}', '{{ patient|escapejs }}')">
+                            {% icone "x" %} Refuser
+                        </button>
+                        {% endif %}
                         <a href="{% url 'carte_patient' patient.pk %}" class="button btn btn-sm">{% icone "id-card" %} Carte</a>
                         <a href="{% url 'modifier_patient' patient.pk %}" class="button primary btn btn-sm">{% icone "edit-2" %} Modifier</a>
-                        <a href="{% url 'supprimer_patient' patient.pk %}" class="button btn btn-danger btn-sm">{% icone "trash-2" %} Supprimer</a>
+                        <a href="{% url 'supprimer_patient' patient.pk %}" class="button btn btn-danger btn-sm">{% icone "trash-2" %}</a>
                     </div>
                 </td>
             </tr>
@@ -104,4 +153,29 @@
     {% endif %}
 </div>
 {% endif %}
+<dialog id="modal-refus-ayant-droit" class="modale-dialogue" style="padding: 24px; border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--ombre-forte); max-width: 440px; width: 92%; background: var(--surface);">
+    <form method="post" id="form-refus-ayant-droit" style="padding: 0; background: none; border: none; box-shadow: none; max-width: none;">
+        {% csrf_token %}
+        <h3 style="margin-top: 0; font-size: 17px; color: var(--titre);">Refuser l'ayant droit</h3>
+        <p id="refus-ad-nom" style="font-size: 13px; color: var(--muted); margin-bottom: 14px;"></p>
+        <label for="id-motif-ad" style="font-size: 13px; font-weight: 700; display: block; margin-bottom: 6px;">Motif de refus notifié à l'assuré *</label>
+        <input type="text" id="id-motif-ad" name="motif_refus" required placeholder="Ex. : Pièce justificative non conforme ou illisible" value="Pièce justificative non conforme ou illisible" style="margin-bottom: 16px;">
+        <div style="display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
+            <button type="button" class="button btn" onclick="document.getElementById('modal-refus-ayant-droit').close()">Annuler</button>
+            <button type="submit" class="button btn btn-danger">Confirmer le refus</button>
+        </div>
+    </form>
+</dialog>
+<script>
+function ouvrirRefusAyantDroit(pk, nom) {
+    var modal = document.getElementById('modal-refus-ayant-droit');
+    var form = document.getElementById('form-refus-ayant-droit');
+    var txt = document.getElementById('refus-ad-nom');
+    if (modal && form) {
+        form.action = '/patients/' + pk + '/refuser/';
+        if (txt) { txt.textContent = 'Bénéficiaire : ' + nom; }
+        modal.showModal();
+    }
+}
+</script>
 {% endblock %}

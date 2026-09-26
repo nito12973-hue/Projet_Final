@@ -219,6 +219,14 @@
             to   { opacity: 1; transform: translateX(0); }
         }
 
+        .icone-nav {
+            display: inline-block;
+            flex-shrink: 0;
+            width: 18px;
+            height: 18px;
+            vertical-align: middle;
+        }
+
         .points-forts .puce {
             flex-shrink: 0;
             display: inline-flex;
@@ -299,21 +307,33 @@
             font-size: 14px;
         }
 
-        .form-control {
+        .form-control,
+        input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+        select,
+        textarea {
             width: 100%;
-            min-height: 46px;
+            min-height: 44px;
+            height: 44px;
             margin-bottom: 16px;
-            padding: 11px 14px;
+            padding: 10px 14px;
             border: 1.5px solid var(--border);
             border-radius: 10px;
             font: inherit;
+            font-size: 14.5px;
             background: #fbfdfc;
+            box-sizing: border-box;
             transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
         }
 
-        .form-control:hover { border-color: #9ecbc6; }
+        .form-control:hover,
+        input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):hover,
+        select:hover,
+        textarea:hover { border-color: #9ecbc6; }
 
-        .form-control:focus {
+        .form-control:focus,
+        input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):focus,
+        select:focus,
+        textarea:focus {
             outline: none;
             border-color: var(--primary);
             background: #ffffff;
@@ -322,24 +342,40 @@
 
         .btn-principal {
             position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
             width: 100%;
-            min-height: 48px;
+            height: 44px;
+            min-height: 44px;
+            padding: 0 20px;
             border: none;
             border-radius: 10px;
             background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-strong) 100%);
-            color: #ffffff;
+            color: #ffffff !important;
             font: inherit;
-            font-size: 16px;
-            font-weight: 700;
+            font-size: 14.5px;
+            font-weight: 600;
+            text-decoration: none;
             cursor: pointer;
             overflow: hidden;
-            transition: transform 0.15s ease, box-shadow 0.2s ease;
-            box-shadow: 0 8px 20px rgba(14, 124, 134, 0.30);
+            box-sizing: border-box;
+            line-height: 1;
+            transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.15s ease;
+            box-shadow: 0 3px 10px rgba(14, 124, 134, 0.22);
+        }
+
+        .btn-principal .icone-nav,
+        .btn-principal > svg {
+            width: 17px;
+            height: 17px;
+            flex-shrink: 0;
         }
 
         .btn-principal:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 26px rgba(14, 124, 134, 0.40);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(14, 124, 134, 0.32);
         }
 
         .btn-principal:active { transform: translateY(0) scale(0.99); }
@@ -360,6 +396,30 @@
             100%    { left: 130%; }
         }
 
+        .cercle-statut {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--primary-soft);
+            color: var(--primary-strong);
+            margin: 0 auto 16px;
+        }
+
+        .cercle-statut .icone-nav,
+        .cercle-statut > svg {
+            width: 26px;
+            height: 26px;
+            flex-shrink: 0;
+        }
+
+        .cercle-statut.danger {
+            background: rgba(179, 38, 30, 0.1);
+            color: var(--danger);
+        }
+
         .erreurs {
             margin: 0 0 16px;
             padding: 12px 14px;
@@ -375,13 +435,25 @@
            session expiree) : meme forme que .erreurs, teinte primaire au
            lieu de danger -- ce n'est pas une erreur de saisie. */
         .avis-info {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
             margin: 0 0 16px;
             padding: 12px 14px;
             border-radius: 10px;
             background: var(--primary-soft);
             border: 1px solid var(--border);
             color: var(--primary-strong);
-            font-size: 14px;
+            font-size: 13.5px;
+            line-height: 1.5;
+        }
+
+        .avis-info .icone-nav,
+        .avis-info > svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+            margin-top: 2px;
         }
 
         .avis-info p { margin: 0; }
@@ -428,7 +500,7 @@
             body { padding: 12px; }
             .panneau-marque { padding: 22px 18px; }
             .panneau-form { padding: 20px 16px 24px; }
-            .btn-principal { width: 100%; min-height: 46px; font-size: 15px; }
+            .btn-principal { width: 100%; height: 42px; min-height: 42px; font-size: 14px; }
         }
 
         /* Focus clavier : meme anneau turquoise que .form-control, coherent

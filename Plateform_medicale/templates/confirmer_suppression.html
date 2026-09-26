@@ -32,6 +32,26 @@
     </div>
 </section>
 
+{% if est_protege %}
+<div class="avis avis-danger" style="border-left: 4px solid var(--danger); background: var(--refus-bg); color: var(--refus-fg);">
+    <p class="avis-titre" style="color:var(--danger); font-weight:700;">{% icone "alert-triangle" %} Suppression bloquée (Conservation réglementaire)</p>
+    <p style="margin:6px 0 0 0; line-height:1.5;">
+        {{ motif_blocage|default:"Cet enregistrement possède des actes médicaux ou administratifs rattachés. Conformément aux obligations légales et à la protection des données de santé, il ne peut pas être supprimé." }}
+    </p>
+    {% if avertissement %}
+    <p class="subtitle" style="margin-top:10px; font-weight:600; color:var(--danger);">Éléments rattachés : {{ avertissement }}</p>
+    {% endif %}
+</div>
+
+<section class="panel panel-form" style="max-width:540px; margin-top:16px;">
+    <p style="font-size:13.5px; color:var(--text-muted); margin-bottom:16px;">
+        Pour préserver l'intégrité de la traçabilité médicale, veuillez plutôt désactiver le compte utilisateur associé si ce profil ne doit plus accéder à la plateforme.
+    </p>
+    <div style="display:flex;gap:10px;">
+        <a href="{{ url_annulation }}" class="button primary">{% icone "arrow-left" %} Retourner à la liste</a>
+    </div>
+</section>
+{% else %}
 <div class="avis avis-danger">
     <p class="avis-titre">{% icone "alert-triangle" %} Cette action est irréversible</p>
     <p style="margin:6px 0 0 0;">Êtes-vous sûr de vouloir supprimer définitivement <strong>{{ objet }}</strong> ?</p>
@@ -43,7 +63,7 @@
 <section class="panel panel-form" style="max-width:540px;">
     <form method="post">
         {% csrf_token %}
-        <div style="display:flex;gap:10px;">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
             <button type="submit" class="button btn-danger">
                 {% icone "trash-2" %} Supprimer définitivement
             </button>
@@ -51,4 +71,5 @@
         </div>
     </form>
 </section>
+{% endif %}
 {% endblock %}

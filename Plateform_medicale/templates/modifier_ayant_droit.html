@@ -13,11 +13,27 @@
 </section>
 
 <section class="panel panel-form" style="border-radius: 16px; box-shadow: var(--ombre-douce); padding: 24px;">
+    {% if ayant_droit.statut_validation == "REFUSE" %}
+    <div style="background: rgba(239, 68, 68, 0.08); border-left: 4px solid var(--danger); padding: 14px 18px; border-radius: 8px; margin-bottom: 20px; font-size: 13.5px; color: var(--texte); line-height: 1.5;">
+        <strong style="color: var(--danger);">Dossier refusé par l'IPM :</strong> {{ ayant_droit.motif_refus|default:"Informations ou pièces justificatives non conformes." }}
+        <p style="margin: 6px 0 0; font-size: 12.5px; color: var(--muted);">En corrigeant les informations ou en téléversant un nouveau justificatif, votre dossier sera automatiquement renvoyé en ré-instruction.</p>
+    </div>
+    {% endif %}
+
+    {% if ayant_droit.document_justificatif %}
+    <div style="background: var(--surface-alt); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; font-size: 13px;">
+        <span>Pièce justificative actuelle :</span>
+        <a href="{{ ayant_droit.document_justificatif.url }}" target="_blank" style="color: var(--primary); font-weight: 600; text-decoration: underline;">
+            {% icone "file-text" %} Consulter le justificatif &nearr;
+        </a>
+    </div>
+    {% endif %}
+
     {% if form.non_field_errors %}
     <div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
     {% endif %}
 
-    <form method="post">
+    <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {% for field in form %}
         <label for="{{ field.id_for_label }}" style="font-weight: 600; font-size: 13.5px; margin-bottom: 4px; display: block;">{{ field.label }}</label>

@@ -9,9 +9,9 @@
         <h1>Trouver un prestataire</h1>
         <p class="subtitle" id="sous-titre-page">
             {% if localisation_active %}
-            Tries du plus proche au plus loin de votre position.
+            Triés du plus proche au plus loin de votre position.
             {% else %}
-            Reseau partenaire, trie par ville.
+            Réseau partenaire, trié par ville.
             {% endif %}
         </p>
     </div>
@@ -80,8 +80,8 @@ resultat.
 
 {% if prestataires_sans_coordonnees %}
 <section class="panel" style="margin-top: 20px; padding: 20px;">
-    <h2 style="margin-top:0;">Autres prestataires du reseau</h2>
-    <p class="subtitle">Localisation non renseignee, non affiches sur la carte.</p>
+    <h2 style="margin-top:0;">Autres prestataires du réseau</h2>
+    <p class="subtitle">Localisation non renseignée, non affichés sur la carte.</p>
     <div class="grille-prestataires-sans-loc">
         {% for prestataire in prestataires_sans_coordonnees %}
         <article class="panel carte-prestataire-sans-loc">
@@ -93,19 +93,19 @@ resultat.
                 </span>
                 <div>
                     <h3>{{ prestataire.nom }}</h3>
-                    <p class="subtitle">{{ prestataire.get_type_prestataire_display }} - {{ prestataire.ville|default:"Ville non renseignee" }}</p>
+                    <p class="subtitle">{{ prestataire.get_type_prestataire_display }} - {{ prestataire.ville|default:"Ville non renseignée" }}</p>
                 </div>
             </div>
             <details class="details-tableau">
-                <summary>Coordonnees</summary>
+                <summary>Coordonnées</summary>
                 <p class="subtitle" style="margin:8px 0 0;">
-                    Adresse : {{ prestataire.adresse|default:"Non renseignee" }}<br>
-                    Telephone : {{ prestataire.telephone|default:"Non renseigne" }}
+                    Adresse : {{ prestataire.adresse|default:"Non renseignée" }}<br>
+                    Téléphone : {{ prestataire.telephone|default:"Non renseigné" }}
                 </p>
             </details>
             <div class="actions">
-                <a class="button" href="{{ prestataire.lien_itineraire }}" target="_blank" rel="noopener">Itineraire</a>
-                <a class="button" href="{% url 'fiche_prestataire_assure' prestataire.pk %}">Voir les medecins</a>
+                <a class="button" href="{{ prestataire.lien_itineraire }}" target="_blank" rel="noopener">Itinéraire</a>
+                <a class="button" href="{% url 'fiche_prestataire_assure' prestataire.pk %}">Voir les médecins</a>
                 <a class="button primary" href="{% url 'ajouter_rendez_vous_assure' %}?prestataire={{ prestataire.pk }}">{% icone "plus-circle" %} Prendre rendez-vous</a>
             </div>
         </article>
@@ -571,8 +571,8 @@ resultat.
 
             var message = document.createElement('p');
             message.textContent = aucunResultatFiltre
-                ? "Aucun prestataire ne correspond a vos filtres actuels."
-                : "Aucun prestataire du reseau n'a encore de position enregistree.";
+                ? "Aucun prestataire ne correspond à vos filtres actuels."
+                : "Aucun prestataire du réseau n'a encore de position enregistrée.";
             bloc.appendChild(message);
 
             var actions = document.createElement('div');

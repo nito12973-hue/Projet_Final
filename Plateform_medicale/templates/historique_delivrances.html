@@ -32,6 +32,7 @@
 
 {% if delivrances %}
 <section class="panel">
+    <div class="table-responsive">
     <table>
         <thead>
             <tr>
@@ -39,19 +40,37 @@
                 <th>Patient</th>
                 <th>Médecin prescripteur</th>
                 <th>Code ordonnance</th>
+                <th style="text-align:right;">Montant total</th>
+                <th style="text-align:right;">Prise en charge IPM</th>
+                <th style="text-align:right;">Ticket modérateur</th>
             </tr>
         </thead>
         <tbody>
             {% for delivrance in delivrances %}
             <tr>
                 <td>{{ delivrance.date_delivrance|date:"d/m/Y H:i" }}</td>
-                <td>{{ delivrance.ordonnance.consultation.patient }}</td>
-                <td>{{ delivrance.ordonnance.consultation.medecin }}</td>
-                <td>{{ delivrance.ordonnance.code_qr }}</td>
+                <td>
+                    <strong>{{ delivrance.ordonnance.consultation.patient }}</strong>
+                    {% if delivrance.taux_couverture %}
+                    <br><span class="badge validee" style="font-size:10px;">{{ delivrance.taux_couverture }}% couvert</span>
+                    {% endif %}
+                </td>
+                <td>Dr. {{ delivrance.ordonnance.consultation.medecin }}</td>
+                <td><span class="code">{{ delivrance.ordonnance.code_qr }}</span></td>
+                <td style="text-align:right;font-family:'IBM Plex Mono',monospace;font-weight:600;">
+                    {{ delivrance.montant_total|franc_cfa }}
+                </td>
+                <td style="text-align:right;font-family:'IBM Plex Mono',monospace;color:var(--primary-dark);">
+                    {{ delivrance.montant_part_assurance|franc_cfa }}
+                </td>
+                <td style="text-align:right;font-family:'IBM Plex Mono',monospace;color:var(--text);">
+                    {{ delivrance.montant_part_patient|franc_cfa }}
+                </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+    </div>
 </section>
 {% if delivrances.paginator.num_pages > 1 %}
 <nav class="pagination" aria-label="Pagination">

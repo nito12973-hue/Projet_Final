@@ -109,24 +109,27 @@ def changer_statut_rendez_vous(request, pk):
     ancien_statut = rendez_vous.statut
     nouveau_statut = request.POST.get("statut")
 
+    next_url = request.POST.get("next")
+    destination = next_url if (next_url and next_url.startswith("/")) else "agenda_medecin"
+
     if nouveau_statut not in RendezVous.Statut.values:
         messages.error(request, "Statut de rendez-vous invalide.")
-        return redirect("agenda_medecin")
+        return redirect(destination)
 
     if nouveau_statut == ancien_statut:
         messages.info(request, "Le statut du rendez-vous est déjà à jour.")
-        return redirect("agenda_medecin")
+        return redirect(destination)
 
     if ancien_statut in (RendezVous.Statut.ANNULE, RendezVous.Statut.REFUSE, RendezVous.Statut.TERMINE):
         messages.warning(
             request,
             f"Impossible de modifier un rendez-vous {rendez_vous.get_statut_display().lower()}."
         )
-        return redirect("agenda_medecin")
+        return redirect(destination)
 
     transitions_autorisees = {
         RendezVous.Statut.DEMANDE: [RendezVous.Statut.CONFIRME, RendezVous.Statut.REFUSE, RendezVous.Statut.ANNULE],
-        RendezVous.Statut.CONFIRME: [RendezVous.Statut.ANNULE],
+        RendezVous.Statut.CONFIRME: [RendezVous.Statut.ANNULE, RendezVous.Statut.ABSENT],
     }
 
     if nouveau_statut not in transitions_autorisees.get(ancien_statut, []):
@@ -134,7 +137,7 @@ def changer_statut_rendez_vous(request, pk):
             request,
             f"Transition non autorisée : impossible de passer de {rendez_vous.get_statut_display()} à {dict(RendezVous.Statut.choices).get(nouveau_statut, nouveau_statut)}."
         )
-        return redirect("agenda_medecin")
+        return redirect(destination)
 
     rendez_vous.statut = nouveau_statut
     rendez_vous.save(update_fields=["statut"])
@@ -156,7 +159,9 @@ def changer_statut_rendez_vous(request, pk):
         else:
             notifier_refus_rdv(rendez_vous)
         messages.success(request, "Rendez-vous annulé.")
-    return redirect("agenda_medecin")
+    elif nouveau_statut == RendezVous.Statut.ABSENT:
+        messages.info(request, "Rendez-vous marqué comme non honoré (patient absent).")
+    return redirect(destination)
 
 
 @role_required(User.Role.MEDECIN)
@@ -342,14 +347,15 @@ def ajouter_consultation_medecin(request):
         if request.method == "POST":
             form = ConsultationForm(request.POST, medecin=medecin, rdv=rdv)
             if form.is_valid():
-                consultation = form.save(commit=False)
-                consultation.medecin = medecin
-                consultation.patient = rdv.patient
-                consultation.type_admission = Consultation.TypeAdmission.RDV
-                consultation.save()
-                Paiement.calculer_pour(consultation).save()
-                rdv.statut = RendezVous.Statut.TERMINE
-                rdv.save(update_fields=["statut"])
+                with transaction.atomic():
+                    consultation = form.save(commit=False)
+                    consultation.medecin = medecin
+                    consultation.patient = rdv.patient
+                    consultation.type_admission = Consultation.TypeAdmission.RDV
+                    consultation.save()
+                    Paiement.calculer_pour(consultation).save()
+                    rdv.statut = RendezVous.Statut.TERMINE
+                    rdv.save(update_fields=["statut"])
                 messages.success(request, "Consultation enregistrée avec succès.")
                 return redirect("ajouter_ordonnance_medecin", consultation_pk=consultation.pk)
         else:
@@ -374,17 +380,19 @@ def ajouter_consultation_medecin(request):
         if request.method == "POST":
             form = ConsultationSpontaneeForm(request.POST, medecin=medecin)
             if form.is_valid():
-                consultation = form.save(commit=False)
-                consultation.medecin = medecin
-                contexte = form.cleaned_data.get("contexte_admission")
-                consultation.type_admission = (
-                    Consultation.TypeAdmission.URGENCE
-                    if contexte == "URGENCE"
-                    else Consultation.TypeAdmission.SPONTANE
-                )
-                # Le diagnostic reste purement le texte clinique saisi par le praticien
-                consultation.save()
-                Paiement.calculer_pour(consultation).save()
+                with transaction.atomic():
+                    consultation = form.save(commit=False)
+                    consultation.medecin = medecin
+                    contexte = form.cleaned_data.get("contexte_admission")
+                    consultation.type_admission = (
+                        Consultation.TypeAdmission.URGENCE
+                        if contexte == "URGENCE"
+                        else Consultation.TypeAdmission.SPONTANE
+                    )
+                    # Le diagnostic reste purement le texte clinique saisi par le praticien
+                    consultation.save()
+                    Paiement.calculer_pour(consultation).save()
+
                 contexte_label = "Urgence médicale" if contexte == "URGENCE" else "Passage spontané non programmé"
                 carte = form.cleaned_data.get("numero_carte")
                 etablissement = str(medecin.prestataire) if medecin.prestataire else "Non rattaché"

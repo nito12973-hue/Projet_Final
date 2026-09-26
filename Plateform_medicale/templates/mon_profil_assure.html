@@ -6,10 +6,12 @@
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>{% if patient %}Mon profil{% else %}Completer mon profil{% endif %}</h1>
+        <h1>{% if patient %}Mon profil{% else %}Compléter mon profil{% endif %}</h1>
         <p class="subtitle">
             {% if not patient %}
-            Ces informations sont necessaires pour generer votre carte de prise en charge.
+            Ces informations sont nécessaires pour générer votre carte de prise en charge.
+            {% else %}
+            Vos coordonnées personnelles et paramètres d'assurance certifiés.
             {% endif %}
         </p>
     </div>
@@ -23,7 +25,8 @@
             Numéro de carte de prise en charge : <strong class="code" style="color: var(--titre); font-size: 15px;">{{ patient.numero_carte }}</strong>
         </p>
     </div>
-    <div>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <a href="{% url 'mon_historique_assure' %}" class="button btn">{% icone "clock-history" %} Mon historique</a>
         <a href="{% url 'carte_assure' %}" class="button btn">{% icone "id-card" %} Ma carte complète</a>
     </div>
 </section>
@@ -35,7 +38,7 @@
         <p class="subtitle" style="margin: 3px 0 0 0; font-size: 13px;">À présenter pour vérification immédiate de vos droits.</p>
     </div>
     <div>
-        <button type="button" class="button btn" id="bouton-voir-qr" onclick="var d=document.getElementById('dialogue-qr-profil'); if(d){ typeof d.showModal === 'function' ? d.showModal() : d.setAttribute('open', ''); }">{% icone "qr-scan" %} Mon QR code</button>
+        <button type="button" class="button btn" id="bouton-voir-qr" onclick="var d=document.getElementById('dialogue-qr-profil'); if(d){ typeof d.showModal === 'function' ? d.showModal() : d.setAttribute('open', ''); }">{% icone "qr-scan" %} Afficher le QR code</button>
     </div>
     <dialog id="dialogue-qr-profil" class="modale-dialogue" style="padding: 28px; border: 1px solid var(--border); border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); text-align: center; background: var(--surface); max-width: 360px; width: 90%;">
         <h3 style="margin: 0 0 16px; font-size: 17px; color: var(--titre); font-weight: 700;">Mon QR code assuré</h3>

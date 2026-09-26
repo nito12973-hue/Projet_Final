@@ -145,48 +145,52 @@ class Command(BaseCommand):
 
         # 4. Profils métier rattachés aux utilisateurs
         medecin_user = utilisateurs[User.Role.MEDECIN]
-        medecin, _ = Medecin.objects.get_or_create(
-            user=medecin_user,
-            defaults={
-                "nom": medecin_user.last_name,
-                "prenom": medecin_user.first_name,
-                "specialite": "Médecine Générale",
-                "telephone": medecin_user.phone_number or "772345678",
-                "email": medecin_user.email,
-                "prestataire": hopital,
-                "annees_experience": 12,
-                "presentation": "Médecin généraliste référent, conventionné IPM SantéSN.",
-            },
-        )
-        if medecin.prestataire_id != hopital.pk:
+        medecin = Medecin.objects.filter(user=medecin_user).first() or Medecin.objects.filter(email=medecin_user.email).first()
+        if not medecin:
+            medecin = Medecin.objects.create(
+                user=medecin_user,
+                nom=medecin_user.last_name,
+                prenom=medecin_user.first_name,
+                specialite="Médecine Générale",
+                telephone=medecin_user.phone_number or "772345678",
+                email=medecin_user.email,
+                prestataire=hopital,
+                annees_experience=12,
+                presentation="Médecin généraliste référent, conventionné IPM SantéSN.",
+            )
+        else:
+            medecin.user = medecin_user
             medecin.prestataire = hopital
-            medecin.save(update_fields=["prestataire"])
+            medecin.save()
 
         pharma_user = utilisateurs[User.Role.PHARMACIEN]
-        pharmacien, _ = Pharmacien.objects.get_or_create(
-            user=pharma_user,
-            defaults={"prestataire": pharmacie},
-        )
-        if pharmacien.prestataire_id != pharmacie.pk:
+        pharmacien = Pharmacien.objects.filter(user=pharma_user).first()
+        if not pharmacien:
+            pharmacien = Pharmacien.objects.create(
+                user=pharma_user,
+                prestataire=pharmacie,
+            )
+        else:
             pharmacien.prestataire = pharmacie
-            pharmacien.save(update_fields=["prestataire"])
+            pharmacien.save()
 
         assure_user = utilisateurs[User.Role.ASSURE]
-        patient, _ = Patient.objects.get_or_create(
-            user=assure_user,
-            defaults={
-                "nom": assure_user.last_name,
-                "prenom": assure_user.first_name,
-                "date_naissance": datetime.date(1988, 6, 15),
-                "telephone": assure_user.phone_number or "771234567",
-                "adresse": "Mermoz Pyrotechnie, Dakar",
-                "plan_couverture": plan_standard,
-                "type_beneficiaire": Patient.TypeBeneficiaire.PRINCIPAL,
-            },
-        )
-        if not patient.plan_couverture:
-            patient.plan_couverture = plan_standard
-            patient.save(update_fields=["plan_couverture"])
+        patient = Patient.objects.filter(user=assure_user).first()
+        if not patient:
+            patient = Patient.objects.create(
+                user=assure_user,
+                nom=assure_user.last_name,
+                prenom=assure_user.first_name,
+                date_naissance=datetime.date(1988, 6, 15),
+                telephone=assure_user.phone_number or "771234567",
+                adresse="Mermoz Pyrotechnie, Dakar",
+                plan_couverture=plan_standard,
+                type_beneficiaire=Patient.TypeBeneficiaire.PRINCIPAL,
+            )
+        else:
+            if not patient.plan_couverture:
+                patient.plan_couverture = plan_standard
+                patient.save(update_fields=["plan_couverture"])
 
         # Ayant droit rattaché à l'assuré
         ayant_droit, _ = Patient.objects.get_or_create(

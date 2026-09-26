@@ -51,6 +51,7 @@
                 </p>
                 <input type="file" id="fichier" name="fichier" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="display: none;" required>
                 <button type="button" class="button btn btn-sm" onclick="document.getElementById('fichier').click()">Choisir un fichier</button>
+                <p id="drop-error-msg" style="display: none; color: var(--danger); font-size: 13px; font-weight: 600; margin: 12px 0 0;"></p>
             </div>
             
             <div id="file-preview" style="display: none; align-items: center; justify-content: center; gap: 12px;">
@@ -75,15 +76,21 @@ document.addEventListener('DOMContentLoaded', function () {
     var filePreview = document.getElementById('file-preview');
     var fileName = document.getElementById('file-name');
     var btnRechoisir = document.getElementById('btn-rechoisir');
+    var dropErrorMsg = document.getElementById('drop-error-msg');
 
     if (!dropZone || !fileInput) return;
 
     function handleFile(file) {
         if (!file) return;
         if (!file.name.toLowerCase().endsWith('.xlsx')) {
-            alert('Veuillez sélectionner un fichier au format Excel (.xlsx)');
+            if (dropErrorMsg) {
+                dropErrorMsg.textContent = 'Format non supporté : veuillez sélectionner un fichier Excel (.xlsx).';
+                dropErrorMsg.style.display = 'block';
+            }
+            dropZone.style.borderColor = 'var(--danger)';
             return;
         }
+        if (dropErrorMsg) { dropErrorMsg.style.display = 'none'; }
         fileName.textContent = file.name;
         dropContent.style.display = 'none';
         filePreview.style.display = 'flex';

@@ -1,7 +1,7 @@
-"""CRUD Prises en charge (liste, ajout, modification, suppression)."""
-
 from django.contrib import messages
-from django.db.models import Q
+from django.core.exceptions import ValidationError
+from django.db import transaction
+from django.db.models import ProtectedError, Q
 from django.shortcuts import get_object_or_404, redirect, render
 
 from ..forms import PriseEnChargeForm
@@ -27,45 +27,51 @@ def liste_prises_en_charge(request):
                     notifier_validation_prise_en_charge,
                 )
                 modifiees_list = list(modifiees)
-                modifiees.update(
-                    statut=nouveau_statut,
-                    valide_par=request.user,
-                    date_validation=timezone.now(),
-                )
-                for item in modifiees_list:
-                    item.statut = nouveau_statut
-                    if nouveau_statut == "validee":
-                        notifier_validation_prise_en_charge(item)
-                        for c in item.consultation_set.all():
-                            if hasattr(c, "paiement"):
-                                if c.paiement.statut == Paiement.Statut.NON_REGLE:
-                                    p_calc = Paiement.calculer_pour(c)
-                                    c.paiement.montant_part_assurance = p_calc.montant_part_assurance
-                                    c.paiement.montant_part_patient = p_calc.montant_part_patient
-                                    c.paiement.taux_applique = p_calc.taux_applique
-                                    c.paiement.save()
-                                else:
-                                    paiement_id = c.paiement.pk
-                                    part_patient_actuelle = c.paiement.montant_part_patient
-                                    p_calc = Paiement.calculer_pour(c)
-                                    trop_percu = part_patient_actuelle - p_calc.montant_part_patient
-                                    if trop_percu > 0:
-                                        journaliser(
-                                            request,
-                                            JournalActivite.Action.MODIFICATION,
-                                            f"Régularisation comptable — Paiement #{paiement_id} ({c.patient})",
-                                            f"Prise en charge #{item.pk} validée a posteriori. Trop-perçu constaté à rembourser : {trop_percu} FCFA (nouvelle part assurance : {p_calc.montant_part_assurance} FCFA)",
-                                        )
-                    elif nouveau_statut == "refusee":
-                        notifier_refus_prise_en_charge(item)
+                reussites = 0
+                with transaction.atomic():
+                    for item in modifiees_list:
+                        item.statut = nouveau_statut
+                        item.valide_par = request.user
+                        item.date_validation = timezone.now()
+                        try:
+                            item.full_clean()
+                            item.save()
+                            reussites += 1
+                        except ValidationError:
+                            continue
+
+                        if nouveau_statut == "validee":
+                            notifier_validation_prise_en_charge(item)
+                            for c in item.consultation_set.all():
+                                if hasattr(c, "paiement"):
+                                    if c.paiement.statut == Paiement.Statut.NON_REGLE:
+                                        p_calc = Paiement.calculer_pour(c)
+                                        c.paiement.montant_part_assurance = p_calc.montant_part_assurance
+                                        c.paiement.montant_part_patient = p_calc.montant_part_patient
+                                        c.paiement.taux_applique = p_calc.taux_applique
+                                        c.paiement.save()
+                                    else:
+                                        paiement_id = c.paiement.pk
+                                        part_patient_actuelle = c.paiement.montant_part_patient
+                                        p_calc = Paiement.calculer_pour(c)
+                                        trop_percu = part_patient_actuelle - p_calc.montant_part_patient
+                                        if trop_percu > 0:
+                                            journaliser(
+                                                request,
+                                                JournalActivite.Action.MODIFICATION,
+                                                f"Régularisation comptable — Paiement #{paiement_id} ({c.patient})",
+                                                f"Prise en charge #{item.pk} validée a posteriori. Trop-perçu constaté à rembourser : {trop_percu} FCFA (nouvelle part assurance : {p_calc.montant_part_assurance} FCFA)",
+                                            )
+                        elif nouveau_statut == "refusee":
+                            notifier_refus_prise_en_charge(item)
 
                 journaliser(
                     request,
                     JournalActivite.Action.DECISION,
                     "Prises en charge (Traitement en masse)",
-                    f"{count} demande(s) passa(ient) au statut : {nouveau_statut}",
+                    f"{reussites} demande(s) passée(s) au statut : {nouveau_statut}",
                 )
-                messages.success(request, f"{count} prise(s) en charge {libelle_statut}.")
+                messages.success(request, f"{reussites} prise(s) en charge {libelle_statut}.")
             else:
                 messages.warning(request, "Aucune demande en attente sélectionnée.")
         return redirect("liste_prises_en_charge")
@@ -113,41 +119,46 @@ def valider_prise_en_charge(request, pk):
         from django.utils import timezone
         from ..models import Paiement
         from ..services.notifications import notifier_validation_prise_en_charge
-        prise_en_charge.statut = "validee"
-        prise_en_charge.valide_par = request.user
-        prise_en_charge.date_validation = timezone.now()
-        prise_en_charge.save()
+        try:
+            with transaction.atomic():
+                prise_en_charge.statut = "validee"
+                prise_en_charge.valide_par = request.user
+                prise_en_charge.date_validation = timezone.now()
+                prise_en_charge.full_clean()
+                prise_en_charge.save()
 
-        # Recalculer les paiements des consultations rattachées
-        for c in prise_en_charge.consultation_set.all():
-            if hasattr(c, "paiement"):
-                if c.paiement.statut == Paiement.Statut.NON_REGLE:
-                    p_calc = Paiement.calculer_pour(c)
-                    c.paiement.montant_part_assurance = p_calc.montant_part_assurance
-                    c.paiement.montant_part_patient = p_calc.montant_part_patient
-                    c.paiement.taux_applique = p_calc.taux_applique
-                    c.paiement.save()
-                else:
-                    paiement_id = c.paiement.pk
-                    part_patient_actuelle = c.paiement.montant_part_patient
-                    p_calc = Paiement.calculer_pour(c)
-                    trop_percu = part_patient_actuelle - p_calc.montant_part_patient
-                    if trop_percu > 0:
-                        journaliser(
-                            request,
-                            JournalActivite.Action.MODIFICATION,
-                            f"Régularisation comptable — Paiement #{paiement_id} ({c.patient})",
-                            f"Prise en charge validée a posteriori. Trop-perçu constaté à rembourser : {trop_percu} FCFA (nouvelle part assurance : {p_calc.montant_part_assurance} FCFA)",
-                        )
+                # Recalculer les paiements des consultations rattachées
+                for c in prise_en_charge.consultation_set.all():
+                    if hasattr(c, "paiement"):
+                        if c.paiement.statut == Paiement.Statut.NON_REGLE:
+                            p_calc = Paiement.calculer_pour(c)
+                            c.paiement.montant_part_assurance = p_calc.montant_part_assurance
+                            c.paiement.montant_part_patient = p_calc.montant_part_patient
+                            c.paiement.taux_applique = p_calc.taux_applique
+                            c.paiement.save()
+                        else:
+                            paiement_id = c.paiement.pk
+                            part_patient_actuelle = c.paiement.montant_part_patient
+                            p_calc = Paiement.calculer_pour(c)
+                            trop_percu = part_patient_actuelle - p_calc.montant_part_patient
+                            if trop_percu > 0:
+                                journaliser(
+                                    request,
+                                    JournalActivite.Action.MODIFICATION,
+                                    f"Régularisation comptable — Paiement #{paiement_id} ({c.patient})",
+                                    f"Prise en charge validée a posteriori. Trop-perçu constaté à rembourser : {trop_percu} FCFA (nouvelle part assurance : {p_calc.montant_part_assurance} FCFA)",
+                                )
 
-        notifier_validation_prise_en_charge(prise_en_charge)
-        journaliser(
-            request,
-            JournalActivite.Action.DECISION,
-            f"Prise en charge validée : {prise_en_charge.patient}",
-            f"Motif : {prise_en_charge.motif}",
-        )
-        messages.success(request, f"La prise en charge de {prise_en_charge.patient} a été validée avec succès.")
+                notifier_validation_prise_en_charge(prise_en_charge)
+                journaliser(
+                    request,
+                    JournalActivite.Action.DECISION,
+                    f"Prise en charge validée : {prise_en_charge.patient}",
+                    f"Motif : {prise_en_charge.motif}",
+                )
+                messages.success(request, f"La prise en charge de {prise_en_charge.patient} a été validée avec succès.")
+        except ValidationError as e:
+            messages.error(request, f"Validation impossible : {e}")
     return redirect("liste_prises_en_charge")
 
 
@@ -159,20 +170,26 @@ def refuser_prise_en_charge(request, pk):
         from django.utils import timezone
         from ..services.notifications import notifier_refus_prise_en_charge
         motif_refus = request.POST.get("motif_refus", "").strip() or "Non conforme aux critères de couverture"
-        prise_en_charge.statut = "refusee"
-        prise_en_charge.motif_refus = motif_refus
-        prise_en_charge.valide_par = request.user
-        prise_en_charge.date_validation = timezone.now()
-        prise_en_charge.save()
 
-        notifier_refus_prise_en_charge(prise_en_charge)
-        journaliser(
-            request,
-            JournalActivite.Action.DECISION,
-            f"Prise en charge refusée : {prise_en_charge.patient}",
-            f"Motif du refus : {motif_refus}",
-        )
-        messages.warning(request, f"La prise en charge de {prise_en_charge.patient} a été refusée.")
+        try:
+            with transaction.atomic():
+                prise_en_charge.statut = "refusee"
+                prise_en_charge.motif_refus = motif_refus
+                prise_en_charge.valide_par = request.user
+                prise_en_charge.date_validation = timezone.now()
+                prise_en_charge.full_clean()
+                prise_en_charge.save()
+
+                notifier_refus_prise_en_charge(prise_en_charge)
+                journaliser(
+                    request,
+                    JournalActivite.Action.DECISION,
+                    f"Prise en charge refusée : {prise_en_charge.patient}",
+                    f"Motif du refus : {motif_refus}",
+                )
+                messages.warning(request, f"La prise en charge de {prise_en_charge.patient} a été refusée.")
+        except ValidationError as e:
+            messages.error(request, f"Impossible de refuser cette prise en charge : {e}")
     return redirect("liste_prises_en_charge")
 
 
@@ -267,9 +284,38 @@ def modifier_prise_en_charge(request, pk):
 @admin_required
 def supprimer_prise_en_charge(request, pk):
     prise_en_charge = get_object_or_404(PriseEnCharge, pk=pk)
+    nb_consultations = prise_en_charge.consultation_set.count()
+    est_protege = (nb_consultations > 0)
+
     if request.method == "POST":
-        journaliser(request, JournalActivite.Action.SUPPRESSION, f"Prise en charge : {prise_en_charge}")
-        prise_en_charge.delete()
-        messages.success(request, "Prise en charge supprimée.")
-        return redirect("liste_prises_en_charge")
-    return render(request, "confirmer_suppression.html", {"objet": prise_en_charge, "type": "Prise en charge"})
+        if est_protege:
+            messages.error(
+                request,
+                f"Impossible de supprimer cette prise en charge : {nb_consultations} consultation(s) médicale(s) y sont rattachée(s).",
+            )
+            return redirect("liste_prises_en_charge")
+
+        try:
+            with transaction.atomic():
+                nom_pec = str(prise_en_charge)
+                prise_en_charge.delete()
+                journaliser(request, JournalActivite.Action.SUPPRESSION, f"Prise en charge : {nom_pec}")
+                messages.success(request, "Prise en charge supprimée.")
+                return redirect("liste_prises_en_charge")
+        except ProtectedError:
+            messages.error(request, "Suppression impossible : des actes médicaux protégés y sont associés.")
+            return redirect("liste_prises_en_charge")
+
+    return render(
+        request,
+        "confirmer_suppression.html",
+        {
+            "objet": prise_en_charge,
+            "type": "Prise en charge",
+            "est_protege": est_protege,
+            "motif_blocage": (
+                "Des consultations médicales sont associées à cette prise en charge. "
+                "Sa suppression est bloquée pour garantir la traçabilité des dossiers de soins."
+            ) if est_protege else None,
+        },
+    )
