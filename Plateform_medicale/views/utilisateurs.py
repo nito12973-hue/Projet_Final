@@ -461,16 +461,24 @@ def ajouter_utilisateur(request):
         form = UtilisateurCreationForm(request.POST)
         if form.is_valid():
             utilisateur = form.save()
-            # Onboarding sécurisé : génération et expédition du lien d'activation (Email / WhatsApp)
             statut_onboarding = envoyer_activation_utilisateur(utilisateur, request=request)
             journaliser(request, JournalActivite.Action.CREATION, f"Utilisateur {utilisateur.email}",
                         f"role : {utilisateur.get_role_display()}")
             bilan = statut_onboarding.get("bilan") or construire_bilan_onboarding(statut_onboarding, utilisateur, action="creation")
-            if bilan["niveau"] == "success":
-                messages.success(request, bilan["texte_flash"])
-            else:
-                messages.warning(request, bilan["texte_flash"])
-            return redirect("liste_utilisateurs")
+            return render(
+                request,
+                "mot_de_passe_genere.html",
+                {
+                    "utilisateur": utilisateur,
+                    "lien_activation": statut_onboarding["lien_activation"],
+                    "whatsapp_direct_url": statut_onboarding.get("whatsapp_direct_url", ""),
+                    "email_envoye": statut_onboarding.get("email_envoye", False),
+                    "whatsapp_envoye": statut_onboarding.get("whatsapp_envoye", False),
+                    "whatsapp_statut": statut_onboarding.get("whatsapp_statut"),
+                    "bilan": bilan,
+                    "action": "creation",
+                },
+            )
     else:
         form = UtilisateurCreationForm()
     return render(request, "ajouter_utilisateur.html", {"form": form})
@@ -547,11 +555,20 @@ def reinitialiser_mot_de_passe(request, pk):
         statut_onboarding = envoyer_activation_utilisateur(utilisateur, request=request)
         journaliser(request, JournalActivite.Action.MOT_DE_PASSE, f"Utilisateur {utilisateur.email}", "Génération du lien de réinitialisation sécurisé")
         bilan = statut_onboarding.get("bilan") or construire_bilan_onboarding(statut_onboarding, utilisateur, action="reinitialisation")
-        if bilan["niveau"] == "success":
-            messages.success(request, bilan["texte_flash"])
-        else:
-            messages.warning(request, bilan["texte_flash"])
-        return redirect("liste_utilisateurs")
+        return render(
+            request,
+            "mot_de_passe_genere.html",
+            {
+                "utilisateur": utilisateur,
+                "lien_activation": statut_onboarding["lien_activation"],
+                "whatsapp_direct_url": statut_onboarding.get("whatsapp_direct_url", ""),
+                "email_envoye": statut_onboarding.get("email_envoye", False),
+                "whatsapp_envoye": statut_onboarding.get("whatsapp_envoye", False),
+                "whatsapp_statut": statut_onboarding.get("whatsapp_statut"),
+                "bilan": bilan,
+                "action": "reinitialisation",
+            },
+        )
     return render(request, "reinitialiser_mot_de_passe.html", {"utilisateur": utilisateur})
 
 
@@ -567,11 +584,20 @@ def renvoyer_activation(request, pk):
         "Renvoi du lien d'activation sécurisé",
     )
     bilan = statut.get("bilan") or construire_bilan_onboarding(statut, utilisateur, action="renvoi")
-    if bilan["niveau"] == "success":
-        messages.success(request, bilan["texte_flash"])
-    else:
-        messages.warning(request, bilan["texte_flash"])
-    return redirect("liste_utilisateurs")
+    return render(
+        request,
+        "mot_de_passe_genere.html",
+        {
+            "utilisateur": utilisateur,
+            "lien_activation": statut["lien_activation"],
+            "whatsapp_direct_url": statut.get("whatsapp_direct_url", ""),
+            "email_envoye": statut.get("email_envoye", False),
+            "whatsapp_envoye": statut.get("whatsapp_envoye", False),
+            "whatsapp_statut": statut.get("whatsapp_statut"),
+            "bilan": bilan,
+            "action": "renvoi",
+        },
+    )
 
 
 @admin_required

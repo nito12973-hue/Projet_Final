@@ -214,7 +214,9 @@ def envoyer_activation_utilisateur(utilisateur, request=None):
     numero_nettoye = "".join(filter(str.isdigit, str(telephone)))
     if numero_nettoye.startswith("00"):
         numero_nettoye = numero_nettoye[2:]
-    elif not numero_nettoye.startswith("221") and len(numero_nettoye) == 9:
+    elif numero_nettoye.startswith("0") and len(numero_nettoye) == 10:
+        numero_nettoye = numero_nettoye[1:]
+    if not numero_nettoye.startswith("221") and len(numero_nettoye) == 9:
         numero_nettoye = f"221{numero_nettoye}"
 
     whatsapp_direct_url = ""
