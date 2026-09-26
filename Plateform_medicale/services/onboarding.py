@@ -62,31 +62,30 @@ def construire_bilan_onboarding(statut, utilisateur, action="creation"):
             f"Ouvrir sur WhatsApp</a>"
         )
 
-    # CAS 1 : WhatsApp envoyé avec succès
-    if whatsapp_envoye:
+    # CAS 1 : WhatsApp et Email tous les deux envoyés automatiquement
+    if whatsapp_envoye and email_envoye:
         texte_dest = f" au {telephone}" if telephone else ""
-        texte_flash = mark_safe(f"{prefixe_creation}Le lien d'activation a été envoyé par WhatsApp{texte_dest}.")
+        mail_dest = f" et à {email}" if email else ""
+        texte_flash = mark_safe(f"{prefixe_creation}Le lien d'activation a été envoyé automatiquement par WhatsApp{texte_dest}{mail_dest} par e-mail.")
+        titre = "Activation envoyée par WhatsApp et Email"
+        note = "Le lien d'activation a été transmis automatiquement sur WhatsApp et sur la boîte e-mail."
+        niveau = "success"
+        canal = "WhatsApp & Email"
+
+    # CAS 2 : WhatsApp uniquement envoyé
+    elif whatsapp_envoye:
+        texte_dest = f" au {telephone}" if telephone else ""
+        texte_flash = mark_safe(f"{prefixe_creation}Le lien d'activation a été envoyé automatiquement par WhatsApp{texte_dest}.")
         titre = "Activation envoyée par WhatsApp"
         note = "Le lien d'activation a été transmis sur le numéro WhatsApp de l'utilisateur."
         niveau = "success"
         canal = "WhatsApp"
 
-    # CAS 2 : Numéro WhatsApp absent ou incorrect -> Bascule Email automatique
-    elif ws in ("SANS_TELEPHONE", "NUMERO_INVALIDE") and email_envoye:
-        texte_dest = f" à {email}" if email else ""
-        texte_flash = mark_safe(
-            f"{prefixe_creation}Numéro de téléphone non renseigné ou incorrect. Le lien d'activation a été envoyé par email{texte_dest} (pensez à vérifier la boîte principale et le dossier Spam / Courrier indésirable)."
-        )
-        titre = "Activation envoyée par Email"
-        note = "Numéro WhatsApp incorrect. Le lien a été envoyé par email."
-        niveau = "success"
-        canal = "Email"
-
-    # CAS 3 : Bascule Email automatique (WhatsApp indisponible)
+    # CAS 3 : Email uniquement envoyé
     elif email_envoye:
         texte_dest = f" à {email}" if email else ""
         texte_flash = mark_safe(
-            f"{prefixe_creation}Le lien d'activation a été envoyé par email{texte_dest} (pensez à vérifier la boîte principale et le dossier Spam / Courrier indésirable)."
+            f"{prefixe_creation}Le lien d'activation a été envoyé automatiquement par email{texte_dest}."
         )
         titre = "Activation envoyée par Email"
         note = "Le lien d'activation a été transmis par email à l'adresse de l'utilisateur."
@@ -163,52 +162,52 @@ def envoyer_activation_utilisateur(utilisateur, request=None):
     email_erreur = None
 
     if whatsapp_res["succes"]:
-        # WhatsApp a fonctionné : NE JAMAIS envoyer par Email
-        logger.info("Activation envoyée par WhatsApp uniquement pour %s (%s)", email, telephone)
+        logger.info("Activation envoyée automatiquement par WhatsApp pour %s (%s)", email, telephone)
     else:
-        # 2. WhatsApp indisponible ou échec : Bascule sur l'Email de secours (Fallback)
-        logger.info("WhatsApp indisponible (%s), bascule sur Email de secours pour %s", whatsapp_res["statut"], email)
-        if email:
+        logger.info("Envoi WhatsApp non délivré (%s) pour %s", whatsapp_res["statut"], email)
+
+    # 2. Envoi Email automatique systématique (Stratégie bi-canal simultanée WhatsApp + Email)
+    if email:
+        try:
+            sujet = "Activation de votre compte SantéSN"
+            ctx = {
+                "user": utilisateur,
+                "prenom": prenom,
+                "email": email,
+                "lien_activation": lien_activation,
+                "duree_heures": 24,
+            }
+            corps_texte = (
+                f"Bonjour {prenom},\n\n"
+                f"Votre compte SantéSN a été créé.\n\n"
+                f"Pour commencer à utiliser la plateforme, veuillez activer votre compte et définir votre mot de passe :\n\n"
+                f"{lien_activation}\n\n"
+                f"Ce lien est valable 24 heures.\n\n"
+                f"Si vous n'êtes pas à l'origine de cette création de compte, veuillez contacter l'administration.\n\n"
+                f"SantéSN"
+            )
             try:
-                sujet = "Activation de votre compte SantéSN"
-                ctx = {
-                    "user": utilisateur,
-                    "prenom": prenom,
-                    "email": email,
-                    "lien_activation": lien_activation,
-                    "duree_heures": 24,
-                }
-                corps_texte = (
-                    f"Bonjour {prenom},\n\n"
-                    f"Votre compte SantéSN a été créé.\n\n"
-                    f"Pour commencer à utiliser la plateforme, veuillez activer votre compte et définir votre mot de passe :\n\n"
-                    f"{lien_activation}\n\n"
-                    f"Ce lien est valable 24 heures.\n\n"
-                    f"Si vous n'êtes pas à l'origine de cette création de compte, veuillez contacter l'administration.\n\n"
-                    f"SantéSN"
-                )
-                try:
-                    corps_html = render_to_string("emails/activation_compte.html", ctx)
-                except Exception:
-                    corps_html = None
+                corps_html = render_to_string("emails/activation_compte.html", ctx)
+            except Exception:
+                corps_html = None
 
-                from_addr = getattr(settings, "DEFAULT_FROM_EMAIL", None) or getattr(settings, "EMAIL_HOST_USER", None) or "noreply@santesn.sn"
-                from_header = f"SantéSN <{from_addr}>" if ("<" not in from_addr and "@" in from_addr) else from_addr
+            from_addr = getattr(settings, "DEFAULT_FROM_EMAIL", None) or getattr(settings, "EMAIL_HOST_USER", None) or "noreply@santesn.sn"
+            from_header = f"SantéSN <{from_addr}>" if ("<" not in from_addr and "@" in from_addr) else from_addr
 
-                msg = EmailMultiAlternatives(
-                    subject=sujet,
-                    body=corps_texte,
-                    from_email=from_header,
-                    to=[email],
-                )
-                if corps_html:
-                    msg.attach_alternative(corps_html, "text/html")
-                msg.send(fail_silently=False)
-                email_envoye = True
-                logger.info("Email d'activation de secours envoyé à %s", email)
-            except Exception as exc:
-                email_erreur = str(exc)
-                logger.warning("Échec d'envoi d'email de secours pour %s : %s", email, exc)
+            msg = EmailMultiAlternatives(
+                subject=sujet,
+                body=corps_texte,
+                from_email=from_header,
+                to=[email],
+            )
+            if corps_html:
+                msg.attach_alternative(corps_html, "text/html")
+            msg.send(fail_silently=False)
+            email_envoye = True
+            logger.info("Email d'activation envoyé automatiquement à %s", email)
+        except Exception as exc:
+            email_erreur = str(exc)
+            logger.warning("Échec d'envoi d'email automatique pour %s : %s", email, exc)
 
     import urllib.parse
     numero_nettoye = "".join(filter(str.isdigit, str(telephone)))
