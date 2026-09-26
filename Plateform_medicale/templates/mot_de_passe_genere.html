@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load icones %}
+
+{% block title %}{% if action == "creation" %}Compte créé — SantéSN{% else %}Lien d'activation généré — SantéSN{% endif %}{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>{% if action == "creation" %}Compte créé avec succès{% else %}Lien d'activation généré{% endif %}</h1>
+        <p class="subtitle">Lien sécurisé pour <strong>{{ utilisateur.get_full_name|default:utilisateur.email }}</strong> ({{ utilisateur.get_role_display }}).</p>
+    </div>
+    <a class="button btn" href="{% url 'liste_utilisateurs' %}">{% icone "chevron-left" %} Retour à la liste</a>
+</section>
+
+<div class="panel" style="padding: 28px; max-width: 680px; border-radius: 18px; box-shadow: var(--ombre-douce); margin-bottom: 24px;">
+    
+    {% if whatsapp_direct_url %}
+    <div style="background: rgba(37, 211, 102, 0.10); border: 1.5px solid #25D366; border-radius: 14px; padding: 20px 22px; margin-bottom: 24px;">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+            <span style="color: #25D366; display: inline-flex;">{% icone "share-2" %}</span>
+            <strong style="color: var(--titre); font-size: 15.5px;">Transmission directe sur WhatsApp</strong>
+        </div>
+        <p style="margin: 0 0 16px 0; font-size: 13.5px; color: var(--text); line-height: 1.5;">
+            Le message pré-rempli contenant le lien d'activation sécurisé (valable 24 heures) est prêt à être transmis au numéro <strong>{{ utilisateur.phone_number }}</strong>.
+        </p>
+        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <a href="{{ whatsapp_direct_url }}" target="_blank" rel="noopener" id="btn-transmettre-whatsapp" class="button" style="background-color: #25D366; color: #FFFFFF !important; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; border: none; padding: 10px 22px; border-radius: 10px; font-size: 14px; box-shadow: 0 2px 8px rgba(37,211,102,0.3);">
+                {% icone "share-2" %} Ouvrir WhatsApp et envoyer le lien
+            </a>
+            <span id="indicateur-redirection" style="font-size: 12px; color: var(--muted);">Ouverture automatique en cours...</span>
+        </div>
+    </div>
+    {% elif email_envoye %}
+    <div style="background: var(--surface-alt); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; margin-bottom: 22px;">
+        <p style="margin: 0; font-size: 13.5px; color: var(--text);">
+            {% icone "check" %} Un email avec le lien d'activation a été envoyé à <strong>{{ utilisateur.email }}</strong> (vérifier également les courriers indésirables).
+        </p>
+    </div>
+    {% else %}
+    <div style="background: var(--surface-alt); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; margin-bottom: 22px;">
+        <p style="margin: 0; font-size: 13.5px; color: var(--text);">
+            {% icone "alert-triangle" %} Aucun numéro de téléphone renseigné. Veuillez copier et transmettre manuellement le lien d'activation ci-dessous.
+        </p>
+    </div>
+    {% endif %}
+
+    <div>
+        <label for="champ-lien-activation" style="display: block; font-size: 13.5px; font-weight: 700; margin-bottom: 8px; color: var(--titre);">
+            Lien d'activation sécurisé (valable 24 heures)
+        </label>
+        <div style="display: flex; align-items: center; gap: 10px; background: var(--champ-bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; flex-wrap: wrap;">
+            <input type="text" readonly value="{{ lien_activation }}" style="flex: 1; min-width: 220px; border: none; background: transparent; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--titre); outline: none;" id="champ-lien-activation">
+            <button type="button" class="button btn btn-sm" data-copier="{{ lien_activation }}">{% icone "copy" %} Copier le lien</button>
+        </div>
+        <p style="font-size: 12px; color: var(--muted); margin: 0; display: inline-flex; align-items: center; gap: 6px;">
+            {% icone "shield-check" %} Par sécurité, l'utilisateur définira son mot de passe lors de sa première connexion via ce lien.
+        </p>
+    </div>
+
+    <div style="margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <a class="button primary btn" href="{% url 'liste_utilisateurs' %}">Retour à la liste des utilisateurs</a>
+        <a class="button btn" href="{% url 'ajouter_utilisateur' %}">{% icone "plus" %} Ajouter un autre utilisateur</a>
+    </div>
+</div>
+
+{% if whatsapp_direct_url %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var btn = document.getElementById("btn-transmettre-whatsapp");
+        var indicateur = document.getElementById("indicateur-redirection");
+        if (btn && btn.href) {
+            try {
+                var popup = window.open(btn.href, "_blank");
+                if (!popup || popup.closed || typeof popup.closed === "undefined") {
+                    if (indicateur) {
+                        indicateur.textContent = "Cliquez sur le bouton ci-dessus pour ouvrir WhatsApp.";
+                    }
+                } else {
+                    if (indicateur) {
+                        indicateur.textContent = "Lien ouvert sur WhatsApp.";
+                    }
+                }
+            } catch (e) {
+                if (indicateur) {
+                    indicateur.textContent = "Cliquez sur le bouton ci-dessus pour ouvrir WhatsApp.";
+                }
+            }
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}
