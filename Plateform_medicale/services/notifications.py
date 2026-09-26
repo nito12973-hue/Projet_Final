@@ -89,7 +89,7 @@ def emettre_notification(
     whatsapp_succes = False
     whatsapp_active = getattr(settings, "WHATSAPP_ENABLED", False)
 
-    # 1. Tentative WhatsApp prioritaire (stratégie mono-canal)
+    # 1. Envoi WhatsApp automatique (Meta Cloud API) si activé et numéro disponible
     if whatsapp_active and telephone:
         try:
             texte_wa = f"[{titre}]\n\n{message}"
@@ -102,12 +102,12 @@ def emettre_notification(
             if res_wa.get("succes"):
                 whatsapp_succes = True
                 notification.whatsapp_envoye = True
-                logger.info("Notification %s envoyée via WhatsApp à %s", notification.pk, getattr(destinataire, "email", telephone))
+                logger.info("Notification %s envoyée automatiquement via WhatsApp à %s", notification.pk, getattr(destinataire, "email", telephone))
         except Exception as exc:
             logger.warning("Échec tentative WhatsApp pour la notification %s : %s", notification.pk, exc)
 
-    # 2. Secours Email (si WhatsApp non envoyé)
-    if not whatsapp_succes and envoyer_email and destinataire.email:
+    # 2. Envoi Email automatique systématique (Stratégie bi-canal simultanée WhatsApp + Email)
+    if envoyer_email and destinataire.email:
         try:
             sujet = sujet_email or f"[SantéSN] {titre}"
             site_url = getattr(settings, "SITE_URL", "https://projet-final-bice.vercel.app").rstrip("/")
@@ -191,7 +191,7 @@ def notifier_demande_rdv(rendez_vous):
         if whatsapp_active and tel:
             res_wa = envoyer_message_whatsapp(tel, texte_wa)
             wa_envoye = res_wa.get("succes", False)
-        if not wa_envoye and email:
+        if email:
             try:
                 msg = EmailMultiAlternatives(
                     subject=f"[SantéSN] {titre_medecin}",
