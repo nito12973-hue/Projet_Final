@@ -10822,6 +10822,20 @@ class MediaFilesServingTests(TestCase):
         response = client.get("/media/justificatifs_ayants_droit/UPsn_CCNA_Section_1-Lesson_1.pdf")
         self.assertEqual(response.status_code, 200)
 
+    def test_fichier_media_base_de_donnees_accessible(self):
+        from .models import FichierMedia
+        FichierMedia.objects.create(
+            chemin="justificatifs_ayants_droit/test_db_doc.pdf",
+            contenu=b"%PDF-1.4 test data",
+            type_mime="application/pdf",
+            taille=18,
+        )
+        client = Client()
+        response = client.get("/media/justificatifs_ayants_droit/test_db_doc.pdf")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+        self.assertEqual(response.content, b"%PDF-1.4 test data")
+
     def test_fichier_media_inexistant_retourne_404(self):
         client = Client()
         response = client.get("/media/justificatifs_ayants_droit/fichier_inexistant_xyz_123.pdf")

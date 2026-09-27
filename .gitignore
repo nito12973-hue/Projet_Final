@@ -15,7 +15,7 @@ db.sqlite3
 
 # Fichiers statiques et medias
 staticfiles/
-media/
+media/*.tmp
 
 # IDE et OS
 .idea/

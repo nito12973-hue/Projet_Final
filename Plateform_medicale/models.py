@@ -1321,3 +1321,23 @@ class MessageSupport(models.Model):
 
     def __str__(self):
         return f"Message de {self.auteur} sur {self.demande.numero_dossier} ({self.date_envoi:%d/%m/%Y %H:%M})"
+
+
+class FichierMedia(models.Model):
+    """Stockage persistant en base de données pour les fichiers médias (documents justificatifs, etc.).
+    Permet la persistance intégrale des fichiers sur architecture serverless (Vercel) sans perte de données.
+    """
+    chemin = models.CharField(max_length=255, unique=True, db_index=True)
+    contenu = models.BinaryField()
+    type_mime = models.CharField(max_length=120, default="application/octet-stream")
+    taille = models.PositiveIntegerField(default=0)
+    date_creation = models.DateTimeField(auto_now_add=True)
+    date_modification = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "fichier média persistant"
+        verbose_name_plural = "fichiers médias persistants"
+        ordering = ["-date_creation"]
+
+    def __str__(self):
+        return f"{self.chemin} ({self.taille} octets)"
