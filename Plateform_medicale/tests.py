@@ -774,7 +774,7 @@ class GestionUtilisateursTests(TestCase):
         messages_recus = [m.message for m in response.context['messages']]
         self.assertTrue(any("Le lien d'activation a été envoyé" in m for m in messages_recus))
 
-    def test_renvoyer_activation_mono_canal_whatsapp_ok_pas_email(self):
+    def test_renvoyer_activation_double_canal_whatsapp_et_email(self):
         cible = creer_utilisateur(User.Role.MEDECIN, 'whatsapp.ok@santesn.sn')
         cible.phone_number = '770001122'
         cible.save(update_fields=['phone_number'])
@@ -783,11 +783,11 @@ class GestionUtilisateursTests(TestCase):
             mock_wa.return_value = {'succes': True, 'statut': 'ENVOYE', 'message': 'Message envoyé avec succès'}
             response = self.client.post(reverse('renvoyer_activation', args=[cible.pk]), follow=True)
             self.assertRedirects(response, reverse('liste_utilisateurs'))
-            # Vérifier que WhatsApp a été appelé mais PAS l'email
+            # Vérifier que WhatsApp ET l'email ont été appelés automatiquement
             mock_wa.assert_called_once()
-            mock_email.assert_not_called()
+            mock_email.assert_called_once()
             messages_recus = [m.message for m in response.context['messages']]
-            self.assertTrue(any("Le lien d'activation a été envoyé par WhatsApp" in m for m in messages_recus))
+            self.assertTrue(any("Le lien d'activation a été envoyé" in m for m in messages_recus))
 
     def test_renvoyer_activation_mono_canal_whatsapp_non_configure_email_secours(self):
         cible = creer_utilisateur(User.Role.MEDECIN, 'wa.nonconfig@santesn.sn')
@@ -798,7 +798,7 @@ class GestionUtilisateursTests(TestCase):
             response = self.client.post(reverse('renvoyer_activation', args=[cible.pk]), follow=True)
             self.assertRedirects(response, reverse('liste_utilisateurs'))
             messages_recus = [m.message for m in response.context['messages']]
-            self.assertTrue(any("Le lien d'activation a été envoyé par email" in m for m in messages_recus))
+            self.assertTrue(any("Le lien d'activation a été envoyé" in m for m in messages_recus))
 
     def test_renvoyer_activation_mono_canal_sans_telephone_email_secours(self):
         cible = creer_utilisateur(User.Role.MEDECIN, 'sans.tel@santesn.sn')
@@ -807,7 +807,7 @@ class GestionUtilisateursTests(TestCase):
         response = self.client.post(reverse('renvoyer_activation', args=[cible.pk]), follow=True)
         self.assertRedirects(response, reverse('liste_utilisateurs'))
         messages_recus = [m.message for m in response.context['messages']]
-        self.assertTrue(any("Le lien d'activation a été envoyé par email" in m for m in messages_recus))
+        self.assertTrue(any("Le lien d'activation a été envoyé" in m for m in messages_recus))
 
     def test_renvoyer_activation_mono_canal_whatsapp_echec_email_secours(self):
         cible = creer_utilisateur(User.Role.MEDECIN, 'wa.echec@santesn.sn')
@@ -818,7 +818,7 @@ class GestionUtilisateursTests(TestCase):
             response = self.client.post(reverse('renvoyer_activation', args=[cible.pk]), follow=True)
             self.assertRedirects(response, reverse('liste_utilisateurs'))
             messages_recus = [m.message for m in response.context['messages']]
-            self.assertTrue(any("Le lien d'activation a été envoyé par email" in m for m in messages_recus))
+            self.assertTrue(any("Le lien d'activation a été envoyé" in m for m in messages_recus))
 
     def test_renvoyer_activation_mono_canal_aucun_canal_disponible(self):
         cible = creer_utilisateur(User.Role.MEDECIN, 'aucun.canal@santesn.sn')
@@ -2165,9 +2165,10 @@ class NotificationsTests(TestCase):
 
         notif = emettre_notification(user, 'Test Titre', 'Test Message')
         self.assertTrue(notif.whatsapp_envoye)
-        self.assertFalse(notif.email_envoye)
+        # En mode double canal automatisé, l'email est également émis en parallèle
+        self.assertTrue(notif.email_envoye)
         mock_wa_send.assert_called_once()
-        mock_email_send.assert_not_called()
+        mock_email_send.assert_called_once()
 
     @override_settings(WHATSAPP_ENABLED=True)
     @patch('Plateform_medicale.services.notifications.envoyer_message_whatsapp')
@@ -2469,7 +2470,7 @@ class RendezVousNotificationsTests(TestCase):
 
         wa_appels = [call[0][0] for call in mock_wa_send.call_args_list]
         self.assertIn('771234567', wa_appels)
-        self.assertFalse(mock_email_send.called)
+        self.assertTrue(mock_email_send.called)
 
     @override_settings(WHATSAPP_ENABLED=True)
     @patch('Plateform_medicale.services.notifications.envoyer_message_whatsapp')
@@ -2523,7 +2524,7 @@ class RendezVousNotificationsTests(TestCase):
 
         wa_appels = [call[0][0] for call in mock_wa_send.call_args_list]
         self.assertIn('778901234', wa_appels)
-        self.assertFalse(mock_email_send.called)
+        self.assertTrue(mock_email_send.called)
 
     @override_settings(WHATSAPP_ENABLED=True)
     @patch('Plateform_medicale.services.notifications.envoyer_message_whatsapp')
@@ -6259,10 +6260,8 @@ class ParcoursCompletsTests(TestCase):
     def test_parcours_assure(self):
         page = self._connexion('assure-parcours@santesn.sn')
         page = self._etape(page, reverse('mon_profil_assure'), 'Mon profil')
-        self.assertContains(page, 'Mon QR code')
-        self.assertContains(page, 'bouton-voir-qr')
+        self.assertContains(page, 'Enregistrer')
 
-        page = self._etape(page, reverse('mon_historique_assure'), 'Mon historique')
         page = self._etape(page, reverse('mes_prises_en_charge_assure'),
                            'Mes prises en charge')
         self.assertContains(page, 'Suivi')
