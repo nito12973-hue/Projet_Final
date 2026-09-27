@@ -14,21 +14,43 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+import os
 from django.conf import settings
-from django.conf.urls.static import static
 from django.contrib import admin
+from django.http import Http404, HttpResponse
 from django.urls import path, include, re_path
 from django.views.static import serve
+
+
+def servir_fichier_media(request, path):
+    """Sert les fichiers médias depuis la base de données (FichierMedia) ou le disque en secours."""
+    path_propre = path.replace("\\", "/").lstrip("/")
+
+    # 1. Base de données PostgreSQL (FichierMedia) : persistance serverless Vercel
+    try:
+        from Plateform_medicale.models import FichierMedia
+        media = FichierMedia.objects.filter(chemin=path_propre).first()
+        if media:
+            response = HttpResponse(media.contenu, content_type=media.type_mime)
+            nom_fichier = os.path.basename(path_propre)
+            response["Content-Disposition"] = f'inline; filename="{nom_fichier}"'
+            response["Content-Length"] = str(media.taille)
+            response["Cache-Control"] = "public, max-age=86400"
+            return response
+    except Exception:
+        pass
+
+    # 2. Secours sur le disque local
+    try:
+        return serve(request, path, document_root=settings.MEDIA_ROOT)
+    except Http404:
+        raise Http404(f"« {path} » n'existe pas.")
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('Plateform_medicale.urls')),
+    re_path(r'^media/(?P<path>.*)$', servir_fichier_media, name='media_serve'),
 ]
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-else:
-    urlpatterns += [
-        re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
-    ]
 
