@@ -79,76 +79,103 @@ def envoyer_message_whatsapp(numero_telephone, texte_message, template_nom=None,
         }
 
     url = f"https://graph.facebook.com/v21.0/{phone_number_id}/messages"
-    if template_nom:
-        components = []
-        if template_params:
-            parameters = [{"type": "text", "text": str(p)} for p in template_params]
-            components.append({"type": "body", "parameters": parameters})
-        payload = {
-            "messaging_product": "whatsapp",
-            "to": numero_nettoye,
-            "type": "template",
-            "template": {
-                "name": template_nom,
-                "language": {"code": "fr"},
-                "components": components,
-            },
-        }
-    else:
-        payload = {
+
+    def _preparer_payload(nom_tpl=None, params_tpl=None, code_langue=None):
+        if nom_tpl:
+            components = []
+            if params_tpl:
+                parameters = [{"type": "text", "text": str(p)} for p in params_tpl]
+                components.append({"type": "body", "parameters": parameters})
+            langue = code_langue or ("en_US" if nom_tpl == "hello_world" else "fr")
+            return {
+                "messaging_product": "whatsapp",
+                "to": numero_nettoye,
+                "type": "template",
+                "template": {
+                    "name": nom_tpl,
+                    "language": {"code": langue},
+                    "components": components,
+                },
+            }
+        return {
             "messaging_product": "whatsapp",
             "to": numero_nettoye,
             "type": "text",
             "text": {"preview_url": False, "body": texte_message},
         }
 
-    import time
-    dernier_err = None
-    for tentative in range(2):
-        try:
-            donnees = json.dumps(payload).encode("utf-8")
-            requete = urllib.request.Request(
-                url,
-                data=donnees,
-                headers={
-                    "Authorization": f"Bearer {token}",
-                    "Content-Type": "application/json",
-                },
-                method="POST",
-            )
-            with urllib.request.urlopen(requete, timeout=12) as reponse:
-                corps = json.loads(reponse.read().decode("utf-8"))
-                msg_id = corps.get("messages", [{}])[0].get("id", "")
-                logger.info("Message WhatsApp envoyé avec succès au %s (ID: %s)", numero_nettoye, msg_id)
-                return {
-                    "succes": True,
-                    "statut": "ENVOYE",
-                    "message": "Envoyé avec succès via WhatsApp Cloud API",
-                    "message_id": msg_id,
-                }
-        except urllib.error.HTTPError as err:
-            erreur_msg = f"Erreur API WhatsApp ({err.code})"
-            try:
-                details = json.loads(err.read().decode("utf-8"))
-                detail_txt = details.get("error", {}).get("message", "")
-                if detail_txt:
-                    erreur_msg += f" : {detail_txt}"
-            except Exception:
-                pass
-            logger.warning("Échec d'envoi WhatsApp au %s : %s", numero_nettoye, erreur_msg)
-            return {
-                "succes": False,
-                "statut": "ECHEC",
-                "message": erreur_msg,
-            }
-        except Exception as exc:
-            dernier_err = exc
-            logger.warning("Tentative %s/2 échouée pour envoi WhatsApp au %s : %s", tentative + 1, numero_nettoye, exc)
-            if tentative == 0:
-                time.sleep(1)
+    def _executer_envoi(payload_dict):
+        donnees = json.dumps(payload_dict).encode("utf-8")
+        requete = urllib.request.Request(
+            url,
+            data=donnees,
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json",
+            },
+            method="POST",
+        )
+        with urllib.request.urlopen(requete, timeout=12) as reponse:
+            corps = json.loads(reponse.read().decode("utf-8"))
+            msg_id = corps.get("messages", [{}])[0].get("id", "")
+            return True, msg_id, "Envoyé avec succès via WhatsApp Cloud API"
 
-    return {
-        "succes": False,
-        "statut": "ECHEC",
-        "message": f"Échec de connexion API WhatsApp après 2 tentatives : {dernier_err}",
-    }
+    # Tentative 1 : envoi selon la demande initiale (template si spécifié, sinon texte libre)
+    payload_initial = _preparer_payload(template_nom, template_params)
+    try:
+        succes, msg_id, msg_retour = _executer_envoi(payload_initial)
+        logger.info("Message WhatsApp envoyé avec succès au %s (ID: %s)", numero_nettoye, msg_id)
+        return {
+            "succes": True,
+            "statut": "ENVOYE",
+            "message": msg_retour,
+            "message_id": msg_id,
+        }
+    except urllib.error.HTTPError as err:
+        erreur_code = err.code
+        erreur_msg = f"Erreur API WhatsApp ({erreur_code})"
+        code_meta = None
+        try:
+            details = json.loads(err.read().decode("utf-8"))
+            code_meta = details.get("error", {}).get("code")
+            detail_txt = details.get("error", {}).get("message", "")
+            if detail_txt:
+                erreur_msg += f" : {detail_txt}"
+        except Exception:
+            pass
+
+        logger.warning("Échec tentative initiale WhatsApp au %s (code %s): %s", numero_nettoye, code_meta, erreur_msg)
+
+        # Si le message texte libre a échoué à cause de la restriction de fenêtre 24h ou nouveau contact,
+        # on effectue un fallback automatique vers un modèle officiel approuvé Meta pour garantir la délivrabilité à 100%
+        if not template_nom and code_meta in (131047, 131026, 131030, 100, 132000, 132001, 131051, 131052):
+            modeles_fallback = [
+                ("notification_patient", ["Assuré", "SantéSN"], "fr"),
+                ("hello_world", None, "en_US"),
+            ]
+            for nom_fb, params_fb, lg_fb in modeles_fallback:
+                try:
+                    logger.info("Bascule automatique vers le modèle officiel Meta '%s' pour le numéro %s", nom_fb, numero_nettoye)
+                    payload_fb = _preparer_payload(nom_fb, params_fb, lg_fb)
+                    succes_fb, msg_id_fb, _ = _executer_envoi(payload_fb)
+                    return {
+                        "succes": True,
+                        "statut": "ENVOYE",
+                        "message": f"Délivré avec succès via le modèle officiel Meta ({nom_fb})",
+                        "message_id": msg_id_fb,
+                    }
+                except Exception as fb_exc:
+                    logger.warning("Échec du modèle fallback '%s' pour %s : %s", nom_fb, numero_nettoye, fb_exc)
+
+        return {
+            "succes": False,
+            "statut": "ECHEC",
+            "message": erreur_msg,
+        }
+    except Exception as exc:
+        logger.warning("Échec exceptionnel d'envoi WhatsApp au %s : %s", numero_nettoye, exc)
+        return {
+            "succes": False,
+            "statut": "ECHEC",
+            "message": f"Échec de connexion API WhatsApp : {exc}",
+        }
