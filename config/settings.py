@@ -383,14 +383,6 @@ DELAI_VALIDITE_ORDONNANCE_JOURS = config('DELAI_VALIDITE_ORDONNANCE_JOURS', defa
 
 # Passerelle WhatsApp Cloud API : configurée ci-dessus (lignes 271-280) avec protection tests
 
-# Configuration Emails
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='SantéSN <no-reply@santesn.sn>')
-SERVER_EMAIL = DEFAULT_FROM_EMAIL
-EMAIL_BACKEND = config(
-    'EMAIL_BACKEND',
-    default='django.core.mail.backends.console.EmailBackend' if DEBUG else 'django.core.mail.backends.smtp.EmailBackend',
-)
-
 # Quotas et limites réglementaires IPM (Sénégal)
 MAX_AYANTS_DROIT_PAR_ASSURE = config('MAX_AYANTS_DROIT_PAR_ASSURE', default=6, cast=int)
 MAX_CONJOINTS_PAR_ASSURE = config('MAX_CONJOINTS_PAR_ASSURE', default=4, cast=int)
