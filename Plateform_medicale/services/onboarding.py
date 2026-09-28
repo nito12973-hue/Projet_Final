@@ -145,17 +145,27 @@ def envoyer_activation_utilisateur(utilisateur, request=None):
         elif hasattr(utilisateur, "pharmacien") and getattr(utilisateur.pharmacien, "telephone", ""):
             telephone = utilisateur.pharmacien.telephone
 
-    # 1. Tentative WhatsApp en premier (Format SMS simple)
+    # 1. Tentative WhatsApp en premier (Format SMS simple + fallback template officiel)
     whatsapp_texte = (
         f"SantéSN : Bonjour {prenom}, activez votre compte et définissez votre mot de passe via ce lien sécurisé (valable 24h) :\n"
         f"{lien_activation}"
     )
-    template_nom = getattr(settings, "WHATSAPP_TEMPLATE_NAME", None)
-    template_params = [prenom, lien_activation] if template_nom else None
+    # Utiliser le modèle officiel approuvé compte_santesn_notif avec bouton cliquable
+    template_nom = "compte_santesn_notif"
+    template_params = [prenom]  # {{1}} body = prénom
+    # Extraire le chemin relatif pour le bouton URL (après le domaine)
+    from urllib.parse import urlparse
+    chemin_activation = urlparse(lien_activation).path.lstrip("/")
+    template_button_params = [chemin_activation]  # {{1}} button URL = chemin d'activation
+
     whatsapp_res = envoyer_message_whatsapp(
-        telephone, whatsapp_texte, template_nom=template_nom, template_params=template_params
+        telephone, whatsapp_texte,
+        template_nom=template_nom,
+        template_params=template_params,
+        template_button_params=template_button_params,
     )
-    if not whatsapp_res["succes"] and template_nom:
+    # Si le template échoue, retenter en texte libre (fenêtre 24h ouverte)
+    if not whatsapp_res["succes"]:
         whatsapp_res = envoyer_message_whatsapp(telephone, whatsapp_texte)
 
     email_envoye = False
