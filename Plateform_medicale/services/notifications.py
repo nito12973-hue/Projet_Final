@@ -100,7 +100,8 @@ def emettre_notification(
 
             # Préparer le template officiel avec bouton URL en cas de besoin (fenêtre 24h fermée)
             prenom_dest = destinataire.first_name or destinataire.get_full_name() or "Assuré"
-            chemin_action = url_action.lstrip("/") if url_action else "connexion"
+            from urllib.parse import urlparse
+            chemin_action = urlparse(url_action).path.lstrip("/") if url_action else "connexion"
             btn_params = [chemin_action]
 
             res_wa = envoyer_message_whatsapp(
