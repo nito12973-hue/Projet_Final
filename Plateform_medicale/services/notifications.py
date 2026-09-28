@@ -98,7 +98,21 @@ def emettre_notification(
                 lien_complet = url_action if url_action.startswith("http") else f"{site_url}{url_action}"
                 texte_wa += f"\n\nConsulter : {lien_complet}"
 
-            res_wa = envoyer_message_whatsapp(telephone, texte_wa)
+            # Préparer le template officiel avec bouton URL en cas de besoin (fenêtre 24h fermée)
+            prenom_dest = destinataire.first_name or destinataire.get_full_name() or "Assuré"
+            chemin_action = url_action.lstrip("/") if url_action else "connexion"
+            btn_params = [chemin_action]
+
+            res_wa = envoyer_message_whatsapp(
+                telephone, texte_wa,
+                template_nom="compte_santesn_notif",
+                template_params=[prenom_dest],
+                template_button_params=btn_params,
+            )
+            # Si le template échoue, retenter en texte libre (fenêtre 24h peut être ouverte)
+            if not res_wa.get("succes"):
+                res_wa = envoyer_message_whatsapp(telephone, texte_wa)
+
             if res_wa.get("succes"):
                 whatsapp_succes = True
                 notification.whatsapp_envoye = True

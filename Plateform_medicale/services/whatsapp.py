@@ -1,6 +1,9 @@
 """
 Service d'envoi WhatsApp officiel (Meta Cloud API / passerelle SMS/WhatsApp agréée).
 Conçu pour une résilience absolue : ne bloque jamais la création de compte.
+
+Templates approuvés sur le WABA production (1060664073517769) :
+  - compte_santesn_notif : BODY {{1}}=nom + BUTTON URL {{1}}=chemin
 """
 
 import json
@@ -13,11 +16,21 @@ from django.conf import settings
 
 logger = logging.getLogger("Plateform_medicale")
 
+# Modèle principal approuvé sur le WABA de production
+TEMPLATE_DEFAUT = "compte_santesn_notif"
 
-def envoyer_message_whatsapp(numero_telephone, texte_message, template_nom=None, template_params=None):
+
+def envoyer_message_whatsapp(
+    numero_telephone,
+    texte_message,
+    template_nom=None,
+    template_params=None,
+    template_button_params=None,
+):
     """
     Envoie un message via l'API officielle WhatsApp Cloud.
-    Supporte les messages directs (texte) et les modèles officiels (template).
+    Supporte les messages directs (texte), les modèles officiels (template)
+    et les modèles avec bouton URL (template_button_params).
 
     Retourne un dictionnaire de résultat :
     {
@@ -80,13 +93,22 @@ def envoyer_message_whatsapp(numero_telephone, texte_message, template_nom=None,
 
     url = f"https://graph.facebook.com/v21.0/{phone_number_id}/messages"
 
-    def _preparer_payload(nom_tpl=None, params_tpl=None, code_langue=None):
+    def _preparer_payload(nom_tpl=None, params_tpl=None, code_langue=None, btn_params=None):
         if nom_tpl:
             components = []
             if params_tpl:
                 parameters = [{"type": "text", "text": str(p)} for p in params_tpl]
                 components.append({"type": "body", "parameters": parameters})
-            langue = code_langue or ("en_US" if nom_tpl == "hello_world" else "fr")
+            # Support du bouton URL dynamique (composant BUTTON)
+            if btn_params:
+                for idx, val in enumerate(btn_params):
+                    components.append({
+                        "type": "button",
+                        "sub_type": "url",
+                        "index": str(idx),
+                        "parameters": [{"type": "text", "text": str(val)}],
+                    })
+            langue = code_langue or "fr"
             return {
                 "messaging_product": "whatsapp",
                 "to": numero_nettoye,
@@ -121,7 +143,7 @@ def envoyer_message_whatsapp(numero_telephone, texte_message, template_nom=None,
             return True, msg_id, "Envoyé avec succès via WhatsApp Cloud API"
 
     # Tentative 1 : envoi selon la demande initiale (template si spécifié, sinon texte libre)
-    payload_initial = _preparer_payload(template_nom, template_params)
+    payload_initial = _preparer_payload(template_nom, template_params, btn_params=template_button_params)
     try:
         succes, msg_id, msg_retour = _executer_envoi(payload_initial)
         logger.info("Message WhatsApp envoyé avec succès au %s (ID: %s)", numero_nettoye, msg_id)
@@ -147,25 +169,25 @@ def envoyer_message_whatsapp(numero_telephone, texte_message, template_nom=None,
         logger.warning("Échec tentative initiale WhatsApp au %s (code %s): %s", numero_nettoye, code_meta, erreur_msg)
 
         # Si le message texte libre a échoué à cause de la restriction de fenêtre 24h ou nouveau contact,
-        # on effectue un fallback automatique vers un modèle officiel approuvé Meta pour garantir la délivrabilité à 100%
+        # on effectue un fallback automatique vers le modèle officiel approuvé pour garantir la délivrabilité
         if not template_nom and code_meta in (131047, 131026, 131030, 100, 132000, 132001, 131051, 131052):
-            modeles_fallback = [
-                ("notification_patient", ["Assuré", "SantéSN"], "fr"),
-                ("hello_world", None, "en_US"),
-            ]
-            for nom_fb, params_fb, lg_fb in modeles_fallback:
-                try:
-                    logger.info("Bascule automatique vers le modèle officiel Meta '%s' pour le numéro %s", nom_fb, numero_nettoye)
-                    payload_fb = _preparer_payload(nom_fb, params_fb, lg_fb)
-                    succes_fb, msg_id_fb, _ = _executer_envoi(payload_fb)
-                    return {
-                        "succes": True,
-                        "statut": "ENVOYE",
-                        "message": f"Délivré avec succès via le modèle officiel Meta ({nom_fb})",
-                        "message_id": msg_id_fb,
-                    }
-                except Exception as fb_exc:
-                    logger.warning("Échec du modèle fallback '%s' pour %s : %s", nom_fb, numero_nettoye, fb_exc)
+            try:
+                logger.info("Bascule automatique vers le modèle officiel '%s' pour le numéro %s", TEMPLATE_DEFAUT, numero_nettoye)
+                payload_fb = _preparer_payload(
+                    TEMPLATE_DEFAUT,
+                    ["Assuré SantéSN"],  # {{1}} body = nom
+                    "fr",
+                    ["activation"],      # {{1}} button URL = chemin
+                )
+                succes_fb, msg_id_fb, _ = _executer_envoi(payload_fb)
+                return {
+                    "succes": True,
+                    "statut": "ENVOYE",
+                    "message": f"Délivré avec succès via le modèle officiel ({TEMPLATE_DEFAUT})",
+                    "message_id": msg_id_fb,
+                }
+            except Exception as fb_exc:
+                logger.warning("Échec du modèle fallback '%s' pour %s : %s", TEMPLATE_DEFAUT, numero_nettoye, fb_exc)
 
         return {
             "succes": False,
