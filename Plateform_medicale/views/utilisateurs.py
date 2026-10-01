@@ -189,13 +189,69 @@ COLONNES_IMPORT_UTILISATEURS = [
     "Date de naissance", "Specialite", "Prestataire", "Plan de couverture",
 ]
 
-_ROLES_PAR_LIBELLE_IMPORT = {}
+ALIAS_COLONNES_IMPORT = {
+    "email": ["EMAIL", "E-MAIL", "COURRIEL", "MAIL", "ADRESSE_EMAIL", "ADRESSE EMAIL"],
+    "prenom": ["PRENOM", "FIRST_NAME", "FIRSTNAME"],
+    "nom": ["NOM", "LAST_NAME", "LASTNAME"],
+    "telephone": ["TELEPHONE", "TEL", "PHONE", "MOBILE", "PORTABLE", "NUMERO_TELEPHONE", "NUMERO TELEPHONE", "CONTACT"],
+    "role": ["ROLE", "PROFIL", "TYPE", "STATUT", "FONCTION"],
+    "date_naissance": ["DATE DE NAISSANCE", "DATE_DE_NAISSANCE", "DATE NAISSANCE", "DATE_NAISSANCE", "NAISSANCE", "DDN", "BIRTHDATE"],
+    "specialite": ["SPECIALITE", "SPECIALTE", "SPECIALTY"],
+    "prestataire": ["PRESTATAIRE", "HOPITAL", "CLINIQUE", "PHARMACIE", "ETABLISSEMENT", "STRUCTURE", "CENTRE"],
+    "plan_couverture": ["PLAN DE COUVERTURE", "PLAN_DE_COUVERTURE", "PLAN", "COUVERTURE", "ASSURANCE", "MUTUELLE", "IPM"],
+}
+
+_ROLES_PAR_LIBELLE_IMPORT = {
+    "ASSURE": User.Role.ASSURE,
+    "PATIENT": User.Role.ASSURE,
+    "ADHERENT": User.Role.ASSURE,
+    "MEDECIN": User.Role.MEDECIN,
+    "DOCTEUR": User.Role.MEDECIN,
+    "PRATICIEN": User.Role.MEDECIN,
+    "PHARMACIEN": User.Role.PHARMACIEN,
+    "PHARMACIE": User.Role.PHARMACIEN,
+    "ADMIN": User.Role.ADMIN,
+    "ADMINISTRATEUR": User.Role.ADMIN,
+}
 for _valeur_role, _label_role in User.Role.choices:
     _ROLES_PAR_LIBELLE_IMPORT[_normaliser_texte_import(_valeur_role)] = _valeur_role
     _ROLES_PAR_LIBELLE_IMPORT[_normaliser_texte_import(_label_role)] = _valeur_role
 
 
-def _analyser_ligne_import_utilisateurs(numero_ligne, valeurs):
+def _detecter_mapping_colonnes(entetes_brutes):
+    """
+    Associe chaque champ à l'index de sa colonne de manière intelligente :
+    insensible à la casse, aux accents, à l'ordre des colonnes et aux alias courants.
+    """
+    mapping = {}
+    for idx, entete in enumerate(entetes_brutes):
+        if not entete:
+            continue
+        texte = _normaliser_texte_import(entete)
+        for cle_champ, alias_liste in ALIAS_COLONNES_IMPORT.items():
+            if cle_champ not in mapping:
+                for alias in alias_liste:
+                    alias_norm = _normaliser_texte_import(alias)
+                    if texte == alias_norm or texte.replace(" ", "_") == alias_norm.replace(" ", "_"):
+                        mapping[cle_champ] = idx
+                        break
+
+    # Si les en-têtes correspondent au format séquentiel classique
+    if "email" not in mapping and len(entetes_brutes) >= 5:
+        mapping = {
+            "email": 0, "prenom": 1, "nom": 2, "telephone": 3, "role": 4,
+            "date_naissance": 5, "specialite": 6, "prestataire": 7, "plan_couverture": 8,
+        }
+
+    colonnes_manquantes = []
+    for obligatoire in ["email", "prenom", "nom", "role"]:
+        if obligatoire not in mapping:
+            colonnes_manquantes.append(obligatoire.capitalize())
+
+    return mapping, colonnes_manquantes
+
+
+def _analyser_ligne_import_utilisateurs(numero_ligne, valeurs, mapping=None):
     """
     Valide une ligne du fichier d'import (voir COLONNES_IMPORT_UTILISATEURS).
 
@@ -203,8 +259,24 @@ def _analyser_ligne_import_utilisateurs(numero_ligne, valeurs):
     sinon. Ne touche jamais la base : l'import est valide en integralite
     avant toute creation (regle "tout ou rien").
     """
-    valeurs = (tuple(valeurs) + (None,) * len(COLONNES_IMPORT_UTILISATEURS))[:len(COLONNES_IMPORT_UTILISATEURS)]
-    email, prenom, nom, telephone, role_brut, date_naissance_brute, specialite, prestataire_brut, plan_brut = valeurs
+    if mapping:
+        def _get_val(cle):
+            idx = mapping.get(cle)
+            if idx is not None and idx < len(valeurs):
+                return valeurs[idx]
+            return None
+        email = _get_val("email")
+        prenom = _get_val("prenom")
+        nom = _get_val("nom")
+        telephone = _get_val("telephone")
+        role_brut = _get_val("role")
+        date_naissance_brute = _get_val("date_naissance")
+        specialite = _get_val("specialite")
+        prestataire_brut = _get_val("prestataire")
+        plan_brut = _get_val("plan_couverture")
+    else:
+        valeurs = (tuple(valeurs) + (None,) * len(COLONNES_IMPORT_UTILISATEURS))[:len(COLONNES_IMPORT_UTILISATEURS)]
+        email, prenom, nom, telephone, role_brut, date_naissance_brute, specialite, prestataire_brut, plan_brut = valeurs
 
     email = (email or "").strip()
     prenom = (prenom or "").strip()
@@ -363,12 +435,12 @@ def importer_utilisateurs_excel(request):
             else:
                 feuille = classeur.active
                 entetes = next(feuille.iter_rows(min_row=1, max_row=1, values_only=True), ())
-                entetes_normalisees = [_normaliser_texte_import(entete) for entete in entetes]
-                entetes_attendues = [_normaliser_texte_import(colonne) for colonne in COLONNES_IMPORT_UTILISATEURS]
+                mapping, colonnes_manquantes = _detecter_mapping_colonnes(entetes)
 
-                if entetes_normalisees[:len(entetes_attendues)] != entetes_attendues:
+                if colonnes_manquantes:
                     erreurs.append(
-                        "En-tetes de colonnes invalides : utilisez le modele telechargeable ci-dessous."
+                        f"En-têtes de colonnes invalides ou manquantes : {', '.join(colonnes_manquantes)}. "
+                        "Vérifiez que les colonnes indispensables (Email, Prénom, Nom, Rôle) sont présentes, ou téléchargez le modèle officiel ci-dessous."
                     )
                 else:
                     lignes_brutes = [
@@ -384,7 +456,7 @@ def importer_utilisateurs_excel(request):
                         donnees_valides = []
                         emails_vus = set()
                         for numero_ligne, valeurs in lignes_brutes:
-                            donnees, erreur = _analyser_ligne_import_utilisateurs(numero_ligne, valeurs)
+                            donnees, erreur = _analyser_ligne_import_utilisateurs(numero_ligne, valeurs, mapping=mapping)
                             if erreur:
                                 erreurs.append(erreur)
                                 continue

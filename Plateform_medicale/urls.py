@@ -1,4 +1,5 @@
 from django.urls import path
+from django.views.generic import RedirectView
 from . import views
 
 urlpatterns = [
@@ -26,8 +27,11 @@ urlpatterns = [
     path('mot-de-passe-reinitialisation/termine/', views.mot_de_passe_reinitialisation_termine, name='mot_de_passe_reinitialisation_termine'),
     path('mot-de-passe-reinitialisation/termine/', views.mot_de_passe_reinitialisation_termine, name='mot_de_passe_reinitialiser_termine'),
     path('activer-compte/<uidb64>/<token>/', views.activer_compte, name='activer_compte'),
-    # Compat: ancienne URL avec préfixe /compte/ (redirige vers la bonne URL)
+    # Compat: redirection pour l'activation sous /compte/
     path('compte/activer-compte/<uidb64>/<token>/', lambda r, uidb64, token: __import__('django.shortcuts', fromlist=['redirect']).redirect('activer_compte', uidb64=uidb64, token=token)),
+    # Redirection universelle : tous les liens générés par le template WhatsApp Meta avec le préfixe /compte/
+    path('compte/<path:chemin>/', RedirectView.as_view(url='/%(chemin)s/', permanent=False)),
+    path('compte/<path:chemin>', RedirectView.as_view(url='/%(chemin)s/', permanent=False)),
     path('redirection/', views.post_login_redirect, name='post_login_redirect'),
     path('installation/', views.setup_wizard, name='setup_wizard'),
     path('parametres/', views.parametres, name='parametres'),
