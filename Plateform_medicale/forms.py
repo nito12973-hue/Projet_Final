@@ -293,7 +293,14 @@ class ConsultationForm(forms.ModelForm):
     date_consultation = forms.DateTimeField(
         label='Date de consultation',
         widget=forms.DateTimeInput(attrs={'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M'),
-        input_formats=['%Y-%m-%dT%H:%M'],
+        input_formats=[
+            '%Y-%m-%dT%H:%M',
+            '%Y-%m-%dT%H:%M:%S',
+            '%Y-%m-%d %H:%M',
+            '%Y-%m-%d %H:%M:%S',
+            '%d/%m/%Y %H:%M',
+            '%d/%m/%Y %H:%M:%S',
+        ],
     )
 
     class Meta:

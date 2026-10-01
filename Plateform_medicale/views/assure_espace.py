@@ -626,7 +626,7 @@ def mon_historique_assure(request):
     beneficiaires = _beneficiaires(patient)
     consultations = Consultation.objects.filter(patient__in=beneficiaires).select_related(
         "patient", "medecin", "service", "paiement"
-    ).order_by("-date_consultation")
+    ).prefetch_related("ordonnances").order_by("-date_consultation")
     return render(request, "mon_historique.html",
                   {"consultations": _paginer(request, consultations)})
 

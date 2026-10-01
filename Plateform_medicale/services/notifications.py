@@ -95,7 +95,11 @@ def emettre_notification(
             texte_wa = f"[{titre}]\n\n{message}"
             if url_action:
                 site_url = getattr(settings, "SITE_URL", "https://projet-final-bice.vercel.app").rstrip("/")
-                lien_complet = url_action if url_action.startswith("http") else f"{site_url}{url_action}"
+                if url_action.startswith("http"):
+                    lien_complet = url_action
+                else:
+                    chemin_clean = "/" + url_action.lstrip("/")
+                    lien_complet = f"{site_url}{chemin_clean}"
                 texte_wa += f"\n\nConsulter : {lien_complet}"
 
             # Préparer le template officiel avec bouton URL en cas de besoin (fenêtre 24h fermée)
@@ -126,11 +130,15 @@ def emettre_notification(
         try:
             sujet = sujet_email or f"[SantéSN] {titre}"
             site_url = getattr(settings, "SITE_URL", "https://projet-final-bice.vercel.app").rstrip("/")
-            lien_action = (
-                url_action if url_action and url_action.startswith("http")
-                else f"{site_url}{url_action}" if url_action
-                else None
-            )
+            if url_action:
+                if url_action.startswith("http"):
+                    lien_action = url_action
+                else:
+                    chemin_clean = "/" + url_action.lstrip("/")
+                    lien_action = f"{site_url}{chemin_clean}"
+            else:
+                lien_action = None
+
             ctx = contexte_email or {}
             ctx.update({
                 "user": destinataire,
