@@ -121,6 +121,12 @@ urlpatterns = [
     path('medecin/consultations/<int:consultation_pk>/ordonnance/ajouter/', views.ajouter_ordonnance_medecin, name='ajouter_ordonnance_medecin'),
     path('medecin/ordonnances/<int:pk>/', views.voir_ordonnance_medecin, name='voir_ordonnance_medecin'),
     path('medecin/ordonnances/<int:pk>/annuler/', views.annuler_ordonnance_medecin, name='annuler_ordonnance_medecin'),
+    # Alias conviviaux pour consultation et ordonnances
+    path('consultation/', lambda r: __import__('django.shortcuts', fromlist=['redirect']).redirect('liste_consultations')),
+    path('assure/consultations/', lambda r: __import__('django.shortcuts', fromlist=['redirect']).redirect('mon_historique_assure')),
+    path('mes-consultations/', lambda r: __import__('django.shortcuts', fromlist=['redirect']).redirect('mon_historique_assure')),
+    path('ordonnance/<int:pk>/', lambda r, pk: __import__('django.shortcuts', fromlist=['redirect']).redirect('voir_ordonnance_assure', pk=pk)),
+    path('ordonnances/<int:pk>/', lambda r, pk: __import__('django.shortcuts', fromlist=['redirect']).redirect('voir_ordonnance_assure', pk=pk)),
     path('medecin/profil/', views.modifier_profil_medecin, name='modifier_profil_medecin'),
     path('api/medecin/demandes-en-attente/', views.api_demandes_en_attente_medecin, name='api_demandes_en_attente_medecin'),
 

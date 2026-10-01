@@ -44,18 +44,26 @@
                     {% endif %}
                 </td>
                 <td>
-                    {% if consultation.paiement %}
-                    <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                        {% if consultation.paiement %}
                         <span class="badge {% if consultation.paiement.statut == 'regle' %}validee{% else %}en_attente{% endif %}">{{ consultation.paiement.get_statut_display }}</span>
                         {% if consultation.paiement.statut == 'regle' %}
                         <a href="{% url 'recu_paiement' consultation.paiement.pk %}" class="button btn btn-sm" title="Imprimer le reçu de paiement" style="padding:4px 8px;gap:4px;">
                             {% icone "printer" %} Reçu
                         </a>
                         {% endif %}
+                        {% else %}
+                        <span style="color:var(--muted);">-</span>
+                        {% endif %}
+
+                        {% with ordonnance=consultation.ordonnances.all|first %}
+                        {% if ordonnance %}
+                        <a href="{% url 'voir_ordonnance_assure' ordonnance.pk %}" class="button primary btn btn-sm" title="Consulter l'ordonnance et le QR code" style="padding:4px 8px;gap:4px;">
+                            {% icone "qr-scan" %} Ordonnance
+                        </a>
+                        {% endif %}
+                        {% endwith %}
                     </div>
-                    {% else %}
-                    <span style="color:var(--muted);">-</span>
-                    {% endif %}
                 </td>
             </tr>
             {% endfor %}
