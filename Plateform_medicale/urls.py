@@ -1,8 +1,10 @@
-from django.urls import path
+from django.urls import path, re_path
 from django.views.generic import RedirectView
 from . import views
 
 urlpatterns = [
+    # Tolérance anti-espace : capture toute URL avec espace ou %20 accidentel et redirige vers l'URL propre
+    re_path(r'^[ %20]+(?P<chemin>.*)$', RedirectView.as_view(url='/%(chemin)s', permanent=False)),
     path('', views.landing, name='landing'),
     path('politique-confidentialite/', views.politique_confidentialite, name='politique_confidentialite'),
     path('cgu/', views.cgu, name='cgu'),

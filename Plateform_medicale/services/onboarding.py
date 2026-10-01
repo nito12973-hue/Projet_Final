@@ -35,8 +35,8 @@ def generer_lien_activation(utilisateur, request=None):
         except Exception:
             pass
 
-    site_url = getattr(settings, "SITE_URL", "https://projet-final-bice.vercel.app").rstrip("/")
-    chemin_clean = "/" + chemin.lstrip("/")
+    site_url = str(getattr(settings, "SITE_URL", "https://projet-final-bice.vercel.app") or "").strip().rstrip("/").strip()
+    chemin_clean = "/" + str(chemin or "").strip().lstrip("/")
     return f"{site_url}{chemin_clean}"
 
 def construire_bilan_onboarding(statut, utilisateur, action="creation"):

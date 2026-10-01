@@ -94,18 +94,20 @@ def emettre_notification(
         try:
             texte_wa = f"[{titre}]\n\n{message}"
             if url_action:
-                site_url = getattr(settings, "SITE_URL", "https://projet-final-bice.vercel.app").rstrip("/")
-                if url_action.startswith("http"):
-                    lien_complet = url_action
+                site_url = str(getattr(settings, "SITE_URL", "https://projet-final-bice.vercel.app") or "").strip().rstrip("/").strip()
+                url_propre = str(url_action or "").strip()
+                if url_propre.startswith("http"):
+                    lien_complet = url_propre
                 else:
-                    chemin_clean = "/" + url_action.lstrip("/")
+                    chemin_clean = "/" + url_propre.lstrip("/")
                     lien_complet = f"{site_url}{chemin_clean}"
                 texte_wa += f"\n\nConsulter : {lien_complet}"
 
             # Préparer le template officiel avec bouton URL en cas de besoin (fenêtre 24h fermée)
             prenom_dest = destinataire.first_name or destinataire.get_full_name() or "Assuré"
             from urllib.parse import urlparse
-            chemin_action = urlparse(url_action).path.lstrip("/") if url_action else "connexion"
+            url_propre = str(url_action or "").strip()
+            chemin_action = urlparse(url_propre).path.strip().lstrip("/") if url_propre else "connexion"
             btn_params = [chemin_action]
 
             res_wa = envoyer_message_whatsapp(
@@ -129,12 +131,13 @@ def emettre_notification(
     if envoyer_email and destinataire.email:
         try:
             sujet = sujet_email or f"[SantéSN] {titre}"
-            site_url = getattr(settings, "SITE_URL", "https://projet-final-bice.vercel.app").rstrip("/")
-            if url_action:
-                if url_action.startswith("http"):
-                    lien_action = url_action
+            site_url = str(getattr(settings, "SITE_URL", "https://projet-final-bice.vercel.app") or "").strip().rstrip("/").strip()
+            url_propre = str(url_action or "").strip()
+            if url_propre:
+                if url_propre.startswith("http"):
+                    lien_action = url_propre
                 else:
-                    chemin_clean = "/" + url_action.lstrip("/")
+                    chemin_clean = "/" + url_propre.lstrip("/")
                     lien_action = f"{site_url}{chemin_clean}"
             else:
                 lien_action = None
