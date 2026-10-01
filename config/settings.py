@@ -73,10 +73,10 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 # URL publique pour les liens absolus dans les emails et WhatsApp (valide sur mobile et web)
-SITE_URL = config(
+SITE_URL = str(config(
     'SITE_URL',
     default='https://projet-final-bice.vercel.app',
-).rstrip('/')
+) or '').strip().rstrip('/').strip()
 
 # Application definition
 
