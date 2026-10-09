@@ -166,94 +166,57 @@
             <div class="carte-3d-wrap">
                 <div class="carte-3d-card" id="carte-assure-flip" tabindex="0" role="button" aria-label="Carte d'assuré interactive. Cliquer pour retourner et afficher le QR code de prise en charge." onclick="this.classList.toggle('flipped')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.classList.toggle('flipped');}">
                     
-                    <!-- RECTO : CARTE BIOMÉTRIQUE SÉCURISÉE -->
+                    <!-- RECTO : IDENTITÉ ET COUVERTURE SANTÉSN TIERS-PAYANT -->
                     <div class="carte-face-recto">
-                        <!-- 1. En-tête officiel républicain -->
-                        <div class="carte-entete-officielle">
-                            <div class="carte-rep-senegal">
-                                <span class="drapeau-senegal-mini">
-                                    <span class="drap-v"></span>
-                                    <span class="drap-j">★</span>
-                                    <span class="drap-r"></span>
-                                </span>
-                                <span class="carte-titre-pays">RÉPUBLIQUE DU SÉNÉGAL</span>
-                            </div>
-                            <div class="carte-logo-ipm">
-                                <span class="carte-ipm-sigle">SANTÉ<strong>SN</strong></span>
-                                <span class="carte-tiers-payant-tag">TIERS-PAYANT</span>
+                        <div class="carte-recto-header">
+                            {% logo_marque taille=26 fond="sombre" %}
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span class="carte-recto-brand">SANTÉ<strong>SN</strong></span>
+                                <span class="carte-recto-tag">TIERS-PAYANT</span>
                             </div>
                         </div>
 
-                        <!-- 2. Zone puce EMV dorée, NFC et Hologramme -->
-                        <div class="carte-securite-ligne">
-                            <div class="carte-puce-or" title="Puce biométrique intégrée">
-                                <span class="puce-contact-centre"></span>
-                            </div>
-                            
-                            <svg class="carte-nfc-wave" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="rgba(255,255,255,0.75)" stroke-width="2.2" stroke-linecap="round" title="Sans contact NFC">
-                                <path d="M7 8.5c1.8 1.8 1.8 4.7 0 6.5"/>
-                                <path d="M11 5.5c3.5 3.5 3.5 9 0 12.5"/>
-                                <path d="M15 2.5c5.2 5.2 5.2 13.8 0 19"/>
-                            </svg>
-
-                            <div class="carte-hologramme" title="Hologramme certifié IPM">
-                                <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
-                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                                </svg>
-                            </div>
+                        <div class="carte-recto-immat">
+                            <span class="carte-recto-immat-label">N° Carte d'Assuré</span>
+                            <span class="carte-recto-immat-valeur">{{ patient.numero_carte }}</span>
                         </div>
 
-                        <!-- 3. Numéro de carte gravé en relief (Embossed 3D) -->
-                        <div class="carte-numero-bloc">
-                            <span class="carte-libelle-champ">N° IMMATRICULATION ASSURÉ</span>
-                            <span class="carte-numero-embouti">{{ patient.numero_carte }}</span>
-                        </div>
-
-                        <!-- 4. Titulaire, Couverture & Statut -->
-                        <div class="carte-bas-ligne">
+                        <div class="carte-recto-details">
                             <div>
-                                <strong class="carte-nom-titulaire">{{ patient.prenom }} {{ patient.nom }}</strong>
-                                <span class="carte-qualite-badge">
+                                <strong class="carte-recto-nom">{{ patient.prenom }} {{ patient.nom }}</strong>
+                                <span class="carte-recto-qualite">
                                     {{ patient.get_type_beneficiaire_display }}
                                 </span>
                             </div>
-                            <div class="carte-taux-box">
-                                <span class="carte-taux-chiffre">{{ patient.taux_couverture|default:"0" }}%</span>
-                                <span class="carte-taux-label">{{ patient.titulaire.plan_couverture.nom|default:"IPM" }}</span>
+                            <div style="text-align: right;">
+                                <span class="carte-recto-taux">{{ patient.taux_couverture|default:"0" }}%</span>
+                                <span class="carte-recto-regime">{{ patient.titulaire.plan_couverture.nom|default:"IPM" }}</span>
                             </div>
                         </div>
 
-                        <!-- 5. Indication d'interaction -->
-                        <div class="carte-flip-hint">
+                        <div class="carte-recto-flip-btn">
                             <span>↺ Cliquer pour afficher le QR code</span>
                         </div>
                     </div>
 
-                    <!-- VERSO : BANDE MAGNÉTIQUE, SIGNATURE ET QR CODE DE CONTRÔLE -->
+                    <!-- VERSO : QR CODE DE SCAN TIERS-PAYANT & CONSIGNES CLAIRES -->
                     <div class="carte-face-verso">
-                        <div class="carte-bande-noire"></div>
+                        <div class="carte-bande-magnetique"></div>
 
                         <div class="carte-verso-corps">
-                            <div class="carte-panneau-signature">
-                                <span class="signature-watermark">SANTÉSN SÉCURITÉ CONVENTIONNÉE</span>
-                                <span class="signature-crypt">{{ patient.numero_carte|slice:":6" }}</span>
+                            <div class="carte-verso-qr-cadre">
+                                {{ qr_svg|safe }}
                             </div>
-
-                            <div class="carte-verso-centre">
-                                <div class="carte-qr-cadre-realiste">
-                                    {{ qr_svg|safe }}
-                                </div>
-                                <div class="carte-verso-texte">
-                                    <strong class="verso-titre">PRISE EN CHARGE DIRECTE</strong>
-                                    <p class="verso-desc">Présenter au guichet du prestataire ou à l'officine conventionnée pour identification instantanée.</p>
-                                    <span class="verso-badge-scan">CONTRÔLE TIERS-PAYANT</span>
-                                </div>
+                            <div class="carte-verso-infos">
+                                <strong class="carte-verso-titre">Prise en charge directe</strong>
+                                <p class="carte-verso-consigne">Présenter ce QR code au guichet du centre de santé ou à la pharmacie conventionnée.</p>
+                                <span class="carte-verso-badge">SCAN INSTANTANÉ</span>
                             </div>
                         </div>
 
                         <div class="carte-verso-pied">
-                            <span>Strictement personnelle · Tiers-payant</span>
-                            <span class="verso-retour-hint">↺ Recto</span>
+                            <span>Strictement personnelle</span>
+                            <span class="carte-verso-retour">↺ Retourner</span>
                         </div>
                     </div>
 
