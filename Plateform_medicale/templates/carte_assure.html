@@ -12,16 +12,16 @@
         </p>
     </div>
     <div class="actions">
-        <a class="button btn" href="{% url 'mes_prises_en_charge_assure' %}">
-            {% icone "shield-check" %} Mes prises en charge
+        <a class="button btn btn-expand" href="{% url 'mes_prises_en_charge_assure' %}" title="Mes prises en charge" aria-label="Mes prises en charge">
+            {% icone "shield-check" %} <span class="expand-text">Mes prises en charge</span>
         </a>
         {% if patient.est_ayant_droit %}
-        <a class="button btn" href="{% url 'liste_ayants_droit' %}">
-            {% icone "chevron-left" %} Mes ayants droit
+        <a class="button btn btn-retour-expand" href="{% url 'liste_ayants_droit' %}" title="Mes ayants droit" aria-label="Mes ayants droit">
+            {% icone "chevron-left" %} <span class="expand-text">Mes ayants droit</span>
         </a>
         {% else %}
-        <a class="button btn" href="{% url 'dashboard_assure' %}">
-            {% icone "chevron-left" %} Mon tableau de bord
+        <a class="button btn btn-retour-expand" href="{% url 'dashboard_assure' %}" title="Mon tableau de bord" aria-label="Mon tableau de bord">
+            {% icone "chevron-left" %} <span class="expand-text">Mon tableau de bord</span>
         </a>
         {% endif %}
         {% if patient.est_valide %}

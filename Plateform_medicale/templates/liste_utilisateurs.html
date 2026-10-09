@@ -39,8 +39,8 @@
 </div>
 
 <div class="actions" style="justify-content:flex-end;margin-bottom:16px;gap:8px;">
-    <a class="button btn" data-chargement="Génération..." href="{% url 'exporter_utilisateurs_excel' %}?{{ request.GET.urlencode }}">{% icone "download" %} Exporter en Excel</a>
-    <a class="button btn" href="{% url 'importer_utilisateurs_excel' %}">{% icone "upload" %} Importer depuis Excel</a>
+    <a class="button btn btn-expand" data-chargement="Génération..." href="{% url 'exporter_utilisateurs_excel' %}?{{ request.GET.urlencode }}" title="Exporter en Excel" aria-label="Exporter en Excel">{% icone "download" %} <span class="expand-text">Exporter en Excel</span></a>
+    <a class="button btn btn-expand" href="{% url 'importer_utilisateurs_excel' %}" title="Importer depuis Excel" aria-label="Importer depuis Excel">{% icone "upload" %} <span class="expand-text">Importer depuis Excel</span></a>
 </div>
 
 <form method="get" class="filtres">

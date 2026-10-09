@@ -5904,6 +5904,84 @@
         }
 
         /* ==========================================================================
+           CHIPS ET BOUTONS EXPANSIBLES AU SURVOL (EXPANDABLE ACTION CHIPS)
+           ========================================================================== */
+        .btn-expand,
+        .btn-retour-expand {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border-radius: 999px !important;
+            padding: 7px 11px !important;
+            min-height: 36px !important;
+            height: 36px !important;
+            box-sizing: border-box !important;
+            transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            white-space: nowrap !important;
+            text-decoration: none !important;
+            cursor: pointer !important;
+            overflow: hidden !important;
+            background: var(--surface) !important;
+            color: var(--titre) !important;
+            border: 1px solid var(--border) !important;
+            box-shadow: var(--ombre-douce);
+        }
+
+        .btn-expand .expand-text,
+        .btn-retour-expand .expand-text {
+            max-width: 0;
+            opacity: 0;
+            overflow: hidden;
+            white-space: nowrap;
+            display: inline-block;
+            transition: max-width 0.32s cubic-bezier(0.4, 0, 0.2, 1), 
+                        opacity 0.22s ease, 
+                        margin 0.25s ease;
+            margin-left: 0;
+            vertical-align: middle;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .btn-expand:hover,
+        .btn-expand:focus-visible,
+        .btn-retour-expand:hover,
+        .btn-retour-expand:focus-visible {
+            padding: 7px 15px !important;
+            border-color: var(--primary) !important;
+            color: var(--primary-strong) !important;
+            box-shadow: 0 4px 14px rgba(14, 124, 134, 0.2) !important;
+        }
+
+        .btn-expand:hover .expand-text,
+        .btn-expand:focus-visible .expand-text,
+        .btn-retour-expand:hover .expand-text,
+        .btn-retour-expand:focus-visible .expand-text {
+            max-width: 220px;
+            opacity: 1;
+            margin-left: 6px;
+            color: var(--primary-strong);
+        }
+
+        .btn-expand.primary {
+            background: var(--primary-strong) !important;
+            border-color: var(--primary-strong) !important;
+            color: #ffffff !important;
+        }
+
+        .btn-expand.primary:hover,
+        .btn-expand.primary:focus-visible {
+            background: var(--primary) !important;
+            border-color: var(--primary) !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 14px rgba(14, 124, 134, 0.35) !important;
+        }
+
+        .btn-expand.primary .expand-text {
+            color: #ffffff !important;
+        }
+
+        /* ==========================================================================
            CARTE D'ASSURÉ BIOMÉTRIQUE HAUTE SÉCURITÉ (STANDARD ISO/IEC 7810 ID-1)
            ========================================================================== */
         .carte-3d-wrap {
