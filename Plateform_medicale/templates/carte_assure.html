@@ -8,23 +8,20 @@
     <div>
         <h1>Carte dématérialisée</h1>
         <p class="subtitle">
-            {{ patient.prenom }} {{ patient.nom }} — Carte d'assuré SantéSN &amp; Tiers-Payant IPM.
+            {{ patient.prenom }} {{ patient.nom }} — Présentation sur écran de smartphone ou guichet de soins conventionné.
         </p>
     </div>
     <div class="actions">
-        <button type="button" class="button btn btn-expand" onclick="window.print();" title="Imprimer la carte" aria-label="Imprimer la carte" style="cursor: pointer;">
-            {% icone "printer" %} <span class="expand-text">Imprimer la carte</span>
-        </button>
-        <a class="button btn btn-expand" href="{% url 'mes_prises_en_charge_assure' %}" title="Mes prises en charge" aria-label="Mes prises en charge">
-            {% icone "shield-check" %} <span class="expand-text">Mes prises en charge</span>
+        <a class="button btn" href="{% url 'mes_prises_en_charge_assure' %}">
+            {% icone "shield-check" %} Mes prises en charge
         </a>
         {% if patient.est_ayant_droit %}
-        <a class="button btn btn-retour-expand" href="{% url 'liste_ayants_droit' %}" title="Mes ayants droit" aria-label="Mes ayants droit">
-            {% icone "chevron-left" %} <span class="expand-text">Mes ayants droit</span>
+        <a class="button btn" href="{% url 'liste_ayants_droit' %}">
+            {% icone "chevron-left" %} Mes ayants droit
         </a>
         {% else %}
-        <a class="button btn btn-retour-expand" href="{% url 'dashboard_assure' %}" title="Mon tableau de bord" aria-label="Mon tableau de bord">
-            {% icone "chevron-left" %} <span class="expand-text">Mon tableau de bord</span>
+        <a class="button btn" href="{% url 'dashboard_assure' %}">
+            {% icone "chevron-left" %} Mon tableau de bord
         </a>
         {% endif %}
         {% if patient.est_valide %}
@@ -40,116 +37,89 @@
 </section>
 
 {% if not patient.est_valide %}
-<div class="message-banner danger carte-sans-impression" style="background: rgba(239, 68, 68, 0.1); border: 2px solid var(--danger); padding: 18px 20px; border-radius: 12px; margin-bottom: 24px;">
+<div class="message-banner danger" style="background: rgba(239, 68, 68, 0.1); border: 2px solid var(--danger); padding: 18px 20px; border-radius: 12px; margin-bottom: 24px;">
     <h3 style="color: var(--danger); margin: 0 0 6px; font-size: 16px; font-weight: 700;">
         {% icone "alert-triangle" %} CARTE INACTIVE · EN COURS D'INSTRUCTION IPM
     </h3>
     <p style="margin: 0; font-size: 13.5px; color: var(--text); line-height: 1.5;">
-        Le rattachement de cet ayant droit est en cours de validation administrative par votre gestionnaire.
-        Le tiers-payant sera effectif dès validation des pièces justificatives.
+        Le rattachement de cet ayant droit est en cours de validation administrative.
+        Le tiers-payant sera activé dès validation des pièces justificatives par le gestionnaire IPM.
     </p>
 </div>
 {% endif %}
 
 <div class="carte-layout-grid">
-    <!-- Zone d'affichage des deux faces de la carte ordinaire -->
-    <div class="carte-printable-zone">
-        
-        <!-- FACE RECTO : IDENTITÉ ET COUVERTURE -->
-        <div class="carte-box carte-box-recto">
-            <div class="carte-box-header">
-                <div class="carte-box-rep">
-                    <span class="carte-rep-flag">
-                        <span class="fl-v"></span><span class="fl-j">★</span><span class="fl-r"></span>
-                    </span>
-                    <span class="carte-rep-nom">RÉPUBLIQUE DU SÉNÉGAL</span>
-                </div>
-                <div class="carte-box-ipm">
-                    <span class="carte-brand">SANTÉ<strong>SN</strong></span>
-                    <span class="carte-badge-tp">TIERS-PAYANT</span>
-                </div>
-            </div>
-
-            <div class="carte-box-corps">
-                <div class="carte-champ-titulaire">
-                    <span class="carte-label">BÉNÉFICIAIRE DES SOINS</span>
-                    <h2 class="carte-valeur-nom">{{ patient.prenom }} {{ patient.nom }}</h2>
-                    <span class="carte-valeur-qualite">
-                        {{ patient.get_type_beneficiaire_display }}{% if patient.est_ayant_droit and patient.lien_parente %} ({{ patient.get_lien_parente_display }}){% endif %}
-                    </span>
-                </div>
-
-                <div class="carte-champ-immat">
-                    <span class="carte-label">N° D'IMMATRICULATION ASSURÉ</span>
-                    <strong class="carte-valeur-code">{{ patient.numero_carte }}</strong>
-                </div>
-
-                <div class="carte-box-details">
-                    <div>
-                        <span class="carte-label">DATE DE NAISSANCE</span>
-                        <span class="carte-valeur-texte">{{ patient.date_naissance|date:"d/m/Y" }}</span>
+    <!-- Colonne Carte 3D Flip Interactive -->
+    <div>
+        <div class="carte-3d-wrap">
+            <div class="carte-3d-card" id="carte-assure-flip" tabindex="0" role="button" aria-label="Carte d'assuré interactive. Cliquer pour retourner et afficher le QR code de prise en charge." onclick="this.classList.toggle('flipped')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.classList.toggle('flipped');}">
+                
+                <!-- RECTO : IDENTITÉ ET COUVERTURE SANTÉSN TIERS-PAYANT -->
+                <div class="carte-face-recto">
+                    <div class="carte-recto-header">
+                        {% logo_marque taille=26 fond="sombre" %}
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span class="carte-recto-brand">SANTÉ<strong>SN</strong></span>
+                            <span class="carte-recto-tag">TIERS-PAYANT</span>
+                        </div>
                     </div>
-                    <div>
-                        <span class="carte-label">RÉGIME IPM</span>
-                        <span class="carte-valeur-texte">{{ patient.titulaire.plan_couverture.nom|default:"Général IPM" }}</span>
+
+                    <div class="carte-recto-immat">
+                        <span class="carte-recto-immat-label">N° Carte de Prise en Charge</span>
+                        <span class="carte-recto-immat-valeur">{{ patient.numero_carte }}</span>
                     </div>
-                    <div style="text-align: right;">
-                        <span class="carte-label">COUVERTURE</span>
-                        <strong class="carte-valeur-taux">{{ patient.taux_couverture|default:"0" }}%</strong>
+
+                    <div class="carte-recto-details">
+                        <div>
+                            <strong class="carte-recto-nom">{{ patient.prenom }} {{ patient.nom }}</strong>
+                            <span class="carte-recto-qualite">
+                                {{ patient.get_type_beneficiaire_display }}{% if patient.est_ayant_droit and patient.lien_parente %} · {{ patient.get_lien_parente_display }}{% endif %}
+                            </span>
+                        </div>
+                        <div style="text-align: right;">
+                            <span class="carte-recto-taux">{{ patient.taux_couverture|default:"0" }}%</span>
+                            <span class="carte-recto-regime">{{ patient.titulaire.plan_couverture.nom|default:"IPM" }}</span>
+                        </div>
+                    </div>
+
+                    <div class="carte-recto-flip-btn">
+                        <span>↺ Cliquer pour afficher le QR code</span>
                     </div>
                 </div>
-            </div>
 
-            <div class="carte-box-footer">
-                <span>Carte officielle d'assurance maladie</span>
-                <span style="font-weight:700;">Face Recto</span>
+                <!-- VERSO : QR CODE DE SCAN TIERS-PAYANT & CONSIGNES CLAIRES -->
+                <div class="carte-face-verso">
+                    <div class="carte-bande-magnetique"></div>
+
+                    <div class="carte-verso-corps">
+                        <div class="carte-verso-qr-cadre">
+                            {{ qr_svg|safe }}
+                        </div>
+                        <div class="carte-verso-infos">
+                            <strong class="carte-verso-titre">Prise en charge directe</strong>
+                            <p class="carte-verso-consigne">Présenter ce QR code au guichet du centre de santé ou à la pharmacie conventionnée.</p>
+                            <span class="carte-verso-badge">SCAN INSTANTANÉ</span>
+                        </div>
+                    </div>
+
+                    <div class="carte-verso-pied">
+                        <span>Strictement personnelle</span>
+                        <span class="carte-verso-retour">↺ Retourner</span>
+                    </div>
+                </div>
+
             </div>
         </div>
-
-        <!-- FACE VERSO : SCAN QR ET MENTIONS LISIBLES -->
-        <div class="carte-box carte-box-verso">
-            <div class="carte-box-header" style="border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
-                <div style="display:flex;align-items:center;gap:6px;">
-                    {% icone "shield-check" %}
-                    <strong style="font-size:12.5px;color:#0b2027;letter-spacing:0.02em;">CONTRÔLE TIERS-PAYANT &amp; SOINS</strong>
-                </div>
-                <span class="carte-badge-tp" style="background:#e0f2fe;color:#0369a1;">SANTÉSN</span>
-            </div>
-
-            <div class="carte-verso-contenu">
-                <div class="carte-verso-qr-block">
-                    <div class="carte-qr-frame">
-                        {{ qr_svg|safe }}
-                    </div>
-                    <span class="carte-qr-code-label">{{ patient.numero_carte }}</span>
-                </div>
-
-                <div class="carte-verso-infos">
-                    <p class="carte-mention-principale">
-                        <strong>Dispense d'avance de frais :</strong> À présenter lors de toute consultation, analyse biologique ou délivrance de médicaments.
-                    </p>
-                    <p class="carte-mention-secondaire">
-                        <strong>Prestataires conventionnés :</strong> Vérifiez la validité en scannant le QR code ou sur le portail sécurisé SantéSN.
-                    </p>
-                    <div class="carte-mention-contact">
-                        <span>Assistance &amp; Gestion : contact@santesn.sn</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="carte-box-footer" style="background:#f8fafc;color:#64748b;border-top:1px solid #e2e8f0;">
-                <span>Usage strictement personnel · Ne pas prêter</span>
-                <span style="font-weight:700;">Face Verso</span>
-            </div>
-        </div>
-
+        <p style="text-align: center; margin: 12px 0 0; font-size: 12.5px; color: var(--muted);">
+            Cliquez sur la carte pour alterner entre le recto et le verso avec QR code.
+        </p>
     </div>
 
-    <!-- Colonne Informations et Guide Pratique -->
-    <div class="carte-sans-impression" style="display: flex; flex-direction: column; gap: 16px;">
+    <!-- Colonne Informations Officielles & Prise en Charge -->
+    <div style="display: flex; flex-direction: column; gap: 16px;">
         <div class="panel panel-bloc">
             <h2 style="margin: 0 0 14px; font-size: 16px; color: var(--titre);">
-                {% icone "shield-check" %} Droits et Prise en Charge
+                {% icone "shield-check" %} Statut de Couverture Tiers-Payant
             </h2>
             <div style="display: flex; flex-direction: column; gap: 12px; font-size: 13.5px;">
                 <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
@@ -157,7 +127,7 @@
                     <strong>{{ patient.prenom }} {{ patient.nom }}</strong>
                 </div>
                 <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
-                    <span style="color: var(--muted);">Statut</span>
+                    <span style="color: var(--muted);">Qualité</span>
                     <strong>{{ patient.get_type_beneficiaire_display }}{% if patient.est_ayant_droit and patient.lien_parente %} ({{ patient.get_lien_parente_display }}){% endif %}</strong>
                 </div>
                 {% if patient.est_ayant_droit and patient.assure_principal %}
@@ -167,7 +137,7 @@
                 </div>
                 {% endif %}
                 <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
-                    <span style="color: var(--muted);">N° Immatriculation</span>
+                    <span style="color: var(--muted);">N° Immatriculation / Carte</span>
                     <strong class="code">{{ patient.numero_carte }}</strong>
                 </div>
                 <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
@@ -186,337 +156,44 @@
         </div>
 
         <div class="panel panel-bloc" style="background: var(--champ-bg); border-left: 4px solid var(--primary);">
-            <h3 style="margin: 0 0 8px; font-size: 14px; color: var(--titre); font-weight: 700;">
-                {% icone "info" %} Utilisation auprès des professionnels de santé
+            <h3 style="margin: 0 0 6px; font-size: 14px; color: var(--titre); font-weight: 700;">
+                {% icone "info" %} Information Réglementaire sur la Carte Physique
             </h3>
-            <ul style="margin: 0; padding-left: 18px; font-size: 13px; color: var(--muted); line-height: 1.6;">
-                <li><strong>Chez le médecin ou à l'hôpital :</strong> Présentez votre carte sur votre téléphone ou sur papier pour certifier vos droits.</li>
-                <li><strong>À la pharmacie :</strong> Le pharmacien scanne le QR code pour appliquer automatiquement le taux de prise en charge sur l'ordonnance.</li>
-                <li><strong>Examens &amp; Hospitalisations :</strong> Transmettez votre devis médical via la section « Mes prises en charge » pour accord préalable.</li>
-            </ul>
+            <p style="margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.5;">
+                Conformément aux normes IPM, l'édition et l'impression des cartes physiques officielles (badges PVC avec microchip) sont exclusivement réservées aux services de gestion de l'IPM.
+                Pour l'obtention d'une carte physique officielle ou toute formalité administrative, veuillez vous adresser au service de gestion des assurés de votre mutuelle SantéSN.
+            </p>
         </div>
     </div>
 </div>
 
 <style>
-    /* Grille principale */
     .carte-layout-grid {
         display: grid;
-        grid-template-columns: minmax(320px, 460px) minmax(280px, 1fr);
-        gap: 24px;
+        grid-template-columns: minmax(300px, 420px) minmax(280px, 1fr);
+        gap: 28px;
         align-items: start;
-        margin-top: 12px;
+        margin-top: 10px;
     }
-    @media (max-width: 900px) {
+    @media (max-width: 768px) {
         .carte-layout-grid {
             grid-template-columns: 1fr;
             gap: 20px;
         }
     }
 
-    /* Zone des cartes : les deux faces présentées sobrement */
-    .carte-printable-zone {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-    }
-
-    /* Carte ordinaire standardisée */
-    .carte-box {
-        background: #ffffff;
-        border: 1.5px solid #cbd5e1;
-        border-radius: 14px;
-        box-shadow: 0 4px 16px rgba(11, 32, 39, 0.06);
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        color: #0b2027;
-        font-family: 'Public Sans', system-ui, sans-serif;
-    }
-
-    /* RECTO : Thème officiel vert foncé institutionnel / sobre */
-    .carte-box-recto {
-        background: linear-gradient(145deg, #094750 0%, #062e34 100%);
-        border-color: #0d5c67;
-        color: #ffffff;
-    }
-
-    .carte-box-recto .carte-label {
-        color: rgba(255, 255, 255, 0.72);
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-        display: block;
-        margin-bottom: 2px;
-    }
-
-    .carte-box-recto .carte-valeur-nom {
-        color: #ffffff;
-        font-size: 19px;
-        font-weight: 800;
-        margin: 0 0 4px 0;
-        letter-spacing: -0.01em;
-    }
-
-    .carte-box-recto .carte-valeur-qualite {
-        display: inline-block;
-        background: rgba(255, 255, 255, 0.15);
-        color: #ffffff;
-        font-size: 12px;
-        font-weight: 600;
-        padding: 3px 8px;
-        border-radius: 6px;
-    }
-
-    .carte-box-recto .carte-valeur-code {
-        color: #6ee7b7;
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 16px;
-        letter-spacing: 0.05em;
-    }
-
-    .carte-box-recto .carte-valeur-texte {
-        color: #ffffff;
-        font-size: 13.5px;
-        font-weight: 600;
-    }
-
-    .carte-box-recto .carte-valeur-taux {
-        color: #34d399;
-        font-size: 20px;
-        font-weight: 800;
-    }
-
-    .carte-box-recto .carte-box-footer {
-        background: rgba(0, 0, 0, 0.2);
-        border-top: 1px solid rgba(255, 255, 255, 0.12);
-        color: rgba(255, 255, 255, 0.7);
-    }
-
-    /* En-tête des faces */
-    .carte-box-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 14px 18px 10px;
-    }
-
-    .carte-box-rep {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .carte-rep-flag {
-        display: inline-flex;
-        width: 18px;
-        height: 12px;
-        border-radius: 2px;
-        overflow: hidden;
-    }
-    .carte-rep-flag .fl-v { width: 33.3%; background: #00853f; }
-    .carte-rep-flag .fl-j { width: 33.4%; background: #fdef42; color: #e31b23; font-size: 8px; line-height: 12px; text-align: center; font-weight: 800; }
-    .carte-rep-flag .fl-r { width: 33.3%; background: #e31b23; }
-
-    .carte-rep-nom {
-        font-size: 11px;
-        font-weight: 800;
-        letter-spacing: 0.04em;
-    }
-
-    .carte-box-ipm {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .carte-brand {
-        font-size: 13.5px;
-        font-weight: 800;
-        letter-spacing: 0.02em;
-    }
-
-    .carte-badge-tp {
-        font-size: 10px;
-        font-weight: 800;
-        padding: 2px 6px;
-        border-radius: 4px;
-        background: #00853f;
-        color: #ffffff;
-        letter-spacing: 0.04em;
-    }
-
-    /* Corps du Recto */
-    .carte-box-corps {
-        padding: 6px 18px 14px;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-    }
-
-    .carte-box-details {
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
-        gap: 10px;
-        padding-top: 8px;
-        border-top: 1px solid rgba(255, 255, 255, 0.15);
-    }
-
-    /* VERSO : Fond clair, texte très lisible et grand QR */
-    .carte-box-verso {
-        background: #ffffff;
-        border-color: #cbd5e1;
-    }
-
-    .carte-verso-contenu {
-        padding: 16px 18px;
-        display: flex;
-        gap: 18px;
-        align-items: center;
-    }
-
-    .carte-verso-qr-block {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 6px;
-        flex-shrink: 0;
-    }
-
-    .carte-qr-frame {
-        width: 108px;
-        height: 108px;
-        padding: 6px;
-        background: #ffffff;
-        border: 1.5px solid #0e7c86;
-        border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .carte-qr-frame svg {
-        width: 100%;
-        height: 100%;
-        display: block;
-    }
-
-    .carte-qr-code-label {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 11.5px;
-        font-weight: 700;
-        color: #0b2027;
-    }
-
-    /* Écritures en bas et sur le côté du verso : nettes, aérées et très claires */
-    .carte-verso-infos {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        text-align: left;
-    }
-
-    .carte-mention-principale {
-        margin: 0;
-        font-size: 12.5px;
-        line-height: 1.45;
-        color: #1e293b;
-    }
-
-    .carte-mention-secondaire {
-        margin: 0;
-        font-size: 12px;
-        line-height: 1.4;
-        color: #475569;
-    }
-
-    .carte-mention-contact {
-        font-size: 11px;
-        color: #0e7c86;
-        font-weight: 700;
-        margin-top: 4px;
-    }
-
-    /* Pied de page des cartes */
-    .carte-box-footer {
-        padding: 8px 18px;
-        font-size: 11.5px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    /* STYLE IMPRESSION PROPRE ET CLAIR (Imprimable sur A4) */
+    /* Sécurité : interdiction d'imprimer une carte découpable non officielle */
     @media print {
-        @page {
-            size: A4 portrait;
-            margin: 15mm;
-        }
-
         body * {
-            visibility: hidden;
-        }
-
-        .carte-printable-zone,
-        .carte-printable-zone * {
-            visibility: visible;
-        }
-
-        .carte-sans-impression,
-        aside,
-        nav,
-        .page-title,
-        .actions,
-        .button,
-        .btn {
             display: none !important;
         }
-
-        body {
-            background: #ffffff !important;
-            color: #000000 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-
-        .carte-layout-grid {
+        body::before {
+            content: "L'impression physique officielle de la carte de tiers-payant est réservée à l'administrateur de l'IPM. Votre carte SantéSN est 100% dématérialisée et directement valide sur votre écran auprès des prestataires conventionnés.";
             display: block !important;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-
-        .carte-printable-zone {
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-            justify-content: center !important;
-            gap: 25px !important;
-            margin: 40px auto !important;
-            width: 100% !important;
-        }
-
-        .carte-box {
-            width: 90mm !important;
-            min-height: 56mm !important;
-            border: 1.5px solid #000000 !important;
-            border-radius: 8px !important;
-            box-shadow: none !important;
-            page-break-inside: avoid !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-        }
-
-        .carte-box-recto {
-            background: #094750 !important;
-            color: #ffffff !important;
-        }
-
-        .carte-box-verso {
-            background: #ffffff !important;
-            color: #000000 !important;
-            border: 1.5px solid #000000 !important;
+            padding: 40px;
+            font-size: 16px;
+            color: #b3261e;
+            text-align: center;
         }
     }
 </style>

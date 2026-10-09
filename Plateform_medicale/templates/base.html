@@ -5982,37 +5982,36 @@
         }
 
         /* ==========================================================================
-           CARTE D'ASSURÉ BIOMÉTRIQUE HAUTE SÉCURITÉ (STANDARD ISO/IEC 7810 ID-1)
+           CARTE D'ASSURÉ DÉMATÉRIALISÉE 3D FLIP (SANTÉSN TIERS-PAYANT)
+           Design sobre, élégant, attractif et typographie haute lisibilité
            ========================================================================== */
         .carte-3d-wrap {
             perspective: 1200px;
             width: 100%;
-            max-width: 390px;
+            max-width: 380px;
             margin: 0 auto;
         }
 
         .carte-3d-card {
             width: 100%;
-            min-height: 242px;
+            min-height: 236px;
             position: relative;
             transform-style: preserve-3d;
-            transition: transform 0.65s cubic-bezier(0.34, 1.4, 0.64, 1);
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
             border-radius: 16px;
             cursor: pointer;
-            box-shadow: 0 20px 38px -10px rgba(4, 28, 32, 0.45), 
-                        0 2px 6px rgba(0, 0, 0, 0.12);
+            box-shadow: 0 16px 36px rgba(7, 31, 36, 0.25), 0 4px 10px rgba(0, 0, 0, 0.08);
             outline: none;
             user-select: none;
         }
 
         .carte-3d-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 26px 46px -10px rgba(14, 124, 134, 0.42), 
-                        0 4px 8px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 20px 42px rgba(7, 31, 36, 0.32), 0 6px 14px rgba(0, 0, 0, 0.1);
         }
 
         .carte-3d-card:focus-visible {
-            box-shadow: 0 0 0 3px var(--primary), 0 20px 38px -10px rgba(4, 28, 32, 0.45);
+            box-shadow: 0 0 0 3px var(--primary), 0 16px 36px rgba(7, 31, 36, 0.25);
         }
 
         .carte-3d-card.flipped {
@@ -6036,377 +6035,202 @@
             box-sizing: border-box;
         }
 
-        /* RECTO : PLASTIQUE PVC & EMV POLYSÉCURISÉ */
+        /* RECTO : ÉLÉGANT DÉGRADÉ ÉMERAUDE / TEAL & TYPOGRAPHIE HAUTE LISIBILITÉ */
         .carte-face-recto {
-            background: 
-                linear-gradient(115deg, rgba(255, 255, 255, 0.24) 0%, rgba(255, 255, 255, 0.05) 32%, transparent 34%),
-                radial-gradient(circle at 85% 15%, rgba(45, 212, 191, 0.28) 0%, transparent 45%),
-                radial-gradient(circle at 15% 85%, rgba(14, 165, 233, 0.22) 0%, transparent 45%),
-                linear-gradient(135deg, #041c20 0%, #06373e 40%, #0a525b 75%, #052327 100%);
+            background: linear-gradient(135deg, #071f24 0%, #095059 55%, #0e7c86 100%);
             color: #ffffff;
-            border: 1px solid rgba(255, 255, 255, 0.25);
-            padding: 16px 18px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            padding: 16px 20px 14px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
         }
 
-        .carte-face-recto::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background-image: radial-gradient(rgba(255, 255, 255, 0.09) 1px, transparent 1px),
-                              radial-gradient(rgba(79, 184, 174, 0.12) 1px, transparent 1px);
-            background-size: 14px 14px;
-            background-position: 0 0, 7px 7px;
-            opacity: 0.65;
-            pointer-events: none;
-        }
-
-        .carte-entete-officielle {
+        .carte-recto-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            position: relative;
-            z-index: 1;
         }
 
-        .carte-rep-senegal {
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-        }
-
-        .drapeau-senegal-mini {
-            display: inline-flex;
-            width: 20px;
-            height: 13px;
-            border-radius: 2px;
-            overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
-            line-height: 1;
-        }
-
-        .drapeau-senegal-mini .drap-v { background: #00853f; width: 33.3%; height: 100%; display: inline-block; }
-        .drapeau-senegal-mini .drap-j { background: #fdef42; width: 33.4%; height: 100%; color: #00853f; font-size: 7.5px; line-height: 13px; text-align: center; font-weight: bold; display: inline-block; }
-        .drapeau-senegal-mini .drap-r { background: #e31b23; width: 33.3%; height: 100%; display: inline-block; }
-
-        .carte-titre-pays {
-            font-size: 9px;
+        .carte-recto-brand {
+            font-size: 11px;
             font-weight: 800;
             letter-spacing: 0.8px;
-            color: rgba(255, 255, 255, 0.95);
+            color: #ffffff;
             text-transform: uppercase;
         }
 
-        .carte-logo-ipm {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
+        .carte-recto-brand strong {
+            color: #5eead4;
         }
 
-        .carte-ipm-sigle {
-            font-size: 11px;
+        .carte-recto-tag {
+            font-size: 8.5px;
             font-weight: 800;
             color: #ffffff;
-            letter-spacing: 0.5px;
-        }
-
-        .carte-ipm-sigle strong {
-            color: #4fb8ae;
-        }
-
-        .carte-tiers-payant-tag {
-            font-size: 7.5px;
-            font-weight: 800;
             background: rgba(255, 255, 255, 0.18);
             border: 1px solid rgba(255, 255, 255, 0.3);
-            color: #ffffff;
-            padding: 1.5px 5px;
+            padding: 2px 6px;
             border-radius: 4px;
             letter-spacing: 0.6px;
         }
 
-        .carte-securite-ligne {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin: 6px 0 4px;
-            position: relative;
-            z-index: 1;
+        .carte-recto-immat {
+            margin: 10px 0 8px;
         }
 
-        /* PUCE EMV DORÉE RÉALISTE */
-        .carte-puce-or {
-            width: 42px;
-            height: 32px;
-            background: linear-gradient(135deg, #f7d57f 0%, #d4af37 32%, #fce99f 52%, #aa7c11 82%, #ffd97d 100%);
-            border-radius: 6px;
-            position: relative;
-            box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.7), 
-                        inset 0 -1px 2px rgba(0, 0, 0, 0.45),
-                        0 2px 4px rgba(0, 0, 0, 0.4);
-            border: 1px solid #996515;
-            overflow: hidden;
-            flex-shrink: 0;
-        }
-
-        .carte-puce-or::before {
-            content: "";
-            position: absolute;
-            inset: 4px;
-            border: 1px solid rgba(138, 90, 16, 0.75);
-            border-radius: 3px;
-        }
-
-        .carte-puce-or::after {
-            content: "";
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: rgba(138, 90, 16, 0.85);
-            box-shadow: 0 6px 0 0 rgba(138, 90, 16, 0.85),
-                        0 -6px 0 0 rgba(138, 90, 16, 0.85);
-        }
-
-        .puce-contact-centre {
-            position: absolute;
-            top: 7px;
-            bottom: 7px;
-            left: 15px;
-            right: 15px;
-            border: 1px solid rgba(138, 90, 16, 0.85);
-            border-radius: 2px;
-            z-index: 2;
-        }
-
-        .carte-nfc-wave {
-            margin-left: 10px;
-            margin-right: auto;
-            opacity: 0.85;
-            filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
-        }
-
-        /* PASTILLE HOLOGRAPHIQUE SÉCURISÉE */
-        .carte-hologramme {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background: conic-gradient(from 145deg, #e2e8f0, #93c5fd, #fbcfe8, #fef08a, #86efac, #67e8f9, #e2e8f0);
-            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4), inset 0 0 2px rgba(255, 255, 255, 0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid rgba(255, 255, 255, 0.7);
-            flex-shrink: 0;
-            color: #0f172a;
-        }
-
-        .carte-numero-bloc {
-            position: relative;
-            z-index: 1;
-            margin: 2px 0 4px;
-        }
-
-        .carte-libelle-champ {
-            font-size: 8px;
+        .carte-recto-immat-label {
+            font-size: 10px;
             text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: rgba(255, 255, 255, 0.65);
-            display: block;
-            margin-bottom: 1px;
-            font-weight: 600;
-        }
-
-        /* CHIFFRES EMBOUTIS 3D EN RELIEF */
-        .carte-numero-embouti {
-            font-family: 'IBM Plex Mono', 'Courier New', monospace;
-            font-size: 16.5px;
+            letter-spacing: 0.08em;
+            color: #99f6e4;
             font-weight: 700;
-            letter-spacing: 2.2px;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .carte-recto-immat-valeur {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 2px;
             color: #ffffff;
-            text-shadow: 0 1px 1px rgba(255, 255, 255, 0.65), 
-                         0 -1px 2px rgba(0, 0, 0, 0.85);
             display: block;
         }
 
-        .carte-bas-ligne {
+        .carte-recto-details {
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
-            padding-top: 6px;
+            padding-top: 8px;
             border-top: 1px solid rgba(255, 255, 255, 0.2);
-            position: relative;
-            z-index: 1;
         }
 
-        .carte-nom-titulaire {
-            font-size: 13px;
+        .carte-recto-nom {
+            font-size: 14px;
             color: #ffffff;
             display: block;
             text-transform: uppercase;
-            letter-spacing: 0.6px;
+            letter-spacing: 0.5px;
             font-weight: 700;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
         }
 
-        .carte-qualite-badge {
-            font-size: 9.5px;
-            color: rgba(255, 255, 255, 0.8);
+        .carte-recto-qualite {
+            font-size: 11.5px;
+            color: #ccfbf1;
+            font-weight: 600;
             display: block;
             margin-top: 1px;
         }
 
-        .carte-taux-box {
-            text-align: right;
-        }
-
-        .carte-taux-chiffre {
-            font-size: 16px;
+        .carte-recto-taux {
+            font-size: 18px;
             font-weight: 800;
             color: #ffffff;
             display: block;
             line-height: 1.1;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
         }
 
-        .carte-taux-label {
-            font-size: 9px;
-            color: rgba(255, 255, 255, 0.8);
+        .carte-recto-regime {
+            font-size: 11px;
+            color: #ccfbf1;
+            font-weight: 600;
             display: block;
         }
 
-        .carte-flip-hint {
+        .carte-recto-flip-btn {
+            margin-top: 8px;
             text-align: center;
-            margin-top: 4px;
-            position: relative;
-            z-index: 1;
         }
 
-        .carte-flip-hint span {
+        .carte-recto-flip-btn span {
             display: inline-flex;
             align-items: center;
-            gap: 4px;
-            font-size: 9px;
-            font-weight: 600;
-            color: rgba(255, 255, 255, 0.95);
-            background: rgba(0, 0, 0, 0.28);
-            padding: 2.5px 9px;
+            gap: 5px;
+            font-size: 10px;
+            font-weight: 700;
+            color: #ffffff;
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            padding: 3.5px 12px;
             border-radius: 999px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
         }
 
-        /* VERSO SÉCURISÉ */
+        /* VERSO : FOND BLANC ÉPURÉ, BANDE MAGNÉTIQUE, QR CODE & TEXTE CLAIR ET LISIBLE */
         .carte-face-verso {
-            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
-            color: #0b2027;
+            background: #ffffff;
+            color: #0f172a;
             border: 1px solid #cbd5e1;
             transform: rotateY(180deg);
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            align-items: center;
             padding-bottom: 10px;
         }
 
-        .carte-bande-noire {
+        .carte-bande-magnetique {
             width: 100%;
             height: 36px;
-            background: linear-gradient(180deg, #18181b 0%, #09090b 100%);
-            box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.2), 0 2px 4px rgba(0, 0, 0, 0.15);
-            margin-top: 12px;
+            background: #0f172a;
         }
 
         .carte-verso-corps {
-            padding: 0 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .carte-panneau-signature {
-            background: #ffffff;
-            border: 1px solid #cbd5e1;
-            border-radius: 4px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 8px;
-            background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(14, 124, 134, 0.05) 5px, rgba(14, 124, 134, 0.05) 10px);
-        }
-
-        .signature-watermark {
-            font-size: 7.5px;
-            letter-spacing: 0.8px;
-            color: #64748b;
-            text-transform: uppercase;
-            font-weight: 600;
-        }
-
-        .signature-crypt {
-            font-family: monospace;
-            font-size: 10px;
-            font-weight: 700;
-            color: #0b2027;
-        }
-
-        .carte-verso-centre {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
+            gap: 14px;
+            padding: 6px 16px;
             width: 100%;
+            box-sizing: border-box;
         }
 
-        .carte-qr-cadre-realiste {
+        .carte-verso-qr-cadre {
             background: #ffffff;
-            padding: 4px;
+            padding: 5px;
             border-radius: 8px;
             border: 1.5px solid #0e7c86;
-            box-shadow: 0 3px 8px rgba(14, 124, 134, 0.15);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
             line-height: 0;
             flex-shrink: 0;
+            box-shadow: 0 2px 6px rgba(14, 124, 134, 0.15);
         }
 
-        .carte-qr-cadre-realiste svg {
+        .carte-verso-qr-cadre svg {
             display: block;
         }
 
-        .carte-verso-texte {
+        .carte-verso-infos {
             text-align: left;
             max-width: 180px;
         }
 
-        .verso-titre {
-            font-size: 10.5px;
+        .carte-verso-titre {
+            font-size: 12.5px;
+            font-weight: 800;
             color: #0b2027;
             display: block;
-            margin-bottom: 2px;
-            font-weight: 800;
+            margin-bottom: 3px;
             letter-spacing: 0.2px;
         }
 
-        .verso-desc {
-            font-size: 8.5px;
-            color: #64748b;
-            margin: 0 0 5px;
-            line-height: 1.3;
+        .carte-verso-consigne {
+            font-size: 10.5px;
+            font-weight: 500;
+            color: #334155;
+            margin: 0 0 6px;
+            line-height: 1.35;
         }
 
-        .verso-badge-scan {
-            font-size: 8px;
+        .carte-verso-badge {
+            font-size: 9.5px;
             font-weight: 800;
             color: #0e7c86;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            background: rgba(14, 124, 134, 0.1);
-            padding: 2px 6px;
+            background: #f0fdfa;
+            border: 1px solid #99f6e4;
+            padding: 2.5px 7px;
             border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
             display: inline-block;
         }
 
@@ -6416,15 +6240,16 @@
             align-items: center;
             width: 100%;
             padding: 0 16px;
-            font-size: 8.5px;
-            color: #94a3b8;
+            font-size: 10.5px;
+            color: #475569;
             box-sizing: border-box;
+            font-weight: 600;
         }
 
-        .verso-retour-hint {
+        .carte-verso-retour {
             display: inline-flex;
             align-items: center;
-            gap: 3px;
+            gap: 4px;
             font-weight: 700;
             color: #0e7c86;
         }
