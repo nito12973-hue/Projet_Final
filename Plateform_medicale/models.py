@@ -360,6 +360,21 @@ class Patient(models.Model):
         return self.statut_validation == self.StatutValidation.VALIDE
 
     @property
+    def nom_complet(self):
+        return f"{self.prenom} {self.nom}".strip()
+
+    @property
+    def age(self):
+        if not self.date_naissance:
+            return None
+        aujourdhui = datetime.date.today()
+        return (
+            aujourdhui.year
+            - self.date_naissance.year
+            - ((aujourdhui.month, aujourdhui.day) < (self.date_naissance.month, self.date_naissance.day))
+        )
+
+    @property
     def titulaire(self):
         """Le beneficiaire porteur du plan de couverture (soi-meme si principal)."""
         return self.assure_principal if self.est_ayant_droit and self.assure_principal_id else self
@@ -529,6 +544,29 @@ class PriseEnCharge(models.Model):
     patient = models.ForeignKey(Patient, on_delete=models.PROTECT)
     date_demande = models.DateTimeField(auto_now_add=True)
     motif = models.TextField()
+    numero_pec = models.CharField(
+        "numéro de prise en charge",
+        max_length=32,
+        unique=True,
+        blank=True,
+        null=True,
+        db_index=True,
+    )
+    montant_estime = models.DecimalField(
+        "montant estimé du devis",
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Montant estimatif figurant sur le devis remis par la structure de soins.",
+    )
+    devis_fichier = models.FileField(
+        "devis médical (PDF ou scan)",
+        upload_to="devis_prises_en_charge/",
+        blank=True,
+        null=True,
+        help_text="Fichier du devis fourni par l'établissement (PDF, JPG, PNG - max 10 Mo).",
+    )
     statut = models.CharField(
         max_length=20,
         choices=STATUT_CHOICES,
@@ -545,8 +583,32 @@ class PriseEnCharge(models.Model):
     date_validation = models.DateTimeField(null=True, blank=True)
     motif_refus = models.CharField("motif de refus", max_length=255, blank=True)
 
+    def save(self, *args, **kwargs):
+        if not self.numero_pec:
+            self.numero_pec = f"PEC-{uuid.uuid4().hex[:8].upper()}"
+        super().save(*args, **kwargs)
+
+    @property
+    def montant_part_assurance(self):
+        if not self.montant_estime:
+            return None
+        taux = self.patient.taux_couverture
+        if not taux:
+            return None
+        return (self.montant_estime * Decimal(str(taux)) / Decimal("100")).quantize(Decimal("1"))
+
+    @property
+    def montant_part_patient(self):
+        if not self.montant_estime:
+            return None
+        part_ass = self.montant_part_assurance
+        if part_ass is None:
+            return self.montant_estime
+        return self.montant_estime - part_ass
+
     def __str__(self):
-        return f"Prise en charge de {self.patient} - {self.statut}"
+        ref = f"[{self.numero_pec}] " if self.numero_pec else ""
+        return f"{ref}Prise en charge de {self.patient} - {self.statut}"
 
     def clean(self):
         """Interdit de changer de patient ou de rétrograder le statut une fois des consultations rattachées."""

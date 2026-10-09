@@ -134,6 +134,7 @@ from .prises_en_charge import (  # noqa: F401
     supprimer_prise_en_charge,
     valider_prise_en_charge,
     refuser_prise_en_charge,
+    telecharger_bon_prise_en_charge_pdf,
 )
 
 # Paiements

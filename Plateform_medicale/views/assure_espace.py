@@ -598,11 +598,12 @@ def demander_prise_en_charge_assure(request):
         return redirect("mon_profil_assure")
 
     if request.method == "POST":
-        form = DemandePriseEnChargeAssureForm(request.POST, assure_patient=patient)
+        form = DemandePriseEnChargeAssureForm(request.POST, request.FILES, assure_patient=patient)
         if form.is_valid():
             demande = form.save(commit=False)
             demande.statut = "en_attente"
             demande.save()
+            form.save_m2m()
             from ..services.notifications import notifier_demande_prise_en_charge
             notifier_demande_prise_en_charge(demande)
             messages.success(

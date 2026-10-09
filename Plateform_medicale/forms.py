@@ -949,17 +949,30 @@ class PriseEnChargeForm(forms.ModelForm):
 
     class Meta:
         model = PriseEnCharge
-        fields = ['patient', 'motif', 'statut', 'motif_refus']
+        fields = ['patient', 'motif', 'montant_estime', 'devis_fichier', 'statut', 'motif_refus']
         labels = {
             'patient': "Bénéficiaire des soins",
             'motif': "Devis estimatif / Détails des actes",
+            'montant_estime': "Montant estimé du devis (FCFA)",
+            'devis_fichier': "Pièce jointe du devis (PDF ou photo/scan)",
             'statut': "Statut de la prise en charge",
             'motif_refus': "Motif du refus (si refusé)",
         }
         widgets = {
-            'motif': forms.Textarea(attrs={'rows': 3, 'placeholder': "Détails du devis chiffré (montant estimé, actes prévus, structure de soins)..."}),
+            'motif': forms.Textarea(attrs={'rows': 3, 'placeholder': "Détails des actes prévus, structure de soins ou devis..."}),
+            'montant_estime': forms.NumberInput(attrs={'placeholder': 'Ex : 250000', 'min': '0', 'step': '500'}),
+            'devis_fichier': forms.FileInput(attrs={'accept': '.pdf,image/*'}),
             'motif_refus': forms.TextInput(attrs={'placeholder': 'Motif obligatoire en cas de refus'}),
         }
+        help_texts = {
+            'devis_fichier': "Format accepté : PDF ou image (PNG, JPG) - taille maximale : 10 Mo.",
+        }
+
+    def clean_devis_fichier(self):
+        doc = self.cleaned_data.get('devis_fichier')
+        if doc and hasattr(doc, 'size') and doc.size > 10 * 1024 * 1024:
+            raise forms.ValidationError("Le fichier du devis ne doit pas dépasser 10 Mo.")
+        return doc
 
 
 class DemandePriseEnChargeAssureForm(forms.ModelForm):
@@ -967,16 +980,23 @@ class DemandePriseEnChargeAssureForm(forms.ModelForm):
 
     class Meta:
         model = PriseEnCharge
-        fields = ['patient', 'motif']
+        fields = ['patient', 'motif', 'montant_estime', 'devis_fichier']
         labels = {
             'patient': "Bénéficiaire des soins",
             'motif': "Devis estimatif & Détails des soins",
+            'montant_estime': "Montant total figurant sur le devis (FCFA)",
+            'devis_fichier': "Fichier PDF ou photo du devis médical",
         }
         widgets = {
             'motif': forms.Textarea(attrs={
                 'rows': 4,
-                'placeholder': 'Renseignez le montant estimé et le détail des actes figurant sur le devis remis par votre médecin ou établissement de soins (ex : Devis Clinique Pasteur - 250 000 FCFA pour intervention chirurgicale et hospitalisation 48h).'
+                'placeholder': 'Renseignez le détail des actes figurant sur le devis remis par votre clinique ou médecin (ex : intervention chirurgicale, hospitalisation 48h, examens de laboratoire).'
             }),
+            'montant_estime': forms.NumberInput(attrs={'placeholder': 'Ex : 150000', 'min': '0', 'step': '500'}),
+            'devis_fichier': forms.FileInput(attrs={'accept': '.pdf,image/*'}),
+        }
+        help_texts = {
+            'devis_fichier': "Téléversez le devis officiel remis par votre clinique ou hôpital (PDF, scan ou photo - max 10 Mo).",
         }
 
     def __init__(self, *args, assure_patient=None, **kwargs):
@@ -989,6 +1009,12 @@ class DemandePriseEnChargeAssureForm(forms.ModelForm):
             )
             self.fields['patient'].queryset = Patient.objects.filter(pk__in=membres_valides)
             self.fields['patient'].empty_label = None
+
+    def clean_devis_fichier(self):
+        doc = self.cleaned_data.get('devis_fichier')
+        if doc and hasattr(doc, 'size') and doc.size > 10 * 1024 * 1024:
+            raise forms.ValidationError("Le fichier du devis ne doit pas dépasser 10 Mo.")
+        return doc
 
     def clean_patient(self):
         patient = self.cleaned_data.get('patient')

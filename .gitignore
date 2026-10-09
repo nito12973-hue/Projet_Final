@@ -16,6 +16,7 @@ db.sqlite3
 # Fichiers statiques et medias
 staticfiles/
 media/*.tmp
+media/devis_prises_en_charge/
 
 # IDE et OS
 .idea/

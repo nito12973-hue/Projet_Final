@@ -25,7 +25,7 @@
     <div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
     {% endif %}
 
-    <form method="post">
+    <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
 
         <div style="margin-bottom: 16px;">
@@ -39,15 +39,39 @@
             </span>
         </div>
 
-        <div style="margin-bottom: 20px;">
+        <div style="margin-bottom: 16px;">
             <label for="{{ form.motif.id_for_label }}"><strong>{{ form.motif.label }}</strong> *</label>
             {{ form.motif }}
             {% if form.motif.errors %}
             <div class="erreurs" role="alert">{{ form.motif.errors }}</div>
             {% endif %}
             <span class="champ-aide" style="display:block;font-size:12px;color:var(--muted);margin-top:4px;">
-                Indiquez le détail chiffré du devis remis par votre praticien ou votre établissement de soins (montant estimé, nature des actes, durée de séjour).
+                Indiquez le détail des actes médicaux figurant sur le devis (chirurgie, examens spécialisés, durée de séjour, établissement).
             </span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 20px;">
+            <div>
+                <label for="{{ form.montant_estime.id_for_label }}"><strong>{{ form.montant_estime.label }}</strong></label>
+                {{ form.montant_estime }}
+                {% if form.montant_estime.errors %}
+                <div class="erreurs" role="alert">{{ form.montant_estime.errors }}</div>
+                {% endif %}
+                <span class="champ-aide" style="display:block;font-size:12px;color:var(--muted);margin-top:4px;">
+                    Montant total chiffré en FCFA figurant sur le devis.
+                </span>
+            </div>
+
+            <div>
+                <label for="{{ form.devis_fichier.id_for_label }}"><strong>{{ form.devis_fichier.label }}</strong></label>
+                {{ form.devis_fichier }}
+                {% if form.devis_fichier.errors %}
+                <div class="erreurs" role="alert">{{ form.devis_fichier.errors }}</div>
+                {% endif %}
+                <span class="champ-aide" style="display:block;font-size:12px;color:var(--muted);margin-top:4px;">
+                    Pièce jointe : PDF, scan ou photo du devis (max 10 Mo).
+                </span>
+            </div>
         </div>
 
         <div class="actions" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">

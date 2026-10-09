@@ -16,7 +16,24 @@
     <div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
     {% endif %}
 
-    <form method="post">
+    {% if prise_en_charge.devis_fichier %}
+    <div style="background: var(--surface-alt); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; font-size: 13px;">
+        <span>Pièce jointe du devis actuellement archivée :</span>
+        <a href="{{ prise_en_charge.devis_fichier.url }}" target="_blank" style="color: var(--primary); font-weight: 600; text-decoration: underline;">
+            {% icone "file-text" %} Consulter le devis &nearr;
+        </a>
+    </div>
+    {% endif %}
+
+    {% if prise_en_charge.statut == 'validee' %}
+    <div style="margin-bottom: 16px;">
+        <a href="{% url 'telecharger_bon_prise_en_charge_pdf' prise_en_charge.pk %}" target="_blank" class="button btn btn-sm" style="display: inline-flex; align-items: center; gap: 6px;">
+            {% icone "download" %} Imprimer le Bon de Prise en Charge officiel (PDF)
+        </a>
+    </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {% for field in form %}
         <label for="{{ field.id_for_label }}">{{ field.label }}</label>
