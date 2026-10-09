@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load icones %}
 
 {% block title %}Modifier {{ medecin }}{% endblock %}
 
@@ -8,7 +9,7 @@
         <h1>Modifier {{ medecin }}</h1>
         <p class="subtitle">{{ medecin.specialite }}</p>
     </div>
-    <a class="button" href="{% url 'liste_medecins' %}">Retour</a>
+    <a class="button btn" href="{% url 'liste_medecins' %}">{% icone "chevron-left" %} Retour</a>
 </section>
 
 <section class="panel panel-form">
@@ -23,7 +24,10 @@
         {{ field }}
         {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
         {% endfor %}
-        <button class="button primary" type="submit">Enregistrer</button>
+        <div class="actions" style="display:flex;gap:10px;align-items:center;margin-top:16px;">
+            <button class="button primary" type="submit">Enregistrer les modifications</button>
+            <a class="button btn" href="{% url 'liste_medecins' %}">Annuler</a>
+        </div>
     </form>
 </section>
 {% endblock %}

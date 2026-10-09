@@ -12,6 +12,9 @@
         </p>
     </div>
     <div class="actions">
+        <a class="button btn" href="{% url 'mes_prises_en_charge_assure' %}">
+            {% icone "shield-check" %} Mes prises en charge
+        </a>
         {% if patient.est_ayant_droit %}
         <a class="button btn" href="{% url 'liste_ayants_droit' %}">
             {% icone "chevron-left" %} Mes ayants droit

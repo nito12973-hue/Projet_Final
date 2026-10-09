@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load icones %}
 
 {% block title %}Modifier la prise en charge{% endblock %}
 
@@ -8,7 +9,7 @@
         <h1>Modifier la prise en charge</h1>
         <p class="subtitle">{{ prise_en_charge.patient }}</p>
     </div>
-    <a class="button" href="{% url 'liste_prises_en_charge' %}">Retour</a>
+    <a class="button btn" href="{% url 'liste_prises_en_charge' %}">{% icone "chevron-left" %} Retour</a>
 </section>
 
 <section class="panel panel-form">
@@ -19,16 +20,8 @@
     {% if prise_en_charge.devis_fichier %}
     <div style="background: var(--surface-alt); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; font-size: 13px;">
         <span>Pièce jointe du devis actuellement archivée :</span>
-        <a href="{{ prise_en_charge.devis_fichier.url }}" target="_blank" style="color: var(--primary); font-weight: 600; text-decoration: underline;">
+        <a href="{{ prise_en_charge.devis_fichier.url }}" target="_blank" style="color: var(--primary); font-weight: 600; text-decoration: underline; display: inline-flex; align-items: center; gap: 4px;">
             {% icone "file-text" %} Consulter le devis &nearr;
-        </a>
-    </div>
-    {% endif %}
-
-    {% if prise_en_charge.statut == 'validee' %}
-    <div style="margin-bottom: 16px;">
-        <a href="{% url 'telecharger_bon_prise_en_charge_pdf' prise_en_charge.pk %}" target="_blank" class="button btn btn-sm" style="display: inline-flex; align-items: center; gap: 6px;">
-            {% icone "download" %} Imprimer le Bon de Prise en Charge officiel (PDF)
         </a>
     </div>
     {% endif %}
@@ -40,7 +33,10 @@
         {{ field }}
         {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
         {% endfor %}
-        <button class="button primary" type="submit">Enregistrer</button>
+        <div class="actions" style="display:flex;gap:10px;align-items:center;margin-top:16px;">
+            <button class="button primary" type="submit">Enregistrer les modifications</button>
+            <a class="button btn" href="{% url 'liste_prises_en_charge' %}">Annuler</a>
+        </div>
     </form>
 </section>
 {% endblock %}

@@ -9,11 +9,12 @@
         <h1>Mes prises en charge</h1>
         <p class="subtitle">Suivi en direct de vos couvertures médicales et de celles de vos ayants droit.</p>
     </div>
-    {% if lignes %}
     <div class="actions">
+        <a class="button btn" href="{% url 'dashboard_assure' %}">{% icone "chevron-left" %} Mon tableau de bord</a>
+        {% if lignes %}
         <a class="button primary btn" href="{% url 'demander_prise_en_charge_assure' %}">{% icone "plus-circle" %} Nouvelle demande</a>
+        {% endif %}
     </div>
-    {% endif %}
 </section>
 
 <form method="get" class="filtres">
@@ -71,36 +72,29 @@ pas un oubli.
             n'est pas validée, les consultations liées restent à votre charge.
         </p>
         {% elif ligne.prise.statut == "validee" %}
-        <div style="margin: 0 0 16px; padding: 16px 20px; border-radius: 12px; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-left: 5px solid #10b981;">
-            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <div style="width: 40px; height: 40px; border-radius: 10px; background: #10b981; color: white; display: flex; align-items: center; justify-content: center; font-size: 20px;">
-                        {% icone "check-circle" %}
-                    </div>
-                    <div>
-                        <strong style="color: #065f46; font-size: 15px; display: block;">Accord de Tiers Payant Validé par l'IPM</strong>
-                        <span style="font-size: 12.5px; color: #047857;">
-                            Référence d'accord : <strong>#{{ ligne.prise.numero_pec }}</strong>
-                            {% if ligne.prise.date_validation %} · Validé le {{ ligne.prise.date_validation|date:"d/m/Y à H:i" }}{% endif %}
-                        </span>
-                    </div>
+        <div style="margin: 0 0 14px; padding: 14px 18px; border-radius: 12px; background: #ecfdf5; border: 1px solid #a7f3d0; border-left: 5px solid #10b981; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 36px; height: 36px; border-radius: 8px; background: #10b981; color: white; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+                    {% icone "check" %}
                 </div>
-                {% if ligne.prise.montant_estime %}
-                <div style="background: white; border: 1px solid rgba(16, 185, 129, 0.3); padding: 8px 14px; border-radius: 10px; text-align: right; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                    <div style="font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 600;">Prise en charge IPM</div>
-                    <div style="font-size: 16px; font-weight: 800; color: #059669;">{{ ligne.prise.montant_part_assurance|franc_cfa }}</div>
-                    <div style="font-size: 11px; color: #64748b;">Reste à payer estimé : <strong style="color: #334155;">{{ ligne.prise.montant_part_patient|franc_cfa }}</strong></div>
-                </div>
-                {% endif %}
-            </div>
-            <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed rgba(16, 185, 129, 0.3); font-size: 13px; color: #065f46; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
                 <div>
-                    <strong>Comment l'utiliser :</strong> Présentez simplement votre <strong>carte d'assuré numérique (QR Code)</strong> ou communiquez la référence <strong>#{{ ligne.prise.numero_pec }}</strong> lors de votre admission. L'établissement appliquera directement la dispense d'avance de frais.
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <strong style="color: #065f46; font-size: 14.5px;">Accord Tiers Payant Validé</strong>
+                        <span style="font-family: monospace; font-size: 12px; font-weight: 700; background: #d1fae5; color: #065f46; padding: 2px 7px; border-radius: 5px;">#{{ ligne.prise.numero_pec }}</span>
+                        {% if ligne.prise.montant_estime %}
+                        <span style="font-size: 12.5px; font-weight: 700; color: #047857; background: white; padding: 2px 8px; border-radius: 6px; border: 1px solid #a7f3d0;">
+                            IPM : {{ ligne.prise.montant_part_assurance|franc_cfa }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    <span style="font-size: 12px; color: #047857; display: block; margin-top: 3px;">
+                        Présentez votre carte QR au guichet pour la prise en charge immédiate.
+                    </span>
                 </div>
-                <a href="{% url 'mon_profil_assure' %}" class="button btn btn-sm" style="background: white; border-color: rgba(16, 185, 129, 0.4); color: #065f46; font-size: 12px; padding: 4px 10px;">
-                    {% icone "id-card" %} Ma carte numérique &rarr;
-                </a>
             </div>
+            <a href="{% url 'carte_assure_detail' ligne.prise.patient.pk %}" class="button primary btn btn-sm" style="font-size: 12.5px; padding: 6px 14px; font-weight: 600;">
+                {% icone "id-card" %} Ma carte d'assuré QR &rarr;
+            </a>
         </div>
         {% elif ligne.prise.statut == "refusee" %}
         <div class="pec-message pec-message-refus" style="margin: 0 0 16px; padding: 12px 16px; border-radius: 10px; font-size: 13px; display: flex; align-items: flex-start; gap: 10px;">
