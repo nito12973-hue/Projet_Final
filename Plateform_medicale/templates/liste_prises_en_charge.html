@@ -72,6 +72,11 @@
                         {% if prise.montant_estime %}
                         <div style="font-size:11.5px;color:var(--titre);font-weight:600;margin-top:2px;">
                             Devis : {{ prise.montant_estime|franc_cfa }}
+                            {% if prise.statut == 'validee' %}
+                            <div style="font-size:10.5px;color:var(--success);font-weight:700;">
+                                Accord IPM : {{ prise.montant_part_assurance|franc_cfa }}
+                            </div>
+                            {% endif %}
                         </div>
                         {% endif %}
                         {% if prise.devis_fichier %}
@@ -81,7 +86,19 @@
                         {% endif %}
                     </div>
                 </td>
-                <td><span class="badge {{ prise.statut }}">{{ prise.get_statut_display }}</span></td>
+                <td>
+                    <span class="badge {{ prise.statut }}">{{ prise.get_statut_display }}</span>
+                    {% if prise.statut == 'validee' and prise.date_validation %}
+                    <div style="font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.2;">
+                        Le {{ prise.date_validation|date:"d/m/Y H:i" }}
+                        {% if prise.valide_par %}<br><span style="color:var(--primary-strong);">par {{ prise.valide_par.get_full_name|default:prise.valide_par.email }}</span>{% endif %}
+                    </div>
+                    {% elif prise.statut == 'refusee' and prise.motif_refus %}
+                    <div style="font-size:10.5px;color:var(--danger);margin-top:4px;line-height:1.2;">
+                        Motif : {{ prise.motif_refus|truncatechars:35 }}
+                    </div>
+                    {% endif %}
+                </td>
                 <td>
                     <div class="actions" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
                         {% if prise.statut == 'en_attente' %}

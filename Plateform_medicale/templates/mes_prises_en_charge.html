@@ -70,6 +70,38 @@ pas un oubli.
             Votre demande est en cours d'examen par l'administration. Tant qu'elle
             n'est pas validée, les consultations liées restent à votre charge.
         </p>
+        {% elif ligne.prise.statut == "validee" %}
+        <div style="margin: 0 0 16px; padding: 16px 20px; border-radius: 12px; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-left: 5px solid #10b981;">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 40px; height: 40px; border-radius: 10px; background: #10b981; color: white; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                        {% icone "check-circle" %}
+                    </div>
+                    <div>
+                        <strong style="color: #065f46; font-size: 15px; display: block;">Accord de Tiers Payant Validé par l'IPM</strong>
+                        <span style="font-size: 12.5px; color: #047857;">
+                            Référence d'accord : <strong>#{{ ligne.prise.numero_pec }}</strong>
+                            {% if ligne.prise.date_validation %} · Validé le {{ ligne.prise.date_validation|date:"d/m/Y à H:i" }}{% endif %}
+                        </span>
+                    </div>
+                </div>
+                {% if ligne.prise.montant_estime %}
+                <div style="background: white; border: 1px solid rgba(16, 185, 129, 0.3); padding: 8px 14px; border-radius: 10px; text-align: right; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div style="font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 600;">Prise en charge IPM</div>
+                    <div style="font-size: 16px; font-weight: 800; color: #059669;">{{ ligne.prise.montant_part_assurance|franc_cfa }}</div>
+                    <div style="font-size: 11px; color: #64748b;">Reste à payer estimé : <strong style="color: #334155;">{{ ligne.prise.montant_part_patient|franc_cfa }}</strong></div>
+                </div>
+                {% endif %}
+            </div>
+            <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed rgba(16, 185, 129, 0.3); font-size: 13px; color: #065f46; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <strong>Comment l'utiliser :</strong> Présentez simplement votre <strong>carte d'assuré numérique (QR Code)</strong> ou communiquez la référence <strong>#{{ ligne.prise.numero_pec }}</strong> lors de votre admission. L'établissement appliquera directement la dispense d'avance de frais.
+                </div>
+                <a href="{% url 'mon_profil_assure' %}" class="button btn btn-sm" style="background: white; border-color: rgba(16, 185, 129, 0.4); color: #065f46; font-size: 12px; padding: 4px 10px;">
+                    {% icone "id-card" %} Ma carte numérique &rarr;
+                </a>
+            </div>
+        </div>
         {% elif ligne.prise.statut == "refusee" %}
         <div class="pec-message pec-message-refus" style="margin: 0 0 16px; padding: 12px 16px; border-radius: 10px; font-size: 13px; display: flex; align-items: flex-start; gap: 10px;">
             {% icone "alert-triangle" %}
@@ -130,7 +162,14 @@ pas un oubli.
             </div>
         </div>
         {% else %}
+        {% if ligne.prise.statut == 'validee' %}
+        <div style="background: var(--champ-bg); border: 1px dashed var(--border); border-radius: 12px; padding: 14px 18px; color: var(--muted); font-size: 13px; display: flex; align-items: center; gap: 10px;">
+            {% icone "info" %}
+            <span><strong>Dossier de soins actif :</strong> Les actes médicaux, hospitalisations ou ordonnances réalisés par la structure conventionnée apparaîtront automatiquement ci-dessus au fur et à mesure.</span>
+        </div>
+        {% else %}
         <p class="pec-vide" style="margin: 0; color: var(--muted); font-size: 13.5px; padding: 12px 0;">Aucune consultation n'est encore rattachée à cette demande.</p>
+        {% endif %}
         {% endif %}
     </div>
 </section>

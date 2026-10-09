@@ -437,11 +437,15 @@
                 {% for pec in dernieres_prises_en_charge %}
                 <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-radius: 12px; background: var(--champ-bg); border: 1px solid var(--border); flex-wrap: wrap; gap: 10px;">
                     <div>
-                        <strong style="font-size: 13.5px; color: var(--titre); display: block; margin-bottom: 2px;">
-                            {{ pec.motif|default:"Prestation médicale conventionnée"|truncatechars:40 }}
-                        </strong>
+                        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 2px; flex-wrap: wrap;">
+                            {% if pec.numero_pec %}<span style="font-size: 11px; font-weight: 700; color: var(--primary-strong); font-family: monospace; background: var(--primary-soft); padding: 1px 6px; border-radius: 4px;">#{{ pec.numero_pec }}</span>{% endif %}
+                            <strong style="font-size: 13.5px; color: var(--titre);">
+                                {{ pec.motif|default:"Prestation médicale conventionnée"|truncatechars:40 }}
+                            </strong>
+                        </div>
                         <span style="font-size: 12px; color: var(--muted);">
-                            Demande du {{ pec.date_demande|date:"d/m/Y" }} · {{ pec.patient }}
+                            {{ pec.patient }} · Demandée le {{ pec.date_demande|date:"d/m/Y" }}
+                            {% if pec.montant_estime %} · <strong style="color:var(--titre);">{{ pec.montant_estime|franc_cfa }}</strong>{% endif %}
                         </span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
