@@ -25,6 +25,7 @@ from ..models import (
     Ordonnance,
     Paiement,
     Patient,
+    PriseEnCharge,
     RendezVous,
     User,
 )
@@ -198,6 +199,10 @@ def rechercher_patients_medecin(request):
         | Q(nom__icontains=requete)
         | Q(prenom__icontains=requete)
     )
+    if "PEC" in requete.upper():
+        patient_ids_pec = list(PriseEnCharge.objects.filter(numero_pec__icontains=requete).values_list("patient_id", flat=True))
+        if patient_ids_pec:
+            filtre |= Q(pk__in=patient_ids_pec)
     if requete.isdecimal():
         filtre |= Q(pk=requete)
 
@@ -258,6 +263,11 @@ def fiche_patient_medecin(request, pk):
         .prefetch_related("ordonnances")
         .order_by("-date_consultation")
     )
+    prises_en_charge = (
+        PriseEnCharge.objects.filter(patient=patient)
+        .select_related("valide_par")
+        .order_by("-date_demande")
+    )
     if patient.type_beneficiaire == Patient.TypeBeneficiaire.PRINCIPAL:
         ayants_droit = patient.ayants_droit.all()
     else:
@@ -283,6 +293,7 @@ def fiche_patient_medecin(request, pk):
         "patient": patient,
         "historique": historique,
         "ayants_droit": ayants_droit,
+        "prises_en_charge": prises_en_charge,
         "prochains_rendez_vous": prochains_rendez_vous,
         "rdv_confirme": rdv_confirme,
         "deja_vu": _patients_du_medecin(medecin).filter(pk=patient.pk).exists(),
@@ -602,5 +613,32 @@ def api_demandes_en_attente_medecin(request):
         for r in demandes[:5]
     ]
     return JsonResponse({"count": count, "items": items})
+
+
+@role_required(User.Role.MEDECIN)
+def verifier_carte_medecin(request):
+    """Scanner ou vérifier une carte d'assuré / accord de prise en charge."""
+    medecin = _medecin_courant(request)
+    if medecin is None:
+        return render(request, "medecin_fiche_manquante.html")
+
+    if request.method == "POST":
+        code = (request.POST.get("code") or "").strip()
+        if "/carte/" in code:
+            code = code.split("/carte/")[-1].strip("/")
+
+        if "PEC" in code.upper():
+            pec = PriseEnCharge.objects.filter(numero_pec__iexact=code).select_related("patient").first()
+            if pec:
+                return redirect("carte_scan", numero=pec.patient.numero_carte)
+
+        patient = Patient.objects.filter(numero_carte__iexact=code).first()
+        if patient:
+            return redirect("carte_scan", numero=patient.numero_carte)
+        else:
+            messages.error(request, f"Aucun assuré ou accord trouvé pour le code « {code} ».")
+
+    return render(request, "verifier_carte_medecin.html", {})
+
 
 

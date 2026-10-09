@@ -52,11 +52,69 @@
     </div>
 </section>
 
-{% comment %}
-La portee depend du role et se lit a l'ecran : le pharmacien ne voit que ce
-qu'il peut servir, le medecin que ce qu'il a lui-meme prescrit. Le QR n'ouvre
-donc pas l'historique medical du patient.
-{% endcomment %}
+{% if prises_en_charge %}
+<section class="panel panel-bloc" style="margin-bottom: 22px;">
+    <div class="panel-header" style="border-bottom: 1px solid var(--border); padding-bottom: 14px; margin-bottom: 16px;">
+        <div>
+            <h2 style="margin: 0; font-size: 16px; color: var(--titre); display: flex; align-items: center; gap: 8px;">
+                {% icone "shield-check" %} Prises en charge &amp; Accords IPM (Tiers-Payant)
+            </h2>
+            <p class="subtitle" style="margin: 3px 0 0;">Devis validés et accords préalables accordés par l'assurance pour cet assuré.</p>
+        </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 14px;">
+        {% for pec in prises_en_charge %}
+        <div style="background: var(--surface); border: 1.5px solid {% if pec.statut == 'validee' %}#10b981{% elif pec.statut == 'refusee' %}#ef4444{% else %}#f59e0b{% endif %}; border-radius: 14px; padding: 16px 18px; box-shadow: var(--ombre-douce);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+                <div>
+                    <span style="font-family: monospace; font-size: 14px; font-weight: 700; color: var(--titre); background: var(--champ-bg); padding: 3px 8px; border-radius: 6px; border: 1px solid var(--border);">
+                        {{ pec.numero_pec|default:"#PEC-EN-COURS" }}
+                    </span>
+                    <span style="font-size: 12.5px; color: var(--muted); margin-left: 8px;">Demande du {{ pec.date_demande|date:"d/m/Y" }}</span>
+                </div>
+                <div>
+                    {% if pec.statut == 'validee' %}
+                    <span class="badge validee">{% icone "check" %} Validée &bull; Accord IPM Actif</span>
+                    {% elif pec.statut == 'refusee' %}
+                    <span class="badge refusee">{% icone "x" %} Refusée</span>
+                    {% else %}
+                    <span class="badge en_attente">{% icone "clock" %} En attente d'instruction</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if pec.statut == 'validee' %}
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; background: rgba(16, 185, 129, 0.08); padding: 12px 14px; border-radius: 10px; margin-bottom: 10px;">
+                <div>
+                    <span style="font-size: 11px; text-transform: uppercase; color: var(--muted); display: block;">Montant Devis</span>
+                    <strong style="font-size: 15px; color: var(--titre);">{{ pec.montant_estime|franc_cfa }}</strong>
+                </div>
+                <div>
+                    <span style="font-size: 11px; text-transform: uppercase; color: #047857; display: block;">Pris en charge par l'IPM ({{ pec.taux_applique }}%)</span>
+                    <strong style="font-size: 16px; color: #047857;">{{ pec.montant_couvert|franc_cfa }}</strong>
+                </div>
+                <div>
+                    <span style="font-size: 11px; text-transform: uppercase; color: #b45309; display: block;">Ticket modérateur patient</span>
+                    <strong style="font-size: 15px; color: #b45309;">{{ pec.montant_ticket_moderateur|franc_cfa }}</strong>
+                </div>
+            </div>
+            {% endif %}
+
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 12.5px; color: var(--muted);">
+                <span>{{ pec.motif|default:"Acte / Soins médicaux sous convention" }}</span>
+                {% if pec.devis_fichier %}
+                <a href="{{ pec.devis_fichier.url }}" target="_blank" rel="noopener noreferrer" class="button btn btn-sm" style="font-size: 11.5px; padding: 3px 10px;">
+                    {% icone "file-text" %} Consulter le devis original
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
 <section class="panel">
     <div class="panel-header">
         <div>

@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% load icones %}
+
+{% block title %}Vérifier Carte & Prise en Charge - Espace Médecin{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Vérification Carte &amp; Prise en Charge</h1>
+        <p class="subtitle">Scannez le QR code de la carte biométrique ou recherchez par N° de carte ou N° d'accord PEC.</p>
+    </div>
+</section>
+
+<div style="max-width: 720px; margin: 0 auto;">
+    <section class="panel panel-form">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:12px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span style="display:inline-flex;padding:8px;border-radius:10px;background:var(--primary-soft);color:var(--primary-strong);">
+                    {% icone "shield-check" %}
+                </span>
+                <div>
+                    <h2 style="margin:0;font-size:16px;color:var(--titre);">Terminal de contrôle des droits &amp; PEC</h2>
+                    <p class="subtitle" style="margin:0;font-size:12.5px;">Accès direct aux devis accordés et au dossier de soins</p>
+                </div>
+            </div>
+            <span class="badge validee" style="font-size:11.5px;padding:4px 10px;">
+                {% icone "check" %} Tiers-Payant IPM
+            </span>
+        </div>
+
+        <form method="post" id="form-scan-medecin">
+            {% csrf_token %}
+            <div style="margin-bottom:14px;">
+                <label for="code" style="display:block;font-weight:700;margin-bottom:6px;font-size:13.5px;">
+                    N° de Carte Assuré ou N° d'accord PEC
+                </label>
+                <div class="champ-recherche" style="margin-bottom:6px;">
+                    {% icone "qr-scan" %}
+                    <input id="code" name="code" type="text" placeholder="Ex. SN-2026-..., #PEC-260309... ou scannez" autofocus required style="font-family:'IBM Plex Mono',monospace;font-size:15px;letter-spacing:0.03em;">
+                </div>
+                <p style="font-size:11.5px;color:var(--muted);margin:0;">
+                    Compatible avec le numéro gravé sur la carte, le QR code optique ou la référence du bon de prise en charge.
+                </p>
+            </div>
+
+            <button class="button primary" type="submit" style="width:100%;justify-content:center;font-weight:700;padding:12px;font-size:14px;">
+                {% icone "search" %} Vérifier les droits &amp; accords IPM
+            </button>
+
+            <div style="margin-top:20px;text-align:center;">
+                <button type="button" id="bouton-scan-camera" class="button btn" hidden style="padding:10px 18px;">
+                    {% icone "qr-scan" %} Scanner avec la caméra de l'appareil
+                </button>
+                <p id="statut-scan-camera" class="subtitle" style="margin:8px 0 0;font-size:12.5px;" role="status" aria-live="polite"></p>
+
+                <div id="panneau-scan-camera" hidden style="position:relative;max-width:340px;margin:14px auto 0;border-radius:16px;overflow:hidden;background:#0b2027;box-shadow:0 12px 32px rgba(11,32,39,0.35);">
+                    <video id="video-scan-camera" autoplay muted playsinline aria-hidden="true" style="width:100%;display:block;aspect-ratio:1/1;object-fit:cover;"></video>
+                    <canvas id="canvas-scan-camera" style="display:none;"></canvas>
+                    <div aria-hidden="true" style="position:absolute;inset:18%;border:2px solid rgba(255,255,255,0.85);border-radius:12px;pointer-events:none;box-shadow:0 0 0 9999px rgba(11,32,39,0.55);">
+                    </div>
+                    <button type="button" id="bouton-fermer-scan-camera" class="button btn btn-sm" style="position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.9);padding:6px 12px;font-size:12px;">Fermer</button>
+                </div>
+            </div>
+        </form>
+    </section>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px;">
+        <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:16px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;color:var(--primary-strong);font-weight:700;font-size:13.5px;">
+                {% icone "file-text" %} Devis &amp; Accords PEC
+            </div>
+            <p style="font-size:12.5px;color:var(--muted);margin:0;line-height:1.45;">
+                Lorsque l'IPM valide un devis ou une prise en charge, la part couverte (ex: 80%) est garantie à l'établissement de santé. Le patient ne paye que son ticket modérateur.
+            </p>
+        </div>
+        <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:16px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;color:#0369a1;font-weight:700;font-size:13.5px;">
+                {% icone "shield-check" %} Sécurité Tiers-Payant
+            </div>
+            <p style="font-size:12.5px;color:var(--muted);margin:0;line-height:1.45;">
+                Le scan de la carte certifie l'identité du bénéficiaire (assuré ou ayant droit) et confirme en temps réel la validité de sa police d'assurance maladie.
+            </p>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" integrity="sha384-b5Ya4Bq3qCyz39m2ISh+4DxjAIljdeFwK/BsXLuj9gugaNwAcj/ia15fxNZL9Nlx" crossorigin="anonymous"></script>
+<script>
+    (function () {
+        var boutonScan = document.getElementById('bouton-scan-camera');
+        var boutonFermer = document.getElementById('bouton-fermer-scan-camera');
+        var panneau = document.getElementById('panneau-scan-camera');
+        var statut = document.getElementById('statut-scan-camera');
+        var video = document.getElementById('video-scan-camera');
+        var canvas = document.getElementById('canvas-scan-camera');
+        var contexte = canvas.getContext('2d');
+        var champCode = document.getElementById('code');
+        var flux = null;
+        var idAnimation = null;
+
+        var cameraDisponible = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+        if (cameraDisponible && typeof jsQR === 'function' && boutonScan) {
+            boutonScan.hidden = false;
+        }
+
+        function arreterScan() {
+            if (idAnimation) {
+                window.cancelAnimationFrame(idAnimation);
+                idAnimation = null;
+            }
+            if (flux) {
+                flux.getTracks().forEach(function (piste) { piste.stop(); });
+                flux = null;
+            }
+            panneau.hidden = true;
+        }
+
+        function analyserImage() {
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                contexte.drawImage(video, 0, 0, canvas.width, canvas.height);
+                var image = contexte.getImageData(0, 0, canvas.width, canvas.height);
+                var resultat = jsQR(image.data, image.width, image.height);
+                if (resultat && resultat.data) {
+                    statut.textContent = 'Code détecté, vérification...';
+                    arreterScan();
+                    champCode.value = resultat.data;
+                    champCode.form.requestSubmit();
+                    return;
+                }
+            }
+            idAnimation = window.requestAnimationFrame(analyserImage);
+        }
+
+        function demarrerScan() {
+            statut.textContent = "Demande d'accès à la caméra...";
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } })
+                .then(function (fluxObtenu) {
+                    flux = fluxObtenu;
+                    video.srcObject = flux;
+                    panneau.hidden = false;
+                    statut.textContent = "Recherche d'un code QR...";
+                    idAnimation = window.requestAnimationFrame(analyserImage);
+                })
+                .catch(function (erreur) {
+                    if (erreur.name === 'NotAllowedError') {
+                        statut.textContent = "Accès à la caméra refusé. Autorisez la caméra dans les paramètres.";
+                    } else if (erreur.name === 'NotFoundError') {
+                        statut.textContent = 'Aucune caméra détectée.';
+                    } else {
+                        statut.textContent = 'Scan par caméra indisponible. Utilisez la saisie manuelle.';
+                    }
+                });
+        }
+
+        if (boutonScan) { boutonScan.addEventListener('click', demarrerScan); }
+        if (boutonFermer) { boutonFermer.addEventListener('click', arreterScan); }
+    })();
+</script>
+{% endblock %}
