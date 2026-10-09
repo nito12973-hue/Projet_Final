@@ -10,7 +10,7 @@
         <p class="subtitle">Suivi en direct de vos couvertures médicales et de celles de vos ayants droit.</p>
     </div>
     <div class="actions">
-        <a class="button btn" href="{% url 'dashboard_assure' %}">{% icone "chevron-left" %} Mon tableau de bord</a>
+        <a class="button btn btn-retour-expand" href="{% url 'dashboard_assure' %}" title="Mon tableau de bord" aria-label="Mon tableau de bord">{% icone "chevron-left" %} <span class="expand-text">Mon tableau de bord</span></a>
         {% if lignes %}
         <a class="button primary btn" href="{% url 'demander_prise_en_charge_assure' %}">{% icone "plus-circle" %} Nouvelle demande</a>
         {% endif %}
