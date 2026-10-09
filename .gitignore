@@ -17,6 +17,7 @@ db.sqlite3
 staticfiles/
 media/*.tmp
 media/devis_prises_en_charge/
+media/justificatifs_ayants_droit/
 
 # IDE et OS
 .idea/
