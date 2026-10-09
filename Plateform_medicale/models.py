@@ -460,7 +460,22 @@ class Medecin(models.Model):
     )
 
     def __str__(self):
-        return f"Dr {self.prenom} {self.nom}"
+        p = self.prenom.strip()
+        n = self.nom.strip()
+        if p.lower().startswith("dr."):
+            p = p[3:].strip()
+        elif p.lower().startswith("dr "):
+            p = p[3:].strip()
+        elif p.lower() == "dr":
+            p = ""
+
+        if n.lower().startswith("dr."):
+            n = n[3:].strip()
+        elif n.lower().startswith("dr "):
+            n = n[3:].strip()
+
+        nom_affiche = f"{p} {n}".strip()
+        return f"Dr {nom_affiche}" if nom_affiche else "Dr"
 
     @property
     def nom_complet(self):
@@ -1003,7 +1018,7 @@ class RendezVous(models.Model):
             })
 
     def __str__(self):
-        return f"RDV {self.patient} - Dr {self.medecin} ({self.date_heure:%d/%m/%Y %H:%M})"
+        return f"RDV {self.patient} - {self.medecin} ({self.date_heure:%d/%m/%Y %H:%M})"
 
 
 class Delivrance(models.Model):

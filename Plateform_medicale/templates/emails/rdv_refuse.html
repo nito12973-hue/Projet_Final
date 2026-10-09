@@ -24,10 +24,10 @@
         <div class="email-body">
             <h2 class="email-title">Rendez-vous non disponible</h2>
             <p>Bonjour {{ user.get_full_name|default:user.email }},</p>
-            <p>Nous vous informons que votre demande de rendez-vous pour le <strong>{{ date_str }}</strong> avec le <strong>Dr {{ rendez_vous.medecin }}</strong> n'a pas pu être retenue par le praticien en raison d'une indisponibilité.</p>
+            <p>Nous vous informons que votre demande de rendez-vous pour le <strong>{{ date_str }}</strong> avec le <strong>{{ rendez_vous.medecin }}</strong> n'a pas pu être retenue par le praticien en raison d'une indisponibilité.</p>
             
             <div class="info-bloc">
-                <p style="margin: 0 0 6px 0;"><strong>Praticien :</strong> Dr {{ rendez_vous.medecin }}</p>
+                <p style="margin: 0 0 6px 0;"><strong>Praticien :</strong> {{ rendez_vous.medecin }}</p>
                 <p style="margin: 0;"><strong>Créneau demandé :</strong> {{ date_str }}</p>
             </div>
 

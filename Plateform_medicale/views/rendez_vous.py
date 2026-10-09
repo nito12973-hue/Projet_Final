@@ -75,7 +75,7 @@ def telecharger_ics_rendez_vous(request, pk):
     if rdv.prestataire and rdv.prestataire.ville:
         lieu += f", {rdv.prestataire.ville}"
 
-    description = f"Rendez-vous médical SantéSN avec Dr {rdv.medecin} ({rdv.medecin.specialite or 'Médecine générale'}). Patient : {rdv.patient.prenom} {rdv.patient.nom}."
+    description = f"Rendez-vous médical SantéSN avec {rdv.medecin} ({rdv.medecin.specialite or 'Médecine générale'}). Patient : {rdv.patient.prenom} {rdv.patient.nom}."
 
     lignes_ics = [
         "BEGIN:VCALENDAR",
@@ -88,7 +88,7 @@ def telecharger_ics_rendez_vous(request, pk):
         f"DTSTAMP:{dt_stamp}",
         f"DTSTART:{dt_start}",
         f"DTEND:{dt_end}",
-        f"SUMMARY:RDV Médical - Dr {rdv.medecin}",
+        f"SUMMARY:RDV Médical - {rdv.medecin}",
         f"DESCRIPTION:{description}",
         f"LOCATION:{lieu}",
         "STATUS:CONFIRMED",

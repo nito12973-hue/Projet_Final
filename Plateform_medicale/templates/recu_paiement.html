@@ -53,7 +53,7 @@
             </div>
             <div class="recu-col-info">
                 <span class="recu-libelle">Praticien & Établissement</span>
-                <strong class="recu-valeur">Dr {{ paiement.consultation.medecin }}</strong>
+                <strong class="recu-valeur">{{ paiement.consultation.medecin }}</strong>
                 <span class="recu-detail">{{ paiement.consultation.medecin.specialite|default:"Médecine générale" }}</span>
                 {% if paiement.consultation.medecin.prestataire %}
                 <span class="recu-detail">{{ paiement.consultation.medecin.prestataire.nom }} ({{ paiement.consultation.medecin.prestataire.ville }})</span>

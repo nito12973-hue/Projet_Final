@@ -141,7 +141,7 @@ formulaire laisseraient le pharmacien croire qu'il faut remplir les deux.
             {% endif %}
         </div>
         <p><strong>Patient :</strong> {{ ordonnance.consultation.patient }} · Carte <span class="code">{{ ordonnance.consultation.patient.numero_carte }}</span></p>
-        <p><strong>Médecin prescripteur :</strong> Dr. {{ ordonnance.consultation.medecin }}</p>
+        <p><strong>Médecin prescripteur :</strong> {{ ordonnance.consultation.medecin }}</p>
         <p><strong>Date de prescription :</strong> {{ ordonnance.date_creation|date:"d/m/Y à H:i" }}</p>
         <p style="margin-bottom:6px;"><strong>Médicaments prescrits :</strong></p>
         {% comment %}

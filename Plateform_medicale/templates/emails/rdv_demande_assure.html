@@ -24,11 +24,11 @@
         <div class="email-body">
             <h2 class="email-title">Demande de rendez-vous enregistrée</h2>
             <p>Bonjour {{ user.get_full_name|default:user.email }},</p>
-            <p>Votre demande de rendez-vous avec le <strong>Dr {{ rendez_vous.medecin }}</strong> a été enregistrée avec succès et est en attente de confirmation par le praticien.</p>
+            <p>Votre demande de rendez-vous avec le <strong>{{ rendez_vous.medecin }}</strong> a été enregistrée avec succès et est en attente de confirmation par le praticien.</p>
             
             <div class="info-bloc">
                 <p style="margin: 0 0 6px 0;"><strong>Date demandée :</strong> {{ date_str }}</p>
-                <p style="margin: 0 0 6px 0;"><strong>Praticien :</strong> Dr {{ rendez_vous.medecin }}</p>
+                <p style="margin: 0 0 6px 0;"><strong>Praticien :</strong> {{ rendez_vous.medecin }}</p>
                 <p style="margin: 0 0 6px 0;"><strong>Patient :</strong> {{ patient }}</p>
                 <p style="margin: 0;"><strong>Statut actuel :</strong> En attente de validation</p>
             </div>

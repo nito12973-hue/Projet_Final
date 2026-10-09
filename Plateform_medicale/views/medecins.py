@@ -117,7 +117,7 @@ def supprimer_medecin(request, pk):
         except ProtectedError:
             messages.error(
                 request,
-                f"Suppression impossible : des actes médicaux protégés sont liés au Dr {medecin}.",
+                f"Suppression impossible : des actes médicaux protégés sont liés au {medecin}.",
             )
             return redirect("liste_medecins")
 

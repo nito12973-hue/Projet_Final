@@ -127,7 +127,7 @@ pas un oubli.
                         <strong>{{ consultation.date_consultation|date:"d/m/Y" }}</strong>
                         {% if consultation.service %}<span class="pec-service">{{ consultation.service.nom }}</span>{% endif %}
                     </td>
-                    <td>Dr. {{ consultation.medecin }}</td>
+                    <td>{{ consultation.medecin }}</td>
                     {% if consultation.paiement %}
                     <td class="code">{{ consultation.paiement.montant_part_assurance|franc_cfa }}</td>
                     <td class="code">{{ consultation.paiement.montant_part_patient|franc_cfa }}</td>

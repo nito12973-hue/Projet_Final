@@ -27,7 +27,7 @@
             <p>Le rendez-vous médical prévu pour le <strong>{{ date_str }}</strong> a été <strong>annulé</strong> par {{ annule_par|default:"une des parties" }}.</p>
             
             <div class="info-bloc">
-                <p style="margin: 0 0 6px 0;"><strong>Praticien :</strong> Dr {{ rendez_vous.medecin }}</p>
+                <p style="margin: 0 0 6px 0;"><strong>Praticien :</strong> {{ rendez_vous.medecin }}</p>
                 <p style="margin: 0 0 6px 0;"><strong>Patient :</strong> {{ patient }}</p>
                 <p style="margin: 0;"><strong>Date initiale :</strong> {{ date_str }}</p>
             </div>

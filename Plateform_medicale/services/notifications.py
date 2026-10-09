@@ -231,7 +231,7 @@ def notifier_demande_rdv(rendez_vous):
         emettre_notification(
             destinataire=assure_user,
             titre="Demande de rendez-vous enregistrée",
-            message=f"Votre demande de rendez-vous avec le Dr {rendez_vous.medecin} pour le {date_str} a bien été enregistrée.",
+            message=f"Votre demande de rendez-vous avec {rendez_vous.medecin} pour le {date_str} a bien été enregistrée.",
             type_evenement=Notification.TypeEvenement.RDV_DEMANDE,
             url_action=reverse("mes_rendez_vous_assure"),
             template_email="emails/rdv_demande_assure.html",
@@ -247,7 +247,7 @@ def notifier_confirmation_rdv(rendez_vous):
     prestataire_nom = f" à {rendez_vous.prestataire.nom}" if rendez_vous.prestataire else ""
 
     titre_patient = "Rendez-vous confirmé"
-    message_patient = f"Votre rendez-vous avec le Dr {rendez_vous.medecin} pour le {date_str}{prestataire_nom} a été validé et confirmé."
+    message_patient = f"Votre rendez-vous avec {rendez_vous.medecin} pour le {date_str}{prestataire_nom} a été validé et confirmé."
 
     if assure_user:
         emettre_notification(
@@ -273,7 +273,7 @@ def notifier_refus_rdv(rendez_vous):
     date_str = rendez_vous.date_heure.strftime("%d/%m/%Y à %H:%M")
 
     titre_patient = "Rendez-vous non disponible"
-    message_patient = f"Votre demande de rendez-vous avec le Dr {rendez_vous.medecin} pour le {date_str} n'a pas pu être retenue par le praticien."
+    message_patient = f"Votre demande de rendez-vous avec {rendez_vous.medecin} pour le {date_str} n'a pas pu être retenue par le praticien."
 
     if assure_user:
         emettre_notification(
@@ -299,7 +299,7 @@ def notifier_annulation_rdv_par_medecin(rendez_vous):
     date_str = rendez_vous.date_heure.strftime("%d/%m/%Y à %H:%M")
 
     titre_patient = "Rendez-vous annulé par le médecin"
-    message_patient = f"Le rendez-vous prévu le {date_str} avec le Dr {rendez_vous.medecin} a été annulé par le praticien."
+    message_patient = f"Le rendez-vous prévu le {date_str} avec {rendez_vous.medecin} a été annulé par le praticien."
 
     if assure_user:
         emettre_notification(
@@ -352,7 +352,7 @@ def notifier_ordonnance_creee(ordonnance):
         emettre_notification(
             destinataire=assure_user,
             titre="Nouvelle ordonnance disponible",
-            message=f"Une nouvelle ordonnance a été rédigée par le Dr {ordonnance.consultation.medecin}.",
+            message=f"Une nouvelle ordonnance a été rédigée par {ordonnance.consultation.medecin}.",
             type_evenement=Notification.TypeEvenement.ORDONNANCE_CREEE,
             url_action=reverse("voir_ordonnance_assure", args=[ordonnance.pk]),
             template_email="emails/ordonnance_creee.html",

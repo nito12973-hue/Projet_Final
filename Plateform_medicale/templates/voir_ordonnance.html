@@ -54,7 +54,7 @@
             </div>
         </div>
         <div class="feuille-praticien">
-            <p class="feuille-praticien-nom">Dr. {{ ordonnance.consultation.medecin }}</p>
+            <p class="feuille-praticien-nom">{{ ordonnance.consultation.medecin }}</p>
             {% if ordonnance.consultation.medecin.specialite %}
             <p>{{ ordonnance.consultation.medecin.specialite }}</p>
             {% endif %}
@@ -139,7 +139,7 @@
             <p class="feuille-etiquette">Signature et cachet du médecin</p>
             <div class="feuille-cadre-signature" style="position:relative;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;min-height:90px;border:1.5px dashed #b8ced4;border-radius:10px;background:rgba(239,244,243,0.35);">
                 <div style="font-size:12px;color:#24424b;line-height:1.45;">
-                    <strong style="font-size:13px;">Dr. {{ ordonnance.consultation.medecin }}</strong><br>
+                    <strong style="font-size:13px;">{{ ordonnance.consultation.medecin }}</strong><br>
                     <span style="font-size:11px;color:#5f6f7d;">{{ ordonnance.consultation.medecin.specialite|default:"Médecine Générale" }}</span><br>
                     <span style="font-size:10.5px;color:#5f6f7d;">Réf. Consultation : {{ ordonnance.consultation.pk }}</span>
                 </div>

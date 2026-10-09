@@ -55,7 +55,7 @@
                     <br><span class="badge validee" style="font-size:10px;">{{ delivrance.taux_couverture }}% couvert</span>
                     {% endif %}
                 </td>
-                <td>Dr. {{ delivrance.ordonnance.consultation.medecin }}</td>
+                <td>{{ delivrance.ordonnance.consultation.medecin }}</td>
                 <td><span class="code">{{ delivrance.ordonnance.code_qr }}</span></td>
                 <td style="text-align:right;font-family:'IBM Plex Mono',monospace;font-weight:600;">
                     {{ delivrance.montant_total|franc_cfa }}

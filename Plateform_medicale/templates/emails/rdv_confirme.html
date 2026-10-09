@@ -28,7 +28,7 @@
             
             <div class="info-bloc">
                 <p style="margin: 0 0 6px 0;"><strong>Date & Heure :</strong> {{ date_str }}</p>
-                <p style="margin: 0 0 6px 0;"><strong>Médecin :</strong> Dr {{ rendez_vous.medecin }}</p>
+                <p style="margin: 0 0 6px 0;"><strong>Médecin :</strong> {{ rendez_vous.medecin }}</p>
                 {% if rendez_vous.prestataire %}
                 <p style="margin: 0 0 6px 0;"><strong>Lieu :</strong> {{ rendez_vous.prestataire.nom }}</p>
                 {% endif %}
