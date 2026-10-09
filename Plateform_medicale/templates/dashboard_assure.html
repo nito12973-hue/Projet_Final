@@ -445,11 +445,6 @@
                         </span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                        {% if pec.statut == 'validee' %}
-                        <a href="{% url 'telecharger_bon_prise_en_charge_pdf' pec.pk %}" target="_blank" class="button primary btn btn-sm" style="font-size: 11px; padding: 4px 8px;" title="Télécharger le Bon de prise en charge (PDF)">
-                            {% icone "download" %} Bon PDF
-                        </a>
-                        {% endif %}
                         <span class="badge {% if pec.statut == 'validee' %}validee{% elif pec.statut == 'refusee' %}refusee{% else %}en_attente{% endif %}">
                             {{ pec.get_statut_display }}
                         </span>

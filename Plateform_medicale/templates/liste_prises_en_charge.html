@@ -36,75 +36,70 @@
 </form>
 
 {% if prises_en_charge %}
-<form method="post">
+<form method="post" id="form-selection-masse" style="margin-bottom: 12px; display: flex; gap: 10px; align-items: center;">
     {% csrf_token %}
-    <div style="margin-bottom: 12px; display: flex; gap: 10px; align-items: center;">
-        <button type="submit" name="action" value="valider_selection" class="button primary btn btn-sm">{% icone "check-circle" %} Valider la sélection</button>
-        <button type="submit" name="action" value="refuser_selection" class="button btn btn-danger btn-sm">{% icone "x-circle" %} Refuser la sélection</button>
-    </div>
-    <section class="panel">
-        <table>
-            <thead>
-                <tr>
-                    <th style="width:36px;"><input type="checkbox" onclick="document.querySelectorAll('input[name=selection]').forEach(cb => cb.checked = this.checked)"></th>
-                    {% entete_tri request.GET "patient__nom" "Patient" %}
-                    {% entete_tri request.GET "date_demande" "Date demande" "col-optionnelle" %}
-                    <th class="col-optionnelle">Devis / Actes</th>
-                    {% entete_tri request.GET "statut" "Statut" %}
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for prise in prises_en_charge %}
-                <tr>
-                    <td>
-                        {% if prise.statut == 'en_attente' %}
-                        <input type="checkbox" name="selection" value="{{ prise.pk }}">
-                        {% endif %}
-                    </td>
-                    <td>{{ prise.patient }}</td>
-                    <td class="col-optionnelle">{{ prise.date_demande|date:"d/m/Y H:i" }}</td>
-                    <td class="col-optionnelle">
-                        <div>
-                            {% if prise.numero_pec %}<span style="font-size:11px;font-weight:700;color:var(--primary-strong);">#{{ prise.numero_pec }}</span><br/>{% endif %}
-                            <span>{{ prise.motif|truncatechars:60 }}</span>
-                            {% if prise.montant_estime %}
-                            <div style="font-size:11.5px;color:var(--titre);font-weight:600;margin-top:2px;">
-                                Devis : {{ prise.montant_estime|franc_cfa }}
-                            </div>
-                            {% endif %}
-                            {% if prise.devis_fichier %}
-                            <a href="{{ prise.devis_fichier.url }}" target="_blank" style="font-size:11px;color:var(--primary);text-decoration:underline;display:inline-flex;align-items:center;gap:4px;margin-top:3px;">
-                                {% icone "file-text" %} Devis joint &nearr;
-                            </a>
-                            {% endif %}
-                        </div>
-                    </td>
-                    <td><span class="badge {{ prise.statut }}">{{ prise.get_statut_display }}</span></td>
-                    <td>
-                        <div class="actions" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-                            {% if prise.statut == 'en_attente' %}
-                            <form method="post" action="{% url 'valider_prise_en_charge' prise.pk %}" style="display:inline;margin:0;padding:0;background:none;border:none;box-shadow:none;">
-                                {% csrf_token %}
-                                <button type="submit" class="button primary btn btn-sm" title="Valider cette prise en charge" style="padding:4px 10px;font-size:12px;">{% icone "check" %} Valider</button>
-                            </form>
-                            <button type="button" class="button btn btn-danger btn-sm" title="Refuser cette prise en charge" style="padding:4px 10px;font-size:12px;" onclick="ouvrirRefus('{{ prise.pk }}', '{{ prise.patient|escapejs }}')">{% icone "x" %} Refuser</button>
-                            {% endif %}
-                            {% if prise.statut == 'validee' %}
-                            <a href="{% url 'telecharger_bon_prise_en_charge_pdf' prise.pk %}" target="_blank" class="button btn btn-sm" title="Imprimer le Bon de Prise en Charge officiel (PDF)" style="padding:4px 10px;font-size:12px;">
-                                {% icone "download" %} Bon PDF
-                            </a>
-                            {% endif %}
-                            <a href="{% url 'modifier_prise_en_charge' prise.pk %}" class="button btn btn-sm">{% icone "edit-2" %} Modifier</a>
-                            <a href="{% url 'supprimer_prise_en_charge' prise.pk %}" class="button btn btn-danger btn-sm">{% icone "trash-2" %} Supprimer</a>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </section>
+    <input type="hidden" name="action" id="action-masse" value="">
+    <button type="submit" onclick="document.getElementById('action-masse').value='valider_selection'" class="button primary btn btn-sm">{% icone "check-circle" %} Valider la sélection</button>
+    <button type="submit" onclick="document.getElementById('action-masse').value='refuser_selection'" class="button btn btn-danger btn-sm">{% icone "x-circle" %} Refuser la sélection</button>
 </form>
+
+<section class="panel">
+    <table>
+        <thead>
+            <tr>
+                <th style="width:36px;"><input type="checkbox" onclick="document.querySelectorAll('input[name=selection]').forEach(cb => cb.checked = this.checked)"></th>
+                {% entete_tri request.GET "patient__nom" "Patient" %}
+                {% entete_tri request.GET "date_demande" "Date demande" "col-optionnelle" %}
+                <th class="col-optionnelle">Devis / Actes</th>
+                {% entete_tri request.GET "statut" "Statut" %}
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for prise in prises_en_charge %}
+            <tr>
+                <td>
+                    {% if prise.statut == 'en_attente' %}
+                    <input type="checkbox" name="selection" value="{{ prise.pk }}" form="form-selection-masse">
+                    {% endif %}
+                </td>
+                <td>{{ prise.patient }}</td>
+                <td class="col-optionnelle">{{ prise.date_demande|date:"d/m/Y H:i" }}</td>
+                <td class="col-optionnelle">
+                    <div>
+                        {% if prise.numero_pec %}<span style="font-size:11px;font-weight:700;color:var(--primary-strong);">#{{ prise.numero_pec }}</span><br/>{% endif %}
+                        <span>{{ prise.motif|truncatechars:60 }}</span>
+                        {% if prise.montant_estime %}
+                        <div style="font-size:11.5px;color:var(--titre);font-weight:600;margin-top:2px;">
+                            Devis : {{ prise.montant_estime|franc_cfa }}
+                        </div>
+                        {% endif %}
+                        {% if prise.devis_fichier %}
+                        <a href="{{ prise.devis_fichier.url }}" target="_blank" style="font-size:11px;color:var(--primary);text-decoration:underline;display:inline-flex;align-items:center;gap:4px;margin-top:3px;">
+                            {% icone "file-text" %} Devis joint &nearr;
+                        </a>
+                        {% endif %}
+                    </div>
+                </td>
+                <td><span class="badge {{ prise.statut }}">{{ prise.get_statut_display }}</span></td>
+                <td>
+                    <div class="actions" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                        {% if prise.statut == 'en_attente' %}
+                        <form method="post" action="{% url 'valider_prise_en_charge' prise.pk %}" style="display:inline;margin:0;padding:0;background:none;border:none;box-shadow:none;">
+                            {% csrf_token %}
+                            <button type="submit" class="button primary btn btn-sm" title="Valider cette prise en charge" style="padding:4px 10px;font-size:12px;">{% icone "check" %} Valider</button>
+                        </form>
+                        <button type="button" class="button btn btn-danger btn-sm" title="Refuser cette prise en charge" style="padding:4px 10px;font-size:12px;" onclick="ouvrirRefus('{{ prise.pk }}', '{{ prise.patient|escapejs }}')">{% icone "x" %} Refuser</button>
+                        {% endif %}
+                        <a href="{% url 'modifier_prise_en_charge' prise.pk %}" class="button btn btn-sm">{% icone "edit-2" %} Modifier</a>
+                        <a href="{% url 'supprimer_prise_en_charge' prise.pk %}" class="button btn btn-danger btn-sm">{% icone "trash-2" %} Supprimer</a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
 
 <dialog id="modal-refus-pec" style="border:1px solid var(--border);border-radius:12px;padding:24px;box-shadow:var(--shadow-lg);max-width:480px;background:var(--surface);color:var(--titre);">
     <form method="post" id="form-refus-pec">
