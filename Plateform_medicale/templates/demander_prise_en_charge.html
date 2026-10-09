@@ -9,15 +9,12 @@
         <h1>Demande de prise en charge</h1>
         <p class="subtitle">Transmettez votre devis médical en 1 clic pour vous ou un ayant droit.</p>
     </div>
-    <a class="button btn" href="{% url 'mes_prises_en_charge_assure' %}">{% icone "chevron-left" %} Mes prises en charge</a>
+    <a class="button btn" href="{% url 'mes_prises_en_charge_assure' %}">{% icone "chevron-left" %} Retour</a>
 </section>
 
-<div style="background:var(--primary-soft);border:1px solid var(--border);border-left:4px solid var(--primary);border-radius:12px;padding:14px 18px;margin-bottom:20px;font-size:13px;line-height:1.5;">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;color:var(--primary-strong);">
-        {% icone "info" %}
-        <strong>Bon à savoir :</strong>
-    </div>
-    Pour vos consultations simples et délivrances en pharmacie, votre <strong>carte d'assuré (QR Code)</strong> suffit au guichet. Ce formulaire sert uniquement aux <strong>accords préalables sur devis</strong> (actes chirurgicaux, hospitalisations, examens spécialisés).
+<div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--primary-soft);border-radius:10px;font-size:12.5px;color:var(--primary-strong);margin-bottom:18px;">
+    {% icone "info" %}
+    <span>Téléversez simplement votre devis médical (PDF ou photo) pour obtenir votre accord préalable.</span>
 </div>
 
 <section class="panel panel-form" style="max-width: 680px;">

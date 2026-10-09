@@ -1,14 +1,15 @@
 {% extends "base.html" %}
+{% load icones %}
 
-{% block title %}Ajouter un assure{% endblock %}
+{% block title %}Ajouter un assuré{% endblock %}
 
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>Ajouter un assure ou un ayant droit</h1>
+        <h1>Ajouter un assuré ou un ayant droit</h1>
         <p class="subtitle">La carte de prise en charge est générée automatiquement.</p>
     </div>
-    <a class="button" href="{% url 'liste_patients' %}">Retour</a>
+    <a class="button btn" href="{% url 'liste_patients' %}">{% icone "chevron-left" %} Retour</a>
 </section>
 
 <section class="panel panel-form">
@@ -23,7 +24,10 @@
         {{ field }}
         {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
         {% endfor %}
-        <button class="button primary" type="submit">Enregistrer</button>
+        <div class="actions" style="display:flex;gap:10px;align-items:center;margin-top:16px;">
+            <button class="button primary" type="submit">Enregistrer l'assuré</button>
+            <a class="button btn" href="{% url 'liste_patients' %}">Annuler</a>
+        </div>
     </form>
 </section>
 {% endblock %}
