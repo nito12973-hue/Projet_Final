@@ -1,4 +1,4 @@
-name: CI SantéSN - Tests & Validation
+name: CI/CD SantéSN - Tests & Validation
 on:
   push:
     branches: [ main, master ]

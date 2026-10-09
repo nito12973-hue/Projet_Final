@@ -949,17 +949,17 @@ class PriseEnChargeForm(forms.ModelForm):
 
     class Meta:
         model = PriseEnCharge
-        fields = ['patient', 'motif', 'montant_estime', 'devis_fichier', 'statut', 'motif_refus']
+        fields = ['patient', 'devis_fichier', 'montant_estime', 'motif', 'statut', 'motif_refus']
         labels = {
             'patient': "Bénéficiaire des soins",
-            'motif': "Devis estimatif / Détails des actes",
-            'montant_estime': "Montant estimé du devis (FCFA)",
             'devis_fichier': "Pièce jointe du devis (PDF ou photo/scan)",
+            'montant_estime': "Montant estimé du devis (FCFA)",
+            'motif': "Devis estimatif / Détails des actes (optionnel si document joint)",
             'statut': "Statut de la prise en charge",
             'motif_refus': "Motif du refus (si refusé)",
         }
         widgets = {
-            'motif': forms.Textarea(attrs={'rows': 3, 'placeholder': "Détails des actes prévus, structure de soins ou devis..."}),
+            'motif': forms.Textarea(attrs={'rows': 3, 'placeholder': "Optionnel si un fichier est joint. Détails des actes prévus ou devis..."}),
             'montant_estime': forms.NumberInput(attrs={'placeholder': 'Ex : 250000', 'min': '0', 'step': '500'}),
             'devis_fichier': forms.FileInput(attrs={'accept': '.pdf,image/*'}),
             'motif_refus': forms.TextInput(attrs={'placeholder': 'Motif obligatoire en cas de refus'}),
@@ -967,6 +967,12 @@ class PriseEnChargeForm(forms.ModelForm):
         help_texts = {
             'devis_fichier': "Format accepté : PDF ou image (PNG, JPG) - taille maximale : 10 Mo.",
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['motif'].required = False
+        self.fields['montant_estime'].required = False
+        self.fields['devis_fichier'].required = False
 
     def clean_devis_fichier(self):
         doc = self.cleaned_data.get('devis_fichier')
@@ -980,27 +986,31 @@ class DemandePriseEnChargeAssureForm(forms.ModelForm):
 
     class Meta:
         model = PriseEnCharge
-        fields = ['patient', 'motif', 'montant_estime', 'devis_fichier']
+        fields = ['patient', 'devis_fichier', 'montant_estime', 'motif']
         labels = {
             'patient': "Bénéficiaire des soins",
-            'motif': "Devis estimatif & Détails des soins",
-            'montant_estime': "Montant total figurant sur le devis (FCFA)",
-            'devis_fichier': "Fichier PDF ou photo du devis médical",
+            'devis_fichier': "Fichier du devis médical (PDF ou photo/scan)",
+            'montant_estime': "Montant figurant sur le devis (FCFA)",
+            'motif': "Remarques ou précisions complémentaires (optionnel)",
         }
         widgets = {
             'motif': forms.Textarea(attrs={
-                'rows': 4,
-                'placeholder': 'Renseignez le détail des actes figurant sur le devis remis par votre clinique ou médecin (ex : intervention chirurgicale, hospitalisation 48h, examens de laboratoire).'
+                'rows': 3,
+                'placeholder': 'Facultatif : vous pouvez laisser ce champ vide si tous les actes et détails figurent déjà sur votre devis numérisé ci-dessus.'
             }),
             'montant_estime': forms.NumberInput(attrs={'placeholder': 'Ex : 150000', 'min': '0', 'step': '500'}),
             'devis_fichier': forms.FileInput(attrs={'accept': '.pdf,image/*'}),
         }
         help_texts = {
-            'devis_fichier': "Téléversez le devis officiel remis par votre clinique ou hôpital (PDF, scan ou photo - max 10 Mo).",
+            'devis_fichier': "Téléversez simplement votre devis (PDF, scan ou photo - max 10 Mo). Inutile de tout recopier manuellement !",
+            'montant_estime': "Indiquez le montant estimatif pour accélérer le calcul automatique de votre prise en charge.",
         }
 
     def __init__(self, *args, assure_patient=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['motif'].required = False
+        self.fields['montant_estime'].required = False
+        self.fields['devis_fichier'].required = False
         if assure_patient:
             membres_valides = [assure_patient.pk] + list(
                 assure_patient.ayants_droit.filter(
@@ -1023,6 +1033,16 @@ class DemandePriseEnChargeAssureForm(forms.ModelForm):
                 "Ce bénéficiaire est en attente de validation par l'administration IPM et ne peut pas faire l'objet d'une prise en charge."
             )
         return patient
+
+    def clean(self):
+        cleaned_data = super().clean()
+        fichier = cleaned_data.get('devis_fichier')
+        motif = (cleaned_data.get('motif') or '').strip()
+        if not fichier and not motif:
+            raise forms.ValidationError(
+                "Veuillez joindre le document/photo de votre devis ou renseigner une description des actes prévus."
+            )
+        return cleaned_data
 
 
 

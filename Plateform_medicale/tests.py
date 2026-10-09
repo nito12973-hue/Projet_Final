@@ -10921,6 +10921,30 @@ class BonPriseEnChargePDFTests(TestCase):
         self.assertEqual(nouvelle_pec.montant_estime, Decimal("150000.00"))
         self.assertTrue(bool(nouvelle_pec.devis_fichier))
 
+    def test_demande_pec_avec_fichier_sans_description_motif_reussit(self):
+        self.client.force_login(self.user_assure)
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        fichier = SimpleUploadedFile("devis_scan.jpg", b"image data fake", content_type="image/jpeg")
+        url = reverse("demander_prise_en_charge_assure")
+        resp = self.client.post(url, {
+            "patient": self.patient.pk,
+            "motif": "",
+            "montant_estime": "85000",
+            "devis_fichier": fichier,
+        })
+        self.assertEqual(resp.status_code, 302)
+        nouvelle_pec = PriseEnCharge.objects.filter(montant_estime=Decimal("85000.00")).first()
+        self.assertIsNotNone(nouvelle_pec)
+        self.assertEqual(nouvelle_pec.motif, "Devis médical numérisé joint")
+        self.assertTrue(bool(nouvelle_pec.devis_fichier))
 
-
-
+    def test_demande_pec_sans_fichier_et_sans_motif_echoue(self):
+        self.client.force_login(self.user_assure)
+        url = reverse("demander_prise_en_charge_assure")
+        resp = self.client.post(url, {
+            "patient": self.patient.pk,
+            "motif": "",
+            "montant_estime": "50000",
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Veuillez joindre le document/photo de votre devis ou renseigner une description")
