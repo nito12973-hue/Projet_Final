@@ -6527,6 +6527,7 @@
                 <a href="{% url 'agenda_medecin' %}" aria-label="Agenda & RDV" data-tooltip="Agenda & RDV" class="{% if url_name == 'agenda_medecin' %}active{% endif %}">{% icone "calendar" %} <span class="nav-texte">Agenda & RDV</span></a>
                 <a href="{% url 'mes_patients' %}" aria-label="Patients" data-tooltip="Patients" class="{% if url_name == 'mes_patients' or url_name == 'fiche_patient_medecin' %}active{% endif %}">{% icone "users" %} <span class="nav-texte">Patients</span></a>
                 <a href="{% url 'historique_consultations' %}" aria-label="Consultations" data-tooltip="Consultations" class="{% if url_name == 'historique_consultations' or url_name == 'ajouter_consultation_medecin' or url_name == 'ajouter_ordonnance_medecin' or url_name == 'voir_ordonnance_medecin' %}active{% endif %}">{% icone "clipboard-list" %} <span class="nav-texte">Consultations</span></a>
+                <a href="{% url 'verifier_carte_medecin' %}" aria-label="Scanner / Vérifier" data-tooltip="Scanner / Vérifier" class="{% if url_name == 'verifier_carte_medecin' %}active{% endif %}">{% icone "qr-scan" %} <span class="nav-texte">Scanner / Vérifier</span></a>
                 {% endwith %}
                 {% elif current_role == "PHARMACIEN" %}
                 {% with url_name=request.resolver_match.url_name %}

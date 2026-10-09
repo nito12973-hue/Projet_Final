@@ -221,16 +221,23 @@ def carte_scan(request, numero):
 
       MEDECIN : uniquement les ordonnances issues de SES PROPRES consultations.
     """
-    from ..models import Ordonnance
+    from ..models import Ordonnance, PriseEnCharge
     patient = get_object_or_404(
         Patient.objects.select_related("assure_principal", "plan_couverture"),
         numero_carte=numero)
+
+    prises_en_charge = (
+        PriseEnCharge.objects.filter(patient=patient)
+        .select_related("valide_par")
+        .order_by("-date_demande")
+    )
 
     # Sécurité Anti-Fraude : carte inactive si en attente de validation ou refusée
     if not patient.est_valide:
         return render(request, "carte_scan.html", {
             "patient": patient,
             "ordonnances": [],
+            "prises_en_charge": prises_en_charge,
             "carte_inactive": True,
             "statut_validation": patient.get_statut_validation_display(),
         })
@@ -255,6 +262,7 @@ def carte_scan(request, numero):
     return render(request, "carte_scan.html", {
         "patient": patient,
         "ordonnances": _paginer(request, ordonnances),
+        "prises_en_charge": prises_en_charge,
         "portee": portee,
         "carte_inactive": False,
     })

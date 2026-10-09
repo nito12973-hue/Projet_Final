@@ -130,6 +130,7 @@ urlpatterns = [
     path('mes-consultations/', lambda r: __import__('django.shortcuts', fromlist=['redirect']).redirect('mon_historique_assure')),
     path('ordonnance/<int:pk>/', lambda r, pk: __import__('django.shortcuts', fromlist=['redirect']).redirect('voir_ordonnance_assure', pk=pk)),
     path('ordonnances/<int:pk>/', lambda r, pk: __import__('django.shortcuts', fromlist=['redirect']).redirect('voir_ordonnance_assure', pk=pk)),
+    path('medecin/scanner/', views.verifier_carte_medecin, name='verifier_carte_medecin'),
     path('medecin/profil/', views.modifier_profil_medecin, name='modifier_profil_medecin'),
     path('api/medecin/demandes-en-attente/', views.api_demandes_en_attente_medecin, name='api_demandes_en_attente_medecin'),
 
