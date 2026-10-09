@@ -59,11 +59,6 @@ pas un oubli.
                 {% icone "file-text" %} Devis joint &nearr;
             </a>
             {% endif %}
-            {% if ligne.prise.statut == 'validee' %}
-            <a href="{% url 'telecharger_bon_prise_en_charge_pdf' ligne.prise.pk %}" target="_blank" class="button primary btn btn-sm" style="font-size: 12px; padding: 5px 12px;">
-                {% icone "download" %} Bon de PEC (PDF)
-            </a>
-            {% endif %}
             <span class="badge {{ ligne.prise.statut }}">{{ ligne.prise.get_statut_display }}</span>
         </div>
     </div>

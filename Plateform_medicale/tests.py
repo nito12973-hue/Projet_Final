@@ -10948,3 +10948,20 @@ class BonPriseEnChargePDFTests(TestCase):
         })
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "Veuillez joindre le document/photo de votre devis ou renseigner une description")
+
+    def test_validation_unitaire_depuis_liste_prises_en_charge(self):
+        pec_attente = PriseEnCharge.objects.create(
+            patient=self.patient,
+            motif="Consultation spécialisée",
+            statut="en_attente",
+        )
+        self.client.force_login(self.admin)
+        resp_get = self.client.get(reverse("liste_prises_en_charge"))
+        self.assertEqual(resp_get.status_code, 200)
+        action_url = reverse("valider_prise_en_charge", args=[pec_attente.pk])
+        self.assertContains(resp_get, f'action="{action_url}"')
+        resp_post = self.client.post(action_url)
+        self.assertEqual(resp_post.status_code, 302)
+        pec_attente.refresh_from_db()
+        self.assertEqual(pec_attente.statut, "validee")
+
