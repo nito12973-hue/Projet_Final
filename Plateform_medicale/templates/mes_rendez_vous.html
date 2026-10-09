@@ -57,7 +57,7 @@
             <tr>
                 <td><span class="libelle-mobile">Date</span><strong>{{ rdv.date_heure|date:"d/m/Y H:i" }}</strong></td>
                 <td><span class="libelle-mobile">Bénéficiaire</span>{{ rdv.patient }}</td>
-                <td><span class="libelle-mobile">Médecin</span>Dr. {{ rdv.medecin }}</td>
+                <td><span class="libelle-mobile">Médecin</span>{{ rdv.medecin }}</td>
                 <td><span class="libelle-mobile">Prestataire</span>{{ rdv.prestataire|default:"-" }}</td>
                 <td><span class="libelle-mobile">Motif</span>{{ rdv.motif|default:"-" }}</td>
                 <td>

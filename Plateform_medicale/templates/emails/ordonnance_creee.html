@@ -24,11 +24,11 @@
         <div class="email-body">
             <h2 class="email-title">Nouvelle ordonnance médicale disponible</h2>
             <p>Bonjour {{ user.get_full_name|default:user.email }},</p>
-            <p>Le <strong>Dr {{ ordonnance.consultation.medecin }}</strong> a émis une nouvelle ordonnance médicale sécurisée pour <strong>{{ patient }}</strong> suite à votre consultation.</p>
+            <p>Le <strong>{{ ordonnance.consultation.medecin }}</strong> a émis une nouvelle ordonnance médicale sécurisée pour <strong>{{ patient }}</strong> suite à votre consultation.</p>
             
             <div class="info-bloc">
                 <p style="margin: 0 0 6px 0;"><strong>Date d'émission :</strong> {{ ordonnance.date_creation|date:"d/m/Y à H:i" }}</p>
-                <p style="margin: 0 0 6px 0;"><strong>Praticien :</strong> Dr {{ ordonnance.consultation.medecin }}</p>
+                <p style="margin: 0 0 6px 0;"><strong>Praticien :</strong> {{ ordonnance.consultation.medecin }}</p>
                 <p style="margin: 0;"><strong>Sécurité :</strong> Ordonnance certifiée avec QR Code anti-fraude</p>
             </div>
 

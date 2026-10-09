@@ -66,7 +66,7 @@
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
                     <div>
                         <h3 style="margin: 0 0 4px; font-size: 17px; font-weight: 800; color: var(--titre);">
-                            Dr. {{ prochain_rdv_principal.medecin }}
+                            {{ prochain_rdv_principal.medecin }}
                         </h3>
                         <p style="margin: 0; font-size: 13.5px; color: var(--muted);">
                             {{ prochain_rdv_principal.medecin.specialite|default:"Consultation médicale" }} · {{ prochain_rdv_principal.prestataire|default:"Cabinet Médical" }}
@@ -121,7 +121,7 @@
                             Réf. #{{ derniere_ordonnance.code_qr }}
                         </strong>
                         <p style="margin: 0; font-size: 13px; color: var(--muted);">
-                            Prescrite le {{ derniere_ordonnance.date_creation|date:"d F Y" }} par Dr. {{ derniere_ordonnance.consultation.medecin }}
+                            Prescrite le {{ derniere_ordonnance.date_creation|date:"d F Y" }} par {{ derniere_ordonnance.consultation.medecin }}
                         </p>
                     </div>
                     <a href="{% url 'voir_ordonnance_assure' derniere_ordonnance.pk %}" class="button primary btn btn-sm">
