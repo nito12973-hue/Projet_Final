@@ -72,7 +72,11 @@
         {% if medecin.telephone %}
         <div>
             <dt>Téléphone</dt>
-            <dd>{{ medecin.telephone }}</dd>
+            <dd>
+                <a href="tel:{{ medecin.telephone }}" style="color: var(--primary); font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                    {% icone "phone" %} {{ medecin.telephone }}
+                </a>
+            </dd>
         </div>
         {% endif %}
     </dl>
@@ -82,10 +86,15 @@
     <p>{{ medecin.presentation|linebreaksbr }}</p>
     {% endif %}
 
-    <div class="actions">
+    <div class="actions" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
         <a class="button primary" href="{% url 'ajouter_rendez_vous_assure' %}?medecin={{ medecin.pk }}">
             {% icone "calendar" %} Demander un rendez-vous
         </a>
+        {% if medecin.telephone %}
+        <a class="button btn" href="tel:{{ medecin.telephone }}">
+            {% icone "phone" %} Appeler le praticien
+        </a>
+        {% endif %}
     </div>
 </section>
 {% endblock %}
