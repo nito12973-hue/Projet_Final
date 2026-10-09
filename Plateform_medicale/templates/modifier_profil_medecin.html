@@ -8,6 +8,7 @@
         <h1>Mon profil professionnel</h1>
         <p class="subtitle">Dr {{ medecin.prenom }} {{ medecin.nom }} — {{ medecin.specialite|default:"Médecine générale" }}</p>
     </div>
+    <a class="button btn" href="{% url 'dashboard_medecin' %}">← Tableau de bord</a>
 </section>
 
 <section class="panel panel-form">
@@ -22,7 +23,10 @@
         {{ field }}
         {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
         {% endfor %}
-        <button class="button primary" type="submit">Enregistrer</button>
+        <div class="actions" style="margin-top: 16px; display: flex; gap: 10px;">
+            <button class="button primary" type="submit">Enregistrer</button>
+            <a class="button btn" href="{% url 'dashboard_medecin' %}">Annuler</a>
+        </div>
     </form>
 </section>
 {% endblock %}

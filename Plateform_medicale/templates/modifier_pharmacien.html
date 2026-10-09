@@ -8,7 +8,7 @@
         <h1>{% if pharmacien.user %}{{ pharmacien.user.get_full_name|default:pharmacien.user.email }}{% elif pharmacien.prestataire %}Pharmacien — {{ pharmacien.prestataire.nom }}{% else %}Fiche pharmacien{% endif %}</h1>
         <p class="subtitle">{% if pharmacien.user %}{{ pharmacien.user.email }}{% else %}Compte utilisateur non assigné{% endif %}</p>
     </div>
-    <a class="button" href="{% url 'liste_pharmaciens' %}">Retour</a>
+    <a class="button btn" href="{% url 'liste_pharmaciens' %}">← Retour</a>
 </section>
 
 <section class="panel panel-form">
@@ -23,7 +23,10 @@
         {{ field }}
         {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
         {% endfor %}
-        <button class="button primary" type="submit">Enregistrer</button>
+        <div class="actions" style="margin-top: 16px; display: flex; gap: 10px;">
+            <button class="button primary" type="submit">Enregistrer</button>
+            <a class="button btn" href="{% url 'liste_pharmaciens' %}">Annuler</a>
+        </div>
     </form>
 </section>
 {% endblock %}
