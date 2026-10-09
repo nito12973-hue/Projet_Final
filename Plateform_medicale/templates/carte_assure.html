@@ -49,89 +49,109 @@
 {% endif %}
 
 <div class="carte-layout-grid">
-    <!-- Colonne Carte 3D Flip -->
+    <!-- Colonne Carte Biométrique 3D Flip -->
     <div>
-        <div class="carte-3d-wrap" style="width: 100%; max-width: 380px; margin: 0 auto;">
-            <div class="carte-3d-card" id="carte-assure-flip" tabindex="0" role="button" aria-label="Cliquer pour retourner la carte" onclick="this.classList.toggle('flipped')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.classList.toggle('flipped');}">
+        <div class="carte-3d-wrap">
+            <div class="carte-3d-card" id="carte-assure-flip" tabindex="0" role="button" aria-label="Carte d'assuré interactive. Cliquer pour retourner et afficher le QR code de prise en charge." onclick="this.classList.toggle('flipped')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.classList.toggle('flipped');}">
                 
-                <!-- RECTO -->
+                <!-- RECTO : CARTE BIOMÉTRIQUE SÉCURISÉE -->
                 <div class="carte-face-recto">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        {% logo_marque taille=26 fond="sombre" %}
-                        <span style="font-size: 10px; font-weight: 800; letter-spacing: 0.8px; color: rgba(255,255,255,0.95); text-transform: uppercase;">
-                            SANTÉ<span style="color:#4fb8ae;">SN</span> · TIERS-PAYANT
-                        </span>
+                    <!-- 1. En-tête officiel républicain -->
+                    <div class="carte-entete-officielle">
+                        <div class="carte-rep-senegal">
+                            <span class="drapeau-senegal-mini">
+                                <span class="drap-v"></span>
+                                <span class="drap-j">★</span>
+                                <span class="drap-r"></span>
+                            </span>
+                            <span class="carte-titre-pays">RÉPUBLIQUE DU SÉNÉGAL</span>
+                        </div>
+                        <div class="carte-logo-ipm">
+                            <span class="carte-ipm-sigle">SANTÉ<strong>SN</strong></span>
+                            <span class="carte-tiers-payant-tag">TIERS-PAYANT</span>
+                        </div>
                     </div>
 
-                    <div style="margin: 14px 0 8px;">
-                        <span style="font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.65); display: block; margin-bottom: 2px;">
-                            N° Carte de Prise en Charge
-                        </span>
-                        <span style="font-family: monospace; font-size: 17px; font-weight: 700; letter-spacing: 1.5px; color: #ffffff;">
-                            {{ patient.numero_carte }}
-                        </span>
+                    <!-- 2. Zone puce EMV dorée, NFC et Hologramme -->
+                    <div class="carte-securite-ligne">
+                        <div class="carte-puce-or" title="Puce biométrique intégrée">
+                            <span class="puce-contact-centre"></span>
+                        </div>
+                        
+                        <svg class="carte-nfc-wave" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="rgba(255,255,255,0.75)" stroke-width="2.2" stroke-linecap="round" title="Sans contact NFC">
+                            <path d="M7 8.5c1.8 1.8 1.8 4.7 0 6.5"/>
+                            <path d="M11 5.5c3.5 3.5 3.5 9 0 12.5"/>
+                            <path d="M15 2.5c5.2 5.2 5.2 13.8 0 19"/>
+                        </svg>
+
+                        <div class="carte-hologramme" title="Hologramme certifié IPM">
+                            <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                            </svg>
+                        </div>
                     </div>
 
-                    <div style="display: flex; justify-content: space-between; align-items: flex-end; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.15);">
+                    <!-- 3. Numéro de carte gravé en relief (Embossed 3D) -->
+                    <div class="carte-numero-bloc">
+                        <span class="carte-libelle-champ">N° IMMATRICULATION ASSURÉ</span>
+                        <span class="carte-numero-embouti">{{ patient.numero_carte }}</span>
+                    </div>
+
+                    <!-- 4. Titulaire, Couverture & Statut -->
+                    <div class="carte-bas-ligne">
                         <div>
-                            <strong style="font-size: 13.5px; color: #ffffff; display: block; text-transform: uppercase; letter-spacing: 0.5px;">
-                                {{ patient.prenom }} {{ patient.nom }}
-                            </strong>
-                            <span style="font-size: 10.5px; color: rgba(255,255,255,0.75);">
+                            <strong class="carte-nom-titulaire">{{ patient.prenom }} {{ patient.nom }}</strong>
+                            <span class="carte-qualite-badge">
                                 {{ patient.get_type_beneficiaire_display }}{% if patient.est_ayant_droit and patient.lien_parente %} · {{ patient.get_lien_parente_display }}{% endif %}
                             </span>
                         </div>
-                        <div style="text-align: right;">
-                            <strong style="font-size: 17px; color: #ffffff; display: block;">
-                                {{ patient.taux_couverture|default:"0" }}%
-                            </strong>
-                            <span style="font-size: 10px; color: rgba(255,255,255,0.75);">
-                                {{ patient.titulaire.plan_couverture.nom|default:"IPM" }}
-                            </span>
+                        <div class="carte-taux-box">
+                            <span class="carte-taux-chiffre">{{ patient.taux_couverture|default:"0" }}%</span>
+                            <span class="carte-taux-label">{{ patient.titulaire.plan_couverture.nom|default:"IPM" }}</span>
                         </div>
                     </div>
 
-                    <div style="margin-top: 10px; text-align: center;">
-                        <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 9.5px; font-weight: 600; color: rgba(255,255,255,0.9); background: rgba(0,0,0,0.22); padding: 3px 10px; border-radius: 20px;">
-                            <span style="font-size: 11px; line-height: 1;">↺</span> Cliquer pour afficher le QR code
-                        </span>
+                    <!-- 5. Indication d'interaction -->
+                    <div class="carte-flip-hint">
+                        <span>↺ Cliquer pour afficher le QR code</span>
                     </div>
                 </div>
 
-                <!-- VERSO -->
+                <!-- VERSO : BANDE MAGNÉTIQUE, SIGNATURE ET QR CODE DE CONTRÔLE -->
                 <div class="carte-face-verso">
-                    <div class="carte-bande-magnetique"></div>
+                    <div class="carte-bande-noire"></div>
 
-                    <div style="display: flex; align-items: center; justify-content: center; gap: 14px; padding: 4px 16px; width: 100%;">
-                        <div class="carte-verso-qr-cadre">
-                            {{ qr_svg|safe }}
+                    <div class="carte-verso-corps">
+                        <div class="carte-panneau-signature">
+                            <span class="signature-watermark">SANTÉSN SÉCURITÉ CONVENTIONNÉE</span>
+                            <span class="signature-crypt">{{ patient.numero_carte|slice:":6" }}</span>
                         </div>
-                        <div style="text-align: left; max-width: 170px;">
-                            <strong style="font-size: 11px; color: #0b2027; display: block; margin-bottom: 2px;">
-                                Prise en charge directe
-                            </strong>
-                            <p style="font-size: 9px; color: #64748b; margin: 0 0 6px; line-height: 1.3;">
-                                Présenter ce code au guichet du centre de santé ou de l'officine conventionnée.
-                            </p>
-                            <span style="font-size: 9px; font-weight: 700; color: #0e7c86; text-transform: uppercase; letter-spacing: 0.05em;">
-                                Scan Instantané
-                            </span>
+
+                        <div class="carte-verso-centre">
+                            <div class="carte-qr-cadre-realiste">
+                                {{ qr_svg|safe }}
+                            </div>
+                            <div class="carte-verso-texte">
+                                <strong class="verso-titre">PRISE EN CHARGE DIRECTE</strong>
+                                <p class="verso-desc">Présenter au guichet du prestataire ou à l'officine conventionnée pour identification instantanée.</p>
+                                <span class="verso-badge-scan">CONTRÔLE TIERS-PAYANT</span>
+                            </div>
                         </div>
                     </div>
 
-                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0 16px; font-size: 9px; color: #94a3b8;">
-                        <span>Strictement personnelle</span>
-                        <span style="display: inline-flex; align-items: center; gap: 4px; font-weight: 600; color: #0e7c86;">
-                            {% icone "chevron-left" %} Retourner
-                        </span>
+                    <div class="carte-verso-pied">
+                        <span>Strictement personnelle · Tiers-payant</span>
+                        <span class="verso-retour-hint">↺ Recto</span>
                     </div>
                 </div>
 
             </div>
         </div>
-        <p style="text-align: center; margin: 12px 0 0; font-size: 12px; color: var(--muted);">
-            Cliquez sur la carte pour alterner entre le recto et le verso avec QR code.
-        </p>
+        <div style="text-align: center; margin-top: 14px;">
+            <button type="button" class="button btn" onclick="document.getElementById('carte-assure-flip').classList.toggle('flipped');" style="font-size: 13px; font-weight: 600; border-radius: 999px; padding: 7px 20px; box-shadow: var(--ombre-douce);">
+                {% icone "repeat" %} Retourner la carte (Verso / Recto)
+            </button>
+        </div>
     </div>
 
     <!-- Colonne Informations Officielles & Prise en Charge -->
