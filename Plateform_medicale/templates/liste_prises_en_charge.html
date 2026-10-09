@@ -49,7 +49,7 @@
                     <th style="width:36px;"><input type="checkbox" onclick="document.querySelectorAll('input[name=selection]').forEach(cb => cb.checked = this.checked)"></th>
                     {% entete_tri request.GET "patient__nom" "Patient" %}
                     {% entete_tri request.GET "date_demande" "Date demande" "col-optionnelle" %}
-                    <th class="col-optionnelle">Motif</th>
+                    <th class="col-optionnelle">Devis / Actes</th>
                     {% entete_tri request.GET "statut" "Statut" %}
                     <th>Actions</th>
                 </tr>

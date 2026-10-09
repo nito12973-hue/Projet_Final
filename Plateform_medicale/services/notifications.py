@@ -116,9 +116,6 @@ def emettre_notification(
                 template_params=[prenom_dest],
                 template_button_params=btn_params,
             )
-            # Si le template échoue, retenter en texte libre (fenêtre 24h peut être ouverte)
-            if not res_wa.get("succes"):
-                res_wa = envoyer_message_whatsapp(telephone, texte_wa)
 
             if res_wa.get("succes"):
                 whatsapp_succes = True

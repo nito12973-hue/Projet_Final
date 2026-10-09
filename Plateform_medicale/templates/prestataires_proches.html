@@ -105,8 +105,10 @@ resultat.
             </details>
             <div class="actions">
                 <a class="button" href="{{ prestataire.lien_itineraire }}" target="_blank" rel="noopener">Itinéraire</a>
-                <a class="button" href="{% url 'fiche_prestataire_assure' prestataire.pk %}">Voir les médecins</a>
+                <a class="button" href="{% url 'fiche_prestataire_assure' prestataire.pk %}">{% if prestataire.type_prestataire == "PHARMACIE" %}Consulter la pharmacie{% else %}Voir les médecins{% endif %}</a>
+                {% if prestataire.type_prestataire != "PHARMACIE" %}
                 <a class="button primary" href="{% url 'ajouter_rendez_vous_assure' %}?prestataire={{ prestataire.pk }}">{% icone "plus-circle" %} Prendre rendez-vous</a>
+                {% endif %}
             </div>
         </article>
         {% endfor %}
@@ -339,11 +341,19 @@ resultat.
             lienItineraire.textContent = 'Itinéraire';
             actions.appendChild(lienItineraire);
 
-            var lienRdv = document.createElement('a');
-            lienRdv.className = 'button primary btn-sm';
-            lienRdv.href = urlRendezVous + '?prestataire=' + prestataire.pk;
-            lienRdv.textContent = 'Prendre RDV';
-            actions.appendChild(lienRdv);
+            if (prestataire.type_code === 'PHARMACIE') {
+                var lienOfficine = document.createElement('a');
+                lienOfficine.className = 'button btn-sm';
+                lienOfficine.href = urlFichePrestataire.replace('/0/', '/' + prestataire.pk + '/');
+                lienOfficine.textContent = 'Consulter l\'officine';
+                actions.appendChild(lienOfficine);
+            } else {
+                var lienRdv = document.createElement('a');
+                lienRdv.className = 'button primary btn-sm';
+                lienRdv.href = urlRendezVous + '?prestataire=' + prestataire.pk;
+                lienRdv.textContent = 'Prendre RDV';
+                actions.appendChild(lienRdv);
+            }
 
             conteneur.appendChild(actions);
             return conteneur;
@@ -436,14 +446,16 @@ resultat.
             var lienProfil = document.createElement('a');
             lienProfil.className = 'button';
             lienProfil.href = urlFichePrestataire.replace('/0/', '/' + prestataire.pk + '/');
-            lienProfil.textContent = 'Voir les medecins';
+            lienProfil.textContent = (prestataire.type_code === 'PHARMACIE') ? 'Consulter l\'officine' : 'Voir les médecins';
             actions.appendChild(lienProfil);
 
-            var lienRdv = document.createElement('a');
-            lienRdv.className = 'button primary';
-            lienRdv.href = urlRendezVous + '?prestataire=' + prestataire.pk;
-            lienRdv.textContent = 'Prendre rendez-vous';
-            actions.appendChild(lienRdv);
+            if (prestataire.type_code !== 'PHARMACIE') {
+                var lienRdv = document.createElement('a');
+                lienRdv.className = 'button primary';
+                lienRdv.href = urlRendezVous + '?prestataire=' + prestataire.pk;
+                lienRdv.textContent = 'Prendre rendez-vous';
+                actions.appendChild(lienRdv);
+            }
 
             article.appendChild(actions);
             return article;
@@ -502,28 +514,206 @@ resultat.
         var conteneurListe = document.getElementById('liste-prestataires-proches');
         var sousTitrePage = document.getElementById('sous-titre-page');
 
-        var villes = Array.from(new Set(donnees.map(function (p) { return p.ville; }).filter(Boolean))).sort();
-        villes.forEach(function (ville) {
-            var option = document.createElement('option');
-            option.value = ville;
-            option.textContent = ville;
-            champVille.appendChild(option);
+        // Catalogue exhaustif des 14 régions administratives et villes/communes du Sénégal
+        var REGIONS_SENEGAL = [
+            {
+                region: "Région de Dakar",
+                villes: [
+                    { nom: "Dakar (Centre / Plateau / Médina)", lat: 14.6700, lng: -17.4350, zoom: 14 },
+                    { nom: "Almadies / Ngor / Ouakam / Yoff", lat: 14.7450, lng: -17.5050, zoom: 13 },
+                    { nom: "Grand Dakar / Mermoz / Fann", lat: 14.7000, lng: -17.4600, zoom: 13 },
+                    { nom: "Parcelles Assainies", lat: 14.7611, lng: -17.4417, zoom: 13 },
+                    { nom: "Pikine", lat: 14.7556, lng: -17.3972, zoom: 13 },
+                    { nom: "Guédiawaye", lat: 14.7700, lng: -17.3900, zoom: 13 },
+                    { nom: "Keur Massar", lat: 14.7833, lng: -17.3167, zoom: 13 },
+                    { nom: "Rufisque", lat: 14.7167, lng: -17.2667, zoom: 13 },
+                    { nom: "Diamniadio", lat: 14.7247, lng: -17.1819, zoom: 13 },
+                    { nom: "Sangalkam / Bargny / Sébikotane", lat: 14.7777, lng: -17.2256, zoom: 13 }
+                ]
+            },
+            {
+                region: "Région de Thiès",
+                villes: [
+                    { nom: "Thiès", lat: 14.7910, lng: -16.9256, zoom: 13 },
+                    { nom: "Mbour", lat: 14.4220, lng: -16.9639, zoom: 13 },
+                    { nom: "Saly Portudal", lat: 14.4419, lng: -17.0272, zoom: 13 },
+                    { nom: "Tivaouane", lat: 14.9547, lng: -16.8225, zoom: 13 },
+                    { nom: "Joal-Fadiouth", lat: 14.1667, lng: -16.8333, zoom: 13 },
+                    { nom: "Somone / Popenguine", lat: 14.4900, lng: -17.0800, zoom: 13 },
+                    { nom: "Pout / Khombole", lat: 14.7700, lng: -17.0600, zoom: 13 }
+                ]
+            },
+            {
+                region: "Région de Diourbel",
+                villes: [
+                    { nom: "Touba", lat: 14.8644, lng: -15.8756, zoom: 13 },
+                    { nom: "Mbacké", lat: 14.7903, lng: -15.9081, zoom: 13 },
+                    { nom: "Diourbel", lat: 14.6547, lng: -16.2344, zoom: 13 },
+                    { nom: "Bambey", lat: 14.6978, lng: -16.4522, zoom: 13 }
+                ]
+            },
+            {
+                region: "Région de Saint-Louis",
+                villes: [
+                    { nom: "Saint-Louis", lat: 16.0326, lng: -16.4818, zoom: 13 },
+                    { nom: "Richard-Toll", lat: 16.4625, lng: -15.7008, zoom: 13 },
+                    { nom: "Dagana", lat: 16.5167, lng: -15.5000, zoom: 13 },
+                    { nom: "Podor", lat: 16.6547, lng: -14.9589, zoom: 13 }
+                ]
+            },
+            {
+                region: "Région de Kaolack",
+                villes: [
+                    { nom: "Kaolack", lat: 14.1397, lng: -16.0722, zoom: 13 },
+                    { nom: "Nioro du Rip", lat: 13.7500, lng: -15.7667, zoom: 13 },
+                    { nom: "Guinguinéo", lat: 14.2667, lng: -15.9500, zoom: 13 }
+                ]
+            },
+            {
+                region: "Région de Ziguinchor (Casamance)",
+                villes: [
+                    { nom: "Ziguinchor", lat: 12.5833, lng: -16.2719, zoom: 13 },
+                    { nom: "Cap Skirring", lat: 12.3700, lng: -16.7483, zoom: 13 },
+                    { nom: "Bignona", lat: 12.8106, lng: -16.2300, zoom: 13 },
+                    { nom: "Oussouye", lat: 12.4833, lng: -16.5500, zoom: 13 }
+                ]
+            },
+            {
+                region: "Région de Fatick",
+                villes: [
+                    { nom: "Fatick", lat: 14.3314, lng: -16.4119, zoom: 13 },
+                    { nom: "Foundiougne", lat: 14.1333, lng: -16.4667, zoom: 13 },
+                    { nom: "Gossas", lat: 14.4900, lng: -16.0600, zoom: 13 },
+                    { nom: "Sokone / Passy", lat: 14.0000, lng: -16.3667, zoom: 13 }
+                ]
+            },
+            {
+                region: "Région de Kolda",
+                villes: [
+                    { nom: "Kolda", lat: 12.8833, lng: -14.9500, zoom: 13 },
+                    { nom: "Vélingara", lat: 13.1500, lng: -14.1167, zoom: 13 },
+                    { nom: "Médina Yoro Foulah", lat: 13.3000, lng: -15.1667, zoom: 13 }
+                ]
+            },
+            {
+                region: "Région de Louga",
+                villes: [
+                    { nom: "Louga", lat: 15.6186, lng: -16.2244, zoom: 13 },
+                    { nom: "Linguère", lat: 15.3950, lng: -15.1194, zoom: 13 },
+                    { nom: "Kébémer", lat: 15.3700, lng: -16.4500, zoom: 13 },
+                    { nom: "Dahra", lat: 15.3333, lng: -15.4833, zoom: 13 }
+                ]
+            },
+            {
+                region: "Région de Tambacounda",
+                villes: [
+                    { nom: "Tambacounda", lat: 13.7539, lng: -13.7586, zoom: 13 },
+                    { nom: "Bakel", lat: 14.9000, lng: -12.4500, zoom: 13 },
+                    { nom: "Goudiry", lat: 14.1800, lng: -12.7200, zoom: 13 },
+                    { nom: "Koumpentoum", lat: 13.9800, lng: -14.5600, zoom: 13 }
+                ]
+            },
+            {
+                region: "Région de Kaffrine",
+                villes: [
+                    { nom: "Kaffrine", lat: 14.1058, lng: -15.5414, zoom: 13 },
+                    { nom: "Koungheul", lat: 13.9833, lng: -14.8000, zoom: 13 },
+                    { nom: "Birkelane", lat: 14.1300, lng: -15.7500, zoom: 13 }
+                ]
+            },
+            {
+                region: "Région de Kédougou",
+                villes: [
+                    { nom: "Kédougou", lat: 12.5564, lng: -12.1747, zoom: 13 },
+                    { nom: "Saraya", lat: 12.8300, lng: -11.7500, zoom: 13 },
+                    { nom: "Salémata", lat: 12.6300, lng: -12.8200, zoom: 13 }
+                ]
+            },
+            {
+                region: "Région de Matam",
+                villes: [
+                    { nom: "Matam", lat: 15.6558, lng: -13.2553, zoom: 13 },
+                    { nom: "Ourossogui", lat: 15.6042, lng: -13.3217, zoom: 13 },
+                    { nom: "Kanel", lat: 15.4900, lng: -13.1800, zoom: 13 },
+                    { nom: "Ranérou", lat: 15.3000, lng: -13.9600, zoom: 13 }
+                ]
+            },
+            {
+                region: "Région de Sédhiou",
+                villes: [
+                    { nom: "Sédhiou", lat: 12.7081, lng: -15.5569, zoom: 13 },
+                    { nom: "Bounkiling", lat: 13.0400, lng: -15.6800, zoom: 13 },
+                    { nom: "Goudomp", lat: 12.5800, lng: -15.8700, zoom: 13 }
+                ]
+            }
+        ];
+
+        var coordonneesVilles = {};
+        REGIONS_SENEGAL.forEach(function (reg) {
+            var group = document.createElement('optgroup');
+            group.label = reg.region;
+            reg.villes.forEach(function (v) {
+                var option = document.createElement('option');
+                option.value = v.nom;
+                option.textContent = v.nom;
+                group.appendChild(option);
+                coordonneesVilles[v.nom] = { lat: v.lat, lng: v.lng, zoom: v.zoom };
+            });
+            champVille.appendChild(group);
         });
 
+        // Ajouter les villes en base qui ne sont pas dans le catalogue
+        var nomsConnus = Object.keys(coordonneesVilles);
+        var autresVillesEnBase = Array.from(new Set(donnees.map(function (p) { return p.ville; }).filter(Boolean)))
+            .filter(function (v) {
+                return !nomsConnus.some(function (nc) {
+                    return nc.toLowerCase().indexOf(v.toLowerCase()) !== -1 || v.toLowerCase().indexOf(nc.toLowerCase()) !== -1;
+                });
+            });
+        if (autresVillesEnBase.length > 0) {
+            var groupAutres = document.createElement('optgroup');
+            groupAutres.label = "Autres localités du réseau";
+            autresVillesEnBase.forEach(function (v) {
+                var opt = document.createElement('option');
+                opt.value = v;
+                opt.textContent = v;
+                groupAutres.appendChild(opt);
+            });
+            champVille.appendChild(groupAutres);
+        }
+
+        function normaliserTexte(txt) {
+            return (txt || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        }
+
         function appliquerFiltres(liste) {
-            var recherche = champRecherche.value.trim().toLowerCase();
-            var ville = champVille.value;
+            var recherche = normaliserTexte(champRecherche.value.trim());
+            var villeFiltre = normaliserTexte(champVille.value.trim());
             var type = champType.value;
             var distanceMax = champDistance.value ? parseFloat(champDistance.value) : null;
 
             return liste.filter(function (item) {
                 var prestataire = item.prestataire;
-                if (recherche && prestataire.nom.toLowerCase().indexOf(recherche) === -1) {
+                var nomP = normaliserTexte(prestataire.nom);
+                var villeP = normaliserTexte(prestataire.ville);
+
+                // Recherche globale : filtre sur le nom ET/OU la ville
+                if (recherche && nomP.indexOf(recherche) === -1 && villeP.indexOf(recherche) === -1) {
                     return false;
                 }
-                if (ville && prestataire.ville !== ville) {
-                    return false;
+
+                // Filtrage géographique souple
+                if (villeFiltre) {
+                    var motsFiltre = villeFiltre.split(/[\s\/\(\)]+/).filter(function (m) { return m.length > 2; });
+                    var correspond = motsFiltre.some(function (mot) {
+                        return villeP.indexOf(mot) !== -1;
+                    }) || villeP.indexOf(villeFiltre) !== -1 || villeFiltre.indexOf(villeP) !== -1;
+
+                    if (!correspond) {
+                        return false;
+                    }
                 }
+
                 if (type && prestataire.type_code !== type) {
                     return false;
                 }
@@ -570,9 +760,13 @@ resultat.
             bloc.appendChild(illustration);
 
             var message = document.createElement('p');
-            message.textContent = aucunResultatFiltre
-                ? "Aucun prestataire ne correspond à vos filtres actuels."
-                : "Aucun prestataire du réseau n'a encore de position enregistrée.";
+            if (champVille.value) {
+                message.innerHTML = "Aucun prestataire conventionné n'est encore enregistré pour <strong>" + champVille.value + "</strong>.<br><span style='font-size:12.5px;color:var(--muted);display:block;margin-top:6px;'>Le réseau de prise en charge SantéSN s'étend activement à toutes les régions du Sénégal. Vous pouvez afficher tous les prestataires disponibles.</span>";
+            } else if (aucunResultatFiltre) {
+                message.textContent = "Aucun prestataire ne correspond à vos filtres actuels.";
+            } else {
+                message.textContent = "Aucun prestataire du réseau n'a encore de position enregistrée.";
+            }
             bloc.appendChild(message);
 
             var actions = document.createElement('div');
@@ -701,6 +895,18 @@ resultat.
         [champRecherche, champVille, champType, champDistance].forEach(function (champ) {
             champ.addEventListener('input', rafraichirAffichage);
             champ.addEventListener('change', rafraichirAffichage);
+        });
+
+        // Recentrage fluide de la carte vers la région / ville sélectionnée
+        champVille.addEventListener('change', function () {
+            var villeChoisie = champVille.value;
+            if (villeChoisie && coordonneesVilles[villeChoisie]) {
+                var pos = coordonneesVilles[villeChoisie];
+                carte.flyTo([pos.lat, pos.lng], pos.zoom || 13, { duration: 1.2 });
+            } else if (!villeChoisie) {
+                // Recentrage général vue nationale Sénégal
+                carte.flyTo([14.4974, -14.4524], 7, { duration: 1.2 });
+            }
         });
 
         var parametres = new URLSearchParams(window.location.search);

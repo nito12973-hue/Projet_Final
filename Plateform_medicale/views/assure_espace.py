@@ -135,9 +135,11 @@ def fiche_prestataire_assure(request, pk):
     """
     prestataire = get_object_or_404(Prestataire, pk=pk, partenaire=True)
     medecins = prestataire.medecins.order_by("nom", "prenom")
+    pharmaciens = prestataire.pharmaciens.select_related("user").all()
     return render(request, "fiche_prestataire_assure.html", {
         "prestataire": prestataire,
         "medecins": medecins,
+        "pharmaciens": pharmaciens,
         "services": prestataire.services.order_by("nom"),
     })
 
@@ -418,7 +420,7 @@ def ajouter_rendez_vous_assure(request):
         if prestataire_id and str(prestataire_id).isdigit():
             return Prestataire.objects.filter(
                 pk=prestataire_id, partenaire=True
-            ).first()
+            ).exclude(type_prestataire=Prestataire.Type.PHARMACIE).first()
         return None
 
     if request.method == "POST":

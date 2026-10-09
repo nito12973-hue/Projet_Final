@@ -110,6 +110,26 @@
     </dl>
 </section>
 
+{% if prestataire.type_prestataire == "PHARMACIE" %}
+<section class="panel panel-bloc" style="border-radius: 16px; border-left: 4px solid var(--primary); padding: 22px; margin-bottom: 24px;">
+    <div style="display: flex; align-items: flex-start; gap: 14px;">
+        <span class="dash-stat-icon" style="font-size: 26px; padding: 10px; background: rgba(14, 124, 134, 0.1); border-radius: 12px; color: var(--primary);">{% icone "pill" %}</span>
+        <div>
+            <h2 style="margin: 0 0 6px 0; font-size: 1.18rem;">Officine pharmaceutique conventionnée</h2>
+            <p class="subtitle" style="margin: 0 0 12px 0;">Cette officine partenaire assure la délivrance de vos médicaments prescrits avec dispense d'avance de frais (tiers payant SantéSN).</p>
+            <div style="background: var(--surface); padding: 14px 18px; border-radius: 10px; border: 1px solid var(--border); font-size: 0.92rem; line-height: 1.55;">
+                <p style="margin: 0 0 8px 0;"><strong>{% icone "check" %} Comment retirer vos médicaments ?</strong></p>
+                <p style="margin: 0 0 6px 0;">1. Présentez simplement le <strong>QR Code de votre ordonnance</strong> ou votre <strong>carte d'assuré numérique</strong> au comptoir de la pharmacie.</p>
+                <p style="margin: 0 0 6px 0;">2. Le pharmacien scanne votre code et vérifie instantanément vos droits et la prescription médicale.</p>
+                <p style="margin: 0;">3. Vous ne réglez que votre ticket modérateur éventuel, la part assurance étant directement couverte par votre IPM.</p>
+            </div>
+            <p class="subtitle" style="margin: 12px 0 0 0; font-size: 0.88rem; color: var(--muted);">
+                <em>Note : Les prises de rendez-vous en ligne ne s'appliquent pas aux pharmacies. Présentez-vous directement aux horaires d'ouverture de l'officine.</em>
+            </p>
+        </div>
+    </div>
+</section>
+{% else %}
 <section class="page-title">
     <div>
         <h2>Médecins de cette structure</h2>
@@ -140,6 +160,7 @@
 <section class="panel panel-bloc">
     <p class="etat-vide">Aucun médecin n'est encore rattaché à cette structure.</p>
 </section>
+{% endif %}
 {% endif %}
 
 {% if services %}

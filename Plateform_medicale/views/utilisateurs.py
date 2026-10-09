@@ -236,8 +236,9 @@ def _detecter_mapping_colonnes(entetes_brutes):
                         mapping[cle_champ] = idx
                         break
 
-    # Si les en-têtes correspondent au format séquentiel classique
-    if "email" not in mapping and len(entetes_brutes) >= 5:
+    # Si la premiere ligne contient directement des données au format séquentiel (commence par un email)
+    premiere_val = str(entetes_brutes[0] or "").strip() if entetes_brutes else ""
+    if "email" not in mapping and len(entetes_brutes) >= 5 and "@" in premiere_val:
         mapping = {
             "email": 0, "prenom": 1, "nom": 2, "telephone": 3, "role": 4,
             "date_naissance": 5, "specialite": 6, "prestataire": 7, "plan_couverture": 8,
