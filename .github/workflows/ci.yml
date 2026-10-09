@@ -1,11 +1,9 @@
 name: CI SantéSN - Tests & Validation
-
 on:
   push:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
-
 jobs:
   test:
     runs-on: ubuntu-latest

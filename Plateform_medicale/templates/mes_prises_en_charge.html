@@ -43,7 +43,7 @@ pas un oubli.
 <section class="panel pec" style="border-radius: 16px; box-shadow: var(--ombre-douce); border: 1px solid var(--border); margin-bottom: 24px; overflow: hidden;">
     <div class="pec-entete" style="background: var(--surface-alt); padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
         <span class="pec-titre">
-            <strong style="font-size: 16px; color: var(--titre);">{{ ligne.prise.motif }}</strong>
+            <strong style="font-size: 16px; color: var(--titre);">Devis : {{ ligne.prise.motif }}</strong>
             <span style="font-size: 13px; color: var(--muted); display: block; margin-top: 2px;">
                 {{ ligne.prise.patient }} · Demandée le {{ ligne.prise.date_demande|date:"d/m/Y" }}
                 {% if ligne.prise.date_validation %} · {% if ligne.prise.statut == 'validee' %}Validée{% else %}Traitée{% endif %} le {{ ligne.prise.date_validation|date:"d/m/Y à H:i" }}{% endif %}

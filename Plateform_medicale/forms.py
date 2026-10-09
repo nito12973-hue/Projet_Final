@@ -633,9 +633,9 @@ class RendezVousAssureForm(forms.ModelForm):
         label='Médecin',
     )
     prestataire = forms.ModelChoiceField(
-        queryset=Prestataire.objects.filter(partenaire=True),
+        queryset=Prestataire.objects.filter(partenaire=True).exclude(type_prestataire=Prestataire.Type.PHARMACIE),
         required=False,
-        label='Prestataire',
+        label='Établissement de soins (Hôpital, Clinique, Cabinet)',
     )
     date_heure = forms.DateTimeField(
         label='Date et heure souhaitées',
@@ -721,6 +721,12 @@ class RendezVousAssureForm(forms.ModelForm):
         cleaned = super().clean()
         medecin = cleaned.get('medecin')
         prestataire = cleaned.get('prestataire')
+        # Un rendez-vous ne peut en aucun cas être pris dans une pharmacie
+        if prestataire and prestataire.type_prestataire == Prestataire.Type.PHARMACIE:
+            self.add_error('prestataire', forms.ValidationError(
+                "Les rendez-vous médicaux ne peuvent pas être pris dans une pharmacie. Les pharmacies assurent uniquement la délivrance d'ordonnances."
+            ))
+
         # Si l'assuré n'a pas sélectionné de prestataire mais que le médecin est rattaché
         # à une structure, on déduit et affecte automatiquement ce prestataire.
         if not prestataire and medecin and medecin.prestataire_id is not None:
@@ -944,8 +950,14 @@ class PriseEnChargeForm(forms.ModelForm):
     class Meta:
         model = PriseEnCharge
         fields = ['patient', 'motif', 'statut', 'motif_refus']
+        labels = {
+            'patient': "Bénéficiaire des soins",
+            'motif': "Devis estimatif / Détails des actes",
+            'statut': "Statut de la prise en charge",
+            'motif_refus': "Motif du refus (si refusé)",
+        }
         widgets = {
-            'motif': forms.Textarea(attrs={'rows': 3}),
+            'motif': forms.Textarea(attrs={'rows': 3, 'placeholder': "Détails du devis chiffré (montant estimé, actes prévus, structure de soins)..."}),
             'motif_refus': forms.TextInput(attrs={'placeholder': 'Motif obligatoire en cas de refus'}),
         }
 
@@ -958,12 +970,12 @@ class DemandePriseEnChargeAssureForm(forms.ModelForm):
         fields = ['patient', 'motif']
         labels = {
             'patient': "Bénéficiaire des soins",
-            'motif': "Description et motif des soins",
+            'motif': "Devis estimatif & Détails des soins",
         }
         widgets = {
             'motif': forms.Textarea(attrs={
                 'rows': 4,
-                'placeholder': 'Précisez la nature des soins (ex : Hospitalisation, Chirurgie, Bilan biologique spécialisé, etc.).'
+                'placeholder': 'Renseignez le montant estimé et le détail des actes figurant sur le devis remis par votre médecin ou établissement de soins (ex : Devis Clinique Pasteur - 250 000 FCFA pour intervention chirurgicale et hospitalisation 48h).'
             }),
         }
 
