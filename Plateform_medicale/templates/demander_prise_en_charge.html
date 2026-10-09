@@ -7,7 +7,7 @@
 <section class="page-title">
     <div>
         <h1>Demande de prise en charge</h1>
-        <p class="subtitle">Transmettez votre demande pour vous-même ou l'un de vos ayants droit enregistrés.</p>
+        <p class="subtitle">Transmettez votre devis médical en 1 clic pour vous ou un ayant droit.</p>
     </div>
     <a class="button btn" href="{% url 'mes_prises_en_charge_assure' %}">{% icone "chevron-left" %} Mes prises en charge</a>
 </section>
@@ -15,67 +15,89 @@
 <div style="background:var(--primary-soft);border:1px solid var(--border);border-left:4px solid var(--primary);border-radius:12px;padding:14px 18px;margin-bottom:20px;font-size:13px;line-height:1.5;">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;color:var(--primary-strong);">
         {% icone "info" %}
-        <strong>Information préalable :</strong>
+        <strong>Bon à savoir :</strong>
     </div>
-    Pour vos consultations, analyses et médicaments en pharmacie, <strong>aucune demande préalable n'est requise</strong>. Présentez simplement votre <strong>carte d'assuré numérique (QR Code)</strong> au guichet du prestataire conventionné pour bénéficier automatiquement du tiers payant. Ce formulaire est réservé aux accords préalables exceptionnels sur présentation de devis (ex : intervention chirurgicale, hospitalisation programmée, actes médicaux lourds).
+    Pour vos consultations simples et délivrances en pharmacie, votre <strong>carte d'assuré (QR Code)</strong> suffit au guichet. Ce formulaire sert uniquement aux <strong>accords préalables sur devis</strong> (actes chirurgicaux, hospitalisations, examens spécialisés).
 </div>
 
 <section class="panel panel-form" style="max-width: 680px;">
     {% if form.non_field_errors %}
-    <div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
+    <div class="erreurs-formulaire" role="alert" style="margin-bottom: 16px; padding: 12px 16px; background: #fee2e2; border-left: 4px solid #ef4444; border-radius: 8px; color: #991b1b; font-size: 13px;">
+        {{ form.non_field_errors }}
+    </div>
     {% endif %}
 
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
 
-        <div style="margin-bottom: 16px;">
+        <!-- 1. Choix du bénéficiaire -->
+        <div style="margin-bottom: 20px;">
             <label for="{{ form.patient.id_for_label }}"><strong>{{ form.patient.label }}</strong> *</label>
             {{ form.patient }}
             {% if form.patient.errors %}
             <div class="erreurs" role="alert">{{ form.patient.errors }}</div>
             {% endif %}
             <span class="champ-aide" style="display:block;font-size:12px;color:var(--muted);margin-top:4px;">
-                Sélectionnez le bénéficiaire concerné par les soins dans votre foyer.
+                Sélectionnez la personne concernée par les soins (vous ou l'un de vos ayants droit validés).
             </span>
         </div>
 
-        <div style="margin-bottom: 16px;">
-            <label for="{{ form.motif.id_for_label }}"><strong>{{ form.motif.label }}</strong> *</label>
+        <!-- 2. Zone principale : Téléversement du devis (PDF ou photo) -->
+        <div style="margin-bottom: 20px; background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 12px; padding: 20px; text-align: left;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                <div style="width: 36px; height: 36px; border-radius: 8px; background: var(--primary-soft); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 18px;">
+                    {% icone "file-text" %}
+                </div>
+                <div>
+                    <label for="{{ form.devis_fichier.id_for_label }}" style="margin: 0; font-size: 14px; font-weight: 700; color: var(--text-main); cursor: pointer;">
+                        {{ form.devis_fichier.label }}
+                    </label>
+                    <div style="font-size: 12px; color: var(--primary-strong); font-weight: 600;">
+                        Inutile de recopier le contenu : joignez simplement votre document !
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 12px;">
+                {{ form.devis_fichier }}
+            </div>
+            {% if form.devis_fichier.errors %}
+            <div class="erreurs" role="alert" style="margin-top: 6px;">{{ form.devis_fichier.errors }}</div>
+            {% endif %}
+            <span class="champ-aide" style="display:block;font-size:12px;color:var(--muted);margin-top:8px;">
+                {{ form.devis_fichier.help_text }}
+            </span>
+        </div>
+
+        <!-- 3. Montant total estimé figurant sur le devis (facultatif mais recommandé) -->
+        <div style="margin-bottom: 20px;">
+            <label for="{{ form.montant_estime.id_for_label }}"><strong>{{ form.montant_estime.label }}</strong> <span style="font-size:12px;color:var(--muted);font-weight:normal;">(recommandé)</span></label>
+            {{ form.montant_estime }}
+            {% if form.montant_estime.errors %}
+            <div class="erreurs" role="alert">{{ form.montant_estime.errors }}</div>
+            {% endif %}
+            <span class="champ-aide" style="display:block;font-size:12px;color:var(--muted);margin-top:4px;">
+                Indiquez le montant figurant sur votre devis pour que l'IPM calcule immédiatement la part prise en charge et le reste à charge.
+            </span>
+        </div>
+
+        <!-- 4. Remarques ou description textuelle (optionnelle) -->
+        <div style="margin-bottom: 24px;">
+            <label for="{{ form.motif.id_for_label }}">
+                <strong>{{ form.motif.label }}</strong> 
+                <span style="font-size:12px;color:var(--muted);font-weight:normal;">(facultatif si le devis est joint)</span>
+            </label>
             {{ form.motif }}
             {% if form.motif.errors %}
             <div class="erreurs" role="alert">{{ form.motif.errors }}</div>
             {% endif %}
             <span class="champ-aide" style="display:block;font-size:12px;color:var(--muted);margin-top:4px;">
-                Indiquez le détail des actes médicaux figurant sur le devis (chirurgie, examens spécialisés, durée de séjour, établissement).
+                Vous pouvez laisser ce champ vide si toutes les informations figurent déjà sur votre document.
             </span>
         </div>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 20px;">
-            <div>
-                <label for="{{ form.montant_estime.id_for_label }}"><strong>{{ form.montant_estime.label }}</strong></label>
-                {{ form.montant_estime }}
-                {% if form.montant_estime.errors %}
-                <div class="erreurs" role="alert">{{ form.montant_estime.errors }}</div>
-                {% endif %}
-                <span class="champ-aide" style="display:block;font-size:12px;color:var(--muted);margin-top:4px;">
-                    Montant total chiffré en FCFA figurant sur le devis.
-                </span>
-            </div>
-
-            <div>
-                <label for="{{ form.devis_fichier.id_for_label }}"><strong>{{ form.devis_fichier.label }}</strong></label>
-                {{ form.devis_fichier }}
-                {% if form.devis_fichier.errors %}
-                <div class="erreurs" role="alert">{{ form.devis_fichier.errors }}</div>
-                {% endif %}
-                <span class="champ-aide" style="display:block;font-size:12px;color:var(--muted);margin-top:4px;">
-                    Pièce jointe : PDF, scan ou photo du devis (max 10 Mo).
-                </span>
-            </div>
-        </div>
-
-        <div class="actions" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
-            <button class="button primary" type="submit">{% icone "send" %} Soumettre la demande</button>
+        <div class="actions" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding-top:8px;border-top:1px solid var(--border);">
+            <button class="button primary" type="submit">{% icone "send" %} Envoyer ma demande de prise en charge</button>
             <a class="button btn" href="{% url 'mes_prises_en_charge_assure' %}">Annuler</a>
         </div>
     </form>

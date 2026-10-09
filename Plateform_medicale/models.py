@@ -543,7 +543,7 @@ class PriseEnCharge(models.Model):
 
     patient = models.ForeignKey(Patient, on_delete=models.PROTECT)
     date_demande = models.DateTimeField(auto_now_add=True)
-    motif = models.TextField()
+    motif = models.TextField("détails ou notes", blank=True, default="")
     numero_pec = models.CharField(
         "numéro de prise en charge",
         max_length=32,
@@ -586,6 +586,11 @@ class PriseEnCharge(models.Model):
     def save(self, *args, **kwargs):
         if not self.numero_pec:
             self.numero_pec = f"PEC-{uuid.uuid4().hex[:8].upper()}"
+        if not self.motif or not self.motif.strip():
+            if self.devis_fichier:
+                self.motif = "Devis médical numérisé joint"
+            else:
+                self.motif = "Demande de prise en charge conventionnée"
         super().save(*args, **kwargs)
 
     @property
