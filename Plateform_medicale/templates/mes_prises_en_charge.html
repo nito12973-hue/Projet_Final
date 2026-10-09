@@ -43,13 +43,29 @@ pas un oubli.
 <section class="panel pec" style="border-radius: 16px; box-shadow: var(--ombre-douce); border: 1px solid var(--border); margin-bottom: 24px; overflow: hidden;">
     <div class="pec-entete" style="background: var(--surface-alt); padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
         <span class="pec-titre">
-            <strong style="font-size: 16px; color: var(--titre);">Devis : {{ ligne.prise.motif }}</strong>
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 2px;">
+                {% if ligne.prise.numero_pec %}<span style="font-size: 11px; font-weight: 700; background: rgba(14, 124, 134, 0.12); color: var(--primary-strong); padding: 2px 7px; border-radius: 6px;">#{{ ligne.prise.numero_pec }}</span>{% endif %}
+                <strong style="font-size: 16px; color: var(--titre);">Devis : {{ ligne.prise.motif }}</strong>
+            </div>
             <span style="font-size: 13px; color: var(--muted); display: block; margin-top: 2px;">
                 {{ ligne.prise.patient }} · Demandée le {{ ligne.prise.date_demande|date:"d/m/Y" }}
                 {% if ligne.prise.date_validation %} · {% if ligne.prise.statut == 'validee' %}Validée{% else %}Traitée{% endif %} le {{ ligne.prise.date_validation|date:"d/m/Y à H:i" }}{% endif %}
+                {% if ligne.prise.montant_estime %} · Montant devis : <strong style="color: var(--titre);">{{ ligne.prise.montant_estime|franc_cfa }}</strong>{% endif %}
             </span>
         </span>
-        <span class="badge {{ ligne.prise.statut }}">{{ ligne.prise.get_statut_display }}</span>
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            {% if ligne.prise.devis_fichier %}
+            <a href="{{ ligne.prise.devis_fichier.url }}" target="_blank" class="button btn btn-sm" style="font-size: 12px; padding: 5px 10px;">
+                {% icone "file-text" %} Devis joint &nearr;
+            </a>
+            {% endif %}
+            {% if ligne.prise.statut == 'validee' %}
+            <a href="{% url 'telecharger_bon_prise_en_charge_pdf' ligne.prise.pk %}" target="_blank" class="button primary btn btn-sm" style="font-size: 12px; padding: 5px 12px;">
+                {% icone "download" %} Bon de PEC (PDF)
+            </a>
+            {% endif %}
+            <span class="badge {{ ligne.prise.statut }}">{{ ligne.prise.get_statut_display }}</span>
+        </div>
     </div>
 
     <div class="pec-corps" style="padding: 20px;">

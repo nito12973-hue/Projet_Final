@@ -430,11 +430,27 @@ class Command(BaseCommand):
             pec = PriseEnCharge.objects.create(
                 patient=patient,
                 motif="Consultation de médecine générale et bilan de routine",
+                montant_estime=Decimal("45000.00"),
                 statut="validee",
+                valide_par=utilisateurs[User.Role.ADMIN],
+                date_validation=timezone.now() - datetime.timedelta(days=2),
             )
-        elif pec.statut != "validee":
+        else:
             pec.statut = "validee"
-            pec.save(update_fields=["statut"])
+            pec.montant_estime = Decimal("45000.00")
+            pec.valide_par = utilisateurs[User.Role.ADMIN]
+            pec.date_validation = timezone.now() - datetime.timedelta(days=2)
+            pec.save()
+
+        # Deuxième PEC de démonstration en attente avec devis chiffré
+        pec_attente, _ = PriseEnCharge.objects.get_or_create(
+            patient=patient,
+            motif="Devis chirurgie ambulatoire & examens d'imagerie - Hôpital Principal",
+            defaults={
+                "montant_estime": Decimal("280000.00"),
+                "statut": "en_attente",
+            },
+        )
 
         consultation = Consultation.objects.filter(
             patient=patient,

@@ -16,7 +16,7 @@
     <div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
     {% endif %}
 
-    <form method="post">
+    <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {% for field in form %}
         <label for="{{ field.id_for_label }}">{{ field.label }}</label>

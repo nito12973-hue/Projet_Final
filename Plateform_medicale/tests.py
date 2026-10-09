@@ -10842,4 +10842,85 @@ class MediaFilesServingTests(TestCase):
         self.assertEqual(response.status_code, 404)
 
 
+class BonPriseEnChargePDFTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.plan = PlanCouverture.objects.create(
+            nom="Plan Test IPM (80%)",
+            taux_couverture=Decimal("80.00"),
+            plafond_annuel=Decimal("1000000.00"),
+        )
+        self.user_assure = creer_utilisateur(User.Role.ASSURE, "assure.pec@santesn.sn")
+        self.patient = Patient.objects.create(
+            user=self.user_assure,
+            nom="Diop",
+            prenom="Moussa",
+            date_naissance=datetime.date(1990, 1, 1),
+            plan_couverture=self.plan,
+        )
+        self.admin = creer_utilisateur(User.Role.ADMIN, "admin.pec@santesn.sn")
+        self.autre_assure = creer_utilisateur(User.Role.ASSURE, "autre.pec@santesn.sn")
+        self.autre_patient = Patient.objects.create(
+            user=self.autre_assure,
+            nom="Sow",
+            prenom="Awa",
+            date_naissance=datetime.date(1992, 5, 10),
+            plan_couverture=self.plan,
+        )
+        self.pec = PriseEnCharge.objects.create(
+            patient=self.patient,
+            motif="Intervention chirurgicale selon devis clinique Pasteur",
+            montant_estime=Decimal("250000.00"),
+            statut="validee",
+            valide_par=self.admin,
+            date_validation=timezone.now(),
+        )
+
+    def test_creation_pec_genere_numero_pec_automatique(self):
+        self.assertTrue(self.pec.numero_pec.startswith("PEC-"))
+        self.assertEqual(self.pec.montant_part_assurance, Decimal("200000"))
+        self.assertEqual(self.pec.montant_part_patient, Decimal("50000"))
+
+    def test_telecharger_bon_pdf_par_admin(self):
+        self.client.force_login(self.admin)
+        url = reverse("telecharger_bon_prise_en_charge_pdf", args=[self.pec.pk])
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp["Content-Type"], "application/pdf")
+        self.assertIn("Bon_PriseEnCharge_", resp["Content-Disposition"])
+        self.assertTrue(resp.content.startswith(b"%PDF"))
+
+    def test_telecharger_bon_pdf_par_assure_titulaire(self):
+        self.client.force_login(self.user_assure)
+        url = reverse("telecharger_bon_prise_en_charge_pdf", args=[self.pec.pk])
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp["Content-Type"], "application/pdf")
+        self.assertTrue(resp.content.startswith(b"%PDF"))
+
+    def test_telecharger_bon_pdf_par_autre_assure_interdit(self):
+        self.client.force_login(self.autre_assure)
+        url = reverse("telecharger_bon_prise_en_charge_pdf", args=[self.pec.pk])
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 403)
+
+    def test_demande_pec_avec_upload_fichier_devis(self):
+        self.client.force_login(self.user_assure)
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        fichier = SimpleUploadedFile("devis_clinique.pdf", b"%PDF-1.4 devis clinique", content_type="application/pdf")
+        url = reverse("demander_prise_en_charge_assure")
+        resp = self.client.post(url, {
+            "patient": self.patient.pk,
+            "motif": "Hospitalisation et soins intensifs",
+            "montant_estime": "150000",
+            "devis_fichier": fichier,
+        })
+        self.assertEqual(resp.status_code, 302)
+        nouvelle_pec = PriseEnCharge.objects.filter(motif="Hospitalisation et soins intensifs").first()
+        self.assertIsNotNone(nouvelle_pec)
+        self.assertEqual(nouvelle_pec.montant_estime, Decimal("150000.00"))
+        self.assertTrue(bool(nouvelle_pec.devis_fichier))
+
+
+
 
