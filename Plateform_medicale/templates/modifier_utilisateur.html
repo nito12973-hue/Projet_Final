@@ -8,7 +8,7 @@
         <h1>Modifier {{ utilisateur }}</h1>
         <p class="subtitle">Mise à jour du profil et du rôle.</p>
     </div>
-    <a class="button" href="{% url 'liste_utilisateurs' %}">Retour</a>
+    <a class="button btn" href="{% url 'liste_utilisateurs' %}">← Retour</a>
 </section>
 
 <section class="panel panel-form">
@@ -23,7 +23,10 @@
         {{ field }}
         {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
         {% endfor %}
-        <button class="button primary" type="submit">Enregistrer</button>
+        <div class="actions" style="margin-top: 16px; display: flex; gap: 10px;">
+            <button class="button primary" type="submit">Enregistrer</button>
+            <a class="button btn" href="{% url 'liste_utilisateurs' %}">Annuler</a>
+        </div>
     </form>
 </section>
 {% endblock %}

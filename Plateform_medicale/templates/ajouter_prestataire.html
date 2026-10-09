@@ -8,7 +8,7 @@
         <h1>Ajouter un prestataire</h1>
         <p class="subtitle">Hôpital, clinique, pharmacie ou cabinet médical.</p>
     </div>
-    <a class="button" href="{% url 'liste_prestataires' %}">Retour</a>
+    <a class="button btn" href="{% url 'liste_prestataires' %}">← Retour</a>
 </section>
 
 <style>
@@ -138,7 +138,10 @@
         <div id="carte-prestataire" role="group" aria-labelledby="titre-carte-prestataire" aria-describedby="aide-carte-prestataire" style="height: 320px; border-radius: 12px; margin-bottom: 8px;"></div>
         <p id="aide-carte-prestataire" class="subtitle" style="margin-top:0;margin-bottom:16px;">Cliquez sur la carte pour placer le prestataire, ou renseignez l'adresse et/ou la ville ci-dessus puis utilisez "Rechercher sur la carte" (accessible au clavier).</p>
 
-        <button class="button primary" type="submit">Enregistrer</button>
+        <div class="actions" style="margin-top: 16px; display: flex; gap: 10px;">
+            <button class="button primary" type="submit">Enregistrer</button>
+            <a class="button btn" href="{% url 'liste_prestataires' %}">Annuler</a>
+        </div>
     </form>
 </section>
 

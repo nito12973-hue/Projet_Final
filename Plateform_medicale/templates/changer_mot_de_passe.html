@@ -27,7 +27,10 @@
         {% if field.help_text %}<p class="subtitle" style="margin:-10px 0 16px;font-size:12px;">{{ field.help_text|safe }}</p>{% endif %}
         {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
         {% endfor %}
-        <button class="button primary" type="submit">Enregistrer</button>
+        <div class="actions" style="margin-top: 16px; display: flex; gap: 10px;">
+            <button class="button primary" type="submit">Enregistrer</button>
+            <a class="button btn" href="{% url 'mon_compte' %}">Annuler</a>
+        </div>
     </form>
 </section>
 {% endblock %}

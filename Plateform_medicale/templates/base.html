@@ -6013,9 +6013,10 @@
                 {% with url_name=request.resolver_match.url_name %}
                 <span class="nav-section">Espace santé</span>
                 <a href="{% url 'dashboard_assure' %}" aria-label="Tableau de bord" data-tooltip="Tableau de bord" class="{% if url_name == 'dashboard_assure' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord</span></a>
+                <a href="{% url 'carte_assure' %}" aria-label="Ma carte d'assuré" data-tooltip="Ma carte d'assuré" class="{% if url_name == 'carte_assure' or url_name == 'carte_assure_detail' %}active{% endif %}">{% icone "id-card" %} <span class="nav-texte">Ma carte d'assuré</span></a>
                 <a href="{% url 'mes_rendez_vous_assure' %}" aria-label="Mes rendez-vous" data-tooltip="Mes rendez-vous" class="{% if url_name == 'mes_rendez_vous_assure' or url_name == 'ajouter_rendez_vous_assure' %}active{% endif %}">{% icone "calendar" %} <span class="nav-texte">Mes rendez-vous</span></a>
                 <a href="{% url 'mes_ordonnances_assure' %}" aria-label="Mes ordonnances" data-tooltip="Mes ordonnances" class="{% if url_name == 'mes_ordonnances_assure' or url_name == 'voir_ordonnance_assure' %}active{% endif %}">{% icone "pill" %} <span class="nav-texte">Mes ordonnances</span></a>
-                <a href="{% url 'mes_prises_en_charge_assure' %}" aria-label="Mes prises en charge" data-tooltip="Mes prises en charge" class="{% if url_name == 'mes_prises_en_charge_assure' %}active{% endif %}">{% icone "shield-check" %} <span class="nav-texte">Mes prises en charge</span></a>
+                <a href="{% url 'mes_prises_en_charge_assure' %}" aria-label="Mes prises en charge" data-tooltip="Mes prises en charge" class="{% if url_name == 'mes_prises_en_charge_assure' or url_name == 'demander_prise_en_charge_assure' %}active{% endif %}">{% icone "shield-check" %} <span class="nav-texte">Mes prises en charge</span></a>
                 
                 <span class="nav-section">Réseau & Foyer</span>
                 <a href="{% url 'prestataires_proches' %}" aria-label="Prestataires conventionnés" data-tooltip="Prestataires conventionnés" class="{% if url_name == 'prestataires_proches' %}active{% endif %}">{% icone "map-pin" %} <span class="nav-texte">Prestataires conventionnés</span></a>
