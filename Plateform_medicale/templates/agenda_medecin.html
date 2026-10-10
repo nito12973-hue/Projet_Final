@@ -5,111 +5,84 @@
 
 {% block content %}
 <style>
-    .banniere-agenda-medecin-hero {
-        position: relative;
-        overflow: hidden;
-        border-radius: 20px;
-        background: linear-gradient(135deg, #0b2027 0%, #11333e 50%, #164654 100%);
-        padding: 26px 30px;
-        color: #ffffff;
-        box-shadow: 0 12px 36px -4px rgba(11, 32, 39, 0.22);
-        margin-bottom: 24px;
-    }
-    .banniere-agenda-medecin-hero::after {
-        content: "";
-        position: absolute;
-        top: -45px;
-        right: -35px;
-        width: 220px;
-        height: 220px;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(79, 184, 174, 0.25) 0%, transparent 70%);
-        pointer-events: none;
-    }
-    .hero-agenda-medecin-conteneur {
-        position: relative;
-        z-index: 2;
+    .entete-agenda-pro {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 20px;
         flex-wrap: wrap;
+        margin-bottom: 22px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--bordure);
     }
-    .badge-agenda-medecin {
+    .badge-agenda-subtil {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        background: rgba(255, 255, 255, 0.12);
-        backdrop-filter: blur(8px);
+        background: rgba(14, 124, 134, 0.08);
+        border: 1px solid rgba(14, 124, 134, 0.2);
+        color: var(--teal-principal, #0e7c86);
         padding: 4px 12px;
         border-radius: 999px;
-        border: 1px solid rgba(255, 255, 255, 0.18);
         font-size: 12px;
-        font-weight: 600;
-        color: #79dba9;
-        margin-bottom: 8px;
+        font-weight: 700;
+        margin-bottom: 6px;
     }
-    .titre-hero-medecin h1 {
+    .titre-agenda-pro {
         margin: 0 0 4px;
-        font-size: 24px;
+        font-size: 22px;
         font-weight: 800;
         letter-spacing: -0.02em;
-        color: #ffffff;
+        color: var(--titre);
     }
-    .desc-hero-medecin {
+    .desc-agenda-pro {
         margin: 0;
         font-size: 13.5px;
-        color: rgba(231, 236, 243, 0.82);
-        max-width: 580px;
+        color: var(--texte-secondaire);
+        max-width: 620px;
         line-height: 1.45;
     }
-    .btn-hero-retour {
+    .btn-agenda-retour {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        background: rgba(255, 255, 255, 0.14);
-        border: 1px solid rgba(255, 255, 255, 0.25);
-        color: #ffffff;
-        padding: 9px 18px;
-        border-radius: 11px;
+        background: var(--surface-carte);
+        border: 1px solid var(--bordure);
+        color: var(--texte-principal);
+        padding: 8px 16px;
+        border-radius: 10px;
         font-size: 13.5px;
-        font-weight: 700;
+        font-weight: 600;
         text-decoration: none;
-        backdrop-filter: blur(8px);
         transition: all 0.2s ease;
     }
-    .btn-hero-retour:hover {
-        background: rgba(255, 255, 255, 0.22);
-        border-color: rgba(255, 255, 255, 0.4);
-        transform: translateY(-1px);
-        color: #ffffff;
+    .btn-agenda-retour:hover {
+        background: var(--fond-general);
+        border-color: var(--bordure-active, #0e7c86);
+        color: var(--teal-principal, #0e7c86);
     }
 </style>
 
-<div class="banniere-agenda-medecin-hero">
-    <div class="hero-agenda-medecin-conteneur">
-        <div>
-            <div class="badge-agenda-medecin">
-                {% icone "calendar" %}
-                <span>Planning &amp; Consultations</span>
-                <span>&bull;</span>
-                <span>SantéSN Pro</span>
-            </div>
-            <div class="titre-hero-medecin">
-                <h1>Mon agenda médical</h1>
-            </div>
-            <p class="desc-hero-medecin">
-                Gestion des consultations programmées, suivi des disponibilités et pilotage de vos créneaux de soins en direct.
-            </p>
+<div class="entete-agenda-pro">
+    <div>
+        <div class="badge-agenda-subtil">
+            {% icone "calendar" %}
+            <span>Planning &amp; Consultations</span>
+            <span>&bull;</span>
+            <span>SantéSN Pro</span>
         </div>
-        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-            <a class="btn-hero-retour" href="{% url 'dashboard_medecin' %}">
-                {% icone "chevron-left" %} Tableau de bord
-            </a>
-            <a class="button primary" href="{% url 'ajouter_consultation_medecin' %}?mode=spontane" style="box-shadow: 0 4px 14px rgba(14, 124, 134, 0.35);">
-                {% icone "plus-circle" %} Consultation spontanée / Urgence
-            </a>
-        </div>
+        <h1 class="titre-agenda-pro">Mon agenda médical</h1>
+        <p class="desc-agenda-pro">
+            Gestion des consultations programmées, suivi des disponibilités et pilotage de vos créneaux de soins en direct.
+        </p>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <a class="btn-agenda-retour" href="{% url 'dashboard_medecin' %}">
+            {% icone "chevron-left" %} Tableau de bord
+        </a>
+        <a class="button primary" href="{% url 'ajouter_consultation_medecin' %}?mode=spontane" style="box-shadow: 0 4px 14px rgba(14, 124, 134, 0.25);">
+            {% icone "plus-circle" %} Consultation spontanée / Urgence
+        </a>
     </div>
 </div>
 
