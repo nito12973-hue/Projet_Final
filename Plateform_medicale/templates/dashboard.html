@@ -4,12 +4,93 @@
 {% block title %}Tableau de bord - Administrateur{% endblock %}
 
 {% block content %}
-<section class="page-title">
-    <div>
-        <h1>{% salutation %}, {% nom_accueil user %}</h1>
-        <p class="subtitle">Vue d'ensemble de la plateforme — {% now "l j F Y" %}</p>
+<style>
+    .banniere-admin-hero {
+        position: relative;
+        overflow: hidden;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #0b2027 0%, #11333e 50%, #164654 100%);
+        padding: 28px 32px;
+        color: #ffffff;
+        box-shadow: 0 12px 36px -4px rgba(11, 32, 39, 0.22);
+        margin-bottom: 24px;
+    }
+    .banniere-admin-hero::after {
+        content: "";
+        position: absolute;
+        top: -40px;
+        right: -40px;
+        width: 220px;
+        height: 220px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(79, 184, 174, 0.28) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    .hero-admin-conteneur {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    .badge-admin-hero {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(8px);
+        padding: 4px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        font-size: 12px;
+        font-weight: 600;
+        color: #79dba9;
+        margin-bottom: 8px;
+    }
+    .titre-hero-admin-dash h1 {
+        margin: 0 0 6px;
+        font-size: 24px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: #ffffff;
+    }
+    .desc-hero-admin-dash {
+        margin: 0;
+        font-size: 13.5px;
+        color: rgba(231, 236, 243, 0.82);
+        max-width: 600px;
+        line-height: 1.45;
+    }
+    @media (max-width: 768px) {
+        .banniere-admin-hero {
+            padding: 22px 20px;
+        }
+        .titre-hero-admin-dash h1 {
+            font-size: 20px;
+        }
+    }
+</style>
+
+<div class="banniere-admin-hero">
+    <div class="hero-admin-conteneur">
+        <div>
+            <div class="badge-admin-hero">
+                {% icone "shield-check" %}
+                <span>Administration Centrale</span>
+                <span>&bull;</span>
+                <span>Supervision SantéSN</span>
+            </div>
+            <div class="titre-hero-admin-dash">
+                <h1>{% salutation %}, {% nom_accueil user %}</h1>
+            </div>
+            <p class="desc-hero-admin-dash">
+                Vue d'ensemble de la plateforme SantéSN — {% now "l j F Y" %}. Pilotage des utilisateurs, conventionnements et flux tiers-payant.
+            </p>
+        </div>
     </div>
-</section>
+</div>
 
 {% if nb_comptes_bloques %}
 <a class="alerte-securite" href="{% url 'parametres_section' 'securite' %}#comptes-bloques">
