@@ -342,6 +342,94 @@ def supprimer_prise_en_charge(request, pk):
     )
 
 
+def _verifier_acces_bon_pec(user, prise_en_charge):
+    role = getattr(user, "role", None)
+    est_admin = user.is_staff or role == User.Role.ADMIN
+    est_assure = False
+    if role == User.Role.ASSURE and hasattr(user, "patient"):
+        patient_assure = user.patient
+        est_assure = (
+            prise_en_charge.patient == patient_assure
+            or prise_en_charge.patient.assure_principal == patient_assure
+        )
+    est_medecin = (role == User.Role.MEDECIN)
+    est_pharmacien = (role == User.Role.PHARMACIEN)
+    if not (est_admin or est_assure or est_medecin or est_pharmacien):
+        raise PermissionDenied("Vous n'êtes pas autorisé à consulter ce bon de prise en charge.")
+    return role
+
+
+@login_required
+def voir_bon_prise_en_charge(request, pk):
+    """Affiche la feuille officielle du Bon de Prise en Charge à l'écran (style ordonnance, épuré et imprimable)."""
+    prise_en_charge = get_object_or_404(
+        PriseEnCharge.objects.select_related(
+            "patient",
+            "patient__plan_couverture",
+            "patient__assure_principal",
+            "patient__assure_principal__plan_couverture",
+            "valide_par",
+        ),
+        pk=pk,
+    )
+    role = _verifier_acces_bon_pec(request.user, prise_en_charge)
+
+    patient = prise_en_charge.patient
+    plan = patient.titulaire.plan_couverture
+    taux = patient.taux_couverture or 80
+    num_bon = prise_en_charge.numero_pec or f"PEC-{prise_en_charge.pk:06d}"
+
+    est_validee = (prise_en_charge.statut == "validee")
+    statut_libelle = "GARANTIE TIERS-PAYANT ACCORDÉE (VALIDÉ)" if est_validee else f"DEMANDE EN COURS D'INSTRUCTION ({prise_en_charge.get_statut_display().upper()})"
+
+    qualite_txt = "Assuré principal" if not patient.est_ayant_droit else f"Ayant droit ({patient.get_lien_parente_display()}) de {patient.assure_principal.nom_complet}"
+    motif_affiche = prise_en_charge.motif.strip() or "Soins et consultations selon devis remis."
+
+    montant_devis_txt = f"{int(prise_en_charge.montant_estime):,} FCFA".replace(",", " ") if prise_en_charge.montant_estime else "Sur justificatif de facture conforme"
+    part_ass_txt = f"{int(prise_en_charge.montant_part_assurance):,} FCFA".replace(",", " ") if prise_en_charge.montant_part_assurance else f"{taux}% du montant facturé"
+    part_pat_txt = f"{int(prise_en_charge.montant_part_patient):,} FCFA".replace(",", " ") if prise_en_charge.montant_part_patient else f"{100 - taux}% (Ticket modérateur)"
+    devis_joint_txt = "Devis certifié numérisé (archivé sur SantéSN)" if prise_en_charge.devis_fichier else "Devis papier vérifié par l'IPM"
+
+    date_jour = timezone.now().strftime("%d/%m/%Y à %H:%M")
+    date_demande_str = prise_en_charge.date_demande.strftime("%d/%m/%Y")
+    date_val_str = prise_en_charge.date_validation.strftime("%d/%m/%Y à %H:%M") if prise_en_charge.date_validation else "En attente"
+    valideur = prise_en_charge.valide_par.get_full_name() or prise_en_charge.valide_par.email if prise_en_charge.valide_par else "Administration IPM"
+
+    # URL de retour selon le rôle
+    if role == User.Role.ASSURE:
+        retour_url = "mes_prises_en_charge_assure"
+    elif role == User.Role.MEDECIN:
+        retour_url = "agenda_medecin"
+    else:
+        retour_url = "liste_prises_en_charge"
+
+    # QR Code SVG d'authenticité optique
+    url_scan = request.build_absolute_uri(reverse("carte_scan", args=[patient.numero_carte]))
+    qr_svg = patient.qr_svg(url_scan, taille_mm=28)
+
+    contexte = {
+        "prise_en_charge": prise_en_charge,
+        "patient": patient,
+        "plan": plan,
+        "taux": taux,
+        "num_bon": num_bon,
+        "statut_libelle": statut_libelle,
+        "qualite_txt": qualite_txt,
+        "motif_affiche": motif_affiche,
+        "montant_devis_txt": montant_devis_txt,
+        "part_ass_txt": part_ass_txt,
+        "part_pat_txt": part_pat_txt,
+        "devis_joint_txt": devis_joint_txt,
+        "date_jour": date_jour,
+        "date_demande_str": date_demande_str,
+        "date_val_str": date_val_str,
+        "valideur": valideur,
+        "qr_svg": qr_svg,
+        "retour_url": retour_url,
+    }
+    return render(request, "voir_bon_prise_en_charge.html", contexte)
+
+
 @login_required
 def telecharger_bon_prise_en_charge_pdf(request, pk):
     """Génère le Bon de Prise en Charge officiel / Lettre de garantie en PDF (ReportLab)."""

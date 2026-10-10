@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+{% load formats icones %}
+
+{% block title %}Bon de Prise en Charge {{ num_bon }} — SantéSN{% endblock %}
+
+{% block content %}
+<section class="page-title sans-impression">
+    <div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <h1 style="margin:0;">Accord de Prise en Charge</h1>
+            <span class="code" style="font-size:14px;padding:3px 8px;border-radius:6px;background:var(--surface);border:1px solid var(--border);">{{ num_bon }}</span>
+            {% if prise_en_charge.statut == 'validee' %}
+            <span class="badge validee">{% icone "check" %} Validé &bull; Accord Actif</span>
+            {% elif prise_en_charge.statut == 'refusee' %}
+            <span class="badge refusee">{% icone "x" %} Refusé</span>
+            {% else %}
+            <span class="badge en_attente">{% icone "clock" %} En attente d'instruction</span>
+            {% endif %}
+        </div>
+        <p class="subtitle">Lettre de garantie officielle et attestation de dispense d'avance de frais (tiers-payant).</p>
+    </div>
+    <div class="actions">
+        <a class="button btn" href="{% url retour_url %}">{% icone "chevron-left" %} Retour</a>
+        <a class="button btn" href="{% url 'telecharger_bon_prise_en_charge_pdf' prise_en_charge.pk %}" target="_blank">
+            {% icone "download" %} Télécharger PDF
+        </a>
+        <button type="button" class="button primary" id="bouton-imprimer-bon">
+            {% icone "printer" %} Imprimer le bon
+        </button>
+    </div>
+</section>
+
+{% if prise_en_charge.statut == 'refusee' %}
+<div class="alert alert-danger sans-impression" style="margin-bottom: 1.5rem; border-left: 4px solid var(--danger); padding: 1rem 1.25rem; border-radius: 10px; background: var(--refus-bg); color: var(--refus-fg);">
+    <strong style="color: var(--danger);">Statut : Demande refusée</strong><br>
+    <span>Cette demande de prise en charge a été refusée par l'administration IPM.</span><br>
+    {% if prise_en_charge.motif_refus %}
+    <span style="font-weight: 500;">Motif indiqué : {{ prise_en_charge.motif_refus }}</span>
+    {% endif %}
+</div>
+{% elif prise_en_charge.statut == 'en_attente' %}
+<div class="alert alert-warning sans-impression" style="margin-bottom: 1.5rem; border-left: 4px solid var(--warning); padding: 1rem 1.25rem; border-radius: 10px; background: var(--attente-bg); color: var(--attente-fg);">
+    <strong>Statut : En cours d'instruction</strong><br>
+    <span>Ce dossier est en attente de validation administrative. L'accord de dispense d'avance de frais ne sera effectif qu'après validation.</span>
+</div>
+{% endif %}
+
+<article class="feuille" style="max-width: 800px; margin: 0 auto; background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; border-radius: 12px; padding: 36px 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+
+    <!-- 1. En-tête officiel de la République & SantéSN -->
+    <header style="display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 14px; border-bottom: 1.5px solid #0f172a; margin-bottom: 16px; gap: 16px;">
+        <div>
+            <p style="margin: 0; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #0f172a;">RÉPUBLIQUE DU SÉNÉGAL</p>
+            <p style="margin: 2px 0 0; font-size: 10px; color: #64748b; line-height: 1.4;">
+                Plateforme Nationale SantéSN de Tiers Payant Médical<br>
+                Protection des Données Personnelles (Loi 2008-12 CDP)
+            </p>
+        </div>
+        <div style="text-align: right;">
+            <div style="font-size: 16px; font-weight: 800; color: #0e7c86; letter-spacing: -0.02em;">
+                SANTÉ<span style="color: #0f172a;">SN</span>
+            </div>
+            <p style="margin: 2px 0 0; font-size: 10px; color: #64748b;">
+                Réf. Accord : <strong style="color: #0f172a; font-family: monospace;">{{ num_bon }}</strong><br>
+                Émis le {{ date_jour }}
+            </p>
+        </div>
+    </header>
+
+    <!-- 2. Titre et Sous-titre du document -->
+    <div style="text-align: center; margin-bottom: 16px;">
+        <h2 style="margin: 0; font-size: 17px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: #0f172a;">
+            BON DE PRISE EN CHARGE MÉDICALE
+        </h2>
+        <p style="margin: 3px 0 0; font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">
+            LETTRE DE GARANTIE &amp; ATTESTATION DE DISPENSE D'AVANCE DE FRAIS (TIERS PAYANT)
+        </p>
+    </div>
+
+    <!-- 3. Bandeau décisionnel sobre -->
+    <div style="background: #f8fafc; border: 1px solid #0f172a; border-radius: 6px; padding: 8px 14px; text-align: center; margin-bottom: 18px;">
+        <span style="font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: #0f172a;">
+            DÉCISION : {{ statut_libelle }}
+        </span>
+    </div>
+
+    <!-- 4. Section 1 : Bénéficiaire et couverture -->
+    <div style="margin-bottom: 16px;">
+        <h3 style="margin: 0 0 6px; font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: #0f172a;">
+            1. IDENTIFICATION DU BÉNÉFICIAIRE &amp; PLAN DE COUVERTURE
+        </h3>
+        <table style="width: 100%; border-collapse: collapse; font-size: 11.5px; border: 1px solid #cbd5e1;">
+            <tbody>
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 7px 12px; background: #f8fafc; width: 22%; font-weight: 700; color: #334155;">Nom &amp; Prénom :</td>
+                    <td style="padding: 7px 12px; width: 28%; font-weight: 800; color: #0f172a; text-transform: uppercase;">{{ patient.nom_complet }}</td>
+                    <td style="padding: 7px 12px; background: #f8fafc; width: 22%; font-weight: 700; color: #334155;">N° Carte Assuré :</td>
+                    <td style="padding: 7px 12px; width: 28%; font-weight: 800; font-family: monospace; color: #0f172a;">{{ patient.numero_carte|default:"N/A" }}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 7px 12px; background: #f8fafc; font-weight: 700; color: #334155;">Qualité :</td>
+                    <td style="padding: 7px 12px; color: #334155;">{{ qualite_txt }}</td>
+                    <td style="padding: 7px 12px; background: #f8fafc; font-weight: 700; color: #334155;">Date de naissance :</td>
+                    <td style="padding: 7px 12px; color: #334155;">
+                        {% if patient.date_naissance %}{{ patient.date_naissance|date:"d/m/Y" }} ({{ patient.age }} ans){% else %}N/A{% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 7px 12px; background: #f8fafc; font-weight: 700; color: #334155;">Régime / Plan IPM :</td>
+                    <td style="padding: 7px 12px; color: #334155;">{{ plan.nom|default:"Régime Conventionné SantéSN" }}</td>
+                    <td style="padding: 7px 12px; background: #f8fafc; font-weight: 700; color: #334155;">Taux Garanti IPM :</td>
+                    <td style="padding: 7px 12px; font-weight: 800; color: #0f172a;">{{ taux }}% (Garantie de tiers payant)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 5. Section 2 : Prestations et montants -->
+    <div style="margin-bottom: 18px;">
+        <h3 style="margin: 0 0 6px; font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: #0f172a;">
+            2. DÉTAILS DES PRESTATIONS COUVERTES &amp; VENTILATION TARIFAIRE
+        </h3>
+        <table style="width: 100%; border-collapse: collapse; font-size: 11.5px; border: 1px solid #cbd5e1;">
+            <tbody>
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 7px 12px; background: #f8fafc; width: 32%; font-weight: 700; color: #334155;">Objet des soins / Actes :</td>
+                    <td style="padding: 7px 12px; color: #0f172a;">{{ motif_affiche }}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 7px 12px; background: #f8fafc; font-weight: 700; color: #334155;">Montant estimé des actes :</td>
+                    <td style="padding: 7px 12px; font-weight: 800; color: #0f172a;">{{ montant_devis_txt }}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 7px 12px; background: #f8fafc; font-weight: 700; color: #334155;">Part garantie par l'IPM :</td>
+                    <td style="padding: 7px 12px; font-weight: 800; color: #0f172a;">
+                        {{ part_ass_txt }} <span style="font-size: 10.5px; font-weight: 500; color: #64748b;">— Pris en charge en tiers-payant (dispense d'avance)</span>
+                    </td>
+                </tr>
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 7px 12px; background: #f8fafc; font-weight: 700; color: #334155;">Ticket modérateur (patient) :</td>
+                    <td style="padding: 7px 12px; font-weight: 700; color: #334155;">
+                        {{ part_pat_txt }} <span style="font-size: 10.5px; font-weight: 500; color: #64748b;">— Reste à régler directement au prestataire</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 7px 12px; background: #f8fafc; font-weight: 700; color: #334155;">Pièce justificative :</td>
+                    <td style="padding: 7px 12px; color: #64748b;">
+                        {{ devis_joint_txt }}
+                        {% if prise_en_charge.devis_fichier %}
+                        &bull; <a href="{{ prise_en_charge.devis_fichier.url }}" target="_blank" class="sans-impression" style="color: #0e7c86; text-decoration: underline; font-weight: 600;">Consulter la pièce originale</a>
+                        {% endif %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 6. Section 3 : Certification, Cachets & QR Code -->
+    <div style="margin-bottom: 18px;">
+        <h3 style="margin: 0 0 6px; font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: #0f172a;">
+            3. CERTIFICATION, SIGNATURES &amp; CONTRÔLE D'AUTHENTICITÉ
+        </h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr auto; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; background: #ffffff;">
+            
+            <!-- Décision IPM -->
+            <div style="padding: 12px 14px; border-right: 1px solid #e2e8f0; font-size: 10.5px; line-height: 1.5; color: #334155;">
+                <strong style="color: #0f172a; font-size: 11px; display: block; margin-bottom: 4px;">Décision de l'administration IPM</strong>
+                &bull; Soumise le : {{ date_demande_str }}<br>
+                &bull; Décision validée le : {{ date_val_str }}<br>
+                &bull; Validateur : {{ valideur }}<br>
+                &bull; Référence sécurisée : <strong style="font-family: monospace;">{{ num_bon }}</strong><br>
+                <span style="font-size: 9.5px; color: #64748b; font-style: italic;">Fait foi auprès des cliniques, hôpitaux et officines partenaires.</span>
+            </div>
+
+            <!-- Cadre cachet de l'établissement de soins -->
+            <div style="padding: 12px 14px; border-right: 1px solid #e2e8f0; font-size: 10.5px; color: #64748b; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <strong style="color: #0f172a; font-size: 11px; display: block; margin-bottom: 2px;">Cadre réservé à l'établissement</strong>
+                    <span>Date de réception &amp; Cachet de la structure :</span>
+                </div>
+                <div style="min-height: 40px; border-bottom: 1px dashed #cbd5e1; margin-top: 10px;"></div>
+            </div>
+
+            <!-- QR Code de vérification optique -->
+            <div style="padding: 10px 14px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f8fafc;">
+                {{ qr_svg|safe }}
+                <span style="font-size: 9px; font-family: monospace; color: #0f172a; font-weight: 700; margin-top: 4px;">{{ num_bon }}</span>
+                <span style="font-size: 8px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Contrôle optique</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. Conditions générales légales (Pied de page) -->
+    <footer style="padding-top: 10px; border-top: 1px solid #e2e8f0; font-size: 9px; line-height: 1.4; color: #64748b; text-align: justify;">
+        <strong style="color: #0f172a;">CONDITIONS GÉNÉRALES DE TIERS PAYANT :</strong>
+        1. Le présent bon est strictement personnel et incessible. Il dispense le bénéficiaire de l'avance des frais de soins à concurrence de la part garantie par l'IPM.
+        2. L'établissement de santé conventionné s'engage à appliquer les tarifs de la convention IPM et à télétransmettre sa facture en joignant cette référence d'accord.
+        3. Données de santé protégées conformément à la Loi 2008-12 relative à la protection des données à caractère personnel (CDP Sénégal) &bull; SantéSN &copy; 2026.
+    </footer>
+
+</article>
+
+<style>
+@media print {
+    .sans-impression, nav, .navigation, header.site-header, footer.site-footer, .bandeau-notif {
+        display: none !important;
+    }
+    body, main {
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .feuille {
+        box-shadow: none !important;
+        border: 1px solid #000000 !important;
+        max-width: 100% !important;
+        padding: 20px !important;
+        margin: 0 !important;
+    }
+}
+</style>
+
+<script>
+    (function () {
+        var bouton = document.getElementById('bouton-imprimer-bon');
+        if (bouton) {
+            bouton.addEventListener('click', function () {
+                window.print();
+            });
+        }
+    })();
+</script>
+{% endblock %}
