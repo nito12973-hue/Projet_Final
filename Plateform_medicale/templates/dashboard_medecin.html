@@ -111,6 +111,168 @@
         box-shadow: 0 6px 18px rgba(14, 124, 134, 0.45);
         color: #ffffff;
     }
+    /* =========================================================
+       CARTES STATISTIQUES MÉDECIN (DESIGN MODERNE & VISUEL)
+       ========================================================= */
+    .med-stats-grille {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 20px;
+        margin-bottom: 26px;
+    }
+    .med-stat-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 22px 24px;
+        box-shadow: 0 4px 18px rgba(11, 32, 39, 0.05);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease, border-color 0.22s ease;
+    }
+    .med-stat-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: transparent;
+        transition: background 0.2s ease;
+    }
+    .med-stat-card.rdv-card::before { background: linear-gradient(90deg, #0e7c86, #4fb8ae); }
+    .med-stat-card.attente-card::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+    .med-stat-card.actes-card::before { background: linear-gradient(90deg, #10b981, #34d399); }
+
+    .med-stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 30px rgba(11, 32, 39, 0.09);
+        border-color: rgba(14, 124, 134, 0.35);
+    }
+
+    .med-stat-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+    }
+    .med-stat-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 19px;
+    }
+    .med-stat-icon.rdv-icon {
+        background: rgba(14, 124, 134, 0.12);
+        color: var(--primary-strong);
+    }
+    .med-stat-icon.attente-icon {
+        background: rgba(245, 158, 11, 0.14);
+        color: #b45309;
+    }
+    .med-stat-icon.actes-icon {
+        background: rgba(16, 185, 129, 0.14);
+        color: #047857;
+    }
+
+    .med-stat-badge {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        padding: 4px 10px;
+        border-radius: 999px;
+    }
+    .med-stat-badge.rdv-badge {
+        background: var(--champ-bg);
+        color: var(--muted);
+        border: 1px solid var(--border);
+    }
+    .med-stat-badge.attente-badge.urgent {
+        background: #fef2f2;
+        color: #dc2626;
+        border: 1px solid #fecaca;
+    }
+    .med-stat-badge.attente-badge.ok {
+        background: #ecfdf5;
+        color: #059669;
+        border: 1px solid #a7f3d0;
+    }
+    .med-stat-badge.actes-badge {
+        background: var(--champ-bg);
+        color: var(--muted);
+        border: 1px solid var(--border);
+    }
+
+    .med-stat-corps {
+        margin-bottom: 16px;
+    }
+    .med-stat-titre {
+        display: block;
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--muted);
+        margin-bottom: 6px;
+    }
+    .med-stat-valeur-wrap {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+    }
+    .med-stat-chiffre {
+        font-size: 38px;
+        font-weight: 800;
+        color: var(--titre);
+        font-variant-numeric: tabular-nums;
+        line-height: 1;
+        letter-spacing: -0.02em;
+    }
+    .med-stat-chiffre.warning {
+        color: #b45309;
+    }
+    .med-stat-chiffre.success {
+        color: #047857;
+    }
+    :root[data-theme="sombre"] .med-stat-chiffre.warning { color: #fbbf24; }
+    :root[data-theme="sombre"] .med-stat-chiffre.success { color: #34d399; }
+
+    .med-stat-unite {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--muted);
+    }
+
+    .med-stat-pied {
+        padding-top: 12px;
+        border-top: 1px solid var(--border);
+    }
+    .med-stat-lien {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--primary);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: gap 0.18s ease, color 0.18s ease;
+    }
+    .med-stat-lien:hover {
+        gap: 10px;
+        color: var(--primary-strong);
+    }
+    .med-stat-lien.warning { color: #b45309; }
+    .med-stat-lien.warning:hover { color: #92400e; }
+    .med-stat-lien.success { color: #047857; }
+    .med-stat-lien.success:hover { color: #065f46; }
+    :root[data-theme="sombre"] .med-stat-lien.warning { color: #fbbf24; }
+    :root[data-theme="sombre"] .med-stat-lien.success { color: #34d399; }
+
     @media (max-width: 768px) {
         .banniere-medecin-hero {
             padding: 22px 20px;
@@ -125,6 +287,10 @@
         .btn-hero-medecin-urgence {
             width: 100%;
             justify-content: center;
+        }
+        .med-stats-grille {
+            grid-template-columns: 1fr;
+            gap: 14px;
         }
     }
 </style>
@@ -189,64 +355,71 @@
     </div>
 </section>
 
-{# Grille des 3 indicateurs clés d'activité #}
-<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:18px;margin-bottom:24px;">
+{# Grille des 3 indicateurs clés d'activité (Design Premium & Visuel) #}
+<div class="med-stats-grille">
     {# 1. Rendez-vous aujourd'hui #}
-    <div class="dash-assure-card">
-        <div class="dash-card-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-            <strong style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--titre);">
-                <span class="dash-card-icon">{% icone "calendar" %}</span>
-                Rendez-vous aujourd'hui
-            </strong>
+    <div class="med-stat-card rdv-card">
+        <div class="med-stat-top">
+            <span class="med-stat-icon rdv-icon">{% icone "calendar" %}</span>
+            <span class="med-stat-badge rdv-badge">Aujourd'hui</span>
         </div>
-        <div>
-            <p style="margin:0 0 8px;font-size:32px;font-weight:800;color:var(--titre);font-variant-numeric:tabular-nums;line-height:1;">
-                {{ total_rendez_vous_du_jour }}
-            </p>
+        <div class="med-stat-corps">
+            <span class="med-stat-titre">Rendez-vous programmés</span>
+            <div class="med-stat-valeur-wrap">
+                <span class="med-stat-chiffre">{{ total_rendez_vous_du_jour }}</span>
+                <span class="med-stat-unite">patient{{ total_rendez_vous_du_jour|pluralize }}</span>
+            </div>
         </div>
-        <div style="padding-top:8px;border-top:1px solid var(--border);">
-            <a href="{% url 'agenda_medecin' %}" style="font-size:12.5px;font-weight:600;color:var(--primary);text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
-                Consulter l'agenda &rarr;
+        <div class="med-stat-pied">
+            <a href="{% url 'agenda_medecin' %}" class="med-stat-lien">
+                <span>Consulter l'agenda complet</span>
+                {% icone "chevron-right" %}
             </a>
         </div>
     </div>
 
     {# 2. Demandes en attente #}
-    <div class="dash-assure-card">
-        <div class="dash-card-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-            <strong style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--titre);">
-                <span class="dash-card-icon" style="background:var(--attente-bg);color:var(--warning);">{% icone "clock-history" %}</span>
-                Demandes en attente
-            </strong>
+    <div class="med-stat-card attente-card">
+        <div class="med-stat-top">
+            <span class="med-stat-icon attente-icon">{% icone "clock-history" %}</span>
+            {% if nb_demandes_en_attente > 0 %}
+            <span class="med-stat-badge attente-badge urgent">À traiter</span>
+            {% else %}
+            <span class="med-stat-badge attente-badge ok">À jour</span>
+            {% endif %}
         </div>
-        <div>
-            <p id="nb-demandes-attente-val" style="margin:0 0 8px;font-size:32px;font-weight:800;color:var(--titre);font-variant-numeric:tabular-nums;line-height:1;">
-                {{ nb_demandes_en_attente }}
-            </p>
+        <div class="med-stat-corps">
+            <span class="med-stat-titre">Demandes en attente</span>
+            <div class="med-stat-valeur-wrap">
+                <span id="nb-demandes-attente-val" class="med-stat-chiffre warning">{{ nb_demandes_en_attente }}</span>
+                <span class="med-stat-unite">demande{{ nb_demandes_en_attente|pluralize }}</span>
+            </div>
         </div>
-        <div style="padding-top:8px;border-top:1px solid var(--border);">
-            <a href="{% url 'agenda_medecin' %}?statut=DEMANDE" style="font-size:12.5px;font-weight:600;color:var(--primary);text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
-                Demandes de rendez-vous &rarr;
+        <div class="med-stat-pied">
+            <a href="{% url 'agenda_medecin' %}?statut=DEMANDE" class="med-stat-lien warning">
+                <span>Demandes de rendez-vous</span>
+                {% icone "chevron-right" %}
             </a>
         </div>
     </div>
 
     {# 3. Consultations enregistrées #}
-    <div class="dash-assure-card">
-        <div class="dash-card-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-            <strong style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--titre);">
-                <span class="dash-card-icon" style="background:var(--ok-bg);color:var(--ok);">{% icone "activity" %}</span>
-                Consultations enregistrées
-            </strong>
+    <div class="med-stat-card actes-card">
+        <div class="med-stat-top">
+            <span class="med-stat-icon actes-icon">{% icone "activity" %}</span>
+            <span class="med-stat-badge actes-badge">Cumul</span>
         </div>
-        <div>
-            <p style="margin:0 0 8px;font-size:32px;font-weight:800;color:var(--titre);font-variant-numeric:tabular-nums;line-height:1;">
-                {{ total_consultations }}
-            </p>
+        <div class="med-stat-corps">
+            <span class="med-stat-titre">Consultations honorées</span>
+            <div class="med-stat-valeur-wrap">
+                <span class="med-stat-chiffre success">{{ total_consultations }}</span>
+                <span class="med-stat-unite">actes</span>
+            </div>
         </div>
-        <div style="padding-top:8px;border-top:1px solid var(--border);">
-            <a href="{% url 'historique_consultations' %}" style="font-size:12.5px;font-weight:600;color:var(--primary);text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
-                Historique des actes &rarr;
+        <div class="med-stat-pied">
+            <a href="{% url 'historique_consultations' %}" class="med-stat-lien success">
+                <span>Historique des actes</span>
+                {% icone "chevron-right" %}
             </a>
         </div>
     </div>
