@@ -349,10 +349,14 @@ def notifier_ordonnance_creee(ordonnance):
     patient = ordonnance.consultation.patient
     assure_user = _obtenir_utilisateur_assure(patient)
     if assure_user:
+        medecin = ordonnance.consultation.medecin
+        structure = f" ({medecin.prestataire.nom})" if medecin and medecin.prestataire else ""
+        nb_lignes = ordonnance.lignes.count()
+        detail_presc = f" comprenant {nb_lignes} médicament(s)" if nb_lignes > 0 else ""
         emettre_notification(
             destinataire=assure_user,
-            titre="Nouvelle ordonnance disponible",
-            message=f"Une nouvelle ordonnance a été rédigée par {ordonnance.consultation.medecin}.",
+            titre="Nouvelle ordonnance médicale disponible",
+            message=f"Le Dr {medecin}{structure} a rédigé une ordonnance{detail_presc} (Réf. {ordonnance.code_qr}). Vous pouvez la consulter et la présenter en pharmacie.",
             type_evenement=Notification.TypeEvenement.ORDONNANCE_CREEE,
             url_action=reverse("voir_ordonnance_assure", args=[ordonnance.pk]),
             template_email="emails/ordonnance_creee.html",
@@ -367,11 +371,12 @@ def notifier_delivrance_effectuee(delivrance):
 
     assure_user = _obtenir_utilisateur_assure(patient)
     if assure_user:
-        nom_ph = delivrance.pharmacien.prestataire.nom if delivrance.pharmacien.prestataire else 'partenaire'
+        nom_ph = delivrance.pharmacien.prestataire.nom if delivrance.pharmacien.prestataire else "partenaire"
+        total_fcfa = f" pour un montant de {delivrance.montant_total:,.0f} FCFA".replace(",", " ") if getattr(delivrance, "montant_total", None) else ""
         emettre_notification(
             destinataire=assure_user,
-            titre="Médicaments délivrés",
-            message=f"Vos médicaments de l'ordonnance du {ordonnance.date_creation:%d/%m/%Y} ont été délivrés par la pharmacie {nom_ph}.",
+            titre="Dispensation pharmaceutique confirmée",
+            message=f"Vos médicaments de l'ordonnance (Réf. {ordonnance.code_qr}) ont été délivrés par la pharmacie « {nom_ph} »{total_fcfa}.",
             type_evenement=Notification.TypeEvenement.DELIVRANCE_EFFECTUEE,
             url_action=reverse("voir_ordonnance_assure", args=[ordonnance.pk]),
             template_email="emails/delivrance_effectuee.html",
@@ -382,11 +387,13 @@ def notifier_delivrance_effectuee(delivrance):
 def notifier_demande_prise_en_charge(prise_en_charge):
     """Déclenché lorsqu'une demande de prise en charge est soumise."""
     admins = User.objects.filter(role=User.Role.ADMIN)
+    pec_ref = getattr(prise_en_charge, "numero_prise_en_charge", None) or f"PEC-#{prise_en_charge.pk}"
+    montant_str = f" — Montant estimé : {prise_en_charge.montant_estime:,.0f} FCFA".replace(",", " ") if getattr(prise_en_charge, "montant_estime", None) else ""
     for admin in admins:
         emettre_notification(
             destinataire=admin,
-            titre="Nouvelle demande de prise en charge",
-            message=f"Une demande de prise en charge pour {prise_en_charge.patient} ({prise_en_charge.motif}) est en attente de validation.",
+            titre=f"Demande de prise en charge ({pec_ref})",
+            message=f"Nouvelle demande de prise en charge ({pec_ref}) soumise pour {prise_en_charge.patient} (Motif : {prise_en_charge.motif}{montant_str}). En attente de validation administrative.",
             type_evenement=Notification.TypeEvenement.PEC_DEMANDE,
             url_action=reverse("liste_prises_en_charge"),
             template_email="emails/pec_demande_admin.html",
@@ -399,12 +406,15 @@ def notifier_validation_prise_en_charge(prise_en_charge):
     patient = prise_en_charge.patient
     assure_user = _obtenir_utilisateur_assure(patient)
     if assure_user:
+        pec_ref = getattr(prise_en_charge, "numero_prise_en_charge", None) or f"PEC-#{prise_en_charge.pk}"
+        taux_str = f" avec une couverture de {prise_en_charge.taux_couverture}%" if getattr(prise_en_charge, "taux_couverture", None) else ""
+        montant_couv_str = f" ({prise_en_charge.montant_couvert:,.0f} FCFA pris en charge)".replace(",", " ") if getattr(prise_en_charge, "montant_couvert", None) else ""
         emettre_notification(
             destinataire=assure_user,
-            titre="Prise en charge accordée",
-            message=f"Votre demande de prise en charge ({prise_en_charge.motif}) a été accordée par l'administration.",
+            titre=f"Bon de prise en charge accordé ({pec_ref})",
+            message=f"Votre demande de prise en charge « {prise_en_charge.motif} » ({pec_ref}) a été accordée par l'administration{taux_str}{montant_couv_str}. Votre bon officiel est disponible en ligne.",
             type_evenement=Notification.TypeEvenement.PEC_VALIDEE,
-            url_action=reverse("mes_prises_en_charge_assure"),
+            url_action=reverse("voir_bon_prise_en_charge", args=[prise_en_charge.pk]),
             template_email="emails/pec_validee.html",
             contexte_email={"prise_en_charge": prise_en_charge, "patient": patient},
         )
@@ -415,11 +425,12 @@ def notifier_refus_prise_en_charge(prise_en_charge):
     patient = prise_en_charge.patient
     assure_user = _obtenir_utilisateur_assure(patient)
     if assure_user:
-        motif = prise_en_charge.motif_refus or 'Non spécifié'
+        pec_ref = getattr(prise_en_charge, "numero_prise_en_charge", None) or f"PEC-#{prise_en_charge.pk}"
+        motif = prise_en_charge.motif_refus or "Dossier non conforme aux critères de couverture"
         emettre_notification(
             destinataire=assure_user,
-            titre="Prise en charge refusée",
-            message=f"Votre demande de prise en charge n'a pas pu être accordée. Motif : {motif}.",
+            titre=f"Décision : Prise en charge non accordée ({pec_ref})",
+            message=f"Votre demande de prise en charge ({pec_ref} — « {prise_en_charge.motif} ») n'a pas pu être accordée. Motif notifié par l'administration : {motif}.",
             type_evenement=Notification.TypeEvenement.PEC_REFUSEE,
             url_action=reverse("mes_prises_en_charge_assure"),
             template_email="emails/pec_refusee.html",

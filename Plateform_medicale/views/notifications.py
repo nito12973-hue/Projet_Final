@@ -18,6 +18,8 @@ def envoyer_notification(request):
         form = EnvoyerNotificationForm(request.POST)
         if form.is_valid():
             message = form.cleaned_data["message"]
+            titre = (form.cleaned_data.get("titre") or "").strip() or "Notification administrative"
+            url_action = (form.cleaned_data.get("url_action") or "").strip()
             destinataire = form.cleaned_data["destinataire"]
             role = form.cleaned_data["role"]
 
@@ -26,9 +28,14 @@ def envoyer_notification(request):
             else:
                 destinataires = list(User.objects.filter(role=role, is_active=True))
 
-            Notification.objects.bulk_create(
-                [Notification(destinataire=u, message=message) for u in destinataires]
-            )
+            from ..services.notifications import emettre_notification
+            for u in destinataires:
+                emettre_notification(
+                    destinataire=u,
+                    titre=titre,
+                    message=message,
+                    url_action=url_action,
+                )
             messages.success(request, f"Notification envoyée à {len(destinataires)} utilisateur(s).")
             return redirect("liste_notifications_envoyees")
     else:

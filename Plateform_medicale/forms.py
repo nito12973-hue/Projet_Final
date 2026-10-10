@@ -861,6 +861,13 @@ class PatientCreationForm(PatientForm):
 class EnvoyerNotificationForm(forms.Form):
     """Envoi d'une notification a un utilisateur precis ou a tout un role."""
 
+    titre = forms.CharField(
+        max_length=150,
+        required=False,
+        label='Sujet / Titre de la notification',
+        widget=forms.TextInput(attrs={'placeholder': 'Ex: Information importante, Rappel administratif...'}),
+        help_text="Titre mis en avant pour l'utilisateur (par défaut: « Notification administrative »).",
+    )
     destinataire = forms.ModelChoiceField(
         queryset=User.objects.filter(is_active=True),
         required=False,
@@ -872,7 +879,17 @@ class EnvoyerNotificationForm(forms.Form):
         required=False,
         label='Ou : tous les utilisateurs de ce rôle',
     )
-    message = forms.CharField(widget=forms.Textarea(attrs={'rows': 4}), label='Message')
+    message = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 4, 'placeholder': 'Détaillez clairement l\'information ou la consigne...'}),
+        label='Message',
+    )
+    url_action = forms.CharField(
+        max_length=255,
+        required=False,
+        label='Lien d\'accès direct (optionnel)',
+        widget=forms.TextInput(attrs={'placeholder': 'Ex: /assure/prises-en-charge/ ou /espace/assure/'}),
+        help_text="Lien cliquable (« Accéder ») permettant à l'utilisateur de se rendre directement sur la page concernée.",
+    )
 
     def clean(self):
         cleaned_data = super().clean()
