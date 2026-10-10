@@ -389,11 +389,34 @@ def mes_rendez_vous_assure(request):
         "patient", "medecin", "prestataire"
     )
     rendez_vous, statut, periode = _filtrer_rendez_vous(request, rendez_vous)
+
+    # Événements pour le calendrier interactif mensuel
+    tous_rdv = RendezVous.objects.filter(patient__in=beneficiaires).select_related(
+        "patient", "medecin", "prestataire"
+    )
+    evenements_calendrier = [
+        {
+            "id": r.pk,
+            "date": r.date_heure.strftime("%Y-%m-%d"),
+            "heure": r.date_heure.strftime("%H:%M"),
+            "date_fr": r.date_heure.strftime("%d/%m/%Y"),
+            "beneficiaire": str(r.patient),
+            "medecin": f"Dr {r.medecin.nom}" if hasattr(r.medecin, "nom") else str(r.medecin),
+            "prestataire": str(r.prestataire) if r.prestataire else "Cabinet médical",
+            "motif": r.motif or "Consultation",
+            "statut": r.statut,
+            "statut_display": r.get_statut_display(),
+            "ics_url": reverse("telecharger_ics_rendez_vous", args=[r.pk]) if r.statut == RendezVous.Statut.CONFIRME else "",
+        }
+        for r in tous_rdv
+    ]
+
     return render(request, "mes_rendez_vous.html", {
         "rendez_vous": _paginer(request, rendez_vous),
         "statut_choisi": statut,
         "periode_choisie": periode,
         "statuts": RendezVous.Statut.choices,
+        "evenements_calendrier": evenements_calendrier,
     })
 
 
