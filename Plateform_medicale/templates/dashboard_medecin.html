@@ -4,22 +4,141 @@
 {% block title %}Espace Médecin — Dr {{ medecin.prenom }} {{ medecin.nom }}{% endblock %}
 
 {% block content %}
-<section class="page-title">
-    <div>
-        <h1>Bonjour Dr. {{ medecin.nom|default:user.last_name }}</h1>
-        <p class="subtitle">
-            {{ medecin.specialite|default:"Médecine générale" }}{% if medecin.prestataire %} &bull; {{ medecin.prestataire.nom }}{% endif %} &mdash; Vue d'ensemble de votre activité clinique du jour
-        </p>
+<style>
+    .banniere-medecin-hero {
+        position: relative;
+        overflow: hidden;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #0b2027 0%, #11333e 50%, #164654 100%);
+        padding: 28px 32px;
+        color: #ffffff;
+        box-shadow: 0 12px 36px -4px rgba(11, 32, 39, 0.22);
+        margin-bottom: 24px;
+    }
+    .banniere-medecin-hero::after {
+        content: "";
+        position: absolute;
+        top: -40px;
+        right: -40px;
+        width: 220px;
+        height: 220px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(79, 184, 174, 0.28) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    .hero-medecin-conteneur {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    .badge-medecin-hero {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(8px);
+        padding: 4px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        font-size: 12px;
+        font-weight: 600;
+        color: #79dba9;
+        margin-bottom: 8px;
+    }
+    .titre-hero-medecin-dash h1 {
+        margin: 0 0 6px;
+        font-size: 24px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: #ffffff;
+    }
+    .desc-hero-medecin-dash {
+        margin: 0;
+        font-size: 13.5px;
+        color: rgba(231, 236, 243, 0.82);
+        max-width: 600px;
+        line-height: 1.45;
+    }
+    .actions-hero-medecin {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    .btn-hero-medecin-agenda {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.14);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        color: #ffffff;
+        padding: 9px 18px;
+        border-radius: 11px;
+        font-size: 13.5px;
+        font-weight: 700;
+        text-decoration: none;
+        backdrop-filter: blur(8px);
+        transition: all 0.2s ease;
+    }
+    .btn-hero-medecin-agenda:hover {
+        background: rgba(255, 255, 255, 0.22);
+        border-color: rgba(255, 255, 255, 0.4);
+        transform: translateY(-1px);
+        color: #ffffff;
+    }
+    .btn-hero-medecin-urgence {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: linear-gradient(135deg, #0e7c86 0%, #095059 100%);
+        border: 1px solid rgba(79, 184, 174, 0.4);
+        color: #ffffff;
+        padding: 9px 18px;
+        border-radius: 11px;
+        font-size: 13.5px;
+        font-weight: 700;
+        text-decoration: none;
+        box-shadow: 0 4px 14px rgba(14, 124, 134, 0.35);
+        transition: all 0.2s ease;
+    }
+    .btn-hero-medecin-urgence:hover {
+        background: linear-gradient(135deg, #129aa7 0%, #0c616c 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(14, 124, 134, 0.45);
+        color: #ffffff;
+    }
+</style>
+
+<div class="banniere-medecin-hero">
+    <div class="hero-medecin-conteneur">
+        <div>
+            <div class="badge-medecin-hero">
+                {% icone "activity" %}
+                <span>Praticien Conventionné</span>
+                <span>&bull;</span>
+                <span>{{ medecin.specialite|default:"Médecine générale" }}{% if medecin.prestataire %} &bull; {{ medecin.prestataire.nom }}{% endif %}</span>
+            </div>
+            <div class="titre-hero-medecin-dash">
+                <h1>{% salutation %}, Dr {% nom_accueil user medecin %}</h1>
+            </div>
+            <p class="desc-hero-medecin-dash">
+                Vue d'ensemble de votre activité clinique du jour, suivi des consultations et gestion en temps réel de votre patientèle.
+            </p>
+        </div>
+        <div class="actions-hero-medecin">
+            <a class="btn-hero-medecin-agenda" href="{% url 'agenda_medecin' %}">
+                {% icone "calendar" %} Mon agenda
+            </a>
+            <a class="btn-hero-medecin-urgence" href="{% url 'ajouter_consultation_medecin' %}?mode=spontane">
+                {% icone "plus-circle" %} Consultation spontanée / Urgence
+            </a>
+        </div>
     </div>
-    <div class="actions">
-        <a class="button btn" href="{% url 'agenda_medecin' %}">
-            {% icone "calendar" %} Mon agenda
-        </a>
-        <a class="button primary" href="{% url 'ajouter_consultation_medecin' %}?mode=spontane">
-            {% icone "plus-circle" %} Consultation spontanée / Urgence
-        </a>
-    </div>
-</section>
+</div>
 
 {# Bannière d'alerte des demandes en attente (chargement initial) #}
 {% if nb_demandes_en_attente > 0 %}
