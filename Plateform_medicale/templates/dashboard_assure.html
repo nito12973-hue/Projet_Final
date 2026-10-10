@@ -4,19 +4,119 @@
 {% block title %}Espace Assuré — {{ patient }}{% endblock %}
 
 {% block content %}
-<section class="page-title">
-    <div>
-        <h1>Bonjour{% if patient.prenom %} {{ patient.prenom }}{% elif patient.nom %} {{ patient.nom }}{% elif user.first_name %} {{ user.first_name }}{% elif user.last_name %} {{ user.last_name }}{% endif %}</h1>
-        <p class="subtitle">Couverture IPM active à {{ patient.taux_couverture|default:"0" }}% &bull; N° {{ patient.numero_carte }}</p>
-    </div>
-    <div class="actions">
-        <a class="button primary btn" href="{% url 'prestataires_proches' %}">
-            {% icone "map-pin" %} Trouver un prestataire
-        </a>
-    </div>
-</section>
-
 <style>
+    .banniere-assure-hero {
+        position: relative;
+        overflow: hidden;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #0b2027 0%, #11333e 50%, #164654 100%);
+        padding: 28px 32px;
+        color: #ffffff;
+        box-shadow: 0 12px 36px -4px rgba(11, 32, 39, 0.22);
+        margin-bottom: 26px;
+    }
+    .banniere-assure-hero::after {
+        content: "";
+        position: absolute;
+        top: -40px;
+        right: -40px;
+        width: 220px;
+        height: 220px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(79, 184, 174, 0.28) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    .hero-assure-conteneur {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    .badge-matricule-hero {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(8px);
+        padding: 4px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        font-size: 12px;
+        font-weight: 600;
+        color: #79dba9;
+        margin-bottom: 8px;
+    }
+    .badge-matricule-hero strong {
+        color: #ffffff;
+        font-family: 'IBM Plex Mono', monospace;
+        letter-spacing: 0.04em;
+    }
+    .titre-hero-assure h1 {
+        margin: 0 0 6px;
+        font-size: 24px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: #ffffff;
+    }
+    .desc-hero-assure {
+        margin: 0;
+        font-size: 13.5px;
+        color: rgba(231, 236, 243, 0.82);
+        max-width: 580px;
+        line-height: 1.45;
+    }
+    .actions-hero-assure {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    .btn-hero-carte {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.14);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        color: #ffffff;
+        padding: 9px 18px;
+        border-radius: 11px;
+        font-size: 13.5px;
+        font-weight: 700;
+        text-decoration: none;
+        backdrop-filter: blur(8px);
+        transition: all 0.2s ease;
+    }
+    .btn-hero-carte:hover {
+        background: rgba(255, 255, 255, 0.22);
+        border-color: rgba(255, 255, 255, 0.4);
+        transform: translateY(-1px);
+        color: #ffffff;
+    }
+    .btn-hero-rdv {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: linear-gradient(135deg, #0e7c86 0%, #095059 100%);
+        border: 1px solid rgba(79, 184, 174, 0.4);
+        color: #ffffff;
+        padding: 9px 18px;
+        border-radius: 11px;
+        font-size: 13.5px;
+        font-weight: 700;
+        text-decoration: none;
+        box-shadow: 0 4px 14px rgba(14, 124, 134, 0.35);
+        transition: all 0.2s ease;
+    }
+    .btn-hero-rdv:hover {
+        background: linear-gradient(135deg, #129aa7 0%, #0c616c 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(14, 124, 134, 0.45);
+        color: #ffffff;
+    }
+
     .grille-assure-dashboard {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -28,21 +128,64 @@
             grid-template-columns: 1fr;
             gap: 20px;
         }
+        .banniere-assure-hero {
+            padding: 22px 20px;
+        }
+        .titre-hero-assure {
+            font-size: 20px;
+        }
+    .grille-assure-dashboard .panel {
+        transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease, border-color 0.22s ease;
+    }
+    .grille-assure-dashboard .panel:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 28px -4px rgba(11, 32, 39, 0.08), 0 3px 8px -2px rgba(11, 32, 39, 0.03);
+        border-color: rgba(14, 124, 134, 0.35);
     }
     .pill-medicament {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        padding: 4px 10px;
+        padding: 5px 11px;
         border-radius: 8px;
         background: var(--surface);
         border: 1px solid var(--border);
         font-size: 12.5px;
-        color: var(--texte);
-        font-weight: 500;
+        color: var(--text);
+        font-weight: 600;
+        box-shadow: 0 1px 3px rgba(11, 32, 39, 0.03);
+        transition: border-color 0.18s ease, transform 0.18s ease;
     }
-
+    .pill-medicament:hover {
+        border-color: var(--primary);
+        transform: translateY(-1px);
+    }
 </style>
+
+<div class="banniere-assure-hero">
+    <div class="hero-assure-conteneur">
+        <div>
+            <div class="badge-matricule-hero">
+                <span>Carte N°</span>
+                <strong>{{ patient.numero_carte }}</strong>
+                <span>&bull;</span>
+                <span>IPM {{ patient.titulaire.plan_couverture.nom|default:"Général" }}</span>
+            </div>
+            <div class="titre-hero-assure"><h1>Bonjour{% if patient.prenom %} {{ patient.prenom }}{% elif patient.nom %} {{ patient.nom }}{% elif user.first_name %} {{ user.first_name }}{% elif user.last_name %} {{ user.last_name }}{% endif %}</h1></div>
+            <p class="desc-hero-assure">
+                Votre prise en charge médicale est active à <strong style="color:#ffffff;">{{ patient.taux_couverture|default:"0" }}%</strong>. Retrouvez vos ordonnances sécurisées, préparez vos consultations et suivez vos accords tiers-payant en un clic.
+            </p>
+        </div>
+        <div class="actions-hero-assure">
+            <a href="{% url 'carte_assure' %}" class="btn-hero-carte">
+                {% icone "id-card" %} Ma carte QR
+            </a>
+            <a href="{% url 'ajouter_rendez_vous_assure' %}" class="btn-hero-rdv">
+                {% icone "calendar" %} Prendre RDV
+            </a>
+        </div>
+    </div>
+</div>
 
 <div class="grille-assure-dashboard">
     <!-- Colonne 1 : Mes Soins & Rendez-vous -->
