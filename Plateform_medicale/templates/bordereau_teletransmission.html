@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+{% load formats icones %}
+
+{% block title %}Bordereau de Télétransmission Tiers Payant{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Bordereau de Télétransmission Tiers Payant</h1>
+        <p class="subtitle">
+            État récapitulatif officiel des actes et prescriptions pour remboursement par l'IPM.
+            <br>
+            <span style="font-size: 13px; color: var(--primary-dark); font-weight: 600;">
+                Structure : {{ nom_prestataire }}
+            </span>
+        </p>
+    </div>
+    <div class="actions">
+        <a class="button btn btn-expand" data-chargement="Génération PDF..." href="{% url 'exporter_bordereau_teletransmission_pdf' %}?{{ request.GET.urlencode }}" title="Exporter le bordereau en PDF" aria-label="Exporter en PDF">
+            {% icone "download" %} <span class="expand-text">Bordereau PDF Officiel</span>
+        </a>
+        <a class="button btn btn-expand" data-chargement="Génération Excel..." href="{% url 'exporter_bordereau_teletransmission_excel' %}?{{ request.GET.urlencode }}" title="Exporter le bordereau en Excel" aria-label="Exporter en Excel">
+            {% icone "download" %} <span class="expand-text">Export Excel (.xlsx)</span>
+        </a>
+        {% if est_admin %}
+        <a class="button btn" href="{% url 'liste_paiements' %}" title="Retour aux paiements">
+            {% icone "receipt" %} <span>Paiements</span>
+        </a>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Synthèse Financière du Bordereau -->
+<section class="dash-grid" style="margin-bottom: 22px;">
+    <div class="dash-stat" style="cursor: default;">
+        <strong>{{ totaux.nb_actes }}</strong>
+        <span>Actes télétransmis</span>
+    </div>
+    <div class="dash-stat" style="cursor: default;">
+        <strong>{{ totaux.total_brut|franc_cfa }}</strong>
+        <span>Montant brut total</span>
+    </div>
+    <div class="dash-stat" style="cursor: default; border-left: 4px solid var(--primary);">
+        <strong style="color: var(--primary-dark);">{{ totaux.total_part_assurance|franc_cfa }}</strong>
+        <span style="font-weight: 600; color: var(--primary-dark);">Net dû par l'IPM (Tiers Payant)</span>
+    </div>
+    <div class="dash-stat" style="cursor: default;">
+        <strong>{{ totaux.total_part_patient|franc_cfa }}</strong>
+        <span>Ticket modérateur patients</span>
+    </div>
+</section>
+
+<!-- Filtres de Période et de Prestataire -->
+<form method="get" class="filtres" style="margin-bottom: 20px;">
+    <div style="min-width: 140px;">
+        <label for="id_mois">Mois</label>
+        <select id="id_mois" name="mois" style="margin-bottom: 0;">
+            <option value="0" {% if mois_choisi == 0 %}selected{% endif %}>Tous les mois</option>
+            {% for num_m, nom_m in liste_mois %}
+            <option value="{{ num_m }}" {% if mois_choisi == num_m %}selected{% endif %}>{{ nom_m }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div style="min-width: 110px;">
+        <label for="id_annee">Année</label>
+        <select id="id_annee" name="annee" style="margin-bottom: 0;">
+            {% for a in liste_annees %}
+            <option value="{{ a }}" {% if annee_choisie == a %}selected{% endif %}>{{ a }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div style="min-width: 170px;">
+        <label for="id_type_acte">Type d'actes</label>
+        <select id="id_type_acte" name="type_acte" style="margin-bottom: 0;">
+            <option value="tous" {% if type_choisi == "tous" %}selected{% endif %}>Tous les actes</option>
+            <option value="consultation" {% if type_choisi == "consultation" %}selected{% endif %}>Consultations médicales</option>
+            <option value="pharmacie" {% if type_choisi == "pharmacie" %}selected{% endif %}>Pharmacie (Délivrances)</option>
+        </select>
+    </div>
+
+    {% if est_admin %}
+    <div style="min-width: 220px; flex: 1;">
+        <label for="id_prestataire">Structure de soins</label>
+        <select id="id_prestataire" name="prestataire" style="margin-bottom: 0;">
+            <option value="">Toutes les structures conventionnées</option>
+            {% for p in prestataires %}
+            <option value="{{ p.pk }}" {% if prestataire_choisi == p.pk %}selected{% endif %}>{{ p.nom }} ({{ p.get_type_prestataire_display }})</option>
+            {% endfor %}
+        </select>
+    </div>
+    {% endif %}
+
+    <div style="min-width: 200px; flex: 1;">
+        <label for="id_q">Recherche</label>
+        <div class="champ-recherche">
+            {% icone "search" %}
+            <input id="id_q" type="text" name="q" placeholder="Patient, N° Carte, Réf..." value="{{ recherche }}" style="margin-bottom: 0;">
+        </div>
+    </div>
+
+    <button type="submit" class="button primary btn">Actualiser</button>
+    {% if mois_choisi or type_choisi != "tous" or prestataire_choisi or recherche %}
+    <a href="{% url 'bordereau_teletransmission' %}" class="button btn">Réinitialiser</a>
+    {% endif %}
+</form>
+
+<!-- Tableau des Actes Télétransmis -->
+{% if actes %}
+<section class="panel">
+    <div style="padding: 12px 18px; background: var(--champ-bg); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+        <span style="font-size: 13.5px; font-weight: 600; color: var(--titre);">
+            Détail des {{ totaux.nb_actes }} actes conventionnés
+        </span>
+        <span style="font-size: 12.5px; color: var(--muted);">
+            Seuls les actes ouvrant droit au Tiers-Payant (part IPM > 0) figurent sur ce bordereau.
+        </span>
+    </div>
+
+    <div class="table-responsive">
+    <table>
+        <thead>
+            <tr>
+                <th scope="col">Réf Acte</th>
+                <th scope="col">Date</th>
+                <th scope="col">Type</th>
+                <th scope="col">Bénéficiaire (Patient)</th>
+                <th scope="col" class="col-optionnelle">Praticien / Structure</th>
+                <th scope="col">Prestation</th>
+                <th scope="col" style="text-align: right;">Total Brut</th>
+                <th scope="col" style="text-align: center;">Taux</th>
+                <th scope="col" style="text-align: right; color: var(--primary-dark);">Part IPM due</th>
+                <th scope="col" style="text-align: right;" class="col-optionnelle">Ticket Mod.</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for a in actes %}
+            <tr>
+                <td><span class="code" style="font-size: 12.5px;">{{ a.reference }}</span></td>
+                <td style="font-size: 12.5px; white-space: nowrap;">{{ a.date|date:"d/m/Y H:i" }}</td>
+                <td>
+                    {% if a.type_code == "consultation" %}
+                    <span class="badge" style="background: rgba(14, 124, 134, 0.12); color: var(--primary-dark); border: 1px solid var(--primary);">Consultation</span>
+                    {% else %}
+                    <span class="badge" style="background: rgba(22, 163, 74, 0.12); color: #15803d; border: 1px solid #16a34a;">Pharmacie</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <strong>{{ a.patient_nom }}</strong>
+                    <br>
+                    <span class="code" style="font-size: 11.5px; color: var(--muted);">Carte {{ a.patient_carte }}</span>
+                </td>
+                <td class="col-optionnelle" style="font-size: 12.5px;">
+                    {{ a.praticien }}
+                    <br>
+                    <span style="color: var(--muted); font-size: 11.5px;">{{ a.prestataire }}</span>
+                </td>
+                <td style="font-size: 12.5px;">{{ a.description }}</td>
+                <td style="text-align: right; font-family: 'IBM Plex Mono', monospace; font-size: 13px;">{{ a.montant_total|franc_cfa }}</td>
+                <td style="text-align: center; font-size: 12.5px;">{{ a.taux|floatformat:0 }}%</td>
+                <td style="text-align: right; font-family: 'IBM Plex Mono', monospace; font-size: 13.5px; font-weight: 700; color: var(--primary-dark);">
+                    {{ a.part_assurance|franc_cfa }}
+                </td>
+                <td class="col-optionnelle" style="text-align: right; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--muted);">
+                    {{ a.part_patient|franc_cfa }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr style="background: var(--champ-bg); font-weight: 700; border-top: 2px solid var(--border);">
+                <td colspan="6" style="padding: 12px 14px; text-transform: uppercase; font-size: 12px; letter-spacing: 0.04em;">
+                    Total consolidé de la période ({{ totaux.nb_actes }} actes)
+                </td>
+                <td style="text-align: right; font-family: 'IBM Plex Mono', monospace; font-size: 13px;">{{ totaux.total_brut|franc_cfa }}</td>
+                <td></td>
+                <td style="text-align: right; font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: var(--primary-dark);">
+                    {{ totaux.total_part_assurance|franc_cfa }}
+                </td>
+                <td class="col-optionnelle" style="text-align: right; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--muted);">
+                    {{ totaux.total_part_patient|franc_cfa }}
+                </td>
+            </tr>
+        </tfoot>
+    </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if actes.has_other_pages %}
+    <nav class="pagination" aria-label="Pagination des actes" style="padding: 14px 18px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 13px; color: var(--muted);">
+            Page {{ actes.number }} sur {{ actes.paginator.num_pages }}
+        </span>
+        <div class="actions" style="margin: 0;">
+            {% if actes.has_previous %}
+            <a href="?page={{ actes.previous_page_number }}{% if mois_choisi %}&mois={{ mois_choisi }}{% endif %}{% if annee_choisie %}&annee={{ annee_choisie }}{% endif %}{% if type_choisi %}&type_acte={{ type_choisi }}{% endif %}{% if prestataire_choisi %}&prestataire={{ prestataire_choisi }}{% endif %}{% if recherche %}&q={{ recherche }}{% endif %}" class="button btn btn-sm">Précédent</a>
+            {% endif %}
+            {% if actes.has_next %}
+            <a href="?page={{ actes.next_page_number }}{% if mois_choisi %}&mois={{ mois_choisi }}{% endif %}{% if annee_choisie %}&annee={{ annee_choisie }}{% endif %}{% if type_choisi %}&type_acte={{ type_choisi }}{% endif %}{% if prestataire_choisi %}&prestataire={{ prestataire_choisi }}{% endif %}{% if recherche %}&q={{ recherche }}{% endif %}" class="button btn btn-sm">Suivant</a>
+            {% endif %}
+        </div>
+    </nav>
+    {% endif %}
+</section>
+{% else %}
+<section class="panel" style="padding: 3rem 1.5rem; text-align: center;">
+    <div style="max-width: 480px; margin: 0 auto;">
+        <div style="font-size: 32px; color: var(--muted); margin-bottom: 12px;">{% icone "receipt" %}</div>
+        <h2 style="font-size: 1.15rem; margin-bottom: 8px;">Aucun acte télétransmis pour cette sélection</h2>
+        <p style="font-size: 0.9rem; color: var(--muted); margin-bottom: 1.25rem;">
+            Aucune consultation ni délivrance pharmaceutique avec prise en charge IPM n'a été enregistrée pour la période et les critères choisis.
+        </p>
+        <a href="{% url 'bordereau_teletransmission' %}" class="button btn">Réinitialiser les critères</a>
+    </div>
+</section>
+{% endif %}
+
+<!-- Bloc d'information légale B2B -->
+<div style="margin-top: 24px; padding: 14px 18px; border-radius: 10px; background: rgba(14, 124, 134, 0.06); border: 1px solid rgba(14, 124, 134, 0.2); font-size: 12.5px; color: var(--primary-dark); line-height: 1.5;">
+    <strong>Procédure de liquidation Tiers-Payant IPM :</strong>
+    Ce bordereau certifié fait foi de relevé de créance pour les prestataires conventionnés. L'IPM procède au rapprochement des ordonnances et feuilles de soins numérisées avant virement interbancaire ou règlement par bon de caisse.
+</div>
+{% endblock %}

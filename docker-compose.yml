@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: santesn_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-santesn_db}
+      POSTGRES_USER: ${DB_USER:-santesn_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-SecretPassword2026!}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-santesn_user} -d ${DB_NAME:-santesn_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - santesn_network
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: santesn_web
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DEBUG: "False"
+      SECRET_KEY: ${SECRET_KEY:-django-insecure-santesn-platform-cloud-default-key-2026-prod-secure-dakar}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1,santesn.sn,www.santesn.sn}
+      DB_ENGINE: postgresql
+      DB_NAME: ${DB_NAME:-santesn_db}
+      DB_USER: ${DB_USER:-santesn_user}
+      DB_PASSWORD: ${DB_PASSWORD:-SecretPassword2026!}
+      DB_HOST: db
+      DB_PORT: 5432
+      DELAI_VALIDITE_ORDONNANCE_JOURS: 90
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+      - logs_volume:/app/logs
+    expose:
+      - 8000
+    networks:
+      - santesn_network
+
+  nginx:
+    image: nginx:alpine
+    container_name: santesn_nginx
+    restart: unless-stopped
+    depends_on:
+      - web
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - static_volume:/app/staticfiles:ro
+      - media_volume:/app/media:ro
+    networks:
+      - santesn_network
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
+  logs_volume:
+
+networks:
+  santesn_network:
+    driver: bridge

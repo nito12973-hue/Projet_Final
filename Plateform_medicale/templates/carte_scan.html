@@ -103,11 +103,18 @@
 
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 12.5px; color: var(--muted);">
                 <span>{{ pec.motif|default:"Acte / Soins médicaux sous convention" }}</span>
-                {% if pec.devis_fichier %}
-                <a href="{{ pec.devis_fichier.url }}" target="_blank" rel="noopener noreferrer" class="button btn btn-sm" style="font-size: 11.5px; padding: 3px 10px;">
-                    {% icone "file-text" %} Consulter le devis original
-                </a>
-                {% endif %}
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    {% if pec.statut == 'validee' %}
+                    <a href="{% url 'telecharger_bon_prise_en_charge_pdf' pec.pk %}" target="_blank" rel="noopener noreferrer" class="button btn btn-sm" style="font-size: 11.5px; padding: 3px 10px; background: white; border: 1px solid #10b981; color: #065f46;">
+                        {% icone "download" %} Bon officiel PDF
+                    </a>
+                    {% endif %}
+                    {% if pec.devis_fichier %}
+                    <a href="{{ pec.devis_fichier.url }}" target="_blank" rel="noopener noreferrer" class="button btn btn-sm" style="font-size: 11.5px; padding: 3px 10px;">
+                        {% icone "file-text" %} Devis source
+                    </a>
+                    {% endif %}
+                </div>
             </div>
         </div>
         {% endfor %}

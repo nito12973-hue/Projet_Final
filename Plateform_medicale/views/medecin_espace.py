@@ -298,6 +298,13 @@ def fiche_patient_medecin(request, pk):
         "rdv_confirme": rdv_confirme,
         "deja_vu": _patients_du_medecin(medecin).filter(pk=patient.pk).exists(),
     }
+    # Traçabilité légale d'accès au Dossier Patient Informatisé (Loi 2008-12 CDP Sénégal)
+    journaliser(
+        request,
+        JournalActivite.Action.ACCES_DPI,
+        f"Dossier Patient : {patient.prenom} {patient.nom}",
+        f"Consultation DPI par Dr {medecin.nom_complet}",
+    )
     return render(request, "fiche_patient_medecin.html", contexte)
 
 
@@ -464,6 +471,9 @@ def ajouter_ordonnance_medecin(request, consultation_pk):
                     ligne.save()
                 for supprimee in formset.deleted_objects:
                     supprimee.delete()
+                # Sceau pose en dernier, dans la meme transaction : il couvre
+                # exactement les lignes enregistrees ci-dessus.
+                ordonnance.sceller()
             from ..services.notifications import notifier_ordonnance_creee
             notifier_ordonnance_creee(ordonnance)
             messages.success(request, "Ordonnance créée.", extra_tags="succes-critique")

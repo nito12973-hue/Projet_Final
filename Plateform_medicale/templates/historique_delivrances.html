@@ -9,7 +9,12 @@
         <h1>Historique des délivrances</h1>
         <p class="subtitle">Ordonnances que vous avez validées.</p>
     </div>
-    <a class="button primary" href="{% url 'scanner_ordonnance' %}">Scanner un QR Code</a>
+    <div class="actions">
+        <a class="button btn" href="{% url 'bordereau_teletransmission' %}" title="Bordereau mensuel Tiers Payant IPM">
+            {% icone "file-text" %} <span>Bordereau IPM</span>
+        </a>
+        <a class="button primary" href="{% url 'scanner_ordonnance' %}">Scanner un QR Code</a>
+    </div>
 </section>
 
 <form method="get" class="filtres">
