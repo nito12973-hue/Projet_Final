@@ -382,6 +382,17 @@ if not DEBUG:
 # Règle métier : durée de validité d'une ordonnance (en jours, paramétrable)
 DELAI_VALIDITE_ORDONNANCE_JOURS = config('DELAI_VALIDITE_ORDONNANCE_JOURS', default=90, cast=int)
 
+# Clé du sceau d'intégrité des ordonnances (HMAC-SHA256). Vide : dérivée de
+# SECRET_KEY. Une clé dédiée permet de faire tourner SECRET_KEY sans
+# invalider les sceaux déjà posés -- à définir en production et à ne JAMAIS
+# changer ensuite.
+ORDONNANCE_SCEAU_CLE = config('ORDONNANCE_SCEAU_CLE', default='')
+
+# Tests uniquement : PBKDF2 (des centaines de milliers d'itérations) rend
+# chaque création d'utilisateur coûteuse. Aucun effet hors `manage.py test`.
+if 'test' in sys.argv:
+    PASSWORD_HASHERS = ['django.contrib.auth.hashers.MD5PasswordHasher']
+
 # Passerelle WhatsApp Cloud API : configurée ci-dessus (lignes 271-280) avec protection tests
 
 # Quotas et limites réglementaires IPM (Sénégal)

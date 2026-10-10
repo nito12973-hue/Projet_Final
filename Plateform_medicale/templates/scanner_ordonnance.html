@@ -143,6 +143,19 @@ formulaire laisseraient le pharmacien croire qu'il faut remplir les deux.
         <p><strong>Patient :</strong> {{ ordonnance.consultation.patient }} · Carte <span class="code">{{ ordonnance.consultation.patient.numero_carte }}</span></p>
         <p><strong>Médecin prescripteur :</strong> {{ ordonnance.consultation.medecin }}</p>
         <p><strong>Date de prescription :</strong> {{ ordonnance.date_creation|date:"d/m/Y à H:i" }}</p>
+        {% if integrite == "intacte" %}
+        <p class="sceau-statut" style="color:var(--primary-dark);font-weight:600;">
+            {% icone "shield-check" %} Sceau d'intégrité vérifié · <span class="code">{{ ordonnance.sceau_court }}</span>
+        </p>
+        {% elif integrite == "alteree" %}
+        <p class="sceau-statut" style="color:var(--danger);font-weight:700;">
+            {% icone "alert-triangle" %} Sceau d'intégrité invalide — contenu modifié après prescription
+        </p>
+        {% else %}
+        <p class="sceau-statut" style="color:var(--text-muted);">
+            {% icone "info" %} Ordonnance antérieure au scellement (aucun sceau)
+        </p>
+        {% endif %}
         <p style="margin-bottom:6px;"><strong>Médicaments prescrits :</strong></p>
         {% comment %}
         Lecture seule : le pharmacien delivre, il ne prescrit pas. Tableau si
@@ -222,6 +235,18 @@ formulaire laisseraient le pharmacien croire qu'il faut remplir les deux.
             </p>
             <div style="font-size:13px; background:rgba(0,0,0,0.05); padding:10px; border-radius:8px;">
                 <p style="margin:0 0 4px 0;"><strong>Date d'émission :</strong> {{ ordonnance.date_creation|date:"d/m/Y" }}</p>
+                <p style="margin:0;"><strong>Référence :</strong> {{ ordonnance.code_qr }}</p>
+            </div>
+        </div>
+        {% elif integrite == "alteree" %}
+        <div style="background:var(--refus-bg); border:1.5px solid var(--danger); border-radius:12px; padding:18px; color:var(--refus-fg);">
+            <h2 style="margin:0 0 8px 0; color:var(--danger); font-size:16px; display:flex; align-items:center; gap:8px;">
+                {% icone "alert-triangle" %} ORDONNANCE FALSIFIÉE
+            </h2>
+            <p style="font-size:13.5px; margin:0 0 10px 0; line-height:1.4;">
+                Le contenu de cette ordonnance ne correspond plus à celui signé par le médecin. Ne délivrez aucun médicament et contactez le prescripteur.
+            </p>
+            <div style="font-size:13px; background:rgba(0,0,0,0.05); padding:10px; border-radius:8px;">
                 <p style="margin:0;"><strong>Référence :</strong> {{ ordonnance.code_qr }}</p>
             </div>
         </div>

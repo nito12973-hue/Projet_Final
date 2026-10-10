@@ -92,9 +92,14 @@ pas un oubli.
                     </span>
                 </div>
             </div>
-            <a href="{% url 'carte_assure_detail' ligne.prise.patient.pk %}" class="button primary btn btn-sm" style="font-size: 12.5px; padding: 6px 14px; font-weight: 600;">
-                {% icone "id-card" %} Ma carte d'assuré QR &rarr;
-            </a>
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <a href="{% url 'telecharger_bon_prise_en_charge_pdf' ligne.prise.pk %}" class="button btn btn-sm" target="_blank" style="font-size: 12.5px; padding: 6px 12px; background: white; border: 1px solid #10b981; color: #065f46; font-weight: 600;">
+                    {% icone "download" %} Bon officiel (PDF)
+                </a>
+                <a href="{% url 'carte_assure_detail' ligne.prise.patient.pk %}" class="button primary btn btn-sm" style="font-size: 12.5px; padding: 6px 14px; font-weight: 600;">
+                    {% icone "id-card" %} Ma carte d'assuré QR &rarr;
+                </a>
+            </div>
         </div>
         {% elif ligne.prise.statut == "refusee" %}
         <div class="pec-message pec-message-refus" style="margin: 0 0 16px; padding: 12px 16px; border-radius: 10px; font-size: 13px; display: flex; align-items: flex-start; gap: 10px;">

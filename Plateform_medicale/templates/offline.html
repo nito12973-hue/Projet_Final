@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load icones %}
+
+{% block title %}Mode Hors-Ligne — SantéSN{% endblock %}
+
+{% block content %}
+<section class="panel" style="max-width: 600px; margin: 40px auto; padding: 36px 24px; text-align: center; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.06);">
+    <div style="width: 68px; height: 68px; border-radius: 50%; background: rgba(14, 124, 134, 0.12); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: var(--primary-dark);">
+        {% icone "smartphone" %}
+    </div>
+
+    <h1 style="font-size: 1.45rem; color: var(--titre); margin-bottom: 10px;">
+        Connexion Internet Interrompue
+    </h1>
+
+    <p style="font-size: 0.95rem; color: var(--muted); line-height: 1.55; margin-bottom: 24px;">
+        SantéSN fonctionne en mode résilient. Votre <strong>carte numérique d'assuré</strong> et son <strong>QR Code vectoriel</strong> restent pleinement accessibles depuis la mémoire locale de votre appareil, même sans connexion réseau.
+    </p>
+
+    <div style="display: flex; flex-direction: column; gap: 12px; max-width: 340px; margin: 0 auto 24px;">
+        <a href="{% url 'carte_assure' %}" class="button primary btn" style="justify-content: center; padding: 12px 18px; font-weight: 600;">
+            {% icone "id-card" %} <span>Afficher ma carte d'assuré</span>
+        </a>
+        <button type="button" onclick="window.location.reload();" class="button btn" style="justify-content: center; padding: 10px 18px;">
+            {% icone "zap" %} <span>Réessayer la connexion</span>
+        </button>
+    </div>
+
+    <div style="font-size: 12px; color: var(--muted); border-top: 1px solid var(--border); padding-top: 16px;">
+        {% icone "shield-check" %} Les pharmaciens et soignants partenaires peuvent scanner votre QR code hors-ligne pour contrôler l'authenticité de vos droits.
+    </div>
+</section>
+{% endblock %}

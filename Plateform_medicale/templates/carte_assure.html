@@ -48,6 +48,16 @@
 </div>
 {% endif %}
 
+<div class="carte-sans-impression" style="margin-bottom: 18px; padding: 10px 14px; border-radius: 8px; background: rgba(14, 124, 134, 0.08); border: 1px solid rgba(14, 124, 134, 0.2); display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12.5px; color: var(--primary-dark); flex-wrap: wrap;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+        {% icone "smartphone" %}
+        <span><strong>Carte Numérique PWA :</strong> Cette carte et son QR Code vectoriel sont sauvegardés sur cet appareil et restent vérifiables même en cas de coupure Internet.</span>
+    </div>
+    <span class="badge ok" style="font-size: 11px; padding: 4px 8px; white-space: nowrap;">
+        {% icone "check" %} Disponible hors-ligne
+    </span>
+</div>
+
 <div class="carte-layout-grid">
     <!-- Colonne Carte 3D Flip Interactive -->
     <div>

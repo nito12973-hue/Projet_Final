@@ -10,6 +10,9 @@
         <p class="subtitle">Suivi du règlement des consultations.</p>
     </div>
     <div class="actions">
+        <a class="button btn primary" href="{% url 'bordereau_teletransmission' %}" title="Bordereau de télétransmission">
+            {% icone "file-text" %} <span>Bordereau Télétransmission</span>
+        </a>
         <a class="button btn btn-expand" data-chargement="Génération..." href="{% url 'exporter_paiements_csv' %}?{{ request.GET.urlencode }}" title="Exporter en CSV" aria-label="Exporter en CSV">{% icone "download" %} <span class="expand-text">Exporter en CSV</span></a>
     </div>
 </section>

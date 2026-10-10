@@ -12,10 +12,17 @@ from django.db.models import Q, Sum
 from django.http import Http404
 from django.shortcuts import redirect, render
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
-from ..models import Delivrance, Ordonnance, User
-from .utils import _paginer, RECHERCHE_ORDONNANCE_MAX, RECHERCHE_ORDONNANCE_MIN, role_required
+from ..models import Delivrance, JournalActivite, Ordonnance, User
+from .utils import (
+    _paginer,
+    RECHERCHE_ORDONNANCE_MAX,
+    RECHERCHE_ORDONNANCE_MIN,
+    journaliser,
+    role_required,
+)
 
 
 def _pharmacien_courant(request):
@@ -144,6 +151,7 @@ def scanner_ordonnance(request):
         "scanner_ordonnance.html",
         {
             "ordonnance": ordonnance,
+            "integrite": ordonnance.verifier_integrite() if ordonnance else None,
             "resultats": resultats,
             "recherche": recherche,
             "trop_de_resultats": trop_de_resultats,
@@ -178,6 +186,20 @@ def valider_delivrance(request, pk):
             messages.error(
                 request,
                 "Cette ordonnance a dépassé sa durée de validité et ne peut plus être délivrée."
+            )
+        elif ordonnance.verifier_integrite() == Ordonnance.Integrite.ALTEREE:
+            # Contenu modifie apres la prescription : on ne delivre pas, et
+            # on laisse une trace pour l'administrateur.
+            journaliser(
+                request, JournalActivite.Action.INTEGRITE,
+                f"Ordonnance {ordonnance.code_qr}",
+                details="Délivrance refusée : sceau d'intégrité invalide.",
+            )
+            messages.error(
+                request,
+                "Délivrance refusée : le contenu de cette ordonnance a été modifié "
+                "après sa prescription (sceau d'intégrité invalide). "
+                "Contactez le médecin prescripteur."
             )
         else:
             montant_str = request.POST.get("montant_total", "").strip().replace(",", ".")
@@ -231,7 +253,9 @@ def valider_delivrance(request, pk):
                 messages.success(request, "Délivrance validée.", extra_tags="succes-critique")
 
     next_url = request.POST.get("next")
-    if next_url and next_url.startswith("/"):
+    if next_url and url_has_allowed_host_and_scheme(
+        next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
         return redirect(next_url)
     return redirect("historique_delivrances")
 

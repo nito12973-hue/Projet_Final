@@ -77,6 +77,9 @@ from .public import (  # noqa: F401
     logo_dark_svg,
     logo_light_svg,
     favicon_svg,
+    manifest_json,
+    service_worker_js,
+    offline_view,
 )
 
 # Dashboard et rapports administrateur
@@ -137,13 +140,16 @@ from .prises_en_charge import (  # noqa: F401
     telecharger_bon_prise_en_charge_pdf,
 )
 
-# Paiements
+# Paiements & Télétransmission
 from .paiements import (  # noqa: F401
     _filtrer_paiements,
     liste_paiements,
     exporter_paiements_csv,
     marquer_paiement_regle,
     recu_paiement,
+    bordereau_teletransmission,
+    exporter_bordereau_teletransmission_pdf,
+    exporter_bordereau_teletransmission_excel,
 )
 
 

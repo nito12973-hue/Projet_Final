@@ -507,6 +507,9 @@ class Command(BaseCommand):
                 quantite="2 boîtes",
             )
 
+        if not ordonnance.sceau:
+            ordonnance.sceller()
+
         self.stdout.write(
             self.style.SUCCESS(
                 "\nDonnées de démonstration SantéSN initialisées avec succès !\n"

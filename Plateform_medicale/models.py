@@ -1,6 +1,7 @@
 import datetime
 from decimal import Decimal
 import io
+import json
 import uuid
 from math import atan2, cos, radians, sin, sqrt
 
@@ -14,6 +15,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
 from django.utils import timezone
+from django.utils.crypto import constant_time_compare, salted_hmac
 
 valider_telephone = RegexValidator(
     regex=r'^\+?[0-9 \-]{7,20}$',
@@ -835,6 +837,22 @@ class Ordonnance(models.Model):
     )
     motif_annulation = models.CharField("motif d'annulation", max_length=255, blank=True)
     date_annulation = models.DateTimeField("date d'annulation", null=True, blank=True)
+    # Sceau d'integrite (HMAC-SHA256) pose UNE FOIS, a la creation, apres
+    # l'enregistrement des lignes. Vide pour les ordonnances anterieures a
+    # son introduction : on ne scelle pas retroactivement un contenu dont on
+    # ne peut plus garantir qu'il n'a pas deja ete modifie.
+    sceau = models.CharField(
+        "sceau d'intégrité",
+        max_length=64,
+        blank=True,
+        editable=False,
+        help_text="HMAC-SHA256 du contenu de l'ordonnance au moment de la prescription.",
+    )
+
+    class Integrite(models.TextChoices):
+        INTACTE = "intacte", "Sceau vérifié — contenu intact"
+        ALTEREE = "alteree", "Sceau invalide — contenu modifié après prescription"
+        NON_SCELLEE = "non_scellee", "Ordonnance antérieure au scellement"
 
     def __str__(self):
         return f"Ordonnance #{self.code_qr} du {self.date_creation:%d/%m/%Y}"
@@ -871,6 +889,71 @@ class Ordonnance(models.Model):
     @staticmethod
     def _generer_code_qr():
         return f"RX-{uuid.uuid4().hex[:10].upper()}"
+
+    # ------------------------------------------------------------------
+    # Scellement cryptographique
+    # ------------------------------------------------------------------
+    # Ce qui est scelle : tout ce qui fait la PRESCRIPTION (qui, pour qui,
+    # quand, quoi). Ce qui ne l'est pas : le statut, l'annulation et la
+    # delivrance -- ils evoluent legitimement apres la signature.
+    #
+    # Portee reelle : le sceau detecte toute modification du contenu en base
+    # (acces direct a la base, admin, script) apres la prescription. Il ne
+    # remplace pas une signature asymetrique verifiable hors ligne : la cle
+    # reste sur le serveur.
+
+    _SEL_SCEAU = "santesn.ordonnance.sceau.v1"
+
+    def contenu_canonique(self):
+        """Representation deterministe (JSON trie) du contenu scelle."""
+        consultation = self.consultation
+        lignes = [
+            [l.medicament, l.dosage, l.posologie, l.duree, l.quantite]
+            for l in self.lignes.order_by("ordre", "pk")
+        ]
+        donnees = {
+            "v": 1,
+            "code": self.code_qr,
+            "consultation": consultation.pk,
+            "patient": consultation.patient_id,
+            "medecin": consultation.medecin_id,
+            "date": self.date_creation.astimezone(datetime.timezone.utc).isoformat(),
+            "lignes": lignes,
+            "texte": self.medicaments,
+        }
+        return json.dumps(donnees, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+    def calculer_sceau(self):
+        cle = getattr(settings, "ORDONNANCE_SCEAU_CLE", "") or None
+        return salted_hmac(
+            self._SEL_SCEAU, self.contenu_canonique(), secret=cle, algorithm="sha256"
+        ).hexdigest()
+
+    def sceller(self):
+        """Pose le sceau. A appeler une seule fois, lignes enregistrees."""
+        if self.sceau:
+            raise ValidationError("Cette ordonnance est déjà scellée.")
+        self.sceau = self.calculer_sceau()
+        self.save(update_fields=["sceau"])
+
+    def verifier_integrite(self):
+        if not self.sceau:
+            return self.Integrite.NON_SCELLEE
+        if constant_time_compare(self.sceau, self.calculer_sceau()):
+            return self.Integrite.INTACTE
+        return self.Integrite.ALTEREE
+
+    @property
+    def integrite(self):
+        return self.verifier_integrite()
+
+    @property
+    def sceau_court(self):
+        """Empreinte lisible imprimee sur l'ordonnance (16 premiers caracteres)."""
+        if not self.sceau:
+            return ""
+        s = self.sceau[:16].upper()
+        return "-".join(s[i:i + 4] for i in range(0, 16, 4))
 
     @property
     def qr_svg(self):
@@ -1276,6 +1359,11 @@ class JournalActivite(models.Model):
         # la boite de dialogue d'impression du navigateur -- ce qu'on
         # enregistre est donc l'edition, pas l'impression elle-meme.
         CARTE = "CARTE", "Carte éditée"
+        # Ordonnance dont le sceau ne correspond plus au contenu : c'est une
+        # alerte de securite (falsification probable), pas un acte de soin.
+        INTEGRITE = "INTEGRITE", "Alerte d'intégrité"
+        # Traçabilité légale d'accès au Dossier Patient Informatisé (Loi 2008-12 CDP Sénégal)
+        ACCES_DPI = "ACCES_DPI", "Accès dossier patient"
 
     auteur = models.ForeignKey(
         settings.AUTH_USER_MODEL,

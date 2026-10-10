@@ -10809,7 +10809,7 @@ class JaugePlafondAnnuelIPMTests(TestCase):
         # Vérification de la jauge visuelle du plafond IPM
         self.assertContains(response, "Plafond annuel de garantie")
         self.assertContains(response, "consommé")
-        self.assertContains(response, "Solde annuel restant disponible")
+        self.assertContains(response, "Budget annuel restant disponible")
         self.assertContains(response, "380")
 
 
@@ -10965,3 +10965,380 @@ class BonPriseEnChargePDFTests(TestCase):
         pec_attente.refresh_from_db()
         self.assertEqual(pec_attente.statut, "validee")
 
+
+class SceauIntegriteOrdonnanceTests(TestCase):
+    """Axe 1 : sceau HMAC-SHA256 pose a la prescription, verifie en pharmacie."""
+
+    def setUp(self):
+        self.medecin = creer_medecin("dr.sceau@santesn.sn")
+        self.pharmacien = creer_pharmacien("pharma.sceau@santesn.sn")
+        self.patient = Patient.objects.create(
+            nom="Ba", prenom="Fatou", date_naissance=datetime.date(1990, 3, 4),
+        )
+        self.consultation = Consultation.objects.create(
+            medecin=self.medecin, patient=self.patient,
+            date_consultation=timezone.now(), diagnostic="Angine",
+        )
+
+    def _ordonnance_scellee(self):
+        ordonnance = Ordonnance.objects.create(consultation=self.consultation)
+        LigneOrdonnance.objects.create(
+            ordonnance=ordonnance, medicament="Amoxicilline", dosage="500 mg", ordre=1)
+        LigneOrdonnance.objects.create(
+            ordonnance=ordonnance, medicament="Paracetamol", dosage="1 g", ordre=2)
+        ordonnance.sceller()
+        return Ordonnance.objects.get(pk=ordonnance.pk)
+
+    # --- Modele -------------------------------------------------------
+
+    def test_sceau_est_un_hmac_sha256_hexadecimal(self):
+        ordonnance = self._ordonnance_scellee()
+        self.assertEqual(len(ordonnance.sceau), 64)
+        int(ordonnance.sceau, 16)  # leve si non hexadecimal
+        self.assertEqual(ordonnance.verifier_integrite(), Ordonnance.Integrite.INTACTE)
+
+    def test_sceau_stable_apres_relecture_en_base(self):
+        ordonnance = self._ordonnance_scellee()
+        self.assertEqual(ordonnance.calculer_sceau(), ordonnance.sceau)
+
+    def test_modification_dosage_detectee(self):
+        ordonnance = self._ordonnance_scellee()
+        LigneOrdonnance.objects.filter(ordonnance=ordonnance, medicament="Amoxicilline") \
+            .update(dosage="1000 mg")
+        self.assertEqual(ordonnance.verifier_integrite(), Ordonnance.Integrite.ALTEREE)
+
+    def test_ajout_de_ligne_detecte(self):
+        ordonnance = self._ordonnance_scellee()
+        LigneOrdonnance.objects.create(ordonnance=ordonnance, medicament="Tramadol", ordre=3)
+        self.assertEqual(ordonnance.verifier_integrite(), Ordonnance.Integrite.ALTEREE)
+
+    def test_suppression_de_ligne_detectee(self):
+        ordonnance = self._ordonnance_scellee()
+        ordonnance.lignes.filter(medicament="Paracetamol").delete()
+        self.assertEqual(ordonnance.verifier_integrite(), Ordonnance.Integrite.ALTEREE)
+
+    def test_changement_de_patient_detecte(self):
+        ordonnance = self._ordonnance_scellee()
+        autre = Patient.objects.create(nom="Sy", prenom="Ali", date_naissance=datetime.date(1980, 1, 1))
+        Consultation.objects.filter(pk=self.consultation.pk).update(patient=autre)
+        ordonnance = Ordonnance.objects.get(pk=ordonnance.pk)
+        self.assertEqual(ordonnance.verifier_integrite(), Ordonnance.Integrite.ALTEREE)
+
+    def test_sceau_falsifie_detecte(self):
+        ordonnance = self._ordonnance_scellee()
+        Ordonnance.objects.filter(pk=ordonnance.pk).update(sceau="0" * 64)
+        ordonnance.refresh_from_db()
+        self.assertEqual(ordonnance.verifier_integrite(), Ordonnance.Integrite.ALTEREE)
+
+    def test_changement_de_statut_ne_casse_pas_le_sceau(self):
+        ordonnance = self._ordonnance_scellee()
+        ordonnance.annuler("Erreur de patient")
+        self.assertEqual(ordonnance.verifier_integrite(), Ordonnance.Integrite.INTACTE)
+
+    def test_double_scellement_refuse(self):
+        ordonnance = self._ordonnance_scellee()
+        with self.assertRaises(ValidationError):
+            ordonnance.sceller()
+
+    def test_ordonnance_historique_non_scellee(self):
+        ordonnance = Ordonnance.objects.create(consultation=self.consultation, medicaments="Doliprane")
+        self.assertEqual(ordonnance.verifier_integrite(), Ordonnance.Integrite.NON_SCELLEE)
+        self.assertEqual(ordonnance.sceau_court, "")
+
+    def test_cle_differente_produit_un_sceau_different(self):
+        ordonnance = self._ordonnance_scellee()
+        with override_settings(ORDONNANCE_SCEAU_CLE="une-autre-cle-dediee"):
+            self.assertNotEqual(ordonnance.calculer_sceau(), ordonnance.sceau)
+            self.assertEqual(ordonnance.verifier_integrite(), Ordonnance.Integrite.ALTEREE)
+
+    def test_sceau_court_lisible(self):
+        ordonnance = self._ordonnance_scellee()
+        self.assertRegex(ordonnance.sceau_court, r"^[0-9A-F]{4}(-[0-9A-F]{4}){3}$")
+
+    # --- Flux medecin -------------------------------------------------
+
+    def test_prescription_par_le_medecin_pose_le_sceau(self):
+        self.client.force_login(self.medecin.user)
+        self.client.post(
+            reverse("ajouter_ordonnance_medecin", args=[self.consultation.pk]),
+            {
+                "lignes-TOTAL_FORMS": "1", "lignes-INITIAL_FORMS": "0",
+                "lignes-MIN_NUM_FORMS": "0", "lignes-MAX_NUM_FORMS": "1000",
+                "lignes-0-medicament": "Ibuprofene", "lignes-0-dosage": "400 mg",
+                "lignes-0-posologie": "", "lignes-0-duree": "", "lignes-0-quantite": "",
+            },
+        )
+        ordonnance = Ordonnance.objects.get(consultation=self.consultation)
+        self.assertEqual(len(ordonnance.sceau), 64)
+        self.assertEqual(ordonnance.verifier_integrite(), Ordonnance.Integrite.INTACTE)
+        page = self.client.get(reverse("voir_ordonnance_medecin", args=[ordonnance.pk]))
+        self.assertContains(page, ordonnance.sceau_court)
+
+    # --- Flux pharmacien ----------------------------------------------
+
+    def test_scanner_affiche_sceau_verifie(self):
+        ordonnance = self._ordonnance_scellee()
+        self.client.force_login(self.pharmacien.user)
+        page = self.client.post(reverse("scanner_ordonnance"), {"code_qr": ordonnance.code_qr})
+        self.assertContains(page, "Sceau d'intégrité vérifié")
+        self.assertContains(page, 'id="form-delivrance"')
+
+    def test_scanner_signale_ordonnance_falsifiee_sans_formulaire(self):
+        ordonnance = self._ordonnance_scellee()
+        LigneOrdonnance.objects.filter(ordonnance=ordonnance).update(quantite="10 boîtes")
+        self.client.force_login(self.pharmacien.user)
+        page = self.client.post(reverse("scanner_ordonnance"), {"code_qr": ordonnance.code_qr})
+        self.assertContains(page, "ORDONNANCE FALSIFIÉE")
+        self.assertNotContains(page, 'id="form-delivrance"')
+
+    def test_delivrance_refusee_et_journalisee_si_falsifiee(self):
+        ordonnance = self._ordonnance_scellee()
+        LigneOrdonnance.objects.filter(ordonnance=ordonnance).update(dosage="5 g")
+        self.client.force_login(self.pharmacien.user)
+        self.client.post(
+            reverse("valider_delivrance", args=[ordonnance.pk]),
+            {"code_qr": ordonnance.code_qr, "montant_total": "5000"},
+        )
+        self.assertFalse(Delivrance.objects.filter(ordonnance=ordonnance).exists())
+        ordonnance.refresh_from_db()
+        self.assertEqual(ordonnance.statut, Ordonnance.Statut.ACTIF)
+        self.assertTrue(JournalActivite.objects.filter(
+            action=JournalActivite.Action.INTEGRITE,
+            objet__contains=ordonnance.code_qr,
+        ).exists())
+
+    def test_delivrance_acceptee_si_intacte(self):
+        ordonnance = self._ordonnance_scellee()
+        self.client.force_login(self.pharmacien.user)
+        self.client.post(
+            reverse("valider_delivrance", args=[ordonnance.pk]),
+            {"code_qr": ordonnance.code_qr, "montant_total": "5000"},
+        )
+        self.assertTrue(Delivrance.objects.filter(ordonnance=ordonnance).exists())
+
+    def test_delivrance_ordonnance_historique_toujours_possible(self):
+        ordonnance = Ordonnance.objects.create(consultation=self.consultation, medicaments="Doliprane")
+        self.client.force_login(self.pharmacien.user)
+        self.client.post(
+            reverse("valider_delivrance", args=[ordonnance.pk]),
+            {"code_qr": ordonnance.code_qr},
+        )
+        self.assertTrue(Delivrance.objects.filter(ordonnance=ordonnance).exists())
+
+    def test_redirection_externe_refusee_apres_delivrance(self):
+        ordonnance = self._ordonnance_scellee()
+        self.client.force_login(self.pharmacien.user)
+        reponse = self.client.post(
+            reverse("valider_delivrance", args=[ordonnance.pk]),
+            {"code_qr": ordonnance.code_qr, "next": "//site-malveillant.example/"},
+        )
+        self.assertRedirects(reponse, reverse("historique_delivrances"), fetch_redirect_response=False)
+
+    def test_redirection_interne_conservee(self):
+        ordonnance = self._ordonnance_scellee()
+        self.client.force_login(self.pharmacien.user)
+        reponse = self.client.post(
+            reverse("valider_delivrance", args=[ordonnance.pk]),
+            {"code_qr": ordonnance.code_qr, "next": reverse("scanner_ordonnance")},
+        )
+        self.assertRedirects(reponse, reverse("scanner_ordonnance"), fetch_redirect_response=False)
+
+
+class BordereauTeletransmissionTests(TestCase):
+    """Axe 2 : Tests du bordereau de télétransmission Tiers Payant B2B et de ses exports."""
+
+    def setUp(self):
+        self.admin = User.objects.create_superuser("admin.teletrans@santesn.sn", "Passer123!")
+        self.prestataire_clinique = Prestataire.objects.create(
+            nom="Clinique de la Madeleine",
+            type_prestataire=Prestataire.Type.CLINIQUE,
+            partenaire=True,
+        )
+        self.prestataire_pharma = Prestataire.objects.create(
+            nom="Grande Pharmacie de Dakar",
+            type_prestataire=Prestataire.Type.PHARMACIE,
+            partenaire=True,
+        )
+        self.medecin = creer_medecin("dr.teletrans@santesn.sn")
+        self.medecin.prestataire = self.prestataire_clinique
+        self.medecin.save()
+
+        self.pharmacien = creer_pharmacien("pharma.teletrans@santesn.sn")
+        self.pharmacien.prestataire = self.prestataire_pharma
+        self.pharmacien.save()
+
+        self.user_assure = User.objects.create_user("patient.teletrans@santesn.sn", "Passer123!", role=User.Role.ASSURE)
+        self.patient = Patient.objects.create(
+            user=self.user_assure,
+            nom="Ndiaye",
+            prenom="Aminata",
+            date_naissance=datetime.date(1992, 4, 15),
+        )
+
+        self.service = ServiceMedical.objects.create(
+            nom="Consultation Spécialiste",
+            prix=Decimal("30000.00"),
+            prestataire=self.prestataire_clinique,
+        )
+
+        # 1. Consultation avec Paiement Tiers-Payant (80% assurance = 24 000, 20% patient = 6 000)
+        self.consultation = Consultation.objects.create(
+            medecin=self.medecin,
+            patient=self.patient,
+            service=self.service,
+            date_consultation=timezone.now(),
+            diagnostic="Consultation annuelle",
+        )
+        self.paiement = Paiement.objects.create(
+            consultation=self.consultation,
+            montant_total=Decimal("30000.00"),
+            taux_applique=Decimal("80.00"),
+            montant_part_assurance=Decimal("24000.00"),
+            montant_part_patient=Decimal("6000.00"),
+            statut=Paiement.Statut.REGLE,
+        )
+
+        # 2. Ordonnance avec Délivrance Tiers-Payant (80% assurance = 16 000, 20% patient = 4 000)
+        self.ordonnance = Ordonnance.objects.create(
+            consultation=self.consultation,
+            medicaments="Antibiotiques",
+        )
+        self.delivrance = Delivrance.objects.create(
+            ordonnance=self.ordonnance,
+            pharmacien=self.pharmacien,
+            montant_total=Decimal("20000.00"),
+            taux_couverture=Decimal("80.00"),
+            montant_part_assurance=Decimal("16000.00"),
+            montant_part_patient=Decimal("4000.00"),
+        )
+
+    def test_acces_anonyme_redirige_vers_login(self):
+        resp = self.client.get(reverse("bordereau_teletransmission"))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn(reverse("login"), resp.url)
+
+    def test_acces_assure_refuse(self):
+        self.client.force_login(self.user_assure)
+        resp = self.client.get(reverse("bordereau_teletransmission"))
+        self.assertEqual(resp.status_code, 403)
+
+    def test_acces_admin_affiche_tous_les_actes_et_totaux(self):
+        self.client.force_login(self.admin)
+        resp = self.client.get(reverse("bordereau_teletransmission"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Bordereau de Télétransmission")
+        # Doit contenir les deux actes
+        self.assertContains(resp, f"CS-{self.consultation.pk:05d}")
+        self.assertContains(resp, f"DEL-{self.ordonnance.code_qr}")
+        # Total part IPM = 24 000 + 16 000 = 40 000 FCFA
+        self.assertContains(resp, "40")
+
+    def test_acces_pharmacien_affiche_uniquement_delivrances_de_son_officine(self):
+        self.client.force_login(self.pharmacien.user)
+        resp = self.client.get(reverse("bordereau_teletransmission"))
+        self.assertEqual(resp.status_code, 200)
+        # La pharmacie voit sa délivrance
+        self.assertContains(resp, f"DEL-{self.ordonnance.code_qr}")
+        # Mais ne doit pas voir la consultation de la clinique
+        self.assertNotContains(resp, f"CS-{self.consultation.pk:05d}")
+
+    def test_acces_medecin_affiche_uniquement_sa_structure(self):
+        self.client.force_login(self.medecin.user)
+        resp = self.client.get(reverse("bordereau_teletransmission"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, f"CS-{self.consultation.pk:05d}")
+        self.assertNotContains(resp, f"DEL-{self.ordonnance.code_qr}")
+
+    def test_filtre_par_type_acte(self):
+        self.client.force_login(self.admin)
+        # 1. Filtre consultation
+        resp_cs = self.client.get(reverse("bordereau_teletransmission") + "?type_acte=consultation")
+        self.assertEqual(resp_cs.status_code, 200)
+        self.assertContains(resp_cs, f"CS-{self.consultation.pk:05d}")
+        self.assertNotContains(resp_cs, f"DEL-{self.ordonnance.code_qr}")
+
+        # 2. Filtre pharmacie
+        resp_ph = self.client.get(reverse("bordereau_teletransmission") + "?type_acte=pharmacie")
+        self.assertEqual(resp_ph.status_code, 200)
+        self.assertNotContains(resp_ph, f"CS-{self.consultation.pk:05d}")
+        self.assertContains(resp_ph, f"DEL-{self.ordonnance.code_qr}")
+
+    def test_export_pdf_bordereau(self):
+        self.client.force_login(self.admin)
+        resp = self.client.get(reverse("exporter_bordereau_teletransmission_pdf"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp["Content-Type"], "application/pdf")
+        self.assertTrue(resp.content.startswith(b"%PDF"))
+        self.assertIn("attachment; filename=", resp["Content-Disposition"])
+
+    def test_export_excel_bordereau(self):
+        self.client.force_login(self.admin)
+        resp = self.client.get(reverse("exporter_bordereau_teletransmission_excel"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", resp["Content-Type"])
+
+        # Vérification de l'intégrité du fichier Excel généré
+        classeur = openpyxl.load_workbook(io.BytesIO(resp.content))
+        self.assertIn("Bordereau Tiers-Payant", classeur.sheetnames)
+        feuille = classeur["Bordereau Tiers-Payant"]
+        self.assertEqual(feuille["A1"].value, "SantéSN — Bordereau Récapitulatif de Télétransmission Tiers-Payant")
+
+
+class PWAModeHorsLigneTests(TestCase):
+    """Axe 3 : Tests de l'infrastructure PWA et de la résilience hors-ligne."""
+
+    def test_manifest_json_valide(self):
+        resp = self.client.get(reverse("manifest_json"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("application/manifest+json", resp["Content-Type"])
+        data = json.loads(resp.content.decode("utf-8"))
+        self.assertEqual(data["short_name"], "SantéSN")
+        self.assertEqual(data["display"], "standalone")
+        self.assertEqual(data["theme_color"], "#0E7C86")
+        self.assertTrue(len(data["icons"]) >= 2)
+
+    def test_service_worker_js_valide(self):
+        resp = self.client.get(reverse("service_worker_js"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("application/javascript", resp["Content-Type"])
+        self.assertEqual(resp["Service-Worker-Allowed"], "/")
+        contenu = resp.content.decode("utf-8")
+        self.assertIn("santesn-pwa-v1", contenu)
+        self.assertIn("/assure/carte/", contenu)
+        self.assertIn("/offline/", contenu)
+
+    def test_page_hors_ligne_accessible(self):
+        resp = self.client.get(reverse("offline_view"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Connexion Internet Interrompue")
+        self.assertContains(resp, "carte numérique d'assuré")
+        self.assertContains(resp, "Afficher ma carte d'assuré")
+
+
+class ConformiteCDPTests(TestCase):
+    """Axe 4 : Traçabilité des accès au dossier médical et conformité CDP Sénégal (Loi 2008-12)."""
+
+    def setUp(self):
+        self.medecin = creer_medecin("dr.cdp@santesn.sn")
+        self.pharmacien = creer_pharmacien("pharma.cdp@santesn.sn")
+        self.patient = Patient.objects.create(
+            nom="Gueye",
+            prenom="Mamadou",
+            date_naissance=datetime.date(1985, 8, 20),
+            statut_validation=Patient.StatutValidation.VALIDE,
+        )
+
+    def test_consultation_dossier_patient_genere_entree_audit_cdp(self):
+        self.client.force_login(self.medecin.user)
+        url = reverse("fiche_patient_medecin", args=[self.patient.pk])
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+
+        # Vérifie qu'une entrée d'audit légal a été scellée dans JournalActivite
+        entree = JournalActivite.objects.filter(
+            action=JournalActivite.Action.ACCES_DPI,
+            auteur=self.medecin.user,
+        ).first()
+        self.assertIsNotNone(entree)
+        self.assertIn("Gueye", entree.objet)
+        self.assertIn("Consultation DPI", entree.details)

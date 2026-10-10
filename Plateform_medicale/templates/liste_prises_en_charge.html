@@ -108,6 +108,11 @@
                         </form>
                         <button type="button" class="button btn btn-danger btn-sm" title="Refuser cette prise en charge" style="padding:4px 10px;font-size:12px;" onclick="ouvrirRefus('{{ prise.pk }}', '{{ prise.patient|escapejs }}')">{% icone "x" %} Refuser</button>
                         {% endif %}
+                        {% if prise.statut == 'validee' %}
+                        <a href="{% url 'telecharger_bon_prise_en_charge_pdf' prise.pk %}" class="button btn btn-sm" target="_blank" title="Télécharger le bon officiel de prise en charge" style="padding:4px 9px;font-size:12px;">
+                            {% icone "download" %} Bon PDF
+                        </a>
+                        {% endif %}
                         <a href="{% url 'modifier_prise_en_charge' prise.pk %}" class="button btn btn-sm">{% icone "edit-2" %} Modifier</a>
                         <a href="{% url 'supprimer_prise_en_charge' prise.pk %}" class="button btn btn-danger btn-sm">{% icone "trash-2" %} Supprimer</a>
                     </div>

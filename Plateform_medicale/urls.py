@@ -13,6 +13,9 @@ urlpatterns = [
     path('logo-dark.svg', views.logo_dark_svg, name='logo_dark_svg'),
     path('logo-light.svg', views.logo_light_svg, name='logo_light_svg'),
     path('favicon.svg', views.favicon_svg, name='favicon_svg'),
+    path('manifest.json', views.manifest_json, name='manifest_json'),
+    path('sw.js', views.service_worker_js, name='service_worker_js'),
+    path('offline/', views.offline_view, name='offline_view'),
     path('tableau-de-bord/', views.dashboard, name='dashboard'),
     path('rapports/', views.rapports, name='rapports'),
     path('journal/', views.journal_activite, name='journal_activite'),
@@ -101,6 +104,11 @@ urlpatterns = [
     path('paiements/exporter/csv/', views.exporter_paiements_csv, name='exporter_paiements_csv'),
     path('paiements/<int:pk>/regler/', views.marquer_paiement_regle, name='marquer_paiement_regle'),
     path('paiements/<int:pk>/recu/', views.recu_paiement, name='recu_paiement'),
+
+    # Télétransmission B2B & Bordereaux Tiers Payant IPM
+    path('teletransmission/', views.bordereau_teletransmission, name='bordereau_teletransmission'),
+    path('teletransmission/exporter/pdf/', views.exporter_bordereau_teletransmission_pdf, name='exporter_bordereau_teletransmission_pdf'),
+    path('teletransmission/exporter/excel/', views.exporter_bordereau_teletransmission_excel, name='exporter_bordereau_teletransmission_excel'),
 
 
     path('prestataires/', views.liste_prestataires, name='liste_prestataires'),

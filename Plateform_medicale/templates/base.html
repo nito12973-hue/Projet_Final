@@ -13,7 +13,12 @@
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="SantéSN — Plateforme Médicale">
     <meta name="twitter:description" content="Plateforme digitale de prise en charge médicale au Sénégal.">
-    <meta name="theme-color" content="#0b2027">
+    <meta name="theme-color" content="#0e7c86">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SantéSN">
+    <link rel="manifest" href="{% url 'manifest_json' %}">
     <meta name="color-scheme" content="light dark">
     <script>
         // Applique le theme AVANT le premier rendu : pose l'attribut apres coup
@@ -6338,6 +6343,7 @@
                 <a href="{% url 'liste_consultations' %}" aria-label="Consultations" data-tooltip="Consultations" class="{% if url_name == 'liste_consultations' %}active{% endif %}">{% icone "clock-history" %} <span class="nav-texte">Consultations</span></a>
                 <a href="{% url 'liste_ordonnances' %}" aria-label="Ordonnances" data-tooltip="Ordonnances" class="{% if url_name == 'liste_ordonnances' %}active{% endif %}">{% icone "qr-scan" %} <span class="nav-texte">Ordonnances</span></a>
                 <a href="{% url 'liste_paiements' %}" aria-label="Paiements" data-tooltip="Paiements" class="{% if url_name == 'liste_paiements' or url_name == 'marquer_paiement_regle' %}active{% endif %}">{% icone "receipt" %} <span class="nav-texte">Paiements</span></a>
+                <a href="{% url 'bordereau_teletransmission' %}" aria-label="Télétransmission IPM" data-tooltip="Télétransmission IPM" class="{% if url_name == 'bordereau_teletransmission' %}active{% endif %}">{% icone "file-text" %} <span class="nav-texte">Télétransmission IPM</span></a>
                 
                 <span class="nav-section">Analyse & Configuration</span>
                 <a href="{% url 'envoyer_notification' %}" aria-label="Notifications" data-tooltip="Notifications" class="{% if url_name == 'envoyer_notification' or url_name == 'liste_notifications_envoyees' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span></a>
@@ -6352,6 +6358,7 @@
                 <a href="{% url 'agenda_medecin' %}" aria-label="Agenda & RDV" data-tooltip="Agenda & RDV" class="{% if url_name == 'agenda_medecin' %}active{% endif %}">{% icone "calendar" %} <span class="nav-texte">Agenda & RDV</span></a>
                 <a href="{% url 'mes_patients' %}" aria-label="Patients" data-tooltip="Patients" class="{% if url_name == 'mes_patients' or url_name == 'fiche_patient_medecin' %}active{% endif %}">{% icone "users" %} <span class="nav-texte">Patients</span></a>
                 <a href="{% url 'historique_consultations' %}" aria-label="Consultations" data-tooltip="Consultations" class="{% if url_name == 'historique_consultations' or url_name == 'ajouter_consultation_medecin' or url_name == 'ajouter_ordonnance_medecin' or url_name == 'voir_ordonnance_medecin' %}active{% endif %}">{% icone "clipboard-list" %} <span class="nav-texte">Consultations</span></a>
+                <a href="{% url 'bordereau_teletransmission' %}" aria-label="Bordereau Tiers-Payant" data-tooltip="Bordereau Tiers-Payant" class="{% if url_name == 'bordereau_teletransmission' %}active{% endif %}">{% icone "file-text" %} <span class="nav-texte">Bordereau Tiers-Payant</span></a>
                 <a href="{% url 'verifier_carte_medecin' %}" aria-label="Scanner / Vérifier" data-tooltip="Scanner / Vérifier" class="{% if url_name == 'verifier_carte_medecin' %}active{% endif %}">{% icone "qr-scan" %} <span class="nav-texte">Scanner / Vérifier</span></a>
                 {% endwith %}
                 {% elif current_role == "PHARMACIEN" %}
@@ -6360,6 +6367,7 @@
                 <a href="{% url 'dashboard_pharmacien' %}" aria-label="Tableau de bord" data-tooltip="Tableau de bord" class="{% if url_name == 'dashboard_pharmacien' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord</span></a>
                 <a href="{% url 'scanner_ordonnance' %}" aria-label="Scanner / Vérifier" data-tooltip="Scanner / Vérifier" class="{% if url_name == 'scanner_ordonnance' %}active{% endif %}">{% icone "qr-scan" %} <span class="nav-texte">Scanner / Vérifier</span></a>
                 <a href="{% url 'historique_delivrances' %}" aria-label="Historique" data-tooltip="Historique" class="{% if url_name == 'historique_delivrances' %}active{% endif %}">{% icone "clock-history" %} <span class="nav-texte">Historique</span></a>
+                <a href="{% url 'bordereau_teletransmission' %}" aria-label="Bordereau IPM" data-tooltip="Bordereau IPM" class="{% if url_name == 'bordereau_teletransmission' %}active{% endif %}">{% icone "file-text" %} <span class="nav-texte">Bordereau IPM</span></a>
                 {% endwith %}
                 {% elif current_role == "ASSURE" %}
                 {% with url_name=request.resolver_match.url_name %}
@@ -7358,6 +7366,13 @@
     })();
     </script>
     {% endif %}
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(function() {});
+        });
+    }
+    </script>
 </body>
 </html>
 
