@@ -6577,6 +6577,19 @@
             if (bouton) { bouton.addEventListener('click', basculerMenu); }
             if (boutonFermer) { boutonFermer.addEventListener('click', fermerMenu); }
             if (fond) { fond.addEventListener('click', fermerMenu); }
+
+            // Fermer le tiroir mobile lorsqu'on clique sur un lien de navigation
+            var barreLaterale = document.getElementById('barre-laterale');
+            if (barreLaterale) {
+                barreLaterale.querySelectorAll('nav a, .logout-button').forEach(function (lien) {
+                    lien.addEventListener('click', function () {
+                        if (corps.classList.contains('sidebar-ouverte')) {
+                            fermerMenu();
+                        }
+                    });
+                });
+            }
+
             document.addEventListener('keydown', function (evenement) {
                 if (evenement.key === 'Escape') { fermerMenu(); }
             });
@@ -6793,14 +6806,65 @@
         })();
 
         (function () {
-            // Fermeture automatique des menus déroulants au toucher extérieur sur mobile/tablette
+            // Fermeture ergonomique des menus déroulants (clic extérieur & sortie du curseur / mouseleave)
+            var selecteurMenus = 'details.menu-theme, details.menu-notifications, details.menu-compte';
+            var delaisFermeture = new Map();
+
+            // 1. Clic à l'extérieur : ferme immédiatement les menus ouverts
             document.addEventListener('click', function (evenement) {
-                var ouverts = document.querySelectorAll('details.menu-theme[open], details.menu-notifications[open], details.menu-compte[open]');
+                var ouverts = document.querySelectorAll(selecteurMenus + '[open]');
                 ouverts.forEach(function (details) {
                     if (!details.contains(evenement.target)) {
                         details.removeAttribute('open');
                     }
                 });
+            });
+
+            // 2. Touche Échap : ferme tous les menus et tiroirs ouverts
+            document.addEventListener('keydown', function (evenement) {
+                if (evenement.key === 'Escape') {
+                    document.querySelectorAll(selecteurMenus + '[open]').forEach(function (details) {
+                        details.removeAttribute('open');
+                    });
+                }
+            });
+
+            // 3. Quand le curseur quitte le menu déroulant (mouseleave), le fermer en douceur après un court délai
+            document.querySelectorAll(selecteurMenus).forEach(function (menu) {
+                menu.addEventListener('mouseleave', function () {
+                    if (!menu.hasAttribute('open')) { return; }
+                    var timer = window.setTimeout(function () {
+                        menu.removeAttribute('open');
+                    }, 450);
+                    delaisFermeture.set(menu, timer);
+                });
+
+                menu.addEventListener('mouseenter', function () {
+                    if (delaisFermeture.has(menu)) {
+                        window.clearTimeout(delaisFermeture.get(menu));
+                        delaisFermeture.delete(menu);
+                    }
+                });
+            });
+
+            // 4. Fermeture automatique des dialogues <dialog> et modales au clic sur leur arrière-plan (backdrop)
+            document.addEventListener('click', function (evenement) {
+                if (evenement.target && evenement.target.tagName === 'DIALOG' && evenement.target.open) {
+                    var rect = evenement.target.getBoundingClientRect();
+                    var clicDansBoite = (
+                        rect.top <= evenement.clientY &&
+                        evenement.clientY <= rect.top + rect.height &&
+                        rect.left <= evenement.clientX &&
+                        evenement.clientX <= rect.left + rect.width
+                    );
+                    if (!clicDansBoite) {
+                        evenement.target.close();
+                    }
+                }
+                var modalAnnulation = document.getElementById('modal-annulation');
+                if (modalAnnulation && evenement.target === modalAnnulation) {
+                    modalAnnulation.style.display = 'none';
+                }
             });
         })();
 
