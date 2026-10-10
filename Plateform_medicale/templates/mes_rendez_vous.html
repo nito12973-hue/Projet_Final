@@ -41,15 +41,28 @@
 
     /* Styles Calendrier Interactif */
     .calendrier-card {
-        background: var(--surface);
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(180deg, var(--surface) 0%, rgba(246, 248, 250, 0.6) 100%);
         border: 1px solid var(--border);
-        border-radius: 18px;
-        box-shadow: var(--ombre-douce);
-        padding: 24px;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px -4px rgba(11, 32, 39, 0.06), 0 2px 8px -2px rgba(11, 32, 39, 0.04);
+        padding: 26px;
         margin-bottom: 24px;
         display: flex;
         flex-direction: column;
         gap: 20px;
+    }
+    .calendrier-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 320px;
+        height: 320px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(14, 124, 134, 0.05) 0%, transparent 70%);
+        pointer-events: none;
     }
     .cal-header {
         display: flex;
@@ -221,26 +234,98 @@
             font-size: 10px;
             padding: 2px 4px;
         }
+    /* Hero Bannière Espace Agenda & Rendez-vous */
+    .banniere-agenda-hero {
+        position: relative;
+        overflow: hidden;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #0b2027 0%, #11333e 50%, #164654 100%);
+        padding: 26px 30px;
+        color: #ffffff;
+        box-shadow: 0 12px 36px -4px rgba(11, 32, 39, 0.22);
+        margin-bottom: 24px;
+    }
+    .banniere-agenda-hero::after {
+        content: "";
+        position: absolute;
+        top: -50px;
+        right: -30px;
+        width: 240px;
+        height: 240px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(79, 184, 174, 0.28) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    .hero-agenda-conteneur {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    .badge-agenda-hero {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(8px);
+        padding: 4px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        font-size: 12px;
+        font-weight: 600;
+        color: #79dba9;
+        margin-bottom: 8px;
+    }
+    .titre-hero-agenda h1 {
+        margin: 0 0 4px;
+        font-size: 24px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: #ffffff;
+    }
+    .desc-hero-agenda {
+        margin: 0;
+        font-size: 13.5px;
+        color: rgba(231, 236, 243, 0.82);
+        max-width: 580px;
+        line-height: 1.45;
     }
 </style>
 
-<section class="page-title">
-    <div>
-        <h1>Mes rendez-vous</h1>
-        <p class="subtitle">Vos rendez-vous et ceux de vos ayants droit en direct.</p>
-    </div>
-    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-        <div class="vue-onglets-agenda">
-            <button type="button" class="onglet-btn actif" id="btn-vue-calendrier" onclick="basculerVue('calendrier')">
-                {% icone "calendar" %} Calendrier
-            </button>
-            <button type="button" class="onglet-btn" id="btn-vue-liste" onclick="basculerVue('liste')">
-                {% icone "clipboard-list" %} Liste
-            </button>
+<div class="banniere-agenda-hero">
+    <div class="hero-agenda-conteneur">
+        <div>
+            <div class="badge-agenda-hero">
+                {% icone "calendar" %}
+                <span>Gestionnaire d'Agenda Médical</span>
+                <span>&bull;</span>
+                <span>SantéSN Tiers-Payant</span>
+            </div>
+            <div class="titre-hero-agenda">
+                <h1>Mon calendrier &amp; consultations</h1>
+            </div>
+            <p class="desc-hero-agenda">
+                Suivez en direct vos rendez-vous et ceux de vos ayants droit. Consultez vos dates clés, exportez vos rappels et programmez vos soins en toute sérénité.
+            </p>
         </div>
-        <a class="button primary" href="{% url 'ajouter_rendez_vous_assure' %}">{% icone "plus-circle" %} Prendre un rendez-vous</a>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <div class="vue-onglets-agenda">
+                <button type="button" class="onglet-btn actif" id="btn-vue-calendrier" onclick="basculerVue('calendrier')">
+                    {% icone "calendar" %} Calendrier
+                </button>
+                <button type="button" class="onglet-btn" id="btn-vue-liste" onclick="basculerVue('liste')">
+                    {% icone "clipboard-list" %} Liste
+                </button>
+            </div>
+            <a class="button primary" href="{% url 'ajouter_rendez_vous_assure' %}" style="box-shadow: 0 4px 14px rgba(14, 124, 134, 0.35);">
+                {% icone "plus-circle" %} Prendre un rendez-vous
+            </a>
+        </div>
     </div>
-</section>
+</div>
 
 <!-- 1. VUE CALENDRIER INTERACTIF (PAR DÉFAUT) -->
 <div id="section-calendrier" class="calendrier-card">
