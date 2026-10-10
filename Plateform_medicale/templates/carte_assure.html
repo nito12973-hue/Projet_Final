@@ -4,60 +4,14 @@
 {% block title %}Carte dématérialisée — {{ patient.prenom }} {{ patient.nom }}{% endblock %}
 
 {% block content %}
-<style>
-<style>
-    .entete-carte-pro {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 20px;
-        flex-wrap: wrap;
-        padding: 6px 0 20px;
-        margin-bottom: 22px;
-        border-bottom: 1px solid var(--border);
-    }
-    .badge-carte-subtil {
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-        background: rgba(14, 124, 134, 0.08);
-        color: var(--primary-strong);
-        border: 1px solid rgba(14, 124, 134, 0.2);
-        padding: 4px 11px;
-        border-radius: 999px;
-        font-size: 11.5px;
-        font-weight: 700;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-        width: fit-content;
-    }
-    .titre-carte-pro {
-        margin: 0;
-        font-size: 22px;
-        font-weight: 800;
-        color: var(--titre);
-        letter-spacing: -0.02em;
-    }
-    .desc-carte-pro {
-        margin: 0;
-        font-size: 13.5px;
-        color: var(--muted);
-        max-width: 540px;
-        line-height: 1.45;
-    }
-</style>
-
-<div class="entete-carte-pro carte-sans-impression">
-    <div style="display: flex; flex-direction: column; gap: 6px;">
-        <span class="badge-carte-subtil">
-            {% icone "id-card" %} Carte Dématérialisée Certifiée · N° {{ patient.numero_carte }}
-        </span>
-        <h1 class="titre-carte-pro">Carte d'assuré numérique</h1>
-        <p class="desc-carte-pro">
-            {{ patient.prenom }} {{ patient.nom }} &mdash; Présentation sur écran de smartphone ou guichet conventionné.
+<section class="page-title carte-sans-impression">
+    <div>
+        <h1>Carte dématérialisée</h1>
+        <p class="subtitle">
+            {{ patient.prenom }} {{ patient.nom }} &mdash; Présentation sur écran de smartphone ou guichet de soins conventionné.
         </p>
     </div>
-    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+    <div class="actions">
         {% if patient.est_ayant_droit %}
         <a class="button btn" href="{% url 'liste_ayants_droit' %}">
             {% icone "chevron-left" %} Mes ayants droit
@@ -71,16 +25,16 @@
             {% icone "shield-check" %} Mes prises en charge
         </a>
         {% if patient.est_valide %}
-        <span class="badge ok" style="padding: 7px 14px; font-size: 13px; font-weight: 700;">
+        <span class="badge ok">
             {% icone "shield-check" %} Validée &amp; Active
         </span>
         {% else %}
-        <span class="badge en_attente" style="padding: 7px 14px; font-size: 13px; font-weight: 700;">
+        <span class="badge en_attente">
             {% icone "clock" %} En attente IPM
         </span>
         {% endif %}
     </div>
-</div>
+</section>
 
 {% if not patient.est_valide %}
 <div class="message-banner danger" style="background: rgba(239, 68, 68, 0.1); border: 2px solid var(--danger); padding: 18px 20px; border-radius: 12px; margin-bottom: 24px;">
