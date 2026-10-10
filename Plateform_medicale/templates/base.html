@@ -6631,6 +6631,31 @@
                 appliquer(prochain);
             });
 
+            // Ouverture automatique de la barre au survol de la souris (Hover Auto-Expand)
+            // Lorsque l'utilisateur a réduit la barre, approcher la souris la déploie automatiquement,
+            // et éloigner la souris la referme en douceur sans perturber son réglage sauvegardé.
+            if (barreLaterale) {
+                var timerRepli = null;
+
+                barreLaterale.addEventListener('mouseenter', function () {
+                    if (window.localStorage.getItem(CLE_STOCKAGE) === '1' && estBureau()) {
+                        if (timerRepli) {
+                            window.clearTimeout(timerRepli);
+                            timerRepli = null;
+                        }
+                        corps.classList.remove('sidebar-reduite');
+                    }
+                });
+
+                barreLaterale.addEventListener('mouseleave', function () {
+                    if (window.localStorage.getItem(CLE_STOCKAGE) === '1' && estBureau()) {
+                        timerRepli = window.setTimeout(function () {
+                            corps.classList.add('sidebar-reduite');
+                        }, 280);
+                    }
+                });
+            }
+
             window.addEventListener('resize', function () {
                 appliquer(window.localStorage.getItem(CLE_STOCKAGE) === '1');
             });
