@@ -4,115 +4,622 @@
 {% block title %}Mes rendez-vous{% endblock %}
 
 {% block content %}
+<style>
+    .vue-onglets-agenda {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--surface);
+        padding: 4px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        box-shadow: var(--ombre-douce);
+    }
+    .onglet-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 13.5px;
+        font-weight: 700;
+        cursor: pointer;
+        border: none;
+        background: transparent;
+        color: var(--muted);
+        transition: all 0.2s ease;
+    }
+    .onglet-btn:hover {
+        color: var(--titre);
+        background: rgba(14, 124, 134, 0.06);
+    }
+    .onglet-btn.actif {
+        background: var(--primary);
+        color: #ffffff;
+        box-shadow: 0 2px 8px rgba(14, 124, 134, 0.35);
+    }
+
+    /* Styles Calendrier Interactif */
+    .calendrier-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        box-shadow: var(--ombre-douce);
+        padding: 24px;
+        margin-bottom: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    .cal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 14px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--border);
+    }
+    .cal-titre-mois {
+        font-size: 20px;
+        font-weight: 800;
+        color: var(--titre);
+        text-transform: capitalize;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .cal-nav-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: var(--champ-bg);
+        color: var(--titre);
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+    .cal-nav-btn:hover {
+        background: var(--primary-soft);
+        color: var(--primary-strong);
+        border-color: var(--primary);
+    }
+    .cal-grid-semaine {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 8px;
+        text-align: center;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 4px;
+    }
+    .cal-grid-jours {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 8px;
+    }
+    .cal-jour {
+        min-height: 90px;
+        background: var(--champ-bg);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        transition: all 0.18s ease;
+        position: relative;
+    }
+    .cal-jour.autre-mois {
+        opacity: 0.35;
+        background: transparent;
+    }
+    .cal-jour.aujourdhui {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 2px rgba(14, 124, 134, 0.25);
+        background: rgba(14, 124, 134, 0.03);
+    }
+    .cal-jour.aujourdhui .cal-jour-num {
+        background: var(--primary);
+        color: #ffffff;
+        border-radius: 999px;
+        width: 24px;
+        height: 24px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .cal-jour-num {
+        font-size: 12.5px;
+        font-weight: 700;
+        color: var(--titre);
+        margin-bottom: 6px;
+    }
+    .cal-events-list {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        width: 100%;
+    }
+    .cal-pastille-rdv {
+        display: block;
+        padding: 3px 6px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        text-align: left;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        cursor: pointer;
+        transition: transform 0.15s ease, filter 0.15s ease;
+        text-decoration: none;
+    }
+    .cal-pastille-rdv:hover {
+        transform: translateY(-1px);
+        filter: brightness(0.92);
+    }
+    .cal-pastille-rdv.statut-CONFIRME {
+        background: #d1fae5;
+        color: #065f46;
+        border: 1px solid #a7f3d0;
+    }
+    .cal-pastille-rdv.statut-DEMANDE {
+        background: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fde68a;
+    }
+    .cal-pastille-rdv.statut-TERMINE {
+        background: #e2e8f0;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+    }
+    .cal-pastille-rdv.statut-ANNULE, .cal-pastille-rdv.statut-REFUSE {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
+    }
+
+    /* Modal / Popin Détails Rendez-vous */
+    .cal-modal-fond {
+        position: fixed;
+        inset: 0;
+        background: rgba(11, 32, 39, 0.45);
+        backdrop-filter: blur(4px);
+        z-index: 9999;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+    .cal-modal-corps {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        max-width: 480px;
+        width: 100%;
+        padding: 26px 28px;
+        box-shadow: 0 20px 45px rgba(0, 0, 0, 0.2);
+        animation: animFadeUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes animFadeUp {
+        from { opacity: 0; transform: translateY(14px) scale(0.97); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @media (max-width: 768px) {
+        .cal-jour {
+            min-height: 65px;
+            padding: 4px;
+        }
+        .cal-pastille-rdv {
+            font-size: 10px;
+            padding: 2px 4px;
+        }
+    }
+</style>
+
 <section class="page-title">
     <div>
         <h1>Mes rendez-vous</h1>
-        <p class="subtitle">Vos rendez-vous et ceux de vos ayants droit.</p>
+        <p class="subtitle">Vos rendez-vous et ceux de vos ayants droit en direct.</p>
     </div>
-    <a class="button primary" href="{% url 'ajouter_rendez_vous_assure' %}">{% icone "plus-circle" %} Prendre un rendez-vous</a>
-</section>
-
-<form method="get" class="filtres" style="background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px 18px; box-shadow: var(--ombre-douce); margin-bottom: 20px;">
-    <div style="min-width:180px;">
-        <label for="periode" style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px;display:block;">Période</label>
-        <select id="periode" name="periode" style="margin-bottom:0;">
-            <option value="">Tous</option>
-            <option value="a_venir" {% if periode_choisie == "a_venir" %}selected{% endif %}>À venir</option>
-            <option value="passes" {% if periode_choisie == "passes" %}selected{% endif %}>Passés</option>
-        </select>
-    </div>
-    <div style="min-width:180px;">
-        <label for="statut" style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px;display:block;">Statut</label>
-        <select id="statut" name="statut" style="margin-bottom:0;">
-            <option value="">Tous</option>
-            {% for value, label in statuts %}
-            <option value="{{ value }}" {% if value == statut_choisi %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <div style="display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap;">
-        <button type="submit" class="button primary btn">{% icone "filter" %} Filtrer</button>
-        {% if statut_choisi or periode_choisie %}
-        <a href="{% url 'mes_rendez_vous_assure' %}" class="button btn">Réinitialiser</a>
-        {% endif %}
-    </div>
-</form>
-
-{% if rendez_vous %}
-<section class="panel" style="border-radius: 16px; box-shadow: var(--ombre-douce); overflow: hidden; border: 1px solid var(--border);">
-    <table class="tableau-carte">
-        <thead>
-            <tr>
-                <th>Date &amp; heure</th>
-                <th>Bénéficiaire</th>
-                <th>Médecin</th>
-                <th>Prestataire</th>
-                <th>Motif</th>
-                <th>Statut</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for rdv in rendez_vous %}
-            <tr>
-                <td><span class="libelle-mobile">Date</span><strong>{{ rdv.date_heure|date:"d/m/Y H:i" }}</strong></td>
-                <td><span class="libelle-mobile">Bénéficiaire</span>{{ rdv.patient }}</td>
-                <td><span class="libelle-mobile">Médecin</span>{{ rdv.medecin }}</td>
-                <td><span class="libelle-mobile">Prestataire</span>{{ rdv.prestataire|default:"-" }}</td>
-                <td><span class="libelle-mobile">Motif</span>{{ rdv.motif|default:"-" }}</td>
-                <td>
-                    <span class="libelle-mobile">Statut</span>
-                    <span class="badge {% if rdv.statut == 'DEMANDE' %}en_attente{% elif rdv.statut == 'CONFIRME' %}confirme{% elif rdv.statut == 'ANNULE' or rdv.statut == 'REFUSE' %}refusee{% elif rdv.statut == 'TERMINE' %}terminee{% endif %}">{{ rdv.get_statut_display }}</span>
-                </td>
-                <td>
-                    <span class="libelle-mobile">Actions</span>
-                    <div style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;">
-                        {% if rdv.statut == 'CONFIRME' %}
-                        <a href="{% url 'telecharger_ics_rendez_vous' rdv.pk %}" class="button btn btn-sm" title="Ajouter à votre agenda (Google / Apple Calendar)" style="gap:4px;padding:5px 9px;">
-                            {% icone "calendar" %} Agenda
-                        </a>
-                        {% endif %}
-                        {% if rdv.statut == 'DEMANDE' or rdv.statut == 'CONFIRME' %}
-                        <form method="post" action="{% url 'annuler_rendez_vous_assure' rdv.pk %}" class="action-ligne"
-                              data-confirmation="Annuler le rendez-vous du {{ rdv.date_heure|date:'d/m/Y à H:i' }} ? Le créneau sera libéré et devra être redemandé."
-                              data-confirmation-action="Oui, annuler le rendez-vous">
-                            {% csrf_token %}
-                            <button type="submit" class="button btn btn-danger btn-sm">Annuler</button>
-                        </form>
-                        {% elif rdv.statut == 'TERMINE' %}
-                        <span style="font-size:12px;color:var(--muted);font-style:italic;">Effectué</span>
-                        {% else %}
-                        <span style="color:var(--muted);">&mdash;</span>
-                        {% endif %}
-                    </div>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</section>
-{% if rendez_vous.paginator.num_pages > 1 %}
-<nav class="pagination" aria-label="Pagination">
-    {% if rendez_vous.has_previous %}
-    <a href="?{% prefixe_pagination request.GET %}page={{ rendez_vous.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Précédent</a>
-    {% endif %}
-    <span class="pagination-info">Page {{ rendez_vous.number }} sur {{ rendez_vous.paginator.num_pages }}</span>
-    {% if rendez_vous.has_next %}
-    <a href="?{% prefixe_pagination request.GET %}page={{ rendez_vous.next_page_number }}" class="button btn btn-sm">Suivant {% icone "chevron-right" %}</a>
-    {% endif %}
-</nav>
-{% endif %}
-{% else %}
-<div class="etat-vide">
-    {% illustration_vide "calendar" %}
-    <h3>Aucun rendez-vous trouvé</h3>
-    <p>{% if statut_choisi or periode_choisie %}Aucun rendez-vous ne correspond aux critères sélectionnés.{% else %}Aucun rendez-vous n'est planifié pour le moment.{% endif %}</p>
-    <div class="actions">
-        {% if statut_choisi or periode_choisie %}
-        <a href="{% url 'mes_rendez_vous_assure' %}" class="button">{% icone "x" %} Réinitialiser les filtres</a>
-        {% endif %}
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <div class="vue-onglets-agenda">
+            <button type="button" class="onglet-btn actif" id="btn-vue-calendrier" onclick="basculerVue('calendrier')">
+                {% icone "calendar" %} Calendrier
+            </button>
+            <button type="button" class="onglet-btn" id="btn-vue-liste" onclick="basculerVue('liste')">
+                {% icone "clipboard-list" %} Liste
+            </button>
+        </div>
         <a class="button primary" href="{% url 'ajouter_rendez_vous_assure' %}">{% icone "plus-circle" %} Prendre un rendez-vous</a>
     </div>
+</section>
+
+<!-- 1. VUE CALENDRIER INTERACTIF (PAR DÉFAUT) -->
+<div id="section-calendrier" class="calendrier-card">
+    <div class="cal-header">
+        <div class="cal-titre-mois">
+            <span id="cal-mois-nom">Octobre 2026</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+            <button type="button" class="button btn btn-sm" onclick="allerAujourdhui()">Aujourd'hui</button>
+            <button type="button" class="cal-nav-btn" onclick="changerMois(-1)" title="Mois précédent" aria-label="Mois précédent">
+                {% icone "chevron-left" %}
+            </button>
+            <button type="button" class="cal-nav-btn" onclick="changerMois(1)" title="Mois suivant" aria-label="Mois suivant">
+                {% icone "chevron-right" %}
+            </button>
+        </div>
+    </div>
+
+    <!-- Légende statuts -->
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;font-size:12px;">
+        <span style="display:inline-flex;align-items:center;gap:6px;">
+            <span style="width:10px;height:10px;border-radius:3px;background:#10b981;"></span> Confirmé
+        </span>
+        <span style="display:inline-flex;align-items:center;gap:6px;">
+            <span style="width:10px;height:10px;border-radius:3px;background:#f59e0b;"></span> En attente
+        </span>
+        <span style="display:inline-flex;align-items:center;gap:6px;">
+            <span style="width:10px;height:10px;border-radius:3px;background:#64748b;"></span> Terminé
+        </span>
+        <span style="display:inline-flex;align-items:center;gap:6px;">
+            <span style="width:10px;height:10px;border-radius:3px;background:#ef4444;"></span> Annulé
+        </span>
+    </div>
+
+    <div class="cal-grid-semaine">
+        <div>Lun</div>
+        <div>Mar</div>
+        <div>Mer</div>
+        <div>Jeu</div>
+        <div>Ven</div>
+        <div>Sam</div>
+        <div>Dim</div>
+    </div>
+
+    <div id="cal-grille-corps" class="cal-grid-jours">
+        <!-- Rendu dynamique par JavaScript -->
+    </div>
 </div>
-{% endif %}
+
+<!-- 2. VUE LISTE ET FILTRES EXISTANTS -->
+<div id="section-liste" style="display:none;">
+    <form method="get" class="filtres" style="background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px 18px; box-shadow: var(--ombre-douce); margin-bottom: 20px;">
+        <div style="min-width:180px;">
+            <label for="periode" style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px;display:block;">Période</label>
+            <select id="periode" name="periode" style="margin-bottom:0;">
+                <option value="">Tous</option>
+                <option value="a_venir" {% if periode_choisie == "a_venir" %}selected{% endif %}>À venir</option>
+                <option value="passes" {% if periode_choisie == "passes" %}selected{% endif %}>Passés</option>
+            </select>
+        </div>
+        <div style="min-width:180px;">
+            <label for="statut" style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px;display:block;">Statut</label>
+            <select id="statut" name="statut" style="margin-bottom:0;">
+                <option value="">Tous</option>
+                {% for value, label in statuts %}
+                <option value="{{ value }}" {% if value == statut_choisi %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap;">
+            <button type="submit" class="button primary btn">{% icone "filter" %} Filtrer</button>
+            {% if statut_choisi or periode_choisie %}
+            <a href="{% url 'mes_rendez_vous_assure' %}" class="button btn">Réinitialiser</a>
+            {% endif %}
+        </div>
+    </form>
+
+    {% if rendez_vous %}
+    <section class="panel" style="border-radius: 16px; box-shadow: var(--ombre-douce); overflow: hidden; border: 1px solid var(--border);">
+        <table class="tableau-carte">
+            <thead>
+                <tr>
+                    <th>Date &amp; heure</th>
+                    <th>Bénéficiaire</th>
+                    <th>Médecin</th>
+                    <th>Prestataire</th>
+                    <th>Motif</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rdv in rendez_vous %}
+                <tr>
+                    <td><span class="libelle-mobile">Date</span><strong>{{ rdv.date_heure|date:"d/m/Y H:i" }}</strong></td>
+                    <td><span class="libelle-mobile">Bénéficiaire</span>{{ rdv.patient }}</td>
+                    <td><span class="libelle-mobile">Médecin</span>{{ rdv.medecin }}</td>
+                    <td><span class="libelle-mobile">Prestataire</span>{{ rdv.prestataire|default:"-" }}</td>
+                    <td><span class="libelle-mobile">Motif</span>{{ rdv.motif|default:"-" }}</td>
+                    <td>
+                        <span class="libelle-mobile">Statut</span>
+                        <span class="badge {% if rdv.statut == 'DEMANDE' %}en_attente{% elif rdv.statut == 'CONFIRME' %}confirme{% elif rdv.statut == 'ANNULE' or rdv.statut == 'REFUSE' %}refusee{% elif rdv.statut == 'TERMINE' %}terminee{% endif %}">{{ rdv.get_statut_display }}</span>
+                    </td>
+                    <td>
+                        <span class="libelle-mobile">Actions</span>
+                        <div style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                            {% if rdv.statut == 'CONFIRME' %}
+                            <a href="{% url 'telecharger_ics_rendez_vous' rdv.pk %}" class="button btn btn-sm" title="Ajouter à votre agenda (Google / Apple Calendar)" style="gap:4px;padding:5px 9px;">
+                                {% icone "calendar" %} Agenda
+                            </a>
+                            {% endif %}
+                            {% if rdv.statut == 'DEMANDE' or rdv.statut == 'CONFIRME' %}
+                            <form method="post" action="{% url 'annuler_rendez_vous_assure' rdv.pk %}" class="action-ligne"
+                                  data-confirmation="Annuler le rendez-vous du {{ rdv.date_heure|date:'d/m/Y à H:i' }} ? Le créneau sera libéré et devra être redemandé."
+                                  data-confirmation-action="Oui, annuler le rendez-vous">
+                                {% csrf_token %}
+                                <button type="submit" class="button btn btn-danger btn-sm">Annuler</button>
+                            </form>
+                            {% elif rdv.statut == 'TERMINE' %}
+                            <span style="font-size:12px;color:var(--muted);font-style:italic;">Effectué</span>
+                            {% else %}
+                            <span style="color:var(--muted);">&mdash;</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+    {% if rendez_vous.paginator.num_pages > 1 %}
+    <nav class="pagination" aria-label="Pagination">
+        {% if rendez_vous.has_previous %}
+        <a href="?{% prefixe_pagination request.GET %}page={{ rendez_vous.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Précédent</a>
+        {% endif %}
+        <span class="pagination-info">Page {{ rendez_vous.number }} sur {{ rendez_vous.paginator.num_pages }}</span>
+        {% if rendez_vous.has_next %}
+        <a href="?{% prefixe_pagination request.GET %}page={{ rendez_vous.next_page_number }}" class="button btn btn-sm">Suivant {% icone "chevron-right" %}</a>
+        {% endif %}
+    </nav>
+    {% endif %}
+    {% else %}
+    <div class="etat-vide">
+        {% illustration_vide "calendar" %}
+        <h3>Aucun rendez-vous trouvé</h3>
+        <p>{% if statut_choisi or periode_choisie %}Aucun rendez-vous ne correspond aux critères sélectionnés.{% else %}Aucun rendez-vous n'est planifié pour le moment.{% endif %}</p>
+        <div class="actions">
+            {% if statut_choisi or periode_choisie %}
+            <a href="{% url 'mes_rendez_vous_assure' %}" class="button">{% icone "x" %} Réinitialiser les filtres</a>
+            {% endif %}
+            <a class="button primary" href="{% url 'ajouter_rendez_vous_assure' %}">{% icone "plus-circle" %} Prendre un rendez-vous</a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal Détails RDV Calendrier -->
+<div id="modal-details-rdv" class="cal-modal-fond" onclick="fermerModalRdv(event)">
+    <div class="cal-modal-corps" onclick="event.stopPropagation()">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span style="width:34px;height:34px;border-radius:8px;background:var(--primary-soft);color:var(--primary-strong);display:flex;align-items:center;justify-content:center;">
+                    {% icone "calendar" %}
+                </span>
+                <h3 style="margin:0;font-size:17px;font-weight:800;color:var(--titre);">Détail du Rendez-vous</h3>
+            </div>
+            <button type="button" onclick="fermerModalRdvDirect()" style="border:none;background:transparent;cursor:pointer;font-size:20px;color:var(--muted);">&times;</button>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:12px;font-size:13.5px;margin-bottom:20px;">
+            <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:8px;">
+                <span style="color:var(--muted);">Date &amp; heure</span>
+                <strong id="modal-date-heure" style="color:var(--titre);"></strong>
+            </div>
+            <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:8px;">
+                <span style="color:var(--muted);">Bénéficiaire</span>
+                <strong id="modal-beneficiaire"></strong>
+            </div>
+            <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:8px;">
+                <span style="color:var(--muted);">Médecin</span>
+                <strong id="modal-medecin" style="color:var(--primary-strong);"></strong>
+            </div>
+            <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:8px;">
+                <span style="color:var(--muted);">Établissement</span>
+                <strong id="modal-prestataire"></strong>
+            </div>
+            <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:8px;">
+                <span style="color:var(--muted);">Motif</span>
+                <span id="modal-motif" style="font-weight:600;"></span>
+            </div>
+            <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:8px;">
+                <span style="color:var(--muted);">Statut</span>
+                <span id="modal-statut-badge" class="badge"></span>
+            </div>
+        </div>
+
+        <div id="modal-actions" style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;">
+            <button type="button" class="button btn btn-sm" onclick="fermerModalRdvDirect()">Fermer</button>
+            <a id="modal-btn-ics" href="#" class="button btn btn-sm" style="display:none;background:var(--primary-soft);color:var(--primary-strong);">
+                {% icone "calendar" %} Ajouter à mon agenda
+            </a>
+        </div>
+    </div>
+</div>
+
+{{ evenements_calendrier|json_script:"donnees-evenements-cal" }}
+
+<script>
+    var RDV_EVENEMENTS = [];
+    try {
+        var elDonnees = document.getElementById('donnees-evenements-cal');
+        if (elDonnees) {
+            RDV_EVENEMENTS = JSON.parse(elDonnees.textContent);
+        }
+    } catch (e) {
+        RDV_EVENEMENTS = [];
+    }
+
+    var dateCouranteCal = new Date();
+
+    function basculerVue(vue) {
+        var secCal = document.getElementById('section-calendrier');
+        var secListe = document.getElementById('section-liste');
+        var btnCal = document.getElementById('btn-vue-calendrier');
+        var btnListe = document.getElementById('btn-vue-liste');
+
+        if (vue === 'calendrier') {
+            secCal.style.display = 'flex';
+            secListe.style.display = 'none';
+            btnCal.classList.add('actif');
+            btnListe.classList.remove('actif');
+        } else {
+            secCal.style.display = 'none';
+            secListe.style.display = 'block';
+            btnCal.classList.remove('actif');
+            btnListe.classList.add('actif');
+        }
+    }
+
+    function formaterMoisAnnee(date) {
+        var moisFr = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+        return moisFr[date.getMonth()] + ' ' + date.getFullYear();
+    }
+
+    function changerMois(delta) {
+        dateCouranteCal.setMonth(dateCouranteCal.getMonth() + delta);
+        rendreCalendrier();
+    }
+
+    function allerAujourdhui() {
+        dateCouranteCal = new Date();
+        rendreCalendrier();
+    }
+
+    function rendreCalendrier() {
+        var titreEl = document.getElementById('cal-mois-nom');
+        if (titreEl) titreEl.textContent = formaterMoisAnnee(dateCouranteCal);
+
+        var corpsEl = document.getElementById('cal-grille-corps');
+        if (!corpsEl) return;
+        corpsEl.innerHTML = '';
+
+        var annee = dateCouranteCal.getFullYear();
+        var mois = dateCouranteCal.getMonth();
+
+        var aujourdhui = new Date();
+        var estMoisCourant = (aujourdhui.getFullYear() === annee && aujourdhui.getMonth() === mois);
+        var jourAujourdhui = aujourdhui.getDate();
+
+        // Premier jour du mois
+        var premierJour = new Date(annee, mois, 1);
+        // Jour de la semaine (0 = Dimanche, 1 = Lundi, etc.) -> Convertir en Lundi = 0, Dimanche = 6
+        var premierJourSemaine = (premierJour.getDay() + 6) % 7;
+
+        var dernierJourMois = new Date(annee, mois + 1, 0).getDate();
+        var dernierJourMoisPrecedent = new Date(annee, mois, 0).getDate();
+
+        // 1. Cases du mois précédent
+        for (var i = premierJourSemaine - 1; i >= 0; i--) {
+            var caseJourPrev = document.createElement('div');
+            caseJourPrev.className = 'cal-jour autre-mois';
+            caseJourPrev.innerHTML = '<span class="cal-jour-num">' + (dernierJourMoisPrecedent - i) + '</span>';
+            corpsEl.appendChild(caseJourPrev);
+        }
+
+        // Indexation des événements par date YYYY-MM-DD
+        var mapEvents = {};
+        RDV_EVENEMENTS.forEach(function (ev) {
+            if (!mapEvents[ev.date]) {
+                mapEvents[ev.date] = [];
+            }
+            mapEvents[ev.date].push(ev);
+        });
+
+        // 2. Cases du mois courant
+        for (var j = 1; j <= dernierJourMois; j++) {
+            var caseJour = document.createElement('div');
+            caseJour.className = 'cal-jour';
+            if (estMoisCourant && j === jourAujourdhui) {
+                caseJour.classList.add('aujourdhui');
+            }
+
+            var numSpan = '<span class="cal-jour-num">' + j + '</span>';
+            var eventsHtml = '<div class="cal-events-list">';
+
+            var dateCle = annee + '-' + String(mois + 1).padStart(2, '0') + '-' + String(j).padStart(2, '0');
+            if (mapEvents[dateCle]) {
+                mapEvents[dateCle].forEach(function (ev, index) {
+                    var titrePastille = ev.heure + ' · ' + ev.medecin;
+                    eventsHtml += '<a href="javascript:void(0)" class="cal-pastille-rdv statut-' + ev.statut + '" onclick="afficherDetailsRdv(' + ev.id + ')" title="' + ev.motif + ' (' + ev.statut_display + ')">' +
+                        '<strong>' + ev.heure + '</strong> ' + ev.medecin +
+                        '</a>';
+                });
+            }
+            eventsHtml += '</div>';
+
+            caseJour.innerHTML = numSpan + eventsHtml;
+            corpsEl.appendChild(caseJour);
+        }
+
+        // 3. Compléter les cases pour remplir la grille 7x5 ou 7x6
+        var totalCases = premierJourSemaine + dernierJourMois;
+        var casesRestantes = (7 - (totalCases % 7)) % 7;
+        for (var k = 1; k <= casesRestantes; k++) {
+            var caseJourSuiv = document.createElement('div');
+            caseJourSuiv.className = 'cal-jour autre-mois';
+            caseJourSuiv.innerHTML = '<span class="cal-jour-num">' + k + '</span>';
+            corpsEl.appendChild(caseJourSuiv);
+        }
+    }
+
+    function afficherDetailsRdv(rdvId) {
+        var rdv = RDV_EVENEMENTS.find(function (r) { return r.id === rdvId; });
+        if (!rdv) return;
+
+        document.getElementById('modal-date-heure').textContent = rdv.date_fr + ' à ' + rdv.heure;
+        document.getElementById('modal-beneficiaire').textContent = rdv.beneficiaire;
+        document.getElementById('modal-medecin').textContent = rdv.medecin;
+        document.getElementById('modal-prestataire').textContent = rdv.prestataire;
+        document.getElementById('modal-motif').textContent = rdv.motif;
+
+        var badge = document.getElementById('modal-statut-badge');
+        badge.textContent = rdv.statut_display;
+        badge.className = 'badge';
+        if (rdv.statut === 'CONFIRME') badge.classList.add('validee');
+        else if (rdv.statut === 'DEMANDE') badge.classList.add('en_attente');
+        else if (rdv.statut === 'TERMINE') badge.classList.add('terminee');
+        else badge.classList.add('refusee');
+
+        var btnIcs = document.getElementById('modal-btn-ics');
+        if (rdv.ics_url) {
+            btnIcs.href = rdv.ics_url;
+            btnIcs.style.display = 'inline-flex';
+        } else {
+            btnIcs.style.display = 'none';
+        }
+
+        document.getElementById('modal-details-rdv').style.display = 'flex';
+    }
+
+    function fermerModalRdv(e) {
+        if (e.target.id === 'modal-details-rdv') {
+            fermerModalRdvDirect();
+        }
+    }
+
+    function fermerModalRdvDirect() {
+        document.getElementById('modal-details-rdv').style.display = 'none';
+    }
+
+    // Si des filtres URL sont actifs, basculer directement sur la vue liste pour l'utilisateur
+    document.addEventListener('DOMContentLoaded', function () {
+        var params = new URLSearchParams(window.location.search);
+        if (params.get('periode') || params.get('statut') || params.get('page')) {
+            basculerVue('liste');
+        } else {
+            basculerVue('calendrier');
+        }
+        rendreCalendrier();
+    });
+</script>
 {% endblock %}
