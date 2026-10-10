@@ -5,113 +5,67 @@
 
 {% block content %}
 <style>
-    .banniere-pec-hero {
-        position: relative;
-        overflow: hidden;
-        border-radius: 20px;
-        background: linear-gradient(135deg, #0b2027 0%, #11333e 50%, #164654 100%);
-        padding: 26px 30px;
-        color: #ffffff;
-        box-shadow: 0 12px 36px -4px rgba(11, 32, 39, 0.22);
-        margin-bottom: 24px;
-    }
-    .banniere-pec-hero::after {
-        content: "";
-        position: absolute;
-        top: -45px;
-        right: -35px;
-        width: 230px;
-        height: 230px;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(79, 184, 174, 0.28) 0%, transparent 70%);
-        pointer-events: none;
-    }
-    .hero-pec-conteneur {
-        position: relative;
-        z-index: 2;
+<style>
+    .entete-pec-pro {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 20px;
         flex-wrap: wrap;
+        padding: 6px 0 20px;
+        margin-bottom: 22px;
+        border-bottom: 1px solid var(--border);
     }
-    .badge-pec-hero {
+    .badge-pec-subtil {
         display: inline-flex;
         align-items: center;
-        gap: 8px;
-        background: rgba(255, 255, 255, 0.12);
-        backdrop-filter: blur(8px);
-        padding: 4px 12px;
+        gap: 7px;
+        background: rgba(14, 124, 134, 0.08);
+        color: var(--primary-strong);
+        border: 1px solid rgba(14, 124, 134, 0.2);
+        padding: 4px 11px;
         border-radius: 999px;
-        border: 1px solid rgba(255, 255, 255, 0.18);
-        font-size: 12px;
-        font-weight: 600;
-        color: #79dba9;
-        margin-bottom: 8px;
+        font-size: 11.5px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        width: fit-content;
     }
-    .titre-hero-pec h1 {
-        margin: 0 0 4px;
-        font-size: 24px;
+    .titre-pec-pro {
+        margin: 0;
+        font-size: 22px;
         font-weight: 800;
+        color: var(--titre);
         letter-spacing: -0.02em;
-        color: #ffffff;
     }
-    .desc-hero-pec {
+    .desc-pec-pro {
         margin: 0;
         font-size: 13.5px;
-        color: rgba(231, 236, 243, 0.82);
-        max-width: 580px;
+        color: var(--muted);
+        max-width: 540px;
         line-height: 1.45;
-    }
-    .btn-hero-retour-pec {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background: rgba(255, 255, 255, 0.14);
-        border: 1px solid rgba(255, 255, 255, 0.25);
-        color: #ffffff;
-        padding: 9px 18px;
-        border-radius: 11px;
-        font-size: 13.5px;
-        font-weight: 700;
-        text-decoration: none;
-        backdrop-filter: blur(8px);
-        transition: all 0.2s ease;
-    }
-    .btn-hero-retour-pec:hover {
-        background: rgba(255, 255, 255, 0.22);
-        border-color: rgba(255, 255, 255, 0.4);
-        transform: translateY(-1px);
-        color: #ffffff;
     }
 </style>
 
-<div class="banniere-pec-hero">
-    <div class="hero-pec-conteneur">
-        <div>
-            <div class="badge-pec-hero">
-                {% icone "shield-check" %}
-                <span>Prises en Charge Tiers-Payant</span>
-                <span>&bull;</span>
-                <span>Couverture IPM</span>
-            </div>
-            <div class="titre-hero-pec">
-                <h1>Mes prises en charge</h1>
-            </div>
-            <p class="desc-hero-pec">
-                Suivi en direct de vos couvertures médicales et accords de dispense d'avance de frais pour vous et votre famille.
-            </p>
-        </div>
-        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-            <a class="btn-hero-retour-pec" href="{% url 'dashboard_assure' %}">
-                {% icone "chevron-left" %} Mon tableau de bord
-            </a>
-            {% if lignes %}
-            <a class="button primary btn" href="{% url 'demander_prise_en_charge_assure' %}" style="box-shadow: 0 4px 14px rgba(14, 124, 134, 0.35);">
-                {% icone "plus-circle" %} Nouvelle demande
-            </a>
-            {% endif %}
-        </div>
+<div class="entete-pec-pro">
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+        <span class="badge-pec-subtil">
+            {% icone "shield-check" %} Prises en charge &amp; Tiers-Payant
+        </span>
+        <h1 class="titre-pec-pro">Mes prises en charge</h1>
+        <p class="desc-pec-pro">
+            Suivi des accords de dispense d'avance de frais pour vous et vos ayants droit.
+        </p>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <a class="button btn" href="{% url 'dashboard_assure' %}">
+            {% icone "chevron-left" %} Tableau de bord
+        </a>
+        {% if lignes %}
+        <a class="button primary btn" href="{% url 'demander_prise_en_charge_assure' %}">
+            {% icone "plus-circle" %} Nouvelle demande
+        </a>
+        {% endif %}
     </div>
 </div>
 
