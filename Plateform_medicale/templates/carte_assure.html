@@ -4,37 +4,129 @@
 {% block title %}Carte dématérialisée — {{ patient.prenom }} {{ patient.nom }}{% endblock %}
 
 {% block content %}
-<section class="page-title carte-sans-impression">
-    <div>
-        <h1>Carte dématérialisée</h1>
-        <p class="subtitle">
-            {{ patient.prenom }} {{ patient.nom }} — Présentation sur écran de smartphone ou guichet de soins conventionné.
-        </p>
+<style>
+    .banniere-carte-hero {
+        position: relative;
+        overflow: hidden;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #0b2027 0%, #11333e 50%, #164654 100%);
+        padding: 26px 30px;
+        color: #ffffff;
+        box-shadow: 0 12px 36px -4px rgba(11, 32, 39, 0.22);
+        margin-bottom: 24px;
+    }
+    .banniere-carte-hero::after {
+        content: "";
+        position: absolute;
+        top: -45px;
+        right: -35px;
+        width: 220px;
+        height: 220px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(79, 184, 174, 0.28) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    .hero-carte-conteneur {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    .badge-carte-hero {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(8px);
+        padding: 4px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        font-size: 12px;
+        font-weight: 600;
+        color: #79dba9;
+        margin-bottom: 8px;
+    }
+    .titre-hero-carte h1 {
+        margin: 0 0 4px;
+        font-size: 24px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: #ffffff;
+    }
+    .desc-hero-carte {
+        margin: 0;
+        font-size: 13.5px;
+        color: rgba(231, 236, 243, 0.82);
+        max-width: 580px;
+        line-height: 1.45;
+    }
+    .btn-hero-retour-carte {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.14);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        color: #ffffff;
+        padding: 9px 18px;
+        border-radius: 11px;
+        font-size: 13.5px;
+        font-weight: 700;
+        text-decoration: none;
+        backdrop-filter: blur(8px);
+        transition: all 0.2s ease;
+    }
+    .btn-hero-retour-carte:hover {
+        background: rgba(255, 255, 255, 0.22);
+        border-color: rgba(255, 255, 255, 0.4);
+        transform: translateY(-1px);
+        color: #ffffff;
+    }
+</style>
+
+<div class="banniere-carte-hero carte-sans-impression">
+    <div class="hero-carte-conteneur">
+        <div>
+            <div class="badge-carte-hero">
+                {% icone "id-card" %}
+                <span>Carte Dématérialisée Certifiée</span>
+                <span>&bull;</span>
+                <span>N° {{ patient.numero_carte }}</span>
+            </div>
+            <div class="titre-hero-carte">
+                <h1>Carte dématérialisée</h1>
+            </div>
+            <p class="desc-hero-carte">
+                {{ patient.prenom }} {{ patient.nom }} &mdash; Présentation sur écran de smartphone ou guichet de soins conventionné.
+            </p>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            {% if patient.est_ayant_droit %}
+            <a class="btn-hero-retour-carte" href="{% url 'liste_ayants_droit' %}">
+                {% icone "chevron-left" %} Mes ayants droit
+            </a>
+            {% else %}
+            <a class="btn-hero-retour-carte" href="{% url 'dashboard_assure' %}">
+                {% icone "chevron-left" %} Mon tableau de bord
+            </a>
+            {% endif %}
+            <a class="btn-hero-retour-carte" href="{% url 'mes_prises_en_charge_assure' %}">
+                {% icone "shield-check" %} Mes prises en charge
+            </a>
+            {% if patient.est_valide %}
+            <span class="badge ok" style="padding: 7px 14px; font-size: 13px; font-weight: 700;">
+                {% icone "shield-check" %} Validée &amp; Active
+            </span>
+            {% else %}
+            <span class="badge en_attente" style="padding: 7px 14px; font-size: 13px; font-weight: 700;">
+                {% icone "clock" %} En attente IPM
+            </span>
+            {% endif %}
+        </div>
     </div>
-    <div class="actions">
-        <a class="button btn" href="{% url 'mes_prises_en_charge_assure' %}">
-            {% icone "shield-check" %} Mes prises en charge
-        </a>
-        {% if patient.est_ayant_droit %}
-        <a class="button btn" href="{% url 'liste_ayants_droit' %}">
-            {% icone "chevron-left" %} Mes ayants droit
-        </a>
-        {% else %}
-        <a class="button btn" href="{% url 'dashboard_assure' %}">
-            {% icone "chevron-left" %} Mon tableau de bord
-        </a>
-        {% endif %}
-        {% if patient.est_valide %}
-        <span class="badge ok" style="padding: 6px 12px; font-size: 13px;">
-            {% icone "shield-check" %} Validée &amp; Active
-        </span>
-        {% else %}
-        <span class="badge en_attente" style="padding: 6px 12px; font-size: 13px;">
-            {% icone "clock" %} En attente IPM
-        </span>
-        {% endif %}
-    </div>
-</section>
+</div>
 
 {% if not patient.est_valide %}
 <div class="message-banner danger" style="background: rgba(239, 68, 68, 0.1); border: 2px solid var(--danger); padding: 18px 20px; border-radius: 12px; margin-bottom: 24px;">

@@ -4,24 +4,123 @@
 {% block title %}Mes ayants droit{% endblock %}
 
 {% block content %}
-<section class="page-title">
-    <div>
-        <h1>Mes ayants droit</h1>
-        <p class="subtitle">Conjoint, enfants et autres membres couverts par votre assurance.</p>
+<style>
+    .banniere-ayants-hero {
+        position: relative;
+        overflow: hidden;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #0b2027 0%, #11333e 50%, #164654 100%);
+        padding: 26px 30px;
+        color: #ffffff;
+        box-shadow: 0 12px 36px -4px rgba(11, 32, 39, 0.22);
+        margin-bottom: 24px;
+    }
+    .banniere-ayants-hero::after {
+        content: "";
+        position: absolute;
+        top: -45px;
+        right: -35px;
+        width: 220px;
+        height: 220px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(79, 184, 174, 0.28) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    .hero-ayants-conteneur {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    .badge-ayants-hero {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(8px);
+        padding: 4px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        font-size: 12px;
+        font-weight: 600;
+        color: #79dba9;
+        margin-bottom: 8px;
+    }
+    .titre-hero-ayants h1 {
+        margin: 0 0 4px;
+        font-size: 24px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: #ffffff;
+    }
+    .desc-hero-ayants {
+        margin: 0;
+        font-size: 13.5px;
+        color: rgba(231, 236, 243, 0.82);
+        max-width: 580px;
+        line-height: 1.45;
+    }
+    .btn-hero-retour-ayants {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.14);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        color: #ffffff;
+        padding: 9px 18px;
+        border-radius: 11px;
+        font-size: 13.5px;
+        font-weight: 700;
+        text-decoration: none;
+        backdrop-filter: blur(8px);
+        transition: all 0.2s ease;
+    }
+    .btn-hero-retour-ayants:hover {
+        background: rgba(255, 255, 255, 0.22);
+        border-color: rgba(255, 255, 255, 0.4);
+        transform: translateY(-1px);
+        color: #ffffff;
+    }
+</style>
+
+<div class="banniere-ayants-hero">
+    <div class="hero-ayants-conteneur">
+        <div>
+            <div class="badge-ayants-hero">
+                {% icone "users" %}
+                <span>Famille &amp; Bénéficiaires</span>
+                <span>&bull;</span>
+                <span>Rattachement IPM</span>
+            </div>
+            <div class="titre-hero-ayants">
+                <h1>Mes ayants droit</h1>
+            </div>
+            <p class="desc-hero-ayants">
+                Gérez les membres de votre foyer couverts par votre contrat d'assurance maladie (conjoint, enfants, ascendants).
+            </p>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <a class="btn-hero-retour-ayants" href="{% url 'dashboard_assure' %}">
+                {% icone "chevron-left" %} Mon tableau de bord
+            </a>
+            <span class="badge" style="background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.25); font-size: 13px; padding: 7px 14px; border-radius: 20px; font-weight: 700; color: {% if quota_atteint %}#fca5a5{% else %}#79dba9{% endif %};">
+                Quota : {{ nb_ayants_droit }} / {{ quota_max }} inscrits
+            </span>
+            {% if ayants_droit and not quota_atteint %}
+            <a class="button primary" href="{% url 'ajouter_ayant_droit' %}" style="box-shadow: 0 4px 14px rgba(14, 124, 134, 0.35);">
+                {% icone "plus-circle" %} Ajouter un ayant droit
+            </a>
+            {% elif quota_atteint %}
+            <button class="button" disabled style="opacity: 0.6; cursor: not-allowed;" title="Quota maximal d'ayants droit atteint pour votre contrat">
+                Quota atteint ({{ quota_max }}/{{ quota_max }})
+            </button>
+            {% endif %}
+        </div>
     </div>
-    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-        <span class="badge" style="background: var(--surface); border: 1px solid var(--border); font-size: 12.5px; padding: 6px 12px; border-radius: 20px; font-weight: 600; color: {% if quota_atteint %}var(--danger){% else %}var(--primary){% endif %};">
-            Quota : {{ nb_ayants_droit }} / {{ quota_max }} inscrits
-        </span>
-        {% if ayants_droit and not quota_atteint %}
-        <a class="button primary" href="{% url 'ajouter_ayant_droit' %}">{% icone "plus-circle" %} Ajouter un ayant droit</a>
-        {% elif quota_atteint %}
-        <button class="button" disabled style="opacity: 0.6; cursor: not-allowed;" title="Quota maximal d'ayants droit atteint pour votre contrat">
-            Quota atteint ({{ quota_max }}/{{ quota_max }})
-        </button>
-        {% endif %}
-    </div>
-</section>
+</div>
 
 {% if quota_atteint %}
 <div class="message-banner info" style="background: var(--surface); border-left: 4px solid var(--primary); padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; color: var(--texte);">

@@ -4,12 +4,111 @@
 {% block title %}Mes ordonnances{% endblock %}
 
 {% block content %}
-<section class="page-title">
-    <div>
-        <h1>Mes ordonnances</h1>
-        <p class="subtitle">Ordonnances émises pour vous et vos ayants droit.</p>
+<style>
+    .banniere-ordonnances-hero {
+        position: relative;
+        overflow: hidden;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #0b2027 0%, #11333e 50%, #164654 100%);
+        padding: 26px 30px;
+        color: #ffffff;
+        box-shadow: 0 12px 36px -4px rgba(11, 32, 39, 0.22);
+        margin-bottom: 24px;
+    }
+    .banniere-ordonnances-hero::after {
+        content: "";
+        position: absolute;
+        top: -45px;
+        right: -35px;
+        width: 220px;
+        height: 220px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(79, 184, 174, 0.28) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    .hero-ordonnances-conteneur {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    .badge-ordonnances-hero {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(8px);
+        padding: 4px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        font-size: 12px;
+        font-weight: 600;
+        color: #79dba9;
+        margin-bottom: 8px;
+    }
+    .titre-hero-ordonnances h1 {
+        margin: 0 0 4px;
+        font-size: 24px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: #ffffff;
+    }
+    .desc-hero-ordonnances {
+        margin: 0;
+        font-size: 13.5px;
+        color: rgba(231, 236, 243, 0.82);
+        max-width: 580px;
+        line-height: 1.45;
+    }
+    .btn-hero-retour-ordo {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.14);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        color: #ffffff;
+        padding: 9px 18px;
+        border-radius: 11px;
+        font-size: 13.5px;
+        font-weight: 700;
+        text-decoration: none;
+        backdrop-filter: blur(8px);
+        transition: all 0.2s ease;
+    }
+    .btn-hero-retour-ordo:hover {
+        background: rgba(255, 255, 255, 0.22);
+        border-color: rgba(255, 255, 255, 0.4);
+        transform: translateY(-1px);
+        color: #ffffff;
+    }
+</style>
+
+<div class="banniere-ordonnances-hero">
+    <div class="hero-ordonnances-conteneur">
+        <div>
+            <div class="badge-ordonnances-hero">
+                {% icone "pill" %}
+                <span>Prescriptions Sécurisées</span>
+                <span>&bull;</span>
+                <span>QR Pharmacie</span>
+            </div>
+            <div class="titre-hero-ordonnances">
+                <h1>Mes ordonnances</h1>
+            </div>
+            <p class="desc-hero-ordonnances">
+                Consultez vos ordonnances médicales certifiées, téléchargez vos posologies et présentez vos QR codes directement aux officines partenaires.
+            </p>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <a class="btn-hero-retour-ordo" href="{% url 'dashboard_assure' %}">
+                {% icone "chevron-left" %} Mon tableau de bord
+            </a>
+        </div>
     </div>
-</section>
+</div>
 
 <form method="get" class="filtres">
     <div style="min-width:240px;">

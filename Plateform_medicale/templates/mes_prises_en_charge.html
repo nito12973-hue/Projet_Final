@@ -4,18 +4,116 @@
 {% block title %}Mes prises en charge{% endblock %}
 
 {% block content %}
-<section class="page-title">
-    <div>
-        <h1>Mes prises en charge</h1>
-        <p class="subtitle">Suivi en direct de vos couvertures médicales et de celles de vos ayants droit.</p>
+<style>
+    .banniere-pec-hero {
+        position: relative;
+        overflow: hidden;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #0b2027 0%, #11333e 50%, #164654 100%);
+        padding: 26px 30px;
+        color: #ffffff;
+        box-shadow: 0 12px 36px -4px rgba(11, 32, 39, 0.22);
+        margin-bottom: 24px;
+    }
+    .banniere-pec-hero::after {
+        content: "";
+        position: absolute;
+        top: -45px;
+        right: -35px;
+        width: 230px;
+        height: 230px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(79, 184, 174, 0.28) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    .hero-pec-conteneur {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    .badge-pec-hero {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(8px);
+        padding: 4px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        font-size: 12px;
+        font-weight: 600;
+        color: #79dba9;
+        margin-bottom: 8px;
+    }
+    .titre-hero-pec h1 {
+        margin: 0 0 4px;
+        font-size: 24px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: #ffffff;
+    }
+    .desc-hero-pec {
+        margin: 0;
+        font-size: 13.5px;
+        color: rgba(231, 236, 243, 0.82);
+        max-width: 580px;
+        line-height: 1.45;
+    }
+    .btn-hero-retour-pec {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.14);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        color: #ffffff;
+        padding: 9px 18px;
+        border-radius: 11px;
+        font-size: 13.5px;
+        font-weight: 700;
+        text-decoration: none;
+        backdrop-filter: blur(8px);
+        transition: all 0.2s ease;
+    }
+    .btn-hero-retour-pec:hover {
+        background: rgba(255, 255, 255, 0.22);
+        border-color: rgba(255, 255, 255, 0.4);
+        transform: translateY(-1px);
+        color: #ffffff;
+    }
+</style>
+
+<div class="banniere-pec-hero">
+    <div class="hero-pec-conteneur">
+        <div>
+            <div class="badge-pec-hero">
+                {% icone "shield-check" %}
+                <span>Prises en Charge Tiers-Payant</span>
+                <span>&bull;</span>
+                <span>Couverture IPM</span>
+            </div>
+            <div class="titre-hero-pec">
+                <h1>Mes prises en charge</h1>
+            </div>
+            <p class="desc-hero-pec">
+                Suivi en direct de vos couvertures médicales et accords de dispense d'avance de frais pour vous et votre famille.
+            </p>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <a class="btn-hero-retour-pec" href="{% url 'dashboard_assure' %}">
+                {% icone "chevron-left" %} Mon tableau de bord
+            </a>
+            {% if lignes %}
+            <a class="button primary btn" href="{% url 'demander_prise_en_charge_assure' %}" style="box-shadow: 0 4px 14px rgba(14, 124, 134, 0.35);">
+                {% icone "plus-circle" %} Nouvelle demande
+            </a>
+            {% endif %}
+        </div>
     </div>
-    <div class="actions">
-        <a class="button btn btn-retour-expand" href="{% url 'dashboard_assure' %}" title="Mon tableau de bord" aria-label="Mon tableau de bord">{% icone "chevron-left" %} <span class="expand-text">Mon tableau de bord</span></a>
-        {% if lignes %}
-        <a class="button primary btn" href="{% url 'demander_prise_en_charge_assure' %}">{% icone "plus-circle" %} Nouvelle demande</a>
-        {% endif %}
-    </div>
-</section>
+</div>
 
 <form method="get" class="filtres">
     <div style="min-width:220px;">
