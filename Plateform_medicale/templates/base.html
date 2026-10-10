@@ -6596,12 +6596,11 @@
         })();
 
         (function () {
-            // Mode reduit du menu (icones seules) : bascule desktop, retenue
-            // entre les visites. Ignoree sous 981px (le tiroir mobile prend
-            // le relais et affiche toujours le texte).
+            // Mode reduit du menu (icones seules) avec expansion fluide au survol de la souris (Hover Auto-Expand)
             var CLE_STOCKAGE = 'santesn-menu-reduit';
             var corps = document.body;
             var bouton = document.getElementById('btn-reduire-menu');
+            var barreLaterale = document.getElementById('barre-laterale');
             if (!bouton) { return; }
 
             function estBureau() {
@@ -6626,6 +6625,30 @@
                 window.localStorage.setItem(CLE_STOCKAGE, prochain ? '1' : '0');
                 appliquer(prochain);
             });
+
+            // Au survol de la souris sur la barre latérale réduite : se déploie automatiquement
+            if (barreLaterale) {
+                var timerRepli = null;
+
+                barreLaterale.addEventListener('mouseenter', function () {
+                    if (window.localStorage.getItem(CLE_STOCKAGE) === '1' && estBureau()) {
+                        if (timerRepli) {
+                            window.clearTimeout(timerRepli);
+                            timerRepli = null;
+                        }
+                        corps.classList.remove('sidebar-reduite');
+                    }
+                });
+
+                // Dès que la souris s'éloigne : se rétracte en douceur
+                barreLaterale.addEventListener('mouseleave', function () {
+                    if (window.localStorage.getItem(CLE_STOCKAGE) === '1' && estBureau()) {
+                        timerRepli = window.setTimeout(function () {
+                            corps.classList.add('sidebar-reduite');
+                        }, 280);
+                    }
+                });
+            }
 
             window.addEventListener('resize', function () {
                 appliquer(window.localStorage.getItem(CLE_STOCKAGE) === '1');
