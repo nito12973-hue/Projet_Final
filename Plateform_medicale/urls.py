@@ -93,7 +93,9 @@ urlpatterns = [
     path('prises-en-charge/<int:pk>/refuser/', views.refuser_prise_en_charge, name='refuser_prise_en_charge'),
     path('prises-en-charge/<int:pk>/modifier/', views.modifier_prise_en_charge, name='modifier_prise_en_charge'),
     path('prises-en-charge/<int:pk>/supprimer/', views.supprimer_prise_en_charge, name='supprimer_prise_en_charge'),
+    path('prises-en-charge/<int:pk>/bon/', views.voir_bon_prise_en_charge, name='voir_bon_prise_en_charge'),
     path('prises-en-charge/<int:pk>/bon-pdf/', views.telecharger_bon_prise_en_charge_pdf, name='telecharger_bon_prise_en_charge_pdf'),
+    path('bon-prise-en-charge/<int:pk>/', views.voir_bon_prise_en_charge),
 
     path('rendez-vous/', views.liste_rendez_vous, name='liste_rendez_vous'),
     path('rendez-vous/<int:pk>/ics/', views.telecharger_ics_rendez_vous, name='telecharger_ics_rendez_vous'),

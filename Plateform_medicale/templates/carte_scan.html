@@ -105,8 +105,8 @@
                 <span>{{ pec.motif|default:"Acte / Soins médicaux sous convention" }}</span>
                 <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                     {% if pec.statut == 'validee' %}
-                    <a href="{% url 'telecharger_bon_prise_en_charge_pdf' pec.pk %}" target="_blank" rel="noopener noreferrer" class="button btn btn-sm" style="font-size: 11.5px; padding: 3px 10px; background: white; border: 1px solid #10b981; color: #065f46;">
-                        {% icone "download" %} Bon officiel PDF
+                    <a href="{% url 'voir_bon_prise_en_charge' pec.pk %}" class="button btn btn-sm" style="font-size: 11.5px; padding: 3px 10px; background: white; border: 1px solid var(--border); color: var(--titre);">
+                        {% icone "file-text" %} Accord officiel
                     </a>
                     {% endif %}
                     {% if pec.devis_fichier %}

@@ -134,8 +134,8 @@
                     <span style="font-size:12px;color:var(--muted);display:block;">{{ pec.motif|default:"Soins conventionnés"|truncatewords:6 }}</span>
                     <div style="display:flex;gap:8px;align-items:center;margin-top:3px;flex-wrap:wrap;">
                         {% if pec.statut == 'validee' %}
-                        <a href="{% url 'telecharger_bon_prise_en_charge_pdf' pec.pk %}" target="_blank" rel="noopener noreferrer" style="font-size:11.5px;color:var(--primary-strong);font-weight:600;text-decoration:underline;">
-                            Bon PDF
+                        <a href="{% url 'voir_bon_prise_en_charge' pec.pk %}" style="font-size:11.5px;color:var(--primary-strong);font-weight:600;text-decoration:underline;">
+                            Voir accord
                         </a>
                         {% endif %}
                         {% if pec.devis_fichier %}
