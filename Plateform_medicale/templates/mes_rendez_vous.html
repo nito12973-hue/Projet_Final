@@ -302,6 +302,37 @@
         border-left: 3.5px solid #ef4444;
     }
 
+    /* Thème Sombre & Contraste des pastilles (Lisibilité garantie) */
+    :root[data-theme="sombre"] .cal-pastille-rdv.statut-CONFIRME {
+        background: rgba(16, 185, 129, 0.16);
+        color: #6ee7b7;
+        border-color: rgba(16, 185, 129, 0.35);
+        border-left: 3.5px solid #10b981;
+    }
+    :root[data-theme="sombre"] .cal-pastille-rdv.statut-DEMANDE {
+        background: rgba(245, 158, 11, 0.16);
+        color: #fcd34d;
+        border-color: rgba(245, 158, 11, 0.35);
+        border-left: 3.5px solid #f59e0b;
+    }
+    :root[data-theme="sombre"] .cal-pastille-rdv.statut-TERMINE {
+        background: rgba(148, 163, 184, 0.14);
+        color: #cbd5e1;
+        border-color: rgba(148, 163, 184, 0.3);
+        border-left: 3.5px solid #94a3b8;
+    }
+    :root[data-theme="sombre"] .cal-pastille-rdv.statut-ANNULE,
+    :root[data-theme="sombre"] .cal-pastille-rdv.statut-REFUSE {
+        background: rgba(239, 68, 68, 0.16);
+        color: #fca5a5;
+        border-color: rgba(239, 68, 68, 0.35);
+        border-left: 3.5px solid #ef4444;
+    }
+    :root[data-theme="sombre"] .cal-jour-badge-rdv {
+        background: rgba(14, 124, 134, 0.25);
+        color: #6fd0c6;
+    }
+
     /* Modal / Popin Détails Rendez-vous */
     .cal-modal-fond {
         position: fixed;
@@ -328,22 +359,52 @@
         from { opacity: 0; transform: translateY(12px) scale(0.97); }
         to { opacity: 1; transform: translateY(0) scale(1); }
     }
+
+    /* Responsive Mobile et Tablettes */
+    .cal-grille-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 6px;
+    }
+    .cal-grille-inner {
+        min-width: 640px;
+    }
     @media (max-width: 768px) {
+        .calendrier-card {
+            padding: 16px 14px;
+        }
+        .cal-header {
+            gap: 12px;
+        }
+        .cal-titre-mois {
+            font-size: 16.5px;
+        }
         .cal-grid-semaine {
-            font-size: 10px;
-            gap: 4px;
+            font-size: 10.5px;
+            gap: 6px;
+            padding: 6px 0;
         }
         .cal-grid-jours {
-            gap: 4px;
+            gap: 6px;
         }
         .cal-jour {
-            min-height: 80px;
-            padding: 4px;
-            border-radius: 8px;
+            min-height: 85px;
+            padding: 6px;
+            border-radius: 10px;
         }
         .cal-pastille-rdv {
-            font-size: 9.5px;
-            padding: 3px 4px;
+            font-size: 10px;
+            padding: 3px 5px;
+        }
+    }
+    @media (max-width: 480px) {
+        .cal-titre-mois {
+            font-size: 15px;
+        }
+        .cal-nav-btn {
+            width: 32px;
+            height: 32px;
         }
     }
 </style>
@@ -408,18 +469,22 @@
         </span>
     </div>
 
-    <div class="cal-grid-semaine">
-        <div>Lun</div>
-        <div>Mar</div>
-        <div>Mer</div>
-        <div>Jeu</div>
-        <div>Ven</div>
-        <div>Sam</div>
-        <div>Dim</div>
-    </div>
+    <div class="cal-grille-wrapper">
+        <div class="cal-grille-inner">
+            <div class="cal-grid-semaine">
+                <div>Lun</div>
+                <div>Mar</div>
+                <div>Mer</div>
+                <div>Jeu</div>
+                <div>Ven</div>
+                <div>Sam</div>
+                <div>Dim</div>
+            </div>
 
-    <div id="cal-grille-corps" class="cal-grid-jours">
-        <!-- Rendu dynamique par JavaScript -->
+            <div id="cal-grille-corps" class="cal-grid-jours">
+                <!-- Rendu dynamique par JavaScript -->
+            </div>
+        </div>
     </div>
 </div>
 
