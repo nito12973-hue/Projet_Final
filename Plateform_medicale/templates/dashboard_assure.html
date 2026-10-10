@@ -171,7 +171,7 @@
                 <span>&bull;</span>
                 <span>IPM {{ patient.titulaire.plan_couverture.nom|default:"Général" }}</span>
             </div>
-            <div class="titre-hero-assure"><h1>Bonjour{% if patient.prenom %} {{ patient.prenom }}{% elif patient.nom %} {{ patient.nom }}{% elif user.first_name %} {{ user.first_name }}{% elif user.last_name %} {{ user.last_name }}{% endif %}</h1></div>
+            <div class="titre-hero-assure"><h1>{% salutation %}, {% nom_accueil user patient %}</h1></div>
             <p class="desc-hero-assure">
                 Votre prise en charge médicale est active à <strong style="color:#ffffff;">{{ patient.taux_couverture|default:"0" }}%</strong>. Retrouvez vos ordonnances sécurisées, préparez vos consultations et suivez vos accords tiers-payant en un clic.
             </p>
