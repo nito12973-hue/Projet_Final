@@ -445,21 +445,25 @@
         body.sidebar-reduite .logout-button::after {
             content: attr(data-tooltip);
             position: absolute;
-            left: calc(100% + 12px);
+            left: calc(100% + 14px);
             top: 50%;
-            transform: translateY(-50%) scale(0.95);
-            padding: 6px 10px;
-            border-radius: 7px;
-            background: var(--primary-dark);
+            transform: translateY(-50%) translateX(-6px);
+            padding: 7px 14px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, var(--primary-dark) 0%, #0d2a35 100%);
+            border: 1px solid rgba(79, 184, 174, 0.35);
             color: #ffffff;
-            font-size: 12.5px;
+            font-size: 13px;
             font-weight: 600;
             white-space: nowrap;
-            box-shadow: 0 6px 18px rgba(8, 15, 30, 0.35);
+            box-shadow: 0 8px 24px rgba(8, 15, 30, 0.45);
             opacity: 0;
+            visibility: hidden;
             pointer-events: none;
-            transition: opacity 0.15s ease, transform 0.15s ease;
-            z-index: 1200;
+            transition: opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1), 
+                        transform 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+                        visibility 0.22s ease;
+            z-index: 1300;
         }
 
         body.sidebar-reduite aside nav a:hover::after,
@@ -467,7 +471,8 @@
         body.sidebar-reduite .logout-button:hover::after,
         body.sidebar-reduite .logout-button:focus-visible::after {
             opacity: 1;
-            transform: translateY(-50%) scale(1);
+            visibility: visible;
+            transform: translateY(-50%) translateX(0);
         }
 
         .icone-nav {
@@ -6625,30 +6630,6 @@
                 window.localStorage.setItem(CLE_STOCKAGE, prochain ? '1' : '0');
                 appliquer(prochain);
             });
-
-            // Au survol de la souris sur la barre latérale réduite : se déploie automatiquement
-            if (barreLaterale) {
-                var timerRepli = null;
-
-                barreLaterale.addEventListener('mouseenter', function () {
-                    if (window.localStorage.getItem(CLE_STOCKAGE) === '1' && estBureau()) {
-                        if (timerRepli) {
-                            window.clearTimeout(timerRepli);
-                            timerRepli = null;
-                        }
-                        corps.classList.remove('sidebar-reduite');
-                    }
-                });
-
-                // Dès que la souris s'éloigne : se rétracte en douceur
-                barreLaterale.addEventListener('mouseleave', function () {
-                    if (window.localStorage.getItem(CLE_STOCKAGE) === '1' && estBureau()) {
-                        timerRepli = window.setTimeout(function () {
-                            corps.classList.add('sidebar-reduite');
-                        }, 280);
-                    }
-                });
-            }
 
             window.addEventListener('resize', function () {
                 appliquer(window.localStorage.getItem(CLE_STOCKAGE) === '1');
