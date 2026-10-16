@@ -2942,21 +2942,51 @@
 
         @media print {
             /* 1. Masquage strict du décor applicatif, de la navigation et des éléments interactifs */
+            header,
+            nav,
+            aside,
+            footer,
+            .topbar,
+            .public-topbar,
             #barre-laterale,
             #barre-chargement,
             #fond-sidebar,
             #modale-confirmation,
             #modal-annulation,
-            .topbar,
+            .menu-theme,
+            #menu-theme-topbar,
+            .menu-notifications,
+            .menu-compte,
+            .topbar-droite,
+            .topbar-recherche,
+            .icone-theme-actuel,
+            .theme-bouton-rapide,
+            .breadcrumb,
+            .fil-ariane,
             .toasts,
             .conteneur-toasts-temps-reel,
             .lien-evitement,
             .carte-sans-impression,
             .sans-impression,
-            footer,
-            .breadcrumb,
-            .fil-ariane {
+            .page-title .actions,
+            .btn-retour-expand,
+            .actions,
+            .barre-actions,
+            .sidebar-toggle,
+            #bouton-menu-mobile,
+            .btn-imprimer,
+            .bouton-imprimer,
+            #bouton-imprimer-recu,
+            #bouton-imprimer-ordonnance,
+            #bouton-imprimer-bon,
+            #bouton-imprimer-carte,
+            button:not(.carte-patient-printable),
+            .button.btn-retour-expand {
                 display: none !important;
+                visibility: hidden !important;
+                height: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
             }
 
             /* 2. Format de page standard A4 */

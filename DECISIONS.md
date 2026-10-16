@@ -205,4 +205,24 @@ Ce document consigne de façon claire et sans jargon chaque décision d'architec
      - **Ruban de KPI d'impact en direct :** 4 métriques de référence (100% dématérialisé, < 3s de validation QR, +120 structures conventionnées, conformité légale CDP Sénégal).
 - **Vérifications :** 893 tests exécutés avec succès (**100% OK**).
 
+---
+
+## [2026-10-16] Assainissement de l'Impression (@media print) & Refonte Réaliste des CGU et Confidentialité (Loi 2008-12 & CDP Sénégal)
+- **Objectifs :**
+  1. Éliminer tout parasitage d'interface (sélecteur de luminosité/thème, cloche de notifications, menu utilisateur, boutons de retour, barres d'actions) sur les impressions de reçus, ordonnances et bons de prise en charge.
+  2. Aligner les Conditions Générales d'Utilisation (CGU) et la Politique de Confidentialité sur les standards des grandes plateformes de santé numériques (Doctolib, Alan) et le droit sénégalais (Loi n° 2008-12 relative à la protection des données à caractère personnel, récépissé CDP, secret médical).
+- **Décisions ergonomiques & techniques :**
+  1. **Assainissement strict de l'impression (`base.html`, `recu_paiement.html`, `voir_bon_prise_en_charge.html`, `voir_ordonnance.html`) :**
+     - Règle `@media print` unifiée masquant formellement `header`, `nav`, `aside`, `footer`, `.topbar`, `.public-topbar`, `.menu-theme`, `#menu-theme-topbar`, `.menu-notifications`, `.menu-compte`, `.fil-ariane`, `.btn-retour-expand`, et les boutons d'action.
+     - Garantie de documents médicaux et comptables au format A4 irréprochable sans débordement de contrôles web.
+  2. **Refonte réaliste des CGU (`cgu.html`) :**
+     - Sommaire interactif sticky à gauche (`cgu-nav-lien`) avec défilement fluide.
+     - 8 articles exhaustifs : Objet & statut juridique, Accès & rôles, Sécurité & authentification (chiffrement, 2FA, QR), Secret médical & télémédecine, Prise en charge dématérialisée (temps réel, plafonds), Propriété intellectuelle, Disponibilité & maintenance (audit de continuité), Droit applicable & juridiction compétente (Tribunal Hors Classe de Dakar).
+     - Cartouche DPO et assistance directe avec contacts officiels (`dpo@santesn.sn`, récépissé CDP `RX-2026-0418-SN`).
+  3. **Refonte de la Politique de Confidentialité (`politique_confidentialite.html`) :**
+     - Sommaire interactif sticky et structuration conforme aux exigences CDP Sénégal et CNIL santé.
+     - 7 sections détaillées : Cadre juridique (Loi 2008-12), Données collectées par profil, Finalités & bases légales, Mesures de sécurité technique (TLS 1.3, AES-256-GCM, hachage bcrypt, RBAC strict), Partage et interconnexion (tiers payant, absence de cession commerciale), Durées de conservation légales (10 ans pour le dossier médical, 3 ans après inactivité), Droits des personnes et saisine CDP.
+     - Bannières d'audit de conformité et encadré officiel de réclamation auprès de la CDP (Immeuble Rivonia, Dakar).
+- **Vérifications :** 893 tests automatisés conformes (**100% OK**), styles d'impression et pages légales validés.
+
 
