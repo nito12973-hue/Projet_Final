@@ -14,11 +14,14 @@
         <p class="subtitle">Sollicitations des adhérents : prises en charge, remboursements, ordonnances, rendez-vous et ayants droit.</p>
         {% endif %}
     </div>
-    {% if total_en_attente > 0 %}
-    <span class="badge en_attente" style="font-size:13px;padding:6px 14px;">
-        {{ total_en_attente }} en attente de réponse
-    </span>
-    {% endif %}
+    <div class="actions" style="display:flex;align-items:center;gap:10px;">
+        {% if total_en_attente > 0 %}
+        <span class="badge en_attente" style="font-size:13px;padding:6px 14px;">
+            {{ total_en_attente }} en attente de réponse
+        </span>
+        {% endif %}
+        <a class="button btn btn-retour-expand" href="{% url 'dashboard' %}" title="Retour au tableau de bord" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
+    </div>
 </section>
 
 <!-- Barre de filtres administrateur -->

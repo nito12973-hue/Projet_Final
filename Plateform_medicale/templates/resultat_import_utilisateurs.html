@@ -11,7 +11,7 @@
             {{ total_crees }} compte{{ total_crees|pluralize }} créé{{ total_crees|pluralize }} avec succès. Les liens d'activation sécurisés ont été générés.
         </p>
     </div>
-    <a class="button primary" href="{% url 'liste_patients' %}">Retour à la liste des utilisateurs</a>
+    <a class="button btn btn-retour-expand" href="{% url 'liste_utilisateurs' %}" title="Retour à la liste des utilisateurs" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour aux utilisateurs</span></a>
 </section>
 
 <div class="kpi-grille" style="grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 20px;" aria-label="Statistiques d'importation">

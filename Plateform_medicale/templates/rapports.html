@@ -10,6 +10,7 @@
         <p class="subtitle">Synthèse analytique et indicateurs clés de la plateforme.</p>
     </div>
     <div class="actions">
+        <a class="button btn btn-retour-expand" href="{% url 'dashboard' %}" title="Retour au tableau de bord" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
         <a class="button btn btn-expand" data-chargement="Génération..." href="{% url 'exporter_rapports_excel' %}" title="Exporter en Excel" aria-label="Exporter en Excel">{% icone "download" %} <span class="expand-text">Exporter en Excel</span></a>
         <a class="button btn btn-expand" data-chargement="Génération..." href="{% url 'exporter_rapports_pdf' %}" title="Exporter en PDF" aria-label="Exporter en PDF">{% icone "download" %} <span class="expand-text">Exporter en PDF</span></a>
     </div>

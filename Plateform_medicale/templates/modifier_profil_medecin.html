@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load icones %}
 
 {% block title %}Mon profil{% endblock %}
 
@@ -8,7 +9,7 @@
         <h1>Mon profil professionnel</h1>
         <p class="subtitle">Dr {{ medecin.prenom }} {{ medecin.nom }} — {{ medecin.specialite|default:"Médecine générale" }}</p>
     </div>
-    <a class="button btn" href="{% url 'dashboard_medecin' %}">← Tableau de bord</a>
+    <a class="button btn btn-retour-expand" href="{% url 'dashboard_medecin' %}" title="Retour au tableau de bord" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
 </section>
 
 <section class="panel panel-form">

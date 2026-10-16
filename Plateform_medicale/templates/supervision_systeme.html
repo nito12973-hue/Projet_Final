@@ -10,6 +10,7 @@
         <p class="subtitle">Observabilité technique en temps réel, santé des services, base de données et sauvegardes vérifiées.</p>
     </div>
     <div class="actions">
+        <a class="button btn btn-retour-expand" href="{% url 'dashboard' %}" title="Retour au tableau de bord" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
         <a class="button btn btn-expand" href="{% url 'supervision_systeme' %}?format=json" target="_blank" title="Exporter l'audit d'infrastructure au format JSON" aria-label="Exporter JSON">
             {% icone "download" %} <span class="expand-text">Export JSON</span>
         </a>

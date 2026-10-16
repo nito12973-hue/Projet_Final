@@ -22,11 +22,9 @@
         <a class="button btn btn-expand" data-chargement="Génération Excel..." href="{% url 'exporter_bordereau_teletransmission_excel' %}?{{ request.GET.urlencode }}" title="Exporter le bordereau en Excel" aria-label="Exporter en Excel">
             {% icone "download" %} <span class="expand-text">Export Excel (.xlsx)</span>
         </a>
-        {% if est_admin %}
-        <a class="button btn" href="{% url 'liste_paiements' %}" title="Retour aux paiements">
-            {% icone "receipt" %} <span>Paiements</span>
+        <a class="button btn btn-retour-expand" href="{% url 'liste_paiements' %}" title="Retour aux paiements">
+            {% icone "chevron-left" %} <span class="expand-text">Retour</span>
         </a>
-        {% endif %}
     </div>
 </section>
 

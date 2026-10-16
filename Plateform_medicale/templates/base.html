@@ -685,6 +685,7 @@
             justify-content: space-between;
             gap: 16px;
             margin-bottom: 22px;
+            flex-wrap: wrap;
         }
 
         h1 {
@@ -1329,6 +1330,7 @@
         .page-title .actions {
             display: flex;
             align-items: center;
+            flex-wrap: wrap;
             gap: 10px;
         }
 
@@ -5706,8 +5708,8 @@
             }
 
             .page-title .actions .button {
-                flex: 1 1 calc(50% - 4px);
-                min-width: 130px;
+                flex: 1 1 auto;
+                min-width: fit-content;
                 text-align: center;
                 justify-content: center;
             }
@@ -6226,19 +6228,28 @@
             box-shadow: var(--ombre-douce);
         }
 
+        .btn-expand,
+        .btn-retour-expand,
+        .btn-action-expand,
+        .action-chip {
+            padding: 8px 16px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 6px !important;
+            transition: all 0.18s ease;
+        }
+
         .btn-expand .expand-text,
         .btn-retour-expand .expand-text,
         .btn-action-expand .expand-text,
         .action-chip .expand-text {
-            max-width: 0;
-            opacity: 0;
-            overflow: hidden;
+            max-width: none;
+            opacity: 1;
+            overflow: visible;
             white-space: nowrap;
             display: inline-block;
-            transition: max-width 0.32s cubic-bezier(0.4, 0, 0.2, 1), 
-                        opacity 0.22s ease, 
-                        margin 0.25s ease;
-            margin-left: 0;
+            margin-left: 2px;
             vertical-align: middle;
             font-size: 13px;
             font-weight: 600;
@@ -6252,10 +6263,10 @@
         .btn-action-expand:focus-visible,
         .action-chip:hover,
         .action-chip:focus-visible {
-            padding: 7px 16px !important;
+            transform: translateY(-1px);
             border-color: var(--primary) !important;
             color: var(--primary-strong) !important;
-            box-shadow: 0 4px 14px rgba(14, 124, 134, 0.2) !important;
+            box-shadow: 0 4px 12px rgba(14, 124, 134, 0.18) !important;
         }
 
         .btn-expand:hover .expand-text,
@@ -6266,9 +6277,6 @@
         .btn-action-expand:focus-visible .expand-text,
         .action-chip:hover .expand-text,
         .action-chip:focus-visible .expand-text {
-            max-width: 260px;
-            opacity: 1;
-            margin-left: 6px;
             color: var(--primary-strong);
         }
 
