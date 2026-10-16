@@ -316,3 +316,9 @@ from .media_securise import (  # noqa: F401
     telecharger_piece_identite_patient,
     telecharger_devis_prise_en_charge,
 )
+
+# Webhook WhatsApp & Chatbot
+from .whatsapp_webhook import (  # noqa: F401
+    webhook_whatsapp,
+)
+

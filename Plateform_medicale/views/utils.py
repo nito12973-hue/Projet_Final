@@ -11,6 +11,7 @@ import logging
 import unicodedata
 from functools import wraps
 
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
@@ -315,6 +316,7 @@ def user_role(request):
             'current_role_label': None,
             'current_organisme': None,
             'notifications_non_lues': 0,
+            'whatsapp_bot_phone': getattr(settings, 'WHATSAPP_SENDER_PHONE', '221789576145'),
         }
 
     contexte = {
@@ -322,6 +324,7 @@ def user_role(request):
         'current_role_label': user.get_role_display(),
         'current_organisme': user.organisme if user.organisme_id else None,
         'notifications_non_lues': user.notifications.filter(lue=False).count(),
+        'whatsapp_bot_phone': getattr(settings, 'WHATSAPP_SENDER_PHONE', '221789576145'),
     }
     if user.role in (User.Role.ADMIN, User.Role.GESTIONNAIRE):
         compteurs = compteurs_files_attente(request)

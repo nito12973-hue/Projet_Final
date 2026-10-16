@@ -215,4 +215,8 @@ urlpatterns = [
     path('documents/remboursements/<int:pk>/justificatif/', views.telecharger_justificatif_remboursement, name='telecharger_justificatif_remboursement'),
     path('documents/patients/<int:pk>/justificatif/', views.telecharger_piece_identite_patient, name='telecharger_piece_identite_patient'),
     path('documents/prises-en-charge/<int:pk>/devis/', views.telecharger_devis_prise_en_charge, name='telecharger_devis_prise_en_charge'),
+
+    # Webhook WhatsApp Cloud API (Meta) & Bot conversationnel
+    path('api/whatsapp/webhook/', views.webhook_whatsapp, name='whatsapp_webhook'),
 ]
+
