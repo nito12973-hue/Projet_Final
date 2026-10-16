@@ -18,6 +18,8 @@ staticfiles/
 media/*.tmp
 media/devis_prises_en_charge/
 media/justificatifs_ayants_droit/
+media/justificatifs_remboursements/
+backups/*.json
 
 # IDE et OS
 .idea/
