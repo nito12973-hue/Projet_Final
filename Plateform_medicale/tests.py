@@ -12788,3 +12788,106 @@ class OrganismeScopedQuerySetTests(TestCase):
         qs = OrganismeScopedQuerySet(model=Patient)
         self.assertGreaterEqual(qs.for_user(self.admin).count(), 2)
 
+
+class ParcoursUtilisateursCompletsTests(TestCase):
+    """
+    Validation E2E des parcours clés pour les 5 rôles de SantéSN :
+    1. Assuré (Consulter carte, plafond, remboursements, PEC, RDV)
+    2. Gestionnaire IPM (Pilotage, dossiers, remboursements, conventions)
+    3. Médecin (Dossier patient, consultation, ordonnance sécurisée)
+    4. Pharmacien (Scan QR, validation délivrance tiers payant)
+    5. Administrateur IT (Supervision, journal, comptes, étanchéité médicale)
+    """
+
+    def setUp(self):
+        self.org = Organisme.objects.create(nom="IPM Senelec", type_organisme="IPM", code="IPM-SENELEC")
+        
+        # 1. Assuré
+        self.user_assure = User.objects.create_user(email="assure.parcours@test.sn", role=User.Role.ASSURE, organisme=self.org)
+        self.patient = Patient.objects.create(
+            user=self.user_assure, nom="Ndiaye", prenom="Awa",
+            date_naissance=datetime.date(1995, 5, 12), organisme=self.org
+        )
+
+        # 2. Gestionnaire
+        self.user_gest = User.objects.create_user(email="gest.parcours@test.sn", role=User.Role.GESTIONNAIRE, organisme=self.org)
+
+        # 3. Médecin
+        self.user_med = User.objects.create_user(email="med.parcours@test.sn", role=User.Role.MEDECIN)
+        self.medecin = Medecin.objects.create(user=self.user_med, nom="Diouf", prenom="Cheikh", specialite="Généraliste")
+
+        # 4. Pharmacien
+        self.user_pharma = User.objects.create_user(email="pharma.parcours@test.sn", role=User.Role.PHARMACIEN)
+        self.pharmacie = Prestataire.objects.create(nom="Pharmacie Corniche", type_prestataire=Prestataire.Type.PHARMACIE, partenaire=True)
+        self.pharmacien = Pharmacien.objects.create(user=self.user_pharma, prestataire=self.pharmacie)
+
+        # 5. Administrateur
+        self.user_admin = User.objects.create_user(email="admin.parcours@test.sn", role=User.Role.ADMIN)
+
+    def test_parcours_assure_ecrans_cles(self):
+        self.client.force_login(self.user_assure)
+        for route in [
+            "dashboard_assure",
+            "carte_assure",
+            "mes_remboursements_assure",
+            "demander_remboursement_assure",
+            "mes_prises_en_charge_assure",
+            "mes_ordonnances_assure",
+            "prestataires_proches",
+            "ajouter_rendez_vous_assure",
+        ]:
+            resp = self.client.get(reverse(route))
+            self.assertEqual(resp.status_code, 200, f"L'assuré doit accéder à {route}")
+
+    def test_parcours_gestionnaire_ipm_ecrans_cles(self):
+        self.client.force_login(self.user_gest)
+        for route in [
+            "dashboard",
+            "liste_patients",
+            "liste_prises_en_charge",
+            "liste_demandes_remboursement",
+            "liste_conventions",
+            "liste_paiements",
+            "rapports",
+        ]:
+            resp = self.client.get(reverse(route))
+            self.assertEqual(resp.status_code, 200, f"Le gestionnaire doit accéder à {route}")
+
+    def test_parcours_medecin_ecrans_cles(self):
+        self.client.force_login(self.user_med)
+        for route in [
+            "dashboard_medecin",
+            "mes_patients",
+            "agenda_medecin",
+            "historique_consultations",
+            "verifier_carte_medecin",
+        ]:
+            resp = self.client.get(reverse(route))
+            self.assertEqual(resp.status_code, 200, f"Le médecin doit accéder à {route}")
+
+    def test_parcours_pharmacien_ecrans_cles(self):
+        self.client.force_login(self.user_pharma)
+        for route in [
+            "dashboard_pharmacien",
+            "scanner_ordonnance",
+            "historique_delivrances",
+        ]:
+            resp = self.client.get(reverse(route))
+            self.assertEqual(resp.status_code, 200, f"Le pharmacien doit accéder à {route}")
+
+    def test_parcours_administrateur_ecrans_cles_et_etancheite(self):
+        self.client.force_login(self.user_admin)
+        for route in [
+            "dashboard",
+            "supervision_systeme",
+            "liste_organismes",
+            "journal_activite",
+            "liste_utilisateurs",
+        ]:
+            resp = self.client.get(reverse(route))
+            self.assertEqual(resp.status_code, 200, f"L'administrateur doit accéder à {route}")
+
+        # L'administrateur ne doit PAS accéder à l'instruction des remboursements (Secret Médical)
+        resp_remb = self.client.get(reverse("liste_demandes_remboursement"))
+        self.assertEqual(resp_remb.status_code, 403, "L'administrateur technique ne doit pas voir les dossiers médicaux")
+
