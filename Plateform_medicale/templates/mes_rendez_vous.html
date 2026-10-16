@@ -583,6 +583,14 @@
                                 {% icone "calendar" %} <span class="expand-text">Ajouter à l'agenda</span>
                             </a>
                             {% endif %}
+                            {% if rdv.medecin.telephone %}
+                            <a href="https://wa.me/{{ rdv.medecin.telephone|cut:' '|cut:'+'|cut:'-'|cut:'.' }}?text=Bonjour%20Dr%20{{ rdv.medecin.nom|urlencode }}%2C%20je%20vous%20contacte%20au%20sujet%20de%20notre%20rendez-vous%20Sant%C3%A9SN%20du%20{{ rdv.date_heure|date:'d/m/Y' }}."
+                               target="_blank" rel="noopener" class="button btn btn-sm"
+                               style="color: #25D366; border-color: rgba(37, 211, 102, 0.4); background: rgba(37, 211, 102, 0.06);"
+                               title="Échanger sur WhatsApp avec Dr {{ rdv.medecin.nom }}" aria-label="Contacter sur WhatsApp">
+                                {% icone "share-2" %} <span class="expand-text">WhatsApp</span>
+                            </a>
+                            {% endif %}
                             {% if rdv.statut == 'DEMANDE' or rdv.statut == 'CONFIRME' %}
                             <form method="post" action="{% url 'annuler_rendez_vous_assure' rdv.pk %}" class="action-ligne"
                                   data-confirmation="Annuler le rendez-vous du {{ rdv.date_heure|date:'d/m/Y à H:i' }} ? Le créneau sera libéré et devra être redemandé."

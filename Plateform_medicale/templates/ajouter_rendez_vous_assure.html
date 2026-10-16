@@ -13,6 +13,22 @@
 </section>
 
 <section class="panel panel-form" style="border-radius: 16px; box-shadow: var(--ombre-douce); padding: 24px;">
+    <div id="encart-whatsapp-rdv" style="display: none; background: rgba(37, 211, 102, 0.08); border: 1.5px solid #25D366; border-radius: 12px; padding: 14px 18px; margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+            <div>
+                <strong style="color: var(--titre); font-size: 14px; display: inline-flex; align-items: center; gap: 6px;">
+                    <span style="color: #25D366;">{% icone "share-2" %}</span> Prise de rendez-vous directe sur WhatsApp
+                </strong>
+                <p style="margin: 3px 0 0; font-size: 12.5px; color: var(--muted);" id="texte-medecin-wa">
+                    Convenez d'un créneau en direct avec le praticien ou le secrétariat médical.
+                </p>
+            </div>
+            <a id="lien-whatsapp-dynamique" href="#" target="_blank" rel="noopener" class="button" style="background-color: #25D366; color: #FFFFFF !important; font-weight: 700; border: none; font-size: 13px; padding: 8px 16px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                {% icone "share-2" %} Discuter sur WhatsApp
+            </a>
+        </div>
+    </div>
+
     {% if form.non_field_errors %}
     <div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
     {% endif %}
@@ -81,10 +97,32 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 3200);
     }
 
-    // 1. SENS MÉDECIN -> PRESTATAIRE
-    // Dès que le patient choisit un médecin, on sélectionne automatiquement son établissement
+    var encartWa = document.getElementById('encart-whatsapp-rdv');
+    var lienWa = document.getElementById('lien-whatsapp-dynamique');
+    var texteWa = document.getElementById('texte-medecin-wa');
+
+    function mettreAJourWhatsApp(medecinId) {
+        if (!encartWa || !lienWa) return;
+        if (medecinId && medecinsData[medecinId] && medecinsData[medecinId].telephone) {
+            var med = medecinsData[medecinId];
+            var tel = med.telephone;
+            var nom = encodeURIComponent(med.nom);
+            var url = 'https://wa.me/' + tel + '?text=Bonjour%20' + nom + '%2C%20je%20suis%20assur%C3%A9%20Sant%C3%A9SN%20et%20je%20souhaite%20convenir%20d%27un%20rendez-vous%20m%C3%A9dical.';
+            lienWa.href = url;
+            if (texteWa) {
+                texteWa.textContent = 'Discutez en direct avec ' + med.nom + (med.prestataire_nom ? ' (' + med.prestataire_nom + ')' : '') + ' pour convenir d\'un horaire.';
+            }
+            encartWa.style.display = 'block';
+        } else {
+            encartWa.style.display = 'none';
+        }
+    }
+
+    // 1. SENS MÉDECIN -> PRESTATAIRE & WHATSAPP
+    // Dès que le patient choisit un médecin, on sélectionne son établissement et active WhatsApp
     medecinSelect.addEventListener('change', function () {
         var medecinId = this.value;
+        mettreAJourWhatsApp(medecinId);
         if (medecinId && medecinsData[medecinId]) {
             var prestId = medecinsData[medecinId].prestataire_id;
             if (prestId && prestataireSelect.value !== prestId) {
@@ -132,9 +170,10 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Auto-alignement au chargement initial si un médecin est pré-rempli sans établissement
-    if (medecinSelect.value && !prestataireSelect.value) {
+    if (medecinSelect.value) {
         var mIdInitial = medecinSelect.value;
-        if (medecinsData[mIdInitial] && medecinsData[mIdInitial].prestataire_id) {
+        mettreAJourWhatsApp(mIdInitial);
+        if (!prestataireSelect.value && medecinsData[mIdInitial] && medecinsData[mIdInitial].prestataire_id) {
             prestataireSelect.value = medecinsData[mIdInitial].prestataire_id;
         }
     }
