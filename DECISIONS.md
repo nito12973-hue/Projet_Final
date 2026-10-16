@@ -242,4 +242,15 @@ Ce document consigne de façon claire et sans jargon chaque décision d'architec
      - Démonstration transparente du produit via le showcase des 4 interfaces réelles (Admin, Assuré, Médecin, Pharmacien) et le parcours en 5 étapes.
 - **Vérifications :** Suite de tests exécutée avec succès (**100% OK**), affichage authentique et sans surcharge.
 
+---
+
+## [2026-10-16] Retrait des Adresses Email Fictives Liées au Domaine Non Acheté (Canaux Réels Téléphone & WhatsApp)
+- **Objectifs :**
+  1. Prendre en compte le fait que le nom de domaine personnalisé n'a pas encore été acheté : éliminer toute adresse email d'apparence professionnelle factice (`contact@santesn.sn`, `dpo@santesn.sn`).
+  2. Remplacer tous les points de contact publics par les canaux fonctionnels et réels de l'organisation : Ligne téléphonique directe et Support WhatsApp (+221 78 957 61 45).
+- **Décisions ergonomiques & techniques :**
+  1. **Landing Page (`landing.html`) :** Cartes de contact et pied de page mis à jour vers Localisation (Dakar, Sénégal), Ligne directe (+221 78 957 61 45) et Support WhatsApp direct.
+  2. **CGU (`cgu.html`) & Confidentialité (`politique_confidentialite.html`) :** Suppression des mentions `dpo@santesn.sn` au profit de la ligne directe WhatsApp et de l'adresse physique à Dakar.
+- **Vérifications :** Tests unitaires conformes (**100% OK**), 0 adresse email fictive présente dans les templates.
+
 
