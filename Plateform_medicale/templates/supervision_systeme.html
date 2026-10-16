@@ -1,0 +1,443 @@
+{% extends "base.html" %}
+{% load icones %}
+
+{% block title %}Supervision Système & Infrastructure — SantéSN{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Supervision Système & Infrastructure</h1>
+        <p class="subtitle">Observabilité technique en temps réel, santé des services, base de données et sauvegardes vérifiées.</p>
+    </div>
+    <div class="actions">
+        <a class="button btn btn-expand" href="{% url 'supervision_systeme' %}?format=json" target="_blank" title="Exporter l'audit d'infrastructure au format JSON" aria-label="Exporter JSON">
+            {% icone "download" %} <span class="expand-text">Export JSON</span>
+        </a>
+        <a class="button btn btn-expand primary" href="{% url 'supervision_systeme' %}" title="Actualiser les métriques en direct" aria-label="Actualiser">
+            {% icone "refresh" %} <span class="expand-text">Actualiser</span>
+        </a>
+    </div>
+</section>
+
+<!-- Bandeau d'état global du système -->
+<section class="panel panel-bloc" style="margin-bottom: 18px; border-left: 4px solid {% if diag.statut_global == 'OPERATIONNEL' %}#10b981{% elif diag.statut_global == 'ATTENTION' %}#f59e0b{% else %}#ef4444{% endif %}; padding: 14px 18px;">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: {% if diag.statut_global == 'OPERATIONNEL' %}rgba(16, 185, 129, 0.12){% elif diag.statut_global == 'ATTENTION' %}rgba(245, 158, 11, 0.12){% else %}rgba(239, 68, 68, 0.12){% endif %}; color: {% if diag.statut_global == 'OPERATIONNEL' %}#059669{% elif diag.statut_global == 'ATTENTION' %}#d97706{% else %}#dc2626{% endif %}; flex-shrink: 0;">
+                {% if diag.statut_global == 'OPERATIONNEL' %}
+                    {% icone "check-circle" %}
+                {% elif diag.statut_global == 'ATTENTION' %}
+                    {% icone "alert-triangle" %}
+                {% else %}
+                    {% icone "shield" %}
+                {% endif %}
+            </div>
+            <div>
+                <h2 style="margin: 0 0 2px; font-size: 15px; font-weight: 700;">{{ diag.statut_label }}</h2>
+                <p class="subtitle" style="margin: 0; font-size: 12px;">
+                    Collecte effectuée le <strong>{{ diag.date_collecte|date:"d/m/Y à H:i:s" }}</strong> (Fuseau : {{ diag.fuseau_horaire }}) · Uptime : <strong>{{ diag.uptime }}</strong>
+                </p>
+            </div>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+            <span class="badge" style="background: rgba(14, 124, 134, 0.1); color: var(--primary-strong); border: 1px solid rgba(14, 124, 134, 0.2); font-weight: 600; padding: 2px 8px; border-radius: 999px; font-size: 11px;">
+                {{ diag.version_santesn }}
+            </span>
+            <span class="badge" style="background: var(--fond-doux); color: var(--titre); border: 1px solid var(--border); font-weight: 600; padding: 2px 8px; border-radius: 999px; font-size: 11px;">
+                {{ diag.version_django }}
+            </span>
+            <span class="badge" style="{% if diag.mode_debug %}background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca;{% else %}background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;{% endif %} font-weight: 700; padding: 2px 8px; border-radius: 999px; font-size: 11px;">
+                DEBUG : {% if diag.mode_debug %}ACTIVÉ{% else %}DÉSACTIVÉ{% endif %}
+            </span>
+        </div>
+    </div>
+</section>
+
+<!-- Cartes d'indicateurs de premier niveau -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 20px;">
+    <!-- Base de données -->
+    <div class="panel panel-bloc" style="margin: 0; padding: 14px 16px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+            <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted);">Base de données</span>
+            <span style="color: var(--primary);">{% icone "database" %}</span>
+        </div>
+        <div style="font-size: 15px; font-weight: 700; color: var(--titre); margin-bottom: 4px;">
+            {{ diag.db.statut }}
+        </div>
+        <div style="font-size: 11.5px; color: var(--muted); line-height: 1.4;">
+            Moteur : <strong>{{ diag.db.moteur|upper }}</strong><br>
+            Latence ping : <strong style="color: {% if diag.db.latence_ms and diag.db.latence_ms < 50 %}#059669{% elif diag.db.latence_ms and diag.db.latence_ms < 200 %}#d97706{% else %}#dc2626{% endif %};">{{ diag.db.latence_ms }} ms</strong> · Taille : <strong>{{ diag.db.taille_base }}</strong>
+        </div>
+    </div>
+
+    <!-- Stockage Disque -->
+    <div class="panel panel-bloc" style="margin: 0; padding: 14px 16px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+            <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted);">Stockage Système</span>
+            <span style="color: var(--primary);">{% icone "hard-drive" %}</span>
+        </div>
+        <div style="font-size: 15px; font-weight: 700; color: var(--titre); margin-bottom: 4px;">
+            {% if diag.stockage.pourcentage_utilise is not None %}{{ diag.stockage.pourcentage_utilise }} % utilisé{% else %}Non disponible{% endif %}
+        </div>
+        <div style="font-size: 11.5px; color: var(--muted); line-height: 1.4;">
+            Espace libre : <strong>{{ diag.stockage.disque_libre }}</strong> sur <strong>{{ diag.stockage.disque_total }}</strong><br>
+            Dossier médias : <strong>{{ diag.stockage.dossier_media_taille }}</strong>
+        </div>
+        {% if diag.stockage.pourcentage_utilise is not None %}
+        <div style="width: 100%; height: 5px; background: var(--border); border-radius: 999px; margin-top: 6px; overflow: hidden;">
+            <div style="width: {{ diag.stockage.pourcentage_utilise }}%; height: 100%; background: {% if diag.stockage.pourcentage_utilise > 90 %}#dc2626{% elif diag.stockage.pourcentage_utilise > 75 %}#f59e0b{% else %}#0e7c86{% endif %}; border-radius: 999px;"></div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Sauvegardes Vérifiées -->
+    <div class="panel panel-bloc" style="margin: 0; padding: 14px 16px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+            <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted);">Dernière Sauvegarde</span>
+            <span style="color: var(--primary);">{% icone "shield-check" %}</span>
+        </div>
+        <div style="font-size: 15px; font-weight: 700; color: {% if diag.sauvegardes.statut == 'OPERATIONNEL' %}#059669{% elif diag.sauvegardes.statut == 'ATTENTION' %}#d97706{% else %}#64748b{% endif %}; margin-bottom: 4px;">
+            {% if diag.sauvegardes.statut == 'OPERATIONNEL' %}
+                Preuve SHA-256 Validée
+            {% elif diag.sauvegardes.statut == 'NON_VERIFIE' %}
+                Fichier non signé
+            {% else %}
+                Non configurée
+            {% endif %}
+        </div>
+        <div style="font-size: 11.5px; color: var(--muted); line-height: 1.4;">
+            {% if diag.sauvegardes.derniere_sauvegarde %}
+                Date : <strong>{{ diag.sauvegardes.derniere_sauvegarde.date_lisible|default:diag.sauvegardes.derniere_sauvegarde.date_utc|slice:":19" }}</strong><br>
+                Taille : <strong>{{ diag.sauvegardes.derniere_sauvegarde.taille_lisible }}</strong>
+            {% else %}
+                Aucun dump vérifié enregistré.<br>
+                Commande : <code>python manage.py sauvegarder_base</code>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Sécurité & Incidents -->
+    <div class="panel panel-bloc" style="margin: 0; padding: 14px 16px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+            <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted);">Sécurité & Tentatives (24h)</span>
+            <span style="color: var(--primary);">{% icone "shield" %}</span>
+        </div>
+        <div style="font-size: 15px; font-weight: 700; color: {% if diag.incidents.tentatives_echecs_24h > 20 %}#dc2626{% else %}var(--titre){% endif %}; margin-bottom: 4px;">
+            {{ diag.incidents.tentatives_echecs_24h }} échec{{ diag.incidents.tentatives_echecs_24h|pluralize }}
+        </div>
+        <div style="font-size: 11.5px; color: var(--muted); line-height: 1.4;">
+            Tentatives suspectes monitorées.<br>
+            Demandes support urgentes : <strong>{{ diag.incidents.demandes_support_urgentes }}</strong>
+        </div>
+    </div>
+</div>
+
+<!-- Section 1 : Détails Infrastructure & Base de données -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 16px; margin-bottom: 20px;">
+    <!-- Carte Base de données détaillée -->
+    <div class="panel panel-bloc">
+        <h2 style="margin-top: 0; font-size: 15px; display: flex; align-items: center; gap: 8px;">
+            {% icone "database" %} Configuration & Connectivité Base de Données
+        </h2>
+        <table style="margin-top: 10px; font-size: 12.5px;">
+            <tbody>
+                <tr>
+                    <td style="font-weight: 600; width: 40%; color: var(--muted); padding: 8px 10px;">Moteur actif</td>
+                    <td style="padding: 8px 10px;"><strong>{{ diag.db.moteur|upper }}</strong></td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 600; color: var(--muted); padding: 8px 10px;">Version serveur</td>
+                    <td style="padding: 8px 10px;">{{ diag.db.version_serveur }}</td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 600; color: var(--muted); padding: 8px 10px;">Nom de la base</td>
+                    <td style="padding: 8px 10px;"><code style="font-size: 11.5px;">{{ diag.db.nom }}</code></td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 600; color: var(--muted); padding: 8px 10px;">Hôte & Port</td>
+                    <td style="padding: 8px 10px;"><code style="font-size: 11.5px;">{{ diag.db.hote }}:{{ diag.db.port }}</code></td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 600; color: var(--muted); padding: 8px 10px;">Latence de requête (SELECT 1)</td>
+                    <td style="padding: 8px 10px;">
+                        <strong style="color: {% if diag.db.latence_ms and diag.db.latence_ms < 50 %}#059669{% elif diag.db.latence_ms and diag.db.latence_ms < 200 %}#d97706{% else %}#dc2626{% endif %};">
+                            {{ diag.db.latence_ms }} ms
+                        </strong>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 600; color: var(--muted); padding: 8px 10px;">Volume physique</td>
+                    <td style="padding: 8px 10px;"><strong>{{ diag.db.taille_base }}</strong></td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 600; color: var(--muted); padding: 8px 10px;">Tables applicatives</td>
+                    <td style="padding: 8px 10px;">{{ diag.db.nb_tables }} tables détectées</td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 600; color: var(--muted); padding: 8px 10px;">État des migrations</td>
+                    <td style="padding: 8px 10px;">
+                        {% if diag.db.migrations_a_jour %}
+                            <span style="color: #059669; font-weight: 700;">✓ Toutes les migrations sont appliquées</span>
+                        {% else %}
+                            <span style="color: #dc2626; font-weight: 700;">⚠ {{ diag.db.migrations_en_attente }} migration(s) en attente</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Carte Environnement d'Exécution & Ressources -->
+    <div class="panel panel-bloc">
+        <h2 style="margin-top: 0; font-size: 15px; display: flex; align-items: center; gap: 8px;">
+            {% icone "server" %} Environnement d'Exécution & Runtime
+        </h2>
+        <table style="margin-top: 10px; font-size: 12.5px;">
+            <tbody>
+                <tr>
+                    <td style="font-weight: 600; width: 40%; color: var(--muted); padding: 8px 10px;">Système d'exploitation</td>
+                    <td style="padding: 8px 10px;">{{ diag.systeme_os }}</td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 600; color: var(--muted); padding: 8px 10px;">Environnement Python</td>
+                    <td style="padding: 8px 10px;">{{ diag.version_python }}</td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 600; color: var(--muted); padding: 8px 10px;">Framework web</td>
+                    <td style="padding: 8px 10px;">{{ diag.version_django }}</td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 600; color: var(--muted); padding: 8px 10px;">Uptime du processus</td>
+                    <td style="padding: 8px 10px;"><strong>{{ diag.uptime }}</strong></td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 600; color: var(--muted); padding: 8px 10px;">Utilisation CPU</td>
+                    <td style="padding: 8px 10px;">
+                        {{ diag.cpu_ram.cpu_pourcentage }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 600; color: var(--muted); padding: 8px 10px;">Mémoire RAM</td>
+                    <td style="padding: 8px 10px;">
+                        {% if diag.cpu_ram.disponible %}
+                            {{ diag.cpu_ram.memoire_utilisee }} ({{ diag.cpu_ram.memoire_pourcentage }})
+                        {% else %}
+                            <span style="color: var(--muted);">{{ diag.cpu_ram.memoire_pourcentage }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 600; color: var(--muted); padding: 8px 10px;">Sonde CPU / RAM</td>
+                    <td style="font-size: 11.5px; color: var(--muted); padding: 8px 10px;">{{ diag.cpu_ram.note }}</td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 600; color: var(--muted); padding: 8px 10px;">Cache Django (Ping)</td>
+                    <td style="padding: 8px 10px;">
+                        <strong>{{ diag.services.cache.statut }}</strong> ({{ diag.services.cache.backend }})
+                        {% if diag.services.cache.latence_ms %} · {{ diag.services.cache.latence_ms }} ms{% endif %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Section 2 : Registre des Sauvegardes Vérifiées -->
+<section class="panel panel-bloc" style="margin-bottom: 24px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <div>
+            <h2 style="margin: 0 0 4px; font-size: 16px; display: flex; align-items: center; gap: 8px;">
+                {% icone "shield-check" %} Registre des Sauvegardes Vérifiées (Preuves Cryptographiques)
+            </h2>
+            <p class="subtitle" style="margin: 0; font-size: 13px;">
+                Conformité stricte : une sauvegarde n'est certifiée que si son intégrité est attestée par un hash SHA-256 dans le registre <code>backups/manifest.json</code>.
+            </p>
+        </div>
+    </div>
+
+    {% if diag.sauvegardes.historique %}
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date de sauvegarde</th>
+                    <th>Fichier d'archive</th>
+                    <th>Taille</th>
+                    <th>Moteur</th>
+                    <th>Empreinte SHA-256</th>
+                    <th>Statut d'intégrité</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in diag.sauvegardes.historique %}
+                <tr>
+                    <td style="font-weight: 600; font-size: 13px;">
+                        {{ b.date_lisible|default:b.date_utc|slice:":19" }}
+                    </td>
+                    <td>
+                        <code style="font-size: 12px;">{{ b.fichier }}</code>
+                    </td>
+                    <td>{{ b.taille_lisible }}</td>
+                    <td><span class="badge" style="background: var(--fond-doux); padding: 2px 8px; border-radius: 4px; font-size: 11px;">{{ b.moteur|default:"DB"|upper }}</span></td>
+                    <td>
+                        <span title="{{ b.sha256 }}" style="font-family: var(--font-mono); font-size: 11.5px; background: rgba(0,0,0,0.04); padding: 2px 6px; border-radius: 4px;">
+                            {{ b.sha256|slice:":12" }}...{{ b.sha256|slice:"-8:" }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if b.statut == 'SUCCES_VERIFIE' %}
+                            <span style="color: #059669; font-weight: 700; font-size: 12px;">✓ Intègre & Vérifiée</span>
+                        {% else %}
+                            <span style="color: #d97706; font-weight: 700; font-size: 12px;">⚠ {{ b.statut }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="etat-vide" style="padding: 32px 20px; text-align: center;">
+        <p style="color: var(--muted); margin: 0 0 12px;">
+            Aucune sauvegarde enregistrée dans le registre d'intégrité <code>backups/manifest.json</code>.
+        </p>
+        <p style="font-size: 13px; color: var(--muted); margin: 0;">
+            Pour exécuter une sauvegarde et générer une preuve vérifiée :<br>
+            <code style="display: inline-block; margin-top: 6px; padding: 6px 12px; background: var(--fond-doux); border-radius: 6px;">python manage.py sauvegarder_base</code>
+        </p>
+    </div>
+    {% endif %}
+</section>
+
+<!-- Section 3 : Événements Récents & Journaux Techniques -->
+<section class="panel panel-bloc" style="margin-bottom: 24px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <div>
+            <h2 style="margin: 0 0 4px; font-size: 16px; display: flex; align-items: center; gap: 8px;">
+                {% icone "activity" %} Événements Récents du Journal Technique (logs/django.log)
+            </h2>
+            <p class="subtitle" style="margin: 0; font-size: 13px;">
+                Extraction sécurisée des avertissements et erreurs système récents. Les secrets et données médicales sont automatiquement assainis.
+            </p>
+        </div>
+        <a class="button btn btn-expand" href="{% url 'journal_activite' %}" title="Consulter le journal d'activité d'administration" aria-label="Journal Métier">
+            {% icone "shield" %} <span class="expand-text">Journal Métier</span>
+        </a>
+    </div>
+
+    {% if diag.incidents.derniers_evenements_logs %}
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 170px;">Horodatage</th>
+                    <th style="width: 100px;">Niveau</th>
+                    <th style="width: 110px;">Composant</th>
+                    <th>Message de l'événement</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in diag.incidents.derniers_evenements_logs %}
+                <tr>
+                    <td style="font-family: var(--font-mono); font-size: 12px; color: var(--muted);">
+                        {{ log.date }}
+                    </td>
+                    <td>
+                        <span class="badge" style="{% if log.niveau == 'WARNING' %}background:#fef3c7;color:#92400e;{% elif log.niveau == 'ERROR' or log.niveau == 'CRITICAL' %}background:#fee2e2;color:#991b1b;{% else %}background:#e0f2fe;color:#075985;{% endif %} padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 11px;">
+                            {{ log.niveau }}
+                        </span>
+                    </td>
+                    <td style="font-weight: 600; font-size: 12.5px;">
+                        {{ log.module }}
+                    </td>
+                    <td style="font-size: 12.5px; font-family: var(--font-mono); word-break: break-word;">
+                        {{ log.message }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p style="text-align: center; color: var(--muted); padding: 24px 0; margin: 0;">
+        Aucun événement d'erreur ou avertissement récent consigné dans <code>logs/django.log</code>.
+    </p>
+    {% endif %}
+</section>
+
+<!-- Section 4 : Intégrations DevOps & Observabilité Industrielle -->
+<section class="panel panel-bloc">
+    <h2 style="margin-top: 0; font-size: 16px; display: flex; align-items: center; gap: 8px;">
+        {% icone "server" %} Intégrations DevOps & Architecture d'Observabilité
+    </h2>
+    <p class="subtitle" style="margin-bottom: 16px;">
+        État des sondes de disponibilité et recommandations d'orchestration pour le déploiement en production.
+    </p>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;">
+        <!-- Sonde Healthcheck -->
+        <div style="border: 1px solid var(--border); border-radius: 10px; padding: 14px; background: var(--surface);">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                <span style="color: #059669;">{% icone "check-circle" %}</span>
+                <strong style="font-size: 14px;">Endpoints de Santé (Healthcheck)</strong>
+            </div>
+            <p style="font-size: 12.5px; color: var(--muted); margin: 0 0 8px;">
+                Sondes HTTP actives pour Nginx, Docker Compose et load-balancers :
+            </p>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <a href="{% url 'health_check' %}" target="_blank" style="font-family: var(--font-mono); font-size: 11.5px; background: var(--fond-doux); padding: 3px 8px; border-radius: 4px; text-decoration: none; color: var(--primary-strong);">
+                    /health/
+                </a>
+                <a href="{% url 'api_health_check' %}" target="_blank" style="font-family: var(--font-mono); font-size: 11.5px; background: var(--fond-doux); padding: 3px 8px; border-radius: 4px; text-decoration: none; color: var(--primary-strong);">
+                    /api/health/
+                </a>
+            </div>
+        </div>
+
+        <!-- Prometheus & OpenTelemetry -->
+        <div style="border: 1px solid var(--border); border-radius: 10px; padding: 14px; background: var(--surface);">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                <span style="color: #059669;">{% icone "bar-chart" %}</span>
+                <strong style="font-size: 14px;">Prometheus & Métriques</strong>
+            </div>
+            <p style="font-size: 12.5px; color: var(--muted); margin: 0;">
+                Statut : <strong style="color: #059669;">Actif & Exposition OpenMetrics</strong>.<br>
+                Endpoint standard exposé sur <a href="{% url 'metrics_prometheus' %}" style="color: var(--primary); font-weight: 700; text-decoration: underline;"><code>/metrics/</code></a> (OpenMetrics v0.0.4 avec console visuelle intégrée).
+            </p>
+        </div>
+
+        <!-- Sentry Exception Tracker -->
+        <div style="border: 1px solid var(--border); border-radius: 10px; padding: 14px; background: var(--surface);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="color: {% if diag.services.sentry.configure %}#059669{% else %}#d97706{% endif %};">{% icone "shield-check" %}</span>
+                    <strong style="font-size: 14px;">Sentry &amp; Télémétrie d'Erreurs</strong>
+                </div>
+                {% if diag.services.sentry.configure %}
+                <span class="badge validee" style="font-size: 11px; padding: 2px 8px;">Connecté &middot; Traçage actif</span>
+                {% endif %}
+            </div>
+            <p style="font-size: 12.5px; color: var(--muted); margin: 0;">
+                Statut : <strong style="color: {% if diag.services.sentry.configure %}#059669{% else %}#d97706{% endif %};">{{ diag.services.sentry.statut }}</strong>.<br>
+                {% if diag.services.sentry.configure %}
+                DSN configuré en région Europe. Les exceptions et erreurs non gérées sont automatiquement capturées en direct (données de santé protégées).
+                {% else %}
+                Définir <code>SENTRY_DSN</code> dans <code>.env</code> pour le traçage automatique des exceptions.
+                {% endif %}
+            </p>
+        </div>
+
+        <!-- Automatisation des Sauvegardes -->
+        <div style="border: 1px solid var(--border); border-radius: 10px; padding: 14px; background: var(--surface);">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                <span style="color: #059669;">{% icone "shield-check" %}</span>
+                <strong style="font-size: 14px;">Automatisation Sauvegardes (Cron)</strong>
+            </div>
+            <p style="font-size: 12.5px; color: var(--muted); margin: 0;">
+                Commande planifiable en cron quotidien :<br>
+                <code>0 2 * * * /app/manage.py sauvegarder_base --retention-jours=30</code>
+            </p>
+        </div>
+    </div>
+</section>
+{% endblock %}

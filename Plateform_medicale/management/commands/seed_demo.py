@@ -6,9 +6,12 @@ from django.utils import timezone
 
 from Plateform_medicale.models import (
     Consultation,
+    ConventionPrestataire,
+    DemandeRemboursement,
     LigneOrdonnance,
     Medecin,
     Ordonnance,
+    Organisme,
     Paiement,
     Patient,
     Pharmacien,
@@ -22,35 +25,69 @@ from Plateform_medicale.models import (
 
 
 class Command(BaseCommand):
-    help = "Initialise ou réinitialise de façon idempotente les 4 comptes et données de démonstration SantéSN."
+    help = "Initialise ou réinitialise de façon idempotente les comptes et données de démonstration SantéSN."
 
     def add_arguments(self, parser):
         parser.add_argument(
             "--password",
             type=str,
             default="Passer123!",
-            help="Mot de passe unifié pour les 4 comptes de démonstration (par défaut: Passer123!).",
+            help="Mot de passe unifié pour les comptes de démonstration (par défaut: Passer123!).",
         )
 
     def handle(self, *args, **options):
         mot_de_passe = options["password"]
         self.stdout.write("Initialisation des données de démonstration SantéSN...")
 
+        # 0. Organismes (IPM / Assureurs) pour tester l'isolation multi-organismes
+        org_defaut = Organisme.obtenir_defaut()
+        org_sonatel, _ = Organisme.objects.get_or_create(
+            code="IPM-SONATEL",
+            defaults={
+                "nom": "IPM Sonatel",
+                "type_organisme": Organisme.TypeOrganisme.IPM,
+                "telephone": "338391234",
+                "email": "contact@ipm-sonatel.sn",
+                "adresse": "46 Boulevard de la République, Dakar",
+                "actif": True,
+            },
+        )
+
         # 1. Comptes Utilisateurs pour chaque rôle
         comptes_specs = [
             {
                 "email": "admin@santesn.sn",
                 "first_name": "Administrateur",
-                "last_name": "SantéSN",
+                "last_name": "Général",
                 "role": User.Role.ADMIN,
+                "organisme": None,
                 "is_staff": True,
                 "phone_number": "770000001",
+            },
+            {
+                "email": "gestionnaire@santesn.sn",
+                "first_name": "Fatou",
+                "last_name": "Gueye",
+                "role": User.Role.GESTIONNAIRE,
+                "organisme": org_defaut,
+                "is_staff": False,
+                "phone_number": "770000002",
+            },
+            {
+                "email": "gestionnaire.sonatel@santesn.sn",
+                "first_name": "Cheikh",
+                "last_name": "Sy",
+                "role": User.Role.GESTIONNAIRE,
+                "organisme": org_sonatel,
+                "is_staff": False,
+                "phone_number": "770000003",
             },
             {
                 "email": "medecin@santesn.sn",
                 "first_name": "Ibrahima",
                 "last_name": "Ndiaye",
                 "role": User.Role.MEDECIN,
+                "organisme": None,
                 "is_staff": False,
                 "phone_number": "772345678",
             },
@@ -59,6 +96,7 @@ class Command(BaseCommand):
                 "first_name": "Awa",
                 "last_name": "Sow",
                 "role": User.Role.PHARMACIEN,
+                "organisme": None,
                 "is_staff": False,
                 "phone_number": "773456789",
             },
@@ -67,8 +105,18 @@ class Command(BaseCommand):
                 "first_name": "Moussa",
                 "last_name": "Diop",
                 "role": User.Role.ASSURE,
+                "organisme": org_defaut,
                 "is_staff": False,
                 "phone_number": "771234567",
+            },
+            {
+                "email": "assure.sonatel@santesn.sn",
+                "first_name": "Ousmane",
+                "last_name": "Fall",
+                "role": User.Role.ASSURE,
+                "organisme": org_sonatel,
+                "is_staff": False,
+                "phone_number": "774567890",
             },
         ]
 
@@ -80,17 +128,21 @@ class Command(BaseCommand):
                     "first_name": spec["first_name"],
                     "last_name": spec["last_name"],
                     "role": spec["role"],
+                    "organisme": spec["organisme"],
                     "is_staff": spec["is_staff"],
                     "phone_number": spec["phone_number"],
                 },
             )
-            # Garantit le rôle, l'activation et le mot de passe
+            # Garantit le rôle, l'organisme, l'activation et le mot de passe
             user.role = spec["role"]
+            user.organisme = spec["organisme"]
             user.is_staff = spec["is_staff"]
             user.is_active = True
             user.set_password(mot_de_passe)
             user.save()
-            utilisateurs[spec["role"]] = user
+            if spec["role"] not in utilisateurs:
+                utilisateurs[spec["role"]] = user
+            utilisateurs[spec["email"]] = user
             statut_txt = "créé" if cree else "mis à jour"
             self.stdout.write(f"  [Compte] {spec['email']} ({spec['role']}) -> {statut_txt}")
 
@@ -432,13 +484,13 @@ class Command(BaseCommand):
                 motif="Consultation de médecine générale et bilan de routine",
                 montant_estime=Decimal("45000.00"),
                 statut="validee",
-                valide_par=utilisateurs[User.Role.ADMIN],
+                valide_par=utilisateurs[User.Role.GESTIONNAIRE],
                 date_validation=timezone.now() - datetime.timedelta(days=2),
             )
         else:
             pec.statut = "validee"
             pec.montant_estime = Decimal("45000.00")
-            pec.valide_par = utilisateurs[User.Role.ADMIN]
+            pec.valide_par = utilisateurs[User.Role.GESTIONNAIRE]
             pec.date_validation = timezone.now() - datetime.timedelta(days=2)
             pec.save()
 
@@ -480,7 +532,7 @@ class Command(BaseCommand):
                 statut=Paiement.Statut.REGLE,
                 mode_reglement=Paiement.ModeReglement.ESPECES,
                 date_reglement=consultation.date_consultation,
-                enregistre_par=utilisateurs[User.Role.ADMIN],
+                enregistre_par=utilisateurs[User.Role.GESTIONNAIRE],
             )
 
         # Ordonnance active prête pour le scan en pharmacie
@@ -510,17 +562,109 @@ class Command(BaseCommand):
         if not ordonnance.sceau:
             ordonnance.sceller()
 
+        # Dossier Assuré du 2e organisme (IPM Sonatel) pour tester le cloisonnement
+        patient_sonatel, _ = Patient.objects.update_or_create(
+            user=utilisateurs["assure.sonatel@santesn.sn"],
+            defaults={
+                "organisme": org_sonatel,
+                "entreprise": "Sonatel SA",
+                "nom": "Fall",
+                "prenom": "Ousmane",
+                "date_naissance": datetime.date(1987, 8, 12),
+                "telephone": "774567890",
+                "adresse": "Sacré-Cœur 3, Dakar",
+                "type_beneficiaire": Patient.TypeBeneficiaire.PRINCIPAL,
+                "plan_couverture": plan_premium,
+                "statut_validation": Patient.StatutValidation.VALIDE,
+            },
+        )
+        PriseEnCharge.objects.get_or_create(
+            patient=patient_sonatel,
+            motif="Bilan ophtalmologique et optique (IPM Sonatel)",
+            defaults={
+                "montant_estime": Decimal("185000.00"),
+                "statut": "en_attente",
+            },
+        )
+
+        # 8. Conventions entre organismes et prestataires
+        for org_conv in (org_defaut, org_sonatel):
+            for prest_conv in (hopital, pharmacie):
+                ConventionPrestataire.objects.get_or_create(
+                    organisme=org_conv,
+                    prestataire=prest_conv,
+                    defaults={
+                        "statut": ConventionPrestataire.Statut.ACTIF,
+                        "numero_convention": f"CONV-{org_conv.code}-{prest_conv.pk}",
+                        "cree_par": utilisateurs[User.Role.GESTIONNAIRE] if org_conv == org_defaut else utilisateurs["gestionnaire.sonatel@santesn.sn"],
+                    },
+                )
+
+        # 9. Demandes de remboursement hors réseau de démonstration
+        DemandeRemboursement.objects.get_or_create(
+            patient=patient,
+            organisme=org_defaut,
+            prestataire_nom="Clinique Ophtalmologique des Almadies (Hors Réseau)",
+            type_soin=DemandeRemboursement.TypeSoin.OPTIQUE,
+            defaults={
+                "date_soins": timezone.now().date() - datetime.timedelta(days=3),
+                "montant_depense": Decimal("45000.00"),
+                "motif": "Consultation spécialisée et verres correcteurs réglés sur place hors réseau conventionné.",
+                "coordonnees_remboursement": "Wave +221 77 123 45 67",
+                "statut": DemandeRemboursement.Statut.EN_ATTENTE,
+            },
+        )
+        DemandeRemboursement.objects.get_or_create(
+            patient=patient,
+            organisme=org_defaut,
+            prestataire_nom="Pharmacie de Garde Point E (Hors Réseau)",
+            type_soin=DemandeRemboursement.TypeSoin.PHARMACIE,
+            defaults={
+                "date_soins": timezone.now().date() - datetime.timedelta(days=12),
+                "montant_depense": Decimal("18500.00"),
+                "taux_applique": Decimal("80.00"),
+                "montant_rembourse_estime": Decimal("14800.00"),
+                "montant_rembourse_accorde": Decimal("14800.00"),
+                "motif": "Achat urgent de médicaments en pharmacie de garde non conventionnée.",
+                "coordonnees_remboursement": "Wave +221 77 123 45 67",
+                "mode_remboursement": DemandeRemboursement.ModeRemboursement.MOBILE_MONEY,
+                "reference_reglement": "WAVE-SN-2026-88412",
+                "statut": DemandeRemboursement.Statut.REMBOURSEE,
+                "traite_par": utilisateurs[User.Role.GESTIONNAIRE],
+                "date_decision": timezone.now() - datetime.timedelta(days=10),
+                "date_reglement": timezone.now() - datetime.timedelta(days=10),
+            },
+        )
+        DemandeRemboursement.objects.get_or_create(
+            patient=patient_sonatel,
+            organisme=org_sonatel,
+            prestataire_nom="Laboratoire Bio24 Mermoz (Hors Réseau)",
+            type_soin=DemandeRemboursement.TypeSoin.BIOLOGIE,
+            defaults={
+                "date_soins": timezone.now().date() - datetime.timedelta(days=2),
+                "montant_depense": Decimal("32000.00"),
+                "motif": "Analyses biologiques complètes avancées hors réseau.",
+                "coordonnees_remboursement": "Orange Money +221 77 456 78 90",
+                "statut": DemandeRemboursement.Statut.EN_ATTENTE,
+            },
+        )
+
         self.stdout.write(
             self.style.SUCCESS(
                 "\nDonnées de démonstration SantéSN initialisées avec succès !\n"
                 "----------------------------------------------------------\n"
                 f"Mot de passe unifié pour tous les comptes : {mot_de_passe}\n"
-                "1. Administrateur  : admin@santesn.sn\n"
-                "2. Médecin         : medecin@santesn.sn\n"
-                "3. Pharmacien      : pharmacien@santesn.sn\n"
-                "4. Assuré          : assure@santesn.sn\n"
-                f"Ordonnance de test : {ordonnance.code_qr}\n"
-                f"Carte Assuré       : {patient.numero_carte}\n"
+                "1. Administrateur Général          : admin@santesn.sn\n"
+                "2. Gestionnaire (IPM SantéSN)      : gestionnaire@santesn.sn\n"
+                "3. Gestionnaire (IPM Sonatel)      : gestionnaire.sonatel@santesn.sn\n"
+                "4. Médecin                         : medecin@santesn.sn\n"
+                "5. Pharmacien                      : pharmacien@santesn.sn\n"
+                "6. Assuré (IPM SantéSN)            : assure@santesn.sn\n"
+                "7. Assuré (IPM Sonatel)            : assure.sonatel@santesn.sn\n"
+                f"Ordonnance de test                 : {ordonnance.code_qr}\n"
+                f"Carte Assuré (IPM SantéSN)         : {patient.numero_carte}\n"
+                f"Carte Assuré (IPM Sonatel)         : {patient_sonatel.numero_carte}\n"
                 "----------------------------------------------------------"
             )
         )
+

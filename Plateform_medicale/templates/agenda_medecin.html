@@ -68,7 +68,7 @@
         <div class="badge-agenda-subtil">
             {% icone "calendar" %}
             <span>Planning &amp; Consultations</span>
-            <span>&bull;</span>
+            <span class="separateur" aria-hidden="true" style="opacity:0.6;">·</span>
             <span>SantéSN Pro</span>
         </div>
         <h1 class="titre-agenda-pro">Mon agenda médical</h1>
@@ -77,11 +77,11 @@
         </p>
     </div>
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-        <a class="btn-agenda-retour" href="{% url 'dashboard_medecin' %}">
-            {% icone "chevron-left" %} Tableau de bord
+        <a class="btn-agenda-retour btn-retour-expand" href="{% url 'dashboard_medecin' %}" title="Retour au tableau de bord" aria-label="Tableau de bord">
+            {% icone "chevron-left" %} <span class="expand-text">Tableau de bord</span>
         </a>
-        <a class="button primary" href="{% url 'ajouter_consultation_medecin' %}?mode=spontane" style="box-shadow: 0 4px 14px rgba(14, 124, 134, 0.25);">
-            {% icone "plus-circle" %} Consultation spontanée / Urgence
+        <a class="button primary btn-expand primary" href="{% url 'ajouter_consultation_medecin' %}?mode=spontane" title="Consultation spontanée ou urgence" aria-label="Consultation spontanée">
+            {% icone "plus-circle" %} <span class="expand-text">Consultation spontanée</span>
         </a>
     </div>
 </div>

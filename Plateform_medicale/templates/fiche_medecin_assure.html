@@ -36,9 +36,9 @@
         <p class="subtitle">{{ medecin.specialite }}</p>
     </div>
     {% if medecin.prestataire and medecin.prestataire.partenaire %}
-    <a class="button" href="{% url 'fiche_prestataire_assure' medecin.prestataire.pk %}">{% icone "chevron-left" %} Retour</a>
+    <a class="button btn btn-retour-expand" href="{% url 'fiche_prestataire_assure' medecin.prestataire.pk %}" title="Retour" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
     {% else %}
-    <a class="button" href="{% url 'prestataires_proches' %}">{% icone "chevron-left" %} Retour</a>
+    <a class="button btn btn-retour-expand" href="{% url 'prestataires_proches' %}" title="Retour" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
     {% endif %}
 </section>
 
@@ -87,12 +87,12 @@
     {% endif %}
 
     <div class="actions" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-        <a class="button primary" href="{% url 'ajouter_rendez_vous_assure' %}?medecin={{ medecin.pk }}">
-            {% icone "calendar" %} Demander un rendez-vous
+        <a class="button primary btn-expand primary" href="{% url 'ajouter_rendez_vous_assure' %}?medecin={{ medecin.pk }}" title="Demander un rendez-vous" aria-label="Demander un rendez-vous">
+            {% icone "calendar" %} <span class="expand-text">Demander un rendez-vous</span>
         </a>
         {% if medecin.telephone %}
-        <a class="button btn" href="tel:{{ medecin.telephone }}">
-            {% icone "phone" %} Appeler le praticien
+        <a class="button btn btn-expand" href="tel:{{ medecin.telephone }}" title="Appeler le praticien" aria-label="Appeler le praticien">
+            {% icone "phone" %} <span class="expand-text">Appeler le praticien</span>
         </a>
         {% endif %}
     </div>

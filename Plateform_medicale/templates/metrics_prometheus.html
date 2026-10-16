@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% load icones formats %}
+
+{% block title %}Métriques Prometheus & OpenMetrics — SantéSN{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+            <a class="button btn btn-retour-expand" href="{% url 'dashboard' %}" title="Retour au Tableau de bord" aria-label="Retour au Tableau de bord">
+                {% icone "chevron-left" %} <span class="expand-text">Retour</span>
+            </a>
+            <span style="color: var(--muted); font-size: 12.5px;">Console d'Infrastructure</span>
+        </div>
+        <h1>Console des Métriques Prometheus &amp; OpenMetrics</h1>
+        <p class="subtitle" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 4px;">
+            <span>Indicateurs réels extraits à la milliseconde près depuis votre base de données PostgreSQL et cache SantéSN.</span>
+            <span style="display: inline-flex; align-items: center; gap: 6px; background: var(--fond-doux); padding: 3px 10px; border-radius: 16px; border: 1px solid var(--border); font-family: var(--font-mono); font-size: 11.5px; color: var(--texte);">
+                <span class="status-pulse-dot" style="width: 7px; height: 7px; background: #10b981; border-radius: 50%; display: inline-block;"></span>
+                <span>Mesure :</span>
+                <strong style="color: var(--titre);">{{ metriques.heure_mesure|date:"H:i:s" }}</strong>
+                <span style="font-size: 11px; color: var(--muted);">UTC</span>
+            </span>
+        </p>
+    </div>
+    <div class="actions">
+        <!-- Bouton Voir le flux brut (expand au survol) -->
+        <button type="button" class="button btn btn-expand" onclick="document.getElementById('zone-flux-brut').scrollIntoView({behavior: 'smooth'});" title="Voir le flux brut OpenMetrics" aria-label="Voir le flux brut">
+            {% icone "code" %} <span class="expand-text">Voir le flux brut</span>
+        </button>
+
+        <!-- Bouton Recalculer / Actualiser (expand au survol) -->
+        <a class="button btn btn-expand primary" href="{% url 'metrics_prometheus' %}" title="Recalculer les métriques en direct" aria-label="Recalculer">
+            {% icone "refresh" %} <span class="expand-text">Recalculer</span>
+        </a>
+    </div>
+</section>
+
+<!-- KPIs Système & Disponibilité -->
+<section class="kpi-grille" style="grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 24px;">
+    <div class="kpi">
+        <span class="kpi-entete">{% icone "activity" %} Santé Globale</span>
+        <strong class="code" style="color: {% if metriques.up == 1 %}#059669{% else %}#dc2626{% endif %};">
+            {% if metriques.up == 1 %}100% UP{% else %}DEGRADE{% endif %}
+        </strong>
+        <span class="kpi-pied">Code prometheus : <code>santesn_up {{ metriques.up }}</code></span>
+    </div>
+
+    <div class="kpi">
+        <span class="kpi-entete">{% icone "database" %} Latence PostgreSQL</span>
+        <strong class="code" style="color: var(--primary);">{{ metriques.db_latence }} ms</strong>
+        <span class="kpi-pied">Temps de réponse de la base</span>
+    </div>
+
+    <div class="kpi">
+        <span class="kpi-entete">{% icone "cpu" %} Latence Cache</span>
+        <strong class="code" style="color: var(--primary);">{{ metriques.cache_latence }} ms</strong>
+        <span class="kpi-pied">Cache mémoire applicatif</span>
+    </div>
+
+    <div class="kpi">
+        <span class="kpi-entete">{% icone "shield" %} Échecs Auth (24h)</span>
+        <strong class="code" style="color: {% if metriques.security_failed_logins > 10 %}#dc2626{% else %}#059669{% endif %};">
+            {{ metriques.security_failed_logins }}
+        </strong>
+        <span class="kpi-pied">Tentatives suspectes bloquées</span>
+    </div>
+</section>
+
+<!-- Grille des Métriques Métiers SantéSN -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-bottom: 24px;">
+    <!-- Rôles Utilisateurs -->
+    <article class="panel panel-bloc">
+        <h2 style="font-size: 15px; margin-top: 0; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+            {% icone "users" %} Répartition des Utilisateurs par Rôle
+        </h2>
+        <table style="width: 100%;">
+            <thead>
+                <tr>
+                    <th style="font-size: 12px;">Rôle système</th>
+                    <th style="text-align: right; font-size: 12px;">Compte(s)</th>
+                    <th style="text-align: right; font-size: 12px;">Métrique Prometheus</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for role, count in metriques.roles.items %}
+                <tr>
+                    <td style="font-weight: 600; font-size: 13px;">{{ role }}</td>
+                    <td style="text-align: right; font-weight: 700; font-size: 13px; font-family: var(--font-mono);">{{ count }}</td>
+                    <td style="text-align: right; font-size: 11.5px; font-family: var(--font-mono); color: var(--muted);">
+                        santesn_total_users{role="{{ role }}"}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" style="text-align: center; color: var(--muted);">Aucune donnée</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </article>
+
+    <!-- Volumes Métier IPM -->
+    <article class="panel panel-bloc">
+        <h2 style="font-size: 15px; margin-top: 0; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+            {% icone "clipboard-list" %} Volumes Opérationnels SantéSN
+        </h2>
+        <table style="width: 100%;">
+            <thead>
+                <tr>
+                    <th style="font-size: 12px;">Indicateur IPM</th>
+                    <th style="text-align: right; font-size: 12px;">Valeur</th>
+                    <th style="text-align: right; font-size: 12px;">Clé OpenMetrics</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="font-size: 13px;">Patients assurés inscrits</td>
+                    <td style="text-align: right; font-weight: 700; font-size: 13px; font-family: var(--font-mono);">{{ metriques.patients }}</td>
+                    <td style="text-align: right; font-size: 11.5px; font-family: var(--font-mono); color: var(--muted);">santesn_patients_total</td>
+                </tr>
+                <tr>
+                    <td style="font-size: 13px;">Prises en charge en attente</td>
+                    <td style="text-align: right; font-weight: 700; font-size: 13px; font-family: var(--font-mono); color: #d97706;">{{ metriques.pec_attente }}</td>
+                    <td style="text-align: right; font-size: 11.5px; font-family: var(--font-mono); color: var(--muted);">santesn_prises_en_charge_total{statut="en_attente"}</td>
+                </tr>
+                <tr>
+                    <td style="font-size: 13px;">Prises en charge validées</td>
+                    <td style="text-align: right; font-weight: 700; font-size: 13px; font-family: var(--font-mono); color: #059669;">{{ metriques.pec_validees }}</td>
+                    <td style="text-align: right; font-size: 11.5px; font-family: var(--font-mono); color: var(--muted);">santesn_prises_en_charge_total{statut="validee"}</td>
+                </tr>
+                <tr>
+                    <td style="font-size: 13px;">Ordonnances électroniques</td>
+                    <td style="text-align: right; font-weight: 700; font-size: 13px; font-family: var(--font-mono);">{{ metriques.ordonnances }}</td>
+                    <td style="text-align: right; font-size: 11.5px; font-family: var(--font-mono); color: var(--muted);">santesn_ordonnances_total</td>
+                </tr>
+                <tr>
+                    <td style="font-size: 13px;">Consultations médicales</td>
+                    <td style="text-align: right; font-weight: 700; font-size: 13px; font-family: var(--font-mono);">{{ metriques.consultations }}</td>
+                    <td style="text-align: right; font-size: 11.5px; font-family: var(--font-mono); color: var(--muted);">santesn_consultations_total</td>
+                </tr>
+            </tbody>
+        </table>
+    </article>
+</div>
+
+<!-- Cadre d'intégration Scraping & Grafana -->
+<article class="panel panel-bloc" style="margin-bottom: 24px;">
+    <h2 style="font-size: 15px; margin-top: 0; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
+        {% icone "terminal" %} Déploiement &amp; Scraping Prometheus / Grafana
+    </h2>
+    <p class="subtitle" style="font-size: 13px; margin-bottom: 12px;">
+        Pour brancher un collecteur Prometheus externe (ex: Kubernetes, Grafana Cloud, VictoriaMetrics), ajoutez ce job dans votre <code>prometheus.yml</code> :
+    </p>
+    <pre style="background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 14px; font-family: var(--font-mono); font-size: 12px; color: var(--texte); overflow-x: auto; margin: 0;"><code>scrape_configs:
+  - job_name: 'santesn-platform'
+    scrape_interval: 15s
+    metrics_path: '/metrics/'
+    static_configs:
+      - targets: ['localhost:80']</code></pre>
+</article>
+
+<!-- Terminal Visuel : Flux Brut OpenMetrics Intégré -->
+<article class="panel panel-bloc" id="zone-flux-brut">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <div>
+            <h2 style="font-size: 15px; margin: 0 0 4px; display: flex; align-items: center; gap: 8px;">
+                {% icone "code" %} Flux Brut OpenMetrics (Scraping natif)
+            </h2>
+            <p class="subtitle" style="margin: 0; font-size: 12.5px;">
+                Ce flux est généré à chaque appel et lu directement par les robots Prometheus sans quitter la plateforme.
+            </p>
+        </div>
+        <button type="button" class="button btn btn-expand btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('contenu-metrics-texte').innerText); alert('Flux OpenMetrics copié dans le presse-papiers !');" title="Copier le flux" aria-label="Copier le flux">
+            {% icone "copy" %} <span class="expand-text">Copier le flux</span>
+        </button>
+    </div>
+    <div style="background: #0f172a; color: #38bdf8; border: 1px solid #1e293b; border-radius: 8px; padding: 16px; font-family: var(--font-mono); font-size: 12px; line-height: 1.6; max-height: 320px; overflow-y: auto;">
+        <pre id="contenu-metrics-texte" style="margin: 0; white-space: pre-wrap; word-break: break-all; color: #e2e8f0;">{{ metriques.flux_brut }}</pre>
+    </div>
+</article>
+
+{% if metriques.format_raw_demande %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var zone = document.getElementById('zone-flux-brut');
+    if (zone) {
+        zone.scrollIntoView({ behavior: 'smooth' });
+        zone.style.border = '2px solid var(--primary)';
+        zone.style.boxShadow = '0 0 0 4px rgba(14, 124, 134, 0.2)';
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

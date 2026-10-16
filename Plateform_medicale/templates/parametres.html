@@ -74,20 +74,32 @@
             <div class="param-corps">
                 <div class="param-tech">
                     <span class="param-puce" aria-hidden="true"></span>
+                    <strong>Neon PostgreSQL</strong>
+                    <span>base de données serverless haute disponibilité · TLS 1.3</span>
+                    <span class="param-etat">opérationnel</span>
+                </div>
+                <div class="param-tech">
+                    <span class="param-puce" aria-hidden="true"></span>
+                    <strong>WhatsApp Cloud API &amp; SMTP</strong>
+                    <span>passerelle de notification multicanale sécurisée</span>
+                    <span class="param-etat">connecté</span>
+                </div>
+                <div class="param-tech">
+                    <span class="param-puce" aria-hidden="true"></span>
                     <strong>OpenStreetMap · Nominatim</strong>
                     <span>recherche d'adresse des prestataires</span>
                     <span class="param-etat">opérationnel</span>
                 </div>
                 <div class="param-tech">
                     <span class="param-puce" aria-hidden="true"></span>
-                    <strong>Leaflet</strong>
+                    <strong>Leaflet &amp; CDN</strong>
                     <span>carte du réseau de prestataires</span>
                     <span class="param-etat">CDN</span>
                 </div>
                 <div class="param-tech">
                     <span class="param-puce" aria-hidden="true"></span>
                     <strong>Chart.js</strong>
-                    <span>graphiques des rapports</span>
+                    <span>moteur de rendu analytique &amp; rapports</span>
                     <span class="param-etat">CDN · v4.4.7</span>
                 </div>
                 <div class="param-tech">
@@ -292,8 +304,8 @@
                     <span class="param-txt"><strong>{{ total_journal }} entrée{{ total_journal|pluralize }}</strong>
                         <span>Non modifiable, ni ici ni ailleurs : un journal qu'on peut retoucher ne prouve rien.</span></span>
                     <span class="param-fin">
-                        <a class="button btn" href="{% url 'journal_activite' %}?action=DEBLOCAGE">Déblocages</a>
-                        <a class="button btn" href="{% url 'journal_activite' %}?action=SUPPRESSION">Suppressions</a>
+                        <a class="button btn btn-expand" href="{% url 'journal_activite' %}?action=DEBLOCAGE" title="Consulter les déblocages" aria-label="Déblocages">{% icone "shield" %} <span class="expand-text">Déblocages</span></a>
+                        <a class="button btn btn-expand" href="{% url 'journal_activite' %}?action=SUPPRESSION" title="Consulter les suppressions" aria-label="Suppressions">{% icone "trash-2" %} <span class="expand-text">Suppressions</span></a>
                     </span>
                 </div>
             </div>
@@ -364,8 +376,8 @@
                           data-confirmation-action="Oui, purger maintenant">
                         {% csrf_token %}
                         <input type="hidden" name="action" value="purger_donnees">
-                        <button type="submit" class="button btn">
-                            {% icone "trash-2" %} Purger les données obsolètes
+                        <button type="submit" class="button btn btn-expand btn-danger" title="Purger les données obsolètes" aria-label="Purger les données">
+                            {% icone "trash-2" %} <span class="expand-text">Purger les données</span>
                         </button>
                     </form>
                 </div>

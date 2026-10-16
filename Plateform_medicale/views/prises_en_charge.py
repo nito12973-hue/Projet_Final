@@ -19,25 +19,38 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import ProtectedError, Q
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 
 from ..forms import PriseEnChargeForm
 from ..models import JournalActivite, PriseEnCharge, User
-from .utils import _paginer, _trier, admin_required, journaliser
+from .utils import (
+    _paginer,
+    _trier,
+    filtrer_par_organisme,
+    gestionnaire_required,
+    get_object_or_404_organisme,
+    journaliser,
+    organisme_gestionnaire,
+)
 
 
-@admin_required
+@gestionnaire_required
 def liste_prises_en_charge(request):
+    organisme = organisme_gestionnaire(request)
     if request.method == "POST":
         action = request.POST.get("action", "")
         pks = request.POST.getlist("selection")
         if action in ("valider_selection", "refuser_selection") and pks:
             nouveau_statut = "validee" if action == "valider_selection" else "refusee"
             libelle_statut = "validée(s)" if nouveau_statut == "validee" else "refusée(s)"
-            modifiees = PriseEnCharge.objects.filter(pk__in=pks, statut="en_attente")
+            modifiees = filtrer_par_organisme(
+                request,
+                PriseEnCharge.objects.filter(pk__in=pks, statut="en_attente"),
+                champ="patient__organisme",
+            )
             count = modifiees.count()
             if count > 0:
                 from django.utils import timezone
@@ -81,6 +94,7 @@ def liste_prises_en_charge(request):
                                                 JournalActivite.Action.MODIFICATION,
                                                 f"Régularisation comptable — Paiement #{paiement_id} ({c.patient})",
                                                 f"Prise en charge #{item.pk} validée a posteriori. Trop-perçu constaté à rembourser : {trop_percu} FCFA (nouvelle part assurance : {p_calc.montant_part_assurance} FCFA)",
+                                                organisme=organisme,
                                             )
                         elif nouveau_statut == "refusee":
                             notifier_refus_prise_en_charge(item)
@@ -90,13 +104,18 @@ def liste_prises_en_charge(request):
                     JournalActivite.Action.DECISION,
                     "Prises en charge (Traitement en masse)",
                     f"{reussites} demande(s) passée(s) au statut : {nouveau_statut}",
+                    organisme=organisme,
                 )
                 messages.success(request, f"{reussites} prise(s) en charge {libelle_statut}.")
             else:
                 messages.warning(request, "Aucune demande en attente sélectionnée.")
         return redirect("liste_prises_en_charge")
 
-    prises_en_charge = PriseEnCharge.objects.select_related("patient")
+    prises_en_charge = filtrer_par_organisme(
+        request,
+        PriseEnCharge.objects.select_related("patient", "patient__organisme"),
+        champ="patient__organisme",
+    )
 
     recherche = request.GET.get("q", "").strip()
     if recherche:
@@ -131,16 +150,26 @@ def liste_prises_en_charge(request):
     )
 
 
-@admin_required
+@gestionnaire_required
 def valider_prise_en_charge(request, pk):
-    """Validation unitaire rapide d une prise en charge par l administration."""
-    prise_en_charge = get_object_or_404(PriseEnCharge, pk=pk)
+    """Validation unitaire rapide d une prise en charge par le gestionnaire."""
+    organisme = organisme_gestionnaire(request)
+    prise_en_charge = get_object_or_404_organisme(
+        request,
+        PriseEnCharge.objects.select_related("patient", "patient__organisme"),
+        champ="patient__organisme",
+        pk=pk,
+    )
     if request.method == "POST":
         from django.utils import timezone
         from ..models import Paiement
         from ..services.notifications import notifier_validation_prise_en_charge
         try:
             with transaction.atomic():
+                verrou = PriseEnCharge.objects.select_for_update().get(pk=prise_en_charge.pk)
+                if verrou.statut == "validee":
+                    messages.info(request, f"La prise en charge de {prise_en_charge.patient} est déjà validée.")
+                    return redirect("liste_prises_en_charge")
                 prise_en_charge.statut = "validee"
                 prise_en_charge.valide_par = request.user
                 prise_en_charge.date_validation = timezone.now()
@@ -167,6 +196,7 @@ def valider_prise_en_charge(request, pk):
                                     JournalActivite.Action.MODIFICATION,
                                     f"Régularisation comptable — Paiement #{paiement_id} ({c.patient})",
                                     f"Prise en charge validée a posteriori. Trop-perçu constaté à rembourser : {trop_percu} FCFA (nouvelle part assurance : {p_calc.montant_part_assurance} FCFA)",
+                                    organisme=organisme,
                                 )
 
                 notifier_validation_prise_en_charge(prise_en_charge)
@@ -175,6 +205,7 @@ def valider_prise_en_charge(request, pk):
                     JournalActivite.Action.DECISION,
                     f"Prise en charge validée : {prise_en_charge.patient}",
                     f"Motif : {prise_en_charge.motif}",
+                    organisme=organisme,
                 )
                 messages.success(request, f"La prise en charge de {prise_en_charge.patient} a été validée avec succès.")
         except ValidationError as e:
@@ -182,10 +213,16 @@ def valider_prise_en_charge(request, pk):
     return redirect("liste_prises_en_charge")
 
 
-@admin_required
+@gestionnaire_required
 def refuser_prise_en_charge(request, pk):
     """Refus unitaire rapide avec motif d une prise en charge."""
-    prise_en_charge = get_object_or_404(PriseEnCharge, pk=pk)
+    organisme = organisme_gestionnaire(request)
+    prise_en_charge = get_object_or_404_organisme(
+        request,
+        PriseEnCharge.objects.select_related("patient", "patient__organisme"),
+        champ="patient__organisme",
+        pk=pk,
+    )
     if request.method == "POST":
         from django.utils import timezone
         from ..services.notifications import notifier_refus_prise_en_charge
@@ -193,6 +230,10 @@ def refuser_prise_en_charge(request, pk):
 
         try:
             with transaction.atomic():
+                verrou = PriseEnCharge.objects.select_for_update().get(pk=prise_en_charge.pk)
+                if verrou.statut == "refusee":
+                    messages.info(request, f"La prise en charge de {prise_en_charge.patient} est déjà refusée.")
+                    return redirect("liste_prises_en_charge")
                 prise_en_charge.statut = "refusee"
                 prise_en_charge.motif_refus = motif_refus
                 prise_en_charge.valide_par = request.user
@@ -206,6 +247,7 @@ def refuser_prise_en_charge(request, pk):
                     JournalActivite.Action.DECISION,
                     f"Prise en charge refusée : {prise_en_charge.patient}",
                     f"Motif du refus : {motif_refus}",
+                    organisme=organisme,
                 )
                 messages.warning(request, f"La prise en charge de {prise_en_charge.patient} a été refusée.")
         except ValidationError as e:
@@ -213,11 +255,12 @@ def refuser_prise_en_charge(request, pk):
     return redirect("liste_prises_en_charge")
 
 
-@admin_required
+@gestionnaire_required
 def ajouter_prise_en_charge(request):
     """A la creation, le statut est toujours 'en_attente' : le champ n'est pas propose."""
+    organisme = organisme_gestionnaire(request)
     if request.method == "POST":
-        form = PriseEnChargeForm(request.POST, request.FILES)
+        form = PriseEnChargeForm(request.POST, request.FILES, organisme=organisme)
         form.fields.pop("statut")
         if form.is_valid():
             prise_en_charge = form.save(commit=False)
@@ -229,18 +272,26 @@ def ajouter_prise_en_charge(request):
             messages.success(request, "Prise en charge ajoutée.")
             return redirect("liste_prises_en_charge")
     else:
-        form = PriseEnChargeForm()
+        form = PriseEnChargeForm(organisme=organisme)
         form.fields.pop("statut")
     return render(request, "ajouter_prise_en_charge.html", {"form": form})
 
 
-@admin_required
+@gestionnaire_required
 def modifier_prise_en_charge(request, pk):
-    prise_en_charge = get_object_or_404(PriseEnCharge, pk=pk)
+    organisme = organisme_gestionnaire(request)
+    prise_en_charge = get_object_or_404_organisme(
+        request,
+        PriseEnCharge.objects.select_related("patient", "patient__organisme"),
+        champ="patient__organisme",
+        pk=pk,
+    )
     if request.method == "POST":
         ancien_statut_code = prise_en_charge.statut
         ancien_statut = prise_en_charge.get_statut_display()
-        form = PriseEnChargeForm(request.POST, request.FILES, instance=prise_en_charge)
+        form = PriseEnChargeForm(
+            request.POST, request.FILES, instance=prise_en_charge, organisme=organisme
+        )
         if form.is_valid():
             prise_en_charge = form.save()
             nouveau_statut_code = prise_en_charge.statut
@@ -276,6 +327,7 @@ def modifier_prise_en_charge(request, pk):
                                         JournalActivite.Action.MODIFICATION,
                                         f"Régularisation comptable — Paiement #{paiement_id} ({c.patient})",
                                         f"Prise en charge #{prise_en_charge.pk} validée a posteriori. Trop-perçu constaté à rembourser : {trop_percu} FCFA (nouvelle part assurance : {p_calc.montant_part_assurance} FCFA)",
+                                        organisme=organisme,
                                     )
                     notifier_validation_prise_en_charge(prise_en_charge)
                 elif nouveau_statut_code == "refusee":
@@ -290,11 +342,12 @@ def modifier_prise_en_charge(request, pk):
                 f"Prise en charge : {prise_en_charge}",
                 "" if nouveau_statut == ancien_statut
                 else f"statut : {ancien_statut} -> {nouveau_statut}",
+                organisme=organisme,
             )
             messages.success(request, "Prise en charge modifiée.")
             return redirect("liste_prises_en_charge")
     else:
-        form = PriseEnChargeForm(instance=prise_en_charge)
+        form = PriseEnChargeForm(instance=prise_en_charge, organisme=organisme)
     return render(
         request,
         "modifier_prise_en_charge.html",
@@ -302,9 +355,15 @@ def modifier_prise_en_charge(request, pk):
     )
 
 
-@admin_required
+@gestionnaire_required
 def supprimer_prise_en_charge(request, pk):
-    prise_en_charge = get_object_or_404(PriseEnCharge, pk=pk)
+    organisme = organisme_gestionnaire(request)
+    prise_en_charge = get_object_or_404_organisme(
+        request,
+        PriseEnCharge.objects.select_related("patient", "patient__organisme"),
+        champ="patient__organisme",
+        pk=pk,
+    )
     nb_consultations = prise_en_charge.consultation_set.count()
     est_protege = (nb_consultations > 0)
 
@@ -320,7 +379,12 @@ def supprimer_prise_en_charge(request, pk):
             with transaction.atomic():
                 nom_pec = str(prise_en_charge)
                 prise_en_charge.delete()
-                journaliser(request, JournalActivite.Action.SUPPRESSION, f"Prise en charge : {nom_pec}")
+                journaliser(
+                    request,
+                    JournalActivite.Action.SUPPRESSION,
+                    f"Prise en charge : {nom_pec}",
+                    organisme=organisme,
+                )
                 messages.success(request, "Prise en charge supprimée.")
                 return redirect("liste_prises_en_charge")
         except ProtectedError:
@@ -344,7 +408,13 @@ def supprimer_prise_en_charge(request, pk):
 
 def _verifier_acces_bon_pec(user, prise_en_charge):
     role = getattr(user, "role", None)
-    est_admin = user.is_staff or role == User.Role.ADMIN
+    if role == User.Role.GESTIONNAIRE:
+        if not user.organisme_id or not user.organisme.actif:
+            raise PermissionDenied("Compte gestionnaire sans organisme actif.")
+        if prise_en_charge.patient.organisme_id != user.organisme_id:
+            raise Http404("Prise en charge introuvable dans votre organisme.")
+        return role
+
     est_assure = False
     if role == User.Role.ASSURE and hasattr(user, "patient"):
         patient_assure = user.patient
@@ -354,7 +424,7 @@ def _verifier_acces_bon_pec(user, prise_en_charge):
         )
     est_medecin = (role == User.Role.MEDECIN)
     est_pharmacien = (role == User.Role.PHARMACIEN)
-    if not (est_admin or est_assure or est_medecin or est_pharmacien):
+    if not (est_assure or est_medecin or est_pharmacien):
         raise PermissionDenied("Vous n'êtes pas autorisé à consulter ce bon de prise en charge.")
     return role
 
@@ -365,6 +435,7 @@ def voir_bon_prise_en_charge(request, pk):
     prise_en_charge = get_object_or_404(
         PriseEnCharge.objects.select_related(
             "patient",
+            "patient__organisme",
             "patient__plan_couverture",
             "patient__assure_principal",
             "patient__assure_principal__plan_couverture",
@@ -436,6 +507,7 @@ def telecharger_bon_prise_en_charge_pdf(request, pk):
     prise_en_charge = get_object_or_404(
         PriseEnCharge.objects.select_related(
             "patient",
+            "patient__organisme",
             "patient__plan_couverture",
             "patient__assure_principal",
             "patient__assure_principal__plan_couverture",
@@ -446,18 +518,23 @@ def telecharger_bon_prise_en_charge_pdf(request, pk):
 
     user = request.user
     role = getattr(user, "role", None)
-    est_admin = user.is_staff or role == User.Role.ADMIN
-    est_assure = False
-    if role == User.Role.ASSURE and hasattr(user, "patient"):
-        patient_assure = user.patient
-        est_assure = (
-            prise_en_charge.patient == patient_assure
-            or prise_en_charge.patient.assure_principal == patient_assure
-        )
-    est_medecin = (role == User.Role.MEDECIN)
+    if role == User.Role.GESTIONNAIRE:
+        if not user.organisme_id or not user.organisme.actif:
+            raise PermissionDenied("Compte gestionnaire sans organisme actif.")
+        if prise_en_charge.patient.organisme_id != user.organisme_id:
+            raise Http404("Prise en charge introuvable dans votre organisme.")
+    else:
+        est_assure = False
+        if role == User.Role.ASSURE and hasattr(user, "patient"):
+            patient_assure = user.patient
+            est_assure = (
+                prise_en_charge.patient == patient_assure
+                or prise_en_charge.patient.assure_principal == patient_assure
+            )
+        est_medecin = (role == User.Role.MEDECIN)
 
-    if not (est_admin or est_assure or est_medecin):
-        raise PermissionDenied("Vous n'êtes pas autorisé à télécharger ce bon de prise en charge.")
+        if not (est_assure or est_medecin):
+            raise PermissionDenied("Vous n'êtes pas autorisé à télécharger ce bon de prise en charge.")
 
     # Réponse HTTP PDF
     reponse = HttpResponse(content_type="application/pdf")

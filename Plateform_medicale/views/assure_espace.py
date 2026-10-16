@@ -17,12 +17,14 @@ from django.views.decorators.http import require_POST
 from ..forms import (
     AyantDroitForm,
     DemandePriseEnChargeAssureForm,
+    DemandeRemboursementAssureForm,
     ProfilAssureForm,
     RendezVousAssureForm,
     aligner_patient_vers_user,
 )
 from ..models import (
     Consultation,
+    DemandeRemboursement,
     JournalActivite,
     Medecin,
     Ordonnance,
@@ -280,17 +282,22 @@ def ajouter_ayant_droit(request):
             ayant_droit = form.save(commit=False)
             ayant_droit.type_beneficiaire = Patient.TypeBeneficiaire.AYANT_DROIT
             ayant_droit.assure_principal = patient
+            ayant_droit.organisme = patient.organisme
             ayant_droit.statut_validation = Patient.StatutValidation.EN_ATTENTE
             ayant_droit.motif_refus = ""
             ayant_droit.save()
 
-            # Notification administrative automatique
+            # Notification automatique aux gestionnaires de l'organisme de l'assuré
             from ..models import Notification, User
             from ..services.notifications import emettre_notification
-            admins = User.objects.filter(role=User.Role.ADMIN, is_active=True)
-            for admin in admins:
+            gestionnaires = User.objects.filter(
+                role=User.Role.GESTIONNAIRE,
+                organisme_id=patient.organisme_id,
+                is_active=True,
+            )
+            for gest in gestionnaires:
                 emettre_notification(
-                    destinataire=admin,
+                    destinataire=gest,
                     type_evenement=Notification.TypeEvenement.AYANT_DROIT_SOUMIS,
                     titre="Nouvelle demande d'ayant droit",
                     message=(
@@ -332,14 +339,19 @@ def modifier_ayant_droit(request, pk):
         form = AyantDroitForm(request.POST, request.FILES, instance=ayant_droit, assure_principal=patient)
         if form.is_valid():
             ad = form.save(commit=False)
+            ad.organisme = patient.organisme
             if ad.statut_validation == Patient.StatutValidation.REFUSE:
                 ad.statut_validation = Patient.StatutValidation.EN_ATTENTE
                 ad.motif_refus = ""
                 from ..models import Notification, User
                 from ..services.notifications import emettre_notification
-                for admin in User.objects.filter(role=User.Role.ADMIN, is_active=True):
+                for gest in User.objects.filter(
+                    role=User.Role.GESTIONNAIRE,
+                    organisme_id=patient.organisme_id,
+                    is_active=True,
+                ):
                     emettre_notification(
-                        destinataire=admin,
+                        destinataire=gest,
                         type_evenement=Notification.TypeEvenement.AYANT_DROIT_SOUMIS,
                         titre="Dossier ayant droit corrigé",
                         message=(
@@ -364,8 +376,13 @@ def supprimer_ayant_droit(request, pk):
     ayant_droit = get_object_or_404(Patient, pk=pk, assure_principal=patient)
 
     if request.method == "POST":
-        journaliser(request, JournalActivite.Action.SUPPRESSION, f"Ayant droit : {ayant_droit}",
-                    f"rattaché à {patient}")
+        journaliser(
+            request,
+            JournalActivite.Action.SUPPRESSION,
+            f"Ayant droit : {ayant_droit}",
+            f"rattaché à {patient}",
+            organisme=patient.organisme,
+        )
         ayant_droit.delete()
         messages.success(request, "Ayant droit supprimé.")
         return redirect("liste_ayants_droit")
@@ -692,5 +709,91 @@ def carte_assure(request, pk=None):
 def attestation_droits_assure(request):
     """L'attestation papier A4 a été retirée : redirection directe vers la carte dématérialisée."""
     return redirect("carte_assure")
+
+
+@role_required(User.Role.ASSURE)
+def mes_remboursements_assure(request):
+    """Liste et suivi des demandes de remboursement hors réseau du foyer de l'assuré."""
+    patient = _patient_principal(request)
+    if patient is None:
+        return redirect("mon_profil_assure")
+    beneficiaires = _beneficiaires(patient)
+    from django.db.models import Sum
+
+    qs = DemandeRemboursement.objects.filter(patient__in=beneficiaires).select_related(
+        "patient", "organisme", "traite_par"
+    ).order_by("-date_demande")
+
+    statut_filtre = request.GET.get("statut", "")
+    if statut_filtre in DemandeRemboursement.Statut.values:
+        qs_filtre = qs.filter(statut=statut_filtre)
+    else:
+        statut_filtre = ""
+        qs_filtre = qs
+
+    total_depense = qs.aggregate(t=Sum("montant_depense"))["t"] or Decimal("0")
+    total_rembourse = qs.filter(
+        statut__in=[DemandeRemboursement.Statut.VALIDEE, DemandeRemboursement.Statut.REMBOURSEE]
+    ).aggregate(t=Sum("montant_rembourse_accorde"))["t"] or Decimal("0")
+    nb_en_attente = qs.filter(statut=DemandeRemboursement.Statut.EN_ATTENTE).count()
+
+    return render(
+        request,
+        "mes_remboursements_assure.html",
+        {
+            "remboursements": _paginer(request, qs_filtre),
+            "patient": patient,
+            "statut_choisi": statut_filtre,
+            "statuts_choices": DemandeRemboursement.Statut.choices,
+            "total_depense": total_depense,
+            "total_rembourse": total_rembourse,
+            "nb_en_attente": nb_en_attente,
+        },
+    )
+
+
+@role_required(User.Role.ASSURE)
+def demander_remboursement_assure(request):
+    """Soumission en ligne d'une demande de remboursement pour soins hors réseau conventionné."""
+    patient = _patient_principal(request)
+    if patient is None:
+        return redirect("mon_profil_assure")
+
+    if request.method == "POST":
+        form = DemandeRemboursementAssureForm(
+            request.POST, request.FILES, assure_patient=patient
+        )
+        if form.is_valid():
+            demande = form.save(commit=False)
+            demande.statut = DemandeRemboursement.Statut.EN_ATTENTE
+            demande.organisme = patient.organisme
+            demande.save()
+            from ..services.notifications import notifier_demande_remboursement
+            notifier_demande_remboursement(demande)
+            journaliser(
+                request,
+                JournalActivite.Action.CREATION,
+                f"Demande remboursement {demande.numero_dossier}",
+                f"{demande.prestataire_nom} — {demande.montant_depense:,.0f} FCFA".replace(",", " "),
+                organisme=patient.organisme,
+            )
+            messages.success(
+                request,
+                f"Votre demande de remboursement ({demande.numero_dossier}) a bien été transmise à votre organisme. "
+                f"Remboursement estimé selon votre plan : {demande.montant_rembourse_estime:,.0f} FCFA.".replace(",", " "),
+            )
+            return redirect("mes_remboursements_assure")
+    else:
+        form = DemandeRemboursementAssureForm(
+            assure_patient=patient,
+            initial={"patient": patient.pk, "date_soins": timezone.now().date()},
+        )
+
+    return render(
+        request,
+        "demander_remboursement.html",
+        {"form": form, "patient": patient},
+    )
+
 
 

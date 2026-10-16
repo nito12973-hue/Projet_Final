@@ -1,30 +1,30 @@
 {% extends "base.html" %}
 {% load formats icones %}
 
-{% block title %}Utilisateurs{% endblock %}
+{% block title %}Comptes signalés{% endblock %}
 
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>Utilisateurs</h1>
-        <p class="subtitle">Comptes de la plateforme : création, rôles, activation et mots de passe.</p>
+        <h1>Comptes signalés</h1>
+        <p class="subtitle">Effectifs par rôle. L'identité d'un utilisateur n'est visible ici que si son compte est bloqué après des tentatives de connexion suspectes.</p>
     </div>
     <div class="actions">
         <a class="button primary" href="{% url 'ajouter_utilisateur' %}">{% icone "plus" %} Ajouter un utilisateur</a>
     </div>
 </section>
 
-<!-- KPIs Compacts -->
-<div class="kpi-grille" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 20px;" aria-label="Statistiques utilisateurs">
+<!-- Effectifs par rôle : aucune donnée nominative -->
+<div class="kpi-grille" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); margin-bottom: 20px;" aria-label="Effectifs par rôle">
     <div class="kpi">
-        <span class="kpi-entete">{% icone "users" %} Total Comptes</span>
+        <span class="kpi-entete">{% icone "users" %} Total comptes</span>
         <strong class="code">{{ total_utilisateurs }}</strong>
         <span class="kpi-pied">Inscrits sur la plateforme</span>
     </div>
     <div class="kpi">
         <span class="kpi-entete">{% icone "heart-pulse" %} Médecins</span>
         <strong class="code">{{ total_medecins }}</strong>
-        <span class="kpi-pied">Praticiens actifs</span>
+        <span class="kpi-pied">Praticiens</span>
     </div>
     <div class="kpi">
         <span class="kpi-entete">{% icone "family" %} Assurés</span>
@@ -32,9 +32,24 @@
         <span class="kpi-pied">Bénéficiaires de soins</span>
     </div>
     <div class="kpi">
-        <span class="kpi-entete">{% icone "pill" %} Pharmacies & Admins</span>
-        <strong class="code">{{ total_pharmaciens_admins }}</strong>
-        <span class="kpi-pied">Gestion & Officines</span>
+        <span class="kpi-entete">{% icone "pill" %} Pharmaciens</span>
+        <strong class="code">{{ total_pharmaciens }}</strong>
+        <span class="kpi-pied">Officines</span>
+    </div>
+    <div class="kpi">
+        <span class="kpi-entete">{% icone "building" %} Gestionnaires</span>
+        <strong class="code">{{ total_gestionnaires }}</strong>
+        <span class="kpi-pied">Organismes / IPM</span>
+    </div>
+    <div class="kpi">
+        <span class="kpi-entete">{% icone "shield" %} Administrateurs</span>
+        <strong class="code">{{ total_admins }}</strong>
+        <span class="kpi-pied">Supervision</span>
+    </div>
+    <div class="kpi">
+        <span class="kpi-entete">{% icone "shield" %} Comptes signalés</span>
+        <strong class="code">{{ total_comptes_signales }}</strong>
+        <span class="kpi-pied">Bloqués actuellement</span>
     </div>
 </div>
 
@@ -54,12 +69,21 @@
         </select>
     </div>
     <div style="min-width:180px;">
+        <label for="organisme">Organisme</label>
+        <select id="organisme" name="organisme" style="margin-bottom:0;">
+            <option value="">Tous les organismes</option>
+            {% for org in organismes %}
+            <option value="{{ org.pk }}" {% if org.pk == organisme_selectionne %}selected{% endif %}>{{ org.nom }} ({{ org.code }})</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div style="min-width:180px;">
         <label for="statut">Statut</label>
         <select id="statut" name="statut" style="margin-bottom:0;">
             <option value="">Tous les statuts</option>
             <option value="actif" {% if statut_selectionne == "actif" %}selected{% endif %}>Actif</option>
             <option value="inactif" {% if statut_selectionne == "inactif" %}selected{% endif %}>Inactif</option>
-            <option value="bloque" {% if statut_selectionne == "bloque" %}selected{% endif %}>Bloqué</option>
+            <option value="bloque" {% if statut_selectionne == "bloque" %}selected{% endif %}>Bloqué temporairement</option>
         </select>
     </div>
     <div style="min-width:220px;flex:1;">
@@ -70,7 +94,7 @@
         </div>
     </div>
     <button type="submit" class="button primary btn">Filtrer</button>
-    {% if role_selectionne or statut_selectionne or recherche %}
+    {% if role_selectionne or organisme_selectionne or statut_selectionne or recherche %}
     <a href="{% url 'liste_utilisateurs' %}" class="button btn">Réinitialiser</a>
     {% endif %}
 </form>
@@ -85,6 +109,7 @@
                 {% entete_tri request.GET "email" "Email" "col-optionnelle" %}
                 <th scope="col" class="col-optionnelle">Téléphone</th>
                 {% entete_tri request.GET "role" "Rôle" "col-optionnelle" %}
+                <th scope="col" class="col-optionnelle">Organisme</th>
                 {% entete_tri request.GET "is_active" "Statut" %}
                 <th scope="col">Actions</th>
             </tr>
@@ -113,6 +138,13 @@
                 </td>
                 <td class="col-optionnelle">
                     <span class="badge">{{ utilisateur.get_role_display }}</span>
+                </td>
+                <td class="col-optionnelle">
+                    {% if utilisateur.organisme %}
+                    <span class="code">{{ utilisateur.organisme.code }}</span> <span class="subtitle">{{ utilisateur.organisme.nom }}</span>
+                    {% else %}
+                    <span style="color:var(--muted);">—</span>
+                    {% endif %}
                 </td>
                 <td>
                     {% if utilisateur.est_temporairement_bloque %}
@@ -173,9 +205,9 @@
 {% else %}
 <div class="etat-vide">
     {% illustration_vide "users" %}
-    <h3>Aucun utilisateur trouvé</h3>
-    <p>{% if role_selectionne or statut_selectionne or recherche %}Aucun compte utilisateur ne correspond à vos critères de recherche ou de filtre.{% else %}Aucun utilisateur n'est encore enregistré sur la plateforme.{% endif %}</p>
-    {% if role_selectionne or statut_selectionne or recherche %}
+    <h3>Aucun compte signalé</h3>
+    <p>{% if role_selectionne or recherche %}Aucun compte utilisateur ne correspond à vos critères de recherche ou de filtre.{% else %}Aucun compte n'est actuellement bloqué : aucune activité suspecte à signaler.{% endif %}</p>
+    {% if role_selectionne or organisme_selectionne or statut_selectionne or recherche %}
     <div class="actions">
         <a href="{% url 'liste_utilisateurs' %}" class="button">{% icone "x" %} Réinitialiser les filtres</a>
     </div>

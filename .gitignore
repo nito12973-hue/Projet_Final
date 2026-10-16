@@ -45,6 +45,7 @@ logs/*.log
 .vercel
 .env*
 !.env.example
+!.env.docker.example
 db.sqlite3.sauvegarde-*
 maquette_*.html
 

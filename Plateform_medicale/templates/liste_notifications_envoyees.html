@@ -9,7 +9,7 @@
         <h1>Notifications envoyees</h1>
         <p class="subtitle">200 dernieres notifications, tous destinataires confondus.</p>
     </div>
-    <a class="button primary" href="{% url 'envoyer_notification' %}">Envoyer une notification</a>
+    <a class="button primary btn-expand primary" href="{% url 'envoyer_notification' %}" title="Envoyer une nouvelle notification" aria-label="Nouvelle notification">{% icone "send" %} <span class="expand-text">Envoyer une notification</span></a>
 </section>
 
 <form method="get" class="filtres">

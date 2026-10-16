@@ -68,7 +68,7 @@
         <div class="badge-proches-subtil">
             {% icone "geo-alt" %}
             <span>Cartographie Médicale &amp; Partenaires</span>
-            <span>&bull;</span>
+            <span class="separateur" aria-hidden="true" style="opacity:0.6;">·</span>
             <span>Réseau Conventionné</span>
         </div>
         <h1 class="titre-proches-pro">Trouver un prestataire</h1>
@@ -208,7 +208,7 @@ resultat.
     }
     .leaflet-popup-content {
         margin: 12px 16px;
-        font-family: 'Public Sans', 'Segoe UI', Arial, sans-serif;
+        font-family: var(--font-body);
         font-size: 13.5px;
         line-height: 1.5;
         color: var(--text);

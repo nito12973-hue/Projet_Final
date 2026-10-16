@@ -17,11 +17,11 @@
         </div>
     </div>
     <div class="actions">
-        <a href="{% url 'creer_demande_support' %}" class="button btn">
-            {% icone "plus-circle" %} Contacter l'administration
+        <a href="{% url 'creer_demande_support' %}" class="button btn btn-expand" title="Contacter l'administration" aria-label="Contacter l'administration">
+            {% icone "plus-circle" %} <span class="expand-text">Contacter l'administration</span>
         </a>
-        <a href="{% url 'assistant_sante' %}?action=reset" class="button btn" title="Effacer la conversation">
-            {% icone "trash-2" %} Réinitialiser
+        <a href="{% url 'assistant_sante' %}?action=reset" class="button btn btn-expand btn-danger" title="Effacer la conversation" aria-label="Réinitialiser">
+            {% icone "trash-2" %} <span class="expand-text">Réinitialiser</span>
         </a>
     </div>
 </section>

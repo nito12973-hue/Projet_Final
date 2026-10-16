@@ -10,9 +10,9 @@
         <p class="subtitle">Événements récents et messages système.</p>
     </div>
     {% if notifications %}
-    <form method="post" action="{% url 'marquer_toutes_notifications_lues' %}">
+    <form method="post" action="{% url 'marquer_toutes_notifications_lues' %}" class="action-ligne">
         {% csrf_token %}
-        <button type="submit" class="button btn">{% icone "check" %} Tout marquer comme lu</button>
+        <button type="submit" class="button btn btn-expand" title="Tout marquer comme lu" aria-label="Tout marquer comme lu">{% icone "check" %} <span class="expand-text">Tout marquer comme lu</span></button>
     </form>
     {% endif %}
 </section>

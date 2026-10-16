@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+{% load formats icones %}
+
+{% block title %}Remboursements hors réseau — {{ organisme.nom|default:"Organisme" }}{% endblock %}
+
+{% block content %}
+<style>
+    .entete-remb-gest {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        flex-wrap: wrap;
+        padding: 6px 0 20px;
+        margin-bottom: 22px;
+        border-bottom: 1px solid var(--border);
+    }
+    .badge-remb-gest {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        background: rgba(14, 124, 134, 0.08);
+        color: var(--primary-strong);
+        border: 1px solid rgba(14, 124, 134, 0.2);
+        padding: 4px 11px;
+        border-radius: 999px;
+        font-size: 11.5px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        width: fit-content;
+    }
+    .titre-remb-gest {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 800;
+        color: var(--titre);
+        letter-spacing: -0.02em;
+    }
+    .desc-remb-gest {
+        margin: 0;
+        font-size: 13.5px;
+        color: var(--muted);
+        max-width: 640px;
+        line-height: 1.45;
+    }
+    .kpi-grid-gest {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    .kpi-card-gest {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 18px 20px;
+        box-shadow: var(--ombre-douce);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .kpi-card-gest .kpi-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+    .kpi-card-gest .kpi-value {
+        font-family: 'IBM Plex Mono', monospace;
+        font-variant-numeric: tabular-nums;
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--titre);
+    }
+</style>
+
+<div class="entete-remb-gest">
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+        <span class="badge-remb-gest">
+            {% icone "receipt" %} Liquidation des Soins Hors Réseau · {{ organisme.nom }}
+        </span>
+        <h1 class="titre-remb-gest">Demandes de remboursement des assurés</h1>
+        <p class="desc-remb-gest">
+            Instruisez les factures acquittées soumises par vos assurés lorsqu'ils consultent un médecin ou achètent des médicaments auprès d'un établissement non conventionné avec <strong>{{ organisme.nom }}</strong>.
+        </p>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <a class="button btn" href="{% url 'dashboard' %}">
+            {% icone "chevron-left" %} Tableau de bord
+        </a>
+    </div>
+</div>
+
+<div class="kpi-grid-gest">
+    <div class="kpi-card-gest">
+        <span class="kpi-label">À instruire (en attente)</span>
+        <span class="kpi-value" style="color: var(--attente-fg);">{{ nb_en_attente }}</span>
+    </div>
+    <div class="kpi-card-gest">
+        <span class="kpi-label">Validées (à régler)</span>
+        <span class="kpi-value" style="color: var(--primary-strong);">{{ nb_validees }}</span>
+    </div>
+    <div class="kpi-card-gest">
+        <span class="kpi-label">Dossiers remboursés</span>
+        <span class="kpi-value" style="color: var(--ok-fg);">{{ nb_remboursees }}</span>
+    </div>
+    <div class="kpi-card-gest">
+        <span class="kpi-label">Volume total accordé</span>
+        <span class="kpi-value" style="color: var(--ok-fg);">{{ total_accorde|fcfa }}</span>
+    </div>
+</div>
+
+<form method="get" class="filtres" style="margin-bottom: 20px;">
+    <div style="flex: 1; min-width: 220px;">
+        <label for="q">Rechercher (N° dossier, assuré, carte, prestataire)</label>
+        <input type="text" id="q" name="q" value="{{ recherche }}" class="form-control" placeholder="Ex : RMB-, Ndiaye, Clinique..." style="margin-bottom: 0;">
+    </div>
+    <div style="min-width: 190px;">
+        <label for="statut">Statut</label>
+        <select id="statut" name="statut" class="form-control" style="margin-bottom: 0;">
+            <option value="">Tous les statuts</option>
+            {% for value, label in statuts_choices %}
+            <option value="{{ value }}" {% if value == statut_choisi %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div style="min-width: 190px;">
+        <label for="type_soin">Nature des soins</label>
+        <select id="type_soin" name="type_soin" class="form-control" style="margin-bottom: 0;">
+            <option value="">Toutes natures</option>
+            {% for value, label in types_soins %}
+            <option value="{{ value }}" {% if value == type_choisi %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit" class="button primary btn">Filtrer</button>
+    {% if statut_choisi or type_choisi or recherche %}
+    <a href="{% url 'liste_demandes_remboursement' %}" class="button btn">Réinitialiser</a>
+    {% endif %}
+</form>
+
+{% if remboursements %}
+<section class="panel" style="padding: 0; overflow: hidden;">
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Dossier</th>
+                    <th>Assuré / Bénéficiaire</th>
+                    <th>Prestataire hors réseau</th>
+                    <th>Nature &amp; Date</th>
+                    <th style="text-align: right;">Frais engagés</th>
+                    <th style="text-align: right;">Part remboursée</th>
+                    <th>Statut</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for remb in remboursements %}
+                <tr>
+                    <td>
+                        <code style="font-family: 'IBM Plex Mono', monospace; font-weight: 700; color: var(--primary-strong);">{{ remb.numero_dossier }}</code>
+                        <div style="font-size: 11.5px; color: var(--muted);">Soumis le {{ remb.date_demande|date:"d/m/Y" }}</div>
+                    </td>
+                    <td>
+                        <strong>{{ remb.patient.nom_complet }}</strong>
+                        <div style="font-size: 12px; color: var(--muted); font-family: 'IBM Plex Mono', monospace;">{{ remb.patient.numero_carte }}</div>
+                    </td>
+                    <td>
+                        <strong>{{ remb.prestataire_nom }}</strong>
+                        {% if remb.coordonnees_remboursement %}
+                        <div style="font-size: 11.5px; color: var(--muted);">Coordonnées : {{ remb.coordonnees_remboursement }}</div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge">{{ remb.get_type_soin_display }}</span>
+                        <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Soins du {{ remb.date_soins|date:"d/m/Y" }}</div>
+                    </td>
+                    <td style="text-align: right; font-family: 'IBM Plex Mono', monospace; font-weight: 600;">
+                        {{ remb.montant_depense|fcfa }}
+                    </td>
+                    <td style="text-align: right; font-family: 'IBM Plex Mono', monospace;">
+                        {% if remb.statut == 'validee' or remb.statut == 'remboursee' %}
+                            <strong style="color: var(--ok-fg);">{{ remb.montant_rembourse_accorde|fcfa }}</strong>
+                            <div style="font-size: 11px; color: var(--muted);">Taux : {{ remb.taux_applique }}%</div>
+                        {% elif remb.statut == 'refusee' %}
+                            <span style="color: var(--refus-fg);">0 FCFA</span>
+                        {% else %}
+                            <span style="color: var(--muted);">Est. {{ remb.montant_rembourse_estime|fcfa }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if remb.statut == 'remboursee' %}
+                            <span class="badge validee">{% icone "check" %} Remboursée</span>
+                            {% if remb.mode_remboursement %}
+                            <div style="font-size: 11px; color: var(--muted); margin-top: 3px;">{{ remb.get_mode_remboursement_display }}</div>
+                            {% endif %}
+                        {% elif remb.statut == 'validee' %}
+                            <span class="badge validee">{% icone "check" %} Validée (à régler)</span>
+                        {% elif remb.statut == 'refusee' %}
+                            <span class="badge refusee">{% icone "x" %} Refusée</span>
+                        {% else %}
+                            <span class="badge en_attente">{% icone "clock" %} En attente</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align: right;">
+                        <div style="display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
+                            {% if remb.justificatif %}
+                            <a href="{{ remb.justificatif.url }}" target="_blank" rel="noopener" class="button btn-sm" title="Consulter la facture acquittée">
+                                {% icone "file-text" %} Facture
+                            </a>
+                            {% endif %}
+                            <a href="{% url 'instruire_demande_remboursement' remb.pk %}" class="button {% if remb.statut == 'en_attente' %}primary{% endif %} btn-sm">
+                                {% if remb.statut == 'en_attente' %}Instruire{% else %}Détails{% endif %}
+                            </a>
+                            {% if remb.statut == 'validee' %}
+                            <form method="post" action="{% url 'marquer_remboursement_regle' remb.pk %}" style="display: inline; margin: 0;">
+                                {% csrf_token %}
+                                <input type="hidden" name="mode_remboursement" value="{{ remb.mode_remboursement|default:'MOBILE_MONEY' }}">
+                                <button type="submit" class="button primary btn-sm" title="Confirmer l'exécution du virement / règlement">
+                                    {% icone "check" %} Marquer réglé
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% include "_pagination.html" with page_obj=remboursements %}
+{% else %}
+<section class="panel" style="text-align: center; padding: 48px 24px;">
+    <div style="max-width: 460px; margin: 0 auto;">
+        <h2 style="margin-top: 0; font-size: 18px; color: var(--titre);">Aucune demande de remboursement</h2>
+        <p style="color: var(--muted); font-size: 14px; line-height: 1.5; margin-bottom: 0;">
+            Aucun dossier de remboursement hors réseau ne correspond aux critères sélectionnés pour <strong>{{ organisme.nom }}</strong>.
+        </p>
+    </div>
+</section>
+{% endif %}
+{% endblock %}

@@ -124,19 +124,31 @@ def creer_demande_support(request):
                 message=premier_message,
             )
 
-            # Notifier tous les administrateurs actifs
-            admins = list(User.objects.filter(role=User.Role.ADMIN, is_active=True))
-            if admins:
-                nom_patient = request.user.get_full_name() or request.user.email
+            # Notifier selon le rôle compétent :
+            # - Si catégorie TECHNIQUE -> Administrateur informatique
+            # - Si catégorie métier (PEC, RDV, Ordonnance, Famille) -> Gestionnaires de l'organisme de l'assuré
+            nom_patient = request.user.get_full_name() or request.user.email
+            if demande.categorie == DemandeSupport.Categorie.TECHNIQUE:
+                destinataires = list(User.objects.filter(role=User.Role.ADMIN, is_active=True))
+                titre_notif = "Nouvelle demande d'assistance informatique"
+            else:
+                org_id = patient.organisme_id if (patient and patient.organisme_id) else None
+                if org_id:
+                    destinataires = list(User.objects.filter(role=User.Role.GESTIONNAIRE, organisme_id=org_id, is_active=True))
+                else:
+                    destinataires = list(User.objects.filter(role=User.Role.GESTIONNAIRE, is_active=True))
+                titre_notif = "Nouvelle demande d'assistance assuré"
+
+            if destinataires:
                 Notification.objects.bulk_create([
                     Notification(
-                        destinataire=admin,
-                        titre="Nouvelle demande d'assistance",
-                        message=f"L'assuré {nom_patient} a ouvert une demande d'assistance (dossier {demande.numero_dossier}) : {demande.objet}.",
+                        destinataire=u,
+                        titre=titre_notif,
+                        message=f"L'assuré {nom_patient} a ouvert une demande ({demande.get_categorie_display()} - {demande.numero_dossier}) : {demande.objet}.",
                         type_evenement=Notification.TypeEvenement.SUPPORT_DEMANDE,
                         url_action=reverse("admin_detail_demande_support", args=[demande.pk]),
                     )
-                    for admin in admins
+                    for u in destinataires
                 ])
 
             messages.success(
@@ -200,19 +212,27 @@ def detail_demande_support(request, pk):
             demande.statut = DemandeSupport.Statut.EN_ATTENTE
             demande.save(update_fields=["statut", "date_mise_a_jour"])
 
-            # Notifier les administrateurs
-            admins = list(User.objects.filter(role=User.Role.ADMIN, is_active=True))
-            if admins:
-                nom_patient = request.user.get_full_name() or request.user.email
+            # Notifier les responsables compétents
+            nom_patient = request.user.get_full_name() or request.user.email
+            if demande.categorie == DemandeSupport.Categorie.TECHNIQUE:
+                destinataires = list(User.objects.filter(role=User.Role.ADMIN, is_active=True))
+            else:
+                org_id = demande.patient.organisme_id if (demande.patient and demande.patient.organisme_id) else None
+                if org_id:
+                    destinataires = list(User.objects.filter(role=User.Role.GESTIONNAIRE, organisme_id=org_id, is_active=True))
+                else:
+                    destinataires = list(User.objects.filter(role=User.Role.GESTIONNAIRE, is_active=True))
+
+            if destinataires:
                 Notification.objects.bulk_create([
                     Notification(
-                        destinataire=admin,
-                        titre="Nouveau message sur demande support",
-                        message=f"{nom_patient} a répondu sur la demande d'assistance (dossier {demande.numero_dossier}).",
+                        destinataire=u,
+                        titre="Nouveau message sur demande d'assistance",
+                        message=f"{nom_patient} a répondu sur la demande (dossier {demande.numero_dossier}).",
                         type_evenement=Notification.TypeEvenement.SUPPORT_DEMANDE,
                         url_action=reverse("admin_detail_demande_support", args=[demande.pk]),
                     )
-                    for admin in admins
+                    for u in destinataires
                 ])
 
             messages.success(request, "Votre message a été envoyé.")
@@ -227,10 +247,30 @@ def detail_demande_support(request, pk):
     })
 
 
-@admin_required
+@role_required(User.Role.ADMIN, User.Role.GESTIONNAIRE)
 def admin_liste_demandes_support(request):
-    """Vue administrateur : Liste de toutes les demandes de support avec filtres avancés."""
-    demandes = DemandeSupport.objects.select_related("patient", "auteur").order_by("-date_creation")
+    """
+    Gestion des tickets de support selon le principe de séparation stricte des rôles :
+    - L'Administrateur reçoit EXCLUSIVEMENT les demandes techniques et informatiques (TECHNIQUE).
+    - Le Gestionnaire reçoit et traite les demandes administratives et santé (PEC, RDV, Ordonnances, Ayants droit, Compte)
+      de son propre organisme.
+    """
+    est_admin = (request.user.role == User.Role.ADMIN)
+    demandes = DemandeSupport.objects.select_related("patient", "auteur", "patient__organisme").order_by("-date_creation")
+
+    if est_admin:
+        # L'administrateur système ne voit QUE les demandes techniques/informatiques
+        demandes = demandes.filter(categorie=DemandeSupport.Categorie.TECHNIQUE)
+        categories_disponibles = [(DemandeSupport.Categorie.TECHNIQUE, "Problème technique")]
+    else:
+        # Le gestionnaire traite les demandes métier des assurés de sa structure
+        if request.user.organisme_id:
+            demandes = demandes.filter(patient__organisme_id=request.user.organisme_id)
+        # Exclut les pures demandes informatiques système réservées à l'admin
+        demandes = demandes.exclude(categorie=DemandeSupport.Categorie.TECHNIQUE)
+        categories_disponibles = [
+            (c, l) for c, l in DemandeSupport.Categorie.choices if c != DemandeSupport.Categorie.TECHNIQUE
+        ]
 
     statut = request.GET.get("statut", "")
     if statut in DemandeSupport.Statut.values:
@@ -259,21 +299,37 @@ def admin_liste_demandes_support(request):
     contexte = {
         "demandes": _paginer(request, demandes),
         "statuts": DemandeSupport.Statut.choices,
-        "categories": DemandeSupport.Categorie.choices,
+        "categories": categories_disponibles,
         "priorites": DemandeSupport.Priorite.choices,
         "statut_choisi": statut,
         "categorie_choisie": categorie,
         "priorite_choisie": priorite,
         "recherche": recherche,
-        "total_en_attente": DemandeSupport.objects.filter(statut=DemandeSupport.Statut.EN_ATTENTE).count(),
+        "total_en_attente": demandes.filter(statut=DemandeSupport.Statut.EN_ATTENTE).count(),
+        "est_admin": est_admin,
     }
     return render(request, "admin_liste_demandes_support.html", contexte)
 
 
-@admin_required
+@role_required(User.Role.ADMIN, User.Role.GESTIONNAIRE)
 def admin_detail_demande_support(request, pk):
-    """Vue administrateur : Traitement, réponse et clôture d'un ticket de support patient."""
-    demande = get_object_or_404(DemandeSupport.objects.select_related("patient", "auteur"), pk=pk)
+    """
+    Traitement, réponse et clôture d'un ticket de support.
+    Contrôle strict des accès :
+    - L'Admin ne peut accéder qu'aux tickets techniques (TECHNIQUE).
+    - Le Gestionnaire ne peut accéder qu'aux tickets métier des assurés de son organisme.
+    """
+    est_admin = (request.user.role == User.Role.ADMIN)
+    qs = DemandeSupport.objects.select_related("patient", "auteur", "patient__organisme")
+
+    if est_admin:
+        demande = get_object_or_404(qs, pk=pk, categorie=DemandeSupport.Categorie.TECHNIQUE)
+    else:
+        filtre = Q(patient__organisme_id=request.user.organisme_id) if request.user.organisme_id else Q()
+        demande = get_object_or_404(
+            qs.exclude(categorie=DemandeSupport.Categorie.TECHNIQUE).filter(filtre),
+            pk=pk
+        )
 
     if request.method == "POST":
         action = request.POST.get("action")
@@ -290,10 +346,11 @@ def admin_detail_demande_support(request, pk):
                 demande.save(update_fields=["statut", "date_mise_a_jour"])
 
                 # Notifier l'assuré auteur de la demande
+                expediteur = "Support Technique Informatique" if est_admin else "Gestionnaire Santé / IPM"
                 Notification.objects.create(
                     destinataire=demande.auteur,
-                    titre="Réponse de l'administration SantéSN",
-                    message=f"L'administration a répondu à votre demande (dossier {demande.numero_dossier} : {demande.objet}).",
+                    titre=f"Réponse de l'{expediteur}",
+                    message=f"Une réponse a été apportée à votre demande (dossier {demande.numero_dossier} : {demande.objet}).",
                     type_evenement=Notification.TypeEvenement.SUPPORT_REPONSE,
                     url_action=reverse("detail_demande_support", args=[demande.pk]),
                 )
@@ -302,7 +359,7 @@ def admin_detail_demande_support(request, pk):
                     request,
                     JournalActivite.Action.DECISION,
                     f"Support — Dossier {demande.numero_dossier}",
-                    details=f"Réponse apportée à {demande.auteur.email}"
+                    details=f"Réponse apportée à {demande.auteur.email} par {request.user.get_role_display()}"
                 )
 
                 messages.success(request, f"Votre réponse a été transmise avec succès à l'assuré (dossier {demande.numero_dossier}).")
@@ -334,4 +391,5 @@ def admin_detail_demande_support(request, pk):
         "messages_fil": demande.messages.select_related("auteur").order_by("date_envoi"),
         "form": form,
         "statuts": DemandeSupport.Statut.choices,
+        "est_admin": est_admin,
     })

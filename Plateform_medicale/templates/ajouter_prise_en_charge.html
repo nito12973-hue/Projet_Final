@@ -9,10 +9,10 @@
         <h1>Ajouter une prise en charge</h1>
         <p class="subtitle">Le statut de départ est toujours "En attente".</p>
     </div>
-    <a class="button btn" href="{% url 'liste_prises_en_charge' %}">{% icone "chevron-left" %} Retour</a>
+    <a class="button btn btn-retour-expand" href="{% url 'liste_prises_en_charge' %}" title="Retour" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
 </section>
 
-<section class="panel panel-form">
+<section class="panel panel-form" style="max-width: 680px;">
     {% if form.non_field_errors %}
     <div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
     {% endif %}
@@ -20,11 +20,17 @@
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {% for field in form %}
-        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-        {{ field }}
-        {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
+        <div class="champ-groupe">
+            <label for="{{ field.id_for_label }}">
+                {{ field.label }}
+                {% if field.field.required %}<span style="color:var(--danger);" aria-hidden="true">*</span>{% endif %}
+            </label>
+            {{ field }}
+            {% if field.help_text %}<p class="champ-aide">{{ field.help_text }}</p>{% endif %}
+            {% if field.errors %}<div class="erreurs" role="alert" style="margin-top: 6px;">{{ field.errors }}</div>{% endif %}
+        </div>
         {% endfor %}
-        <div class="actions" style="display:flex;gap:10px;align-items:center;margin-top:16px;">
+        <div class="actions" style="margin-top: 24px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
             <button class="button primary" type="submit">Enregistrer la prise en charge</button>
             <a class="button btn" href="{% url 'liste_prises_en_charge' %}">Annuler</a>
         </div>

@@ -62,6 +62,11 @@ urlpatterns = [
     path('utilisateurs/<int:pk>/renvoyer-activation/', views.renvoyer_activation, name='renvoyer_activation'),
     path('utilisateurs/<int:pk>/supprimer/', views.supprimer_utilisateur, name='supprimer_utilisateur'),
 
+    path('organismes/', views.liste_organismes, name='liste_organismes'),
+    path('organismes/ajouter/', views.ajouter_organisme, name='ajouter_organisme'),
+    path('organismes/<int:pk>/modifier/', views.modifier_organisme, name='modifier_organisme'),
+    path('organismes/<int:pk>/activer-desactiver/', views.activer_desactiver_organisme, name='activer_desactiver_organisme'),
+
     path('patients/', views.liste_patients, name='liste_patients'),
     path('patients/ajouter/', views.ajouter_patient, name='ajouter_patient'),
     path('patients/<int:pk>/modifier/', views.modifier_patient, name='modifier_patient'),
@@ -75,6 +80,7 @@ urlpatterns = [
     path('medecins/<int:pk>/supprimer/', views.supprimer_medecin, name='supprimer_medecin'),
 
     path('pharmaciens/', views.liste_pharmaciens, name='liste_pharmaciens'),
+    path('pharmaciens/ajouter/', views.ajouter_pharmacien, name='ajouter_pharmacien'),
     path('pharmaciens/<int:pk>/modifier/', views.modifier_pharmacien, name='modifier_pharmacien'),
 
     path('services/', views.liste_services, name='liste_services'),
@@ -107,6 +113,11 @@ urlpatterns = [
     path('paiements/<int:pk>/regler/', views.marquer_paiement_regle, name='marquer_paiement_regle'),
     path('paiements/<int:pk>/recu/', views.recu_paiement, name='recu_paiement'),
 
+    # Demandes de remboursement hors réseau (Gestionnaire IPM)
+    path('remboursements/', views.liste_demandes_remboursement, name='liste_demandes_remboursement'),
+    path('remboursements/<int:pk>/instruire/', views.instruire_demande_remboursement, name='instruire_demande_remboursement'),
+    path('remboursements/<int:pk>/regler/', views.marquer_remboursement_regle, name='marquer_remboursement_regle'),
+
     # Télétransmission B2B & Bordereaux Tiers Payant IPM
     path('teletransmission/', views.bordereau_teletransmission, name='bordereau_teletransmission'),
     path('teletransmission/exporter/pdf/', views.exporter_bordereau_teletransmission_pdf, name='exporter_bordereau_teletransmission_pdf'),
@@ -118,6 +129,11 @@ urlpatterns = [
     path('prestataires/ajouter/', views.ajouter_prestataire, name='ajouter_prestataire'),
     path('prestataires/<int:pk>/modifier/', views.modifier_prestataire, name='modifier_prestataire'),
     path('prestataires/<int:pk>/supprimer/', views.supprimer_prestataire, name='supprimer_prestataire'),
+
+    # Réseau conventionné propre à chaque organisme assureur (IPM)
+    path('conventions/', views.liste_conventions, name='liste_conventions'),
+    path('conventions/ajouter/', views.ajouter_convention, name='ajouter_convention'),
+    path('conventions/<int:pk>/statut/', views.changer_statut_convention, name='changer_statut_convention'),
 
     path('plans-de-couverture/', views.liste_plans_couverture, name='liste_plans_couverture'),
     path('plans-de-couverture/ajouter/', views.ajouter_plan_couverture, name='ajouter_plan_couverture'),
@@ -167,6 +183,8 @@ urlpatterns = [
     path('assure/ordonnances/<int:pk>/', views.voir_ordonnance_assure, name='voir_ordonnance_assure'),
     path('assure/prises-en-charge/', views.mes_prises_en_charge_assure, name='mes_prises_en_charge_assure'),
     path('assure/prises-en-charge/demander/', views.demander_prise_en_charge_assure, name='demander_prise_en_charge_assure'),
+    path('assure/remboursements/', views.mes_remboursements_assure, name='mes_remboursements_assure'),
+    path('assure/remboursements/demander/', views.demander_remboursement_assure, name='demander_remboursement_assure'),
     path('assure/historique/', views.mon_historique_assure, name='mon_historique_assure'),
 
     path('notifications/envoyer/', views.envoyer_notification, name='envoyer_notification'),
@@ -185,4 +203,16 @@ urlpatterns = [
     # Support Administrateur
     path('support/demandes/', views.admin_liste_demandes_support, name='admin_liste_demandes_support'),
     path('support/demandes/<int:pk>/', views.admin_detail_demande_support, name='admin_detail_demande_support'),
+
+    # Observabilité, Supervision Système & DevOps
+    path('supervision/', views.supervision_systeme, name='supervision_systeme'),
+    path('supervision/tester-sentry/', views.tester_sentry, name='tester_sentry'),
+    path('health/', views.health_check, name='health_check'),
+    path('api/health/', views.health_check, name='api_health_check'),
+    path('metrics/', views.metrics_prometheus, name='metrics_prometheus'),
+
+    # Téléchargement sécurisé des justificatifs médicaux & pièces d'état civil
+    path('documents/remboursements/<int:pk>/justificatif/', views.telecharger_justificatif_remboursement, name='telecharger_justificatif_remboursement'),
+    path('documents/patients/<int:pk>/justificatif/', views.telecharger_piece_identite_patient, name='telecharger_piece_identite_patient'),
+    path('documents/prises-en-charge/<int:pk>/devis/', views.telecharger_devis_prise_en_charge, name='telecharger_devis_prise_en_charge'),
 ]

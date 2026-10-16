@@ -5,117 +5,6 @@
 
 {% block content %}
 <style>
-    .banniere-assure-hero {
-        position: relative;
-        overflow: hidden;
-        border-radius: 20px;
-        background: linear-gradient(135deg, #0b2027 0%, #11333e 50%, #164654 100%);
-        padding: 28px 32px;
-        color: #ffffff;
-        box-shadow: 0 12px 36px -4px rgba(11, 32, 39, 0.22);
-        margin-bottom: 26px;
-    }
-    .banniere-assure-hero::after {
-        content: "";
-        position: absolute;
-        top: -40px;
-        right: -40px;
-        width: 220px;
-        height: 220px;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(79, 184, 174, 0.28) 0%, transparent 70%);
-        pointer-events: none;
-    }
-    .hero-assure-conteneur {
-        position: relative;
-        z-index: 2;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 20px;
-        flex-wrap: wrap;
-    }
-    .badge-matricule-hero {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background: rgba(255, 255, 255, 0.12);
-        backdrop-filter: blur(8px);
-        padding: 4px 12px;
-        border-radius: 999px;
-        border: 1px solid rgba(255, 255, 255, 0.18);
-        font-size: 12px;
-        font-weight: 600;
-        color: #79dba9;
-        margin-bottom: 8px;
-    }
-    .badge-matricule-hero strong {
-        color: #ffffff;
-        font-family: 'IBM Plex Mono', monospace;
-        letter-spacing: 0.04em;
-    }
-    .titre-hero-assure h1 {
-        margin: 0 0 6px;
-        font-size: 24px;
-        font-weight: 800;
-        letter-spacing: -0.02em;
-        color: #ffffff;
-    }
-    .desc-hero-assure {
-        margin: 0;
-        font-size: 13.5px;
-        color: rgba(231, 236, 243, 0.82);
-        max-width: 580px;
-        line-height: 1.45;
-    }
-    .actions-hero-assure {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        flex-wrap: wrap;
-    }
-    .btn-hero-carte {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background: rgba(255, 255, 255, 0.14);
-        border: 1px solid rgba(255, 255, 255, 0.25);
-        color: #ffffff;
-        padding: 9px 18px;
-        border-radius: 11px;
-        font-size: 13.5px;
-        font-weight: 700;
-        text-decoration: none;
-        backdrop-filter: blur(8px);
-        transition: all 0.2s ease;
-    }
-    .btn-hero-carte:hover {
-        background: rgba(255, 255, 255, 0.22);
-        border-color: rgba(255, 255, 255, 0.4);
-        transform: translateY(-1px);
-        color: #ffffff;
-    }
-    .btn-hero-rdv {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background: linear-gradient(135deg, #0e7c86 0%, #095059 100%);
-        border: 1px solid rgba(79, 184, 174, 0.4);
-        color: #ffffff;
-        padding: 9px 18px;
-        border-radius: 11px;
-        font-size: 13.5px;
-        font-weight: 700;
-        text-decoration: none;
-        box-shadow: 0 4px 14px rgba(14, 124, 134, 0.35);
-        transition: all 0.2s ease;
-    }
-    .btn-hero-rdv:hover {
-        background: linear-gradient(135deg, #129aa7 0%, #0c616c 100%);
-        transform: translateY(-1px);
-        box-shadow: 0 6px 18px rgba(14, 124, 134, 0.45);
-        color: #ffffff;
-    }
 
     .grille-assure-dashboard {
         display: grid;
@@ -162,39 +51,26 @@
             grid-template-columns: 1fr;
             gap: 20px;
         }
-        .banniere-assure-hero {
-            padding: 22px 20px;
-        }
-        .titre-hero-assure {
-            font-size: 20px;
-        }
     }
 </style>
 
-<div class="banniere-assure-hero">
-    <div class="hero-assure-conteneur">
-        <div>
-            <div class="badge-matricule-hero">
-                <span>Carte N°</span>
-                <strong>{{ patient.numero_carte }}</strong>
-                <span>&bull;</span>
-                <span>IPM {{ patient.titulaire.plan_couverture.nom|default:"Général" }}</span>
-            </div>
-            <div class="titre-hero-assure"><h1>{% salutation %}, {% nom_accueil user patient %}</h1></div>
-            <p class="desc-hero-assure">
-                Votre prise en charge médicale est active à <strong style="color:#ffffff;">{{ patient.taux_couverture|default:"0" }}%</strong>. Retrouvez vos ordonnances sécurisées, préparez vos consultations et suivez vos accords tiers-payant en un clic.
-            </p>
-        </div>
-        <div class="actions-hero-assure">
-            <a href="{% url 'carte_assure' %}" class="btn-hero-carte">
-                {% icone "id-card" %} Ma carte QR
-            </a>
-            <a href="{% url 'ajouter_rendez_vous_assure' %}" class="btn-hero-rdv">
-                {% icone "calendar" %} Prendre RDV
-            </a>
-        </div>
+<section class="page-title">
+    <div>
+        <h1>{% salutation %}, {% nom_accueil user patient %}</h1>
+        <p class="subtitle">Carte N° {{ patient.numero_carte }} · Taux de prise en charge : {{ patient.taux_couverture|default:"0" }}% · IPM {{ patient.titulaire.plan_couverture.nom|default:"Général" }} — {% now "l j F Y" %}</p>
     </div>
-</div>
+    <div class="actions">
+        <a href="{% url 'carte_assure' %}" class="button btn btn-expand" title="Afficher ma carte dématérialisée" aria-label="Ma carte QR">
+            {% icone "id-card" %} <span class="expand-text">Ma carte QR</span>
+        </a>
+        <a href="{% url 'demander_remboursement_assure' %}" class="button btn btn-expand" title="Se faire rembourser une facture hors réseau" aria-label="Remboursement hors réseau">
+            {% icone "receipt" %} <span class="expand-text">Remboursement hors réseau</span>
+        </a>
+        <a href="{% url 'ajouter_rendez_vous_assure' %}" class="button primary btn-expand primary" title="Prendre un rendez-vous médical" aria-label="Prendre RDV">
+            {% icone "calendar" %} <span class="expand-text">Prendre RDV</span>
+        </a>
+    </div>
+</section>
 
 <div class="grille-assure-dashboard">
     <!-- Colonne 1 : Mes Soins & Rendez-vous -->
@@ -233,11 +109,11 @@
                 </div>
 
                 <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding-top: 12px; border-top: 1px solid var(--border);">
-                    <a href="{% url 'telecharger_ics_rendez_vous' prochain_rdv_principal.pk %}" class="button btn btn-sm" style="background: var(--primary-soft); color: var(--primary-strong); border: 1px solid rgba(14, 124, 134, 0.2);">
-                        {% icone "calendar" %} Télécharger rappel .ICS
+                    <a href="{% url 'telecharger_ics_rendez_vous' prochain_rdv_principal.pk %}" class="button btn btn-expand" title="Télécharger rappel dans l'agenda (.ics)" aria-label="Télécharger rappel .ICS">
+                        {% icone "calendar" %} <span class="expand-text">Télécharger rappel .ICS</span>
                     </a>
-                    <a href="{% url 'mes_rendez_vous_assure' %}" class="button btn btn-sm">
-                        {% icone "eye" %} Voir mes rendez-vous
+                    <a href="{% url 'mes_rendez_vous_assure' %}" class="button btn btn-expand" title="Consulter mes rendez-vous" aria-label="Voir mes rendez-vous">
+                        {% icone "eye" %} <span class="expand-text">Voir mes rendez-vous</span>
                     </a>
                 </div>
             </div>

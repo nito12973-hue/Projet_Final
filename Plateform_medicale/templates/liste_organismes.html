@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% load formats icones %}
+
+{% block title %}Organismes{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Organismes (IPM & Assureurs)</h1>
+        <p class="subtitle">Gestion des organismes de couverture santé : création, codes d'identification et activation.</p>
+    </div>
+    <div class="actions">
+        <a class="button primary btn-expand primary" href="{% url 'ajouter_organisme' %}" title="Enregistrer un nouvel organisme" aria-label="Nouvel organisme">{% icone "plus" %} <span class="expand-text">Nouvel organisme</span></a>
+    </div>
+</section>
+
+<div class="kpi-grille" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 20px;" aria-label="Statistiques organismes">
+    <div class="kpi">
+        <span class="kpi-entete">{% icone "building" %} Total Organismes</span>
+        <strong class="code">{{ total_organismes }}</strong>
+        <span class="kpi-pied">IPM & Assureurs enregistrés</span>
+    </div>
+    <div class="kpi">
+        <span class="kpi-entete">{% icone "check" %} Actifs</span>
+        <strong class="code">{{ total_organismes_actifs }}</strong>
+        <span class="kpi-pied">Organismes opérationnels</span>
+    </div>
+    <div class="kpi">
+        <span class="kpi-entete">{% icone "x" %} Inactifs</span>
+        <strong class="code">{{ total_organismes_inactifs }}</strong>
+        <span class="kpi-pied">Organismes suspendus</span>
+    </div>
+</div>
+
+<form method="get" class="filtres">
+    <div style="min-width:180px;">
+        <label for="type">Type d'organisme</label>
+        <select id="type" name="type" style="margin-bottom:0;">
+            <option value="">Tous les types</option>
+            {% for value, label in types_organisme %}
+            <option value="{{ value }}" {% if value == type_selectionne %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div style="min-width:180px;">
+        <label for="statut">Statut</label>
+        <select id="statut" name="statut" style="margin-bottom:0;">
+            <option value="">Tous les statuts</option>
+            <option value="actif" {% if statut_selectionne == "actif" %}selected{% endif %}>Actif</option>
+            <option value="inactif" {% if statut_selectionne == "inactif" %}selected{% endif %}>Inactif</option>
+        </select>
+    </div>
+    <div style="min-width:220px;flex:1;">
+        <label for="q">Recherche</label>
+        <div class="champ-recherche">
+            {% icone "search" %}
+            <input id="q" type="text" name="q" placeholder="Nom, code ou email..." value="{{ recherche }}" style="margin-bottom:0;">
+        </div>
+    </div>
+    <button type="submit" class="button primary btn">Filtrer</button>
+    {% if type_selectionne or statut_selectionne or recherche %}
+    <a href="{% url 'liste_organismes' %}" class="button btn">Réinitialiser</a>
+    {% endif %}
+</form>
+
+{% if organismes %}
+<section class="panel">
+    <table>
+        <caption class="sr-only">Liste des organismes de couverture santé</caption>
+        <thead>
+            <tr>
+                {% entete_tri request.GET "nom" "Organisme" %}
+                {% entete_tri request.GET "code" "Code" %}
+                {% entete_tri request.GET "type_organisme" "Type" "col-optionnelle" %}
+                <th scope="col" class="col-optionnelle">Gestionnaires</th>
+                <th scope="col" class="col-optionnelle">Assurés</th>
+                {% entete_tri request.GET "actif" "Statut" %}
+                <th scope="col">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for org in organismes %}
+            <tr>
+                <td>
+                    <strong>{{ org.nom }}</strong>
+                    {% if org.email or org.telephone %}
+                    <div class="subtitle" style="font-size:12px;">
+                        {{ org.email|default:"" }}{% if org.email and org.telephone %} · {% endif %}{{ org.telephone|default:"" }}
+                    </div>
+                    {% endif %}
+                </td>
+                <td><span class="code">{{ org.code }}</span></td>
+                <td class="col-optionnelle"><span class="badge">{{ org.get_type_organisme_display }}</span></td>
+                <td class="col-optionnelle">{{ org.nb_gestionnaires }}</td>
+                <td class="col-optionnelle">{{ org.nb_patients }}</td>
+                <td>
+                    {% if org.actif %}
+                    <span class="badge validee">Actif</span>
+                    {% else %}
+                    <span class="badge refusee">Inactif</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="actions" style="flex-wrap:nowrap;gap:6px;">
+                        <a href="{% url 'modifier_organisme' org.pk %}" class="button primary btn btn-sm">{% icone "edit-2" %} Modifier</a>
+                        <form method="post" action="{% url 'activer_desactiver_organisme' org.pk %}" class="action-ligne">
+                            {% csrf_token %}
+                            {% if org.actif %}
+                            <button type="submit" class="button btn btn-sm">Désactiver</button>
+                            {% else %}
+                            <button type="submit" class="button btn btn-sm">Activer</button>
+                            {% endif %}
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% if organismes.paginator.num_pages > 1 %}
+<nav class="pagination" aria-label="Pagination">
+    {% if organismes.has_previous %}
+    <a href="?{% prefixe_pagination request.GET %}page={{ organismes.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Précédent</a>
+    {% endif %}
+    <span class="pagination-info">Page {{ organismes.number }} sur {{ organismes.paginator.num_pages }}</span>
+    {% if organismes.has_next %}
+    <a href="?{% prefixe_pagination request.GET %}page={{ organismes.next_page_number }}" class="button btn btn-sm">Suivant {% icone "chevron-right" %}</a>
+    {% endif %}
+</nav>
+{% endif %}
+{% else %}
+<div class="etat-vide">
+    {% illustration_vide "building" %}
+    <h3>Aucun organisme trouvé</h3>
+    <p>{% if type_selectionne or statut_selectionne or recherche %}Aucun organisme ne correspond à vos critères.{% else %}Aucun organisme n'est encore enregistré.{% endif %}</p>
+</div>
+{% endif %}
+{% endblock %}

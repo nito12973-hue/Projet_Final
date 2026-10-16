@@ -9,7 +9,7 @@
         <h1>Plans de couverture</h1>
         <p class="subtitle">Règles de remboursement applicables aux assurés et leurs ayants droit.</p>
     </div>
-    <a class="button primary" href="{% url 'ajouter_plan_couverture' %}">Ajouter un plan</a>
+    <a class="button primary btn-expand primary" href="{% url 'ajouter_plan_couverture' %}" title="Ajouter un nouveau plan de couverture" aria-label="Nouveau plan">{% icone "plus" %} <span class="expand-text">Nouveau plan</span></a>
 </section>
 
 {% if plans %}

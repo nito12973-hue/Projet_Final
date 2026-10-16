@@ -211,7 +211,13 @@ def valider_delivrance(request, pk):
                 montant_total = Decimal("0.00")
 
             patient = ordonnance.consultation.patient
-            taux = patient.taux_couverture or Decimal("0.00")
+            # Vérification conventionnelle stricte :
+            # Le tiers payant n'est accordé que si l'officine possède une convention active avec l'organisme de l'assuré
+            est_conventionne = True
+            if pharmacien.prestataire and patient.organisme:
+                est_conventionne = pharmacien.prestataire.est_conventionne_par(patient.organisme)
+
+            taux = (patient.taux_couverture or Decimal("0.00")) if est_conventionne else Decimal("0.00")
 
             delivrance = Delivrance(
                 ordonnance=ordonnance,

@@ -13,13 +13,26 @@ from ..forms import PatientCreationForm, PatientForm, generer_mot_de_passe
 from ..models import JournalActivite, Notification, Patient, User
 from ..services.notifications import emettre_notification
 from ..services.onboarding import construire_bilan_onboarding, envoyer_activation_utilisateur
-from .utils import _avertissement_cascade, _paginer, _trier, admin_required, journaliser
+from .utils import (
+    _avertissement_cascade,
+    _paginer,
+    _trier,
+    filtrer_par_organisme,
+    gestionnaire_required,
+    get_object_or_404_organisme,
+    journaliser,
+    organisme_gestionnaire,
+    role_required,
+)
 from .medecin_espace import _medecin_courant
 
 
-@admin_required
+@gestionnaire_required
 def liste_patients(request):
-    patients = Patient.objects.select_related("assure_principal", "plan_couverture", "user").all()
+    patients = filtrer_par_organisme(
+        request,
+        Patient.objects.select_related("assure_principal", "plan_couverture", "user", "organisme"),
+    )
 
     recherche = request.GET.get("q", "").strip()
     if recherche:
@@ -28,6 +41,7 @@ def liste_patients(request):
             | Q(prenom__icontains=recherche)
             | Q(numero_carte__icontains=recherche)
             | Q(telephone__icontains=recherche)
+            | Q(entreprise__icontains=recherche)
             | Q(user__email__icontains=recherche)
         )
 
@@ -39,14 +53,17 @@ def liste_patients(request):
     if statut_validation:
         patients = patients.filter(statut_validation=statut_validation)
 
-    nb_en_attente = Patient.objects.filter(
-        type_beneficiaire=Patient.TypeBeneficiaire.AYANT_DROIT,
-        statut_validation=Patient.StatutValidation.EN_ATTENTE,
+    nb_en_attente = filtrer_par_organisme(
+        request,
+        Patient.objects.filter(
+            type_beneficiaire=Patient.TypeBeneficiaire.AYANT_DROIT,
+            statut_validation=Patient.StatutValidation.EN_ATTENTE,
+        ),
     ).count()
 
     patients = _trier(
         request, patients,
-        ["id", "nom", "type_beneficiaire", "assure_principal__nom", "numero_carte", "plan_couverture__nom", "statut_validation"],
+        ["id", "nom", "type_beneficiaire", "assure_principal__nom", "numero_carte", "plan_couverture__nom", "statut_validation", "entreprise"],
         ["nom", "prenom"],
     )
 
@@ -62,19 +79,22 @@ def liste_patients(request):
     return render(request, "liste_patients.html", contexte)
 
 
-@admin_required
+@gestionnaire_required
 def ajouter_patient(request):
+    organisme = organisme_gestionnaire(request)
     if request.method == "POST":
-        form = PatientCreationForm(request.POST)
+        form = PatientCreationForm(request.POST, organisme=organisme)
         if form.is_valid():
             with transaction.atomic():
                 patient = form.save(commit=False)
+                patient.organisme = organisme
                 if patient.type_beneficiaire == Patient.TypeBeneficiaire.PRINCIPAL:
                     mot_de_passe = generer_mot_de_passe()
                     utilisateur = User.objects.create_user(
                         email=form.cleaned_data['email'],
                         password=mot_de_passe,
                         role=User.Role.ASSURE,
+                        organisme=organisme,
                         first_name=patient.prenom,
                         last_name=patient.nom,
                         phone_number=patient.telephone,
@@ -82,7 +102,13 @@ def ajouter_patient(request):
                     patient.user = utilisateur
                     patient.save()
                     statut_onboarding = envoyer_activation_utilisateur(utilisateur, request=request)
-                    journaliser(request, JournalActivite.Action.CREATION, f"Assuré {utilisateur.email}", f"{patient.prenom} {patient.nom}")
+                    journaliser(
+                        request,
+                        JournalActivite.Action.CREATION,
+                        f"Assuré {utilisateur.email}",
+                        f"{patient.prenom} {patient.nom}",
+                        organisme=organisme,
+                    )
                     bilan = statut_onboarding.get("bilan") or construire_bilan_onboarding(statut_onboarding, utilisateur, action="creation")
                     if bilan["niveau"] == "success":
                         messages.success(request, bilan["texte_flash"])
@@ -90,31 +116,39 @@ def ajouter_patient(request):
                         messages.warning(request, bilan["texte_flash"])
                     return redirect("liste_patients")
                 patient.save()
-                journaliser(request, JournalActivite.Action.CREATION, f"Ayant droit {patient}", f"Rattaché à {patient.assure_principal}")
+                journaliser(
+                    request,
+                    JournalActivite.Action.CREATION,
+                    f"Ayant droit {patient}",
+                    f"Rattaché à {patient.assure_principal}",
+                    organisme=organisme,
+                )
                 messages.success(request, "Assuré ajouté.")
                 return redirect("liste_patients")
     else:
-        form = PatientCreationForm()
+        form = PatientCreationForm(organisme=organisme)
     return render(request, "ajouter_patient.html", {"form": form})
 
 
-@admin_required
+@gestionnaire_required
 def modifier_patient(request, pk):
-    patient = get_object_or_404(Patient, pk=pk)
+    organisme = organisme_gestionnaire(request)
+    patient = get_object_or_404_organisme(request, Patient, pk=pk)
     if request.method == "POST":
-        form = PatientForm(request.POST, instance=patient)
+        form = PatientForm(request.POST, instance=patient, organisme=organisme)
         if form.is_valid():
             form.save()
             messages.success(request, "Assuré modifié.")
             return redirect("liste_patients")
     else:
-        form = PatientForm(instance=patient)
+        form = PatientForm(instance=patient, organisme=organisme)
     return render(request, "modifier_patient.html", {"form": form, "patient": patient})
 
 
-@admin_required
+@gestionnaire_required
 def supprimer_patient(request, pk):
-    patient = get_object_or_404(Patient, pk=pk)
+    organisme = organisme_gestionnaire(request)
+    patient = get_object_or_404_organisme(request, Patient, pk=pk)
     nb_consultations = patient.consultation_set.count()
     nb_prises_en_charge = patient.priseencharge_set.count()
     est_protege = (nb_consultations > 0 or nb_prises_en_charge > 0)
@@ -147,6 +181,7 @@ def supprimer_patient(request, pk):
                     JournalActivite.Action.SUPPRESSION,
                     f"Assuré : {nom_patient}",
                     details_journal,
+                    organisme=organisme,
                 )
                 messages.success(request, f"Assuré {nom_patient} supprimé avec succès.")
                 return redirect("liste_patients")
@@ -180,11 +215,13 @@ def supprimer_patient(request, pk):
 
 
 @login_required
-@admin_required
+@gestionnaire_required
 def carte_patient(request, pk):
     """Carte de prise en charge, recto/verso, prete a imprimer."""
-    patient = get_object_or_404(
-        Patient.objects.select_related("assure_principal", "plan_couverture"), pk=pk
+    patient = get_object_or_404_organisme(
+        request,
+        Patient.objects.select_related("assure_principal", "plan_couverture", "organisme"),
+        pk=pk,
     )
 
     url_scan = request.build_absolute_uri(
@@ -192,17 +229,19 @@ def carte_patient(request, pk):
     )
 
     # Editer une carte, c'est delivrer une piece : on trace qui et pour qui.
-    journaliser(request, JournalActivite.Action.CARTE, f"Carte de {patient}",
-                f"n° {patient.numero_carte}")
+    journaliser(
+        request,
+        JournalActivite.Action.CARTE,
+        f"Carte de {patient}",
+        f"n° {patient.numero_carte}",
+        organisme=patient.organisme,
+    )
 
     return render(request, "carte_patient.html", {
         "patient": patient,
         "qr_svg": patient.qr_svg(url_scan),
         "url_scan": url_scan,
     })
-
-
-from .utils import role_required  # noqa: E402
 
 
 @role_required(User.Role.MEDECIN, User.Role.PHARMACIEN)
@@ -268,77 +307,91 @@ def carte_scan(request, numero):
     })
 
 
-@admin_required
+@gestionnaire_required
 @require_POST
 def valider_ayant_droit(request, pk):
-    ayant_droit = get_object_or_404(
-        Patient.objects.select_related("assure_principal__user"),
+    ayant_droit = get_object_or_404_organisme(
+        request,
+        Patient.objects.select_related("assure_principal__user", "organisme"),
         pk=pk,
         type_beneficiaire=Patient.TypeBeneficiaire.AYANT_DROIT,
     )
-    ayant_droit.statut_validation = Patient.StatutValidation.VALIDE
-    ayant_droit.date_decision = timezone.now()
-    ayant_droit.valide_par = request.user
-    ayant_droit.motif_refus = ""
-    ayant_droit.save(update_fields=["statut_validation", "date_decision", "valide_par", "motif_refus"])
+    with transaction.atomic():
+        verrou = Patient.objects.select_for_update().get(pk=ayant_droit.pk)
+        if verrou.statut_validation == Patient.StatutValidation.VALIDE:
+            messages.info(request, f"L'ayant droit {ayant_droit.prenom} {ayant_droit.nom} est déjà validé.")
+            return redirect(request.META.get("HTTP_REFERER") or "liste_patients")
+        ayant_droit.statut_validation = Patient.StatutValidation.VALIDE
+        ayant_droit.date_decision = timezone.now()
+        ayant_droit.valide_par = request.user
+        ayant_droit.motif_refus = ""
+        ayant_droit.save(update_fields=["statut_validation", "date_decision", "valide_par", "motif_refus"])
 
-    journaliser(
-        request,
-        JournalActivite.Action.DECISION,
-        str(ayant_droit),
-        f"Validation de l'ayant droit {ayant_droit} (assuré : {ayant_droit.assure_principal})",
-    )
-
-    if ayant_droit.assure_principal and ayant_droit.assure_principal.user:
-        emettre_notification(
-            destinataire=ayant_droit.assure_principal.user,
-            type_evenement=Notification.TypeEvenement.AYANT_DROIT_VALIDE,
-            titre="Ayant droit validé par l'IPM",
-            message=(
-                f"La demande de rattachement pour {ayant_droit.prenom} {ayant_droit.nom} "
-                f"a été validée par l'administration IPM. Sa carte de prise en charge ({ayant_droit.numero_carte}) est désormais active."
-            ),
-            url_action=reverse("liste_ayants_droit"),
+        journaliser(
+            request,
+            JournalActivite.Action.DECISION,
+            str(ayant_droit),
+            f"Validation de l'ayant droit {ayant_droit} (assuré : {ayant_droit.assure_principal})",
+            organisme=ayant_droit.organisme,
         )
+
+        if ayant_droit.assure_principal and ayant_droit.assure_principal.user:
+            emettre_notification(
+                destinataire=ayant_droit.assure_principal.user,
+                type_evenement=Notification.TypeEvenement.AYANT_DROIT_VALIDE,
+                titre="Ayant droit validé par l'IPM",
+                message=(
+                    f"La demande de rattachement pour {ayant_droit.prenom} {ayant_droit.nom} "
+                    f"a été validée par l'administration IPM. Sa carte de prise en charge ({ayant_droit.numero_carte}) est désormais active."
+                ),
+                url_action=reverse("liste_ayants_droit"),
+            )
 
     messages.success(request, f"L'ayant droit {ayant_droit.prenom} {ayant_droit.nom} a été validé avec succès.")
     return redirect(request.META.get("HTTP_REFERER") or "liste_patients")
 
 
-@admin_required
+@gestionnaire_required
 @require_POST
 def refuser_ayant_droit(request, pk):
-    ayant_droit = get_object_or_404(
-        Patient.objects.select_related("assure_principal__user"),
+    ayant_droit = get_object_or_404_organisme(
+        request,
+        Patient.objects.select_related("assure_principal__user", "organisme"),
         pk=pk,
         type_beneficiaire=Patient.TypeBeneficiaire.AYANT_DROIT,
     )
     motif = (request.POST.get("motif_refus") or request.POST.get("motif") or "").strip() or "Pièce justificative non conforme ou informations incomplètes"
-    ayant_droit.statut_validation = Patient.StatutValidation.REFUSE
-    ayant_droit.date_decision = timezone.now()
-    ayant_droit.valide_par = request.user
-    ayant_droit.motif_refus = motif
-    ayant_droit.save(update_fields=["statut_validation", "date_decision", "valide_par", "motif_refus"])
+    with transaction.atomic():
+        verrou = Patient.objects.select_for_update().get(pk=ayant_droit.pk)
+        if verrou.statut_validation == Patient.StatutValidation.REFUSE and verrou.motif_refus == motif:
+            messages.info(request, f"L'ayant droit {ayant_droit.prenom} {ayant_droit.nom} est déjà refusé.")
+            return redirect(request.META.get("HTTP_REFERER") or "liste_patients")
+        ayant_droit.statut_validation = Patient.StatutValidation.REFUSE
+        ayant_droit.date_decision = timezone.now()
+        ayant_droit.valide_par = request.user
+        ayant_droit.motif_refus = motif
+        ayant_droit.save(update_fields=["statut_validation", "date_decision", "valide_par", "motif_refus"])
 
-    journaliser(
-        request,
-        JournalActivite.Action.DECISION,
-        str(ayant_droit),
-        f"Refus de l'ayant droit {ayant_droit} : {motif}",
-    )
-
-    if ayant_droit.assure_principal and ayant_droit.assure_principal.user:
-        emettre_notification(
-            destinataire=ayant_droit.assure_principal.user,
-            type_evenement=Notification.TypeEvenement.AYANT_DROIT_REFUSE,
-            titre="Demande d'ayant droit refusée",
-            message=(
-                f"La demande de rattachement pour {ayant_droit.prenom} {ayant_droit.nom} "
-                f"a été refusée par l'administration IPM. Motif : {motif}. "
-                "Vous pouvez mettre à jour son dossier et joindre une pièce justificative conforme depuis votre espace."
-            ),
-            url_action=reverse("modifier_ayant_droit", args=[ayant_droit.pk]),
+        journaliser(
+            request,
+            JournalActivite.Action.DECISION,
+            str(ayant_droit),
+            f"Refus de l'ayant droit {ayant_droit} : {motif}",
+            organisme=ayant_droit.organisme,
         )
+
+        if ayant_droit.assure_principal and ayant_droit.assure_principal.user:
+            emettre_notification(
+                destinataire=ayant_droit.assure_principal.user,
+                type_evenement=Notification.TypeEvenement.AYANT_DROIT_REFUSE,
+                titre="Demande d'ayant droit refusée",
+                message=(
+                    f"La demande de rattachement pour {ayant_droit.prenom} {ayant_droit.nom} "
+                    f"a été refusée par l'administration IPM. Motif : {motif}. "
+                    "Vous pouvez mettre à jour son dossier et joindre une pièce justificative conforme depuis votre espace."
+                ),
+                url_action=reverse("modifier_ayant_droit", args=[ayant_droit.pk]),
+            )
 
     messages.warning(request, f"L'ayant droit {ayant_droit.prenom} {ayant_droit.nom} a été refusé.")
     return redirect(request.META.get("HTTP_REFERER") or "liste_patients")

@@ -102,17 +102,11 @@
                         {{ ayant_droit.get_lien_parente_display|default:"Ayant droit" }}
                     </span>
                     {% if ayant_droit.statut_validation == "VALIDE" %}
-                    <span class="badge" style="background: rgba(16, 185, 129, 0.12); color: #059669; border: 1px solid rgba(16, 185, 129, 0.25); font-size: 10.5px; font-weight: 600;">
-                        ● Validé
-                    </span>
+                    <span class="badge validee">Validé</span>
                     {% elif ayant_droit.statut_validation == "EN_ATTENTE" %}
-                    <span class="badge" style="background: rgba(245, 158, 11, 0.12); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.25); font-size: 10.5px; font-weight: 600;">
-                        ● En instruction
-                    </span>
+                    <span class="badge en_attente">En instruction</span>
                     {% elif ayant_droit.statut_validation == "REFUSE" %}
-                    <span class="badge" style="background: rgba(239, 68, 68, 0.12); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.25); font-size: 10.5px; font-weight: 600;">
-                        ● Refusé
-                    </span>
+                    <span class="badge refusee">Refusé</span>
                     {% endif %}
                 </div>
             </div>

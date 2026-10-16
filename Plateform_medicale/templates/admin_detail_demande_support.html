@@ -7,7 +7,7 @@
 <section class="page-title">
     <div>
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
-            <a href="{% url 'admin_liste_demandes_support' %}" class="button btn btn-sm">{% icone "chevron-left" %} Retour aux demandes</a>
+            <a href="{% url 'admin_liste_demandes_support' %}" class="button btn btn-retour-expand" title="Retour aux demandes" aria-label="Retour aux demandes">{% icone "chevron-left" %} <span class="expand-text">Retour aux demandes</span></a>
             <span class="badge {% if demande.statut == 'EN_ATTENTE' %}en_attente{% elif demande.statut == 'REPONDU' %}validee{% elif demande.statut == 'FERME' %}annule{% else %}en_attente{% endif %}">
                 {{ demande.get_statut_display }}
             </span>
@@ -32,9 +32,11 @@
             {% for m in messages_fil %}
             <div style="padding:16px;border-radius:14px;{% if m.auteur.role == 'ADMIN' %}background:rgba(14, 124, 134, 0.08);border:1px solid rgba(14, 124, 134, 0.25);margin-left:24px;{% else %}background:var(--champ-bg);border:1px solid var(--border);margin-right:24px;{% endif %}">
                 <div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;margin-bottom:6px;">
-                    <strong style="color:{% if m.auteur.role == 'ADMIN' %}var(--primary-strong){% else %}var(--titre){% endif %};">
+                    <strong style="color:{% if m.auteur.role == 'ADMIN' or m.auteur.role == 'GESTIONNAIRE' %}var(--primary-strong){% else %}var(--titre){% endif %};">
                         {% if m.auteur.role == 'ADMIN' %}
-                        Administration SantéSN ({{ m.auteur.get_full_name|default:m.auteur.email }})
+                        Support Technique Informatique ({{ m.auteur.get_full_name|default:m.auteur.email }})
+                        {% elif m.auteur.role == 'GESTIONNAIRE' %}
+                        Gestionnaire Santé / IPM ({{ m.auteur.get_full_name|default:m.auteur.email }})
                         {% else %}
                         Assuré : {{ m.auteur.get_full_name|default:m.auteur.email }}
                         {% endif %}

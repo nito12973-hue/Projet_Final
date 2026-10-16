@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load icones %}
+
+{% block title %}Ajouter un pharmacien{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Ajouter un pharmacien</h1>
+        <p class="subtitle">Créez le compte du pharmacien et rattachez-le à sa pharmacie partenaire. Un lien d'activation lui est envoyé.</p>
+    </div>
+    <a class="button btn btn-retour-expand" href="{% url 'liste_pharmaciens' %}" title="Retour" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
+</section>
+
+<section class="panel panel-form">
+    {% if form.non_field_errors %}
+    <div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
+        {% endfor %}
+        <div class="actions" style="display:flex;gap:10px;align-items:center;margin-top:16px;">
+            <button class="button primary" type="submit">Enregistrer le pharmacien</button>
+            <a class="button btn" href="{% url 'liste_pharmaciens' %}">Annuler</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

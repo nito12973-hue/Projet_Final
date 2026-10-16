@@ -22,11 +22,11 @@
         <p class="subtitle">Aperçu de la prescription au format standard A4 pour impression et délivrance.</p>
     </div>
     <div class="actions">
-        <a class="button btn" href="{% url retour_url %}">{% icone "chevron-left" %} Retour</a>
+        <a class="button btn btn-retour-expand" href="{% url retour_url %}" title="Retour" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
         {% if user.role == 'MEDECIN' and not ordonnance.est_delivree and not ordonnance.est_annulee %}
-        <button type="button" class="button btn btn-danger" onclick="document.getElementById('modal-annulation').style.display='flex'">Annuler l'ordonnance</button>
+        <button type="button" class="button btn btn-expand btn-danger" onclick="document.getElementById('modal-annulation').style.display='flex'" title="Annuler l'ordonnance" aria-label="Annuler l'ordonnance">{% icone "x" %} <span class="expand-text">Annuler l'ordonnance</span></button>
         {% endif %}
-        <button type="button" class="button primary" id="bouton-imprimer-ordonnance">{% icone "printer" %} Imprimer l'ordonnance</button>
+        <button type="button" class="button primary btn-expand primary" id="bouton-imprimer-ordonnance" title="Imprimer ou enregistrer en PDF" aria-label="Imprimer l'ordonnance">{% icone "printer" %} <span class="expand-text">Imprimer l'ordonnance</span></button>
     </div>
 </section>
 
@@ -93,6 +93,7 @@
 
     <section class="feuille-prescription">
         {% if lignes_structurees %}
+        <div class="table-responsive">
         <table class="feuille-table">
             <thead>
                 <tr>
@@ -115,6 +116,7 @@
                 {% endfor %}
             </tbody>
         </table>
+        </div>
         {% else %}
         <ol class="feuille-lignes">
             {% for ligne in lignes_prescription %}

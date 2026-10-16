@@ -7,9 +7,9 @@
 <section class="page-title">
     <div>
         <h1>Pharmaciens</h1>
-        <p class="subtitle">Les comptes sont crees depuis « Utilisateurs » (role Pharmacien) ; affectez-les ici a une pharmacie.</p>
+        <p class="subtitle">Creez les comptes pharmaciens ici et affectez-les a une pharmacie partenaire.</p>
     </div>
-    <a class="button" href="{% url 'ajouter_utilisateur' %}">Créer un compte pharmacien</a>
+    <a class="button primary btn-expand primary" href="{% url 'ajouter_pharmacien' %}" title="Créer un nouveau compte pharmacien">{% icone "plus" %} <span class="expand-text">Créer un pharmacien</span> &rarr;</a>
 </section>
 
 {% if pharmaciens %}
@@ -30,7 +30,7 @@
                 <td class="col-optionnelle">{% if pharmacien.user %}{{ pharmacien.user.email }}{% else %}Compte non assigné{% endif %}</td>
                 <td>{{ pharmacien.prestataire|default:"Non affecté" }}</td>
                 <td>
-                    <a href="{% url 'modifier_pharmacien' pharmacien.pk %}" class="button primary btn btn-sm">{% icone "edit-2" %} Affecter une pharmacie</a>
+                    <a href="{% url 'modifier_pharmacien' pharmacien.pk %}" class="button primary btn btn-sm">{% icone "edit-2" %} Affecter une pharmacie &rarr;</a>
                 </td>
             </tr>
             {% endfor %}

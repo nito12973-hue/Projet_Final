@@ -52,8 +52,9 @@ RUN groupadd -r santesn && useradd -r -g santesn -d /app -s /bin/bash santesn
 # Copie du code source
 COPY . .
 
-# Création des dossiers statiques et médias avec permissions
+# Création des dossiers statiques et médias avec permissions (et normalisation LF Windows -> Linux)
 RUN mkdir -p /app/staticfiles /app/media /app/logs && \
+    sed -i 's/\r$//' /app/docker-entrypoint.sh && \
     chown -R santesn:santesn /app && \
     chmod +x /app/docker-entrypoint.sh
 

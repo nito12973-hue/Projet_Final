@@ -17,16 +17,18 @@
     </div>
 </section>
 
-<section class="dash-grid" style="margin-bottom: 18px;">
-    <div class="dash-stat" style="cursor: default;">
-        <strong>{{ total_regle|franc_cfa }}</strong>
-        <span>Déjà perçu des patients</span>
+<div class="kpi-grille" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: 20px;" aria-label="Statistiques paiements">
+    <div class="kpi">
+        <span class="kpi-entete">{% icone "check" %} Déjà Perçu</span>
+        <strong class="code" style="color: var(--success);">{{ total_regle|franc_cfa }}</strong>
+        <span class="kpi-pied">Part patient encaissée</span>
     </div>
-    <div class="dash-stat" style="cursor: default;">
-        <strong>{{ total_non_regle|franc_cfa }}</strong>
-        <span>Reste a percevoir des patients</span>
+    <div class="kpi">
+        <span class="kpi-entete">{% icone "clock" %} Reste à Percevoir</span>
+        <strong class="code" style="color: var(--warning);">{{ total_non_regle|franc_cfa }}</strong>
+        <span class="kpi-pied">En attente de paiement</span>
     </div>
-</section>
+</div>
 
 <form method="get" class="filtres">
     <div style="min-width:220px;flex:1;">

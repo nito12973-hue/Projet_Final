@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% load icones %}
+
+{% block title %}Ajouter un organisme{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Ajouter un organisme</h1>
+        <p class="subtitle">Enregistrez une IPM, une compagnie d'assurance, une mutuelle ou une entreprise auto-assurée.</p>
+    </div>
+    <a class="button btn btn-retour-expand" href="{% url 'liste_organismes' %}" title="Retour" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
+</section>
+
+<section class="panel panel-form" style="max-width: 640px;">
+    {% if form.non_field_errors %}
+    <div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+        {% if field.field.widget.input_type == "checkbox" %}
+        <div class="champ-case">
+            {{ field }}
+            <div class="champ-case-texte">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {% if field.help_text %}<p class="subtitle">{{ field.help_text }}</p>{% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div class="champ-groupe" style="margin-bottom: 16px;">
+            <label for="{{ field.id_for_label }}" style="font-weight: 600; margin-bottom: 4px; display: block;">
+                {{ field.label }}
+                {% if field.field.required %}<span style="color:var(--danger);" aria-hidden="true">*</span>{% endif %}
+            </label>
+            {{ field }}
+        </div>
+        {% endif %}
+        {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
+        {% endfor %}
+        <div style="margin-top: 24px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <button class="button primary" type="submit">Créer l'organisme</button>
+            <a class="button btn" href="{% url 'liste_organismes' %}">Annuler</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

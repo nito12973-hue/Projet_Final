@@ -19,7 +19,7 @@
 {% if carte_inactive %}
 <div class="message-banner danger" style="background: rgba(239, 68, 68, 0.1); border: 2px solid var(--danger); padding: 18px 20px; border-radius: 12px; margin-bottom: 24px;">
     <h3 style="color: var(--danger); margin: 0 0 6px; font-size: 16px; font-weight: 700;">
-        {% icone "alert-triangle" %} CARTE INACTIVE &bull; PRISE EN CHARGE REFUSÉE
+        {% icone "alert-triangle" %} CARTE INACTIVE · PRISE EN CHARGE REFUSÉE
     </h3>
     <p style="margin: 0; font-size: 13.5px; color: var(--texte); line-height: 1.5;">
         Ce bénéficiaire est actuellement <strong>{{ statut_validation }}</strong> auprès de l'IPM. Les droits au tiers payant ne sont pas validés.
@@ -75,7 +75,7 @@
                 </div>
                 <div>
                     {% if pec.statut == 'validee' %}
-                    <span class="badge validee">{% icone "check" %} Validée &bull; Accord IPM Actif</span>
+                    <span class="badge validee">{% icone "check" %} Validée · Accord IPM Actif</span>
                     {% elif pec.statut == 'refusee' %}
                     <span class="badge refusee">{% icone "x" %} Refusée</span>
                     {% else %}
@@ -110,7 +110,7 @@
                     </a>
                     {% endif %}
                     {% if pec.devis_fichier %}
-                    <a href="{{ pec.devis_fichier.url }}" target="_blank" rel="noopener noreferrer" class="button btn btn-sm" style="font-size: 11.5px; padding: 3px 10px;">
+                    <a href="{% url 'telecharger_devis_prise_en_charge' pec.pk %}" target="_blank" rel="noopener noreferrer" class="button btn btn-sm" style="font-size: 11.5px; padding: 3px 10px;">
                         {% icone "file-text" %} Devis source
                     </a>
                     {% endif %}

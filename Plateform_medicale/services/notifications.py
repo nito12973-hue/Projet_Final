@@ -386,14 +386,19 @@ def notifier_delivrance_effectuee(delivrance):
 
 def notifier_demande_prise_en_charge(prise_en_charge):
     """Déclenché lorsqu'une demande de prise en charge est soumise."""
-    admins = User.objects.filter(role=User.Role.ADMIN)
+    organisme_id = getattr(prise_en_charge.patient, "organisme_id", None)
+    destinataires = User.objects.filter(
+        role=User.Role.GESTIONNAIRE,
+        organisme_id=organisme_id,
+        is_active=True,
+    )
     pec_ref = getattr(prise_en_charge, "numero_prise_en_charge", None) or f"PEC-#{prise_en_charge.pk}"
     montant_str = f" — Montant estimé : {prise_en_charge.montant_estime:,.0f} FCFA".replace(",", " ") if getattr(prise_en_charge, "montant_estime", None) else ""
-    for admin in admins:
+    for dest in destinataires:
         emettre_notification(
-            destinataire=admin,
+            destinataire=dest,
             titre=f"Demande de prise en charge ({pec_ref})",
-            message=f"Nouvelle demande de prise en charge ({pec_ref}) soumise pour {prise_en_charge.patient} (Motif : {prise_en_charge.motif}{montant_str}). En attente de validation administrative.",
+            message=f"Nouvelle demande de prise en charge ({pec_ref}) soumise pour {prise_en_charge.patient} (Motif : {prise_en_charge.motif}{montant_str}). En attente de validation par votre organisme.",
             type_evenement=Notification.TypeEvenement.PEC_DEMANDE,
             url_action=reverse("liste_prises_en_charge"),
             template_email="emails/pec_demande_admin.html",
@@ -436,3 +441,73 @@ def notifier_refus_prise_en_charge(prise_en_charge):
             template_email="emails/pec_refusee.html",
             contexte_email={"prise_en_charge": prise_en_charge, "patient": patient},
         )
+
+
+def notifier_demande_remboursement(demande):
+    """Déclenché lorsqu'un assuré soumet une demande de remboursement hors réseau."""
+    organisme_id = demande.organisme_id or getattr(demande.patient, "organisme_id", None)
+    destinataires = User.objects.filter(
+        role=User.Role.GESTIONNAIRE,
+        organisme_id=organisme_id,
+        is_active=True,
+    )
+    montant_str = f"{demande.montant_depense:,.0f} FCFA".replace(",", " ")
+    for dest in destinataires:
+        emettre_notification(
+            destinataire=dest,
+            titre=f"Demande de remboursement ({demande.numero_dossier})",
+            message=(
+                f"Nouvelle demande de remboursement hors réseau ({demande.numero_dossier}) "
+                f"soumise pour {demande.patient} — {demande.prestataire_nom} ({montant_str})."
+            ),
+            type_evenement=Notification.TypeEvenement.PEC_DEMANDE,
+            url_action=reverse("liste_demandes_remboursement"),
+        )
+
+
+def notifier_validation_remboursement(demande):
+    """Déclenché lorsqu'un remboursement est validé ou réglé par le gestionnaire."""
+    patient = demande.patient
+    assure_user = _obtenir_utilisateur_assure(patient)
+    if assure_user:
+        montant_accorde_str = f"{demande.montant_rembourse_accorde:,.0f} FCFA".replace(",", " ")
+        est_regle = demande.statut == demande.Statut.REMBOURSEE
+        titre = (
+            f"Remboursement réglé ({demande.numero_dossier})"
+            if est_regle
+            else f"Demande de remboursement approuvée ({demande.numero_dossier})"
+        )
+        detail_reglement = ""
+        if est_regle and demande.mode_remboursement:
+            detail_reglement = f" via {demande.get_mode_remboursement_display()}"
+            if demande.reference_reglement:
+                detail_reglement += f" (Réf. {demande.reference_reglement})"
+        emettre_notification(
+            destinataire=assure_user,
+            titre=titre,
+            message=(
+                f"Votre demande de remboursement {demande.numero_dossier} ({demande.prestataire_nom}) "
+                f"a été approuvée à hauteur de {montant_accorde_str}{detail_reglement}."
+            ),
+            type_evenement=Notification.TypeEvenement.PEC_VALIDEE,
+            url_action=reverse("mes_remboursements_assure"),
+        )
+
+
+def notifier_refus_remboursement(demande):
+    """Déclenché lorsqu'une demande de remboursement est refusée par le gestionnaire."""
+    patient = demande.patient
+    assure_user = _obtenir_utilisateur_assure(patient)
+    if assure_user:
+        motif = demande.motif_refus or "Justificatif non conforme aux garanties du contrat"
+        emettre_notification(
+            destinataire=assure_user,
+            titre=f"Demande de remboursement refusée ({demande.numero_dossier})",
+            message=(
+                f"Votre demande de remboursement {demande.numero_dossier} ({demande.prestataire_nom}) "
+                f"n'a pas pu être accordée. Motif : {motif}."
+            ),
+            type_evenement=Notification.TypeEvenement.PEC_REFUSEE,
+            url_action=reverse("mes_remboursements_assure"),
+        )
+
