@@ -7,27 +7,14 @@
 <div class="page-juridique-conteneur">
     <!-- En-tête du document légal -->
     <header class="entete-document-legal sans-impression">
-        <div class="fil-ariane-legal">
-            <a href="{% url 'landing' %}">Accueil</a>
-            <span class="separateur-chevron">›</span>
-            <span>Cadre Conventionnel</span>
-            <span class="separateur-chevron">›</span>
-            <span class="courant">Politique de Confidentialité</span>
-        </div>
-
         <div class="titre-et-actions-legal">
             <div>
-                <div class="badges-legal">
-                    <span class="badge-statut-legal">{% icone "shield-check" %} Protection des Données de Santé</span>
-                    <span class="badge-date-legal">Version 2.4 · En vigueur au 16 octobre 2026</span>
-                    <span class="badge-cdp-legal">Loi sénégalaise n° 2008-12</span>
-                </div>
                 <h1>Politique de Confidentialité & Protection des Données</h1>
-                <p class="sous-titre-legal">Garanties de protection de la vie privée, secret médical, chiffrement des données et droits des assurés conformément aux directives de la Commission de Protection des Données Personnelles du Sénégal (CDP).</p>
+                <p class="sous-titre-legal">Garanties de protection de la vie privée, secret médical, chiffrement des données et droits des assurés conformément aux directives de la Commission de Protection des Données Personnelles du Sénégal (CDP) et à la Loi sénégalaise n° 2008-12.</p>
             </div>
             <div class="actions-document-legal">
-                <a href="{% url 'landing' %}" class="btn-action-legal secondaire">
-                    {% icone "chevron-left" %} <span>Retour à l'accueil</span>
+                <a href="{% url 'landing' %}" class="button btn btn-retour-expand" title="Retour à l'accueil" aria-label="Retour à l'accueil">
+                    {% icone "chevron-left" %} <span class="expand-text">Retour</span>
                 </a>
             </div>
         </div>

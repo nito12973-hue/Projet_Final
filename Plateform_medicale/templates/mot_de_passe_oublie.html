@@ -4,7 +4,7 @@
 {% block title %}Mot de passe oublié — SantéSN{% endblock %}
 
 {% block content %}
-<a href="{% url 'login' %}" class="lien-retour-accueil">{% icone "chevron-left" %} Retour à la connexion</a>
+<a href="{% url 'login' %}" class="lien-retour-accueil" title="Retour à la connexion" aria-label="Retour à la connexion">{% icone "chevron-left" %}<span class="expand-text">Retour à la connexion</span></a>
 <h1>Mot de passe oublié</h1>
 <p class="sous-titre">Saisissez l'adresse email liée à votre compte SantéSN pour recevoir un lien sécurisé de réinitialisation.</p>
 
