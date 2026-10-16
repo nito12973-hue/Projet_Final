@@ -68,3 +68,24 @@ Ce document consigne de façon claire et sans jargon chaque décision d'architec
   - `config/settings/prod.py` : Mode production durci (`DEBUG=False`), validation stricte de `SECRET_KEY`, en-têtes HTTPS stricts (`SECURE_*`, HSTS), base de données PostgreSQL via `dj_database_url`, masquage des données sensibles avant envoi Sentry, et offloading Nginx `X-Accel-Redirect`.
   - `config/settings/__init__.py` : Sélecteur automatique transparent assurant une compatibilité 100% avec les configurations existantes (Docker, `manage.py`, Vercel).
 
+---
+
+## [2026-10-16] Prise de Rendez-vous Directe par WhatsApp pour les Assurés
+- **Décision :** Offrir à chaque assuré la possibilité de contacter et de convenir d'un rendez-vous directement via WhatsApp avec le praticien (médecin de famille, spécialiste ou centre de santé).
+- **Justification métier & Contexte Sénégalais :**
+  - Au Sénégal, WhatsApp est l'application la plus universellement installée et consultée sur smartphone, fonctionnant avec une consommation de données minimale sur les réseaux mobiles 3G/4G/Orange/Free.
+  - La prise de rendez-vous en ligne via des calendriers complexes pose souvent des difficultés aux assurés ayant une faible aisance numérique ou lors de coupures réseau.
+  - Un bouton direct WhatsApp avec message pré-formaté (Nom de l'assuré, numéro de police/matricule IPM, objet de la consultation) simplifie drastiquement le parcours : en un clic, le patient initie l'échange avec le cabinet médical sans ressaisie.
+- **Points d'intégration :**
+  - *Fiche praticien (`fiche_medecin_assure.html`) :* Bouton vert standardisé avec lien direct `https://wa.me/...`.
+  - *Formulaire de rendez-vous (`ajouter_rendez_vous_assure.html`) :* Encadré dynamique de contact direct dès la sélection d'un médecin.
+  - *Liste des rendez-vous (`mes_rendez_vous.html`) :* Bouton de confirmation/relance rapide par WhatsApp sur chaque ligne de rendez-vous.
+
+---
+
+## [2026-10-16] Nettoyage Intégral et Hygiène du Répertoire de Travail
+- **Décision :** Supprimer tous les artefacts obsolètes, fichiers de cache temporaires et templates orphelins :
+  - Suppression de `Plateform_medicale/templates/mot_de_passe_genere.html` (orphelin, le mot de passe est désormais transmis de manière sécurisée par canal dédié).
+  - Suppression des caches `.pytest_cache` et `.kilo/`.
+  - Configuration de `.gitignore` pour ignorer systématiquement les fichiers temporaires de tests générés localement (`media/justificatifs_remboursements/*.pdf`, `backups/*.json`).
+  - Validation que l'arbre de travail git est 100% propre (`nothing to commit, working tree clean`) et que la totalité des 884 tests passe sans aucune régression.
