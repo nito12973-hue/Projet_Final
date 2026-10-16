@@ -20,26 +20,88 @@
 </div>
 {% endif %}
 
-<form method="post" novalidate>
+<form method="post" novalidate id="form-activer-compte">
     {% csrf_token %}
 
-    <label for="{{ form.nouveau_mot_de_passe.id_for_label }}">{{ form.nouveau_mot_de_passe.label }}</label>
-    {{ form.nouveau_mot_de_passe }}
-    {% if form.nouveau_mot_de_passe.help_text %}
-    <p class="aide">{{ form.nouveau_mot_de_passe.help_text }}</p>
-    {% endif %}
-    {% if form.nouveau_mot_de_passe.errors %}
-    <div class="erreurs" role="alert">{{ form.nouveau_mot_de_passe.errors.0 }}</div>
-    {% endif %}
+    <div class="champ-groupe">
+        <label for="{{ form.nouveau_mot_de_passe.id_for_label }}">
+            <span>{{ form.nouveau_mot_de_passe.label }} <span class="champ-requis" aria-hidden="true">*</span></span>
+        </label>
+        <div class="champ-icone-wrapper">
+            <span class="champ-icone-prefix" aria-hidden="true">{% icone "lock" %}</span>
+            {{ form.nouveau_mot_de_passe }}
+            <button type="button" class="btn-toggle-oeil" onclick="toggleChampMdp('{{ form.nouveau_mot_de_passe.id_for_label }}', this)" title="Afficher ou masquer" aria-label="Afficher ou masquer le mot de passe">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/>
+                    <circle cx="12" cy="12" r="2.5"/>
+                </svg>
+            </button>
+        </div>
+        {% if form.nouveau_mot_de_passe.help_text %}
+        <p class="aide">{{ form.nouveau_mot_de_passe.help_text }}</p>
+        {% endif %}
+        {% if form.nouveau_mot_de_passe.errors %}
+        <div class="erreur-champ" role="alert">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span>{{ form.nouveau_mot_de_passe.errors.0 }}</span>
+        </div>
+        {% endif %}
+    </div>
 
-    <label for="{{ form.confirmation_mot_de_passe.id_for_label }}">{{ form.confirmation_mot_de_passe.label }}</label>
-    {{ form.confirmation_mot_de_passe }}
-    {% if form.confirmation_mot_de_passe.errors %}
-    <div class="erreurs" role="alert">{{ form.confirmation_mot_de_passe.errors.0 }}</div>
-    {% endif %}
+    <div class="champ-groupe">
+        <label for="{{ form.confirmation_mot_de_passe.id_for_label }}">
+            <span>{{ form.confirmation_mot_de_passe.label }} <span class="champ-requis" aria-hidden="true">*</span></span>
+        </label>
+        <div class="champ-icone-wrapper">
+            <span class="champ-icone-prefix" aria-hidden="true">{% icone "lock" %}</span>
+            {{ form.confirmation_mot_de_passe }}
+            <button type="button" class="btn-toggle-oeil" onclick="toggleChampMdp('{{ form.confirmation_mot_de_passe.id_for_label }}', this)" title="Afficher ou masquer" aria-label="Afficher ou masquer le mot de passe">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/>
+                    <circle cx="12" cy="12" r="2.5"/>
+                </svg>
+            </button>
+        </div>
+        {% if form.confirmation_mot_de_passe.errors %}
+        <div class="erreur-champ" role="alert">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span>{{ form.confirmation_mot_de_passe.errors.0 }}</span>
+        </div>
+        {% endif %}
+    </div>
 
-    <button type="submit" class="btn-principal" style="margin-top: 8px;">
-        {% icone "check" %} Valider et activer mon compte
+    <button type="submit" class="btn-principal" id="btn-submit-activer" style="margin-top: 10px;">
+        <span class="btn-label" style="display:inline-flex;align-items:center;gap:8px;">{% icone "check" %} Valider et activer mon compte</span>
     </button>
 </form>
+
+<script>
+function toggleChampMdp(inputId, btn) {
+    var input = document.getElementById(inputId);
+    if (input && btn) {
+        var svg = btn.querySelector('svg');
+        if (input.type === 'password') {
+            input.type = 'text';
+            if (svg) svg.innerHTML = '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="2.5"/><line x1="3" y1="3" x2="21" y2="21"/>';
+        } else {
+            input.type = 'password';
+            if (svg) svg.innerHTML = '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="2.5"/>';
+        }
+    }
+}
+
+document.getElementById('form-activer-compte')?.addEventListener('submit', function () {
+    var btn = document.getElementById('btn-submit-activer');
+    if (btn) {
+        setTimeout(function () {
+            btn.disabled = true;
+            btn.classList.add('chargement');
+            var label = btn.querySelector('.btn-label');
+            if (label) {
+                label.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="icone-spin"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/></svg> Activation en cours...';
+            }
+        }, 10);
+    }
+});
+</script>
 {% endblock %}

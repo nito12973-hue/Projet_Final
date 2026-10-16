@@ -1391,6 +1391,25 @@
                 flex-wrap: wrap;
                 gap: 4px;
             }
+            .panel-form {
+                padding: 18px 16px;
+                border-radius: 12px;
+                max-width: 100%;
+            }
+            .panel-form .actions {
+                flex-direction: column;
+                width: 100%;
+                gap: 10px;
+            }
+            .panel-form .actions .button,
+            .panel-form .actions button,
+            .panel-form .actions a.button {
+                width: 100%;
+                min-height: 46px;
+                height: 46px;
+                font-size: 15px;
+                justify-content: center;
+            }
         }
 
         /* Erreurs de formulaire : classe manquante jusqu'ici (chaque template
@@ -1398,13 +1417,42 @@
            label) et globale (form.non_field_errors, avant les champs). */
         .erreurs {
             color: var(--danger);
-            margin: -10px 0 16px;
+            margin: -8px 0 16px;
             font-size: 13px;
+            font-weight: 500;
+        }
+
+        .erreurs ul {
+            margin: 4px 0 0;
+            padding-left: 20px;
         }
 
         .erreurs-formulaire {
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.22);
             color: var(--danger);
-            margin-bottom: 16px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 13.5px;
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+
+        .erreurs-formulaire ul {
+            margin: 4px 0 0;
+            padding-left: 20px;
+        }
+
+        .button.chargement,
+        button.chargement {
+            opacity: 0.85;
+            pointer-events: none;
+            cursor: not-allowed;
+        }
+
+        @keyframes tourner {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
         }
 
         /* Encart de rappel patient compact (UX-013) */
@@ -7327,6 +7375,42 @@
                 var modalAnnulation = document.getElementById('modal-annulation');
                 if (modalAnnulation && evenement.target === modalAnnulation) {
                     modalAnnulation.style.display = 'none';
+                }
+            });
+        })();
+
+        (function () {
+            // Protection anti-double soumission & état de chargement élégant sur tous les formulaires POST
+            document.addEventListener('submit', function (evt) {
+                var form = evt.target;
+                if (!(form instanceof HTMLFormElement)) { return; }
+                if (form.method && form.method.toUpperCase() !== 'POST') { return; }
+                if (form.getAttribute('data-confirmation') && form.dataset.confirme !== 'oui') { return; }
+
+                var bouton = form.querySelector('button[type="submit"]:not([data-sans-chargement])');
+                if (bouton && !bouton.disabled) {
+                    setTimeout(function () {
+                        bouton.disabled = true;
+                        bouton.classList.add('chargement');
+                        if (!bouton.querySelector('.icone-spin')) {
+                            var spinner = document.createElement('span');
+                            spinner.className = 'icone-spin';
+                            spinner.style.cssText = 'display:inline-block;width:13px;height:13px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;margin-right:7px;animation:tourner 0.8s linear infinite;vertical-align:middle;';
+                            bouton.prepend(spinner);
+                        }
+                    }, 20);
+                }
+            });
+
+            // Restauration si retour arrière ou restauration de cache de page
+            window.addEventListener('pageshow', function (evt) {
+                if (evt.persisted) {
+                    document.querySelectorAll('button[type="submit"].chargement').forEach(function (btn) {
+                        btn.disabled = false;
+                        btn.classList.remove('chargement');
+                        var sp = btn.querySelector('.icone-spin');
+                        if (sp) { sp.remove(); }
+                    });
                 }
             });
         })();
