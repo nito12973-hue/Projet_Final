@@ -188,3 +188,21 @@ Ce document consigne de façon claire et sans jargon chaque décision d'architec
      - Suppression de l'étirement des champs de saisie pour une lecture plus rapide et un confort de frappe naturel.
 - **Vérifications :** Suite complète de 893 tests validée (**100% succès**).
 
+---
+
+## [2026-10-16] Structuration Professionnelle de la Connexion et de la Landing Page (Standard Grandes Plateformes)
+- **Objectifs :**
+  1. Structurer la page de connexion comme les grands portails SaaS médicaux (Doctolib Pro, Alan, Stripe) avec repères par profil, aide contextuelle et réassurance.
+  2. Structurer la landing page avec une barre de recherche rapide de soins dans le Hero et un ruban d'indicateurs clés d'impact en direct.
+- **Décisions ergonomiques & techniques :**
+  1. **Page de connexion structurée (`login.html` & `base_auth.html`) :**
+     - **Sélecteur d'espace par onglets (Assuré, Médecin, Pharmacie, Gestionnaire) :** Onglets cliquables adaptant dynamiquement l'aide contextuelle, l'exemple de saisie (`placeholder`) et l'intitulé du bouton d'action.
+     - **Badge de statut sécurisé :** Indicateur vert « Connexion Sécurisée SSL » avec point pulsé.
+     - **Bloc de préférences & conformité :** Case « Mémoriser mon adresse » (sauvegardée dans `localStorage`) et badge « Chiffré 256 bits ».
+     - **Bloc d'assistance & accès :** Guide explicatif pour la première connexion, raccourci direct vers l'assistance WhatsApp et la FAQ.
+  2. **Landing page enrichie (`landing.html`) :**
+     - **Barre de recherche rapide de praticiens et pharmacies :** Intégrée au sein de `hero-centre`, permettant aux visiteurs de rechercher un soin et une localité (Dakar, Thiès...) avec un design épuré type Doctolib.
+     - **Ruban de KPI d'impact en direct :** 4 métriques de référence (100% dématérialisé, < 3s de validation QR, +120 structures conventionnées, conformité légale CDP Sénégal).
+- **Vérifications :** 893 tests exécutés avec succès (**100% OK**).
+
+
