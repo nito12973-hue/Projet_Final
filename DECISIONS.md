@@ -264,4 +264,15 @@ Ce document consigne de façon claire et sans jargon chaque décision d'architec
   2. Suppression des en-têtes d'impression statiques dédiés, ne conservant qu'un bouton de retour clair vers l'accueil.
 - **Vérifications :** 16 tests légaux et landing validés avec succès (**100% OK**), vérification système Django sans anomalie.
 
+---
+
+## [2026-10-16] Harmonisation des Données Réelles et Amélioration de la Landing Page
+- **Objectifs :**
+  1. Remplacer toute adresse factice (« Almadies Zone 8 ») par la mention sobre validée par l'utilisateur : « Équipe SantéSN · Dakar, République du Sénégal » et Ligne directe WhatsApp.
+  2. Ajuster la FAQ sur la protection des données de la landing page pour refléter fidèlement le respect de la Loi sénégalaise n° 2008-12 et les contrôles RBAC.
+- **Décisions ergonomiques & techniques :**
+  1. **Politique de Confidentialité (`politique_confidentialite.html`) :** Mention du Référent Protection des Données : « Équipe SantéSN · Dakar, République du Sénégal · Ligne directe WhatsApp : +221 78 957 61 45 ».
+  2. **Landing Page (`landing.html`) :** Réponse FAQ claire et positive sur la protection des données des assurés.
+- **Vérifications :** Tests unitaires validés (**100% OK**), pile Docker reconstruite et opérationnelle.
+
 
