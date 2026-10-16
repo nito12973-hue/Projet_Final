@@ -103,3 +103,18 @@ Ce document consigne de façon claire et sans jargon chaque décision d'architec
   - Service de parsing et d'orchestration (`Plateform_medicale/services/whatsapp_bot.py`).
   - Suite de tests unitaires dédiée (`WhatsAppBotAndWebhookTests`) validant le cycle conversationnel complet et la conformité du protocole.
 
+---
+
+## [2026-10-16] Stabilisation Visuelle, Suppression des Sauts de Mise en Page (CLS) et Boutons Retour Standardisés
+- **Problème identifié :** Les boutons `.btn-expand` utilisaient une animation CSS sur `:hover` (`max-width: 0 -> 260px`). Au survol de la souris, le bouton doublait soudainement de largeur, repoussant brutalement les boutons voisins vers la ligne du dessous ou chevauchant les en-têtes de cartes et de tableaux. De plus, plusieurs pages secondaires (formulaires et fiches) n'avaient pas de bouton de retour explicite vers leur tableau de bord d'origine, forçant l'utilisateur à recourir aux boutons du navigateur.
+- **Décisions ergonomiques & techniques :**
+  1. **Stabilisation des largeurs de boutons :** Suppression de l'animation d'extension de texte au survol (`.expand-text` a désormais `max-width: none` et `opacity: 1` fixes). Les boutons conservent un libellé clair et lisible en permanence, avec une micro-élévation douce (`transform: translateY(-1px)`) au survol sans modifier les dimensions du conteneur.
+  2. **En-têtes flexibles et anti-chevauchement :** Ajout de `flex-wrap: wrap; gap: 12px;` sur `.page-title` et son sous-groupe `.actions` afin d'éviter tout écrasement ou chevauchement d'éléments lorsque l'écran rétrécit.
+  3. **Standardisation du bouton « Retour » :** Ajout systématique d'un bouton de retour (`btn-retour-expand` avec icône chevron et libellé explicite) positionné en haut à droite des en-têtes de pages secondaires :
+     - Pharmacien : `scanner_ordonnance.html` -> retour au tableau de bord pharmacien.
+     - Médecin : `verifier_carte_medecin.html`, `modifier_profil_medecin.html` -> retour au tableau de bord praticien.
+     - Gestionnaire / Admin : `supervision_systeme.html`, `rapports.html`, `parametres.html`, `admin_liste_demandes_support.html`, `bordereau_teletransmission.html`, `resultat_import_utilisateurs.html` -> retours vers leurs sections mères respectives.
+     - Assuré : `assistant_sante.html`, `mes_demandes_support.html`, `mon_profil_assure.html` -> retour au tableau de bord assuré.
+- **Résultat :** Parcours utilisateur fluide, cohérent, sans saut visuel ni décalage brutal, conforme aux standards SaaS santé (Doctolib / Alan).
+
+
