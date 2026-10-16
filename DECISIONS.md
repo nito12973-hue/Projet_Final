@@ -133,3 +133,20 @@ Ce document consigne de façon claire et sans jargon chaque décision d'architec
 
 
 
+
+---
+
+## [2026-10-16] Amélioration de la Cartographie Médicale, Géolocalisation et Visualisations par Courbes
+- **Objectifs :**
+  1. Offrir aux assurés et administrateurs une expérience de localisation fluide, interactive et immédiatement actionnable (itinéraires, appels, contact direct WhatsApp avec les prestataires de santé).
+  2. Rendre les courbes de tendances (paiements, consultations, répartition des prises en charge) plus lisibles, précises, sobres et conformes aux bonnes pratiques UX.
+- **Décisions ergonomiques & techniques :**
+  1. **Cartographie médicale et géolocalisation (`prestataires_proches.html` & `liste_prestataires.html`) :**
+     - **Recadrage dynamique intelligent :** Lorsque l'assuré recherche un prestataire, sélectionne une région/ville (Dakar, Thiès, Kaolack, Saint-Louis...) ou filtre par type d'établissement, la carte calcule les limites (`fitBounds`) des marqueurs visibles et recentre automatiquement la vue avec animation fluide (`flyTo` ou `fitBounds` avec padding de confort).
+     - **Contact direct WhatsApp et badges conventionnés :** Les infobulles Leaflet et les fiches des prestataires affichent un badge officiel « Convention Tiers-Payant » et un bouton direct WhatsApp vert (`wa.me/221...`) pré-rempli pour toute structure disposant d'un numéro mobile sénégalais (préfixes 70, 75, 76, 77, 78).
+     - **Enrichissement de la carte réseau admin (`liste_prestataires.html`) :** Les marqueurs circulaires affichent désormais le type de structure, la ville, le téléphone direct cliquable, le raccourci WhatsApp et un lien d'édition rapide vers la fiche du prestataire.
+  2. **Courbes et graphiques de tendance (`dashboard.html` & `rapports.html`) :**
+     - **Courbe des flux financiers sur le tableau de bord :** La courbe de tendance des paiements sur 30 jours affiche désormais des repères temporels horizontaux épurés (dates tous les 5 jours) et des montants ordonnés en FCFA lisibles (`k` et `M`), avec infobulle complète formatée en FCFA (`new Intl.NumberFormat('fr-FR')`).
+     - **Courbe des consultations médicales (`rapports.html`) :** Les tooltips indiquent explicitement le nombre d'actes (« X consultations »), les axes disposent de pas entiers et de grilles douces adaptées au thème.
+     - **Graphique en anneau des prises en charge (`rapports.html`) :** Découpe interne aérée (`cutout: 62%`) et affichage automatique du pourcentage calculé en temps réel dans les infobulles survolées.
+- **Vérifications :** Suite complète de tests validée avec succès (**893 tests OK à 100%**).

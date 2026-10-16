@@ -369,35 +369,62 @@ resultat.
         function creerContenuPopup(prestataire, distance) {
             var conteneur = document.createElement('div');
 
+            var badgePartenaire = document.createElement('span');
+            badgePartenaire.style.cssText = 'display:inline-flex;align-items:center;gap:4px;background:#ecfdf5;color:#047857;border:1px solid #a7f3d0;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:999px;margin-bottom:6px;';
+            badgePartenaire.innerHTML = '&#10003; Convention Tiers-Payant';
+            conteneur.appendChild(badgePartenaire);
+
             var titre = document.createElement('strong');
+            titre.style.cssText = 'display:block;font-size:13.5px;color:var(--primary-dark,#0b2027);margin-bottom:2px;';
             titre.textContent = prestataire.nom;
             conteneur.appendChild(titre);
 
             var ligneType = document.createElement('div');
-            ligneType.textContent = prestataire.type + ' - ' + prestataire.ville;
+            ligneType.style.cssText = 'font-size:12px;color:var(--text-muted,#64748b);margin-bottom:4px;';
+            ligneType.textContent = prestataire.type + ' · ' + prestataire.ville;
             conteneur.appendChild(ligneType);
 
             if (prestataire.telephone) {
                 var ligneTelephone = document.createElement('div');
+                ligneTelephone.style.cssText = 'font-size:12px;margin-bottom:4px;';
                 var lienTel = document.createElement('a');
                 lienTel.href = 'tel:' + prestataire.telephone.replace(/\s+/g, '');
                 lienTel.style.color = 'var(--primary, #0e7c86)';
                 lienTel.style.fontWeight = '600';
                 lienTel.style.textDecoration = 'none';
-                lienTel.textContent = 'Tel. ' + prestataire.telephone;
+                lienTel.textContent = '📞 ' + prestataire.telephone;
                 ligneTelephone.appendChild(lienTel);
                 conteneur.appendChild(ligneTelephone);
             }
 
             if (distance !== null) {
                 var ligneDistance = document.createElement('div');
-                ligneDistance.style.marginTop = '4px';
-                ligneDistance.textContent = distance.toFixed(1) + ' km (~' + estimerMinutes(distance) + ' min)';
+                ligneDistance.style.cssText = 'font-size:12px;font-weight:600;color:var(--text,#0b2027);margin-top:2px;margin-bottom:6px;';
+                ligneDistance.textContent = '📍 ' + distance.toFixed(1) + ' km (~' + estimerMinutes(distance) + ' min)';
                 conteneur.appendChild(ligneDistance);
             }
 
             var actions = document.createElement('div');
             actions.className = 'popup-actions';
+
+            if (prestataire.telephone) {
+                var telNettoye = (prestataire.telephone || '').replace(/[^0-9]/g, '');
+                if (telNettoye.length >= 9) {
+                    if (telNettoye.length === 9 && (telNettoye.startsWith('70') || telNettoye.startsWith('75') || telNettoye.startsWith('76') || telNettoye.startsWith('77') || telNettoye.startsWith('78'))) {
+                        telNettoye = '221' + telNettoye;
+                    }
+                    if (telNettoye.startsWith('22170') || telNettoye.startsWith('22175') || telNettoye.startsWith('22176') || telNettoye.startsWith('22177') || telNettoye.startsWith('22178')) {
+                        var lienWa = document.createElement('a');
+                        lienWa.className = 'button btn-sm';
+                        lienWa.style.cssText = 'background:#25D366;color:#ffffff;border-color:#22c55e;font-weight:600;font-size:11.5px;padding:3px 7px;';
+                        lienWa.href = 'https://wa.me/' + telNettoye + '?text=' + encodeURIComponent('Bonjour ' + prestataire.nom + ', je suis assuré conventionné SantéSN et souhaite des informations pour une prise en charge / rendez-vous.');
+                        lienWa.target = '_blank';
+                        lienWa.rel = 'noopener';
+                        lienWa.textContent = 'WhatsApp';
+                        actions.appendChild(lienWa);
+                    }
+                }
+            }
 
             var origineParam = (dernierePositionUtilisateur.lat !== null)
                 ? '&origin=' + dernierePositionUtilisateur.lat + ',' + dernierePositionUtilisateur.lng
@@ -415,7 +442,7 @@ resultat.
                 var lienOfficine = document.createElement('a');
                 lienOfficine.className = 'button btn-sm';
                 lienOfficine.href = urlFichePrestataire.replace('/0/', '/' + prestataire.pk + '/');
-                lienOfficine.textContent = 'Consulter l\'officine';
+                lienOfficine.textContent = 'Voir l\'officine';
                 actions.appendChild(lienOfficine);
             } else {
                 var lienRdv = document.createElement('a');
@@ -492,6 +519,23 @@ resultat.
                 lienAppel.href = 'tel:' + prestataire.telephone.replace(/\s+/g, '');
                 lienAppel.textContent = 'Appeler';
                 actions.appendChild(lienAppel);
+
+                var telNettoye = (prestataire.telephone || '').replace(/[^0-9]/g, '');
+                if (telNettoye.length >= 9) {
+                    if (telNettoye.length === 9 && (telNettoye.startsWith('70') || telNettoye.startsWith('75') || telNettoye.startsWith('76') || telNettoye.startsWith('77') || telNettoye.startsWith('78'))) {
+                        telNettoye = '221' + telNettoye;
+                    }
+                    if (telNettoye.startsWith('22170') || telNettoye.startsWith('22175') || telNettoye.startsWith('22176') || telNettoye.startsWith('22177') || telNettoye.startsWith('22178')) {
+                        var lienWa = document.createElement('a');
+                        lienWa.className = 'button';
+                        lienWa.style.cssText = 'background:#25D366;color:#ffffff;border-color:#22c55e;font-weight:600;';
+                        lienWa.href = 'https://wa.me/' + telNettoye + '?text=' + encodeURIComponent('Bonjour ' + prestataire.nom + ', je suis assuré conventionné SantéSN et souhaite des informations pour une prise en charge / rendez-vous.');
+                        lienWa.target = '_blank';
+                        lienWa.rel = 'noopener';
+                        lienWa.textContent = 'WhatsApp';
+                        actions.appendChild(lienWa);
+                    }
+                }
             }
 
 
@@ -932,6 +976,19 @@ resultat.
                         });
                         conteneurListe.appendChild(fiche);
                     });
+                }
+            }
+
+            // Recadrage intelligent et automatique de la carte selon les filtres actifs
+            var filtreActif = Boolean(champRecherche.value || champVille.value || champType.value || champDistance.value);
+            if (filtreActif && liste.length > 0) {
+                if (liste.length === 1) {
+                    carte.flyTo([liste[0].prestataire.latitude, liste[0].prestataire.longitude], 15, { duration: 0.8 });
+                } else {
+                    var bornesVisibles = liste.map(function(item) {
+                        return [item.prestataire.latitude, item.prestataire.longitude];
+                    });
+                    carte.fitBounds(bornesVisibles, { padding: [35, 35], maxZoom: 15 });
                 }
             }
         }

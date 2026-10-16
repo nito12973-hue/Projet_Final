@@ -208,15 +208,63 @@
             }).addTo(carte);
 
             var contenu = document.createElement('div');
+            contenu.style.minWidth = '200px';
+            contenu.style.fontFamily = 'var(--font-body, system-ui, sans-serif)';
+
+            var enteteBadge = document.createElement('div');
+            enteteBadge.style.cssText = 'display:inline-flex;align-items:center;gap:4px;background:#ecfdf5;color:#047857;border:1px solid #a7f3d0;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:999px;margin-bottom:6px;';
+            enteteBadge.innerHTML = '&#10003; Conventionné SantéSN';
+            contenu.appendChild(enteteBadge);
+
             var titre = document.createElement('strong');
+            titre.style.cssText = 'display:block;font-size:13.5px;color:var(--primary-dark,#0b2027);margin-bottom:2px;';
             titre.textContent = prestataire.nom;
             contenu.appendChild(titre);
-            if (prestataire.ville) {
-                contenu.appendChild(document.createElement('br'));
-                var ville = document.createElement('span');
-                ville.textContent = prestataire.ville;
-                contenu.appendChild(ville);
+
+            var typeVille = document.createElement('div');
+            typeVille.style.cssText = 'font-size:12px;color:var(--text-muted,#64748b);margin-bottom:6px;';
+            typeVille.textContent = (prestataire.type_prestataire || 'Établissement') + (prestataire.ville ? ' · ' + prestataire.ville : '');
+            contenu.appendChild(typeVille);
+
+            if (prestataire.telephone) {
+                var telDiv = document.createElement('div');
+                telDiv.style.cssText = 'display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:8px;';
+                var lienTel = document.createElement('a');
+                lienTel.href = 'tel:' + prestataire.telephone.replace(/\s+/g, '');
+                lienTel.style.cssText = 'color:var(--primary,#0e7c86);font-weight:600;text-decoration:none;';
+                lienTel.textContent = '📞 ' + prestataire.telephone;
+                telDiv.appendChild(lienTel);
+
+                var telNettoye = (prestataire.telephone || '').replace(/[^0-9]/g, '');
+                if (telNettoye.length >= 9) {
+                    if (telNettoye.length === 9 && (telNettoye.startsWith('70') || telNettoye.startsWith('75') || telNettoye.startsWith('76') || telNettoye.startsWith('77') || telNettoye.startsWith('78'))) {
+                        telNettoye = '221' + telNettoye;
+                    }
+                    if (telNettoye.startsWith('22170') || telNettoye.startsWith('22175') || telNettoye.startsWith('22176') || telNettoye.startsWith('22177') || telNettoye.startsWith('22178')) {
+                        var lienWa = document.createElement('a');
+                        lienWa.href = 'https://wa.me/' + telNettoye + '?text=' + encodeURIComponent('Bonjour ' + prestataire.nom + ', je vous contacte depuis la plateforme SantéSN.');
+                        lienWa.target = '_blank';
+                        lienWa.rel = 'noopener';
+                        lienWa.style.cssText = 'background:#25D366;color:#ffffff;font-size:11px;font-weight:700;padding:2px 6px;border-radius:4px;text-decoration:none;';
+                        lienWa.textContent = 'WhatsApp';
+                        telDiv.appendChild(lienWa);
+                    }
+                }
+                contenu.appendChild(telDiv);
             }
+
+            if (prestataire.id) {
+                var actionsDiv = document.createElement('div');
+                actionsDiv.style.cssText = 'display:flex;gap:6px;margin-top:6px;';
+                var lienModif = document.createElement('a');
+                lienModif.className = 'button btn-sm primary';
+                lienModif.style.cssText = 'padding:3px 8px;font-size:11.5px;';
+                lienModif.href = '/prestataires/' + prestataire.id + '/modifier/';
+                lienModif.textContent = 'Modifier';
+                actionsDiv.appendChild(lienModif);
+                contenu.appendChild(actionsDiv);
+            }
+
             marqueur.bindPopup(contenu);
         });
 

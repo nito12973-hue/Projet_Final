@@ -45,7 +45,7 @@ def liste_prestataires(request):
     # depuis le dashboard admin) : seuls les champs necessaires au rendu.
     prestataires_carte = list(
         Prestataire.objects.filter(partenaire=True, latitude__isnull=False, longitude__isnull=False)
-        .values("nom", "type_prestataire", "ville", "latitude", "longitude")
+        .values("id", "nom", "type_prestataire", "ville", "telephone", "latitude", "longitude")
     )
 
     contexte = {
