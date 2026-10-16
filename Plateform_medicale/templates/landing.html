@@ -334,6 +334,180 @@
             margin-top: 36px;
         }
 
+        /* ===== Barre de recherche rapide de soins (Style grandes plateformes Doctolib / Alan) ===== */
+        .barre-recherche-soins-hero {
+            margin-top: 36px;
+            background: #ffffff;
+            border: 1.5px solid var(--border);
+            border-radius: 18px;
+            box-shadow: 0 12px 30px -5px rgba(11, 32, 39, 0.08), 0 4px 10px -2px rgba(11, 32, 39, 0.04);
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-align: left;
+            width: 100%;
+            max-width: 780px;
+            margin-left: auto;
+            margin-right: auto;
+            transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+        }
+
+        .barre-recherche-soins-hero:hover {
+            border-color: rgba(14, 124, 134, 0.4);
+            box-shadow: 0 16px 36px -6px rgba(11, 32, 39, 0.12);
+        }
+
+        .champ-soin-hero {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 6px 12px;
+        }
+
+        .champ-soin-hero .icone-soin {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: var(--primary-soft);
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .champ-soin-hero .icone-soin svg,
+        .champ-soin-hero .icone-soin .icone-nav {
+            width: 18px;
+            height: 18px;
+        }
+
+        .champ-soin-hero .saisie-bloc {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .champ-soin-hero label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 3px;
+        }
+
+        .champ-soin-hero input {
+            border: none;
+            background: transparent;
+            padding: 0;
+            margin: 0;
+            min-height: auto;
+            height: 22px;
+            font-size: 14.5px;
+            font-weight: 500;
+            color: var(--text);
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .champ-soin-hero input:focus {
+            outline: none;
+            box-shadow: none;
+        }
+
+        .separateur-soins {
+            width: 1px;
+            height: 38px;
+            background: var(--border);
+            flex-shrink: 0;
+        }
+
+        .btn-lancer-recherche {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 22px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+            color: #ffffff !important;
+            font-weight: 700;
+            font-size: 14.5px;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: transform 0.16s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 14px rgba(14, 124, 134, 0.25);
+            flex-shrink: 0;
+        }
+
+        .btn-lancer-recherche:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(14, 124, 134, 0.35);
+        }
+
+        .btn-lancer-recherche svg,
+        .btn-lancer-recherche .icone-nav {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Ruban de stats d'impact */
+        .ruban-stats {
+            background: #ffffff;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            padding: 32px 0;
+        }
+
+        .grille-ruban-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 28px;
+        }
+
+        .item-stat-ruban {
+            display: flex;
+            flex-direction: column;
+            padding: 6px 18px;
+            border-left: 3px solid var(--primary);
+        }
+
+        .item-stat-ruban .chiffre-stat {
+            font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--primary-dark);
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+        }
+
+        .item-stat-ruban .label-stat {
+            font-size: 13.5px;
+            font-weight: 700;
+            color: var(--text);
+            margin-top: 4px;
+        }
+
+        .item-stat-ruban .desc-stat {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 2px;
+            line-height: 1.4;
+        }
+
+        @media (max-width: 860px) {
+            .barre-recherche-soins-hero { flex-direction: column; align-items: stretch; padding: 14px; gap: 12px; }
+            .separateur-soins { display: none; }
+            .btn-lancer-recherche { justify-content: center; }
+            .grille-ruban-stats { grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        }
+
+        @media (max-width: 540px) {
+            .grille-ruban-stats { grid-template-columns: 1fr; }
+        }
+
         @keyframes entree {
             from { opacity: 0; transform: translateY(22px); }
             to   { opacity: 1; transform: translateY(0); }
@@ -1359,6 +1533,54 @@
                     <span class="badge-confiance">{% icone "lock" %} Données de santé protégées (CDP)</span>
                     <span class="badge-confiance">{% icone "zap" %} Tiers payant automatisé</span>
                 </div>
+
+                <!-- Barre de recherche rapide de soins (Style grandes plateformes Doctolib / Alan) -->
+                <div class="barre-recherche-soins-hero revele" role="search" aria-label="Recherche rapide de praticiens ou pharmacies">
+                    <div class="champ-soin-hero">
+                        <span class="icone-soin">{% icone "stethoscope" %}</span>
+                        <div class="saisie-bloc">
+                            <label>Praticien, spécialité ou officine</label>
+                            <input type="text" placeholder="Médecin généraliste, Pédiatrie, Pharmacie..." readonly onclick="window.location.href='{% url 'login' %}';" aria-label="Spécialité médicale ou officine">
+                        </div>
+                    </div>
+                    <div class="separateur-soins" aria-hidden="true"></div>
+                    <div class="champ-soin-hero">
+                        <span class="icone-soin">{% icone "map-pin" %}</span>
+                        <div class="saisie-bloc">
+                            <label>Localisation au Sénégal</label>
+                            <input type="text" placeholder="Dakar, Thiès, Kaolack, Saint-Louis..." readonly onclick="window.location.href='{% url 'login' %}';" aria-label="Localisation">
+                        </div>
+                    </div>
+                    <a href="{% url 'login' %}" class="btn-lancer-recherche" aria-label="Rechercher des prestataires de santé conventionnés">
+                        {% icone "search" %} <span>Trouver un prestataire</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== RUBAN DE KPI D'IMPACT EN DIRECT ===== -->
+    <section class="ruban-stats" aria-label="Chiffres clés de la plateforme SantéSN">
+        <div class="conteneur grille-ruban-stats">
+            <div class="item-stat-ruban revele">
+                <span class="chiffre-stat">100%</span>
+                <span class="label-stat">Tiers-Payant Dématérialisé</span>
+                <span class="desc-stat">Zéro avance de frais sur les actes couverts</span>
+            </div>
+            <div class="item-stat-ruban revele">
+                <span class="chiffre-stat">&lt; 3s</span>
+                <span class="label-stat">Validation Instantanée</span>
+                <span class="desc-stat">Prise en charge et ordonnances sécurisées par QR Code</span>
+            </div>
+            <div class="item-stat-ruban revele">
+                <span class="chiffre-stat">+120</span>
+                <span class="label-stat">Structures Partenaires</span>
+                <span class="desc-stat">Pharmacies, cliniques et hôpitaux au Sénégal</span>
+            </div>
+            <div class="item-stat-ruban revele">
+                <span class="chiffre-stat">CDP</span>
+                <span class="label-stat">Conformité Légale</span>
+                <span class="desc-stat">Données de santé protégées (Loi 2008-12)</span>
             </div>
         </div>
     </section>

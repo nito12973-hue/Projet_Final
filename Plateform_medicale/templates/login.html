@@ -5,8 +5,40 @@
 
 {% block content %}
 <a href="{% url 'landing' %}" class="lien-retour-accueil">{% icone "chevron-left" %} Retour à l'accueil</a>
-<h1>Connexion</h1>
-<p class="sous-titre">Accédez à votre espace sécurisé.</p>
+
+<div class="auth-card-top">
+    <div class="badge-securite-statut">
+        <span class="pastille-point"></span>
+        <span>Connexion Sécurisée SSL</span>
+    </div>
+    <h1>Connexion</h1>
+    <p class="sous-titre">Accédez à votre espace sécurisé SantéSN.</p>
+</div>
+
+<!-- Sélecteur d'espace ergonomique (inspiré des grandes plateformes de santé) -->
+<div class="selecteur-roles" role="tablist" aria-label="Espaces SantéSN">
+    <button type="button" class="btn-role actif" onclick="choisirRole('assure', this)" role="tab" aria-selected="true" id="tab-assure">
+        <span class="role-icone">{% icone "user" %}</span>
+        <span>Assuré</span>
+    </button>
+    <button type="button" class="btn-role" onclick="choisirRole('medecin', this)" role="tab" aria-selected="false" id="tab-medecin">
+        <span class="role-icone">{% icone "stethoscope" %}</span>
+        <span>Médecin</span>
+    </button>
+    <button type="button" class="btn-role" onclick="choisirRole('pharmacien', this)" role="tab" aria-selected="false" id="tab-pharmacien">
+        <span class="role-icone">{% icone "pill" %}</span>
+        <span>Pharmacie</span>
+    </button>
+    <button type="button" class="btn-role" onclick="choisirRole('gestionnaire', this)" role="tab" aria-selected="false" id="tab-gestionnaire">
+        <span class="role-icone">{% icone "shield-check" %}</span>
+        <span>Gestionnaire</span>
+    </button>
+</div>
+
+<div id="aide-role-connexion" class="aide-role-box">
+    <span class="pastille-info">{% icone "info" %}</span>
+    <span id="texte-aide-role">Espace Assuré : Utilisez l'adresse email associée à votre contrat d'assurance ou IPM.</span>
+</div>
 
 {% if session_expiree %}
 <div class="avis-info" role="status">
@@ -70,13 +102,83 @@
         {% endif %}
     </div>
 
-    <button type="submit" class="btn-principal" id="btn-submit-connexion" style="margin-top: 6px;">
-        <span class="btn-label" style="display:inline-flex;align-items:center;gap:8px;">{% icone "lock" %} Se connecter</span>
+    <div class="options-connexion">
+        <label class="case-memoriser">
+            <input type="checkbox" id="memoriser-email">
+            <span>Mémoriser mon adresse</span>
+        </label>
+        <span class="badge-chiffrement">{% icone "shield-check" %} Chiffré 256 bits</span>
+    </div>
+
+    <button type="submit" class="btn-principal" id="btn-submit-connexion">
+        <span class="btn-label" style="display:inline-flex;align-items:center;gap:8px;">
+            {% icone "lock" %} <span id="label-btn-texte">Se connecter à mon espace</span>
+        </span>
     </button>
 </form>
 
+<!-- Bloc assistance & informations d'accès -->
+<div class="bloc-assistance-auth">
+    <div class="assistance-ligne">
+        <strong>Première connexion sur la plateforme ?</strong>
+        <p>Votre compte est ouvert par votre employeur ou organisme de santé. Consultez votre boîte de réception pour activer votre accès.</p>
+    </div>
+    <div class="assistance-actions">
+        <a href="https://wa.me/221789576145?text=Bonjour%20SantéSN,%20j'ai%20besoin%20d'aide%20pour%20me%20connecter" target="_blank" rel="noopener" class="lien-assistance">
+            {% icone "phone" %} Support WhatsApp
+        </a>
+        <a href="{% url 'landing' %}#faq" class="lien-assistance">
+            {% icone "help-circle" %} Questions fréquentes
+        </a>
+    </div>
+</div>
 
 <script>
+var rolesConfig = {
+    assure: {
+        aide: "Espace Assuré : Utilisez l'adresse email associée à votre contrat d'assurance ou IPM.",
+        placeholder: "ex. awa.diallo@santesn.sn",
+        btnText: "Se connecter à mon espace Assuré"
+    },
+    medecin: {
+        aide: "Espace Médical : Connectez-vous avec vos identifiants praticien agréés pour vos consultations.",
+        placeholder: "ex. dr.ndiaye@santesn.sn",
+        btnText: "Se connecter à mon espace Médecin"
+    },
+    pharmacien: {
+        aide: "Espace Officine : Accédez au terminal de scan et délivrance des ordonnances sécurisées.",
+        placeholder: "ex. pharmacie.centrale@santesn.sn",
+        btnText: "Se connecter à mon espace Pharmacie"
+    },
+    gestionnaire: {
+        aide: "Espace Gestionnaire & Administration : Pilotage des prises en charge, prestataires et flux.",
+        placeholder: "ex. gestionnaire@santesn.sn",
+        btnText: "Se connecter au portail Gestionnaire"
+    }
+};
+
+function choisirRole(roleCle, bouton) {
+    document.querySelectorAll('.btn-role').forEach(function(b) {
+        b.classList.remove('actif');
+        b.setAttribute('aria-selected', 'false');
+    });
+    if (bouton) {
+        bouton.classList.add('actif');
+        bouton.setAttribute('aria-selected', 'true');
+    }
+    var config = rolesConfig[roleCle];
+    if (config) {
+        var texteAide = document.getElementById('texte-aide-role');
+        if (texteAide) texteAide.textContent = config.aide;
+        var emailInput = document.getElementById("{{ form.email.id_for_label }}");
+        if (emailInput && !emailInput.value) {
+            emailInput.setAttribute('placeholder', config.placeholder);
+        }
+        var btnTexte = document.getElementById('label-btn-texte');
+        if (btnTexte) btnTexte.textContent = config.btnText;
+    }
+}
+
 function toggleMdp() {
     var passInput = document.getElementById("{{ form.password.id_for_label }}");
     var svg = document.getElementById("icone-oeil");
@@ -91,7 +193,30 @@ function toggleMdp() {
     }
 }
 
+// Mémorisation locale de l'email
+document.addEventListener('DOMContentLoaded', function () {
+    var emailInput = document.getElementById("{{ form.email.id_for_label }}");
+    var memoireCheckbox = document.getElementById('memoriser-email');
+    if (emailInput && memoireCheckbox) {
+        var emailStocke = localStorage.getItem('santesn_memo_email');
+        if (emailStocke && !emailInput.value) {
+            emailInput.value = emailStocke;
+            memoireCheckbox.checked = true;
+        }
+    }
+});
+
 document.getElementById('form-connexion')?.addEventListener('submit', function () {
+    var emailInput = document.getElementById("{{ form.email.id_for_label }}");
+    var memoireCheckbox = document.getElementById('memoriser-email');
+    if (emailInput && memoireCheckbox) {
+        if (memoireCheckbox.checked && emailInput.value) {
+            localStorage.setItem('santesn_memo_email', emailInput.value);
+        } else {
+            localStorage.removeItem('santesn_memo_email');
+        }
+    }
+
     var btn = document.getElementById('btn-submit-connexion');
     if (btn) {
         setTimeout(function () {

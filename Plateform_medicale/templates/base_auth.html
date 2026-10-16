@@ -135,6 +135,227 @@
             box-sizing: border-box;
         }
 
+        /* Badge de statut sécurité en haut de la carte */
+        .auth-card-top {
+            margin-bottom: 16px;
+        }
+
+        .badge-securite-statut {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #065f46;
+            margin-bottom: 10px;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+        }
+
+        .badge-securite-statut .pastille-point {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+            animation: clignoter 2s infinite ease-in-out;
+        }
+
+        @keyframes clignoter {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.85); }
+        }
+
+        /* Sélecteur de rôle par onglets modernes */
+        .selecteur-roles {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            margin-bottom: 12px;
+            background: #f1f5f9;
+            padding: 4px;
+            border-radius: 12px;
+        }
+
+        .btn-role {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            padding: 8px 4px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 11.5px;
+            font-weight: 600;
+            color: var(--muted);
+            cursor: pointer;
+            transition: all 0.16s ease;
+        }
+
+        .btn-role:hover {
+            color: var(--texte);
+            background: rgba(255, 255, 255, 0.7);
+        }
+
+        .btn-role.actif {
+            background: #ffffff;
+            color: var(--primary-strong);
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+            font-weight: 700;
+        }
+
+        .btn-role .role-icone {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+        }
+
+        .btn-role .role-icone svg,
+        .btn-role .role-icone .icone-nav {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Boîte d'aide contextuelle par rôle */
+        .aide-role-box {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            background: var(--primary-soft);
+            border: 1px solid rgba(14, 124, 134, 0.18);
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 12.5px;
+            color: var(--primary-strong);
+            margin-bottom: 18px;
+            line-height: 1.45;
+        }
+
+        .aide-role-box .pastille-info {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .aide-role-box .pastille-info svg,
+        .aide-role-box .pastille-info .icone-nav {
+            width: 15px;
+            height: 15px;
+        }
+
+        /* Ligne des options de connexion */
+        .options-connexion {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+            font-size: 12.5px;
+            color: var(--muted);
+        }
+
+        .case-memoriser {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .case-memoriser input {
+            width: 16px;
+            height: 16px;
+            min-height: 16px;
+            margin: 0;
+            cursor: pointer;
+            accent-color: var(--primary);
+        }
+
+        .badge-chiffrement {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: #059669;
+            font-weight: 600;
+            font-size: 11.5px;
+            background: #ecfdf5;
+            padding: 3px 8px;
+            border-radius: 6px;
+        }
+
+        .badge-chiffrement svg,
+        .badge-chiffrement .icone-nav {
+            width: 13px;
+            height: 13px;
+        }
+
+        /* Bloc d'aide structuré sous le formulaire */
+        .bloc-assistance-auth {
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            font-size: 12.5px;
+            color: var(--muted);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .assistance-ligne strong {
+            display: block;
+            color: var(--texte);
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .assistance-ligne p {
+            margin: 0;
+            line-height: 1.45;
+        }
+
+        .assistance-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .lien-assistance {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--primary);
+            font-weight: 600;
+            text-decoration: none;
+            font-size: 12.5px;
+            padding: 6px 11px;
+            border-radius: 8px;
+            background: var(--primary-soft);
+            transition: all 0.15s ease;
+        }
+
+        .lien-assistance:hover {
+            background: rgba(14, 124, 134, 0.14);
+            color: var(--primary-strong);
+        }
+
+        .lien-assistance svg,
+        .lien-assistance .icone-nav {
+            width: 14px;
+            height: 14px;
+        }
+
         /* Titre de page */
         h1 {
             margin: 0 0 6px;
