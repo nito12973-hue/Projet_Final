@@ -117,4 +117,19 @@ Ce document consigne de façon claire et sans jargon chaque décision d'architec
      - Assuré : `assistant_sante.html`, `mes_demandes_support.html`, `mon_profil_assure.html` -> retour au tableau de bord assuré.
 - **Résultat :** Parcours utilisateur fluide, cohérent, sans saut visuel ni décalage brutal, conforme aux standards SaaS santé (Doctolib / Alan).
 
+---
+
+## [2026-10-16] Correction Ergonomie Admin (Retour Tableau de Bord) et Accès WhatsApp Direct au Plafond Assuré
+- **Problèmes identifiés :**
+  1. *Confusion dans la navigation utilisateurs Admin :* Sur la page de résultat de l'import et les formulaires utilisateurs, le bouton « Retour aux utilisateurs » renvoyait vers `/utilisateurs/` où l'administrateur arrivait sur une page vide (« Aucun compte signalé » car aucun compte n'était bloqué), sans possibilité immédiate de regagner son tableau de bord.
+  2. *Parcours WhatsApp sur le plafond assuré :* L'assuré ne disposait pas de raccourci direct pour interroger ou vérifier son solde de garantie restant sur WhatsApp depuis sa carte de plafond sur le tableau de bord.
+- **Décisions ergonomiques & correctifs :**
+  1. **Cohérence du retour administrateur :**
+     - Remplacement de l'action « Retour aux utilisateurs » par un bouton universel « Retour au tableau de bord » (`{% url 'dashboard' %}`) sur [resultat_import_utilisateurs.html](file:///c:/Users/nito1/Desktop/Projet_Final/Plateform_medicale/templates/resultat_import_utilisateurs.html), [importer_utilisateurs.html](file:///c:/Users/nito1/Desktop/Projet_Final/Plateform_medicale/templates/importer_utilisateurs.html), [ajouter_utilisateur.html](file:///c:/Users/nito1/Desktop/Projet_Final/Plateform_medicale/templates/ajouter_utilisateur.html) et [modifier_utilisateur.html](file:///c:/Users/nito1/Desktop/Projet_Final/Plateform_medicale/templates/modifier_utilisateur.html).
+     - Ajout d'un bouton « Retour au tableau de bord » dans l'en-tête et dans l'état vide de [liste_utilisateurs.html](file:///c:/Users/nito1/Desktop/Projet_Final/Plateform_medicale/templates/liste_utilisateurs.html), garantissant que l'administrateur n'est jamais bloqué sans action claire.
+  2. **Accès WhatsApp direct sur le plafond :**
+     - Sur [dashboard_assure.html](file:///c:/Users/nito1/Desktop/Projet_Final/Plateform_medicale/templates/dashboard_assure.html), le montant du solde annuel restant est désormais cliquable et ouvre directement WhatsApp (`https://wa.me/{{ whatsapp_bot_phone }}?text=1`) pour interroger instantanément le bot SantéSN (option 1 : consultation des droits et solde restant du foyer).
+     - Ajout d'un bouton direct WhatsApp sur la carte du solde et sous la jauge visuelle de consommation du plafond.
+
+
 
