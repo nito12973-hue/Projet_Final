@@ -12891,3 +12891,137 @@ class ParcoursUtilisateursCompletsTests(TestCase):
         resp_remb = self.client.get(reverse("liste_demandes_remboursement"))
         self.assertEqual(resp_remb.status_code, 403, "L'administrateur technique ne doit pas voir les dossiers médicaux")
 
+
+class WhatsAppBotAndWebhookTests(TestCase):
+    """Tests complets du Chatbot WhatsApp SantéSN et du Webhook officiel Meta."""
+
+    def setUp(self):
+        self.organisme = Organisme.objects.create(nom="IPM Sonatel", type_organisme=Organisme.TypeOrganisme.IPM)
+        self.plan = PlanCouverture.objects.create(nom="Formule Cadre", taux_couverture=Decimal("80.00"), plafond_annuel=Decimal("500000.00"))
+        self.user_assure = User.objects.create_user(
+            email="assure.wa@santesn.sn",
+            password=PASSWORD,
+            role=User.Role.ASSURE,
+            first_name="Amadou",
+            last_name="Ba",
+            phone_number="221771112233",
+            organisme=self.organisme,
+        )
+        self.patient = Patient.objects.create(
+            user=self.user_assure,
+            nom="Ba",
+            prenom="Amadou",
+            date_naissance=datetime.date(1990, 5, 12),
+            telephone="221771112233",
+            organisme=self.organisme,
+            plan_couverture=self.plan,
+            type_beneficiaire=Patient.TypeBeneficiaire.PRINCIPAL,
+            statut_validation=Patient.StatutValidation.VALIDE,
+        )
+        self.prestataire = Prestataire.objects.create(
+            nom="Clinique de la Madeleine",
+            type_prestataire=Prestataire.Type.CLINIQUE,
+            ville="Dakar",
+            telephone="338890000",
+            partenaire=True,
+        )
+        self.medecin = Medecin.objects.create(
+            nom="Diop",
+            prenom="Mamadou",
+            specialite="Médecine Générale",
+            telephone="776543210",
+            email="dr.diop@santesn.sn",
+            prestataire=self.prestataire,
+        )
+
+    def test_webhook_meta_verification_succes(self):
+        url = reverse("whatsapp_webhook")
+        response = self.client.get(url, {
+            "hub.mode": "subscribe",
+            "hub.verify_token": "santesn_webhook_secret_2026",
+            "hub.challenge": "123456789_challenge_ok",
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content.decode("utf-8"), "123456789_challenge_ok")
+
+    def test_webhook_meta_verification_echec_token_invalide(self):
+        url = reverse("whatsapp_webhook")
+        response = self.client.get(url, {
+            "hub.mode": "subscribe",
+            "hub.verify_token": "mauvais_token",
+            "hub.challenge": "tentative_fraude",
+        })
+        self.assertEqual(response.status_code, 403)
+
+    def test_bot_message_accueil_et_menu(self):
+        from Plateform_medicale.services.whatsapp_bot import traiter_message_entrant_whatsapp
+        reponse = traiter_message_entrant_whatsapp("221771112233", "Bonjour")
+        self.assertIn("Bonjour Amadou", reponse)
+        self.assertIn("Prendre un rendez-vous médical direct", reponse)
+        self.assertIn("Consulter mes droits", reponse)
+
+    def test_bot_consultation_droits_et_solde(self):
+        from Plateform_medicale.services.whatsapp_bot import traiter_message_entrant_whatsapp
+        reponse = traiter_message_entrant_whatsapp("221771112233", "1")
+        self.assertIn("Amadou Ba", reponse)
+        self.assertIn("80", reponse)
+        self.assertIn("500", reponse)
+
+    def test_bot_liste_medecins(self):
+        from Plateform_medicale.services.whatsapp_bot import traiter_message_entrant_whatsapp
+        reponse = traiter_message_entrant_whatsapp("221771112233", "2")
+        self.assertIn("Dr. Mamadou Diop", reponse)
+        self.assertIn("Médecine Générale", reponse)
+        self.assertIn("Exemple :", reponse)
+
+    def test_bot_prise_de_rendez_vous_directe_whatsapp(self):
+        from Plateform_medicale.services.whatsapp_bot import traiter_message_entrant_whatsapp
+        reponse = traiter_message_entrant_whatsapp("221771112233", "RDV 1 25/12/2026 10:30 Maux de tête et fièvre")
+        self.assertIn("Votre rendez-vous a été enregistré", reponse)
+        self.assertIn("Dr. Mamadou Diop", reponse)
+        self.assertIn("25/12/2026 à 10:30", reponse)
+
+        rdv = RendezVous.objects.filter(patient=self.patient, medecin=self.medecin).first()
+        self.assertIsNotNone(rdv)
+        self.assertEqual(rdv.statut, RendezVous.Statut.DEMANDE)
+        self.assertEqual(rdv.date_heure.day, 25)
+        self.assertEqual(rdv.date_heure.month, 12)
+        self.assertEqual(rdv.date_heure.hour, 10)
+        self.assertEqual(rdv.date_heure.minute, 30)
+        self.assertIn("Maux de tête", rdv.motif)
+
+    def test_bot_prise_de_rendez_vous_conflit_creneau(self):
+        from Plateform_medicale.services.whatsapp_bot import traiter_message_entrant_whatsapp
+        traiter_message_entrant_whatsapp("221771112233", "RDV 1 25/12/2026 14:00 Contrôle")
+        reponse_conflit = traiter_message_entrant_whatsapp("221771112233", "RDV 1 25/12/2026 14:00 Autre motif")
+        self.assertIn("Créneau indisponible", reponse_conflit)
+
+    def test_bot_urgences_senegal(self):
+        from Plateform_medicale.services.whatsapp_bot import traiter_message_entrant_whatsapp
+        reponse = traiter_message_entrant_whatsapp("221771112233", "4")
+        self.assertIn("SAMU National", reponse)
+        self.assertIn("1515", reponse)
+        self.assertIn("18", reponse)
+
+    def test_webhook_post_traitement_complet(self):
+        import json
+        from unittest.mock import patch
+        url = reverse("whatsapp_webhook")
+        payload = {
+            "from": "221771112233",
+            "text": "1",
+        }
+        with patch("Plateform_medicale.views.whatsapp_webhook.envoyer_message_whatsapp") as mock_envoyer:
+            mock_envoyer.return_value = {"succes": True, "statut": "ENVOYE"}
+            response = self.client.post(
+                url,
+                data=json.dumps(payload),
+                content_type="application/json",
+            )
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            self.assertEqual(data["status"], "ok")
+            self.assertIn("Vos Droits", data["reponse"])
+            mock_envoyer.assert_called_once()
+
+

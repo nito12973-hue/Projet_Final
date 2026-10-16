@@ -60,6 +60,9 @@
         <p class="subtitle">Carte N° {{ patient.numero_carte }} · Taux de prise en charge : {{ patient.taux_couverture|default:"0" }}% · IPM {{ patient.titulaire.plan_couverture.nom|default:"Général" }} — {% now "l j F Y" %}</p>
     </div>
     <div class="actions">
+        <a href="https://wa.me/{{ whatsapp_bot_phone }}?text=RDV" target="_blank" rel="noopener noreferrer" class="button btn btn-expand" style="border-color: #25D366; color: #128C7E; font-weight: 700; background: rgba(37, 211, 102, 0.08);" title="Prendre RDV sur WhatsApp avec l'assistant SantéSN" aria-label="RDV WhatsApp">
+            {% icone "chat-dots" %} <span class="expand-text">RDV WhatsApp</span>
+        </a>
         <a href="{% url 'carte_assure' %}" class="button btn btn-expand" title="Afficher ma carte dématérialisée" aria-label="Ma carte QR">
             {% icone "id-card" %} <span class="expand-text">Ma carte QR</span>
         </a>
@@ -71,6 +74,22 @@
         </a>
     </div>
 </section>
+
+<!-- Assistant Chatbot WhatsApp SantéSN -->
+<div style="background: linear-gradient(135deg, rgba(37, 211, 102, 0.08) 0%, rgba(18, 140, 126, 0.12) 100%); border: 1.5px solid rgba(37, 211, 102, 0.35); border-radius: 16px; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 22px;">
+    <div style="display: flex; align-items: center; gap: 14px;">
+        <div style="width: 42px; height: 42px; border-radius: 12px; background: #25D366; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 20px; flex-shrink: 0; box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);">
+            {% icone "chat-dots" %}
+        </div>
+        <div>
+            <div style="font-weight: 800; font-size: 15px; color: var(--titre);">Prenez rendez-vous directement sur WhatsApp !</div>
+            <div style="font-size: 13px; color: var(--muted);">Envoyez simplement <strong>"RDV"</strong> au bot SantéSN sur WhatsApp au <strong>+{{ whatsapp_bot_phone }}</strong> pour choisir votre médecin et réserver en 1 clic.</div>
+        </div>
+    </div>
+    <a href="https://wa.me/{{ whatsapp_bot_phone }}?text=RDV" target="_blank" rel="noopener noreferrer" class="button" style="background: #25D366; color: #fff; border: none; font-weight: 700; border-radius: 10px; padding: 9px 18px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(37, 211, 102, 0.35);">
+        {% icone "chat-dots" %} Démarrer sur WhatsApp
+    </a>
+</div>
 
 <div class="grille-assure-dashboard">
     <!-- Colonne 1 : Mes Soins & Rendez-vous -->
