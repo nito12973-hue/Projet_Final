@@ -225,4 +225,21 @@ Ce document consigne de façon claire et sans jargon chaque décision d'architec
      - Bannières d'audit de conformité et encadré officiel de réclamation auprès de la CDP (Immeuble Rivonia, Dakar).
 - **Vérifications :** 893 tests automatisés conformes (**100% OK**), styles d'impression et pages légales validés.
 
+---
+
+## [2026-10-16] Assainissement Sobre de la Connexion et de la Landing Page (Zéro artifice trompeur)
+- **Objectifs :**
+  1. Épurer totalement la page de connexion (`login.html` & `base_auth.html`) : supprimer les onglets de sélection de profils factices et les boîtes d'aide parasites, recentrer le formulaire sur sa fonction première avec un design net, accessible et responsive.
+  2. Aligner la Landing Page (`landing.html`) sur la promesse réelle de SantéSN sans éléments trompeurs : supprimer la fausse barre de recherche cliquable et le faux ruban de statistiques inventées.
+- **Décisions ergonomiques & techniques :**
+  1. **Page de connexion épurée (`login.html` & `base_auth.html`) :**
+     - Formulaire centré et net : Email / Identifiant, Mot de passe avec toggle oeil, bouton "Se connecter" avec indicateur de chargement.
+     - Suppression des onglets artificiels par rôle : Django authentifie directement l'utilisateur et le redirige selon son rôle en base de données.
+     - Lien sobre et discret vers la FAQ d'assistance en bas de carte.
+  2. **Landing Page authentique (`landing.html`) :**
+     - Suppression de la barre de recherche fictive du Hero et des compteurs non vérifiés.
+     - Mise en valeur directe des bénéfices réels : tiers payant dématérialisé, ordonnances infalsifiables sécurisées par QR Code, secret médical et conformité CDP Sénégal (Loi 2008-12).
+     - Démonstration transparente du produit via le showcase des 4 interfaces réelles (Admin, Assuré, Médecin, Pharmacien) et le parcours en 5 étapes.
+- **Vérifications :** Suite de tests exécutée avec succès (**100% OK**), affichage authentique et sans surcharge.
+
 
