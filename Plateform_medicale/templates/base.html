@@ -2942,10 +2942,11 @@
 
         @media print {
             /* 1. Masquage strict du décor applicatif, de la navigation et des éléments interactifs */
-            header,
-            nav,
+            header.topbar,
+            header.public-topbar,
+            nav:not(.feuille-nav),
             aside,
-            footer,
+            footer:not(.feuille-pied):not(.recu-pied),
             .topbar,
             .public-topbar,
             #barre-laterale,
@@ -2987,6 +2988,22 @@
                 height: 0 !important;
                 margin: 0 !important;
                 padding: 0 !important;
+            }
+
+            /* Préservation obligatoire des en-têtes officiels, logos et identités médicales imprimables */
+            .feuille-entete,
+            .recu-entete,
+            .feuille header,
+            .feuille-recu header,
+            .carte-assure-entete,
+            .feuille-marque,
+            .recu-marque,
+            .feuille-praticien,
+            .feuille-patient {
+                display: flex !important;
+                visibility: visible !important;
+                height: auto !important;
+                opacity: 1 !important;
             }
 
             /* 2. Format de page standard A4 */
