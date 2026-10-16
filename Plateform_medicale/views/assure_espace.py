@@ -492,6 +492,7 @@ def ajouter_rendez_vous_assure(request):
             "prestataire_id": str(m.prestataire_id) if m.prestataire_id else "",
             "prestataire_nom": m.prestataire.nom if m.prestataire else "",
             "specialite": m.specialite or "",
+            "telephone": (m.telephone or (m.prestataire.telephone if m.prestataire else "")).replace(" ", "").replace("+", "").replace("-", "").replace(".", ""),
         }
         for m in Medecin.objects.filter(
             Q(user__is_active=True) | Q(user__isnull=True)
