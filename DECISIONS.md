@@ -88,4 +88,18 @@ Ce document consigne de façon claire et sans jargon chaque décision d'architec
   - Suppression de `Plateform_medicale/templates/mot_de_passe_genere.html` (orphelin, le mot de passe est désormais transmis de manière sécurisée par canal dédié).
   - Suppression des caches `.pytest_cache` et `.kilo/`.
   - Configuration de `.gitignore` pour ignorer systématiquement les fichiers temporaires de tests générés localement (`media/justificatifs_remboursements/*.pdf`, `backups/*.json`).
-  - Validation que l'arbre de travail git est 100% propre (`nothing to commit, working tree clean`) et que la totalité des 884 tests passe sans aucune régression.
+  - Validation que l'arbre de travail git est 100% propre (`nothing to commit, working tree clean`) et que la totalité des 893 tests passe sans aucune régression.
+
+---
+
+## [2026-10-16] Chatbot Conversationnel et Webhook Meta Cloud API
+- **Décision :** Implémenter un moteur conversationnel complet et un webhook officiel Meta (`/api/whatsapp/webhook/`) permettant à tout assuré de dialoguer avec SantéSN directement depuis son application WhatsApp :
+  - **Menu interactif :** Accueil personnalisé selon le numéro de téléphone de l'expéditeur.
+  - **Consultation des droits :** Taux de couverture de l'assuré, plafond annuel restant du foyer et statut d'adhésion.
+  - **Réservation directe de rendez-vous :** Sélection d'un praticien partenaire, analyse de la date et de l'heure voulues, détection des conflits d'horaires et création instantanée du `RendezVous` en base avec statut `DEMANDE`.
+  - **Urgences nationales :** Rappel des numéros de secours au Sénégal (SAMU 1515, Pompiers 18, SOS Médecins).
+- **Architecture technique :**
+  - Contrôleur webhook (`Plateform_medicale/views/whatsapp_webhook.py`) conforme aux spécifications Meta (authentification par challenge GET et ingestion des événements POST).
+  - Service de parsing et d'orchestration (`Plateform_medicale/services/whatsapp_bot.py`).
+  - Suite de tests unitaires dédiée (`WhatsAppBotAndWebhookTests`) validant le cycle conversationnel complet et la conformité du protocole.
+
