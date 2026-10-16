@@ -265,8 +265,10 @@
 }
 
 @media print {
-    .sans-impression, header, nav, aside, footer, #barre-laterale, .topbar {
+    .sans-impression, header, nav, aside, footer, #barre-laterale, .topbar, .public-topbar, .topbar-droite, .menu-theme, #menu-theme-topbar, .menu-notifications, .menu-compte, .fil-ariane, .page-title, .actions, .button, button {
         display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
     }
     body {
         background: #ffffff !important;

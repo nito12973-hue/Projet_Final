@@ -1,109 +1,713 @@
 {% extends "base.html" %}
 {% load icones %}
 
-{% block title %}Conditions Générales d'Utilisation (CGU){% endblock %}
+{% block title %}Conditions Générales d'Utilisation (CGU) — SantéSN{% endblock %}
 
 {% block content %}
-<div style="max-width: 900px; margin: 0 auto; padding: 20px 0 60px;">
-    <div style="margin-bottom: 30px;">
-        <a href="{% url 'landing' %}" class="button btn btn-sm" style="margin-bottom: 16px;">
-            {% icone "chevron-left" %} Retour à l'accueil
-        </a>
-        <h1 style="font-size: 28px; margin-bottom: 8px;">Conditions Générales d'Utilisation (CGU)</h1>
-        <p class="subtitle">Règles d'utilisation, engagements déontologiques et cadre juridique de la plateforme SantéSN.</p>
-    </div>
-
-    <div class="avis" style="border-left: 4px solid var(--primary); background: var(--surface); margin-bottom: 28px; padding: 18px 22px;">
-        <div class="avis-titre" style="color: var(--primary-strong); margin-bottom: 6px;">
-            {% icone "file-text" %} Cadre Conventionnel & Légal
+<div class="page-juridique-conteneur">
+    <!-- En-tête du document légal -->
+    <header class="entete-document-legal sans-impression">
+        <div class="fil-ariane-legal">
+            <a href="{% url 'landing' %}">Accueil</a>
+            <span class="separateur-chevron">›</span>
+            <span>Cadre Conventionnel</span>
+            <span class="separateur-chevron">›</span>
+            <span class="courant">Conditions Générales d'Utilisation</span>
         </div>
-        <p style="margin: 0; font-size: 13.5px; color: var(--muted); line-height: 1.55;">
-            L'utilisation de la plateforme SantéSN emporte acceptation pleine et entière des présentes Conditions Générales d'Utilisation. Les règles ci-après précisent les droits et devoirs des acteurs de l'écosystème de santé (Assurés, Praticiens soignants, Pharmaciens d'officine et Gestionnaires d'assurance). Ce document est soumis à validation juridique régulière par les autorités de tutelle.
-        </p>
+
+        <div class="titre-et-actions-legal">
+            <div>
+                <div class="badges-legal">
+                    <span class="badge-statut-legal">{% icone "shield-check" %} Document Officiel SantéSN</span>
+                    <span class="badge-date-legal">Version 2.4 · En vigueur au 16 octobre 2026</span>
+                    <span class="badge-cdp-legal">Conformité République du Sénégal</span>
+                </div>
+                <h1>Conditions Générales d'Utilisation (CGU)</h1>
+                <p class="sous-titre-legal">Règles d'utilisation, engagements déontologiques, tiers-payant dématérialisé et cadre juridique de la plateforme SantéSN.</p>
+            </div>
+            <div class="actions-document-legal">
+                <button type="button" class="btn-action-legal" onclick="window.print()" title="Imprimer ou enregistrer au format PDF">
+                    {% icone "printer" %} <span>Imprimer / PDF</span>
+                </button>
+                <a href="{% url 'landing' %}" class="btn-action-legal secondaire">
+                    {% icone "chevron-left" %} <span>Retour</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- En-tête officiel imprimable uniquement -->
+    <div class="entete-impression-officielle">
+        <div class="logo-impression">
+            <strong>SantéSN</strong> · Plateforme Nationale de Santé Connectée & Tiers-Payant Dématérialisé
+        </div>
+        <h2>Conditions Générales d'Utilisation (CGU) — Document Officiel</h2>
+        <p class="meta-impression">République du Sénégal · Version 2.4 · Entrée en vigueur : 16 Octobre 2026 · Page 1/1</p>
     </div>
 
-    <article class="panel" style="padding: 32px; display: flex; flex-direction: column; gap: 28px; line-height: 1.65; color: var(--text);">
-        <section>
-            <h2 style="font-size: 20px; color: var(--titre); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                {% icone "shield-check" %} 1. Objet du Service
-            </h2>
-            <p>
-                SantéSN est une infrastructure logicielle nationale dédiée à la dématérialisation et à la fiabilisation de la chaîne de soins au Sénégal. Elle assure l'interconnexion sécurisée entre les bénéficiaires d'assurance santé, les professionnels de santé prescripteurs, les officines de pharmacie dispensatrices et les caisses de prévoyance (IPM / mutuelles).
-            </p>
-        </section>
+    <!-- Corps du document en 2 colonnes (Sommaire Sticky + Contenu) -->
+    <div class="grille-juridique">
+        <!-- Sommaire latéral sticky -->
+        <aside class="sommaire-lateral sans-impression">
+            <div class="sommaire-carte">
+                <h3 class="sommaire-titre">{% icone "list" %} Sommaire des Articles</h3>
+                <nav class="sommaire-liens" aria-label="Navigation des articles des CGU">
+                    <a href="#art-1" class="lien-sommaire">1. Objet du Service & Champ d'application</a>
+                    <a href="#art-2" class="lien-sommaire">2. Accès & Attribution des Comptes</a>
+                    <a href="#art-3" class="lien-sommaire">3. Engagements Spécifiques par Rôle</a>
+                    <a href="#art-4" class="lien-sommaire">4. Valeur Probante de l'Ordonnance RX</a>
+                    <a href="#art-5" class="lien-sommaire">5. Tiers-Payant & Prises en Charge</a>
+                    <a href="#art-6" class="lien-sommaire">6. Secret Médical & Données Personnelles</a>
+                    <a href="#art-7" class="lien-sommaire">7. Disponibilité & Responsabilité</a>
+                    <a href="#art-8" class="lien-sommaire">8. Loi Applicable & Juridiction</a>
+                </nav>
 
-        <section>
-            <h2 style="font-size: 20px; color: var(--titre); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                {% icone "users" %} 2. Modalités d'Accès & Attribution des Comptes
-            </h2>
-            <p>
-                L'accès à SantéSN est strictement nominatif et encadré par les règles suivantes :
-            </p>
-            <ul style="padding-left: 20px; margin-top: 8px; display: flex; flex-direction: column; gap: 6px;">
-                <li><strong>Absence d'auto-inscription libre :</strong> Les comptes sont exclusivement créés et habilités par l'administrateur institutionnel ou l'IPM de rattachement, après vérification de l'identité ou de l'inscription à l'Ordre professionnel compétent.</li>
-                <li><strong>Confidentialité des identifiants :</strong> Tout titulaire de compte est responsable exclusif de la préservation de son mot de passe. Tout acte accompli depuis une session authentifiée est réputé émaner de son titulaire légitime.</li>
-                <li><strong>Sécurité des sessions :</strong> La déconnexion doit être opérée systématiquement à l'issue de chaque session de consultation ou de délivrance, en particulier sur poste partagé en cabinet ou officine.</li>
-            </ul>
-        </section>
-
-        <section>
-            <h2 style="font-size: 20px; color: var(--titre); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                {% icone "stethoscope" %} 3. Engagements Spécifiques par Rôle
-            </h2>
-            <div style="display: flex; flex-direction: column; gap: 16px; margin-top: 10px;">
-                <div style="background: var(--champ-bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px;">
-                    <strong style="color: var(--titre); display: block; margin-bottom: 4px;">Médecins & Professionnels de santé prescripteurs</strong>
-                    <span style="font-size: 13.5px; color: var(--text);">
-                        Le praticien engage sa responsabilité ordinale et déontologique lors de la rédaction de chaque diagnostic et ordonnance. Il s'engage à vérifier l'identité du patient et la cohérence des antécédents médicaux avant toute prescription électronique.
-                    </span>
-                </div>
-                <div style="background: var(--champ-bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px;">
-                    <strong style="color: var(--titre); display: block; margin-bottom: 4px;">Pharmaciens d'officine & Équipes de dispensation</strong>
-                    <span style="font-size: 13.5px; color: var(--text);">
-                        Le pharmacien procède obligatoirement au contrôle d'authenticité par scan du QR Code sécurisé ou saisie du code unique <code>RX-XXXXXXXXXX</code>. La validation de délivrance emporte obligation de remise physique des médicaments prescrits et verrouille définitivement l'ordonnance en base.
-                    </span>
-                </div>
-                <div style="background: var(--champ-bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px;">
-                    <strong style="color: var(--titre); display: block; margin-bottom: 4px;">Assurés sociaux & Bénéficiaires</strong>
-                    <span style="font-size: 13.5px; color: var(--text);">
-                        L'assuré veille à la régularité de sa couverture et présente sa carte numérique ou physique lors des soins. Il s'interdit toute cession ou tentative d'utilisation frauduleuse de ses droits ou de ceux de ses ayants droit.
-                    </span>
+                <div class="sommaire-assistance">
+                    <strong>Besoin d'un renseignement juridique ?</strong>
+                    <p>Pour toute question sur vos droits ou conventions de partenariat :</p>
+                    <a href="mailto:dpo@santesn.sn" class="lien-contact-sommaire">{% icone "mail" %} dpo@santesn.sn</a>
+                    <a href="https://wa.me/221789576145" target="_blank" rel="noopener" class="lien-contact-sommaire whatsapp">{% icone "phone" %} Support WhatsApp</a>
                 </div>
             </div>
-        </section>
+        </aside>
 
-        <section>
-            <h2 style="font-size: 20px; color: var(--titre); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                {% icone "qr-scan" %} 4. Valeur Probante de l'Ordonnance Numérique
-            </h2>
-            <p>
-                Toute ordonnance émise via SantéSN est pourvue d'un identifiant cryptographique unique (code <code>RX</code>) et d'un QR Code vectoriel indélébile. Conformément aux dispositions sur la dématérialisation des actes au Sénégal, cette ordonnance numérique fait foi devant les autorités sanitaires, organismes d'assurance et juridictions compétentes.
-            </p>
-            <p style="margin-top: 8px;">
-                <strong>Durée de validité :</strong> Par défaut, sauf mention expresse du médecin prescripteur, une ordonnance est valable pour une durée de 90 jours à compter de sa date de création. Une fois délivrée, son statut passe irrévocablement à « Délivrée » et interdit toute délivrance subséquente.
-            </p>
-        </section>
+        <!-- Contenu des articles -->
+        <main class="contenu-juridique">
+            <div class="encadre-preambule">
+                <div class="preambule-titre">
+                    {% icone "info" %}
+                    <span>Préambule & Force Obligatoire</span>
+                </div>
+                <p>
+                    L'utilisation de la plateforme SantéSN implique l'acceptation intégrale, sans réserve ni restriction, des présentes Conditions Générales d'Utilisation. Elles lient contractuellement la plateforme, les assurés sociaux, les praticiens soignants, les officines de pharmacie agréées et les institutions de prévoyance maladie (IPM / Mutuelles). Ce cadre est révisé régulièrement en concertation avec les instances ordinales et de tutelle sénégalaises.
+                </p>
+            </div>
 
-        <section>
-            <h2 style="font-size: 20px; color: var(--titre); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                {% icone "lock" %} 5. Disponibilité, Maintenance & Responsabilité
-            </h2>
-            <p>
-                L'exploitant s'efforce d'assurer une disponibilité du service 24h/24 et 7j/7, avec un taux de disponibilité cible supérieur à 99,5%. Des interruptions ponctuelles pour maintenance évolutive ou corrective peuvent intervenir sous réserve d'information préalable.
-            </p>
-            <p style="margin-top: 8px;">
-                SantéSN ne saurait être tenue pour responsable en cas de force majeure, d'interruption des réseaux de télécommunication tiers ou de déclarations erronées saisies par un utilisateur de la plateforme.
-            </p>
-        </section>
+            <!-- Article 1 -->
+            <article class="article-legal" id="art-1">
+                <div class="article-entete">
+                    <span class="article-numero">Article 1</span>
+                    <h2>{% icone "shield-check" %} Objet du Service & Champ d'Application</h2>
+                </div>
+                <div class="en-bref-pill">En résumé : SantéSN interconnecte les acteurs de la santé au Sénégal pour éliminer la fraude et accélérer les soins.</div>
+                <p>
+                    SantéSN est une infrastructure numérique nationale conçue pour dématérialiser, sécuriser et fluidifier l'ensemble du parcours de soins et du tiers-payant en République du Sénégal. Elle assure une interconnexion cryptographique et en temps réel entre :
+                </p>
+                <ul class="liste-points-legal">
+                    <li><strong>Les Bénéficiaires & Assurés sociaux :</strong> Salariés, retraités et ayants droit d'entreprises ou de mutuelles partenaires.</li>
+                    <li><strong>Les Professionnels de Santé Prescripteurs :</strong> Médecins généralistes, spécialistes, dentistes et chirurgiens dûment inscrits à l'Ordre National des Médecins du Sénégal (ONMS).</li>
+                    <li><strong>Les Établissements & Prestataires Conventionnés :</strong> Hôpitaux publics, cliniques privées, centres de santé, cabinets médicaux et laboratoires d'analyses.</li>
+                    <li><strong>Les Pharmacies d'Officine Agréées :</strong> Membres de l'Ordre National des Pharmaciens du Sénégal (ONP) assurant la délivrance sécurisée des médicaments.</li>
+                    <li><strong>Les Caisses de Prévoyance & Assurances :</strong> Institutions de Prévoyance Maladie (IPM), mutuelles de santé, compagnies d'assurance et entreprises gestionnaires.</li>
+                </ul>
+            </article>
 
-        <section>
-            <h2 style="font-size: 20px; color: var(--titre); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                {% icone "building" %} 6. Loi Applicable & Juridiction Compétente
-            </h2>
-            <p>
-                Les présentes CGU sont régies par le droit en vigueur en République du Sénégal. Tout litige relatif à leur interprétation ou à leur exécution relève de la compétence exclusive des juridictions de Dakar, après tentative de conciliation préalable.
-            </p>
-        </section>
-    </article>
+            <!-- Article 2 -->
+            <article class="article-legal" id="art-2">
+                <div class="article-entete">
+                    <span class="article-numero">Article 2</span>
+                    <h2>{% icone "users" %} Modalités d'Accès, Enrôlement & Attribution des Comptes</h2>
+                </div>
+                <div class="en-bref-pill">En résumé : Aucun compte n'est ouvert sans validation préalable par une IPM ou un organisme habilité.</div>
+                <p>L'accès à l'espace numérique sécurisé SantéSN est strictement nominatif et encadré par des règles rigoureuses :</p>
+                <ul class="liste-points-legal">
+                    <li><strong>Absence d'auto-inscription libre :</strong> Contrairement aux réseaux sociaux grand public, aucun utilisateur ne peut s'inscrire librement. Chaque profil (Assuré, Médecin, Pharmacien, Gestionnaire) est validé et créé par l'administrateur institutionnel ou l'IPM de rattachement après contrôle des pièces justificatives.</li>
+                    <li><strong>Activation sécurisée par lien à usage unique :</strong> La première connexion requiert la validation d'un lien d'activation sécurisé valable 24 heures transmis par email ou canal vérifié, avec définition obligatoire d'un mot de passe fort d'au moins 8 caractères comprenant majuscules, minuscules, chiffres et caractères spéciaux.</li>
+                    <li><strong>Responsabilité de session :</strong> Chaque utilisateur est civilement et pénalement responsable des actes accomplis sous son identifiant. Toute opération effectuée depuis un compte authentifié est réputée réalisée par son titulaire.</li>
+                    <li><strong>Verrouillage de sécurité :</strong> Tout compte subit un verrouillage automatique de sécurité temporaire après 5 tentatives consécutives de connexion infructueuses afin de prévenir toute attaque par force brute.</li>
+                </ul>
+            </article>
+
+            <!-- Article 3 -->
+            <article class="article-legal" id="art-3">
+                <div class="article-entete">
+                    <span class="article-numero">Article 3</span>
+                    <h2>{% icone "stethoscope" %} Engagements Spécifiques & Déontologie par Rôle</h2>
+                </div>
+                <div class="en-bref-pill">En résumé : Chaque corps de métier dispose de prérogatives strictes respectant le secret médical et les devoirs ordinaux.</div>
+
+                <div class="grille-roles-legal">
+                    <div class="carte-role-legal">
+                        <div class="role-titre">
+                            {% icone "stethoscope" %}
+                            <strong>Médecins Prescripteurs</strong>
+                        </div>
+                        <p>
+                            Le praticien engage son entière responsabilité ordinale et déontologique lors de la prescription. Il atteste avoir personnellement examiné le patient, validé son identité et renseigné des posologies conformes à l'art médical. L'émission d'une ordonnance génère un identifiant unique inaltérable.
+                        </p>
+                    </div>
+
+                    <div class="carte-role-legal">
+                        <div class="role-titre">
+                            {% icone "pill" %}
+                            <strong>Pharmaciens d'Officine</strong>
+                        </div>
+                        <p>
+                            Le pharmacien procède obligatoirement au scan du QR Code ou à la saisie du code unique <code>RX-XXXXXXXXXX</code> avant toute dispensation. La validation de délivrance emporte obligation de remise physique des médicaments prescrits et verrouille instantanément l'ordonnance en base.
+                        </p>
+                    </div>
+
+                    <div class="carte-role-legal">
+                        <div class="role-titre">
+                            {% icone "user" %}
+                            <strong>Assurés & Familles</strong>
+                        </div>
+                        <p>
+                            L'assuré veille à la validité de ses droits et présente sa carte numérique ou physique lors des soins. Il s'interdit formellement toute cession, duplication ou tentative d'utilisation frauduleuse de ses droits ou de ceux de ses ayants droit sous peine de radiation immédiate et poursuites pénales.
+                        </p>
+                    </div>
+
+                    <div class="carte-role-legal">
+                        <div class="role-titre">
+                            {% icone "building" %}
+                            <strong>Gestionnaires IPM & Mutuelles</strong>
+                        </div>
+                        <p>
+                            Les gestionnaires instruisent les devis de prise en charge et les demandes de remboursement dans le strict respect de la confidentialité. Conformément au principe d'étanchéité médicale (RBAC), les gestionnaires n'ont jamais accès aux diagnostics confidentiels des patients.
+                        </p>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Article 4 -->
+            <article class="article-legal" id="art-4">
+                <div class="article-entete">
+                    <span class="article-numero">Article 4</span>
+                    <h2>{% icone "qr-scan" %} Valeur Probante de l'Ordonnance Numérique & Code RX</h2>
+                </div>
+                <div class="en-bref-pill">En résumé : L'ordonnance SantéSN est dotée d'une signature cryptographique infalsifiable faisant pleine foi.</div>
+                <p>
+                    Chaque prescription électronique générée sur SantéSN reçoit un numéro unique de traçabilité structuré sous la forme <code>RX-XXXXXXXXXX</code> accompagné d'un QR Code vectoriel indélébile scellé au moment de sa signature :
+                </p>
+                <ul class="liste-points-legal">
+                    <li><strong>Force probante :</strong> L'ordonnance électronique émise sur SantéSN possède la même valeur légale et probatoire qu'une ordonnance manuscrite originale, conformément au Code des Obligations Civiles et Commerciales du Sénégal relatif à la preuve électronique.</li>
+                    <li><strong>Durée de validité :</strong> Sauf mention expresse d'urgence ou de posologie spécifique inscrite par le prescripteur, la durée maximale de validité d'une ordonnance est de 90 jours calendaires à compter de son émission.</li>
+                    <li><strong>Usage unique & verrouillage anti-fraude :</strong> Une fois les médicaments dispensés en pharmacie, le statut de l'ordonnance passe irrévocablement à l'état « Délivrée ». Toute tentative ultérieure de réutilisation est automatiquement rejetée avec alerte immédiate.</li>
+                </ul>
+            </article>
+
+            <!-- Article 5 -->
+            <article class="article-legal" id="art-5">
+                <div class="article-entete">
+                    <span class="article-numero">Article 5</span>
+                    <h2>{% icone "zap" %} Tiers-Payant, Prises en Charge & Régularisation des Soins</h2>
+                </div>
+                <div class="en-bref-pill">En résumé : L'assuré bénéficie de la dispense d'avance de frais selon le barème conventionné de son organisme.</div>
+                <p>Le mécanisme de tiers-payant SantéSN fonctionne selon les règles suivantes :</p>
+                <ul class="liste-points-legal">
+                    <li><strong>Dispense d'avance de frais :</strong> Sur présentation de la carte SantéSN (numérique ou physique), l'assuré ne règle au prestataire que le ticket modérateur résiduel non couvert par son organisme (ex. 20% si la couverture est à 80%).</li>
+                    <li><strong>Plafond annuel de consommation :</strong> Les prestations sont débitées en temps réel sur le solde annuel alloué au foyer. Lorsque le plafond annuel est atteint, les prestations complémentaires sont basculées à la charge exclusive de l'adhérent.</li>
+                    <li><strong>Accords préalables & devis médicaux :</strong> Pour les actes hospitaliers, dentaires ou optiques excédant les seuils conventionnels, un devis préalable doit être téléversé et instruit par le médecin-conseil de l'IPM avant délivrance de la lettre de garantie.</li>
+                </ul>
+            </article>
+
+            <!-- Article 6 -->
+            <article class="article-legal" id="art-6">
+                <div class="article-entete">
+                    <span class="article-numero">Article 6</span>
+                    <h2>{% icone "lock" %} Secret Médical & Protection des Données Personnelles</h2>
+                </div>
+                <div class="en-bref-pill">En résumé : Vos données de santé sont strictement confidentielles et protégées par la Loi n° 2008-12.</div>
+                <p>
+                    SantéSN s'engage à respecter scrupuleusement les prescriptions de la <strong>Loi sénégalaise n° 2008-12 relative à la protection des données à caractère personnel</strong>, ainsi que le Code de Déontologie Médicale du Sénégal :
+                </p>
+                <ul class="liste-points-legal">
+                    <li><strong>Secret professionnel & médical :</strong> Les données médicales (antécédents, diagnostics, traitements) sont couvertes par le secret médical absolu. Elles ne sont accessibles qu'au médecin traitant et au patient lui-même.</li>
+                    <li><strong>Hébergement souverain & sécurisé :</strong> Les bases de données sont hébergées selon des standards stricts garantissant leur souveraineté, protégées par un chiffrement TLS 1.3 en transit et AES-256 au repos.</li>
+                    <li><strong>Interdiction absolue de revente :</strong> SantéSN ne commercialise, ne loue et ne cède aucune donnée à des tiers, régies publicitaires ou courtiers d'informations.</li>
+                </ul>
+            </article>
+
+            <!-- Article 7 -->
+            <article class="article-legal" id="art-7">
+                <div class="article-entete">
+                    <span class="article-numero">Article 7</span>
+                    <h2>{% icone "check" %} Disponibilité, Maintenance & Continuité de Service</h2>
+                </div>
+                <div class="en-bref-pill">En résumé : Service garanti 24h/24 et 7j/7 avec un taux de disponibilité cible supérieur à 99,5%.</div>
+                <p>
+                    L'infrastructure logicielle SantéSN est surveillée en temps réel par une équipe d'ingénieurs d'astreinte. Des fenêtres de maintenance programmée peuvent intervenir aux heures de moindre affluence (entre 01h00 et 05h00 GMT) sous réserve d'avis technique affiché préalablement.
+                </p>
+            </article>
+
+            <!-- Article 8 -->
+            <article class="article-legal" id="art-8">
+                <div class="article-entete">
+                    <span class="article-numero">Article 8</span>
+                    <h2>{% icone "building" %} Loi Applicable & Règlement des Différends</h2>
+                </div>
+                <div class="en-bref-pill">En résumé : Droit sénégalais applicable et juridiction exclusive des tribunaux de Dakar.</div>
+                <p>
+                    Les présentes Conditions Générales d'Utilisation sont exclusivement régies par le droit en vigueur en République du Sénégal. En cas de différend relatif à l'interprétation, la validité ou l'exécution des présentes, les parties s'engagent à rechercher préalablement une solution amiable par voie de conciliation. À défaut d'accord amiable dans un délai de 30 jours, compétence expresse et exclusive est attribuée aux tribunaux compétents du ressort de la Cour d'Appel de Dakar.
+                </p>
+            </article>
+
+            <div class="carte-validation-cdp">
+                <div class="badge-sceau-cdp">{% icone "shield-check" %}</div>
+                <div>
+                    <strong>Homologation & Déclaration Officielle</strong>
+                    <p>Déclaré et enregistré auprès de la Commission de Protection des Données Personnelles du Sénégal (CDP) sous le récépissé de conformité officielle pour les traitements de santé numérique.</p>
+                </div>
+            </div>
+        </main>
+    </div>
 </div>
+
+<style>
+/* ===== Styles du document juridique façon grandes plateformes ===== */
+.page-juridique-conteneur {
+    max-width: 1140px;
+    margin: 0 auto;
+    padding: 16px 20px 80px;
+}
+
+.fil-ariane-legal {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 14px;
+}
+.fil-ariane-legal a {
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+.fil-ariane-legal a:hover {
+    color: var(--primary);
+    text-decoration: underline;
+}
+.separateur-chevron {
+    color: #cbd5e1;
+    font-size: 12px;
+}
+.fil-ariane-legal .courant {
+    color: var(--primary-strong);
+    font-weight: 600;
+}
+
+.entete-document-legal {
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+}
+
+.titre-et-actions-legal {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.badges-legal {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+.badge-statut-legal {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #065f46;
+}
+.badge-statut-legal svg, .badge-statut-legal .icone-nav { width: 14px; height: 14px; }
+
+.badge-date-legal {
+    padding: 4px 10px;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #475569;
+}
+
+.badge-cdp-legal {
+    padding: 4px 10px;
+    background: var(--primary-soft);
+    border: 1px solid rgba(14, 124, 134, 0.2);
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--primary-strong);
+}
+
+.entete-document-legal h1 {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    font-size: 30px;
+    font-weight: 800;
+    color: var(--primary-dark);
+    margin: 0 0 8px;
+    letter-spacing: -0.02em;
+}
+
+.sous-titre-legal {
+    font-size: 15px;
+    color: var(--muted);
+    max-width: 720px;
+    line-height: 1.55;
+    margin: 0;
+}
+
+.actions-document-legal {
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.btn-action-legal {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+    color: #ffffff !important;
+    font-weight: 600;
+    font-size: 13.5px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform 0.16s ease, box-shadow 0.16s ease;
+    box-shadow: 0 2px 8px rgba(14, 124, 134, 0.2);
+}
+.btn-action-legal:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(14, 124, 134, 0.3);
+}
+.btn-action-legal svg, .btn-action-legal .icone-nav { width: 15px; height: 15px; }
+
+.btn-action-legal.secondaire {
+    background: #ffffff;
+    color: var(--texte) !important;
+    border: 1.5px solid var(--border);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+.btn-action-legal.secondaire:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+/* Grille 2 colonnes avec sommaire sticky */
+.grille-juridique {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 36px;
+    align-items: flex-start;
+}
+
+.sommaire-lateral {
+    position: sticky;
+    top: 90px;
+}
+
+.sommaire-carte {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.05);
+}
+
+.sommaire-titre {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--primary-dark);
+    margin: 0 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+.sommaire-titre svg, .sommaire-titre .icone-nav { width: 16px; height: 16px; color: var(--primary); }
+
+.sommaire-liens {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.lien-sommaire {
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    color: var(--muted);
+    text-decoration: none;
+    font-weight: 500;
+    line-height: 1.4;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+.lien-sommaire:hover {
+    background: var(--primary-soft);
+    color: var(--primary-strong);
+    font-weight: 600;
+}
+
+.sommaire-assistance {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+}
+.sommaire-assistance strong {
+    display: block;
+    color: var(--texte);
+    margin-bottom: 4px;
+}
+.sommaire-assistance p {
+    margin: 0 0 10px;
+    line-height: 1.4;
+}
+
+.lien-contact-sommaire {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+.lien-contact-sommaire:hover { text-decoration: underline; }
+.lien-contact-sommaire svg, .lien-contact-sommaire .icone-nav { width: 13px; height: 13px; }
+.lien-contact-sommaire.whatsapp { color: #059669; }
+
+/* Contenu des articles */
+.contenu-juridique {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+.encadre-preambule {
+    background: var(--primary-soft);
+    border: 1px solid rgba(14, 124, 134, 0.22);
+    border-left: 4px solid var(--primary);
+    border-radius: 12px;
+    padding: 18px 22px;
+}
+.preambule-titre {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--primary-strong);
+    font-weight: 700;
+    font-size: 14.5px;
+    margin-bottom: 8px;
+}
+.preambule-titre svg, .preambule-titre .icone-nav { width: 16px; height: 16px; }
+.encadre-preambule p {
+    margin: 0;
+    font-size: 13.5px;
+    color: #334155;
+    line-height: 1.6;
+}
+
+.article-legal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    scroll-margin-top: 100px;
+}
+
+.article-entete {
+    margin-bottom: 12px;
+}
+
+.article-numero {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--primary);
+    margin-bottom: 4px;
+}
+
+.article-entete h2 {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--primary-dark);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: -0.015em;
+}
+.article-entete h2 svg, .article-entete h2 .icone-nav { width: 20px; height: 20px; color: var(--primary); flex-shrink: 0; }
+
+.en-bref-pill {
+    display: inline-block;
+    padding: 4px 10px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 16px;
+}
+
+.article-legal p {
+    margin: 0 0 12px;
+    font-size: 14.5px;
+    color: #334155;
+    line-height: 1.65;
+}
+
+.liste-points-legal {
+    padding-left: 20px;
+    margin: 12px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 14px;
+    color: #334155;
+    line-height: 1.55;
+}
+.liste-points-legal strong { color: var(--texte); }
+
+.grille-roles-legal {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.carte-role-legal {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+}
+.role-titre {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--primary-dark);
+    margin-bottom: 8px;
+    font-size: 13.5px;
+}
+.role-titre svg, .role-titre .icone-nav { width: 16px; height: 16px; color: var(--primary); }
+.carte-role-legal p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+}
+
+.carte-validation-cdp {
+    background: #ffffff;
+    border: 1.5px solid #a7f3d0;
+    border-radius: 14px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.08);
+}
+.badge-sceau-cdp {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: #ecfdf5;
+    color: #059669;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+}
+.badge-sceau-cdp svg, .badge-sceau-cdp .icone-nav { width: 24px; height: 24px; }
+.carte-validation-cdp strong {
+    display: block;
+    color: #065f46;
+    font-size: 14px;
+    margin-bottom: 2px;
+}
+.carte-validation-cdp p {
+    margin: 0;
+    font-size: 13px;
+    color: #047857;
+    line-height: 1.45;
+}
+
+/* En-tête uniquement visible à l'impression */
+.entete-impression-officielle {
+    display: none;
+}
+
+/* Responsive */
+@media (max-width: 960px) {
+    .grille-juridique { grid-template-columns: 1fr; }
+    .sommaire-lateral { display: none; }
+    .grille-roles-legal { grid-template-columns: 1fr; }
+}
+
+/* Impression A4 propre sans fuite de topbar ou menus */
+@media print {
+    .sans-impression, header, nav, aside, footer, #barre-laterale, .topbar, .public-topbar, .topbar-droite, .menu-theme, #menu-theme-topbar, .menu-notifications, .menu-compte, .fil-ariane, .actions, .sommaire-lateral {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+    }
+    .entete-impression-officielle {
+        display: block !important;
+        margin-bottom: 20mm !important;
+        border-bottom: 2px solid #0e7c86 !important;
+        padding-bottom: 6mm !important;
+    }
+    .logo-impression {
+        font-size: 14pt !important;
+        color: #0e7c86 !important;
+    }
+    .entete-impression-officielle h2 {
+        font-size: 16pt !important;
+        margin: 4mm 0 2mm !important;
+    }
+    .meta-impression {
+        font-size: 9pt !important;
+        color: #64748b !important;
+        margin: 0 !important;
+    }
+    .page-juridique-conteneur {
+        padding: 0 !important;
+        max-width: 100% !important;
+    }
+    .article-legal {
+        box-shadow: none !important;
+        border: 1px solid #e2e8f0 !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        margin-bottom: 8mm !important;
+        padding: 6mm !important;
+    }
+    body {
+        background: #ffffff !important;
+        margin: 0 !important;
+    }
+    @page {
+        size: A4 portrait;
+        margin: 15mm 12mm;
+    }
+}
+</style>
 {% endblock %}

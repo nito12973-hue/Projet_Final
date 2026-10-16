@@ -185,6 +185,37 @@
 </div>
 {% endif %}
 
+<style>
+@media print {
+    .sans-impression, header, nav, aside, footer, #barre-laterale, .topbar, .public-topbar, .topbar-droite, .menu-theme, #menu-theme-topbar, .menu-notifications, .menu-compte, .fil-ariane, .page-title, .actions, .button, button, #modal-annulation {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+    }
+    body {
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .ordonnance-carte {
+        box-shadow: none !important;
+        border: 1.5px solid #0e7c86 !important;
+        border-radius: 8px !important;
+        max-width: 100% !important;
+        margin: 0 auto !important;
+        padding: 24px !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    @page {
+        size: A4 portrait;
+        margin: 15mm 12mm;
+    }
+}
+</style>
+
 <script>
     (function () {
         var bouton = document.getElementById('bouton-imprimer-ordonnance');

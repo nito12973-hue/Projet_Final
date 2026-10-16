@@ -202,8 +202,10 @@
 
 <style>
 @media print {
-    .sans-impression, nav, .navigation, header.site-header, footer.site-footer, .bandeau-notif {
+    .sans-impression, nav, .navigation, header, header.site-header, footer, footer.site-footer, #barre-laterale, .topbar, .public-topbar, .topbar-droite, .menu-theme, #menu-theme-topbar, .menu-notifications, .menu-compte, .fil-ariane, .page-title, .actions, .bandeau-notif, .button, button {
         display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
     }
     body, main {
         background: #ffffff !important;
