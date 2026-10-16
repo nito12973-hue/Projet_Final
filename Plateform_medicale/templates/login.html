@@ -4,7 +4,7 @@
 {% block title %}Connexion — SantéSN{% endblock %}
 
 {% block content %}
-<a href="{% url 'landing' %}" class="lien-retour-accueil">{% icone "chevron-left" %} Retour à l'accueil</a>
+<a href="{% url 'landing' %}" class="lien-retour-accueil" title="Retour à l'accueil" aria-label="Retour à l'accueil">{% icone "chevron-left" %}<span class="expand-text">Retour à l'accueil</span></a>
 
 <div class="auth-card-top">
     <h1>Connexion</h1>

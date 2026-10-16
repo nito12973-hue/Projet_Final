@@ -9,13 +9,7 @@
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect x='18' y='6' width='12' height='36' rx='4' fill='%230e7c86'/%3E%3Crect x='6' y='18' width='36' height='12' rx='4' fill='%230e7c86'/%3E%3Cpath d='M6 24H14L17 16L21 32L25 19L27.5 24H42' fill='none' stroke='%23e0824f' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    {% comment %}
-    Non bloquante pour le premier rendu : media="print" laisse la page
-    s'afficher (police de repli), onload rebascule sur "all". Mesure :
-    2452 ms de premier rendu en cache froid, dont 1342 ms d'attente sur cette
-    feuille ; 1040 ms apres. {# #} de Django est MONO-LIGNE : un commentaire
-    multi-lignes fuit dans la sortie (un test le verrouille).
-    {% endcomment %}
+    {% comment %} Non bloquante pour le premier rendu {% endcomment %}
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap"></noscript>
     <style>
@@ -38,28 +32,239 @@
 
         * { box-sizing: border-box; }
 
-        body {
+        html, body {
             margin: 0;
+            padding: 0;
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
             color: var(--texte);
-            background: #f8fafc;
-            background-image: radial-gradient(circle at 50% 0%, #edf7f6 0%, #f8fafc 70%);
-            padding: 32px 16px;
+            background: #ffffff;
+            -webkit-font-smoothing: antialiased;
         }
 
         ::selection {
             background: rgba(14, 124, 134, 0.25);
         }
 
-        /* Conteneur principal centré, compact et épuré (max-width 440px) */
-        .auth-container {
+        /* ===== Layout Split-Screen 50% / 50% ===== */
+        .auth-split-wrapper {
+            display: flex;
+            min-height: 100vh;
+            width: 100%;
+        }
+
+        /* ----- Colonne Gauche : Vitrine & Marque (50% Desktop) ----- */
+        .auth-brand-side {
+            flex: 1 1 50%;
+            max-width: 50%;
+            background: linear-gradient(155deg, #061c22 0%, #0d4c55 52%, #082930 100%);
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+            padding: 56px 48px;
+            box-sizing: border-box;
+        }
+
+        /* Filigrane d'ambiance géométrique */
+        .auth-brand-side::before {
+            content: '';
+            position: absolute;
+            top: -20%;
+            right: -20%;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(20, 184, 166, 0.15) 0%, rgba(14, 124, 134, 0) 70%);
+            pointer-events: none;
+        }
+
+        .auth-brand-side::after {
+            content: '';
+            position: absolute;
+            bottom: -15%;
+            left: -15%;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(249, 115, 22, 0.08) 0%, rgba(249, 115, 22, 0) 70%);
+            pointer-events: none;
+        }
+
+        .brand-side-inner {
+            position: relative;
+            z-index: 2;
+            max-width: 500px;
+            width: 100%;
+            margin: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        .brand-side-header {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 14px;
+        }
+
+        .auth-brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: #ffffff;
+            transition: opacity 0.18s ease;
+        }
+
+        .auth-brand:hover {
+            opacity: 0.92;
+        }
+
+        .auth-brand-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .auth-brand-title {
+            font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            color: #ffffff;
+        }
+
+        .auth-brand-title .accent {
+            color: #2dd4bf;
+        }
+
+        .brand-badge-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 999px;
+            background: rgba(45, 212, 191, 0.12);
+            border: 1px solid rgba(45, 212, 191, 0.3);
+            color: #5eead4;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+
+        .brand-side-body {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .brand-hero-title {
+            margin: 0;
+            font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+            font-size: 30px;
+            line-height: 1.25;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: #ffffff;
+        }
+
+        .brand-hero-desc {
+            margin: 0;
+            font-size: 15px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .brand-features-list {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            margin-top: 8px;
+        }
+
+        .brand-feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+        }
+
+        .brand-feature-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: #5eead4;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .brand-feature-content h4 {
+            margin: 0 0 3px 0;
+            font-size: 14.5px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .brand-feature-content p {
+            margin: 0;
+            font-size: 13px;
+            line-height: 1.45;
+            color: rgba(255, 255, 255, 0.72);
+        }
+
+        .brand-side-footer {
+            margin-top: 8px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .brand-footer-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12.5px;
+            color: rgba(255, 255, 255, 0.65);
+            flex-wrap: wrap;
+        }
+
+        .brand-footer-info .sep {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* ----- Colonne Droite : Formulaire (50% Desktop) ----- */
+        .auth-form-side {
+            flex: 1 1 50%;
+            max-width: 50%;
+            background: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 48px 36px;
+            box-sizing: border-box;
+            position: relative;
+            overflow-y: auto;
+        }
+
+        .auth-form-wrapper {
             width: 100%;
             max-width: 440px;
-            margin: 0 auto;
+            margin: auto;
             display: flex;
             flex-direction: column;
             gap: 20px;
@@ -67,64 +272,36 @@
         }
 
         @keyframes apparaitre {
-            from { opacity: 0; transform: translateY(16px); }
+            from { opacity: 0; transform: translateY(14px); }
             to   { opacity: 1; transform: translateY(0); }
         }
 
-        /* En-tête centré avec logo et signature SantéSN */
-        .auth-header {
+        /* Header mobile uniquement */
+        .auth-mobile-header {
+            display: none;
             text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
+            margin-bottom: 8px;
         }
 
-        .auth-brand {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            text-decoration: none;
+        .auth-mobile-header .auth-brand {
             color: var(--primary-dark);
-            transition: opacity 0.15s ease;
         }
 
-        .auth-brand:hover {
-            opacity: 0.9;
-        }
-
-        .auth-brand-icon {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
+        .auth-mobile-header .auth-brand-icon {
             background: #e6f4f2;
             border: 1px solid rgba(14, 124, 134, 0.22);
             box-shadow: 0 2px 6px rgba(14, 124, 134, 0.1);
         }
 
-        .auth-brand-title {
-            font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-            font-size: 26px;
-            font-weight: 800;
-            letter-spacing: -0.025em;
+        .auth-mobile-header .auth-brand-title {
             color: #0f172a;
         }
 
-        .auth-brand-title .accent {
+        .auth-mobile-header .auth-brand-title .accent {
             color: var(--primary);
         }
 
-        .auth-header-sub {
-            margin: 0;
-            font-size: 13.5px;
-            color: var(--muted);
-            font-weight: 500;
-        }
-
-        /* Carte de formulaire blanche, centrée, bordure douce et ombre subtile */
+        /* Carte de formulaire blanche */
         .auth-card {
             background: var(--surface);
             border: 1px solid var(--border);
@@ -139,7 +316,6 @@
             margin-bottom: 20px;
         }
 
-        /* Titre de page */
         h1 {
             margin: 0 0 6px;
             font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
@@ -156,43 +332,68 @@
             line-height: 1.5;
         }
 
-        /* Lien de retour discret */
+        /* Bouton retour interactif : compact par défaut, s'élargit au survol */
         .lien-retour-accueil {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            margin: 0 0 16px 0;
-            padding: 5px 9px;
-            border-radius: 8px;
+            gap: 0;
+            padding: 7px 11px;
+            border-radius: 999px;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
             color: var(--muted);
             text-decoration: none;
             font-weight: 600;
             font-size: 13px;
-            background: rgba(100, 116, 139, 0.06);
             width: fit-content;
-            transition: color 0.18s ease, background 0.18s ease;
+            margin-bottom: 18px;
+            transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .lien-retour-accueil .expand-text {
+            max-width: 0;
+            opacity: 0;
+            overflow: hidden;
+            white-space: nowrap;
+            display: inline-block;
+            margin-left: 0;
+            vertical-align: middle;
+            font-size: 13px;
+            font-weight: 600;
+            transition: max-width 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease, margin-left 0.24s ease;
         }
 
         .lien-retour-accueil .icone-nav,
         .lien-retour-accueil > svg {
-            width: 14px;
-            height: 14px;
-            transition: transform 0.18s ease;
+            width: 15px;
+            height: 15px;
+            flex-shrink: 0;
+            transition: transform 0.2s ease;
         }
 
-        .lien-retour-accueil:hover {
-            color: var(--primary-strong);
+        .lien-retour-accueil:hover,
+        .lien-retour-accueil:focus-visible {
+            padding: 7px 16px;
+            gap: 6px;
+            transform: translateY(-1px);
+            border-color: var(--primary);
             background: var(--primary-soft);
+            color: var(--primary-strong);
+            box-shadow: 0 4px 12px rgba(14, 124, 134, 0.16);
+            outline: none;
+        }
+
+        .lien-retour-accueil:hover .expand-text,
+        .lien-retour-accueil:focus-visible .expand-text {
+            max-width: 160px;
+            opacity: 1;
+            margin-left: 6px;
+            color: var(--primary-strong);
         }
 
         .lien-retour-accueil:hover .icone-nav,
         .lien-retour-accueil:hover > svg {
-            transform: translateX(-3px);
-        }
-
-        .lien-retour-accueil:focus-visible {
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(14, 124, 134, 0.3);
+            transform: translateX(-2px);
         }
 
         /* Groupes de champs */
@@ -521,15 +722,46 @@
             color: #cbd5e1;
         }
 
-        /* ===== Responsive ===== */
-        @media (max-width: 480px) {
-            body { padding: 20px 12px; }
-            .auth-container { max-width: 100%; }
-            .auth-card { padding: 24px 18px; border-radius: 14px; }
-            .form-control, input, select, textarea { font-size: 16px !important; }
+        /* ===== Responsive & Adaptation Mobile ===== */
+        @media (max-width: 992px) {
+            .auth-split-wrapper {
+                flex-direction: column;
+            }
+
+            .auth-brand-side {
+                display: none;
+            }
+
+            .auth-form-side {
+                flex: 1 1 100%;
+                max-width: 100%;
+                min-height: 100vh;
+                padding: 32px 20px;
+                justify-content: center;
+            }
+
+            .auth-mobile-header {
+                display: flex;
+                justify-content: center;
+            }
         }
 
-        /* Accessibilité : réduire les animations si demandé */
+        @media (max-width: 480px) {
+            .auth-form-side {
+                padding: 24px 14px;
+            }
+
+            .auth-card {
+                padding: 24px 18px;
+                border-radius: 14px;
+            }
+
+            .form-control, input, select, textarea {
+                font-size: 16px !important;
+            }
+        }
+
+        /* Accessibilité : réduire les animations */
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after {
                 animation-duration: 0.01ms !important;
@@ -540,35 +772,105 @@
     </style>
 </head>
 <body>
-    <div class="auth-container">
-        <header class="auth-header">
-            <a href="{% url 'landing' %}" class="auth-brand" title="SantéSN - Retour à l'accueil">
-                <span class="auth-brand-icon">
-                    <svg width="26" height="26" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                        <rect x="18" y="6" width="12" height="36" rx="4" fill="#0E7C86"/>
-                        <rect x="6" y="18" width="36" height="12" rx="4" fill="#0E7C86"/>
-                        <path d="M6 24H14L17 16L21 32L25 19L27.5 24H42" fill="none" stroke="#E0824F" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </span>
-                <span class="auth-brand-title">Santé<span class="accent">SN</span></span>
-            </a>
-            <p class="auth-header-sub">Prise en charge médicale &amp; Tiers-payant</p>
-        </header>
+    <div class="auth-split-wrapper">
+        <!-- COLONNE GAUCHE (50% DESKTOP) : VITRINE & MARQUE SANTÉSN -->
+        <aside class="auth-brand-side" aria-label="Présentation SantéSN">
+            <div class="brand-side-inner">
+                <div class="brand-side-header">
+                    <a href="{% url 'landing' %}" class="auth-brand" title="SantéSN - Retour à l'accueil">
+                        <span class="auth-brand-icon">
+                            <svg width="28" height="28" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <rect x="18" y="6" width="12" height="36" rx="4" fill="#2dd4bf"/>
+                                <rect x="6" y="18" width="36" height="12" rx="4" fill="#2dd4bf"/>
+                                <path d="M6 24H14L17 16L21 32L25 19L27.5 24H42" fill="none" stroke="#f97316" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </span>
+                        <span class="auth-brand-title">Santé<span class="accent">SN</span></span>
+                    </a>
+                    <span class="brand-badge-pill">Sénégal · Tiers-Payant &amp; Santé Numérique</span>
+                </div>
 
-        <main class="auth-card auth-shell panneau-form" role="main">
-            {% block content %}{% endblock %}
-        </main>
+                <div class="brand-side-body">
+                    <h2 class="brand-hero-title">L'infrastructure médicale unifiée au service du Sénégal.</h2>
+                    <p class="brand-hero-desc">
+                        Connectez médecins prescripteurs, pharmaciens, mutuelles et assurés au sein d'une plateforme sécurisée, conforme aux exigences réglementaires nationales.
+                    </p>
 
-        <footer class="auth-footer">
-            <p class="auth-footer-brand">© SantéSN — Plateforme médicale sécurisée</p>
-            <div class="auth-footer-links">
-                <a href="{% url 'landing' %}">Accueil</a>
-                <span class="sep">•</span>
-                <a href="{% url 'cgu' %}">CGU</a>
-                <span class="sep">•</span>
-                <a href="{% url 'politique_confidentialite' %}">Confidentialité</a>
+                    <div class="brand-features-list">
+                        <div class="brand-feature-item">
+                            <div class="brand-feature-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                            </div>
+                            <div class="brand-feature-content">
+                                <h4>Tiers-payant dématérialisé</h4>
+                                <p>Vérification des droits en temps réel, calcul automatique des quotes-parts et transmission instantanée aux mutuelles et IPM.</p>
+                            </div>
+                        </div>
+
+                        <div class="brand-feature-item">
+                            <div class="brand-feature-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                            </div>
+                            <div class="brand-feature-content">
+                                <h4>Ordonnances infalsifiables &amp; QR Code</h4>
+                                <p>Authentification univoque de chaque prescription médicale et traçabilité stricte des délivrances en officine.</p>
+                            </div>
+                        </div>
+
+                        <div class="brand-feature-item">
+                            <div class="brand-feature-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            </div>
+                            <div class="brand-feature-content">
+                                <h4>Secret médical &amp; CDP Sénégal</h4>
+                                <p>Isolation multi-tenant stricte, chiffrement des données de santé et conformité intégrale avec la Loi n° 2008-12.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="brand-side-footer">
+                    <div class="brand-footer-info">
+                        <span>Dakar, République du Sénégal</span>
+                        <span class="sep">•</span>
+                        <span>Support : +221 78 957 61 45</span>
+                    </div>
+                </div>
             </div>
-        </footer>
+        </aside>
+
+        <!-- COLONNE DROITE (50% DESKTOP) : FORMULAIRE D'ACCÈS -->
+        <div class="auth-form-side">
+            <div class="auth-form-wrapper">
+                <div class="auth-mobile-header">
+                    <a href="{% url 'landing' %}" class="auth-brand" title="SantéSN - Retour à l'accueil">
+                        <span class="auth-brand-icon">
+                            <svg width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <rect x="18" y="6" width="12" height="36" rx="4" fill="#0E7C86"/>
+                                <rect x="6" y="18" width="36" height="12" rx="4" fill="#0E7C86"/>
+                                <path d="M6 24H14L17 16L21 32L25 19L27.5 24H42" fill="none" stroke="#E0824F" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </span>
+                        <span class="auth-brand-title">Santé<span class="accent">SN</span></span>
+                    </a>
+                </div>
+
+                <main class="auth-card auth-shell panneau-form" role="main">
+                    {% block content %}{% endblock %}
+                </main>
+
+                <footer class="auth-footer">
+                    <p class="auth-footer-brand">© SantéSN — Plateforme médicale sécurisée</p>
+                    <div class="auth-footer-links">
+                        <a href="{% url 'landing' %}">Accueil</a>
+                        <span class="sep">•</span>
+                        <a href="{% url 'cgu' %}">CGU</a>
+                        <span class="sep">•</span>
+                        <a href="{% url 'politique_confidentialite' %}">Confidentialité</a>
+                    </div>
+                </footer>
+            </div>
+        </div>
     </div>
 </body>
 </html>

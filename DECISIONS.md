@@ -4,6 +4,19 @@ Ce document consigne de façon claire et sans jargon chaque décision d'architec
 
 ---
 
+## [2026-10-16] Refonte Split-Screen (50%/50%) de l'Authentification & Boutons Interactifs Extensibles
+- **Décision :** Abandon du centrage mono-bloc isolé de la page de connexion au profit d'un agencement moderne en deux volets (« Split-Screen » 50% / 50% sur écran large, comme sur les grandes plateformes SaaS telles que Stripe, Doctolib ou GitHub) et harmonisation des boutons de retour interactifs (« expand on hover »).
+- **Volet Gauche (Marque & Présentation Métier) :**
+  - Identité visuelle institutionnelle SantéSN (dégradé sombre/teal médical, logo SVG, badge d'ancrage national).
+  - Présentation claire des 3 piliers opérationnels réels : Tiers-payant dématérialisé avec IPM sénégalaises, Ordonnances infalsifiables à QR code traçable, et Secret médical garanti sous l'égide de la Loi 2008-12 (CDP Sénégal).
+  - Aucune adresse postale ou email fictive sur un nom de domaine non acquis (`@santesn.sn`) : ancrage géographique sobre (« Dakar, République du Sénégal ») et contact support direct par WhatsApp/téléphone (+221 78 957 61 45).
+- **Volet Droit (Formulaire & Accès Sécurisé) :**
+  - Carte de saisie épurée avec inputs contrastés, icônes de repérage et bascule œil mot de passe.
+  - Bouton retour vers la landing page compact au repos (icône chevron seule) qui s'élargit en douceur au survol (`.expand-text` s'anime de 0 à 160px) pour afficher son libellé complet, puis se rétracte à nouveau lorsque le curseur s'éloigne.
+  - Adaptation fluide sur mobile (< 992px) avec mise en page verticale évitant tout débordement horizontal ou scroll superflu.
+
+---
+
 ## [2026-10-16] Initialisation du Registre & Principes Directeurs
 - **Décision :** Adopter une approche produit centrée sur l'utilisateur final (salarié assuré, gestionnaire IPM, médecin, pharmacien, admin IT) avec isolation multi-tenant stricte dès l'ORM, contrôle strict des flux médias sensibles et respect de la législation sénégalaise (Loi 2008-12 sur les données à caractère personnel - CDP).
 - **Options considérées :** 

@@ -6314,27 +6314,28 @@
         .btn-retour-expand,
         .btn-action-expand,
         .action-chip {
-            padding: 8px 16px !important;
+            padding: 7px 11px !important;
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
-            gap: 6px !important;
-            transition: all 0.18s ease;
+            gap: 0 !important;
+            transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1) !important;
         }
 
         .btn-expand .expand-text,
         .btn-retour-expand .expand-text,
         .btn-action-expand .expand-text,
         .action-chip .expand-text {
-            max-width: none;
-            opacity: 1;
-            overflow: visible;
-            white-space: nowrap;
-            display: inline-block;
-            margin-left: 2px;
-            vertical-align: middle;
-            font-size: 13px;
-            font-weight: 600;
+            max-width: 0 !important;
+            opacity: 0 !important;
+            overflow: hidden !important;
+            white-space: nowrap !important;
+            display: inline-block !important;
+            margin-left: 0 !important;
+            vertical-align: middle !important;
+            font-size: 13px !important;
+            font-weight: 600 !important;
+            transition: max-width 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease, margin-left 0.24s ease !important;
         }
 
         .btn-expand:hover,
@@ -6345,10 +6346,12 @@
         .btn-action-expand:focus-visible,
         .action-chip:hover,
         .action-chip:focus-visible {
-            transform: translateY(-1px);
+            padding: 7px 16px !important;
+            gap: 6px !important;
+            transform: translateY(-1px) !important;
             border-color: var(--primary) !important;
             color: var(--primary-strong) !important;
-            box-shadow: 0 4px 12px rgba(14, 124, 134, 0.18) !important;
+            box-shadow: 0 4px 12px rgba(14, 124, 134, 0.2) !important;
         }
 
         .btn-expand:hover .expand-text,
@@ -6359,7 +6362,10 @@
         .btn-action-expand:focus-visible .expand-text,
         .action-chip:hover .expand-text,
         .action-chip:focus-visible .expand-text {
-            color: var(--primary-strong);
+            max-width: 160px !important;
+            opacity: 1 !important;
+            margin-left: 6px !important;
+            color: var(--primary-strong) !important;
         }
 
         .btn-expand.primary,
