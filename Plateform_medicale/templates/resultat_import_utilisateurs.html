@@ -11,7 +11,7 @@
             {{ total_crees }} compte{{ total_crees|pluralize }} créé{{ total_crees|pluralize }} avec succès. Les liens d'activation sécurisés ont été générés.
         </p>
     </div>
-    <a class="button btn btn-retour-expand" href="{% url 'liste_utilisateurs' %}" title="Retour à la liste des utilisateurs" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour aux utilisateurs</span></a>
+    <a class="button btn btn-retour-expand" href="{% url 'dashboard' %}" title="Retour au tableau de bord" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour au tableau de bord</span></a>
 </section>
 
 <div class="kpi-grille" style="grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 20px;" aria-label="Statistiques d'importation">
@@ -89,5 +89,10 @@
 
 <div class="panel-bloc" style="margin-top:16px;background:var(--primary-soft);border:1px solid var(--border);border-radius:12px;font-size:13px;color:var(--primary-strong);">
     {% icone "shield-check" %} <strong>Confidentialité garantie</strong> : Conformément aux règles de sécurité, les jetons d'activation sont transmis de manière confidentielle et ne sont pas exposés en clair dans ce tableau. Si un utilisateur nécessite un nouveau lien, utilisez l'action <em>« Renvoyer activation »</em> dans la liste des utilisateurs.
+</div>
+
+<div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap;">
+    <a class="button primary" href="{% url 'dashboard' %}">{% icone "grid" %} Retour au tableau de bord</a>
+    <a class="button btn" href="{% url 'importer_utilisateurs_excel' %}">{% icone "upload" %} Importer un autre fichier</a>
 </div>
 {% endblock %}

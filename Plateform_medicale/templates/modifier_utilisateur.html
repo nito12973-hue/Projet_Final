@@ -9,7 +9,7 @@
         <h1>Modifier {{ utilisateur }}</h1>
         <p class="subtitle">Mise à jour du profil et du rôle.</p>
     </div>
-    <a class="button btn btn-retour-expand" href="{% url 'liste_utilisateurs' %}" title="Retour" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
+    <a class="button btn btn-retour-expand" href="{% url 'dashboard' %}" title="Retour au tableau de bord" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
 </section>
 
 <section class="panel panel-form">
@@ -26,7 +26,7 @@
         {% endfor %}
         <div class="actions" style="margin-top: 16px; display: flex; gap: 10px;">
             <button class="button primary" type="submit">Enregistrer</button>
-            <a class="button btn" href="{% url 'liste_utilisateurs' %}">Annuler</a>
+            <a class="button btn" href="{% url 'dashboard' %}">Annuler</a>
         </div>
     </form>
 </section>

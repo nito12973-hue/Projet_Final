@@ -10,6 +10,7 @@
         <p class="subtitle">Effectifs par rôle. L'identité d'un utilisateur n'est visible ici que si son compte est bloqué après des tentatives de connexion suspectes.</p>
     </div>
     <div class="actions">
+        <a class="button btn btn-retour-expand" href="{% url 'dashboard' %}" title="Retour au tableau de bord" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
         <a class="button primary" href="{% url 'ajouter_utilisateur' %}">{% icone "plus" %} Ajouter un utilisateur</a>
     </div>
 </section>
@@ -207,11 +208,12 @@
     {% illustration_vide "users" %}
     <h3>Aucun compte signalé</h3>
     <p>{% if role_selectionne or recherche %}Aucun compte utilisateur ne correspond à vos critères de recherche ou de filtre.{% else %}Aucun compte n'est actuellement bloqué : aucune activité suspecte à signaler.{% endif %}</p>
-    {% if role_selectionne or organisme_selectionne or statut_selectionne or recherche %}
     <div class="actions">
+        <a href="{% url 'dashboard' %}" class="button primary">{% icone "chevron-left" %} Retour au tableau de bord</a>
+        {% if role_selectionne or organisme_selectionne or statut_selectionne or recherche %}
         <a href="{% url 'liste_utilisateurs' %}" class="button">{% icone "x" %} Réinitialiser les filtres</a>
+        {% endif %}
     </div>
-    {% endif %}
 </div>
 {% endif %}
 {% endblock %}
