@@ -7,9 +7,9 @@
 <section class="page-title">
     <div>
         <h1>Journal d'activité</h1>
-        <p class="subtitle">Qui a fait quoi, et quand. Lecture seule, non modifiable. Seules les actions abouties y figurent.</p>
+        <p class="subtitle">Qui a fait quoi, quand et sur quel type d'objet. Lecture seule, non modifiable. Les noms et détails métier ne sont pas affichés. Seules les actions abouties y figurent.</p>
     </div>
-    <a class="button btn" href="{% url 'parametres_section' 'securite' %}">{% icone "chevron-left" %} Sécurité</a>
+    <a class="button btn btn-retour-expand" href="{% url 'parametres_section' 'securite' %}" title="Retour à Sécurité" aria-label="Retour à Sécurité">{% icone "chevron-left" %} <span class="expand-text">Sécurité</span></a>
 </section>
 
 <form method="get" class="filtres">
@@ -17,8 +17,17 @@
         <label for="q">Recherche</label>
         <div class="champ-recherche">
             {% icone "search" %}
-            <input id="q" type="text" name="q" placeholder="Auteur, objet concerné ou détail" value="{{ recherche }}" style="margin-bottom:0;">
+            <input id="q" type="text" name="q" placeholder="Auteur, organisme ou action" value="{{ recherche }}" style="margin-bottom:0;">
         </div>
+    </div>
+    <div style="min-width:200px;">
+        <label for="organisme">Organisme</label>
+        <select id="organisme" name="organisme" style="margin-bottom:0;">
+            <option value="">Tous les organismes</option>
+            {% for org in organismes %}
+            <option value="{{ org.pk }}" {% if org.pk == organisme_choisi %}selected{% endif %}>{{ org.nom }} ({{ org.code }})</option>
+            {% endfor %}
+        </select>
     </div>
     <div style="min-width:220px;">
         <label for="action">Action</label>
@@ -34,7 +43,7 @@
         <input id="date" type="date" name="date" value="{{ date_choisie }}" style="margin-bottom:0;">
     </div>
     <button type="submit" class="button primary btn">Filtrer</button>
-    {% if recherche or action_choisie or date_choisie %}
+    {% if recherche or action_choisie or date_choisie or organisme_choisi %}
     <a href="{% url 'journal_activite' %}" class="button btn">Réinitialiser</a>
     {% endif %}
 </form>
@@ -46,9 +55,9 @@
             <tr>
                 {% entete_tri request.GET "date" "Quand" %}
                 {% entete_tri request.GET "auteur_libelle" "Qui" %}
+                {% entete_tri request.GET "organisme_libelle" "Organisme" "col-optionnelle" %}
                 {% entete_tri request.GET "action" "Quoi" %}
-                <th scope="col">Sur quoi</th>
-                <th scope="col" class="col-optionnelle">Détail</th>
+                <th scope="col">Type d'objet</th>
             </tr>
         </thead>
         <tbody>
@@ -65,9 +74,9 @@
                     {% endcomment %}
                     {% if not entree.auteur %}<span class="subtitle">· compte supprimé</span>{% endif %}
                 </td>
+                <td class="col-optionnelle">{{ entree.organisme_libelle|default:"—" }}</td>
                 <td><span class="badge {% if entree.action == 'SUPPRESSION' %}refusee{% elif entree.action == 'DESACTIVATION' %}en_attente{% else %}validee{% endif %}">{{ entree.get_action_display }}</span></td>
-                <td>{{ entree.objet }}</td>
-                <td class="subtitle col-optionnelle">{{ entree.details|default:"—" }}</td>
+                <td>{{ entree.objet|type_objet }}</td>
             </tr>
             {% endfor %}
         </tbody>

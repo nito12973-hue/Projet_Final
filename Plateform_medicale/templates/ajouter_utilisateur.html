@@ -9,7 +9,7 @@
         <h1>Ajouter un utilisateur</h1>
         <p class="subtitle">Un compte sera créé et un lien d'activation sécurisé valable 24 heures sera envoyé via le canal disponible.</p>
     </div>
-    <a class="button" href="{% url 'liste_utilisateurs' %}">{% icone "chevron-left" %} Retour</a>
+    <a class="button btn btn-retour-expand" href="{% url 'liste_utilisateurs' %}" title="Retour" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
 </section>
 
 <section class="panel panel-form" style="max-width: 640px;">
@@ -46,6 +46,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!selectRole || !aideRole) return;
 
     var descriptions = {
+        'GESTIONNAIRE': 'Le rôle Gestionnaire gère les assurés, ayants droit, prises en charge et paiements de l\'organisme sélectionné (obligatoire).',
         'MEDECIN': 'Le rôle Médecin créera automatiquement sa fiche professionnelle (agenda, consultations et prescriptions).',
         'PHARMACIEN': 'Le rôle Pharmacien créera son profil d\'officine pour la vérification et délivrance d\'ordonnances.',
         'ASSURE': 'Le rôle Assuré permettra la prise de rendez-vous et la consultation des ordonnances.'

@@ -1,0 +1,116 @@
+[
+{
+  "model": "Plateform_medicale.organisme",
+  "pk": 1,
+  "fields": {
+    "nom": "IPM SantéSN Défaut",
+    "code": "IPM-DEFAUT",
+    "type_organisme": "IPM",
+    "adresse": "",
+    "telephone": "",
+    "email": "",
+    "actif": true,
+    "date_creation": "2026-10-16T20:08:21.463Z"
+  }
+},
+{
+  "model": "Plateform_medicale.user",
+  "pk": 1,
+  "fields": {
+    "password": "md5$DusuyvoAvmhvzNHmdtQjrB$e81e750d9e802763690d9697123bdde3",
+    "last_login": null,
+    "is_superuser": false,
+    "email": "admin-infra@santesn.sn",
+    "first_name": "Admin",
+    "last_name": "DevOps",
+    "phone_number": "",
+    "role": "ADMIN",
+    "organisme": null,
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2026-10-16T20:09:19.705Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "Plateform_medicale.user",
+  "pk": 2,
+  "fields": {
+    "password": "md5$Rz524lc9sudEKOPSF0v7s0$67e8447ce4bd0f4719b55d4dade9eb8b",
+    "last_login": null,
+    "is_superuser": false,
+    "email": "dr-infra@santesn.sn",
+    "first_name": "Dr",
+    "last_name": "Test",
+    "phone_number": "",
+    "role": "MEDECIN",
+    "organisme": null,
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-10-16T20:09:19.706Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "Plateform_medicale.user",
+  "pk": 3,
+  "fields": {
+    "password": "md5$hQGmMKw54E6EiMV2qzqw3N$2caecbbda900766ec7ec6987342ceb00",
+    "last_login": null,
+    "is_superuser": false,
+    "email": "assure-infra@santesn.sn",
+    "first_name": "Assure",
+    "last_name": "Test",
+    "phone_number": "",
+    "role": "ASSURE",
+    "organisme": null,
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-10-16T20:09:19.707Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "Plateform_medicale.user",
+  "pk": 4,
+  "fields": {
+    "password": "md5$0CyezPkgVDFvKrZXyvCzRx$1f90c6c1986f5eeea708962567dcebf2",
+    "last_login": null,
+    "is_superuser": false,
+    "email": "gest-infra@santesn.sn",
+    "first_name": "Gestionnaire",
+    "last_name": "Test",
+    "phone_number": "",
+    "role": "GESTIONNAIRE",
+    "organisme": null,
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-10-16T20:09:19.708Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "Plateform_medicale.user",
+  "pk": 5,
+  "fields": {
+    "password": "md5$U1yykCP5oLoFtaxzlt4uep$8b14bdc6eafc0c11e81c8461a8583df3",
+    "last_login": null,
+    "is_superuser": false,
+    "email": "pharma-infra@santesn.sn",
+    "first_name": "Pharma",
+    "last_name": "Test",
+    "phone_number": "",
+    "role": "PHARMACIEN",
+    "organisme": null,
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-10-16T20:09:19.708Z",
+    "groups": [],
+    "user_permissions": []
+  }
+}
+]

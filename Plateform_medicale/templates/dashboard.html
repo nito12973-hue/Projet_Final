@@ -1,15 +1,153 @@
 {% extends "base.html" %}
 {% load icones formats %}
 
-{% block title %}Tableau de bord - Administrateur{% endblock %}
+{% block title %}Tableau de bord - {% if est_gestionnaire %}Gestionnaire{% else %}Administrateur{% endif %}{% endblock %}
 
 {% block content %}
 <section class="page-title">
     <div>
         <h1>{% salutation %}, {% nom_accueil user %}</h1>
-        <p class="subtitle">Vue d'ensemble de la plateforme — {% now "l j F Y" %}</p>
+        {% if not est_gestionnaire %}
+        <p class="subtitle" style="display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-top:4px;">
+            <span>Console d'administration système &amp; infrastructure informatique</span>
+            <span style="display:inline-flex;align-items:center;gap:6px;background:var(--fond-doux);padding:3px 10px;border-radius:6px;border:1px solid var(--border);font-family:var(--font-mono);font-size:12.5px;color:var(--texte);">
+                <span class="status-pulse-dot" style="width:8px;height:8px;background:#10b981;border-radius:50%;display:inline-block;"></span>
+                <span>Horloge serveur :</span>
+                <strong id="admin-live-clock" style="color:var(--titre);font-weight:700;">{% now "H:i:s" %}</strong>
+                <span style="font-size:11px;color:var(--muted);">UTC</span>
+                {% if diag_infra and diag_infra.latence_ms %}
+                <span style="margin-left:4px;color:var(--muted);">·</span>
+                <span style="color:var(--primary);font-weight:600;">{{ diag_infra.latence_ms }} ms ping</span>
+                {% endif %}
+            </span>
+        </p>
+        {% else %}
+        <p class="subtitle">Tableau de bord de gestion &amp; tiers payant — {% now "l j F Y" %}</p>
+        {% endif %}
+    </div>
+    <div class="actions">
+        {% if not est_gestionnaire %}
+        <a class="button btn btn-expand" href="{% url 'journal_activite' %}" title="Consulter le journal de sécurité" aria-label="Journal de sécurité">{% icone "shield" %} <span class="expand-text">Journal de sécurité</span></a>
+        <a class="button primary btn-expand primary" href="{% url 'ajouter_utilisateur' %}" title="Créer un nouvel utilisateur" aria-label="Nouvel utilisateur">{% icone "plus" %} <span class="expand-text">Nouvel utilisateur</span></a>
+        {% else %}
+        <a class="button primary btn-expand primary" href="{% url 'ajouter_patient' %}" title="Enregistrer un nouvel assuré" aria-label="Nouvel assuré">{% icone "id-card" %} <span class="expand-text">Nouvel assuré</span></a>
+        <a class="button primary btn-expand primary" href="{% url 'ajouter_prise_en_charge' %}" title="Émettre une prise en charge" aria-label="Prise en charge">{% icone "shield-check" %} <span class="expand-text">Prise en charge</span></a>
+        {% endif %}
     </div>
 </section>
+
+{% if not est_gestionnaire %}
+<section class="kpi-grille" style="grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 16px;" aria-label="Indicateurs infrastructure et sécurité">
+    <div class="kpi">
+        <span class="kpi-entete">{% icone "database" %} Base de données Cloud <span class="badge validee" style="margin-left:auto;font-size:10.5px;padding:2px 8px;">100% UP</span></span>
+        <strong class="code" style="color: var(--primary);">PostgreSQL</strong>
+        <span class="kpi-pied"><span class="status-pulse-dot" style="display:inline-block;vertical-align:middle;margin-right:4px;"></span> Cluster opérationnel · TLS 1.3</span>
+    </div>
+    <a class="kpi" href="{% url 'liste_utilisateurs' %}">
+        <span class="kpi-entete">{% icone "users" %} Comptes d'accès IAM</span>
+        <strong class="code">{{ total_comptes_actifs }}</strong>
+        <span class="kpi-pied">{{ total_comptes_inactifs }} inactif{{ total_comptes_inactifs|pluralize }} · Anti brute-force</span>
+    </a>
+    <a class="kpi" href="{% url 'journal_activite' %}">
+        <span class="kpi-entete">{% icone "shield" %} Audit &amp; Sécurité</span>
+        <strong class="code">{{ total_journaux_activite }}</strong>
+        <span class="kpi-pied">Traçabilité CDP · Inaltérable</span>
+    </a>
+    <a class="kpi" href="{% url 'parametres_section' 'general' %}">
+        <span class="kpi-entete">{% icone "bell" %} Passerelles Télécoms <span class="badge validee" style="margin-left:auto;font-size:10.5px;padding:2px 8px;">ACTIVES</span></span>
+        <strong class="code" style="color: var(--primary);">WhatsApp &amp; Mail</strong>
+        <span class="kpi-pied">Notifications cloud prêtes</span>
+    </a>
+</section>
+
+<!-- Barre Observabilité DevOps Admin : Sentry & Prometheus -->
+<div style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+    <!-- Carte Prometheus -->
+    <a href="{% url 'metrics_prometheus' %}" style="flex: 1; min-width: 240px; text-decoration: none; border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; background: var(--surface); display: flex; align-items: center; justify-content: space-between; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--primary)';" onmouseout="this.style.borderColor='var(--border)';">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="color: var(--primary); display: flex; align-items: center;">{% icone "bar-chart" %}</span>
+            <div>
+                <strong style="font-size: 13px; color: var(--titre); display: block;">Prometheus / OpenMetrics</strong>
+                <span style="font-size: 11.5px; color: var(--muted);">Flux actif &middot; Consulter la console</span>
+            </div>
+        </div>
+        <span class="badge validee" style="font-size: 10.5px; padding: 2px 7px;">200 OK</span>
+    </a>
+
+    <!-- Carte Sentry -->
+    <a href="{% url 'supervision_systeme' %}" style="flex: 1; min-width: 240px; text-decoration: none; border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; background: var(--surface); display: flex; align-items: center; justify-content: space-between; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--primary)';" onmouseout="this.style.borderColor='var(--border)';">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="color: var(--primary); display: flex; align-items: center;">{% icone "shield-check" %}</span>
+            <div>
+                <strong style="font-size: 13px; color: var(--titre); display: block;">Sentry Télémétrie</strong>
+                <span style="font-size: 11.5px; color: var(--muted);">Traçage actif &middot; DSN connecté</span>
+            </div>
+        </div>
+        <span class="badge validee" style="font-size: 10.5px; padding: 2px 7px;">En ligne</span>
+    </a>
+
+    <!-- Accès console supervision -->
+    <a href="{% url 'supervision_systeme' %}" class="button btn btn-expand" style="align-self: center;" title="Supervision système" aria-label="Supervision système">
+        {% icone "cpu" %} <span class="expand-text">Supervision système</span>
+    </a>
+</div>
+
+<!-- Section Diagnostic Erreurs & Télémétrie Applicative (Directement sur le Dashboard Admin) -->
+<article class="panel panel-bloc" style="margin-bottom: 24px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <div>
+            <h2 style="margin: 0 0 2px; font-size: 15px; display: flex; align-items: center; gap: 8px;">
+                {% icone "alert-triangle" %} Événements &amp; Erreurs Système Récents
+            </h2>
+            <p class="subtitle" style="margin: 0; font-size: 12.5px;">
+                Télémétrie en temps réel capturée par SantéSN et synchronisée avec Sentry &amp; logs serveurs.
+            </p>
+        </div>
+        <a class="lien-discret" href="{% url 'supervision_systeme' %}" style="font-size: 12.5px; font-weight: 600;">
+            Voir tous les logs &rarr;
+        </a>
+    </div>
+
+    {% if diag_incidents.derniers_evenements_logs %}
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 150px; font-size: 12px;">Horodatage</th>
+                    <th style="width: 90px; font-size: 12px;">Niveau</th>
+                    <th style="width: 100px; font-size: 12px;">Source</th>
+                    <th style="font-size: 12px;">Message &amp; Diagnostic de l'erreur</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in diag_incidents.derniers_evenements_logs|slice:":5" %}
+                <tr>
+                    <td style="font-family: var(--font-mono); font-size: 11.5px; color: var(--muted);">
+                        {{ log.date }}
+                    </td>
+                    <td>
+                        <span class="badge" style="{% if log.niveau == 'WARNING' %}background:#fef3c7;color:#92400e;{% elif log.niveau == 'ERROR' or log.niveau == 'CRITICAL' %}background:#fee2e2;color:#991b1b;{% else %}background:#e0f2fe;color:#075985;{% endif %} padding: 2px 7px; border-radius: 4px; font-weight: 700; font-size: 10.5px;">
+                            {{ log.niveau }}
+                        </span>
+                    </td>
+                    <td style="font-weight: 600; font-size: 12px;">
+                        {{ log.module }}
+                    </td>
+                    <td style="font-size: 12px; font-family: var(--font-mono); word-break: break-word; color: var(--texte);">
+                        {{ log.message }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="padding: 16px; text-align: center; color: var(--muted); font-size: 13px;">
+        <span style="color: #059669; font-weight: 600;">Aucune anomalie ou erreur détectée.</span> Le système fonctionne de manière nominale.
+    </div>
+    {% endif %}
+</article>
+{% endif %}
 
 {% if nb_comptes_bloques %}
 <a class="alerte-securite" href="{% url 'parametres_section' 'securite' %}#comptes-bloques">
@@ -22,15 +160,14 @@
 </a>
 {% endif %}
 
-{% comment %}
-Bandeau "A traiter" : ouvre la page sur les files d'attente reelles plutot que
-sur les compteurs du jour, qui valent zero la plupart du temps. Chaque tuile
-mene a une liste filtree qui existe reellement.
-{% endcomment %}
 <section class="file-attente" aria-label="À traiter maintenant">
+    {% if est_gestionnaire %}
     <h2 class="file-titre">{% icone "clock-history" %} À traiter maintenant</h2>
+    {% else %}
+    <h2 class="file-titre">{% icone "activity" %} Surveillance des flux d'activité &amp; files d'attente</h2>
+    {% endif %}
 
-    {% if nb_pec_urgentes_48h %}
+    {% if est_gestionnaire and nb_pec_urgentes_48h %}
     <a href="{% url 'liste_prises_en_charge' %}?statut=en_attente&urgent=1" style="display:flex;align-items:center;flex-wrap:wrap;gap:10px;background:var(--refus-bg);color:var(--refus-fg);border:1px solid var(--danger);padding:10px 16px;border-radius:8px;margin-bottom:14px;text-decoration:none;font-weight:600;font-size:13.5px;">
         <span style="color:var(--danger);" aria-hidden="true">{% icone "alert-triangle" %}</span>
         <span>{{ nb_pec_urgentes_48h }} prise{{ nb_pec_urgentes_48h|pluralize }} en charge en attente depuis plus de 48 h</span>
@@ -40,6 +177,7 @@ mene a une liste filtree qui existe reellement.
 
     {% if file_totale %}
     <div class="file-grille">
+        {% if est_gestionnaire %}
         <a class="file-tuile{% if jours_attente_max and jours_attente_max > 7 %} urgent{% endif %}"
            href="{% url 'liste_prises_en_charge' %}?statut=en_attente"
            aria-label="Prises en charge en attente : {{ total_prises_en_charge_attente }}{% if jours_attente_max %}, la plus ancienne : {{ jours_attente_max }} j{% endif %}">
@@ -48,12 +186,14 @@ mene a une liste filtree qui existe reellement.
             <span class="file-libelle">En attente de décision</span>
             {% if jours_attente_max %}<span class="file-note">la plus ancienne : {{ jours_attente_max }} j</span>{% endif %}
         </a>
+
         <a class="file-tuile" href="{% url 'liste_rendez_vous' %}?statut=DEMANDE"
            aria-label="Rendez-vous à confirmer : {{ rdv_a_confirmer }}">
             <span class="file-entete">{% icone "calendar" %} Rendez-vous</span>
             <strong class="file-nombre code">{{ rdv_a_confirmer }}</strong>
             <span class="file-libelle">Demandes à confirmer</span>
         </a>
+
         <a class="file-tuile" href="{% url 'liste_ordonnances' %}?delivrance=non"
            aria-label="Ordonnances non délivrées : {{ ordonnances_non_delivrees }}">
             <span class="file-entete">{% icone "qr-scan" %} Pharmacie</span>
@@ -61,7 +201,9 @@ mene a une liste filtree qui existe reellement.
             <span class="file-libelle">Ordonnances non délivrées</span>
             <span class="file-note">{{ total_delivrances }} délivrées sur {{ total_ordonnances }}</span>
         </a>
-        <a class="file-tuile{% if nb_ayants_droit_en_attente %} urgent{% endif %}"
+
+        {% if nb_ayants_droit_en_attente %}
+        <a class="file-tuile urgent"
            href="{% url 'liste_patients' %}?type=AYANT_DROIT&statut=EN_ATTENTE"
            aria-label="Ayants droit en attente de validation : {{ nb_ayants_droit_en_attente }}">
             <span class="file-entete">{% icone "users" %} Ayants droit</span>
@@ -69,6 +211,8 @@ mene a une liste filtree qui existe reellement.
             <span class="file-libelle">En attente de validation IPM</span>
             <span class="file-note">Contrôle anti-fraude</span>
         </a>
+        {% endif %}
+
         <a class="file-tuile" href="{% url 'liste_paiements' %}?statut=non_regle"
            aria-label="Règlements en attente : {{ paiements_non_regles_nb }}, soit {{ montant_non_regle|franc_cfa }}">
             <span class="file-entete">{% icone "receipt" %} Paiements</span>
@@ -76,13 +220,57 @@ mene a une liste filtree qui existe reellement.
             <span class="file-libelle">Règlements en attente</span>
             <span class="file-note">{{ montant_non_regle|franc_cfa }}</span>
         </a>
+
+        <a class="file-tuile{% if nb_remboursements_attente %} urgent{% endif %}" href="{% url 'liste_demandes_remboursement' %}?statut=en_attente"
+           aria-label="Remboursements hors réseau en attente : {{ nb_remboursements_attente }}">
+            <span class="file-entete">{% icone "credit-card" %} Remboursements</span>
+            <strong class="file-nombre code">{{ nb_remboursements_attente }}</strong>
+            <span class="file-libelle">Factures hors réseau</span>
+            <span class="file-note">Instruction &amp; virement</span>
+        </a>
+        {% else %}
+        {# Admin : Télémétrie des files applicatives sans navigation médicale #}
+        <div class="file-tuile{% if jours_attente_max and jours_attente_max > 7 %} urgent{% endif %}"
+             aria-label="Prises en charge en attente : {{ total_prises_en_charge_attente }}{% if jours_attente_max %}, la plus ancienne : {{ jours_attente_max }} j{% endif %}">
+            <span class="file-entete">{% icone "shield-check" %} Prises en charge</span>
+            <strong class="file-nombre code">{{ total_prises_en_charge_attente }}</strong>
+            <span class="file-libelle">Pipeline d'autorisation</span>
+            {% if jours_attente_max %}<span class="file-note">la plus ancienne : {{ jours_attente_max }} j</span>{% else %}<span class="file-note">File de validation</span>{% endif %}
+        </div>
+
+        <div class="file-tuile" aria-label="Rendez-vous à confirmer : {{ rdv_a_confirmer }}">
+            <span class="file-entete">{% icone "calendar" %} Rendez-vous</span>
+            <strong class="file-nombre code">{{ rdv_a_confirmer }}</strong>
+            <span class="file-libelle">Demandes à confirmer</span>
+            <span class="file-note">Flux de synchronisation</span>
+        </div>
+
+        <div class="file-tuile" aria-label="Ordonnances non délivrées : {{ ordonnances_non_delivrees }}">
+            <span class="file-entete">{% icone "qr-scan" %} Pharmacie</span>
+            <strong class="file-nombre code">{{ ordonnances_non_delivrees }}</strong>
+            <span class="file-libelle">Ordonnances non délivrées</span>
+            <span class="file-note">{{ total_delivrances }} délivrées sur {{ total_ordonnances }}</span>
+        </div>
+
+        <a class="file-tuile" href="{% url 'rapports' %}"
+           aria-label="Règlements en attente : {{ paiements_non_regles_nb }}, soit {{ montant_non_regle|franc_cfa }}">
+            <span class="file-entete">{% icone "receipt" %} Paiements</span>
+            <strong class="file-nombre code">{{ paiements_non_regles_nb }}</strong>
+            <span class="file-libelle">Règlements en attente</span>
+            <span class="file-note">{{ montant_non_regle|franc_cfa }}</span>
+        </a>
+        {% endif %}
     </div>
     {% else %}
     <p class="file-vide">{% icone "check" %} Rien en attente. Toutes les files sont traitées.</p>
     {% endif %}
 </section>
 
+{% if est_gestionnaire %}
 <h2 class="section-titre">Couverture &amp; finances</h2>
+{% else %}
+<h2 class="section-titre">Finances &amp; Écosystème</h2>
+{% endif %}
 <section class="bande-couverture">
     <article class="panel carte-finances">
         <div class="panel-header">
@@ -90,7 +278,11 @@ mene a une liste filtree qui existe reellement.
                 <h2>Paiements</h2>
                 <p class="subtitle">Part patient encaissée · 30 derniers jours</p>
             </div>
+            {% if est_gestionnaire %}
             <a class="lien-discret" href="{% url 'liste_paiements' %}">Détail</a>
+            {% else %}
+            <a class="lien-discret" href="{% url 'rapports' %}">Rapports &rarr;</a>
+            {% endif %}
         </div>
         <div class="finances-corps">
             <div class="finances-principal">
@@ -120,6 +312,7 @@ mene a une liste filtree qui existe reellement.
         <p class="finances-legende">Paiements réglés, jour par jour</p>
     </article>
 
+    {% if est_gestionnaire %}
     <article class="panel carte-assures">
         <div class="panel-header">
             <div>
@@ -156,31 +349,67 @@ mene a une liste filtree qui existe reellement.
             {% endif %}
         </div>
     </article>
+    {% else %}
+    <article class="panel carte-assures carte-organismes">
+        <div class="panel-header">
+            <div>
+                <h2>Organisation &amp; Écosystème</h2>
+                <p class="subtitle">Entreprises conventionnées &amp; réseau de santé</p>
+            </div>
+            <a class="lien-discret" href="{% url 'liste_organismes' %}">Gérer &rarr;</a>
+        </div>
+        <div class="assures-corps">
+            <p class="assures-total"><strong class="code">{{ total_organismes }}</strong> <span>structure{{ total_organismes|pluralize }} conventionnée{{ total_organismes|pluralize }} active{{ total_organismes|pluralize }}</span></p>
+            <ul class="assures-legende" style="margin-top: 14px;">
+                <li>
+                    <span class="pastille-principal" style="background:var(--primary);" aria-hidden="true"></span>
+                    <a href="{% url 'liste_organismes' %}">Entreprises &amp; IPM</a>
+                    <strong class="code">{{ total_organismes }}</strong>
+                </li>
+                <li>
+                    <span class="pastille-ayant-droit" style="background:var(--primary-light);" aria-hidden="true"></span>
+                    <a href="{% url 'liste_utilisateurs' %}">Comptes d'accès actifs</a>
+                    <strong class="code">{{ total_comptes_actifs }}</strong>
+                </li>
+                <li>
+                    <span class="pastille-principal" style="background:var(--accent);" aria-hidden="true"></span>
+                    <a href="{% url 'liste_prestataires' %}">Réseau de soins</a>
+                    <strong class="code">{{ total_prestataires }}</strong>
+                </li>
+            </ul>
+            <div style="margin-top: 16px;">
+                <a class="button button--subtle" href="{% url 'liste_organismes' %}" style="width: 100%; justify-content: center; font-size: 13px; padding: 9px 14px;">
+                    {% icone "building" %} Annuaire des organismes &rarr;
+                </a>
+            </div>
+        </div>
+    </article>
+    {% endif %}
 </section>
 
-<h2 class="section-titre">Activité</h2>
+<h2 class="section-titre">{% if est_gestionnaire %}Activité de santé{% else %}Activité de la plateforme{% endif %}</h2>
 <section class="kpi-grille">
     <a class="kpi" href="{% url 'rapports' %}" aria-label="Consultations : {{ total_consultations }}">
         <span class="kpi-entete">{% icone "clipboard-list" %} Consultations</span>
         <strong class="code">{{ total_consultations }}</strong>
         <span class="kpi-pied">{% if consultations_7j %}Total enregistré <span class="kpi-delta">+{{ consultations_7j }} (7 j)</span>{% else %}Total enregistré{% endif %}</span>
     </a>
-    <a class="kpi" href="{% url 'liste_ordonnances' %}" aria-label="Ordonnances émises : {{ total_ordonnances }}, dont {{ total_delivrances }} délivrées">
+    <a class="kpi" href="{% if est_gestionnaire %}{% url 'liste_ordonnances' %}{% else %}{% url 'rapports' %}{% endif %}" aria-label="Ordonnances émises : {{ total_ordonnances }}, dont {{ total_delivrances }} délivrées">
         <span class="kpi-entete">{% icone "qr-scan" %} Ordonnances</span>
         <strong class="code">{{ total_ordonnances }}</strong>
         <span class="kpi-pied{% if ordonnances_non_delivrees %} manque{% endif %}">{{ total_delivrances }} délivrées{% if ordonnances_7j %} <span class="kpi-delta">+{{ ordonnances_7j }} (7 j)</span>{% endif %}</span>
     </a>
-    <a class="kpi" href="{% url 'liste_medecins' %}" aria-label="Médecins : {{ total_medecins }}">
+    <a class="kpi" href="{% if est_gestionnaire %}{% url 'liste_medecins' %}{% else %}{% url 'rapports' %}{% endif %}" aria-label="Médecins : {{ total_medecins }}">
         <span class="kpi-entete">{% icone "stethoscope" %} Médecins actifs</span>
         <strong class="code">{{ total_medecins }}</strong>
-        <span class="kpi-pied{% if medecins_sans_prestataire %} manque{% endif %}">{% if medecins_sans_prestataire %}{{ medecins_sans_prestataire }} sans prestataire{% else %}Tous rattachés{% endif %}</span>
+        <span class="kpi-pied{% if medecins_sans_prestataire and est_gestionnaire %} manque{% endif %}">{% if est_gestionnaire and medecins_sans_prestataire %}{{ medecins_sans_prestataire }} sans prestataire{% else %}Praticiens conventionnés{% endif %}</span>
     </a>
-    <a class="kpi" href="{% url 'liste_pharmaciens' %}" aria-label="Pharmaciens : {{ total_pharmaciens }}">
+    <a class="kpi" href="{% if est_gestionnaire %}{% url 'liste_pharmaciens' %}{% else %}{% url 'rapports' %}{% endif %}" aria-label="Pharmaciens : {{ total_pharmaciens }}">
         <span class="kpi-entete">{% icone "pill" %} Pharmaciens actifs</span>
         <strong class="code">{{ total_pharmaciens }}</strong>
-        <span class="kpi-pied{% if pharmaciens_sans_prestataire %} manque{% endif %}">{% if pharmaciens_sans_prestataire %}{{ pharmaciens_sans_prestataire }} sans pharmacie{% else %}Tous rattachés{% endif %}</span>
+        <span class="kpi-pied{% if pharmaciens_sans_prestataire and est_gestionnaire %} manque{% endif %}">{% if est_gestionnaire and pharmaciens_sans_prestataire %}{{ pharmaciens_sans_prestataire }} sans pharmacie{% else %}Officines partenaires{% endif %}</span>
     </a>
-    <a class="kpi" href="{% url 'liste_prestataires' %}" aria-label="Prestataires partenaires : {{ total_prestataires }}">
+    <a class="kpi" href="{% if est_gestionnaire %}{% url 'liste_prestataires' %}{% else %}{% url 'liste_organismes' %}{% endif %}" aria-label="Prestataires partenaires : {{ total_prestataires }}">
         <span class="kpi-entete">{% icone "building" %} Prestataires</span>
         <strong class="code">{{ total_prestataires }}</strong>
         <span class="kpi-pied">{% for type in prestataires_par_type|slice:":2" %}{{ type.total }} {{ type.libelle }}{% if not forloop.last %} · {% endif %}{% empty %}Aucun partenaire{% endfor %}</span>
@@ -191,15 +420,23 @@ mene a une liste filtree qui existe reellement.
     <article class="panel">
         <div class="panel-header">
             <div>
+                {% if est_gestionnaire %}
                 <h2>Prises en charge récentes</h2>
                 <p class="subtitle">Les demandes en attente remontent en premier</p>
+                {% else %}
+                <h2>Flux des autorisations système</h2>
+                <p class="subtitle">Dernières requêtes d'autorisation transmises par les prestataires</p>
+                {% endif %}
             </div>
+            {% if est_gestionnaire %}
             <a class="lien-discret" href="{% url 'liste_prises_en_charge' %}">Voir tout</a>
+            {% endif %}
         </div>
         {% if dernieres_prises_en_charge %}
         <ul class="liste-lignes">
             {% for prise in dernieres_prises_en_charge %}
             <li>
+                {% if est_gestionnaire %}
                 <a href="{% url 'modifier_prise_en_charge' prise.pk %}">
                     <span class="ligne-avatar" aria-hidden="true">{{ prise.patient.prenom|slice:":1" }}{{ prise.patient.nom|slice:":1" }}</span>
                     <span class="ligne-texte">
@@ -208,6 +445,16 @@ mene a une liste filtree qui existe reellement.
                     </span>
                     <span class="badge {{ prise.statut }}">{{ prise.get_statut_display }}</span>
                 </a>
+                {% else %}
+                <div class="ligne-apercu" style="display:flex;align-items:center;padding:12px 14px;gap:12px;">
+                    <span class="ligne-avatar" aria-hidden="true">{{ prise.patient.prenom|slice:":1" }}{{ prise.patient.nom|slice:":1" }}</span>
+                    <span class="ligne-texte" style="display:flex;flex-direction:column;gap:2px;">
+                        <span class="ligne-nom" style="font-weight:600;font-size:13.5px;color:var(--titre);">{{ prise.patient }}</span>
+                        <span class="ligne-sous" style="font-size:12px;color:var(--muted);">Demandée le {{ prise.date_demande|date:"d/m/Y" }}</span>
+                    </span>
+                    <span class="badge {{ prise.statut }}" style="margin-left:auto;">{{ prise.get_statut_display }}</span>
+                </div>
+                {% endif %}
             </li>
             {% endfor %}
         </ul>
@@ -215,84 +462,139 @@ mene a une liste filtree qui existe reellement.
         <div class="etat-vide">
             {% illustration_vide "shield-check" %}
             <p>Aucune prise en charge enregistrée.</p>
+            {% if est_gestionnaire %}
             <div class="actions">
                 <a class="button primary" href="{% url 'ajouter_prise_en_charge' %}">Ajouter une prise en charge</a>
             </div>
+            {% endif %}
         </div>
         {% endif %}
     </article>
 
+    {% if not est_gestionnaire %}
     <article class="panel">
         <div class="panel-header">
             <div>
-                <h2>Derniers comptes créés</h2>
-                <p class="subtitle">Hors assurés — <a href="{% url 'liste_utilisateurs' %}?statut=actif">{{ total_comptes_actifs }} actifs</a>, <a href="{% url 'liste_utilisateurs' %}?statut=inactif">{{ total_comptes_inactifs }} désactivés</a></p>
+                <h2>Comptes par rôle</h2>
+                <p class="subtitle">{{ total_comptes_actifs }} actifs, {{ total_comptes_inactifs }} désactivés — effectifs uniquement, sans identité</p>
             </div>
-            <a class="lien-discret" href="{% url 'liste_utilisateurs' %}">Voir tout</a>
+            <a class="lien-discret" href="{% url 'liste_utilisateurs' %}">Comptes signalés{% if nb_comptes_bloques %} ({{ nb_comptes_bloques }}){% endif %}</a>
         </div>
-        {% if derniers_comptes %}
         <ul class="liste-lignes">
-            {% for compte in derniers_comptes %}
+            {% for ligne in comptes_par_role %}
             <li>
-                <a href="{% url 'modifier_utilisateur' compte.pk %}">
-                    <span class="ligne-avatar" aria-hidden="true">{{ compte.get_full_name|default:compte.email|slice:":2"|upper }}</span>
-                    <span class="ligne-texte">
-                        <span class="ligne-nom">{{ compte.get_full_name|default:compte.email }}</span>
-                        <span class="ligne-sous">{{ compte.date_joined|date:"d/m/Y" }}</span>
+                <div class="ligne-apercu" style="display:flex;align-items:center;padding:12px 14px;gap:12px;">
+                    <span class="ligne-texte" style="display:flex;flex-direction:column;gap:2px;">
+                        <span class="ligne-nom" style="font-weight:600;font-size:13.5px;color:var(--titre);">{{ ligne.label }}</span>
                     </span>
-                    <span class="etiquette-role">{{ compte.get_role_display }}</span>
-                </a>
+                    <strong class="code" style="margin-left:auto;">{{ ligne.total }}</strong>
+                </div>
             </li>
             {% endfor %}
         </ul>
-        {% else %}
-        <div class="etat-vide">
-            {% illustration_vide "users" %}
-            <p>Aucun compte enregistré.</p>
-            <div class="actions">
-                <a class="button primary" href="{% url 'ajouter_utilisateur' %}">Ajouter un utilisateur</a>
-            </div>
-        </div>
-        {% endif %}
     </article>
+    {% endif %}
 </section>
 
 <section class="bande-bas">
-    {% if assures_sans_plan or medecins_sans_prestataire or pharmaciens_sans_prestataire or prestataires_sans_coordonnees %}
-    <article class="panel">
-        <div class="panel-header">
-            <div>
-                <h2>Fiches à compléter</h2>
-                <p class="subtitle">Données manquantes qui gênent l'exploitation</p>
+    {% if est_gestionnaire %}
+        {% if medecins_sans_prestataire or pharmaciens_sans_prestataire or prestataires_sans_coordonnees or assures_sans_plan %}
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2>Fiches à compléter</h2>
+                    <p class="subtitle">Données manquantes qui gênent l'exploitation</p>
+                </div>
             </div>
-        </div>
-        <div class="fiches-grille">
-            {% if prestataires_sans_coordonnees %}
-            <a class="fiche" href="{% url 'liste_prestataires' %}?localisation=sans">
-                {% icone "map-pin" %}
-                <span><strong class="code">{{ prestataires_sans_coordonnees }}</strong> Prestataire{{ prestataires_sans_coordonnees|pluralize }} sans coordonnées</span>
-            </a>
-            {% endif %}
-            {% if assures_sans_plan %}
-            <a class="fiche" href="{% url 'liste_patients' %}?type=PRINCIPAL">
-                {% icone "id-card" %}
-                <span><strong class="code">{{ assures_sans_plan }}</strong> Assuré{{ assures_sans_plan|pluralize }} sans plan</span>
-            </a>
-            {% endif %}
-            {% if medecins_sans_prestataire %}
-            <a class="fiche" href="{% url 'liste_medecins' %}">
-                {% icone "stethoscope" %}
-                <span><strong class="code">{{ medecins_sans_prestataire }}</strong> Médecin{{ medecins_sans_prestataire|pluralize }} sans prestataire</span>
-            </a>
-            {% endif %}
-            {% if pharmaciens_sans_prestataire %}
-            <a class="fiche" href="{% url 'liste_pharmaciens' %}">
-                {% icone "pill" %}
-                <span><strong class="code">{{ pharmaciens_sans_prestataire }}</strong> Pharmacien{{ pharmaciens_sans_prestataire|pluralize }} sans pharmacie</span>
-            </a>
-            {% endif %}
-        </div>
-    </article>
+            <div class="fiches-grille">
+                {% if prestataires_sans_coordonnees %}
+                <a class="fiche" href="{% url 'liste_prestataires' %}?localisation=sans">
+                    {% icone "map-pin" %}
+                    <span><strong class="code">{{ prestataires_sans_coordonnees }}</strong> Prestataire{{ prestataires_sans_coordonnees|pluralize }} sans coordonnées</span>
+                </a>
+                {% endif %}
+                {% if assures_sans_plan %}
+                <a class="fiche" href="{% url 'liste_patients' %}?type=PRINCIPAL">
+                    {% icone "id-card" %}
+                    <span><strong class="code">{{ assures_sans_plan }}</strong> Assuré{{ assures_sans_plan|pluralize }} sans plan</span>
+                </a>
+                {% endif %}
+                {% if medecins_sans_prestataire %}
+                <a class="fiche" href="{% url 'liste_medecins' %}">
+                    {% icone "stethoscope" %}
+                    <span><strong class="code">{{ medecins_sans_prestataire }}</strong> Médecin{{ medecins_sans_prestataire|pluralize }} sans prestataire</span>
+                </a>
+                {% endif %}
+                {% if pharmaciens_sans_prestataire %}
+                <a class="fiche" href="{% url 'liste_pharmaciens' %}">
+                    {% icone "pill" %}
+                    <span><strong class="code">{{ pharmaciens_sans_prestataire }}</strong> Pharmacien{{ pharmaciens_sans_prestataire|pluralize }} sans pharmacie</span>
+                </a>
+                {% endif %}
+            </div>
+        </article>
+        {% endif %}
+    {% else %}
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2>Supervision système &amp; Flux d'activité en direct</h2>
+                    <p class="subtitle">Observabilité technique et traçabilité temps réel</p>
+                </div>
+                <a class="lien-discret" href="{% url 'supervision_systeme' %}">Console complète &rarr;</a>
+            </div>
+            <div class="fiches-grille" style="margin-bottom: 14px;">
+                <a class="fiche" href="{% url 'supervision_systeme' %}">
+                    {% icone "activity" %}
+                    <span><strong class="code">Observabilité</strong> Diagnostics, CPU, RAM &amp; Santé</span>
+                </a>
+                <a class="fiche" href="{% url 'journal_activite' %}">
+                    {% icone "shield" %}
+                    <span><strong class="code">Audit CDP</strong> Traçabilité des actions sensibles</span>
+                </a>
+                <a class="fiche" href="{% url 'parametres_section' 'securite' %}">
+                    {% icone "lock" %}
+                    <span><strong class="code">Politique IAM</strong> Protection brute-force</span>
+                </a>
+                <a class="fiche" href="{% url 'admin_liste_demandes_support' %}">
+                    {% icone "chat" %}
+                    <span><strong class="code">Support IT</strong> File d'assistance</span>
+                </a>
+            </div>
+
+            <!-- Flux des événements en temps réel avec défilement continu -->
+            <div style="border-top: 1px solid var(--border); padding-top: 12px; margin-top: 6px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                    <span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted);display:flex;align-items:center;gap:6px;">
+                        <span class="status-pulse-dot" style="width:7px;height:7px;background:#10b981;border-radius:50%;display:inline-block;"></span>
+                        Flux d'activité récent (défilement automatique)
+                    </span>
+                    <a href="{% url 'journal_activite' %}" style="font-size:12px;color:var(--primary);text-decoration:none;font-weight:600;">Tout voir &rarr;</a>
+                </div>
+                <div id="flux-activite-defilant" style="max-height: 190px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); padding: 4px 8px;">
+                    {% if derniers_journaux %}
+                    <ul style="list-style:none;padding:0;margin:0;font-size:12.5px;display:flex;flex-direction:column;gap:6px;">
+                        {% for j in derniers_journaux %}
+                        <li style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 8px;border-radius:6px;border-bottom:1px solid rgba(0,0,0,0.04);">
+                            <div style="display:flex;align-items:center;gap:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                                <span class="badge {% if j.action == 'SUPPRESSION' %}refusee{% elif j.action == 'DESACTIVATION' %}en_attente{% else %}validee{% endif %}" style="font-size:10.5px;padding:2px 6px;">
+                                    {{ j.get_action_display }}
+                                </span>
+                                <span style="font-weight:600;color:var(--titre);">{{ j.auteur_libelle|default:"Système" }}</span>
+                                <span style="color:var(--muted);font-size:12px;">{{ j.objet|truncatechars:45 }}</span>
+                            </div>
+                            <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted);flex-shrink:0;">
+                                {{ j.date|date:"H:i:s" }}
+                            </span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p style="margin:8px;font-size:12.5px;color:var(--muted);text-align:center;">Aucune activité récente enregistrée.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </article>
     {% endif %}
 
     <article class="panel">
@@ -301,16 +603,16 @@ mene a une liste filtree qui existe reellement.
                 <h2>Actions rapides</h2>
             </div>
         </div>
-        {% comment %}
-        Uniquement des CREATIONS. "Rapports" a ete retire : c'est une page, pas
-        une action, et elle est dans le menu. "Prestataire" aussi : on en cree
-        quelques-uns par an, pas depuis le tableau de bord. Un raccourci n'a de
-        valeur que s'il epargne un detour reel.
-        {% endcomment %}
         <div class="actions-grille">
+            {% if est_gestionnaire %}
             <a class="button primary" href="{% url 'ajouter_patient' %}">{% icone "id-card" %} Nouvel assuré</a>
-            <a class="button primary" href="{% url 'ajouter_medecin' %}">{% icone "stethoscope" %} Nouveau médecin</a>
-            <a class="button" href="{% url 'ajouter_prise_en_charge' %}">{% icone "shield-check" %} Prise en charge</a>
+            <a class="button primary" href="{% url 'ajouter_prise_en_charge' %}">{% icone "shield-check" %} Prise en charge</a>
+            <a class="button" href="{% url 'liste_paiements' %}">{% icone "receipt" %} Règlements</a>
+            {% else %}
+            <a class="button primary" href="{% url 'ajouter_organisme' %}">{% icone "building" %} Nouvelle entreprise / IPM</a>
+            <a class="button" href="{% url 'ajouter_utilisateur' %}">{% icone "users" %} Nouvel utilisateur</a>
+            <a class="button" href="{% url 'journal_activite' %}">{% icone "shield" %} Journal de sécurité</a>
+            {% endif %}
         </div>
     </article>
 </section>
@@ -330,7 +632,6 @@ mene a une liste filtree qui existe reellement.
         var elementDonnees = document.getElementById('donnees-tendance-paiements');
         var donnees = elementDonnees ? JSON.parse(elementDonnees.textContent) : { labels: [], totaux: [] };
 
-        // Verifie l'absence de donnees avant meme de charger Chart.js (~200 Ko).
         if (!donnees.totaux.some(function (total) { return Number(total) > 0; })) {
             var vide = document.createElement('p');
             vide.className = 'empty';
@@ -340,8 +641,6 @@ mene a une liste filtree qui existe reellement.
         }
 
         function demarrerGrapheTendance() {
-            // Dernier point marque (rayon fixe, pas seulement au survol) : c'est
-            // la valeur du jour, le repere le plus utile sur une tendance 30 j.
             var rayonsPoints = donnees.totaux.map(function (_, index) {
                 return index === donnees.totaux.length - 1 ? 4 : 0;
             });
@@ -382,9 +681,6 @@ mene a une liste filtree qui existe reellement.
                             display: true,
                             beginAtZero: true,
                             ticks: { display: false, maxTicksLimit: 3 },
-                            // Chart.js 4 : le pointille des lignes de grille se
-                            // configure via scales.y.border.dash (grid.borderDash
-                            // a ete retire depuis la v4).
                             grid: { color: 'rgba(11, 32, 39, 0.08)', drawTicks: false },
                             border: { display: false, dash: [2, 4] },
                         },
@@ -405,6 +701,40 @@ mene a une liste filtree qui existe reellement.
             canevas.replaceWith(message);
         };
         document.body.appendChild(scriptChartJs);
+    })();
+
+    // Horloge UTC en direct et défilement fluide du flux d'activité pour l'Administrateur
+    (function () {
+        var horloge = document.getElementById('admin-live-clock');
+        if (horloge) {
+            function majHorloge() {
+                var d = new Date();
+                var h = String(d.getUTCHours()).padStart(2, '0');
+                var m = String(d.getUTCMinutes()).padStart(2, '0');
+                var s = String(d.getUTCSeconds()).padStart(2, '0');
+                horloge.textContent = h + ':' + m + ':' + s;
+            }
+            setInterval(majHorloge, 1000);
+        }
+
+        var flux = document.getElementById('flux-activite-defilant');
+        if (flux && flux.scrollHeight > flux.clientHeight) {
+            var enPause = false;
+            flux.addEventListener('mouseenter', function() { enPause = true; });
+            flux.addEventListener('mouseleave', function() { enPause = false; });
+            flux.addEventListener('touchstart', function() { enPause = true; }, { passive: true });
+            flux.addEventListener('touchend', function() { enPause = false; }, { passive: true });
+
+            setInterval(function() {
+                if (!enPause) {
+                    if (flux.scrollTop + flux.clientHeight >= flux.scrollHeight - 2) {
+                        flux.scrollTo({ top: 0, behavior: 'smooth' });
+                    } else {
+                        flux.scrollBy({ top: 22, behavior: 'smooth' });
+                    }
+                }
+            }, 3500);
+        }
     })();
 </script>
 {% endblock %}

@@ -5,20 +5,24 @@ réinitialisation mot de passe.
 
 import csv
 import datetime
+import logging
 import unicodedata
 
 import openpyxl
 from openpyxl.utils import get_column_letter
 
 from django.contrib import messages
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
-from django.db.models import ProtectedError, Q
+from django.db.models import Count, ProtectedError, Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
+logger = logging.getLogger("Plateform_medicale")
+
 from ..forms import (
+    OrganismeForm,
     UtilisateurCreationForm,
     UtilisateurModificationForm,
     lier_fiche_medecin,
@@ -27,6 +31,7 @@ from ..forms import (
 from ..models import (
     JournalActivite,
     Medecin,
+    Organisme,
     Patient,
     Pharmacien,
     PlanCouverture,
@@ -43,36 +48,79 @@ from .utils import (
     _trier,
     admin_required,
     journaliser,
+    role_required,
 )
 
 
+def _emails_comptes_signales():
+    """Emails des comptes actuellement bloques apres des echecs de connexion repetes.
+
+    Confidentialite : c'est le SEUL cas ou l'administrateur a le droit de voir
+    l'identite d'un utilisateur et d'agir sur son compte (utilisateur
+    malveillant). Pour tous les autres comptes, il n'a que des compteurs.
+    """
+    return {u.email for u, _ in TentativeConnexion.comptes_bloques()}
+
+
+def _compte_accessible_ou_403(request, pk):
+    """Renvoie le compte `pk` si l'utilisateur a le droit de le consulter, sinon 403.
+
+    Autorise : son propre compte, ou un compte signale (bloque). Tout refus
+    est trace dans le logger de securite.
+
+    Un GESTIONNAIRE ne peut acceder qu'aux utilisateurs de SON organisme.
+    L'ADMIN ne peut acceder qu'aux comptes malveillants/bloques (ou au sien).
+    """
+    utilisateur = get_object_or_404(User, pk=pk)
+    if request.user.role == User.Role.ADMIN:
+        if utilisateur != request.user and utilisateur.email not in _emails_comptes_signales():
+            raise PermissionDenied
+    elif request.user.role == User.Role.GESTIONNAIRE:
+        if utilisateur.organisme_id != request.user.organisme_id:
+            raise PermissionDenied
+    return utilisateur
+
+
 def _filtrer_utilisateurs(request):
-    """Filtres partages entre la liste et l'export Excel des utilisateurs."""
-    utilisateurs = User.objects.all()
+    """Filtres partages entre la liste et les exports des utilisateurs.
 
-    role = request.GET.get("role", "")
-    statut = request.GET.get("statut", "")
-    recherche = request.GET.get("q", "").strip()
-
+    Le perimetre de l'administrateur est STRICTEMENT limite aux comptes signales (bloques).
+    Un GESTIONNAIRE ne voit que les utilisateurs de SON organisme.
+    """
+    utilisateurs = User.objects.select_related("organisme").all()
     comptes_bloques = TentativeConnexion.comptes_bloques()
     dict_bloques = {u.email.lower(): ligne for u, ligne in comptes_bloques}
     emails_bloques = {u.email for u, _ in comptes_bloques}
 
+    if request.user.role == User.Role.ADMIN:
+        utilisateurs = utilisateurs.filter(email__in=emails_bloques)
+    elif request.user.role == User.Role.GESTIONNAIRE:
+        utilisateurs = utilisateurs.filter(organisme_id=request.user.organisme_id)
+
+    role = request.GET.get("role", "")
+    organisme_id = request.GET.get("organisme", "").strip()
+    recherche = request.GET.get("q", "").strip()
+
     if role:
         utilisateurs = utilisateurs.filter(role=role)
-    if statut == "actif":
-        utilisateurs = utilisateurs.filter(is_active=True)
-        if emails_bloques:
-            utilisateurs = utilisateurs.exclude(email__in=emails_bloques)
+    statut = request.GET.get("statut", "")
+    if statut == "bloque":
+        utilisateurs = utilisateurs.filter(email__in=emails_bloques)
+    elif statut == "actif":
+        utilisateurs = utilisateurs.filter(is_active=True).exclude(email__in=emails_bloques)
     elif statut == "inactif":
         utilisateurs = utilisateurs.filter(is_active=False)
-    elif statut == "bloque":
-        utilisateurs = utilisateurs.filter(email__in=emails_bloques)
+    else:
+        statut = ""
+    if organisme_id.isdigit():
+        utilisateurs = utilisateurs.filter(organisme_id=int(organisme_id))
     if recherche:
         utilisateurs = utilisateurs.filter(
             Q(email__icontains=recherche)
             | Q(first_name__icontains=recherche)
             | Q(last_name__icontains=recherche)
+            | Q(organisme__nom__icontains=recherche)
+            | Q(organisme__code__icontains=recherche)
         )
 
     utilisateurs = _trier(request, utilisateurs, ["last_name", "email", "role", "is_active"], ["last_name", "first_name"])
@@ -80,16 +128,25 @@ def _filtrer_utilisateurs(request):
     return utilisateurs, {
         "role": role,
         "statut": statut,
+        "organisme": int(organisme_id) if organisme_id.isdigit() else "",
         "recherche": recherche,
         "emails_bloques": emails_bloques,
         "comptes_bloques_dict": dict_bloques,
     }
 
 
-@admin_required
+@role_required(User.Role.ADMIN, User.Role.GESTIONNAIRE)
 def liste_utilisateurs(request):
+    """Vue admin : compteurs par role + comptes signales (bloques) uniquement.
+
+    L'administrateur voit COMBIEN il y a de medecins, d'assures, de pharmaciens,
+    de gestionnaires... mais jamais QUI ils sont, sauf pour un compte bloque
+    apres des echecs de connexion repetes (utilisateur potentiellement malveillant).
+    """
     utilisateurs, filtres = _filtrer_utilisateurs(request)
-    tous = User.objects.all()
+    comptes_par_role = dict(
+        User.objects.values_list("role").annotate(total=Count("id")).order_by()
+    )
     page_utilisateurs = _paginer(request, utilisateurs)
     dict_bloques = filtres.get("comptes_bloques_dict", {})
     for u in page_utilisateurs:
@@ -105,18 +162,23 @@ def liste_utilisateurs(request):
     contexte = {
         "utilisateurs": page_utilisateurs,
         "roles": User.Role.choices,
+        "organismes": Organisme.objects.order_by("nom"),
         "role_selectionne": filtres["role"],
         "statut_selectionne": filtres["statut"],
+        "organisme_selectionne": filtres["organisme"],
         "recherche": filtres["recherche"],
-        "total_utilisateurs": tous.count(),
-        "total_medecins": tous.filter(role=User.Role.MEDECIN).count(),
-        "total_assures": tous.filter(role=User.Role.ASSURE).count(),
-        "total_pharmaciens_admins": tous.filter(role__in=[User.Role.PHARMACIEN, User.Role.ADMIN]).count(),
+        "total_utilisateurs": sum(comptes_par_role.values()),
+        "total_gestionnaires": comptes_par_role.get(User.Role.GESTIONNAIRE, 0),
+        "total_medecins": comptes_par_role.get(User.Role.MEDECIN, 0),
+        "total_assures": comptes_par_role.get(User.Role.ASSURE, 0),
+        "total_pharmaciens": comptes_par_role.get(User.Role.PHARMACIEN, 0),
+        "total_admins": comptes_par_role.get(User.Role.ADMIN, 0),
+        "total_comptes_signales": len(filtres["emails_bloques"]),
     }
     return render(request, "liste_utilisateurs.html", contexte)
 
 
-@admin_required
+@role_required(User.Role.ADMIN, User.Role.GESTIONNAIRE)
 def exporter_utilisateurs_excel(request):
     utilisateurs, filtres = _filtrer_utilisateurs(request)
     emails_bloques = filtres.get("emails_bloques", set())
@@ -155,7 +217,7 @@ def exporter_utilisateurs_excel(request):
     return reponse
 
 
-@admin_required
+@role_required(User.Role.ADMIN, User.Role.GESTIONNAIRE)
 def exporter_utilisateurs_csv(request):
     utilisateurs, filtres = _filtrer_utilisateurs(request)
     emails_bloques = filtres.get("emails_bloques", set())
@@ -291,7 +353,13 @@ def _analyser_ligne_import_utilisateurs(numero_ligne, valeurs, mapping=None):
     if not role:
         return None, (
             f"Ligne {numero_ligne} : role '{role_brut}' inconnu "
-            "(attendu : Administrateur, Assure, Medecin ou Pharmacien)."
+            "(attendu : Assure, Medecin ou Pharmacien)."
+        )
+    if role in (User.Role.ADMIN, User.Role.GESTIONNAIRE):
+        # Securite : un import ne doit jamais creer un compte privilegie.
+        return None, (
+            f"Ligne {numero_ligne} : le role '{role_brut}' ne peut pas etre cree par import "
+            "(attendu : Assure, Medecin ou Pharmacien)."
         )
 
     if telephone:
@@ -408,7 +476,7 @@ def _creer_comptes_import_utilisateurs(lignes_validees, request=None):
     return resultats
 
 
-@admin_required
+@role_required(User.Role.GESTIONNAIRE)
 def importer_utilisateurs_excel(request):
     """
     Creation en masse de comptes (Assure principal / Medecin / Pharmacien /
@@ -502,7 +570,7 @@ def importer_utilisateurs_excel(request):
     return render(request, "importer_utilisateurs.html", {"erreurs": erreurs})
 
 
-@admin_required
+@role_required(User.Role.GESTIONNAIRE)
 def telecharger_modele_import_utilisateurs(request):
     classeur = openpyxl.Workbook()
     feuille = classeur.active
@@ -528,42 +596,57 @@ def telecharger_modele_import_utilisateurs(request):
     return reponse
 
 
-@admin_required
+@role_required(User.Role.ADMIN, User.Role.GESTIONNAIRE)
 def ajouter_utilisateur(request):
     if request.method == "POST":
-        form = UtilisateurCreationForm(request.POST)
+        form = UtilisateurCreationForm(request.POST, request=request)
         if form.is_valid():
             utilisateur = form.save()
             statut_onboarding = envoyer_activation_utilisateur(utilisateur, request=request)
-            journaliser(request, JournalActivite.Action.CREATION, f"Utilisateur {utilisateur.email}",
-                        f"role : {utilisateur.get_role_display()}")
+            details = f"role : {utilisateur.get_role_display()}"
+            if utilisateur.organisme:
+                details += f" — organisme : {utilisateur.organisme.nom} ({utilisateur.organisme.code})"
+            journaliser(
+                request,
+                JournalActivite.Action.CREATION,
+                f"Utilisateur {utilisateur.email}",
+                details,
+                organisme=utilisateur.organisme,
+            )
             bilan = statut_onboarding.get("bilan") or construire_bilan_onboarding(statut_onboarding, utilisateur, action="creation")
             messages.success(request, bilan["texte_flash"])
             return redirect("liste_utilisateurs")
     else:
-        form = UtilisateurCreationForm()
+        form = UtilisateurCreationForm(request=request)
     return render(request, "ajouter_utilisateur.html", {"form": form})
 
 
-@admin_required
+@role_required(User.Role.ADMIN, User.Role.GESTIONNAIRE)
 def modifier_utilisateur(request, pk):
-    utilisateur = get_object_or_404(User, pk=pk)
+    utilisateur = _compte_accessible_ou_403(request, pk)
     if request.method == "POST":
         form = UtilisateurModificationForm(request.POST, instance=utilisateur)
         if form.is_valid():
             nouveau_role = form.cleaned_data["role"]
             if utilisateur.pk == request.user.pk and nouveau_role != request.user.role:
                 form.add_error("role", "Vous ne pouvez pas modifier votre propre rôle.")
+            elif request.user.role == User.Role.GESTIONNAIRE and nouveau_role == User.Role.ADMIN:
+                form.add_error("role", "Un gestionnaire ne peut pas promouvoir un utilisateur au rôle Administrateur.")
             else:
                 ancien_role = utilisateur.get_role_display()
                 utilisateur_modifie = form.save()
                 lier_fiche_medecin(utilisateur_modifie)
                 lier_fiche_pharmacien(utilisateur_modifie)
                 nouveau = utilisateur_modifie.get_role_display()
+                details = "" if nouveau == ancien_role else f"role : {ancien_role} -> {nouveau}"
+                if utilisateur_modifie.organisme:
+                    suffixe_org = f"organisme : {utilisateur_modifie.organisme.nom} ({utilisateur_modifie.organisme.code})"
+                    details = f"{details} — {suffixe_org}" if details else suffixe_org
                 journaliser(
                     request, JournalActivite.Action.MODIFICATION,
                     f"Utilisateur {utilisateur_modifie.email}",
-                    "" if nouveau == ancien_role else f"role : {ancien_role} -> {nouveau}",
+                    details,
+                    organisme=utilisateur_modifie.organisme,
                 )
                 messages.success(request, "Utilisateur modifié.")
                 return redirect("liste_utilisateurs")
@@ -576,10 +659,10 @@ def modifier_utilisateur(request, pk):
     )
 
 
-@admin_required
+@role_required(User.Role.ADMIN, User.Role.GESTIONNAIRE)
 @require_POST
 def activer_desactiver_utilisateur(request, pk):
-    utilisateur = get_object_or_404(User, pk=pk)
+    utilisateur = _compte_accessible_ou_403(request, pk)
     if utilisateur.pk == request.user.pk:
         messages.error(request, "Vous ne pouvez pas désactiver votre propre compte.")
         return redirect("liste_utilisateurs")
@@ -601,6 +684,7 @@ def activer_desactiver_utilisateur(request, pk):
         request,
         JournalActivite.Action.ACTIVATION if utilisateur.is_active else JournalActivite.Action.DESACTIVATION,
         f"Utilisateur {utilisateur.email}",
+        organisme=utilisateur.organisme,
     )
     if utilisateur.is_active:
         messages.success(request, f"Compte {utilisateur} activé.")
@@ -609,44 +693,56 @@ def activer_desactiver_utilisateur(request, pk):
     return redirect("liste_utilisateurs")
 
 
-@admin_required
+@role_required(User.Role.ADMIN, User.Role.GESTIONNAIRE)
 def reinitialiser_mot_de_passe(request, pk):
-    utilisateur = get_object_or_404(User, pk=pk)
+    utilisateur = _compte_accessible_ou_403(request, pk)
     if request.method == "POST":
         statut_onboarding = envoyer_activation_utilisateur(utilisateur, request=request)
-        journaliser(request, JournalActivite.Action.MOT_DE_PASSE, f"Utilisateur {utilisateur.email}", "Génération du lien de réinitialisation sécurisé")
+        journaliser(
+            request,
+            JournalActivite.Action.MOT_DE_PASSE,
+            f"Utilisateur {utilisateur.email}",
+            "Génération du lien de réinitialisation sécurisé",
+            organisme=utilisateur.organisme,
+        )
         bilan = statut_onboarding.get("bilan") or construire_bilan_onboarding(statut_onboarding, utilisateur, action="reinitialisation")
         messages.success(request, bilan["texte_flash"])
         return redirect("liste_utilisateurs")
     return render(request, "reinitialiser_mot_de_passe.html", {"utilisateur": utilisateur})
 
 
-@admin_required
+@role_required(User.Role.ADMIN, User.Role.GESTIONNAIRE)
 @require_POST
 def renvoyer_activation(request, pk):
-    utilisateur = get_object_or_404(User, pk=pk)
+    utilisateur = _compte_accessible_ou_403(request, pk)
     statut = envoyer_activation_utilisateur(utilisateur, request=request)
     journaliser(
         request,
         JournalActivite.Action.MOT_DE_PASSE,
         f"Utilisateur {utilisateur.email}",
         "Renvoi du lien d'activation sécurisé",
+        organisme=utilisateur.organisme,
     )
     bilan = statut.get("bilan") or construire_bilan_onboarding(statut, utilisateur, action="renvoi")
     messages.success(request, bilan["texte_flash"])
     return redirect("liste_utilisateurs")
 
 
-@admin_required
+@role_required(User.Role.ADMIN, User.Role.GESTIONNAIRE)
 def supprimer_utilisateur(request, pk):
-    utilisateur = get_object_or_404(User, pk=pk)
+    utilisateur = _compte_accessible_ou_403(request, pk)
     if utilisateur.pk == request.user.pk:
         messages.error(request, "Vous ne pouvez pas supprimer votre propre compte.")
+        return redirect("liste_utilisateurs")
+
+    if request.user.role == User.Role.GESTIONNAIRE and utilisateur.role == User.Role.ADMIN:
+        messages.error(request, "Un gestionnaire ne peut pas supprimer un compte Administrateur.")
         return redirect("liste_utilisateurs")
 
     if request.method == "POST":
         email_utilisateur = utilisateur.email
         role_libelle = utilisateur.get_role_display()
+        organisme_cible = utilisateur.organisme
         try:
             with transaction.atomic():
                 utilisateur.delete()
@@ -655,6 +751,7 @@ def supprimer_utilisateur(request, pk):
                     JournalActivite.Action.SUPPRESSION,
                     f"Utilisateur {email_utilisateur}",
                     f"role : {role_libelle}",
+                    organisme=organisme_cible,
                 )
                 messages.success(request, f"Utilisateur {email_utilisateur} supprimé avec succès.")
                 return redirect("liste_utilisateurs")
@@ -670,3 +767,113 @@ def supprimer_utilisateur(request, pk):
         "confirmer_suppression.html",
         {"objet": utilisateur, "type": "Utilisateur"},
     )
+
+
+# ---------------------------------------------------------------------------
+# Gestion des organismes (Administrateur Général uniquement)
+# ---------------------------------------------------------------------------
+
+@admin_required
+def liste_organismes(request):
+    from django.db.models import Count
+    organismes = Organisme.objects.annotate(
+        nb_gestionnaires=Count("utilisateurs", filter=Q(utilisateurs__role=User.Role.GESTIONNAIRE), distinct=True),
+        nb_patients=Count("patients", distinct=True),
+    )
+
+    type_organisme = request.GET.get("type", "").strip()
+    statut = request.GET.get("statut", "").strip()
+    recherche = request.GET.get("q", "").strip()
+
+    if type_organisme:
+        organismes = organismes.filter(type_organisme=type_organisme)
+    if statut == "actif":
+        organismes = organismes.filter(actif=True)
+    elif statut == "inactif":
+        organismes = organismes.filter(actif=False)
+    if recherche:
+        organismes = organismes.filter(
+            Q(nom__icontains=recherche)
+            | Q(code__icontains=recherche)
+            | Q(email__icontains=recherche)
+        )
+
+    organismes = _trier(request, organismes, ["nom", "code", "type_organisme", "actif", "date_creation"], ["nom"])
+    tous = Organisme.objects.all()
+
+    return render(
+        request,
+        "liste_organismes.html",
+        {
+            "organismes": _paginer(request, organismes),
+            "types_organisme": Organisme.TypeOrganisme.choices,
+            "type_selectionne": type_organisme,
+            "statut_selectionne": statut,
+            "recherche": recherche,
+            "total_organismes": tous.count(),
+            "total_organismes_actifs": tous.filter(actif=True).count(),
+            "total_organismes_inactifs": tous.filter(actif=False).count(),
+        },
+    )
+
+
+@admin_required
+def ajouter_organisme(request):
+    if request.method == "POST":
+        form = OrganismeForm(request.POST)
+        if form.is_valid():
+            organisme = form.save()
+            journaliser(
+                request,
+                JournalActivite.Action.CREATION,
+                f"Organisme {organisme.nom}",
+                f"Code : {organisme.code} — Type : {organisme.get_type_organisme_display()}",
+                organisme=organisme,
+            )
+            messages.success(request, f"Organisme « {organisme.nom} » ({organisme.code}) créé avec succès.")
+            return redirect("liste_organismes")
+    else:
+        form = OrganismeForm()
+    return render(request, "ajouter_organisme.html", {"form": form})
+
+
+@admin_required
+def modifier_organisme(request, pk):
+    organisme = get_object_or_404(Organisme, pk=pk)
+    if request.method == "POST":
+        form = OrganismeForm(request.POST, instance=organisme)
+        if form.is_valid():
+            organisme = form.save()
+            journaliser(
+                request,
+                JournalActivite.Action.MODIFICATION,
+                f"Organisme {organisme.nom}",
+                f"Code : {organisme.code} — Type : {organisme.get_type_organisme_display()}",
+                organisme=organisme,
+            )
+            messages.success(request, f"Organisme « {organisme.nom} » modifié.")
+            return redirect("liste_organismes")
+    else:
+        form = OrganismeForm(instance=organisme)
+    return render(request, "modifier_organisme.html", {"form": form, "organisme": organisme})
+
+
+@admin_required
+@require_POST
+def activer_desactiver_organisme(request, pk):
+    organisme = get_object_or_404(Organisme, pk=pk)
+    organisme.actif = not organisme.actif
+    organisme.save(update_fields=["actif"])
+    journaliser(
+        request,
+        JournalActivite.Action.ACTIVATION if organisme.actif else JournalActivite.Action.DESACTIVATION,
+        f"Organisme {organisme.nom}",
+        f"Code : {organisme.code}",
+        organisme=organisme,
+    )
+    if organisme.actif:
+        messages.success(request, f"Organisme « {organisme.nom} » activé.")
+    else:
+        messages.success(request, f"Organisme « {organisme.nom} » désactivé.")
+    return redirect("liste_organismes")
+

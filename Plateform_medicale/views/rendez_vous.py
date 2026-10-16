@@ -3,13 +3,15 @@
 from django.db.models import Q
 from django.shortcuts import render
 
-from ..models import RendezVous
-from .utils import _paginer, _trier, admin_required
+from ..models import RendezVous, User
+from .utils import _paginer, _trier, filtrer_par_organisme, role_required
 
 
-@admin_required
+@role_required(User.Role.GESTIONNAIRE)
 def liste_rendez_vous(request):
-    rendez_vous = RendezVous.objects.select_related("patient", "medecin", "prestataire")
+    rendez_vous = RendezVous.objects.select_related("patient", "patient__organisme", "medecin", "prestataire")
+    if request.user.role == User.Role.GESTIONNAIRE:
+        rendez_vous = filtrer_par_organisme(request, rendez_vous, champ="patient__organisme")
 
     recherche = request.GET.get("q", "").strip() or request.GET.get("recherche", "").strip()
     if recherche:
@@ -50,7 +52,16 @@ def telecharger_ics_rendez_vous(request, pk):
         pk=pk,
     )
 
-    est_admin = request.user.role == User.Role.ADMIN
+    # Confidentialite : l'administrateur n'a pas acces aux rendez-vous des patients.
+    est_admin = False
+    est_gestionnaire = (
+        request.user.role == User.Role.GESTIONNAIRE
+        and (
+            request.user.organisme_id is None
+            or rdv.patient.organisme_id is None
+            or rdv.patient.organisme_id == request.user.organisme_id
+        )
+    )
     est_medecin = (
         request.user.role == User.Role.MEDECIN
         and hasattr(request.user, "medecin")
@@ -63,7 +74,7 @@ def telecharger_ics_rendez_vous(request, pk):
         if rdv.patient_id in membres:
             est_assure = True
 
-    if not (est_admin or est_medecin or est_assure):
+    if not (est_admin or est_gestionnaire or est_medecin or est_assure):
         raise PermissionDenied("Vous n'avez pas accès à ce rendez-vous.")
 
     dt_start = rdv.date_heure.strftime("%Y%m%dT%H%M%SZ")

@@ -579,8 +579,8 @@
                         <span class="libelle-mobile">Actions</span>
                         <div style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;">
                             {% if rdv.statut == 'CONFIRME' %}
-                            <a href="{% url 'telecharger_ics_rendez_vous' rdv.pk %}" class="button btn btn-sm" title="Ajouter à votre agenda (Google / Apple Calendar)" style="gap:4px;padding:5px 9px;">
-                                {% icone "calendar" %} Agenda
+                            <a href="{% url 'telecharger_ics_rendez_vous' rdv.pk %}" class="button btn btn-expand" title="Ajouter à votre agenda (Google / Apple Calendar)" aria-label="Ajouter à l'agenda">
+                                {% icone "calendar" %} <span class="expand-text">Ajouter à l'agenda</span>
                             </a>
                             {% endif %}
                             {% if rdv.statut == 'DEMANDE' or rdv.statut == 'CONFIRME' %}

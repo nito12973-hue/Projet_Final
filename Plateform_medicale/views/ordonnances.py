@@ -3,15 +3,19 @@
 from django.db.models import Q
 from django.shortcuts import render
 
-from ..models import Ordonnance
-from .utils import _paginer, _trier, admin_required
+from ..models import Ordonnance, User
+from .utils import _paginer, _trier, filtrer_par_organisme, role_required
 
 
-@admin_required
+@role_required(User.Role.GESTIONNAIRE)
 def liste_ordonnances(request):
     ordonnances = Ordonnance.objects.select_related(
-        "consultation__patient", "consultation__medecin", "delivrance"
+        "consultation__patient", "consultation__patient__organisme", "consultation__medecin", "delivrance"
     )
+    if request.user.role == User.Role.GESTIONNAIRE:
+        ordonnances = filtrer_par_organisme(
+            request, ordonnances, champ="consultation__patient__organisme"
+        )
 
     recherche = request.GET.get("q", "").strip()
     if recherche:

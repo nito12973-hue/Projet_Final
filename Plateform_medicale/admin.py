@@ -4,11 +4,13 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import (
     Consultation,
     Delivrance,
+    DemandeRemboursement,
     JournalActivite,
     LigneOrdonnance,
     Medecin,
     Notification,
     Ordonnance,
+    Organisme,
     Paiement,
     Patient,
     Pharmacien,
@@ -39,34 +41,41 @@ class SuppressionGereeParLAppMixin:
         return False
 
 
+@admin.register(Organisme)
+class OrganismeAdmin(SuppressionGereeParLAppMixin, admin.ModelAdmin):
+    list_display = ["nom", "code", "type_organisme", "telephone", "email", "actif", "date_creation"]
+    list_filter = ["type_organisme", "actif"]
+    search_fields = ["nom", "code", "email"]
+
+
 @admin.register(User)
 class UserAdmin(SuppressionGereeParLAppMixin, BaseUserAdmin):
     ordering = ['email']
-    list_display = ['email', 'first_name', 'last_name', 'role', 'is_active', 'is_staff']
-    list_filter = ['role', 'is_active', 'is_staff']
+    list_display = ['email', 'first_name', 'last_name', 'role', 'organisme', 'is_active', 'is_staff']
+    list_filter = ['role', 'organisme', 'is_active', 'is_staff']
     search_fields = ['email', 'first_name', 'last_name']
 
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
         ('Informations personnelles', {'fields': ('first_name', 'last_name', 'phone_number')}),
         ('Rôle et permissions', {
-            'fields': ('role', 'is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
+            'fields': ('role', 'organisme', 'is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
         }),
         ('Dates', {'fields': ('last_login', 'date_joined')}),
     )
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'password1', 'password2', 'role', 'first_name', 'last_name'),
+            'fields': ('email', 'password1', 'password2', 'role', 'organisme', 'first_name', 'last_name'),
         }),
     )
 
 
 @admin.register(Patient)
 class PatientAdmin(SuppressionGereeParLAppMixin, admin.ModelAdmin):
-    list_display = ["nom", "prenom", "type_beneficiaire", "numero_carte", "assure_principal", "plan_couverture"]
-    list_filter = ["type_beneficiaire", "plan_couverture"]
-    search_fields = ["nom", "prenom", "numero_carte"]
+    list_display = ["nom", "prenom", "organisme", "entreprise", "type_beneficiaire", "numero_carte", "assure_principal", "plan_couverture"]
+    list_filter = ["organisme", "type_beneficiaire", "plan_couverture"]
+    search_fields = ["nom", "prenom", "numero_carte", "entreprise"]
 
 
 @admin.register(Medecin)
@@ -139,9 +148,9 @@ class JournalActiviteAdmin(admin.ModelAdmin):
     Les entrees sont creees exclusivement par journaliser() (views.py).
     """
 
-    list_display = ["date", "auteur_libelle", "action", "objet", "details"]
-    list_filter = ["action"]
-    search_fields = ["auteur_libelle", "objet", "details"]
+    list_display = ["date", "auteur_libelle", "organisme_libelle", "action", "objet", "details"]
+    list_filter = ["action", "organisme"]
+    search_fields = ["auteur_libelle", "organisme_libelle", "objet", "details"]
 
     def has_add_permission(self, request):
         return False
@@ -194,3 +203,21 @@ class OrdonnanceAdmin(SuppressionGereeParLAppMixin, admin.ModelAdmin):
 class PaiementAdmin(admin.ModelAdmin):
     list_display = ["consultation", "montant_total", "montant_part_patient", "statut", "date_reglement"]
     list_filter = ["statut", "mode_reglement"]
+
+
+@admin.register(DemandeRemboursement)
+class DemandeRemboursementAdmin(SuppressionGereeParLAppMixin, admin.ModelAdmin):
+    list_display = [
+        "numero_dossier",
+        "patient",
+        "organisme",
+        "prestataire_nom",
+        "type_soin",
+        "date_soins",
+        "montant_depense",
+        "montant_rembourse_accorde",
+        "statut",
+    ]
+    list_filter = ["statut", "type_soin", "organisme"]
+    search_fields = ["numero_dossier", "patient__nom", "patient__prenom", "prestataire_nom"]
+

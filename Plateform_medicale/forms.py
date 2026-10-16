@@ -10,12 +10,15 @@ from django.utils import timezone
 
 from .models import (
     Consultation,
+    ConventionPrestataire,
+    DemandeRemboursement,
     DemandeSupport,
     JournalActivite,
     LigneOrdonnance,
     Medecin,
     MessageSupport,
     Ordonnance,
+    Organisme,
     Paiement,
     Patient,
     Pharmacien,
@@ -238,26 +241,104 @@ class SetupWizardForm(forms.ModelForm):
         )
 
 
+class OrganismeForm(forms.ModelForm):
+    """Création ou modification d'un organisme assureur (IPM / Assurance / Mutuelle / Entreprise)."""
+
+    class Meta:
+        model = Organisme
+        fields = [
+            "nom",
+            "code",
+            "type_organisme",
+            "adresse",
+            "telephone",
+            "email",
+            "actif",
+        ]
+        widgets = {
+            "nom": forms.TextInput(attrs={"placeholder": "Ex : IPM Sonatel"}),
+            "code": forms.TextInput(attrs={"placeholder": "Ex : IPM-SONATEL"}),
+            "adresse": forms.TextInput(attrs={"placeholder": "Ex : Dakar, Plateau"}),
+            "telephone": forms.TextInput(attrs={"placeholder": "Ex : 770000000"}),
+            "email": forms.EmailInput(attrs={"placeholder": "contact@organisme.sn"}),
+        }
+
+    def clean_code(self):
+        code = (self.cleaned_data.get("code") or "").strip().upper()
+        if not code:
+            raise forms.ValidationError("Le code de l'organisme est obligatoire.")
+        qs = Organisme.objects.filter(code__iexact=code)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError("Ce code d'organisme est déjà utilisé.")
+        return code
+
+
 class UtilisateurCreationForm(forms.ModelForm):
-    """Creation d'un compte par l'administrateur : le mot de passe est genere automatiquement."""
+    """Creation d'un compte GESTIONNAIRE par l'administrateur : le mot de passe est genere automatiquement."""
 
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email', 'phone_number', 'role']
+        fields = ['first_name', 'last_name', 'email', 'phone_number', 'role', 'organisme']
 
     def __init__(self, *args, **kwargs):
+        self._request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
-        # Un seul administrateur, jamais recreable depuis l'interface classique
-        # (voir UtilisateurModificationForm) : cette vue n'est accessible qu'a
-        # un administrateur deja existant (@admin_required), donc ADMIN n'est
-        # jamais un choix valide ici.
-        self.fields['role'].choices = [
-            choix for choix in User.Role.choices if choix[0] != User.Role.ADMIN
-        ]
+        user = getattr(self._request, 'user', None) if self._request else None
+        is_gestionnaire = user is not None and user.role == User.Role.GESTIONNAIRE
+
+        if is_gestionnaire:
+            # Le gestionnaire cree des comptes dans SON organisme uniquement.
+            # Roles possibles : GESTIONNAIRE, MEDECIN, PHARMACIEN, ASSURE (jamais ADMIN).
+            self.fields['role'].choices = [
+                choix for choix in User.Role.choices
+                if choix[0] in (User.Role.GESTIONNAIRE, User.Role.MEDECIN, User.Role.PHARMACIEN, User.Role.ASSURE)
+            ]
+            self.fields['role'].initial = User.Role.MEDECIN
+            # Organisme impose : celui du gestionnaire, non modifiable.
+            self.fields['organisme'].queryset = Organisme.objects.filter(pk=user.organisme_id)
+            self.fields['organisme'].initial = user.organisme
+            self.fields['organisme'].required = False
+            self.fields['organisme'].widget = forms.HiddenInput()
+        else:
+            # L'administrateur peut creer tout compte sauf ADMIN.
+            self.fields['role'].choices = [
+                choix for choix in User.Role.choices if choix[0] != User.Role.ADMIN
+            ]
+            self.fields['role'].initial = User.Role.GESTIONNAIRE
+            self.fields['organisme'].queryset = Organisme.objects.filter(actif=True)
+            self.fields['organisme'].required = False
+            self.fields['organisme'].empty_label = "— Aucun organisme —"
+
+    def clean(self):
+        cleaned_data = super().clean()
+        role = cleaned_data.get('role')
+        organisme = cleaned_data.get('organisme')
+        user = getattr(self._request, 'user', None) if self._request else None
+        is_gestionnaire = user is not None and user.role == User.Role.GESTIONNAIRE
+
+        if is_gestionnaire:
+            # Force l'organisme a celui du gestionnaire (le champ est cache).
+            cleaned_data['organisme'] = user.organisme
+            if role == User.Role.ADMIN:
+                self.add_error('role', "Un gestionnaire ne peut pas creer un compte Administrateur.")
+        else:
+            if role == User.Role.GESTIONNAIRE and not organisme:
+                self.add_error(
+                    'organisme',
+                    "Un gestionnaire doit obligatoirement être rattaché à un organisme.",
+                )
+            elif role == User.Role.ADMIN:
+                cleaned_data['organisme'] = None
+        return cleaned_data
 
     def save(self, commit=True):
         self.mot_de_passe_genere = generer_mot_de_passe()
         utilisateur = super().save(commit=False)
+        user = getattr(self._request, 'user', None) if self._request else None
+        if user and user.role == User.Role.GESTIONNAIRE and user.organisme:
+            utilisateur.organisme = user.organisme
         utilisateur.set_password(self.mot_de_passe_genere)
         if commit:
             utilisateur.save()
@@ -271,7 +352,7 @@ class UtilisateurModificationForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email', 'phone_number', 'role']
+        fields = ['first_name', 'last_name', 'email', 'phone_number', 'role', 'organisme']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -285,6 +366,27 @@ class UtilisateurModificationForm(forms.ModelForm):
             self.fields['role'].choices = [
                 choix for choix in User.Role.choices if choix[0] != User.Role.ADMIN
             ]
+        if self.instance.pk and self.instance.organisme_id:
+            self.fields['organisme'].queryset = Organisme.objects.filter(
+                Q(actif=True) | Q(pk=self.instance.organisme_id)
+            )
+        else:
+            self.fields['organisme'].queryset = Organisme.objects.filter(actif=True)
+        self.fields['organisme'].required = False
+        self.fields['organisme'].empty_label = "— Aucun organisme —"
+
+    def clean(self):
+        cleaned_data = super().clean()
+        role = cleaned_data.get('role')
+        organisme = cleaned_data.get('organisme')
+        if role == User.Role.GESTIONNAIRE and not organisme:
+            self.add_error(
+                'organisme',
+                "Un gestionnaire doit obligatoirement être rattaché à un organisme.",
+            )
+        elif role == User.Role.ADMIN:
+            cleaned_data['organisme'] = None
+        return cleaned_data
 
 
 class ConsultationForm(forms.ModelForm):
@@ -476,10 +578,13 @@ class OrdonnanceForm(forms.ModelForm):
     class Meta:
         model = Ordonnance
         fields = ['medicaments']
+        labels = {
+            'medicaments': 'Médicaments prescrits',
+        }
         widgets = {
             'medicaments': forms.Textarea(attrs={
                 'rows': 6,
-                'placeholder': 'Un medicament par ligne : nom, dosage, posologie...',
+                'placeholder': 'Un médicament par ligne : nom, dosage, posologie...',
             }),
         }
 
@@ -490,6 +595,17 @@ class MedecinProfilForm(forms.ModelForm):
     class Meta:
         model = Medecin
         fields = ['specialite', 'prestataire', 'telephone', 'annees_experience', 'presentation']
+        labels = {
+            'specialite': 'Spécialité médicale',
+            'prestataire': 'Établissement rattaché',
+            'telephone': 'Téléphone professionnel',
+            'annees_experience': "Années d'expérience",
+            'presentation': 'Présentation professionnelle',
+        }
+        help_texts = {
+            'presentation': "Texte libre affiché à l'assuré lorsqu'il choisit son médecin.",
+            'annees_experience': "Laissez vide si l'information n'est pas connue.",
+        }
         widgets = {
             'presentation': forms.Textarea(attrs={
                 'rows': 4,
@@ -560,6 +676,12 @@ class AyantDroitForm(forms.ModelForm):
             'date_naissance': forms.DateInput(attrs={'type': 'date'}),
         }
         labels = {
+            'nom': 'Nom',
+            'prenom': 'Prénom',
+            'date_naissance': 'Date de naissance',
+            'telephone': 'Téléphone',
+            'adresse': 'Adresse',
+            'lien_parente': 'Lien de parenté',
             'document_justificatif': 'Pièce justificative officielle (Extrait de naissance, acte de mariage - PDF/Image)',
         }
         help_texts = {
@@ -646,18 +768,18 @@ class RendezVousAssureForm(forms.ModelForm):
     class Meta:
         model = RendezVous
         fields = ['patient', 'medecin', 'prestataire', 'date_heure', 'motif']
-        labels = {'patient': 'Beneficiaire'}
+        labels = {'patient': 'Bénéficiaire'}
         widgets = {
             'motif': forms.Textarea(attrs={
                 'rows': 4,
                 'placeholder': (
                     "Ex. : douleurs abdominales depuis trois jours, "
-                    "avec de la fievre et des nausees."
+                    "avec de la fièvre et des nausées."
                 ),
             }),
         }
         help_texts = {
-            'motif': "Decrivez ce que vous ressentez. Le medecin etablira le diagnostic.",
+            'motif': "Décrivez ce que vous ressentez. Le médecin établira le diagnostic.",
         }
 
     def __init__(self, *args, beneficiaires=None, prestataire=None, **kwargs):
@@ -739,7 +861,7 @@ class RendezVousAssureForm(forms.ModelForm):
         if (medecin and prestataire and medecin.prestataire_id is not None
                 and medecin.prestataire_id != prestataire.pk):
             self.add_error('medecin', forms.ValidationError(
-                "Ce medecin n'exerce pas chez %(prestataire)s.",
+                "Ce médecin n'exerce pas chez %(prestataire)s.",
                 params={'prestataire': prestataire.nom},
             ))
         return cleaned
@@ -752,14 +874,69 @@ class PrestataireForm(forms.ModelForm):
         model = Prestataire
         fields = [
             'nom', 'type_prestataire', 'adresse', 'ville', 'telephone',
-            'partenaire', 'date_conventionnement', 'latitude', 'longitude',
+            'date_conventionnement', 'partenaire', 'latitude', 'longitude',
         ]
+        labels = {
+            'nom': "Nom de l'établissement",
+            'type_prestataire': "Type d'établissement",
+            'adresse': "Adresse",
+            'ville': "Ville",
+            'telephone': "Téléphone",
+            'date_conventionnement': "Date de conventionnement",
+            'partenaire': "Partenaire actif (réseau conventionné)",
+        }
+        help_texts = {
+            'partenaire': "Fait partie du réseau conventionné.",
+            'latitude': "Renseignée en plaçant un point sur la carte ci-dessous.",
+        }
         widgets = {
             'adresse': forms.Textarea(attrs={'rows': 3}),
             'date_conventionnement': forms.DateInput(attrs={'type': 'date'}),
             'latitude': forms.HiddenInput(),
             'longitude': forms.HiddenInput(),
         }
+
+
+class ConventionPrestataireForm(forms.ModelForm):
+    """Conventionnement d'un établissement de santé par l'organisme assureur (IPM)."""
+
+    class Meta:
+        model = ConventionPrestataire
+        fields = [
+            'prestataire',
+            'numero_convention',
+            'statut',
+            'tiers_payant_actif',
+            'date_conventionnement',
+            'date_fin',
+            'remarques',
+        ]
+        labels = {
+            'prestataire': "Établissement de santé à conventionner",
+            'numero_convention': "Numéro de convention / Référence contrat",
+            'statut': "Statut du conventionnement",
+            'tiers_payant_actif': "Dispense d'avance des frais (Tiers payant actif)",
+            'date_conventionnement': "Date d'effet",
+            'date_fin': "Date d'échéance (optionnel)",
+            'remarques': "Barèmes / Accords particuliers négociés",
+        }
+        widgets = {
+            'date_conventionnement': forms.DateInput(attrs={'type': 'date'}),
+            'date_fin': forms.DateInput(attrs={'type': 'date'}),
+            'numero_convention': forms.TextInput(attrs={'placeholder': "Ex : CONV-IPM-2026-042"}),
+            'remarques': forms.TextInput(attrs={'placeholder': "Ex : Tiers payant ambulatoire 80%, hospitalisation conventionnée"}),
+        }
+
+    def __init__(self, *args, organisme=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.organisme = organisme
+        if organisme:
+            deja_conventionnes = ConventionPrestataire.objects.filter(organisme=organisme)
+            if self.instance and self.instance.pk:
+                deja_conventionnes = deja_conventionnes.exclude(pk=self.instance.pk)
+            deja_ids = deja_conventionnes.values_list('prestataire_id', flat=True)
+            self.fields['prestataire'].queryset = Prestataire.objects.exclude(id__in=deja_ids).order_by('nom')
+
 
 
 class PharmacienAffectationForm(forms.ModelForm):
@@ -776,22 +953,78 @@ class PharmacienAffectationForm(forms.ModelForm):
         fields = ['prestataire']
 
 
+class PharmacienCreationForm(forms.ModelForm):
+    """Creation d'un pharmacien par le gestionnaire.
+
+    Cree le compte de connexion (role PHARMACIEN, mot de passe genere et lien
+    d'activation envoye par la vue) et la fiche metier Pharmacien rattachee a
+    sa pharmacie partenaire. Meme logique que la creation d'un medecin.
+    """
+
+    prestataire = forms.ModelChoiceField(
+        queryset=Prestataire.objects.filter(type_prestataire=Prestataire.Type.PHARMACIE),
+        required=False,
+        label='Pharmacie',
+    )
+
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email', 'phone_number']
+
+    def save(self, commit=True):
+        self.mot_de_passe_genere = generer_mot_de_passe()
+        utilisateur = super().save(commit=False)
+        utilisateur.role = User.Role.PHARMACIEN
+        utilisateur.set_password(self.mot_de_passe_genere)
+        if commit:
+            utilisateur.save()
+            lier_fiche_pharmacien(utilisateur)
+            if self.cleaned_data.get('prestataire'):
+                utilisateur.pharmacien.prestataire = self.cleaned_data['prestataire']
+                utilisateur.pharmacien.save(update_fields=['prestataire'])
+        return utilisateur
+
+
 class PatientForm(forms.ModelForm):
     """
     Creation/modification complete d'un assure ou d'un ayant droit par
-    l'administrateur, y compris l'attribution du plan de couverture
-    (responsabilite RH/assurance, pas celle de l'assure lui-meme).
+    le gestionnaire de l'organisme, y compris l'attribution du plan de couverture.
     """
 
     class Meta:
         model = Patient
         fields = [
-            'nom', 'prenom', 'date_naissance', 'telephone', 'adresse',
+            'nom', 'prenom', 'date_naissance', 'telephone', 'adresse', 'entreprise',
             'type_beneficiaire', 'assure_principal', 'lien_parente', 'plan_couverture',
         ]
+        labels = {
+            'nom': 'Nom',
+            'prenom': 'Prénom',
+            'date_naissance': 'Date de naissance',
+            'telephone': 'Téléphone',
+            'adresse': 'Adresse',
+            'entreprise': 'Entreprise employeur (optionnel)',
+            'type_beneficiaire': 'Type de bénéficiaire',
+            'assure_principal': 'Assuré principal',
+            'lien_parente': 'Lien de parenté',
+            'plan_couverture': 'Plan de couverture',
+        }
+        help_texts = {
+            'assure_principal': "Renseigné uniquement pour un ayant droit : l'assuré principal rattaché.",
+            'plan_couverture': "Renseigné pour l'assuré principal ; les ayants droit héritent de ce plan.",
+        }
         widgets = {
             'date_naissance': forms.DateInput(attrs={'type': 'date'}),
         }
+
+    def __init__(self, *args, organisme=None, **kwargs):
+        self._organisme = organisme
+        super().__init__(*args, **kwargs)
+        if organisme is not None and 'assure_principal' in self.fields:
+            self.fields['assure_principal'].queryset = Patient.objects.filter(
+                type_beneficiaire=Patient.TypeBeneficiaire.PRINCIPAL,
+                organisme=organisme,
+            )
 
     def clean_date_naissance(self):
         """La date de naissance ne peut pas être dans le futur."""
@@ -819,9 +1052,25 @@ class PatientForm(forms.ModelForm):
                 'assure_principal',
                 "Un ayant droit doit être rattaché à un assuré principal.",
             )
+        elif (
+            assure_principal
+            and self._organisme is not None
+            and assure_principal.organisme_id != self._organisme.pk
+        ):
+            self.add_error(
+                'assure_principal',
+                "Cet assuré principal n'appartient pas à votre organisme.",
+            )
+
+        if self._organisme is not None:
+            self.instance.organisme = self._organisme
+        elif assure_principal and assure_principal.organisme_id:
+            self.instance.organisme_id = assure_principal.organisme_id
         return cleaned_data
 
     def save(self, commit=True):
+        if self._organisme is not None:
+            self.instance.organisme = self._organisme
         patient = super().save(commit=commit)
         if commit:
             aligner_patient_vers_user(patient)
@@ -918,10 +1167,24 @@ class MedecinForm(forms.ModelForm):
             'nom', 'prenom', 'specialite', 'telephone', 'email', 'prestataire',
             'annees_experience', 'presentation',
         ]
+        labels = {
+            'nom': 'Nom',
+            'prenom': 'Prénom',
+            'specialite': 'Spécialité',
+            'telephone': 'Téléphone',
+            'email': 'Adresse email',
+            'prestataire': 'Établissement rattaché',
+            'annees_experience': "Années d'expérience",
+            'presentation': 'Présentation professionnelle',
+        }
+        help_texts = {
+            'presentation': "Texte libre affiché à l'assuré lorsqu'il choisit son médecin.",
+            'annees_experience': "Laissez vide si l'information n'est pas connue.",
+        }
         widgets = {
             'presentation': forms.Textarea(attrs={
                 'rows': 4,
-                'placeholder': "Domaines de prise en charge, parcours, langues parlees...",
+                'placeholder': "Domaines de prise en charge, parcours, langues parlées...",
             }),
         }
 
@@ -962,7 +1225,7 @@ class ServiceMedicalForm(forms.ModelForm):
 
 
 class PriseEnChargeForm(forms.ModelForm):
-    """Creation/modification d'une prise en charge (par l'administrateur)."""
+    """Creation/modification d'une prise en charge (par le gestionnaire)."""
 
     class Meta:
         model = PriseEnCharge
@@ -985,11 +1248,24 @@ class PriseEnChargeForm(forms.ModelForm):
             'devis_fichier': "Format accepté : PDF ou image (PNG, JPG) - taille maximale : 10 Mo.",
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, organisme=None, **kwargs):
+        self._organisme = organisme
         super().__init__(*args, **kwargs)
         self.fields['motif'].required = False
         self.fields['montant_estime'].required = False
         self.fields['devis_fichier'].required = False
+        if organisme is not None and 'patient' in self.fields:
+            self.fields['patient'].queryset = Patient.objects.filter(organisme=organisme)
+
+    def clean_patient(self):
+        patient = self.cleaned_data.get('patient')
+        if (
+            patient
+            and self._organisme is not None
+            and patient.organisme_id != self._organisme.pk
+        ):
+            raise forms.ValidationError("Ce bénéficiaire n'appartient pas à votre organisme.")
+        return patient
 
     def clean_devis_fichier(self):
         doc = self.cleaned_data.get('devis_fichier')
@@ -1086,6 +1362,9 @@ class PaiementReglementForm(forms.ModelForm):
     class Meta:
         model = Paiement
         fields = ['mode_reglement']
+        labels = {
+            'mode_reglement': "Mode de règlement",
+        }
 
     def clean_mode_reglement(self):
         mode_reglement = self.cleaned_data['mode_reglement']
@@ -1267,5 +1546,213 @@ class ReponseSupportForm(forms.ModelForm):
                 "placeholder": "Écrivez votre réponse ici..."
             })
         }
+
+
+class DemandeRemboursementAssureForm(FormControlMixin, forms.ModelForm):
+    """
+    Formulaire permettant à un assuré de soumettre une demande de remboursement
+    pour des soins payés auprès d'un prestataire hors réseau (non conventionné).
+    """
+
+    EXTENSIONS_AUTORISEES = (".pdf", ".jpg", ".jpeg", ".png", ".webp")
+    TAILLE_MAX_OCTETS = 10 * 1024 * 1024  # 10 Mo
+
+    class Meta:
+        model = DemandeRemboursement
+        fields = [
+            "patient",
+            "prestataire_nom",
+            "type_soin",
+            "date_soins",
+            "montant_depense",
+            "justificatif",
+            "coordonnees_remboursement",
+            "motif",
+        ]
+        labels = {
+            "patient": "Bénéficiaire des soins",
+            "prestataire_nom": "Nom de l'établissement ou du praticien (hors réseau)",
+            "type_soin": "Nature des soins",
+            "date_soins": "Date de la consultation ou de l'achat",
+            "montant_depense": "Montant total payé (FCFA)",
+            "justificatif": "Facture acquittée / Feuille de soins (PDF ou photo)",
+            "coordonnees_remboursement": "Numéro Mobile Money (Wave / Orange Money) ou IBAN",
+            "motif": "Précisions sur les soins ou médicaments (optionnel)",
+        }
+        widgets = {
+            "prestataire_nom": forms.TextInput(attrs={
+                "placeholder": "Ex. : Clinique Pasteur, Pharmacie Guigon, Cabinet Dentaire..."
+            }),
+            "date_soins": forms.DateInput(attrs={"type": "date"}),
+            "montant_depense": forms.NumberInput(attrs={
+                "placeholder": "Ex. : 25000",
+                "min": "100",
+                "step": "100",
+            }),
+            "justificatif": forms.FileInput(attrs={"accept": ".pdf,image/*"}),
+            "coordonnees_remboursement": forms.TextInput(attrs={
+                "placeholder": "Ex. : Wave 77 123 45 67 ou IBAN SN08..."
+            }),
+            "motif": forms.Textarea(attrs={
+                "rows": 3,
+                "placeholder": "Décrivez brièvement le contexte (urgence, déplacement, médicament non disponible en réseau...)"
+            }),
+        }
+
+    def __init__(self, *args, assure_patient=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._assure_patient = assure_patient
+        self.fields["motif"].required = False
+        self.fields["coordonnees_remboursement"].required = False
+        if assure_patient:
+            membres_valides = [assure_patient.pk] + list(
+                assure_patient.ayants_droit.filter(
+                    statut_validation=Patient.StatutValidation.VALIDE
+                ).values_list("pk", flat=True)
+            )
+            self.fields["patient"].queryset = Patient.objects.filter(pk__in=membres_valides)
+            self.fields["patient"].empty_label = None
+            if not self.initial.get("coordonnees_remboursement") and assure_patient.telephone:
+                self.fields["coordonnees_remboursement"].initial = assure_patient.telephone
+
+    def clean_prestataire_nom(self):
+        nom = (self.cleaned_data.get("prestataire_nom") or "").strip()
+        if not nom:
+            raise forms.ValidationError("Veuillez indiquer le nom de l'établissement ou du praticien.")
+        return nom
+
+    def clean_date_soins(self):
+        date_soins = self.cleaned_data.get("date_soins")
+        if date_soins and date_soins > timezone.now().date():
+            raise forms.ValidationError("La date des soins ne peut pas être dans le futur.")
+        return date_soins
+
+    def clean_justificatif(self):
+        doc = self.cleaned_data.get("justificatif")
+        if doc:
+            if hasattr(doc, "size") and doc.size > self.TAILLE_MAX_OCTETS:
+                raise forms.ValidationError("Le fichier justificatif ne doit pas dépasser 10 Mo.")
+            nom_fichier = (getattr(doc, "name", "") or "").lower()
+            if nom_fichier and not nom_fichier.endswith(self.EXTENSIONS_AUTORISEES):
+                raise forms.ValidationError(
+                    "Format non supporté. Formats acceptés : PDF, JPG, PNG, WEBP."
+                )
+        return doc
+
+    def clean_patient(self):
+        patient = self.cleaned_data.get("patient")
+        if patient and not patient.est_valide:
+            raise forms.ValidationError(
+                "Ce bénéficiaire est en attente de validation et ne peut pas encore demander un remboursement."
+            )
+        if self._assure_patient and patient:
+            foyer_ids = {self._assure_patient.pk} | set(
+                self._assure_patient.ayants_droit.values_list("pk", flat=True)
+            )
+            if patient.pk not in foyer_ids:
+                raise forms.ValidationError("Ce bénéficiaire ne fait pas partie de votre foyer.")
+        return patient
+
+    def clean(self):
+        cleaned_data = super().clean()
+        justificatif = cleaned_data.get("justificatif")
+        motif = (cleaned_data.get("motif") or "").strip()
+        if not justificatif and not motif:
+            raise forms.ValidationError(
+                "Veuillez joindre la facture acquittée (PDF/photo) ou détailler les soins dans les observations."
+            )
+        return cleaned_data
+
+
+class InstructionRemboursementForm(FormControlMixin, forms.Form):
+    """
+    Formulaire d'instruction d'une demande de remboursement par le Gestionnaire IPM :
+    validation (avec montant accordé), refus motivé, ou confirmation du virement.
+    """
+
+    DECISION_CHOICES = [
+        ("valider", "Approuver la demande de remboursement"),
+        ("rembourser", "Approuver et marquer immédiatement comme remboursée"),
+        ("refuser", "Refuser la demande"),
+    ]
+
+    decision = forms.ChoiceField(
+        label="Décision d'instruction",
+        choices=DECISION_CHOICES,
+        initial="valider",
+    )
+    montant_rembourse_accorde = forms.DecimalField(
+        label="Montant accordé par l'assurance (FCFA)",
+        max_digits=12,
+        decimal_places=2,
+        required=False,
+        min_value=0,
+        widget=forms.NumberInput(attrs={"step": "1", "min": "0"}),
+        help_text="Calculé automatiquement selon le taux du plan et le plafond annuel restant.",
+    )
+    mode_remboursement = forms.ChoiceField(
+        label="Mode de remboursement",
+        choices=[("", "— Sélectionner —")] + list(DemandeRemboursement.ModeRemboursement.choices),
+        required=False,
+    )
+    reference_reglement = forms.CharField(
+        label="Référence de transaction / virement",
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(attrs={"placeholder": "Ex. : VIR-2026-8841 ou Wave ID"}),
+    )
+    motif_refus = forms.CharField(
+        label="Motif du refus (obligatoire en cas de rejet)",
+        max_length=255,
+        required=False,
+        widget=forms.TextInput(attrs={
+            "placeholder": "Ex. : Facture non acquittée, acte hors panier de garantie..."
+        }),
+    )
+
+    def __init__(self, *args, demande=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.demande = demande
+        if demande and not self.is_bound:
+            _, estime = demande.calculer_estimation()
+            self.fields["montant_rembourse_accorde"].initial = (
+                demande.montant_rembourse_accorde
+                if demande.montant_rembourse_accorde and demande.montant_rembourse_accorde > 0
+                else estime
+            )
+            self.fields["mode_remboursement"].initial = demande.mode_remboursement or "MOBILE_MONEY"
+            self.fields["reference_reglement"].initial = demande.reference_reglement
+
+    def clean(self):
+        cleaned_data = super().clean()
+        decision = cleaned_data.get("decision")
+        montant = cleaned_data.get("montant_rembourse_accorde")
+        motif_refus = (cleaned_data.get("motif_refus") or "").strip()
+        mode = cleaned_data.get("mode_remboursement")
+
+        if decision in ("valider", "rembourser"):
+            if montant is None or montant <= 0:
+                self.add_error(
+                    "montant_rembourse_accorde",
+                    "Veuillez indiquer un montant de remboursement supérieur à 0 FCFA."
+                )
+            elif self.demande and montant > self.demande.montant_depense:
+                self.add_error(
+                    "montant_rembourse_accorde",
+                    "Le montant remboursé ne peut pas dépasser le montant payé par l'assuré."
+                )
+            if decision == "rembourser" and not mode:
+                self.add_error(
+                    "mode_remboursement",
+                    "Veuillez préciser le mode de règlement utilisé pour ce remboursement."
+                )
+        elif decision == "refuser":
+            if not motif_refus:
+                self.add_error(
+                    "motif_refus",
+                    "Un motif explicite est obligatoire pour justifier le refus auprès de l'assuré."
+                )
+        return cleaned_data
+
 
 

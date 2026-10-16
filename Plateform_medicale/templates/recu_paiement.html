@@ -12,12 +12,12 @@
     <div class="actions">
         {% if user.role == "ASSURE" %}
         <a class="button btn" href="{% url 'mon_historique_assure' %}">{% icone "chevron-left" %} Mon historique</a>
-        {% elif user.role == "ADMIN" %}
-        <a class="button btn" href="{% url 'liste_paiements' %}">{% icone "chevron-left" %} Paiements</a>
+        {% elif user.role == "GESTIONNAIRE" %}
+        <a class="button btn btn-retour-expand" href="{% url 'liste_paiements' %}" title="Retour aux paiements" aria-label="Paiements">{% icone "chevron-left" %} <span class="expand-text">Paiements</span></a>
         {% else %}
-        <a class="button btn" href="{% url 'post_login_redirect' %}">{% icone "chevron-left" %} Retour</a>
+        <a class="button btn btn-retour-expand" href="{% url 'post_login_redirect' %}" title="Retour" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
         {% endif %}
-        <button type="button" class="button primary" id="bouton-imprimer-recu">{% icone "printer" %} Imprimer la quittance</button>
+        <button type="button" class="button primary btn-expand primary" id="bouton-imprimer-recu" title="Imprimer la quittance officielle" aria-label="Imprimer la quittance">{% icone "printer" %} <span class="expand-text">Imprimer la quittance</span></button>
     </div>
 </section>
 
@@ -62,27 +62,29 @@
         </div>
 
         <section class="recu-corps">
-            <table class="recu-tableau">
-                <thead>
-                    <tr>
-                        <th scope="col">Désignation de la prestation</th>
-                        <th scope="col" style="text-align: right;">Montant conventionné</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>
-                            <strong>{{ paiement.consultation.service.nom|default:"Consultation médicale" }}</strong>
-                            <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">
-                                Acte médical dispensé le {{ paiement.consultation.date_consultation|date:"d/m/Y" }}
-                            </div>
-                        </td>
-                        <td style="text-align: right; font-weight: 600;">
-                            {{ paiement.montant_total|franc_cfa }}
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="table-responsive">
+                <table class="recu-tableau">
+                    <thead>
+                        <tr>
+                            <th scope="col">Désignation de la prestation</th>
+                            <th scope="col" style="text-align: right;">Montant conventionné</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <strong>{{ paiement.consultation.service.nom|default:"Consultation médicale" }}</strong>
+                                <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">
+                                    Acte médical dispensé le {{ paiement.consultation.date_consultation|date:"d/m/Y" }}
+                                </div>
+                            </td>
+                            <td style="text-align: right; font-weight: 600;">
+                                {{ paiement.montant_total|franc_cfa }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
             <div class="recu-recapitulatif">
                 <div class="recu-ligne-calcul">

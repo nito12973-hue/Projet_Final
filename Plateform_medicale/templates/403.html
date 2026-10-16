@@ -6,6 +6,9 @@
     <title>Accès réservé — SantéSN</title>
     <meta name="theme-color" content="#0b2027">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect x='18' y='6' width='12' height='36' rx='4' fill='%230e7c86'/%3E%3Crect x='6' y='18' width='36' height='12' rx='4' fill='%230e7c86'/%3E%3Cpath d='M6 24H14L17 16L21 32L25 19L27.5 24H42' fill='none' stroke='%23e0824f' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         body {
             margin: 0;
@@ -13,9 +16,9 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #eff4f3;
-            color: #1f2933;
-            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f8fafc;
+            color: #0f172a;
+            font-family: 'Inter', -apple-system, sans-serif;
             text-align: center;
             padding: 24px;
         }
@@ -23,23 +26,26 @@
             max-width: 480px;
             background: #ffffff;
             padding: 40px 32px;
-            border-radius: 18px;
-            box-shadow: 0 12px 36px rgba(11,32,39,0.08);
-            border: 1px solid #d9e2ea;
+            border-radius: 20px;
+            box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.08);
+            border: 1px solid #e2e8f0;
         }
         h1 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
             font-size: 52px;
             margin: 0 0 6px;
-            color: #0b2027;
+            color: #0f172a;
             font-weight: 800;
         }
         h2 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
             font-size: 20px;
             margin: 0 0 12px;
-            color: #0b2027;
+            color: #0f172a;
+            font-weight: 700;
         }
         p {
-            color: #5f6f7d;
+            color: #64748b;
             font-size: 14.5px;
             line-height: 1.5;
             margin: 0 0 24px;
@@ -53,20 +59,32 @@
         a {
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 6px;
             padding: 11px 22px;
+            min-height: 44px;
             border-radius: 10px;
             font-weight: 600;
             text-decoration: none;
             font-size: 14px;
+            transition: all 0.15s ease;
         }
         .btn-principal {
-            background: linear-gradient(135deg, #0b2027 0%, #095059 100%);
+            background: linear-gradient(135deg, #064e3b 0%, #0f766e 100%);
             color: #ffffff;
+            box-shadow: 0 4px 12px rgba(6, 78, 59, 0.2);
+        }
+        .btn-principal:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(6, 78, 59, 0.3);
         }
         .btn-secondaire {
-            background: #dcece9;
-            color: #095059;
+            background: #f0fdfa;
+            color: #0f766e;
+            border: 1px solid #ccfbf1;
+        }
+        .btn-secondaire:hover {
+            background: #e6f7f5;
         }
     </style>
 </head>

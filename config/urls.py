@@ -22,9 +22,29 @@ from django.urls import path, include, re_path
 from django.views.static import serve
 
 
+DOSSIERS_MEDIAS_SENSIBLES = (
+    "justificatifs_remboursements",
+    "documents_patients",
+    "documents_ayants_droit",
+    "devis_prises_en_charge",
+    "ordonnances",
+)
+
+
 def servir_fichier_media(request, path):
-    """Sert les fichiers médias depuis la base de données (FichierMedia) ou le disque en secours."""
+    """
+    Sert les fichiers médias publics ou protégés.
+    RÈGLE DE SÉCURITÉ MÉDICALE :
+    Les documents confidentiels (justificatifs, pièces d'identité, devis) ne peuvent JAMAIS
+    être servis par cette route générique non authentifiée. Ils doivent transiter par
+    les contrôleurs sécurisés avec vérification multi-organismes.
+    """
     path_propre = path.replace("\\", "/").lstrip("/")
+
+    # Interdiction formelle d'accès direct aux pièces sensibles
+    for dossier in DOSSIERS_MEDIAS_SENSIBLES:
+        if path_propre.startswith(f"{dossier}/") or path_propre == dossier:
+            raise Http404("Accès interdit : ce document médical confidentiel nécessite une authentification dédiée.")
 
     # 1. Base de données PostgreSQL (FichierMedia) : persistance serverless Vercel
     try:
@@ -36,18 +56,25 @@ def servir_fichier_media(request, path):
             response["Content-Disposition"] = f'inline; filename="{nom_fichier}"'
             response["Content-Length"] = str(media.taille)
             response["Cache-Control"] = "public, max-age=86400"
+            response["X-Content-Type-Options"] = "nosniff"
             return response
     except Exception:
         pass
 
-    # 2. Secours sur le disque local
+    # 2. Secours sur le disque local pour les médias non sensibles (logos, illustrations)
     try:
-        return serve(request, path, document_root=settings.MEDIA_ROOT)
+        response = serve(request, path, document_root=settings.MEDIA_ROOT)
+        response["X-Content-Type-Options"] = "nosniff"
+        return response
     except Http404:
         raise Http404(f"« {path} » n'existe pas.")
 
 
+from Plateform_medicale import views as plateform_views
+
 urlpatterns = [
+    path('admin/logs', plateform_views.journal_activite, name='admin_logs_sans_slash'),
+    path('admin/logs/', plateform_views.journal_activite, name='admin_logs'),
     path('admin/', admin.site.urls),
     path('', include('Plateform_medicale.urls')),
     re_path(r'^media/(?P<path>.*)$', servir_fichier_media, name='media_serve'),

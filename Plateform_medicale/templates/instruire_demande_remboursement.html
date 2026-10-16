@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+{% load formats icones %}
+
+{% block title %}Instruction {{ demande.numero_dossier }}{% endblock %}
+
+{% block content %}
+<style>
+    .entete-inst-remb {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        flex-wrap: wrap;
+        padding: 6px 0 20px;
+        margin-bottom: 24px;
+        border-bottom: 1px solid var(--border);
+    }
+    .grille-inst-remb {
+        display: grid;
+        grid-template-columns: 1fr 1.15fr;
+        gap: 24px;
+        align-items: start;
+    }
+    @media (max-width: 960px) {
+        .grille-inst-remb {
+            grid-template-columns: 1fr;
+        }
+    }
+    .carte-recap-remb {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 22px;
+        box-shadow: var(--ombre-douce);
+        margin-bottom: 18px;
+    }
+    .ligne-recap {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px dashed var(--border);
+        font-size: 13.5px;
+    }
+    .ligne-recap:last-child {
+        border-bottom: none;
+    }
+    .ligne-recap .label {
+        color: var(--muted);
+        font-weight: 500;
+    }
+    .ligne-recap .val {
+        font-weight: 700;
+        color: var(--titre);
+        text-align: right;
+    }
+    .ligne-recap .val.mono {
+        font-family: 'IBM Plex Mono', monospace;
+        font-variant-numeric: tabular-nums;
+    }
+    .encart-calcul {
+        background: rgba(14, 124, 134, 0.06);
+        border: 1px solid rgba(14, 124, 134, 0.22);
+        border-radius: 12px;
+        padding: 16px 18px;
+        margin-top: 14px;
+    }
+</style>
+
+<div class="entete-inst-remb">
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <code style="font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 14px; color: var(--primary-strong); background: rgba(14,124,134,0.1); padding: 4px 10px; border-radius: 6px;">
+                {{ demande.numero_dossier }}
+            </code>
+            {% if demande.statut == 'remboursee' %}
+                <span class="badge validee">{% icone "check" %} Remboursée</span>
+            {% elif demande.statut == 'validee' %}
+                <span class="badge validee">{% icone "check" %} Validée (en cours de règlement)</span>
+            {% elif demande.statut == 'refusee' %}
+                <span class="badge refusee">{% icone "x" %} Refusée</span>
+            {% else %}
+                <span class="badge en_attente">{% icone "clock" %} En attente d'instruction</span>
+            {% endif %}
+        </div>
+        <h1 style="margin: 0; font-size: 22px; font-weight: 800; color: var(--titre);">
+            Instruction de remboursement hors réseau
+        </h1>
+        <p style="margin: 0; font-size: 13.5px; color: var(--muted);">
+            Demande déposée le {{ demande.date_demande|date:"d/m/Y à H:i" }} par <strong>{{ demande.patient.nom_complet }}</strong> ({{ demande.organisme.nom }}).
+        </p>
+    </div>
+    <div>
+        <a href="{% url 'liste_demandes_remboursement' %}" class="button btn">
+            {% icone "chevron-left" %} Retour à la file des remboursements
+        </a>
+    </div>
+</div>
+
+<div class="grille-inst-remb">
+    <div>
+        <section class="carte-recap-remb">
+            <h2 style="margin-top: 0; font-size: 16px; color: var(--titre); margin-bottom: 14px;">
+                1. Bénéficiaire &amp; Garanties du contrat
+            </h2>
+            <div class="ligne-recap">
+                <span class="label">Bénéficiaire des soins</span>
+                <span class="val">{{ demande.patient.nom_complet }} ({{ demande.patient.get_type_beneficiaire_display }})</span>
+            </div>
+            <div class="ligne-recap">
+                <span class="label">N° Carte Assuré</span>
+                <span class="val mono">{{ demande.patient.numero_carte }}</span>
+            </div>
+            <div class="ligne-recap">
+                <span class="label">Formule de couverture</span>
+                <span class="val">
+                    {% if demande.patient.titulaire.plan_couverture %}
+                        {{ demande.patient.titulaire.plan_couverture.nom }} ({{ taux_calcule }}%)
+                    {% else %}
+                        Taux standard ({{ taux_calcule }}%)
+                    {% endif %}
+                </span>
+            </div>
+            <div class="ligne-recap">
+                <span class="label">Plafond annuel restant (foyer)</span>
+                <span class="val mono">
+                    {% if plafond_restant is not None %}
+                        {{ plafond_restant|fcfa }}
+                    {% else %}
+                        Illimité
+                    {% endif %}
+                </span>
+            </div>
+            {% if demande.coordonnees_remboursement %}
+            <div class="ligne-recap">
+                <span class="label">Coordonnées de versement souhaitées</span>
+                <span class="val mono">{{ demande.coordonnees_remboursement }}</span>
+            </div>
+            {% endif %}
+        </section>
+
+        <section class="carte-recap-remb">
+            <h2 style="margin-top: 0; font-size: 16px; color: var(--titre); margin-bottom: 14px;">
+                2. Détails de la facture hors réseau
+            </h2>
+            <div class="ligne-recap">
+                <span class="label">Établissement / Praticien</span>
+                <span class="val">{{ demande.prestataire_nom }}</span>
+            </div>
+            <div class="ligne-recap">
+                <span class="label">Nature des soins</span>
+                <span class="val"><span class="badge">{{ demande.get_type_soin_display }}</span></span>
+            </div>
+            <div class="ligne-recap">
+                <span class="label">Date des soins</span>
+                <span class="val">{{ demande.date_soins|date:"d/m/Y" }}</span>
+            </div>
+            <div class="ligne-recap">
+                <span class="label">Montant acquitté par l'assuré</span>
+                <span class="val mono" style="font-size: 16px;">{{ demande.montant_depense|fcfa }}</span>
+            </div>
+            {% if demande.motif %}
+            <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--border);">
+                <div style="font-size: 12px; color: var(--muted); font-weight: 600; margin-bottom: 4px;">Observations de l'assuré :</div>
+                <div style="font-size: 13.5px; color: var(--texte);">{{ demande.motif }}</div>
+            </div>
+            {% endif %}
+
+            <div class="encart-calcul">
+                <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--primary-strong); margin-bottom: 6px;">
+                    Calcul théorique de remboursement
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                    <span style="font-size: 13px; color: var(--muted);">Barème {{ taux_calcule }}% (sous réserve du plafond) :</span>
+                    <strong style="font-family: 'IBM Plex Mono', monospace; font-size: 18px; color: var(--ok-fg);">
+                        {{ montant_estime|fcfa }}
+                    </strong>
+                </div>
+            </div>
+
+            <div style="margin-top: 16px;">
+                {% if demande.justificatif %}
+                <a href="{% url 'telecharger_justificatif_remboursement' demande.pk %}" target="_blank" rel="noopener" class="button btn" style="width: 100%; justify-content: center;">
+                    {% icone "file-text" %} Ouvrir la facture acquittée / pièce justificative
+                </a>
+                {% else %}
+                <div style="padding: 10px 14px; border-radius: 8px; background: var(--surface-alt); font-size: 13px; color: var(--muted);">
+                    Aucun fichier joint à ce dossier.
+                </div>
+                {% endif %}
+            </div>
+        </section>
+    </div>
+
+    <div>
+        <section class="panel" style="padding: 24px;">
+            <h2 style="margin-top: 0; font-size: 17px; color: var(--titre); margin-bottom: 6px;">
+                3. Décision &amp; Liquidation
+            </h2>
+            <p style="font-size: 13px; color: var(--muted); margin-top: 0; margin-bottom: 20px;">
+                Validez le montant accordé à l'assuré ou indiquez le motif de rejet. L'assuré est immédiatement notifié de votre décision.
+            </p>
+
+            {% if demande.traite_par %}
+            <div style="margin-bottom: 18px; padding: 12px 14px; border-radius: 10px; background: var(--surface-alt); border: 1px solid var(--border); font-size: 12.5px; color: var(--muted);">
+                Dernière instruction par <strong>{{ demande.traite_par.get_full_name|default:demande.traite_par.email }}</strong>
+                {% if demande.date_decision %}le {{ demande.date_decision|date:"d/m/Y à H:i" }}{% endif %}.
+            </div>
+            {% endif %}
+
+            <form method="post" novalidate>
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                <div class="alert error" style="margin-bottom: 16px;">
+                    {{ form.non_field_errors }}
+                </div>
+                {% endif %}
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="{{ form.decision.id_for_label }}">{{ form.decision.label }}</label>
+                    {{ form.decision }}
+                    {% if form.decision.errors %}
+                    <div class="field-error" style="color: var(--refus-fg); font-size: 12.5px; margin-top: 4px;">{{ form.decision.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+
+                <div id="bloc-validation">
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label for="{{ form.montant_rembourse_accorde.id_for_label }}">{{ form.montant_rembourse_accorde.label }}</label>
+                        {{ form.montant_rembourse_accorde }}
+                        {% if form.montant_rembourse_accorde.help_text %}
+                        <small style="display: block; color: var(--muted); font-size: 12px; margin-top: 4px;">{{ form.montant_rembourse_accorde.help_text }}</small>
+                        {% endif %}
+                        {% if form.montant_rembourse_accorde.errors %}
+                        <div class="field-error" style="color: var(--refus-fg); font-size: 12.5px; margin-top: 4px;">{{ form.montant_rembourse_accorde.errors|striptags }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label for="{{ form.mode_remboursement.id_for_label }}">{{ form.mode_remboursement.label }}</label>
+                        {{ form.mode_remboursement }}
+                        {% if form.mode_remboursement.errors %}
+                        <div class="field-error" style="color: var(--refus-fg); font-size: 12.5px; margin-top: 4px;">{{ form.mode_remboursement.errors|striptags }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label for="{{ form.reference_reglement.id_for_label }}">{{ form.reference_reglement.label }}</label>
+                        {{ form.reference_reglement }}
+                        {% if form.reference_reglement.errors %}
+                        <div class="field-error" style="color: var(--refus-fg); font-size: 12.5px; margin-top: 4px;">{{ form.reference_reglement.errors|striptags }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div id="bloc-refus" style="margin-bottom: 18px;">
+                    <div class="form-group">
+                        <label for="{{ form.motif_refus.id_for_label }}">{{ form.motif_refus.label }}</label>
+                        {{ form.motif_refus }}
+                        {% if form.motif_refus.errors %}
+                        <div class="field-error" style="color: var(--refus-fg); font-size: 12.5px; margin-top: 4px;">{{ form.motif_refus.errors|striptags }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--border);">
+                    <a href="{% url 'liste_demandes_remboursement' %}" class="button btn">Annuler</a>
+                    <button type="submit" class="button primary btn">
+                        {% icone "check-circle" %} Enregistrer la décision
+                    </button>
+                </div>
+            </form>
+        </section>
+    </div>
+</div>
+
+<script>
+(function() {
+    var selectDecision = document.getElementById("{{ form.decision.id_for_label }}");
+    var blocValidation = document.getElementById("bloc-validation");
+    var blocRefus = document.getElementById("bloc-refus");
+    if (!selectDecision || !blocValidation || !blocRefus) return;
+
+    function actualiserBlocs() {
+        var val = selectDecision.value;
+        if (val === "refuser") {
+            blocValidation.style.opacity = "0.45";
+            blocRefus.style.display = "block";
+        } else {
+            blocValidation.style.opacity = "1";
+            blocRefus.style.display = "none";
+        }
+    }
+    selectDecision.addEventListener("change", actualiserBlocs);
+    actualiserBlocs();
+})();
+</script>
+{% endblock %}

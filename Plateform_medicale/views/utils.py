@@ -19,10 +19,14 @@ from django.utils import timezone
 
 logger = logging.getLogger("Plateform_medicale")
 
+from django.shortcuts import get_object_or_404
+
 from ..models import (
+    DemandeRemboursement,
     DemandeSupport,
     JournalActivite,
     Paiement,
+    Patient,
     PriseEnCharge,
     RendezVous,
     User,
@@ -64,23 +68,28 @@ def _trier(request, queryset, champs_autorises, defaut):
     return queryset.order_by(defaut)
 
 
-def journaliser(request, action, objet, details=""):
+def journaliser(request, action, objet, details="", organisme=None):
     """Enregistre une entree du journal d'activite.
 
     A appeler APRES que l'action a reussi, jamais avant : une entree qui
     decrit une action qui a echoue serait pire que pas d'entree du tout.
 
-    L'auteur est fige en texte en meme temps qu'il est reference : supprimer
-    le compte d'un administrateur ne doit pas effacer la trace de ce qu'il a
-    fait (la cle passe a NULL, le libelle reste).
+    L'auteur et l'organisme sont figes en texte en meme temps qu'ils sont
+    references : supprimer le compte ou l'organisme ne doit pas effacer la
+    trace de ce qui a ete fait (la cle passe a NULL, le libelle reste).
     """
     utilisateur = request.user if request.user.is_authenticated else None
+    org = organisme
+    if org is None and utilisateur is not None and getattr(utilisateur, "organisme_id", None):
+        org = utilisateur.organisme
     JournalActivite.objects.create(
         auteur=utilisateur,
         auteur_libelle=(
             (utilisateur.get_full_name() or utilisateur.email)[:254]
             if utilisateur else "—"
         ),
+        organisme=org,
+        organisme_libelle=str(org)[:200] if org else "",
         action=action,
         objet=objet[:200],
         details=details[:300],
@@ -142,7 +151,7 @@ def _normaliser_texte_import(valeur):
 
 
 # ---------------------------------------------------------------------------
-# Permissions par rôle
+# Permissions par rôle & isolation par organisme
 # ---------------------------------------------------------------------------
 
 def role_required(*roles):
@@ -172,37 +181,123 @@ def role_required(*roles):
 
 
 def admin_required(view_func):
-    """Restreint une vue au rôle ADMIN uniquement."""
+    """Restreint une vue au rôle ADMIN (Administrateur Général) uniquement."""
     return role_required(User.Role.ADMIN)(view_func)
 
 
+def gestionnaire_required(view_func):
+    """Restreint une vue au rôle GESTIONNAIRE rattaché à un organisme défini et actif."""
+
+    @wraps(view_func)
+    @login_required
+    def _wrapped(request, *args, **kwargs):
+        if request.user.role != User.Role.GESTIONNAIRE:
+            logger.warning(
+                f"Alerte de sécurité: Accès refusé pour {request.user.email} (rôle: {request.user.role}) "
+                f"vers {view_func.__name__} sur {request.path}. Rôle autorisé: GESTIONNAIRE"
+            )
+            raise PermissionDenied
+        if not request.user.organisme_id or not request.user.organisme.actif:
+            logger.warning(
+                f"Alerte de sécurité: Gestionnaire {request.user.email} sans organisme actif "
+                f"vers {view_func.__name__} sur {request.path}."
+            )
+            raise PermissionDenied("Ce compte gestionnaire n'est rattaché à aucun organisme actif.")
+        return view_func(request, *args, **kwargs)
+
+    return _wrapped
+
+
+def organisme_gestionnaire(request):
+    """Retourne l'organisme actif du gestionnaire connecté ou lève PermissionDenied."""
+    user = getattr(request, "user", None)
+    if (
+        user is None
+        or not user.is_authenticated
+        or user.role != User.Role.GESTIONNAIRE
+        or not user.organisme_id
+        or not user.organisme.actif
+    ):
+        raise PermissionDenied("Accès réservé à un gestionnaire rattaché à un organisme actif.")
+    return user.organisme
+
+
+def filtrer_par_organisme(request, queryset, champ="organisme"):
+    """Filtre un queryset par l'organisme du gestionnaire connecté."""
+    organisme = organisme_gestionnaire(request)
+    return queryset.filter(**{champ: organisme})
+
+
+def get_object_or_404_organisme(request, modele_ou_qs, champ="organisme", **kwargs):
+    """Récupère un objet appartenant strictement à l'organisme du gestionnaire (sinon 404)."""
+    qs = (
+        modele_ou_qs
+        if hasattr(modele_ou_qs, "filter")
+        else modele_ou_qs._default_manager.all()
+    )
+    qs = filtrer_par_organisme(request, qs, champ=champ)
+    return get_object_or_404(qs, **kwargs)
+
+
 def compteurs_files_attente(request=None):
-    """Compteurs des files d'attente administrateur.
-
-    Source UNIQUE : les pastilles du menu lateral (via le context processor
-    user_role) et le bandeau "A traiter" du dashboard affichent les memes
-    nombres. Sans ce cache, la vue et le context processor lancaient chacun
-    les memes deux requetes au meme rendu -- et surtout, deux noms coexistaient
-    pour un meme chiffre, donc deux endroits a corriger le jour ou la regle
-    metier change.
-
-    Le cache est pose sur la requete : le context processor s'execute au rendu
-    du gabarit, donc apres la vue, et reutilise ce qu'elle a deja calcule.
-    """
+    """Compteurs des files d'attente (isolés par organisme pour un Gestionnaire)."""
     if request is not None and hasattr(request, "_compteurs_files_attente"):
         return request._compteurs_files_attente
 
     maintenant = timezone.now()
     il_y_a_48h = maintenant - datetime.timedelta(hours=48)
-    pec_stats = PriseEnCharge.objects.aggregate(
+
+    user = getattr(request, "user", None) if request is not None else None
+    pec_qs = PriseEnCharge.objects.all()
+    paiement_qs = Paiement.objects.all()
+    remb_qs = DemandeRemboursement.objects.filter(
+        statut=DemandeRemboursement.Statut.EN_ATTENTE
+    )
+    ayants_droit_qs = Patient.objects.filter(
+        type_beneficiaire=Patient.TypeBeneficiaire.AYANT_DROIT,
+        statut_validation=Patient.StatutValidation.EN_ATTENTE,
+    )
+
+    if (
+        user is not None
+        and user.is_authenticated
+        and user.role == User.Role.GESTIONNAIRE
+        and user.organisme_id
+    ):
+        pec_qs = pec_qs.filter(patient__organisme_id=user.organisme_id)
+        paiement_qs = paiement_qs.filter(consultation__patient__organisme_id=user.organisme_id)
+        remb_qs = remb_qs.filter(organisme_id=user.organisme_id)
+        ayants_droit_qs = ayants_droit_qs.filter(organisme_id=user.organisme_id)
+
+    pec_stats = pec_qs.aggregate(
         total_attente=Count("id", filter=Q(statut="en_attente")),
         urgentes_48h=Count("id", filter=Q(statut="en_attente", date_demande__lte=il_y_a_48h)),
     )
+    if user is not None and user.is_authenticated:
+        if user.role == User.Role.ADMIN:
+            demandes_support_attente = DemandeSupport.objects.filter(
+                statut=DemandeSupport.Statut.EN_ATTENTE,
+                categorie=DemandeSupport.Categorie.TECHNIQUE,
+            ).count()
+        elif user.role == User.Role.GESTIONNAIRE:
+            qs_support = DemandeSupport.objects.filter(statut=DemandeSupport.Statut.EN_ATTENTE).exclude(
+                categorie=DemandeSupport.Categorie.TECHNIQUE
+            )
+            if user.organisme_id:
+                qs_support = qs_support.filter(patient__organisme_id=user.organisme_id)
+            demandes_support_attente = qs_support.count()
+        else:
+            demandes_support_attente = 0
+    else:
+        demandes_support_attente = 0
+
     compteurs = {
         "prises_en_charge_attente": pec_stats["total_attente"] or 0,
         "nb_pec_urgentes_48h": pec_stats["urgentes_48h"] or 0,
-        "paiements_non_regles": Paiement.objects.filter(statut=Paiement.Statut.NON_REGLE).count(),
-        "demandes_support_attente": DemandeSupport.objects.filter(statut=DemandeSupport.Statut.EN_ATTENTE).count(),
+        "paiements_non_regles": paiement_qs.filter(statut=Paiement.Statut.NON_REGLE).count(),
+        "remboursements_attente": remb_qs.count(),
+        "ayants_droit_en_attente": ayants_droit_qs.count(),
+        "demandes_support_attente": demandes_support_attente,
     }
     if request is not None:
         request._compteurs_files_attente = compteurs
@@ -210,24 +305,29 @@ def compteurs_files_attente(request=None):
 
 
 def user_role(request):
-    """Context processor : role, notifications non lues, et compteurs de file
-    d'attente pour les pastilles du menu lateral administrateur.
-
-    Les compteurs admin ne sont calcules que pour le role ADMIN : les autres
-    roles n'ont pas ces ecrans. Un visiteur anonyme ne declenche aucune requete.
+    """Context processor : role, organisme, notifications non lues, et compteurs de file
+    d'attente pour les pastilles du menu lateral.
     """
     user = getattr(request, 'user', None)
     if user is None or not user.is_authenticated:
-        return {'current_role': None, 'current_role_label': None, 'notifications_non_lues': 0}
+        return {
+            'current_role': None,
+            'current_role_label': None,
+            'current_organisme': None,
+            'notifications_non_lues': 0,
+        }
 
     contexte = {
         'current_role': user.role,
         'current_role_label': user.get_role_display(),
+        'current_organisme': user.organisme if user.organisme_id else None,
         'notifications_non_lues': user.notifications.filter(lue=False).count(),
     }
-    if user.role == User.Role.ADMIN:
+    if user.role in (User.Role.ADMIN, User.Role.GESTIONNAIRE):
         compteurs = compteurs_files_attente(request)
         contexte['nb_prises_en_charge_attente'] = compteurs["prises_en_charge_attente"]
         contexte['nb_paiements_non_regles'] = compteurs["paiements_non_regles"]
+        contexte['nb_remboursements_attente'] = compteurs["remboursements_attente"]
+        contexte['nb_ayants_droit_en_attente'] = compteurs["ayants_droit_en_attente"]
         contexte['nb_demandes_support_attente'] = compteurs["demandes_support_attente"]
     return contexte

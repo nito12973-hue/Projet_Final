@@ -8,8 +8,9 @@ from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.db import transaction
 from django.db.models import Q, Sum
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
@@ -24,13 +25,29 @@ from reportlab.platypus import KeepTogether, Paragraph, SimpleDocTemplate, Space
 
 from ..forms import PaiementReglementForm
 from ..models import Delivrance, JournalActivite, Paiement, Prestataire, User
-from .utils import _cellule_csv, _paginer, _trier, admin_required, journaliser
+from .utils import (
+    _cellule_csv,
+    _paginer,
+    _trier,
+    filtrer_par_organisme,
+    gestionnaire_required,
+    get_object_or_404_organisme,
+    journaliser,
+    organisme_gestionnaire,
+)
 
 
 def _filtrer_paiements(request):
-    """Filtres partages entre la liste et l'export CSV des paiements."""
-    paiements = Paiement.objects.select_related(
-        "consultation", "consultation__patient", "consultation__service"
+    """Filtres partages entre la liste et l'export CSV des paiements (isolés par organisme)."""
+    paiements = filtrer_par_organisme(
+        request,
+        Paiement.objects.select_related(
+            "consultation",
+            "consultation__patient",
+            "consultation__patient__organisme",
+            "consultation__service",
+        ),
+        champ="consultation__patient__organisme",
     )
 
     statut = request.GET.get("statut", "")
@@ -53,11 +70,15 @@ def _filtrer_paiements(request):
     return paiements, {"statut": statut, "recherche": recherche}
 
 
-@admin_required
+@gestionnaire_required
 def liste_paiements(request):
     paiements, filtres = _filtrer_paiements(request)
 
-    totaux = Paiement.objects.aggregate(
+    totaux = filtrer_par_organisme(
+        request,
+        Paiement.objects.all(),
+        champ="consultation__patient__organisme",
+    ).aggregate(
         total_regle=Sum("montant_part_patient", filter=Q(statut=Paiement.Statut.REGLE)),
         total_non_regle=Sum("montant_part_patient", filter=Q(statut=Paiement.Statut.NON_REGLE)),
     )
@@ -73,7 +94,7 @@ def liste_paiements(request):
     return render(request, "liste_paiements.html", contexte)
 
 
-@admin_required
+@gestionnaire_required
 def exporter_paiements_csv(request):
     paiements, _ = _filtrer_paiements(request)
 
@@ -101,9 +122,17 @@ def exporter_paiements_csv(request):
     return reponse
 
 
-@admin_required
+@gestionnaire_required
 def marquer_paiement_regle(request, pk):
-    paiement = get_object_or_404(Paiement, pk=pk)
+    organisme = organisme_gestionnaire(request)
+    paiement = get_object_or_404_organisme(
+        request,
+        Paiement.objects.select_related(
+            "consultation", "consultation__patient", "consultation__patient__organisme"
+        ),
+        champ="consultation__patient__organisme",
+        pk=pk,
+    )
     if paiement.statut == Paiement.Statut.REGLE:
         messages.info(request, "Ce paiement est déjà réglé.")
         return redirect("liste_paiements")
@@ -111,19 +140,26 @@ def marquer_paiement_regle(request, pk):
     if request.method == "POST":
         form = PaiementReglementForm(request.POST, instance=paiement)
         if form.is_valid():
-            paiement = form.save(commit=False)
-            paiement.statut = Paiement.Statut.REGLE
-            paiement.date_reglement = timezone.now()
-            # Qui a constate l'encaissement : jamais saisi, toujours deduit
-            # du compte connecte. En especes, c'est la seule trace de la
-            # personne qui a recu l'argent.
-            paiement.enregistre_par = request.user
-            paiement.save()
-            journaliser(
-                request, JournalActivite.Action.REGLEMENT,
-                f"Paiement #{paiement.pk} · {paiement.consultation.patient}",
-                f"{paiement.montant_part_patient} F CFA · {paiement.get_mode_reglement_display()}",
-            )
+            with transaction.atomic():
+                verrou = Paiement.objects.select_for_update().get(pk=paiement.pk)
+                if verrou.statut == Paiement.Statut.REGLE:
+                    messages.info(request, "Ce paiement est déjà réglé.")
+                    return redirect("liste_paiements")
+                paiement = form.save(commit=False)
+                paiement.statut = Paiement.Statut.REGLE
+                paiement.date_reglement = timezone.now()
+                # Qui a constate l'encaissement : jamais saisi, toujours deduit
+                # du compte connecte. En especes, c'est la seule trace de la
+                # personne qui a recu l'argent.
+                paiement.enregistre_par = request.user
+                paiement.save()
+                journaliser(
+                    request,
+                    JournalActivite.Action.REGLEMENT,
+                    f"Paiement #{paiement.pk} · {paiement.consultation.patient}",
+                    f"{paiement.montant_part_patient} F CFA · {paiement.get_mode_reglement_display()}",
+                    organisme=organisme,
+                )
             messages.success(request, f"Le règlement pour {paiement.consultation.patient} a été enregistré avec succès.")
             return redirect("liste_paiements")
     else:
@@ -141,6 +177,7 @@ def recu_paiement(request, pk):
     paiement = get_object_or_404(
         Paiement.objects.select_related(
             "consultation__patient",
+            "consultation__patient__organisme",
             "consultation__medecin",
             "consultation__service",
             "consultation__prise_en_charge",
@@ -151,21 +188,26 @@ def recu_paiement(request, pk):
         pk=pk,
     )
 
-    est_admin = request.user.role == User.Role.ADMIN
-    est_medecin = (
-        request.user.role == User.Role.MEDECIN
-        and hasattr(request.user, "medecin")
-        and paiement.consultation.medecin == request.user.medecin
-    )
-    est_assure = False
-    if request.user.role == User.Role.ASSURE and hasattr(request.user, "patient"):
-        patient_assure = request.user.patient
-        membres = [patient_assure.pk] + list(patient_assure.ayants_droit.values_list("pk", flat=True))
-        if paiement.consultation.patient_id in membres:
-            est_assure = True
+    if request.user.role == User.Role.GESTIONNAIRE:
+        if not request.user.organisme_id or not request.user.organisme.actif:
+            raise PermissionDenied("Compte gestionnaire sans organisme actif.")
+        if paiement.consultation.patient.organisme_id != request.user.organisme_id:
+            raise Http404("Ce reçu de paiement n'appartient pas à votre organisme.")
+    else:
+        est_medecin = (
+            request.user.role == User.Role.MEDECIN
+            and hasattr(request.user, "medecin")
+            and paiement.consultation.medecin == request.user.medecin
+        )
+        est_assure = False
+        if request.user.role == User.Role.ASSURE and hasattr(request.user, "patient"):
+            patient_assure = request.user.patient
+            membres = [patient_assure.pk] + list(patient_assure.ayants_droit.values_list("pk", flat=True))
+            if paiement.consultation.patient_id in membres:
+                est_assure = True
 
-    if not (est_admin or est_medecin or est_assure):
-        raise PermissionDenied("Vous n'avez pas accès à ce reçu de paiement.")
+        if not (est_medecin or est_assure):
+            raise PermissionDenied("Vous n'avez pas accès à ce reçu de paiement.")
 
     date_ref = paiement.date_reglement or paiement.consultation.date_consultation
     reference_recu = f"REC-{date_ref.strftime('%Y%m%d')}-{paiement.pk:05d}"
@@ -238,10 +280,10 @@ LISTE_MOIS = [
 
 
 def _verifier_acces_teletransmission(request):
-    """Vérifie que l'utilisateur a accès au bordereau (Admin, Médecin, Pharmacien)."""
+    """Vérifie que l'utilisateur a accès au bordereau (Gestionnaire, Admin, Médecin, Pharmacien)."""
     if not request.user.is_authenticated:
         raise PermissionDenied("Connexion requise.")
-    if request.user.role not in (User.Role.ADMIN, User.Role.MEDECIN, User.Role.PHARMACIEN):
+    if request.user.role not in (User.Role.ADMIN, User.Role.GESTIONNAIRE, User.Role.MEDECIN, User.Role.PHARMACIEN):
         raise PermissionDenied("Accès réservé aux gestionnaires IPM et professionnels de santé.")
 
     prestataire_force = None
@@ -250,11 +292,11 @@ def _verifier_acces_teletransmission(request):
     elif request.user.role == User.Role.MEDECIN and hasattr(request.user, "medecin"):
         prestataire_force = request.user.medecin.prestataire
 
-    est_admin = request.user.role == User.Role.ADMIN
+    est_admin = request.user.role in (User.Role.ADMIN, User.Role.GESTIONNAIRE)
     return est_admin, prestataire_force
 
 
-def _recuperer_actes_teletransmission(annee=None, mois=None, prestataire_id=None, type_acte="tous", recherche=""):
+def _recuperer_actes_teletransmission(annee=None, mois=None, prestataire_id=None, type_acte="tous", recherche="", organisme_id=None):
     """
     Consolide l'ensemble des actes de Tiers Payant (Consultations médicales + Délivrances pharmacie)
     éligibles au remboursement par l'IPM (part assurance > 0).
@@ -274,6 +316,8 @@ def _recuperer_actes_teletransmission(annee=None, mois=None, prestataire_id=None
             "consultation__prise_en_charge",
         ).filter(montant_part_assurance__gt=Decimal("0.00"))
 
+        if organisme_id:
+            paiements_qs = paiements_qs.filter(consultation__patient__organisme_id=organisme_id)
         if annee:
             paiements_qs = paiements_qs.filter(consultation__date_consultation__year=annee)
         if mois:
@@ -317,6 +361,8 @@ def _recuperer_actes_teletransmission(annee=None, mois=None, prestataire_id=None
             "pharmacien__prestataire",
         ).filter(montant_part_assurance__gt=Decimal("0.00"))
 
+        if organisme_id:
+            delivrances_qs = delivrances_qs.filter(ordonnance__consultation__patient__organisme_id=organisme_id)
         if annee:
             delivrances_qs = delivrances_qs.filter(date_delivrance__year=annee)
         if mois:
@@ -412,6 +458,7 @@ def bordereau_teletransmission(request):
         prestataire_id=prestataire_id,
         type_acte=type_acte,
         recherche=recherche,
+        organisme_id=request.user.organisme_id if request.user.role == User.Role.GESTIONNAIRE else None,
     )
 
     liste_annees = list(range(maintenant.year - 2, maintenant.year + 2))
@@ -482,6 +529,7 @@ def exporter_bordereau_teletransmission_pdf(request):
         prestataire_id=prestataire_id,
         type_acte=type_acte,
         recherche=recherche,
+        organisme_id=request.user.organisme_id if request.user.role == User.Role.GESTIONNAIRE else None,
     )
 
     nom_prestataire = "Tous les prestataires conventionnés"
@@ -744,6 +792,7 @@ def exporter_bordereau_teletransmission_excel(request):
         prestataire_id=prestataire_id,
         type_acte=type_acte,
         recherche=recherche,
+        organisme_id=request.user.organisme_id if request.user.role == User.Role.GESTIONNAIRE else None,
     )
 
     nom_prestataire = "Tous les prestataires conventionnés"

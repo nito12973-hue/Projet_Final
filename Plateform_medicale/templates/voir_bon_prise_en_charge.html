@@ -10,7 +10,7 @@
             <h1 style="margin:0;">Accord de Prise en Charge</h1>
             <span class="code" style="font-size:14px;padding:3px 8px;border-radius:6px;background:var(--surface);border:1px solid var(--border);">{{ num_bon }}</span>
             {% if prise_en_charge.statut == 'validee' %}
-            <span class="badge validee">{% icone "check" %} Validé &bull; Accord Actif</span>
+            <span class="badge validee">{% icone "check" %} Validé · Accord Actif</span>
             {% elif prise_en_charge.statut == 'refusee' %}
             <span class="badge refusee">{% icone "x" %} Refusé</span>
             {% else %}
@@ -20,12 +20,12 @@
         <p class="subtitle">Lettre de garantie officielle et attestation de dispense d'avance de frais (tiers-payant).</p>
     </div>
     <div class="actions">
-        <a class="button btn" href="{% url retour_url %}">{% icone "chevron-left" %} Retour</a>
-        <a class="button btn" href="{% url 'telecharger_bon_prise_en_charge_pdf' prise_en_charge.pk %}" target="_blank">
-            {% icone "download" %} Télécharger PDF
+        <a class="button btn btn-retour-expand" href="{% url retour_url %}" title="Retour" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
+        <a class="button btn btn-expand" href="{% url 'telecharger_bon_prise_en_charge_pdf' prise_en_charge.pk %}" target="_blank" title="Télécharger le bon officiel en PDF" aria-label="Télécharger en PDF">
+            {% icone "download" %} <span class="expand-text">Télécharger PDF</span>
         </a>
-        <button type="button" class="button primary" id="bouton-imprimer-bon">
-            {% icone "printer" %} Imprimer le bon
+        <button type="button" class="button primary btn-expand primary" id="bouton-imprimer-bon" title="Imprimer le bon officiel" aria-label="Imprimer le bon">
+            {% icone "printer" %} <span class="expand-text">Imprimer le bon</span>
         </button>
     </div>
 </section>
@@ -85,7 +85,7 @@
     </div>
 
     <!-- 4. Section 1 : Bénéficiaire et couverture -->
-    <div style="margin-bottom: 16px;">
+    <div class="table-responsive" style="margin-bottom: 16px;">
         <h3 style="margin: 0 0 6px; font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: #0f172a;">
             1. IDENTIFICATION DU BÉNÉFICIAIRE &amp; PLAN DE COUVERTURE
         </h3>
@@ -116,7 +116,7 @@
     </div>
 
     <!-- 5. Section 2 : Prestations et montants -->
-    <div style="margin-bottom: 18px;">
+    <div class="table-responsive" style="margin-bottom: 18px;">
         <h3 style="margin: 0 0 6px; font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: #0f172a;">
             2. DÉTAILS DES PRESTATIONS COUVERTES &amp; VENTILATION TARIFAIRE
         </h3>
@@ -147,7 +147,7 @@
                     <td style="padding: 7px 12px; color: #64748b;">
                         {{ devis_joint_txt }}
                         {% if prise_en_charge.devis_fichier %}
-                        &bull; <a href="{{ prise_en_charge.devis_fichier.url }}" target="_blank" class="sans-impression" style="color: #0e7c86; text-decoration: underline; font-weight: 600;">Consulter la pièce originale</a>
+                        · <a href="{% url 'telecharger_devis_prise_en_charge' prise_en_charge.pk %}" target="_blank" class="sans-impression" style="color: #0e7c86; text-decoration: underline; font-weight: 600;">Consulter la pièce originale</a>
                         {% endif %}
                     </td>
                 </tr>
@@ -163,13 +163,13 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr auto; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; background: #ffffff;">
             
             <!-- Décision IPM -->
-            <div style="padding: 12px 14px; border-right: 1px solid #e2e8f0; font-size: 10.5px; line-height: 1.5; color: #334155;">
-                <strong style="color: #0f172a; font-size: 11px; display: block; margin-bottom: 4px;">Décision de l'administration IPM</strong>
-                &bull; Soumise le : {{ date_demande_str }}<br>
-                &bull; Décision validée le : {{ date_val_str }}<br>
-                &bull; Validateur : {{ valideur }}<br>
-                &bull; Référence sécurisée : <strong style="font-family: monospace;">{{ num_bon }}</strong><br>
-                <span style="font-size: 9.5px; color: #64748b; font-style: italic;">Fait foi auprès des cliniques, hôpitaux et officines partenaires.</span>
+            <div style="padding: 12px 14px; border-right: 1px solid #e2e8f0; font-size: 10.5px; line-height: 1.6; color: #334155;">
+                <strong style="color: #0f172a; font-size: 11px; display: block; margin-bottom: 6px;">Décision de l'administration IPM</strong>
+                <div>Soumise le : <strong>{{ date_demande_str }}</strong></div>
+                <div>Décision validée le : <strong>{{ date_val_str }}</strong></div>
+                <div>Validateur : <strong>{{ valideur }}</strong></div>
+                <div>Référence sécurisée : <strong style="font-family: monospace;">{{ num_bon }}</strong></div>
+                <span style="font-size: 9.5px; color: #64748b; font-style: italic; display: block; margin-top: 4px;">Fait foi auprès des cliniques, hôpitaux et officines partenaires.</span>
             </div>
 
             <!-- Cadre cachet de l'établissement de soins -->
@@ -195,7 +195,7 @@
         <strong style="color: #0f172a;">CONDITIONS GÉNÉRALES DE TIERS PAYANT :</strong>
         1. Le présent bon est strictement personnel et incessible. Il dispense le bénéficiaire de l'avance des frais de soins à concurrence de la part garantie par l'IPM.
         2. L'établissement de santé conventionné s'engage à appliquer les tarifs de la convention IPM et à télétransmettre sa facture en joignant cette référence d'accord.
-        3. Données de santé protégées conformément à la Loi 2008-12 relative à la protection des données à caractère personnel (CDP Sénégal) &bull; SantéSN &copy; 2026.
+        3. Données de santé protégées conformément à la Loi 2008-12 relative à la protection des données à caractère personnel (CDP Sénégal) · SantéSN &copy; 2026.
     </footer>
 
 </article>

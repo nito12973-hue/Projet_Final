@@ -26,8 +26,10 @@ from django.utils import timezone
 from ..models import (
     Consultation,
     Delivrance,
+    JournalActivite,
     Medecin,
     Ordonnance,
+    Organisme,
     Paiement,
     Patient,
     Pharmacien,
@@ -37,19 +39,64 @@ from ..models import (
     TentativeConnexion,
     User,
 )
+from ..services.supervision import (
+    diagnostiquer_base_de_donnees,
+    diagnostiquer_services_externes,
+    diagnostiquer_journaux_et_incidents,
+)
 from .utils import (
     MOIS_ABREGES,
     admin_required,
     compteurs_files_attente,
+    organisme_gestionnaire,
+    role_required,
 )
 
 
-@admin_required
+def _dashboard_admin(request):
+    """Tableau de bord de l'administrateur : infrastructure et securite UNIQUEMENT.
+
+    Aucune donnee metier (paiements, assures, consultations, ordonnances...) et
+    aucune identite : uniquement la sante du systeme, la securite des acces et
+    des effectifs de comptes par role.
+    """
+    comptes_par_role_brut = dict(
+        User.objects.values_list("role").annotate(total=Count("id")).order_by()
+    )
+    contexte = {
+        "comptes_par_role": [
+            {"label": label, "total": comptes_par_role_brut.get(value, 0)}
+            for value, label in User.Role.choices
+        ],
+        "total_comptes_actifs": User.objects.filter(is_active=True).count(),
+        "total_comptes_inactifs": User.objects.filter(is_active=False).count(),
+        "nb_comptes_bloques": len(TentativeConnexion.comptes_bloques()),
+        "derniers_journaux": JournalActivite.objects.select_related("auteur", "organisme").order_by("-date")[:15],
+        "total_journaux_activite": JournalActivite.objects.count(),
+        "diag_infra": diagnostiquer_base_de_donnees(),
+        "diag_services": diagnostiquer_services_externes(),
+        "diag_incidents": diagnostiquer_journaux_et_incidents(limite=8),
+    }
+    return render(request, "dashboard_admin.html", contexte)
+
+
+@role_required(User.Role.ADMIN, User.Role.GESTIONNAIRE)
 def dashboard(request):
-    # Les demandes en attente remontent en tete : triee par date seule, la
-    # liste noyait l'urgence sous des dossiers deja clos.
+    if request.user.role == User.Role.ADMIN:
+        return _dashboard_admin(request)
+
+    org_id = request.user.organisme_id
+    qs_patients = Patient.objects.filter(organisme_id=org_id) if org_id else Patient.objects.all()
+    qs_pec = PriseEnCharge.objects.filter(patient__organisme_id=org_id) if org_id else PriseEnCharge.objects.all()
+    qs_paiements = Paiement.objects.filter(consultation__patient__organisme_id=org_id) if org_id else Paiement.objects.all()
+    qs_rdv = RendezVous.objects.filter(patient__organisme_id=org_id) if org_id else RendezVous.objects.all()
+    qs_consultations = Consultation.objects.filter(patient__organisme_id=org_id) if org_id else Consultation.objects.all()
+    qs_ordonnances = Ordonnance.objects.filter(consultation__patient__organisme_id=org_id) if org_id else Ordonnance.objects.all()
+    qs_delivrances = Delivrance.objects.filter(ordonnance__consultation__patient__organisme_id=org_id) if org_id else Delivrance.objects.all()
+    qs_journaux = JournalActivite.objects.filter(organisme_id=org_id) if org_id else JournalActivite.objects.all()
+
     dernieres_prises_en_charge = (
-        PriseEnCharge.objects.select_related("patient")
+        qs_pec.select_related("patient")
         .annotate(
             priorite=Case(
                 When(statut="en_attente", then=Value(0)),
@@ -60,11 +107,7 @@ def dashboard(request):
         .order_by("priorite", "-date_demande")[:5]
     )
 
-    # Bandeau financier : meme agregat que liste_paiements (Sum filtre par
-    # statut), pour un signal de sante financiere absent jusqu'ici du
-    # dashboard alors que c'est la donnee la plus parlante pour une
-    # compagnie d'assurance/IPM qui evaluerait la plateforme.
-    totaux_paiements = Paiement.objects.aggregate(
+    totaux_paiements = qs_paiements.aggregate(
         total_regle=Sum("montant_part_patient", filter=Q(statut=Paiement.Statut.REGLE)),
         total_non_regle=Sum("montant_part_patient", filter=Q(statut=Paiement.Statut.NON_REGLE)),
     )
@@ -73,48 +116,48 @@ def dashboard(request):
     montant_total_paiements = montant_regle + montant_non_regle
     taux_reglement = round((montant_regle / montant_total_paiements) * 100) if montant_total_paiements else None
 
-    # Activite du jour, plateforme entiere (pas un seul medecin)
     maintenant = timezone.now()
     debut_jour = maintenant.replace(hour=0, minute=0, second=0, microsecond=0)
     fin_jour = debut_jour + datetime.timedelta(days=1)
     total_rendez_vous_aujourd_hui = (
-        RendezVous.objects.filter(date_heure__gte=debut_jour, date_heure__lt=fin_jour)
+        qs_rdv.filter(date_heure__gte=debut_jour, date_heure__lt=fin_jour)
         .exclude(statut=RendezVous.Statut.ANNULE)
         .count()
     )
-    total_consultations_aujourd_hui = Consultation.objects.filter(
+    total_consultations_aujourd_hui = qs_consultations.filter(
         date_consultation__gte=debut_jour, date_consultation__lt=fin_jour
     ).count()
 
-    # Tendance des paiements regles sur les 7 derniers jours
     il_y_a_7_jours = maintenant - datetime.timedelta(days=7)
-    montant_regle_7j = Paiement.objects.filter(
+    montant_regle_7j = qs_paiements.filter(
         statut=Paiement.Statut.REGLE, date_reglement__gte=il_y_a_7_jours
     ).aggregate(total=Sum("montant_part_patient"))["total"] or 0
 
-    # Borne haute explicite pour eviter les consultations futures mal datees
-    consultations_7j = Consultation.objects.filter(
+    consultations_7j = qs_consultations.filter(
         date_consultation__gte=il_y_a_7_jours, date_consultation__lte=maintenant
     ).count()
-    ordonnances_7j = Ordonnance.objects.filter(date_creation__gte=il_y_a_7_jours).count()
+    ordonnances_7j = qs_ordonnances.filter(date_creation__gte=il_y_a_7_jours).count()
 
-    # Anciennete de la file d'attente
     plus_ancienne_attente = (
-        PriseEnCharge.objects.filter(statut="en_attente").order_by("date_demande").first()
+        qs_pec.filter(statut="en_attente").order_by("date_demande").first()
     )
     jours_attente_max = (
         (maintenant - plus_ancienne_attente.date_demande).days if plus_ancienne_attente else None
     )
 
-    # Derniers comptes crees, hors assures
-    derniers_comptes = (
-        User.objects.exclude(role=User.Role.ASSURE).order_by("-date_joined")[:5]
+    est_gestionnaire = request.user.role == User.Role.GESTIONNAIRE
+    qs_users = User.objects.filter(organisme_id=org_id) if org_id else User.objects.all()
+    comptes_par_role_brut = dict(
+        qs_users.values_list("role").annotate(total=Count("id")).order_by()
     )
+    comptes_par_role = [
+        {"label": label, "total": comptes_par_role_brut.get(value, 0)}
+        for value, label in User.Role.choices
+    ]
 
     tendance_paiements = _montants_regles_par_jour()
 
-    # Un seul aller-retour pour les trois comptages de Patient
-    repartition_patients = Patient.objects.aggregate(
+    repartition_patients = qs_patients.aggregate(
         total=Count("id"),
         principaux=Count("id", filter=Q(type_beneficiaire=Patient.TypeBeneficiaire.PRINCIPAL)),
         sans_plan=Count(
@@ -128,14 +171,16 @@ def dashboard(request):
     patients_principaux = repartition_patients["principaux"]
     ayants_droit = repartition_patients["total"] - patients_principaux
 
-    # Files d'attente du bandeau "A traiter"
     compteurs = compteurs_files_attente(request)
     total_prises_en_charge_attente = compteurs["prises_en_charge_attente"]
     paiements_non_regles_nb = compteurs["paiements_non_regles"]
-    rdv_a_confirmer = RendezVous.objects.filter(statut=RendezVous.Statut.DEMANDE).count()
-    ordonnances_non_delivrees = Ordonnance.objects.filter(delivrance__isnull=True).count()
+    rdv_a_confirmer = qs_rdv.filter(statut=RendezVous.Statut.DEMANDE).count()
+    ordonnances_non_delivrees = qs_ordonnances.filter(delivrance__isnull=True).count()
+    nb_ayants_droit_attente = qs_patients.filter(
+        type_beneficiaire=Patient.TypeBeneficiaire.AYANT_DROIT,
+        statut_validation=Patient.StatutValidation.EN_ATTENTE,
+    ).count()
 
-    # Libelles au pluriel
     pluriels_prestataire = {
         Prestataire.Type.HOPITAL: "hôpitaux",
         Prestataire.Type.CLINIQUE: "cliniques",
@@ -157,15 +202,16 @@ def dashboard(request):
     nb_pec_urgentes_48h = compteurs.get("nb_pec_urgentes_48h", 0)
 
     contexte = {
-        "total_patients": Patient.objects.count(),
+        "total_organismes": Organisme.objects.count(),
+        "total_patients": repartition_patients["total"],
         "total_medecins": Medecin.objects.count(),
         "total_pharmaciens": Pharmacien.objects.count(),
         "total_prestataires": Prestataire.objects.filter(partenaire=True).count(),
         "total_prises_en_charge_attente": total_prises_en_charge_attente,
         "jours_attente_max": jours_attente_max,
         "nb_pec_urgentes_48h": nb_pec_urgentes_48h,
-        "total_consultations": Consultation.objects.count(),
-        "total_ordonnances": Ordonnance.objects.count(),
+        "total_consultations": qs_consultations.count(),
+        "total_ordonnances": qs_ordonnances.count(),
         "montant_regle": montant_regle,
         "montant_regle_7j": montant_regle_7j,
         "montant_non_regle": montant_non_regle,
@@ -174,18 +220,19 @@ def dashboard(request):
         "tendance_paiements": tendance_paiements,
         "consultations_7j": consultations_7j,
         "ordonnances_7j": ordonnances_7j,
-        "total_comptes_actifs": User.objects.filter(is_active=True).count(),
-        "total_comptes_inactifs": User.objects.filter(is_active=False).count(),
+        "total_comptes_actifs": qs_users.filter(is_active=True).count(),
+        "total_comptes_inactifs": qs_users.filter(is_active=False).count(),
         "total_rendez_vous_aujourd_hui": total_rendez_vous_aujourd_hui,
         "total_consultations_aujourd_hui": total_consultations_aujourd_hui,
-        "dernieres_prises_en_charge": dernieres_prises_en_charge,
-        "derniers_comptes": derniers_comptes,
+        "dernieres_prises_en_charge": dernieres_prises_en_charge if est_gestionnaire else [],
+        "derniers_comptes": [],
+        "comptes_par_role": comptes_par_role,
         "patients_principaux": patients_principaux,
         "ayants_droit": ayants_droit,
         "assures_sans_plan": repartition_patients["sans_plan"],
         "rdv_a_confirmer": rdv_a_confirmer,
         "ordonnances_non_delivrees": ordonnances_non_delivrees,
-        "total_delivrances": Delivrance.objects.count(),
+        "total_delivrances": qs_delivrances.count(),
         "paiements_non_regles_nb": paiements_non_regles_nb,
         "montant_total_facture": montant_total_paiements,
         "medecins_sans_prestataire": Medecin.objects.filter(prestataire__isnull=True).count(),
@@ -195,25 +242,28 @@ def dashboard(request):
         ).count(),
         "prestataires_par_type": prestataires_par_type,
         "nb_comptes_bloques": nb_comptes_bloques,
-        "nb_ayants_droit_en_attente": Patient.objects.filter(
-            type_beneficiaire=Patient.TypeBeneficiaire.AYANT_DROIT,
-            statut_validation=Patient.StatutValidation.EN_ATTENTE,
-        ).count(),
+        "derniers_journaux": qs_journaux.select_related("auteur", "organisme").order_by("-date")[:15],
+        "total_journaux_activite": qs_journaux.count(),
+        "diag_infra": None,
+        "diag_services": None,
+        "diag_incidents": None,
+        "est_gestionnaire": est_gestionnaire,
+        "organisme": request.user.organisme if (est_gestionnaire and org_id) else None,
+        "nb_ayants_droit_en_attente": nb_ayants_droit_attente,
+        "nb_remboursements_attente": compteurs.get("remboursements_attente", 0),
         "file_totale": (
             total_prises_en_charge_attente
             + rdv_a_confirmer
             + ordonnances_non_delivrees
             + paiements_non_regles_nb
-            + Patient.objects.filter(
-                type_beneficiaire=Patient.TypeBeneficiaire.AYANT_DROIT,
-                statut_validation=Patient.StatutValidation.EN_ATTENTE,
-            ).count()
+            + compteurs.get("remboursements_attente", 0)
+            + nb_ayants_droit_attente
         ),
     }
     return render(request, "dashboard.html", contexte)
 
 
-def _consultations_par_mois(nombre_mois=6):
+def _consultations_par_mois(nombre_mois=6, queryset=None):
     """Nombre de consultations par mois, sur les `nombre_mois` derniers mois (mois courant inclus)."""
     annee, mois = timezone.now().year, timezone.now().month
     mois_reference = []
@@ -224,8 +274,9 @@ def _consultations_par_mois(nombre_mois=6):
             mois, annee = 12, annee - 1
     mois_reference.reverse()
 
+    base = Consultation.objects.all() if queryset is None else queryset
     comptages = (
-        Consultation.objects.annotate(mois=TruncMonth("date_consultation"))
+        base.annotate(mois=TruncMonth("date_consultation"))
         .values("mois")
         .annotate(total=Count("id"))
     )
@@ -282,13 +333,14 @@ def _montants_regles_par_jour(nombre_jours=30):
     }
 
 
-def _consultations_par_annee(nombre_annees=5):
+def _consultations_par_annee(nombre_annees=5, queryset=None):
     """Nombre de consultations par annee, sur les `nombre_annees` dernieres annees (annee courante incluse)."""
     annee_courante = timezone.now().year
     annees_reference = list(range(annee_courante - nombre_annees + 1, annee_courante + 1))
 
+    base = Consultation.objects.all() if queryset is None else queryset
     comptages = (
-        Consultation.objects.annotate(annee=TruncYear("date_consultation"))
+        base.annotate(annee=TruncYear("date_consultation"))
         .values("annee")
         .annotate(total=Count("id"))
     )
@@ -300,52 +352,61 @@ def _consultations_par_annee(nombre_annees=5):
     }
 
 
-def _donnees_rapports():
+def _donnees_rapports(organisme=None):
     """Comptages et agregats de synthese de l'activite de la plateforme (Phase 13)."""
+    qs_patients = Patient.objects.filter(organisme=organisme) if organisme else Patient.objects.all()
+    qs_rdv = RendezVous.objects.filter(patient__organisme=organisme) if organisme else RendezVous.objects.all()
+    qs_pec = PriseEnCharge.objects.filter(patient__organisme=organisme) if organisme else PriseEnCharge.objects.all()
+    qs_consultations = Consultation.objects.filter(patient__organisme=organisme) if organisme else Consultation.objects.all()
+    qs_ordonnances = Ordonnance.objects.filter(consultation__patient__organisme=organisme) if organisme else Ordonnance.objects.all()
+    qs_delivrances = Delivrance.objects.filter(ordonnance__consultation__patient__organisme=organisme) if organisme else Delivrance.objects.all()
+
     return {
         "utilisateurs_par_role": [
             {"label": label, "total": User.objects.filter(role=value).count()}
             for value, label in User.Role.choices
         ],
         "patients_par_type": [
-            {"label": label, "total": Patient.objects.filter(type_beneficiaire=value).count()}
+            {"label": label, "total": qs_patients.filter(type_beneficiaire=value).count()}
             for value, label in Patient.TypeBeneficiaire.choices
         ],
         "rendez_vous_par_statut": [
-            {"label": label, "total": RendezVous.objects.filter(statut=value).count()}
+            {"label": label, "total": qs_rdv.filter(statut=value).count()}
             for value, label in RendezVous.Statut.choices
         ],
         "prises_en_charge_par_statut": [
-            {"label": label, "total": PriseEnCharge.objects.filter(statut=value).count()}
+            {"label": label, "total": qs_pec.filter(statut=value).count()}
             for value, label in PriseEnCharge.STATUT_CHOICES
         ],
         "prises_en_charge_chart": {
             "labels": [label for value, label in PriseEnCharge.STATUT_CHOICES],
-            "totaux": [PriseEnCharge.objects.filter(statut=value).count() for value, label in PriseEnCharge.STATUT_CHOICES],
+            "totaux": [qs_pec.filter(statut=value).count() for value, label in PriseEnCharge.STATUT_CHOICES],
         },
-        "total_consultations": Consultation.objects.count(),
-        "total_ordonnances": Ordonnance.objects.count(),
-        "total_delivrances": Delivrance.objects.count(),
+        "total_consultations": qs_consultations.count(),
+        "total_ordonnances": qs_ordonnances.count(),
+        "total_delivrances": qs_delivrances.count(),
         "total_prestataires_partenaires": Prestataire.objects.filter(partenaire=True).count(),
-        "consultations_par_jour": _consultations_par_jour(),
-        "consultations_par_mois": _consultations_par_mois(),
-        "consultations_par_annee": _consultations_par_annee(),
+        "consultations_par_jour": _consultations_par_jour(queryset=qs_consultations),
+        "consultations_par_mois": _consultations_par_mois(queryset=qs_consultations),
+        "consultations_par_annee": _consultations_par_annee(queryset=qs_consultations),
     }
 
 
-@admin_required
+@role_required(User.Role.GESTIONNAIRE)
 def rapports(request):
     """Synthese de l'activite de la plateforme : comptages et graphiques (Phase 13)."""
-    return render(request, "rapports.html", _donnees_rapports())
+    organisme = organisme_gestionnaire(request) if request.user.role == User.Role.GESTIONNAIRE else None
+    return render(request, "rapports.html", _donnees_rapports(organisme=organisme))
 
 
-@admin_required
+@role_required(User.Role.GESTIONNAIRE)
 def exporter_rapports_excel(request):
     """
     Exporte un classeur Excel multi-feuilles professionnel avec styles SantéSN,
     formats numériques et cohérence 1:1 avec le rapport PDF.
     """
-    donnees = _donnees_rapports()
+    organisme = organisme_gestionnaire(request) if request.user.role == User.Role.GESTIONNAIRE else None
+    donnees = _donnees_rapports(organisme=organisme)
     classeur = openpyxl.Workbook()
     classeur.remove(classeur.active)
 
@@ -648,14 +709,15 @@ class NumberedCanvas:
         self._underlying.restoreState()
 
 
-@admin_required
+@role_required(User.Role.GESTIONNAIRE)
 def exporter_rapports_pdf(request):
     """
     Génère un rapport administratif PDF professionnel et institutionnel :
     En-tête SantéSN, métadonnées, 4 KPI, graphiques vectoriels ReportLab, tableaux consolidés,
     et pagination officielle "Page X sur Y".
     """
-    donnees = _donnees_rapports()
+    organisme = organisme_gestionnaire(request) if request.user.role == User.Role.GESTIONNAIRE else None
+    donnees = _donnees_rapports(organisme=organisme)
     reponse = HttpResponse(content_type="application/pdf")
     reponse["Content-Disposition"] = 'attachment; filename="rapports_santesn.pdf"'
 

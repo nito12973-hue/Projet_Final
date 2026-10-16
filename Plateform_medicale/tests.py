@@ -19,7 +19,9 @@ from django.utils import timezone
 
 from .models import (
     Consultation,
+    ConventionPrestataire,
     Delivrance,
+    DemandeRemboursement,
     DemandeSupport,
     JournalActivite,
     LigneOrdonnance,
@@ -27,6 +29,7 @@ from .models import (
     MessageSupport,
     Notification,
     Ordonnance,
+    Organisme,
     Paiement,
     Patient,
     Pharmacien,
@@ -58,8 +61,10 @@ def date_rdv_ouvrable(jours=2, heure=10):
     return cible.replace(hour=heure, minute=0, second=0, microsecond=0).strftime('%Y-%m-%dT%H:%M')
 
 
-def creer_utilisateur(role, email):
-    return User.objects.create_user(email=email, password=PASSWORD, role=role)
+def creer_utilisateur(role, email, organisme=None):
+    if role != User.Role.ADMIN and organisme is None:
+        organisme = Organisme.obtenir_defaut()
+    return User.objects.create_user(email=email, password=PASSWORD, role=role, organisme=organisme)
 
 
 def creer_medecin(email, specialite='Medecine generale'):
@@ -86,6 +91,13 @@ def creer_patient(nom='Diop', prenom='Moussa'):
 def creer_pharmacien(email):
     utilisateur = creer_utilisateur(User.Role.PHARMACIEN, email)
     return Pharmacien.objects.create(user=utilisateur)
+
+
+def bloquer_compte(email):
+    """Bloque temporairement `email` (echecs de connexion repetes) : c'est le
+    seul cas ou l'administrateur, limite a l'infrastructure, voit une identite."""
+    for _ in range(TentativeConnexion.MAX_TENTATIVES):
+        TentativeConnexion.enregistrer_echec(email)
 
 
 ENTETES_IMPORT_UTILISATEURS = [
@@ -352,10 +364,10 @@ class ProtectionDesVuesTests(TestCase):
         self.assertEqual(response.status_code, 403)
 
 
-class DashboardAdminTests(TestCase):
+class DashboardGestionnaireTests(TestCase):
     def setUp(self):
-        creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
-        self.client.login(username='admin@santesn.sn', password=PASSWORD)
+        creer_utilisateur(User.Role.GESTIONNAIRE, 'gestionnaire@santesn.sn')
+        self.client.login(username='gestionnaire@santesn.sn', password=PASSWORD)
 
     def test_sans_donnees_le_bandeau_financier_affiche_un_tiret(self):
         response = self.client.get(reverse('dashboard'))
@@ -407,10 +419,11 @@ class DashboardAdminTests(TestCase):
         self.assertEqual(response.context['total_comptes_inactifs'], 1)
         self.assertGreaterEqual(response.context['total_comptes_actifs'], 1)
 
-    def test_gouvernance_stats_actifs_inactifs_sont_cliquables(self):
+    def test_administrateur_accede_au_tableau_de_bord_de_supervision(self):
+        admin = creer_utilisateur(User.Role.ADMIN, 'admin-gouvernance@santesn.sn')
+        self.client.force_login(admin)
         response = self.client.get(reverse('dashboard'))
-        self.assertContains(response, f'href="{reverse("liste_utilisateurs")}?statut=actif"')
-        self.assertContains(response, f'href="{reverse("liste_utilisateurs")}?statut=inactif"')
+        self.assertContains(response, 'Supervision')
 
     def test_aujourd_hui_ne_compte_que_les_rendez_vous_et_consultations_du_jour(self):
         medecin = creer_medecin('medecin@santesn.sn')
@@ -476,12 +489,12 @@ class DashboardAdminTests(TestCase):
         )
         self.assertContains(response, 'aria-label="Prises en charge en attente : 0"')
 
-    def test_derniers_comptes_crees(self):
+    def test_dashboard_gestionnaire_ne_liste_pas_les_comptes_iam(self):
         creer_medecin('nouveau.medecin@santesn.sn')
 
         response = self.client.get(reverse('dashboard'))
-        self.assertContains(response, 'Derniers comptes cr')
-        self.assertContains(response, 'nouveau.medecin@santesn.sn')
+        self.assertNotContains(response, 'Derniers comptes cr')
+        self.assertNotContains(response, 'nouveau.medecin@santesn.sn')
 
     def test_dashboard_n_affiche_plus_les_digests_assures_et_prestataires(self):
         """Regression : ces 2 digests sont retires du dashboard (deplaces
@@ -618,18 +631,31 @@ class DashboardAdminTests(TestCase):
         self.assertEqual(response.context['consultations_7j'], 0)
         self.assertEqual(response.context['ordonnances_7j'], 0)
 
-    def test_nav_admin_a_des_separateurs_de_section(self):
+    def test_navigation_separe_les_sections_admin_et_gestionnaire(self):
+        admin = creer_utilisateur(User.Role.ADMIN, 'admin-nav-sections@santesn.sn')
+        self.client.force_login(admin)
         response = self.client.get(reverse('dashboard'))
         self.assertContains(response, 'class="nav-section"')
-        self.assertContains(response, '>Pilotage & Opérations<')
-        self.assertContains(response, '>Acteurs & Établissements<')
-        self.assertContains(response, '>Activité Médicale & Finances<')
-        self.assertContains(response, '>Analyse & Configuration<')
+        self.assertContains(response, '>Supervision Plateforme<')
+        self.assertContains(response, '>Comptes & Sécurité<')
+        self.assertContains(response, '>Infrastructure & Support<')
+
+        org = Organisme.objects.create(nom='IPM Test Nav', code='IPM-NAV', type_organisme=Organisme.TypeOrganisme.IPM)
+        gest = User.objects.create_user(
+            email='gest.nav@santesn.sn', password=PASSWORD, role=User.Role.GESTIONNAIRE, organisme=org
+        )
+        self.client.force_login(gest)
+        resp_gest = self.client.get(reverse('dashboard'))
+        self.assertContains(resp_gest, '>Pilotage<')
+        self.assertContains(resp_gest, '>Adhérents & Contrats<')
+        self.assertContains(resp_gest, '>Prises en charge & Activité<')
+        self.assertContains(resp_gest, '>Réseau de Soins Conventionné<')
+        self.assertContains(resp_gest, '>Finances & Règlements<')
 
 
 class GestionUtilisateursTests(TestCase):
     def setUp(self):
-        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
+        self.admin = creer_utilisateur(User.Role.GESTIONNAIRE, 'admin@santesn.sn')
         self.client.login(username='admin@santesn.sn', password=PASSWORD)
 
     def test_liste_utilisateurs_interdite_aux_non_admins(self):
@@ -697,7 +723,7 @@ class GestionUtilisateursTests(TestCase):
         })
         self.assertEqual(response.status_code, 200)
         self.admin.refresh_from_db()
-        self.assertEqual(self.admin.role, User.Role.ADMIN)
+        self.assertEqual(self.admin.role, User.Role.GESTIONNAIRE)
 
     def test_desactivation_utilisateur(self):
         cible = creer_utilisateur(User.Role.MEDECIN, 'cible@santesn.sn')
@@ -741,15 +767,20 @@ class GestionUtilisateursTests(TestCase):
         self.assertEqual(cible.role, User.Role.MEDECIN)
 
     def test_modifier_utilisateur_admin_garde_son_propre_role_dans_le_formulaire(self):
-        response = self.client.get(reverse('modifier_utilisateur', args=[self.admin.pk]))
+        superadmin = creer_utilisateur(User.Role.ADMIN, 'superadmin-edit@santesn.sn')
+        self.client.login(username='superadmin-edit@santesn.sn', password=PASSWORD)
+        response = self.client.get(reverse('modifier_utilisateur', args=[superadmin.pk]))
         choix = dict(response.context['form'].fields['role'].choices)
         self.assertIn(User.Role.ADMIN.value, choix)
 
     def test_reactivation_bloquee_si_un_autre_admin_est_deja_actif(self):
+        superadmin = creer_utilisateur(User.Role.ADMIN, 'superadmin-reac@santesn.sn')
         ancien_admin = creer_utilisateur(User.Role.ADMIN, 'ancien-admin@santesn.sn')
+        bloquer_compte(ancien_admin.email)
         ancien_admin.is_active = False
         ancien_admin.save(update_fields=['is_active'])
 
+        self.client.login(username='superadmin-reac@santesn.sn', password=PASSWORD)
         response = self.client.post(reverse('activer_desactiver_utilisateur', args=[ancien_admin.pk]))
         self.assertRedirects(response, reverse('liste_utilisateurs'))
         ancien_admin.refresh_from_db()
@@ -868,6 +899,7 @@ class ToastsMessagesTests(TestCase):
 
     def test_message_succes_rendu_en_toast(self):
         cible = creer_utilisateur(User.Role.MEDECIN, 'cible@santesn.sn')
+        bloquer_compte(cible.email)
         response = self.client.post(
             reverse('activer_desactiver_utilisateur', args=[cible.pk]), follow=True
         )
@@ -887,6 +919,7 @@ class ToastsMessagesTests(TestCase):
 
     def test_toast_elements_visuels_saas(self):
         cible = creer_utilisateur(User.Role.MEDECIN, 'cible2@santesn.sn')
+        bloquer_compte(cible.email)
         response = self.client.post(
             reverse('activer_desactiver_utilisateur', args=[cible.pk]), follow=True
         )
@@ -1837,7 +1870,7 @@ class EspaceAssureTests(TestCase):
 
 class AdminPrestatairesTests(TestCase):
     def setUp(self):
-        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
+        self.admin = creer_utilisateur(User.Role.GESTIONNAIRE, 'admin@santesn.sn')
         self.client.login(username='admin@santesn.sn', password=PASSWORD)
 
     def test_liste_prestataires_interdite_aux_non_admins(self):
@@ -1935,7 +1968,7 @@ def _reponse_nominatim(payload):
 
 class RechercheLieuPrestataireTests(TestCase):
     def setUp(self):
-        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
+        self.admin = creer_utilisateur(User.Role.GESTIONNAIRE, 'admin@santesn.sn')
         self.client.login(username='admin@santesn.sn', password=PASSWORD)
         # Les reponses Nominatim sont desormais mises en cache : sans purge,
         # un test servirait le resultat simule du precedent.
@@ -2003,7 +2036,7 @@ class DistanceKmTests(TestCase):
 
 class PrestataireCoordonneesTests(TestCase):
     def setUp(self):
-        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
+        self.admin = creer_utilisateur(User.Role.GESTIONNAIRE, 'admin@santesn.sn')
         self.client.login(username='admin@santesn.sn', password=PASSWORD)
 
     def test_creation_prestataire_avec_coordonnees(self):
@@ -2033,7 +2066,7 @@ class PrestataireCoordonneesTests(TestCase):
 
 class AdminPharmaciensTests(TestCase):
     def setUp(self):
-        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
+        self.admin = creer_utilisateur(User.Role.GESTIONNAIRE, 'admin@santesn.sn')
         self.client.login(username='admin@santesn.sn', password=PASSWORD)
 
     def test_affectation_pharmacien_a_une_pharmacie(self):
@@ -2049,7 +2082,7 @@ class AdminPharmaciensTests(TestCase):
 
 class AdminPatientFormTests(TestCase):
     def setUp(self):
-        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
+        self.admin = creer_utilisateur(User.Role.GESTIONNAIRE, 'admin@santesn.sn')
         self.client.login(username='admin@santesn.sn', password=PASSWORD)
 
     def test_liste_patients_triable_par_numero(self):
@@ -2560,7 +2593,7 @@ class RendezVousNotificationsTests(TestCase):
 
 class RapportsTests(TestCase):
     def setUp(self):
-        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
+        self.admin = creer_utilisateur(User.Role.GESTIONNAIRE, 'admin@santesn.sn')
         self.client.login(username='admin@santesn.sn', password=PASSWORD)
 
     def test_rapports_interdit_aux_non_admins(self):
@@ -2685,7 +2718,7 @@ class RapportsTests(TestCase):
 
 class AdminMedecinsFormTests(TestCase):
     def setUp(self):
-        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
+        self.admin = creer_utilisateur(User.Role.GESTIONNAIRE, 'admin@santesn.sn')
         self.client.login(username='admin@santesn.sn', password=PASSWORD)
 
     def test_creation_medecin_via_formulaire_cree_aussi_son_compte(self):
@@ -2755,7 +2788,7 @@ class AdminMedecinsFormTests(TestCase):
 
 class AdminServicesFormTests(TestCase):
     def setUp(self):
-        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
+        self.admin = creer_utilisateur(User.Role.GESTIONNAIRE, 'admin@santesn.sn')
         self.client.login(username='admin@santesn.sn', password=PASSWORD)
 
     def test_creation_et_suppression_service(self):
@@ -2783,7 +2816,7 @@ class AdminServicesFormTests(TestCase):
 
 class AdminPriseEnChargeFormTests(TestCase):
     def setUp(self):
-        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
+        self.admin = creer_utilisateur(User.Role.GESTIONNAIRE, 'admin@santesn.sn')
         self.client.login(username='admin@santesn.sn', password=PASSWORD)
         self.patient = creer_patient()
 
@@ -2878,7 +2911,7 @@ class PaiementTests(TestCase):
 
     def test_liste_paiements_affiche_le_paiement_a_l_admin(self):
         self.client.logout()
-        creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
+        creer_utilisateur(User.Role.GESTIONNAIRE, 'admin@santesn.sn')
         self.client.login(username='admin@santesn.sn', password=PASSWORD)
 
         consultation = Consultation.objects.create(
@@ -2893,7 +2926,7 @@ class PaiementTests(TestCase):
 
     def test_marquer_paiement_regle(self):
         self.client.logout()
-        creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
+        creer_utilisateur(User.Role.GESTIONNAIRE, 'admin@santesn.sn')
         self.client.login(username='admin@santesn.sn', password=PASSWORD)
 
         consultation = Consultation.objects.create(
@@ -2914,7 +2947,7 @@ class PaiementTests(TestCase):
 
     def test_marquer_paiement_regle_exige_mode_reglement(self):
         self.client.logout()
-        creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
+        creer_utilisateur(User.Role.GESTIONNAIRE, 'admin@santesn.sn')
         self.client.login(username='admin@santesn.sn', password=PASSWORD)
 
         consultation = Consultation.objects.create(
@@ -2934,7 +2967,7 @@ class PaiementTests(TestCase):
 
 class PlanCouvertureAdminTests(TestCase):
     def setUp(self):
-        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
+        self.admin = creer_utilisateur(User.Role.GESTIONNAIRE, 'admin@santesn.sn')
         self.client.login(username='admin@santesn.sn', password=PASSWORD)
 
     def test_liste_interdite_aux_non_admins(self):
@@ -2965,7 +2998,7 @@ class PlanCouvertureAdminTests(TestCase):
 
 class SuppressionCascadeTests(TestCase):
     def setUp(self):
-        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
+        self.admin = creer_utilisateur(User.Role.GESTIONNAIRE, 'admin@santesn.sn')
         self.client.login(username='admin@santesn.sn', password=PASSWORD)
 
     def test_avertissement_suppression_patient_avec_ayant_droit(self):
@@ -2985,11 +3018,14 @@ class SuppressionCascadeTests(TestCase):
 
 class PharmacienSuppressionCompteTests(TestCase):
     def test_suppression_compte_pharmacien_preserve_la_fiche(self):
-        admin = creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
+        organisme = Organisme.obtenir_defaut()
+        gest = creer_utilisateur(User.Role.GESTIONNAIRE, 'gest_pharma_suppr@santesn.sn', organisme=organisme)
         pharmacien = creer_pharmacien('pharmacien@santesn.sn')
         utilisateur_pharmacien = pharmacien.user
+        utilisateur_pharmacien.organisme = organisme
+        utilisateur_pharmacien.save()
 
-        self.client.login(username='admin@santesn.sn', password=PASSWORD)
+        self.client.login(username='gest_pharma_suppr@santesn.sn', password=PASSWORD)
         response = self.client.post(reverse('supprimer_utilisateur', args=[utilisateur_pharmacien.pk]))
         self.assertRedirects(response, reverse('liste_utilisateurs'))
 
@@ -2999,7 +3035,7 @@ class PharmacienSuppressionCompteTests(TestCase):
 
 class ValidationFormulairesTests(TestCase):
     def setUp(self):
-        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
+        self.admin = creer_utilisateur(User.Role.GESTIONNAIRE, 'admin@santesn.sn')
         self.client.login(username='admin@santesn.sn', password=PASSWORD)
 
     def test_patient_ayant_droit_sans_principal_refuse(self):
@@ -3184,7 +3220,8 @@ class ChangerMotDePasseTests(TestCase):
 
 class ExportUtilisateursExcelTests(TestCase):
     def setUp(self):
-        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
+        self.organisme = Organisme.obtenir_defaut()
+        self.admin = creer_utilisateur(User.Role.GESTIONNAIRE, 'admin@santesn.sn', organisme=self.organisme)
         self.client.login(username='admin@santesn.sn', password=PASSWORD)
 
     def test_interdit_aux_non_admins(self):
@@ -3195,8 +3232,8 @@ class ExportUtilisateursExcelTests(TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_export_contient_le_bon_type_de_contenu_et_les_utilisateurs(self):
-        creer_utilisateur(User.Role.MEDECIN, 'medecin1@santesn.sn')
-        creer_utilisateur(User.Role.PHARMACIEN, 'pharmacien1@santesn.sn')
+        creer_utilisateur(User.Role.MEDECIN, 'medecin1@santesn.sn', organisme=self.organisme)
+        creer_utilisateur(User.Role.PHARMACIEN, 'pharmacien1@santesn.sn', organisme=self.organisme)
 
         response = self.client.get(reverse('exporter_utilisateurs_excel'))
         self.assertEqual(response.status_code, 200)
@@ -3214,8 +3251,8 @@ class ExportUtilisateursExcelTests(TestCase):
         self.assertIn('admin@santesn.sn', emails)
 
     def test_export_respecte_le_filtre_par_role(self):
-        creer_utilisateur(User.Role.MEDECIN, 'medecin1@santesn.sn')
-        creer_utilisateur(User.Role.PHARMACIEN, 'pharmacien1@santesn.sn')
+        creer_utilisateur(User.Role.MEDECIN, 'medecin1@santesn.sn', organisme=self.organisme)
+        creer_utilisateur(User.Role.PHARMACIEN, 'pharmacien1@santesn.sn', organisme=self.organisme)
 
         response = self.client.get(reverse('exporter_utilisateurs_excel'), {'role': 'MEDECIN'})
         classeur = openpyxl.load_workbook(io.BytesIO(response.content))
@@ -3227,24 +3264,38 @@ class ExportUtilisateursExcelTests(TestCase):
 
 class ImportUtilisateursExcelTests(TestCase):
     def setUp(self):
-        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
-        self.client.login(username='admin@santesn.sn', password=PASSWORD)
+        self.organisme = Organisme.objects.create(nom='IPRES Test', code='IPRES-TEST')
+        self.gestionnaire = creer_utilisateur(User.Role.GESTIONNAIRE, 'gestionnaire_import@santesn.sn', organisme=self.organisme)
+        self.client.login(username='gestionnaire_import@santesn.sn', password=PASSWORD)
 
-    def test_page_interdite_aux_non_admins(self):
+    def test_page_interdite_aux_non_gestionnaires(self):
         self.client.logout()
         creer_utilisateur(User.Role.MEDECIN, 'medecin@santesn.sn')
         self.client.login(username='medecin@santesn.sn', password=PASSWORD)
         response = self.client.get(reverse('importer_utilisateurs_excel'))
         self.assertEqual(response.status_code, 403)
 
-    def test_page_accessible_a_l_admin(self):
+        # L'admin système n'a pas accès à l'import de fiches nominatives
+        self.client.logout()
+        creer_utilisateur(User.Role.ADMIN, 'admin_import_refus@santesn.sn')
+        self.client.login(username='admin_import_refus@santesn.sn', password=PASSWORD)
+        response = self.client.get(reverse('importer_utilisateurs_excel'))
+        self.assertEqual(response.status_code, 403)
+
+    def test_page_accessible_au_gestionnaire(self):
         response = self.client.get(reverse('importer_utilisateurs_excel'))
         self.assertEqual(response.status_code, 200)
 
-    def test_modele_interdit_aux_non_admins(self):
+    def test_modele_interdit_aux_non_gestionnaires(self):
         self.client.logout()
         creer_utilisateur(User.Role.MEDECIN, 'medecin@santesn.sn')
         self.client.login(username='medecin@santesn.sn', password=PASSWORD)
+        response = self.client.get(reverse('telecharger_modele_import_utilisateurs'))
+        self.assertEqual(response.status_code, 403)
+
+        self.client.logout()
+        creer_utilisateur(User.Role.ADMIN, 'admin_modele_refus@santesn.sn')
+        self.client.login(username='admin_modele_refus@santesn.sn', password=PASSWORD)
         response = self.client.get(reverse('telecharger_modele_import_utilisateurs'))
         self.assertEqual(response.status_code, 403)
 
@@ -3410,7 +3461,7 @@ class PaginationListesAdminTests(TestCase):
     """Plan de direction artistique, item 1 : pagination des listes admin."""
 
     def setUp(self):
-        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin@santesn.sn')
+        self.admin = creer_utilisateur(User.Role.GESTIONNAIRE, 'admin@santesn.sn')
         self.client.login(username='admin@santesn.sn', password=PASSWORD)
 
     def test_liste_services_repartie_sur_deux_pages(self):
@@ -3442,22 +3493,30 @@ class PaginationListesAdminTests(TestCase):
         self.assertEqual(response.context['services'].number, 2)
 
     def test_filtre_preserve_en_changeant_de_page(self):
+        # Confidentialite : l'administrateur ne voit que les comptes bloques.
+        creer_utilisateur(User.Role.ADMIN, 'admin-pagination@santesn.sn')
+        self.client.logout()
+        self.client.login(username='admin-pagination@santesn.sn', password=PASSWORD)
         for i in range(25):
             creer_utilisateur(User.Role.MEDECIN, f'medecin{i:02d}@santesn.sn')
+            bloquer_compte(f'medecin{i:02d}@santesn.sn')
         creer_utilisateur(User.Role.PHARMACIEN, 'pharmacien@santesn.sn')
+        bloquer_compte('pharmacien@santesn.sn')
+        creer_utilisateur(User.Role.MEDECIN, 'medecin-non-bloque@santesn.sn')
 
         response = self.client.get(
             reverse('liste_utilisateurs'), {'role': User.Role.MEDECIN.value, 'page': 2}
         )
         emails = [u.email for u in response.context['utilisateurs']]
         self.assertNotIn('pharmacien@santesn.sn', emails)
+        self.assertNotIn('medecin-non-bloque@santesn.sn', emails)
         self.assertEqual(response.context['utilisateurs'].number, 2)
         self.assertContains(response, f'role={User.Role.MEDECIN.value}')
 
 
 class ListeRendezVousAdminTests(TestCase):
     def setUp(self):
-        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin-rdv@santesn.sn')
+        self.admin = creer_utilisateur(User.Role.GESTIONNAIRE, 'admin-rdv@santesn.sn')
         self.medecin = creer_medecin('medecin-rdv@santesn.sn')
         self.patient = creer_patient(nom='Sarr', prenom='Mariama')
         self.autre_patient = creer_patient(nom='Fall', prenom='Ousmane')
@@ -3505,7 +3564,7 @@ class ListeRendezVousAdminTests(TestCase):
 
 class ListeOrdonnancesAdminTests(TestCase):
     def setUp(self):
-        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin-ord@santesn.sn')
+        self.admin = creer_utilisateur(User.Role.GESTIONNAIRE, 'admin-ord@santesn.sn')
         self.medecin = creer_medecin('medecin-ord@santesn.sn')
         self.patient = creer_patient(nom='Ba', prenom='Aminata')
         self.pharmacien = creer_pharmacien('pharmacien-ord@santesn.sn')
@@ -3568,10 +3627,17 @@ class ContexteShellTests(TestCase):
         self.assertIsNone(contexte.get('nb_prises_en_charge_attente'))
         self.assertEqual(contexte['notifications_non_lues'], 0)
 
-    def test_recherche_topbar_reservee_a_l_admin(self):
+    def test_recherche_topbar_reservee_au_gestionnaire(self):
+        creer_utilisateur(User.Role.GESTIONNAIRE, 'gest-rech@santesn.sn')
+        self.client.login(username='gest-rech@santesn.sn', password=PASSWORD)
+        self.assertContains(self.client.get(reverse('dashboard')), 'recherche-globale')
+
+        self.client.logout()
         creer_utilisateur(User.Role.ADMIN, 'admin-rech@santesn.sn')
         self.client.login(username='admin-rech@santesn.sn', password=PASSWORD)
-        self.assertContains(self.client.get(reverse('dashboard')), 'recherche-globale')
+        self.assertNotContains(
+            self.client.get(reverse('dashboard')), 'recherche-globale'
+        )
 
         self.client.logout()
         creer_medecin('medecin-rech@santesn.sn')
@@ -3586,9 +3652,9 @@ class ContexteShellTests(TestCase):
         self.assertEqual(libelle_page('route_qui_n_existe_pas'), '')
 
 
-class DashboardAdminContexteTests(TestCase):
+class DashboardGestionnaireContexteTests(TestCase):
     def setUp(self):
-        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin-dash@santesn.sn')
+        self.gestionnaire = creer_utilisateur(User.Role.GESTIONNAIRE, 'gestionnaire-dash@santesn.sn')
         self.medecin = creer_medecin('medecin-dash@santesn.sn')
         self.principal = creer_patient(nom='Diallo', prenom='Abdoulaye')
         Patient.objects.create(
@@ -3610,7 +3676,7 @@ class DashboardAdminContexteTests(TestCase):
         Prestataire.objects.create(
             nom='Hopital Test', type_prestataire=Prestataire.Type.HOPITAL, ville='Dakar'
         )
-        self.client.login(username='admin-dash@santesn.sn', password=PASSWORD)
+        self.client.login(username='gestionnaire-dash@santesn.sn', password=PASSWORD)
 
     def test_nouvelles_cles_de_contexte(self):
         contexte = self.client.get(reverse('dashboard')).context
@@ -3666,18 +3732,18 @@ class DashboardAdminContexteTests(TestCase):
         self.assertEqual(reponse.status_code, 403)
 
 
-class CompteursFilesAttenteTests(TestCase):
+class CompteursFilesAttenteGestionnaireTests(TestCase):
     """Les pastilles du menu (context processor user_role) et le bandeau du
     dashboard affichent les memes compteurs : ils ne doivent etre calcules
     qu'une seule fois par rendu, et rester coherents entre les deux."""
 
     def setUp(self):
-        creer_utilisateur(User.Role.ADMIN, 'admin-files@santesn.sn')
+        creer_utilisateur(User.Role.GESTIONNAIRE, 'gestionnaire-files@santesn.sn')
         self.patient = creer_patient(nom='Sow', prenom='Awa')
         PriseEnCharge.objects.create(patient=self.patient, motif='A', statut='en_attente')
         PriseEnCharge.objects.create(patient=self.patient, motif='B', statut='en_attente')
         PriseEnCharge.objects.create(patient=self.patient, motif='C', statut='validee')
-        self.client.login(username='admin-files@santesn.sn', password=PASSWORD)
+        self.client.login(username='gestionnaire-files@santesn.sn', password=PASSWORD)
 
     def test_le_compteur_n_est_pas_calcule_deux_fois(self):
         with CaptureQueriesContext(connection) as contexte:
@@ -4062,7 +4128,7 @@ class LibellesAccentuesTests(TestCase):
 
     def test_filtre_par_statut_fonctionne_toujours(self):
         """Garde-fou : les filtres GET utilisent la VALEUR, pas le libelle."""
-        creer_utilisateur(User.Role.ADMIN, 'admin-libelles@santesn.sn')
+        creer_utilisateur(User.Role.GESTIONNAIRE, 'admin-libelles@santesn.sn')
         patient = creer_patient(nom='Fall', prenom='Ndeye')
         PriseEnCharge.objects.create(patient=patient, motif='A', statut='validee')
         PriseEnCharge.objects.create(patient=patient, motif='B', statut='refusee')
@@ -4084,7 +4150,7 @@ class LibellesAccentuesTests(TestCase):
         (changer un libelle dans models.py repassait les graphiques en gris,
         sans aucune erreur visible). Ce test verrouille les deux absences.
         """
-        creer_utilisateur(User.Role.ADMIN, 'admin-couleurs@santesn.sn')
+        creer_utilisateur(User.Role.GESTIONNAIRE, 'admin-couleurs@santesn.sn')
         self.client.login(username='admin-couleurs@santesn.sn', password=PASSWORD)
         contenu = self.client.get(reverse('rapports')).content.decode()
         self.assertEqual(contenu.count('<canvas'), 2)
@@ -4282,6 +4348,8 @@ class NavigationCoherenteTests(TestCase):
                 reverse('importer_utilisateurs_excel'))
 
     def test_import_reglements_absent_de_liste_paiements(self):
+        creer_utilisateur(User.Role.GESTIONNAIRE, 'gest-nav@santesn.sn')
+        self.client.login(username='gest-nav@santesn.sn', password=PASSWORD)
         self.assertNotContains(self.client.get(reverse('liste_paiements')),
                                '/paiements/importer/')
 
@@ -4289,12 +4357,18 @@ class NavigationCoherenteTests(TestCase):
         # Les exports proposes dans Parametres ignoraient les filtres alors
         # que le sous-titre affirmait le contraire : deux chemins, dont un
         # qui mentait.
+        creer_utilisateur(User.Role.GESTIONNAIRE, 'gest-nav-exp@santesn.sn')
         for nom, page in (
             ('exporter_utilisateurs_excel', 'liste_utilisateurs'),
             ('exporter_rapports_excel', 'rapports'),
             ('exporter_paiements_csv', 'liste_paiements'),
         ):
+            if page in ('liste_paiements', 'rapports'):
+                self.client.login(username='gest-nav-exp@santesn.sn', password=PASSWORD)
+            else:
+                self.client.login(username='admin-nav@santesn.sn', password=PASSWORD)
             self.assertContains(self.client.get(reverse(page)), reverse(nom))
+            self.client.login(username='admin-nav@santesn.sn', password=PASSWORD)
             for section in SECTIONS_TOUTES:
                 self.assertNotContains(
                     self.client.get(reverse('parametres_section', args=[section])),
@@ -4327,11 +4401,14 @@ class ConfirmationsActionsSensiblesTests(TestCase):
         self.assertContains(reponse, 'Oui, déconnecter partout')
 
     def test_desactivation_confirmee_mais_pas_l_activation(self):
-        actif = creer_utilisateur(User.Role.MEDECIN, 'actif-confirm@santesn.sn')
-        inactif = creer_utilisateur(User.Role.MEDECIN, 'inactif-confirm@santesn.sn')
+        organisme = Organisme.obtenir_defaut()
+        gest = creer_utilisateur(User.Role.GESTIONNAIRE, 'gest-confirm-desact@santesn.sn', organisme=organisme)
+        actif = creer_utilisateur(User.Role.MEDECIN, 'actif-confirm@santesn.sn', organisme=organisme)
+        inactif = creer_utilisateur(User.Role.MEDECIN, 'inactif-confirm@santesn.sn', organisme=organisme)
         inactif.is_active = False
         inactif.save()
 
+        self.client.login(username='gest-confirm-desact@santesn.sn', password=PASSWORD)
         html = self.client.get(reverse('liste_utilisateurs')).content.decode()
         # La ligne du compte actif porte la confirmation (on va le desactiver),
         # celle du compte inactif non (le reactiver n'a rien de destructif).
@@ -4357,7 +4434,12 @@ class ConfirmationsActionsSensiblesTests(TestCase):
 
     def test_actions_de_lecture_sans_confirmation(self):
         """Filtrer, exporter, consulter : aucune confirmation ne doit gener."""
+        creer_utilisateur(User.Role.GESTIONNAIRE, 'gest-confirm@santesn.sn')
         for nom in ('liste_utilisateurs', 'liste_paiements', 'rapports', 'dashboard'):
+            if nom == 'liste_paiements':
+                self.client.login(username='gest-confirm@santesn.sn', password=PASSWORD)
+            else:
+                self.client.login(username='admin-confirm@santesn.sn', password=PASSWORD)
             html = self.client.get(reverse(nom)).content.decode()
             debut = html.find('<form method="get"')
             if debut != -1:
@@ -4780,7 +4862,7 @@ class CoherencePatientPriseEnChargeTests(TestCase):
     rencontre."""
 
     def setUp(self):
-        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin-coherence@santesn.sn')
+        self.admin = creer_utilisateur(User.Role.GESTIONNAIRE, 'admin-coherence@santesn.sn')
         self.client.login(username='admin-coherence@santesn.sn', password=PASSWORD)
         self.patient = creer_patient(nom='Ba', prenom='Cheikh')
         self.autre = creer_patient(nom='Fall', prenom='Astou')
@@ -4864,7 +4946,7 @@ class ListeConsultationsAdminTests(TestCase):
     fiche_patient_medecin)."""
 
     def setUp(self):
-        creer_utilisateur(User.Role.ADMIN, 'admin-consult@santesn.sn')
+        creer_utilisateur(User.Role.GESTIONNAIRE, 'admin-consult@santesn.sn')
         self.client.login(username='admin-consult@santesn.sn', password=PASSWORD)
 
         self.patient = creer_patient(nom='Diallo', prenom='Mariama')
@@ -4978,6 +5060,9 @@ class ListeConsultationsAdminTests(TestCase):
         self.assertTrue(page.has_next())
 
     def test_entree_de_menu_presente(self):
+        # L'entrée consultations est dans le menu opérationnel du gestionnaire (IPM/Assureur)
+        gest = creer_utilisateur(User.Role.GESTIONNAIRE, 'gest-consult-menu@santesn.sn')
+        self.client.login(username=gest.email, password=PASSWORD)
         self.assertContains(self._page(), reverse('liste_consultations'))
 
 
@@ -5150,6 +5235,7 @@ class JournalActiviteTests(TestCase):
 
     def test_suppression_dutilisateur(self):
         cible = creer_utilisateur(User.Role.ASSURE, 'a-supprimer@santesn.sn')
+        bloquer_compte(cible.email)
         self.client.post(reverse('supprimer_utilisateur', args=[cible.pk]))
         entree = JournalActivite.objects.get(action=JournalActivite.Action.SUPPRESSION)
         self.assertIn('a-supprimer@santesn.sn', entree.objet)
@@ -5160,6 +5246,7 @@ class JournalActiviteTests(TestCase):
         # en CASCADE aurait efface l'entree en meme temps que l'objet -- or
         # c'est precisement la suppression qu'on veut garder.
         cible = creer_utilisateur(User.Role.ASSURE, 'efface@santesn.sn')
+        bloquer_compte(cible.email)
         self.client.post(reverse('supprimer_utilisateur', args=[cible.pk]))
         self.assertFalse(User.objects.filter(pk=cible.pk).exists())
         self.assertTrue(JournalActivite.objects.filter(objet__contains='efface@santesn.sn').exists())
@@ -5168,6 +5255,7 @@ class JournalActiviteTests(TestCase):
         # Supprimer le compte d'un administrateur ne doit pas effacer la
         # trace de ce qu'il a fait : la cle passe a NULL, le libelle reste.
         cible = creer_utilisateur(User.Role.ASSURE, 'cible@santesn.sn')
+        bloquer_compte(cible.email)
         self.client.post(reverse('supprimer_utilisateur', args=[cible.pk]))
         self.admin.delete()
         entree = JournalActivite.objects.get(objet__contains='cible@santesn.sn')
@@ -5176,6 +5264,7 @@ class JournalActiviteTests(TestCase):
 
     def test_desactivation_puis_activation(self):
         cible = creer_utilisateur(User.Role.MEDECIN, 'bascule@santesn.sn')
+        bloquer_compte(cible.email)
         self.client.post(reverse('activer_desactiver_utilisateur', args=[cible.pk]))
         self.client.post(reverse('activer_desactiver_utilisateur', args=[cible.pk]))
         actions = list(JournalActivite.objects.order_by('pk').values_list('action', flat=True))
@@ -5184,6 +5273,7 @@ class JournalActiviteTests(TestCase):
 
     def test_reinitialisation_de_mot_de_passe(self):
         cible = creer_utilisateur(User.Role.ASSURE, 'oubli@santesn.sn')
+        bloquer_compte(cible.email)
         self.client.post(reverse('reinitialiser_mot_de_passe', args=[cible.pk]))
         self.assertEqual(len(self._entrees(action=JournalActivite.Action.MOT_DE_PASSE)), 1)
 
@@ -5205,6 +5295,8 @@ class JournalActiviteTests(TestCase):
     def test_decision_sur_une_prise_en_charge(self):
         # C'est ce statut qui decide si le patient paie 10% ou 100% :
         # l'auteur de la decision doit rester connu.
+        creer_utilisateur(User.Role.GESTIONNAIRE, 'gest-journal@santesn.sn')
+        self.client.login(username='gest-journal@santesn.sn', password=PASSWORD)
         patient = creer_patient(nom='Ba', prenom='Fatou')
         prise = PriseEnCharge.objects.create(patient=patient, motif='Suivi')
         self.client.post(reverse('modifier_prise_en_charge', args=[prise.pk]),
@@ -5214,6 +5306,8 @@ class JournalActiviteTests(TestCase):
         self.assertIn('Validée', entree.details)
 
     def test_modification_sans_changement_de_statut_nest_pas_une_decision(self):
+        creer_utilisateur(User.Role.GESTIONNAIRE, 'gest-journal@santesn.sn')
+        self.client.login(username='gest-journal@santesn.sn', password=PASSWORD)
         patient = creer_patient(nom='Sy', prenom='Modou')
         prise = PriseEnCharge.objects.create(patient=patient, motif='Avant')
         self.client.post(reverse('modifier_prise_en_charge', args=[prise.pk]),
@@ -5224,6 +5318,8 @@ class JournalActiviteTests(TestCase):
     def test_reglement_dun_paiement(self):
         # Paiement porte date_reglement et mode_reglement, mais PAS qui l'a
         # marque regle : le journal est la seule trace de l'auteur.
+        creer_utilisateur(User.Role.GESTIONNAIRE, 'gest-journal@santesn.sn')
+        self.client.login(username='gest-journal@santesn.sn', password=PASSWORD)
         patient = creer_patient(nom='Fall', prenom='Ndeye')
         medecin = creer_medecin('medecin-journal@santesn.sn')
         service = ServiceMedical.objects.create(nom='Consultation', prix=Decimal('10000'))
@@ -5240,6 +5336,7 @@ class JournalActiviteTests(TestCase):
     def test_toutes_les_suppressions_metier_sont_journalisees(self):
         """Couverture : un journal partiel donnerait l'illusion d'une trace
         exhaustive. Chaque ecran de suppression doit laisser une entree."""
+        creer_utilisateur(User.Role.GESTIONNAIRE, 'gest-journal@santesn.sn')
         patient = creer_patient(nom='Kane', prenom='Awa')
         medecin = creer_medecin('medecin-suppr@santesn.sn')
         cas = [
@@ -5258,6 +5355,7 @@ class JournalActiviteTests(TestCase):
         ]
         for nom_vue, pk in cas:
             JournalActivite.objects.all().delete()
+            self.client.login(username='gest-journal@santesn.sn', password=PASSWORD)
             self.client.post(reverse(nom_vue, args=[pk]))
             self.assertEqual(
                 len(self._entrees(action=JournalActivite.Action.SUPPRESSION)), 1, nom_vue)
@@ -5299,6 +5397,7 @@ class JournalActiviteTests(TestCase):
 
     def test_ecran_en_lecture_seule(self):
         cible = creer_utilisateur(User.Role.ASSURE, 'trace@santesn.sn')
+        bloquer_compte(cible.email)
         self.client.post(reverse('activer_desactiver_utilisateur', args=[cible.pk]))
         contenu = self.client.get(reverse('journal_activite')).content.decode()
         self.assertNotIn('class="action-ligne"', contenu)
@@ -5306,6 +5405,7 @@ class JournalActiviteTests(TestCase):
 
     def test_filtres_action_recherche_et_date(self):
         cible = creer_utilisateur(User.Role.ASSURE, 'filtrable@santesn.sn')
+        bloquer_compte(cible.email)
         self.client.post(reverse('activer_desactiver_utilisateur', args=[cible.pk]))
         self.client.post(reverse('reinitialiser_mot_de_passe', args=[cible.pk]))
 
@@ -5315,7 +5415,7 @@ class JournalActiviteTests(TestCase):
         self.assertEqual(len(lignes()), 2)
         self.assertEqual(len(lignes(action=JournalActivite.Action.MOT_DE_PASSE)), 1)
         self.assertEqual(len(lignes(action='PAS_UNE_ACTION')), 2)
-        self.assertEqual(len(lignes(q='filtrable')), 2)
+        self.assertEqual(len(lignes(q='Awa')), 2)
         self.assertEqual(len(lignes(q='introuvable')), 0)
         aujourdhui = timezone.localtime(timezone.now()).date()
         self.assertEqual(len(lignes(date=aujourdhui.isoformat())), 2)
@@ -5376,7 +5476,7 @@ class CartePriseEnChargeTests(TestCase):
     compte, un medecin a un compte sans avoir de carte."""
 
     def setUp(self):
-        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin-carte@santesn.sn')
+        self.admin = creer_utilisateur(User.Role.GESTIONNAIRE, 'admin-carte@santesn.sn')
         self.admin.first_name = 'Awa'
         self.admin.last_name = 'Ndiaye'
         self.admin.save()
@@ -5697,8 +5797,18 @@ class ColonnesOptionnellesMobileTests(TestCase):
         'liste_notifications_envoyees',
     ]
 
+    LISTES_GESTIONNAIRE = {
+        'liste_patients', 'liste_medecins', 'liste_pharmaciens',
+        'liste_prestataires', 'liste_plans_couverture', 'liste_prises_en_charge',
+        'liste_rendez_vous', 'liste_consultations', 'liste_ordonnances',
+        'liste_paiements',
+    }
+
     def setUp(self):
         creer_utilisateur(User.Role.ADMIN, 'admin-colonnes@santesn.sn')
+        creer_utilisateur(User.Role.GESTIONNAIRE, 'gest-colonnes@santesn.sn')
+        u_bloque = creer_utilisateur(User.Role.MEDECIN, 'bloque-colonnes@santesn.sn')
+        bloquer_compte(u_bloque.email)
         self.client.login(username='admin-colonnes@santesn.sn', password=PASSWORD)
         # De quoi faire rendre au moins une ligne dans chaque liste.
         patient = creer_patient(nom='Sow', prenom='Awa')
@@ -5719,8 +5829,13 @@ class ColonnesOptionnellesMobileTests(TestCase):
         JournalActivite.objects.create(auteur_libelle='Awa', objet='Test',
                                        action=JournalActivite.Action.MODIFICATION)
 
+    def _connecter_pour(self, nom):
+        email = 'gest-colonnes@santesn.sn' if nom in self.LISTES_GESTIONNAIRE else 'admin-colonnes@santesn.sn'
+        self.client.login(username=email, password=PASSWORD)
+
     def test_chaque_liste_marque_des_colonnes_secondaires(self):
         for nom in self.LISTES:
+            self._connecter_pour(nom)
             self.assertContains(self.client.get(reverse(nom)), 'col-optionnelle',
                                 msg_prefix=nom)
 
@@ -5728,6 +5843,7 @@ class ColonnesOptionnellesMobileTests(TestCase):
         """L'invariant central : c'est precisement elle qui disparaissait de
         l'ecran. Elle doit rester visible a toute largeur."""
         for nom in self.LISTES:
+            self._connecter_pour(nom)
             contenu = self.client.get(reverse(nom)).content.decode()
             position = contenu.find('>Actions<')
             if position == -1:
@@ -5738,6 +5854,7 @@ class ColonnesOptionnellesMobileTests(TestCase):
     def test_les_colonnes_masquees_le_sont_en_tete_ET_en_cellule(self):
         """Masquer l'en-tete sans masquer les cellules decalerait toutes les
         colonnes d'une liste."""
+        self._connecter_pour('liste_patients')
         contenu = self.client.get(reverse('liste_patients')).content.decode()
         entetes = contenu.count('<th scope="col" class="col-optionnelle"') \
             + contenu.count('<th class="col-optionnelle"')
@@ -5757,7 +5874,7 @@ class RechercheMedecinsAdminTests(TestCase):
     couverture n'en ont volontairement pas -- quelques lignes chacun."""
 
     def setUp(self):
-        creer_utilisateur(User.Role.ADMIN, 'admin-med@santesn.sn')
+        creer_utilisateur(User.Role.GESTIONNAIRE, 'admin-med@santesn.sn')
         self.client.login(username='admin-med@santesn.sn', password=PASSWORD)
         self.cardiologue = creer_medecin('cardio@santesn.sn', specialite='Cardiologie')
         self.pediatre = creer_medecin('pediatre@santesn.sn', specialite='Pédiatrie')
@@ -6160,6 +6277,9 @@ class ParcoursCompletsTests(TestCase):
         self.admin = creer_utilisateur(User.Role.ADMIN, 'admin-parcours@santesn.sn')
         self.admin.first_name, self.admin.last_name = 'Awa', 'Ndiaye'
         self.admin.save()
+        self.gestionnaire = creer_utilisateur(User.Role.GESTIONNAIRE, 'gest-parcours@santesn.sn')
+        self.gestionnaire.first_name, self.gestionnaire.last_name = 'Moussa', 'Fall'
+        self.gestionnaire.save()
 
         self.plan = PlanCouverture.objects.create(
             nom='Famille 80%', taux_couverture=Decimal('80'))
@@ -6205,20 +6325,24 @@ class ParcoursCompletsTests(TestCase):
         self.assertEqual(reponse.status_code, 200, nom_etape)
         return reponse
 
-    # --- ADMINISTRATEUR -----------------------------------------------
+    # --- ADMINISTRATEUR & GESTIONNAIRE --------------------------------
     def test_parcours_administrateur(self):
+        # 1. Parcours Gestionnaire : tableau de bord -> Assurés -> Carte -> retour Assurés
+        page_gest = self._connexion('gest-parcours@santesn.sn')
+        self.assertContains(page_gest, 'Tableau de bord')
+        page_gest = self._etape(page_gest, reverse('liste_patients'), 'Assurés')
+        page_gest = self._etape(page_gest, reverse('carte_patient', args=[self.patient.pk]),
+                                'carte du bénéficiaire')
+        self.assertContains(page_gest, self.patient.numero_carte)
+        self.assertContains(page_gest, '<svg')
+        page_gest = self._etape(page_gest, reverse('liste_patients'), 'retour Assurés')
+        self.client.logout()
+
+        # 2. Parcours Administrateur Général : tableau de bord -> Utilisateurs -> Sécurité -> Journal
         page = self._connexion('admin-parcours@santesn.sn')
-        # La connexion doit deposer sur le tableau de bord du role.
         self.assertContains(page, 'Tableau de bord')
 
         page = self._etape(page, reverse('liste_utilisateurs'), 'Utilisateurs')
-        page = self._etape(page, reverse('liste_patients'), 'Assurés')
-        page = self._etape(page, reverse('carte_patient', args=[self.patient.pk]),
-                           'carte du bénéficiaire')
-        self.assertContains(page, self.patient.numero_carte)
-        self.assertContains(page, '<svg')                      # le QR y est
-
-        page = self._etape(page, reverse('liste_patients'), 'retour Assurés')
 
         parametres = self.client.get(reverse('parametres'), follow=True)
         page = self._etape(parametres, reverse('parametres_section', args=['securite']),
@@ -6983,7 +7107,7 @@ class TracePaiementEspecesTests(TestCase):
     constate le reglement. Le champ est deduit, jamais saisi."""
 
     def setUp(self):
-        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin-caisse@santesn.sn')
+        self.admin = creer_utilisateur(User.Role.GESTIONNAIRE, 'admin-caisse@santesn.sn')
         patient = creer_patient()
         medecin = creer_medecin('medecin-caisse@santesn.sn')
         service = ServiceMedical.objects.create(nom='Consultation generale', prix=5000)
@@ -7040,7 +7164,7 @@ class RechercheEtablissementReelTests(TestCase):
     """
 
     def setUp(self):
-        creer_utilisateur(User.Role.ADMIN, 'admin-geo@santesn.sn')
+        creer_utilisateur(User.Role.GESTIONNAIRE, 'admin-geo@santesn.sn')
         self.client.login(username='admin-geo@santesn.sn', password=PASSWORD)
         cache.clear()
 
@@ -7489,6 +7613,7 @@ class OnboardingEtActivationTests(TestCase):
         self.assertContains(reponse_rejeu, 'Lien expiré ou invalide')
 
     def test_renvoyer_activation_par_admin(self):
+        bloquer_compte(self.user.email)
         self.client.login(username='admin-onboarding@santesn.sn', password=PASSWORD)
         reponse = self.client.post(reverse('renvoyer_activation', args=[self.user.pk]), follow=True)
         self.assertEqual(reponse.status_code, 200)
@@ -7551,7 +7676,7 @@ class RapportsKpiEtPdfTests(TestCase):
     """Tests des rapports d'activité, KPI et export ReportLab PDF vectoriel."""
 
     def setUp(self):
-        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin-rapports@santesn.sn')
+        self.admin = creer_utilisateur(User.Role.GESTIONNAIRE, 'admin-rapports@santesn.sn')
 
     def test_vue_rapports_accessible_admin_avec_kpi(self):
         self.client.login(username='admin-rapports@santesn.sn', password=PASSWORD)
@@ -7576,7 +7701,7 @@ class RapportsExcelMultiFeuillesTests(TestCase):
     """Tests du classeur Excel multi-feuilles professionnel et cohérence avec le PDF."""
 
     def setUp(self):
-        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin-excel@santesn.sn')
+        self.admin = creer_utilisateur(User.Role.GESTIONNAIRE, 'admin-excel@santesn.sn')
 
     def test_export_excel_structure_5_feuilles_et_coherence(self):
         import io
@@ -7647,7 +7772,7 @@ class ProductiviteMetierV11Tests(TestCase):
     """Tests automatisés des fonctionnalités Productivité Métier V1.1."""
 
     def setUp(self):
-        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin-v11@santesn.sn')
+        self.admin = creer_utilisateur(User.Role.GESTIONNAIRE, 'admin-v11@santesn.sn')
         self.medecin_user = creer_utilisateur(User.Role.MEDECIN, 'dr.v11@santesn.sn')
         self.medecin = Medecin.objects.create(
             user=self.medecin_user, nom='Diagne', prenom='Dr',
@@ -7847,8 +7972,8 @@ class PlafondAnnuelTests(TestCase):
         paiement.date_reglement = timezone.now()
         paiement.save()
 
-        # Connexion en admin
-        admin_user = User.objects.create_user(email="admin-recu@santesn.sn", password=PASSWORD, role=User.Role.ADMIN)
+        # Connexion en gestionnaire
+        admin_user = creer_utilisateur(User.Role.GESTIONNAIRE, "admin-recu@santesn.sn")
         self.client.login(username="admin-recu@santesn.sn", password=PASSWORD)
         response = self.client.get(reverse("recu_paiement", kwargs={"pk": paiement.pk}))
         self.assertEqual(response.status_code, 200)
@@ -7863,8 +7988,8 @@ class PlafondAnnuelTests(TestCase):
             date_heure=timezone.now() + datetime.timedelta(days=2),
             statut=RendezVous.Statut.CONFIRME,
         )
-        admin_user = User.objects.create_user(email="admin-ics@santesn.sn", password=PASSWORD, role=User.Role.ADMIN)
-        self.client.login(username="admin-ics@santesn.sn", password=PASSWORD)
+        gest_user = User.objects.create_user(email="gest-ics@santesn.sn", password=PASSWORD, role=User.Role.GESTIONNAIRE)
+        self.client.login(username="gest-ics@santesn.sn", password=PASSWORD)
         response = self.client.get(reverse("telecharger_ics_rendez_vous", kwargs={"pk": rdv.pk}))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "text/calendar; charset=utf-8")
@@ -8269,9 +8394,13 @@ class CorrectionsAuditMetierTests(TestCase):
         # 1. Vérification que la variable historique NEON_DATABASE_URL n'existe plus dans settings
         self.assertFalse(hasattr(settings, "NEON_DATABASE_URL"))
 
-        # 2. Vérification par analyse statique du fichier config/settings.py
-        settings_path = Path(settings.BASE_DIR) / "config" / "settings.py"
-        settings_code = settings_path.read_text(encoding="utf-8")
+        # 2. Vérification par analyse statique des fichiers de configuration settings
+        settings_dir = Path(settings.BASE_DIR) / "config" / "settings"
+        if settings_dir.is_dir():
+            settings_code = "\n".join(f.read_text(encoding="utf-8") for f in settings_dir.glob("*.py"))
+        else:
+            settings_path = Path(settings.BASE_DIR) / "config" / "settings.py"
+            settings_code = settings_path.read_text(encoding="utf-8")
         self.assertNotIn("NEON_DATABASE_URL", settings_code)
         self.assertNotIn("npg_", settings_code)
         self.assertNotIn("ep-round-tree", settings_code)
@@ -9134,8 +9263,9 @@ class SynchronisationIdentiteTests(TestCase):
         self.assertEqual(self.medecin.nom, "Fall")
 
     def test_d_admin_modifier_patient_met_a_jour_user(self):
-        """D. Admin : Modification Patient -> User cohérent."""
-        self.client.login(email="admin.sync@santesn.sn", password=self.mdp)
+        """D. Gestionnaire : Modification Patient -> User cohérent."""
+        creer_utilisateur(User.Role.GESTIONNAIRE, "gest.sync@santesn.sn")
+        self.client.login(email="gest.sync@santesn.sn", password=PASSWORD)
         rep = self.client.post(reverse("modifier_patient", args=[self.patient.pk]), {
             "prenom": "Cheikh",
             "nom": "Dieng",
@@ -9153,8 +9283,9 @@ class SynchronisationIdentiteTests(TestCase):
         self.assertEqual(self.user_assure.last_name, "Dieng")
 
     def test_e_admin_modifier_medecin_met_a_jour_user(self):
-        """E. Admin : Modification Medecin -> User cohérent."""
-        self.client.login(email="admin.sync@santesn.sn", password=self.mdp)
+        """E. Gestionnaire : Modification Medecin -> User cohérent."""
+        creer_utilisateur(User.Role.GESTIONNAIRE, "gest.sync.med@santesn.sn")
+        self.client.login(email="gest.sync.med@santesn.sn", password=PASSWORD)
         rep = self.client.post(reverse("modifier_medecin", args=[self.medecin.pk]), {
             "prenom": "Oumar",
             "nom": "Kane",
@@ -9169,6 +9300,10 @@ class SynchronisationIdentiteTests(TestCase):
         self.assertEqual(self.medecin.nom, "Kane")
         self.assertEqual(self.user_medecin.first_name, "Oumar")
         self.assertEqual(self.user_medecin.last_name, "Kane")
+
+        # L'administrateur système n'a pas accès à la gestion des médecins (403)
+        self.client.login(email="admin.sync@santesn.sn", password=self.mdp)
+        self.assertEqual(self.client.get(reverse("modifier_medecin", args=[self.medecin.pk])).status_code, 403)
 
     def test_f_modifier_phone_number_ne_modifie_pas_telephone_metier(self):
         """F. Téléphone : modifier User.phone_number ne modifie PAS Patient.telephone ni Medecin.telephone."""
@@ -9223,14 +9358,15 @@ class VisibiliteComptesBloquesP1ATests(TestCase):
     """Tests P1-A : Visibilité et déblocage des comptes temporairement bloqués dans /utilisateurs/."""
 
     def setUp(self):
-        self.admin = creer_utilisateur(User.Role.ADMIN, "admin-p1a@santesn.sn")
-        self.assure = creer_utilisateur(User.Role.ASSURE, "assure-p1a@santesn.sn")
-        self.medecin = creer_utilisateur(User.Role.MEDECIN, "medecin-p1a@santesn.sn")
-        self.pharmacien = creer_utilisateur(User.Role.PHARMACIEN, "pharmacien-p1a@santesn.sn")
-        self.inactif = creer_utilisateur(User.Role.ASSURE, "inactif-p1a@santesn.sn")
+        self.organisme = Organisme.obtenir_defaut()
+        self.admin = creer_utilisateur(User.Role.GESTIONNAIRE, "gest-p1a@santesn.sn", organisme=self.organisme)
+        self.assure = creer_utilisateur(User.Role.ASSURE, "assure-p1a@santesn.sn", organisme=self.organisme)
+        self.medecin = creer_utilisateur(User.Role.MEDECIN, "medecin-p1a@santesn.sn", organisme=self.organisme)
+        self.pharmacien = creer_utilisateur(User.Role.PHARMACIEN, "pharmacien-p1a@santesn.sn", organisme=self.organisme)
+        self.inactif = creer_utilisateur(User.Role.ASSURE, "inactif-p1a@santesn.sn", organisme=self.organisme)
         self.inactif.is_active = False
         self.inactif.save(update_fields=["is_active"])
-        self.client.login(username="admin-p1a@santesn.sn", password=PASSWORD)
+        self.client.login(username="gest-p1a@santesn.sn", password=PASSWORD)
 
     def _bloquer(self, email):
         for _ in range(TentativeConnexion.MAX_TENTATIVES):
@@ -9501,6 +9637,7 @@ class TraçabiliteBlocagesP1BTests(TestCase):
 
     def test_j_lien_historique_present_et_fonctionnel(self):
         """J. Le lien Historique est présent dans /utilisateurs/ et filtre le journal sur l'utilisateur."""
+        self._echouer(TentativeConnexion.MAX_TENTATIVES)
         self.client.login(username=self.admin.email, password=PASSWORD)
         rep = self.client.get(reverse("liste_utilisateurs"))
         self.assertEqual(rep.status_code, 200)
@@ -9783,13 +9920,13 @@ class AssistantEtSupportTests(TestCase):
         self.assertIn("En cours", data['reponse']['texte'])
 
     def test_support_creation_ticket_par_assure(self):
-        """L'assuré crée un ticket de support qui notifie les administrateurs."""
+        """L'assuré crée un ticket de support technique qui notifie les administrateurs."""
         self.client.login(username='assure-support@santesn.sn', password=PASSWORD)
         res = self.client.post(reverse('creer_demande_support'), {
-            'categorie': DemandeSupport.Categorie.PRISE_EN_CHARGE,
+            'categorie': DemandeSupport.Categorie.TECHNIQUE,
             'priorite': DemandeSupport.Priorite.URGENTE,
-            'objet': 'Remboursement non reçu pour ma consultation',
-            'premier_message': "Bonjour, ma prise en charge du 10 mars n'apparaît pas correctement.",
+            'objet': 'Problème technique de connexion',
+            'premier_message': "Bonjour, impossible d'accéder au portail depuis ce matin.",
         })
         self.assertEqual(res.status_code, 302)
         ticket = DemandeSupport.objects.filter(auteur=self.user_assure).first()
@@ -9836,26 +9973,26 @@ class AssistantEtSupportTests(TestCase):
         self.assertEqual(res.status_code, 404)
 
     def test_support_admin_traitement_et_reponse(self):
-        """L'administrateur répond au ticket, le clôture et notifie l'assuré."""
+        """L'administrateur répond au ticket technique, le clôture et notifie l'assuré."""
         ticket = DemandeSupport.objects.create(
             auteur=self.user_assure,
             patient=self.patient,
-            objet="Correction taux",
-            categorie=DemandeSupport.Categorie.PRISE_EN_CHARGE,
+            objet="Panne accès portail",
+            categorie=DemandeSupport.Categorie.TECHNIQUE,
             statut=DemandeSupport.Statut.EN_ATTENTE,
         )
-        MessageSupport.objects.create(demande=ticket, auteur=self.user_assure, message="Taux incorrect")
+        MessageSupport.objects.create(demande=ticket, auteur=self.user_assure, message="Erreur de connexion serveur")
 
         self.client.login(username='admin-support@santesn.sn', password=PASSWORD)
         # Liste admin
         res_liste = self.client.get(reverse('admin_liste_demandes_support'))
         self.assertEqual(res_liste.status_code, 200)
-        self.assertIn("Correction taux", res_liste.content.decode('utf-8'))
+        self.assertIn("Panne accès portail", res_liste.content.decode('utf-8'))
 
         # Réponse admin
         res_rep = self.client.post(reverse('admin_detail_demande_support', kwargs={'pk': ticket.pk}), {
             'action': 'repondre',
-            'message': "Nous avons rectifié votre dossier. Votre taux est désormais de 80%.",
+            'message': "Le cache serveur a été purgé et l'accès est rétabli.",
         })
         self.assertEqual(res_rep.status_code, 302)
 
@@ -9929,8 +10066,8 @@ class PreLaunchAuditAndLegalPagesTests(TestCase):
         self.assertIn("/cgu/", contenu)
 
     def test_import_excel_rejette_fichier_non_xlsx(self):
-        admin = creer_utilisateur(User.Role.ADMIN, 'admin-audit@santesn.sn')
-        self.client.login(username='admin-audit@santesn.sn', password=PASSWORD)
+        gest = creer_utilisateur(User.Role.GESTIONNAIRE, 'gest-import-audit@santesn.sn')
+        self.client.login(username='gest-import-audit@santesn.sn', password=PASSWORD)
         fichier_invalide = SimpleUploadedFile('test.pdf', b'%PDF-1.4 test content', content_type='application/pdf')
         resp = self.client.post(reverse('importer_utilisateurs_excel'), {'fichier': fichier_invalide})
         self.assertEqual(resp.status_code, 200)
@@ -9987,7 +10124,7 @@ class TestAmeliorationsPlateformeSN(TestCase):
             date_naissance=datetime.date(1995, 5, 10),
             telephone='771234567',
         )
-        self.agent = creer_utilisateur(User.Role.ADMIN, 'agent-test-sn@santesn.sn')
+        self.agent = creer_utilisateur(User.Role.GESTIONNAIRE, 'agent-test-sn@santesn.sn')
 
     def test_prescription_champs_distincts(self):
         """Vérifie que la ligne d'ordonnance sépare le médicament de son dosage et posologie."""
@@ -10058,7 +10195,7 @@ class TestAmeliorationsPlateformeSN(TestCase):
 
     def test_liste_prises_en_charge_get_ok(self):
         """Vérifie que la page liste des prises en charge répond 200 en GET sans ValueError."""
-        self.client.force_login(self.admin)
+        self.client.force_login(self.agent)
         resp = self.client.get(reverse('liste_prises_en_charge'))
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "Prises en charge")
@@ -10108,6 +10245,7 @@ class TestAmeliorationsPlateformeSN(TestCase):
 class AuditCorrectionsTests(TestCase):
     def setUp(self):
         self.admin_user = creer_utilisateur(User.Role.ADMIN, 'admin_audit@santesn.sn')
+        self.gestionnaire = creer_utilisateur(User.Role.GESTIONNAIRE, 'gest_audit@santesn.sn')
         self.medecin = creer_medecin('medecin_audit@santesn.sn')
         self.patient = creer_patient('Fall', 'Ibrahima')
         self.service = ServiceMedical.objects.create(nom="Consultation Générale", prix=Decimal("15000.00"))
@@ -10189,7 +10327,8 @@ class AuditCorrectionsTests(TestCase):
             date_reglement=timezone.now(),
         )
 
-        self.client.force_login(self.admin_user)
+        gest_user = creer_utilisateur(User.Role.GESTIONNAIRE, 'gest_audit_pec@santesn.sn')
+        self.client.force_login(gest_user)
         resp = self.client.post(reverse('valider_prise_en_charge', args=[pec.pk]))
         self.assertEqual(resp.status_code, 302)
 
@@ -10209,8 +10348,8 @@ class AuditCorrectionsTests(TestCase):
         self.assertIn("medicaments", OrdonnanceAdmin.exclude)
 
     def test_renvoyer_activation_mono_canal_redirect_liste(self):
-        self.client.force_login(self.admin_user)
-        utilisateur_test = creer_utilisateur(User.Role.MEDECIN, 'dr.test.activation@santesn.sn')
+        self.client.force_login(self.gestionnaire)
+        utilisateur_test = creer_utilisateur(User.Role.MEDECIN, 'dr.test.activation@santesn.sn', organisme=self.gestionnaire.organisme)
         utilisateur_test.phone_number = "221704872319"
         utilisateur_test.save()
 
@@ -10277,7 +10416,8 @@ class AuditCorrectionsTests(TestCase):
             date_consultation=timezone.now(),
             diagnostic="Consultation historique",
         )
-        self.client.force_login(self.admin_user)
+        gest_user = creer_utilisateur(User.Role.GESTIONNAIRE, 'gest_audit_suppr@santesn.sn')
+        self.client.force_login(gest_user)
         resp = self.client.post(reverse('supprimer_patient', args=[self.patient.pk]), follow=True)
         self.assertRedirects(resp, reverse('liste_patients'))
         self.assertTrue(Patient.objects.filter(pk=self.patient.pk).exists())
@@ -10293,7 +10433,7 @@ class AuditCorrectionsTests(TestCase):
             date_consultation=timezone.now(),
             diagnostic="Consultation historique Dr",
         )
-        self.client.force_login(self.admin_user)
+        self.client.force_login(self.gestionnaire)
         resp = self.client.post(reverse('supprimer_medecin', args=[self.medecin.pk]), follow=True)
         self.assertRedirects(resp, reverse('liste_medecins'))
         self.assertTrue(Medecin.objects.filter(pk=self.medecin.pk).exists())
@@ -10360,7 +10500,7 @@ class AuditCorrectionsTests(TestCase):
     def test_journal_audit_trace_apres_suppression_reussie(self):
         """Vérifie que le journal d'audit enregistre l'action de suppression après succès réel (P1.3)."""
         service_test = ServiceMedical.objects.create(nom="Radiologie Audit", prix=Decimal("30000.00"))
-        self.client.force_login(self.admin_user)
+        self.client.force_login(self.gestionnaire)
         resp = self.client.post(reverse('supprimer_service', args=[service_test.pk]), follow=True)
         self.assertRedirects(resp, reverse('liste_services'))
         self.assertFalse(ServiceMedical.objects.filter(pk=service_test.pk).exists())
@@ -10439,7 +10579,7 @@ class PasswordResetSelfServiceTests(TestCase):
 
 class AyantDroitValidationAntiFraudeTests(TestCase):
     def setUp(self):
-        self.admin_user = creer_utilisateur(User.Role.ADMIN, 'admin_valid@santesn.sn')
+        self.admin_user = creer_utilisateur(User.Role.GESTIONNAIRE, 'admin_valid@santesn.sn')
         self.assure_user = creer_utilisateur(User.Role.ASSURE, 'assure_parent@santesn.sn')
         self.patient_principal = Patient.objects.create(
             user=self.assure_user,
@@ -10636,7 +10776,7 @@ class AyantDroitValidationAntiFraudeTests(TestCase):
 
 class CarteDematerialiseeEtDroitsSaaSTests(TestCase):
     def setUp(self):
-        self.admin = creer_utilisateur(User.Role.ADMIN, 'admin_cartes@santesn.sn')
+        self.admin = creer_utilisateur(User.Role.GESTIONNAIRE, 'admin_cartes@santesn.sn')
         self.user_assure = creer_utilisateur(User.Role.ASSURE, 'assure_cartes@santesn.sn')
         self.patient = Patient.objects.create(
             user=self.user_assure,
@@ -10817,6 +10957,11 @@ class MediaFilesServingTests(TestCase):
     """Vérifie que les pièces justificatives et fichiers médias sont correctement servis par l'URLconf."""
 
     def test_fichier_media_existant_accessible(self):
+        from django.conf import settings
+        chemin_disque = pathlib.Path(settings.MEDIA_ROOT) / "justificatifs_ayants_droit" / "UPsn_CCNA_Section_1-Lesson_1.pdf"
+        chemin_disque.parent.mkdir(parents=True, exist_ok=True)
+        if not chemin_disque.exists():
+            chemin_disque.write_bytes(b"%PDF-1.4 test document")
         client = Client()
         # Le fichier justificatif déposé existe sur le disque
         response = client.get("/media/justificatifs_ayants_droit/UPsn_CCNA_Section_1-Lesson_1.pdf")
@@ -10858,7 +11003,7 @@ class BonPriseEnChargePDFTests(TestCase):
             date_naissance=datetime.date(1990, 1, 1),
             plan_couverture=self.plan,
         )
-        self.admin = creer_utilisateur(User.Role.ADMIN, "admin.pec@santesn.sn")
+        self.admin = creer_utilisateur(User.Role.GESTIONNAIRE, "admin.pec@santesn.sn")
         self.autre_assure = creer_utilisateur(User.Role.ASSURE, "autre.pec@santesn.sn")
         self.autre_patient = Patient.objects.create(
             user=self.autre_assure,
@@ -11342,3 +11487,1304 @@ class ConformiteCDPTests(TestCase):
         self.assertIsNotNone(entree)
         self.assertIn("Gueye", entree.objet)
         self.assertIn("Consultation DPI", entree.details)
+
+class IsolationMultiOrganismesEtape1Tests(TestCase):
+    """Tests d'isolation stricte multi-organismes (Étape 1) :
+    - Séparation Administrateur Général (ADMIN) vs Gestionnaire (GESTIONNAIRE)
+    - Isolation étanche entre Organisme A et Organisme B (404 sur les IDs croisés)
+    - Accès 403 pour l'Administrateur Général sur les vues de gestion des assurés
+    - Route /admin/logs dédiée sans casser /admin/ de Django
+    - Journal d'activité scellé avec organisme et organisme_libelle figé
+    - Secret médical maintenu pour l'Administrateur Général et le Gestionnaire
+    """
+
+    def setUp(self):
+        self.org_a = Organisme.objects.create(
+            nom="IPM Sonatel",
+            code="IPM-SONATEL",
+            type_organisme=Organisme.TypeOrganisme.IPM,
+            email="contact@ipm-sonatel.sn",
+            telephone="338391234",
+            actif=True,
+        )
+        self.org_b = Organisme.objects.create(
+            nom="Assurance AXA Sénégal",
+            code="AXA-SN",
+            type_organisme=Organisme.TypeOrganisme.ASSURANCE,
+            email="contact@axa.sn",
+            telephone="338491000",
+            actif=True,
+        )
+        self.admin_general = creer_utilisateur(User.Role.ADMIN, "admin.general@santesn.sn")
+        self.gest_a = creer_utilisateur(
+            User.Role.GESTIONNAIRE, "gest.a@santesn.sn", organisme=self.org_a
+        )
+        self.gest_b = creer_utilisateur(
+            User.Role.GESTIONNAIRE, "gest.b@santesn.sn", organisme=self.org_b
+        )
+
+        self.plan = PlanCouverture.objects.create(
+            nom="Famille 80%", taux_couverture=Decimal("80.00"), plafond_annuel=Decimal("1000000.00")
+        )
+        self.user_assure_a = creer_utilisateur(
+            User.Role.ASSURE, "assure.a@santesn.sn", organisme=self.org_a
+        )
+        self.patient_a = Patient.objects.create(
+            user=self.user_assure_a,
+            organisme=self.org_a,
+            entreprise="Sonatel SA",
+            nom="Diop",
+            prenom="Ousmane",
+            date_naissance=datetime.date(1985, 4, 10),
+            telephone="771000010",
+            plan_couverture=self.plan,
+            statut_validation=Patient.StatutValidation.VALIDE,
+        )
+        self.ayant_droit_a = Patient.objects.create(
+            assure_principal=self.patient_a,
+            type_beneficiaire=Patient.TypeBeneficiaire.AYANT_DROIT,
+            lien_parente=Patient.LienParente.ENFANT,
+            nom="Diop",
+            prenom="Amina",
+            date_naissance=datetime.date(2016, 6, 15),
+            statut_validation=Patient.StatutValidation.EN_ATTENTE,
+        )
+
+        self.user_assure_b = creer_utilisateur(
+            User.Role.ASSURE, "assure.b@santesn.sn", organisme=self.org_b
+        )
+        self.patient_b = Patient.objects.create(
+            user=self.user_assure_b,
+            organisme=self.org_b,
+            entreprise="CBAO Groupe Attijariwafa",
+            nom="Ndiaye",
+            prenom="Fatou",
+            date_naissance=datetime.date(1990, 9, 20),
+            telephone="772000020",
+            plan_couverture=self.plan,
+            statut_validation=Patient.StatutValidation.VALIDE,
+        )
+        self.ayant_droit_b = Patient.objects.create(
+            assure_principal=self.patient_b,
+            type_beneficiaire=Patient.TypeBeneficiaire.AYANT_DROIT,
+            lien_parente=Patient.LienParente.ENFANT,
+            nom="Ndiaye",
+            prenom="Cheikh",
+            date_naissance=datetime.date(2018, 2, 12),
+            statut_validation=Patient.StatutValidation.EN_ATTENTE,
+        )
+
+        self.pec_a = PriseEnCharge.objects.create(
+            patient=self.patient_a, motif="Hospitalisation A", statut="en_attente"
+        )
+        self.pec_b = PriseEnCharge.objects.create(
+            patient=self.patient_b, motif="Hospitalisation B", statut="en_attente"
+        )
+
+        self.medecin = creer_medecin("dr.isolation@santesn.sn")
+        self.service = ServiceMedical.objects.create(nom="Consultation", prix=Decimal("15000.00"))
+        self.consult_a = Consultation.objects.create(
+            patient=self.patient_a,
+            medecin=self.medecin,
+            service=self.service,
+            date_consultation=timezone.now(),
+            diagnostic="Diagnostic confidentiel A",
+            traitement="Traitement secret A",
+        )
+        self.paiement_a = Paiement.calculer_pour(self.consult_a)
+        self.paiement_a.save()
+
+        self.consult_b = Consultation.objects.create(
+            patient=self.patient_b,
+            medecin=self.medecin,
+            service=self.service,
+            date_consultation=timezone.now(),
+            diagnostic="Diagnostic confidentiel B",
+            traitement="Traitement secret B",
+        )
+        self.paiement_b = Paiement.calculer_pour(self.consult_b)
+        self.paiement_b.save()
+
+    def test_ayant_droit_herite_automatiquement_de_lorganisme_du_principal(self):
+        self.assertEqual(self.ayant_droit_a.organisme, self.org_a)
+        self.assertEqual(self.ayant_droit_b.organisme, self.org_b)
+
+    def test_validation_modele_user_gestionnaire_exige_organisme(self):
+        gest_sans_org = User(
+            email="gest.sans.org@santesn.sn",
+            role=User.Role.GESTIONNAIRE,
+            organisme=None,
+        )
+        with self.assertRaises(ValidationError):
+            gest_sans_org.full_clean()
+
+    def test_admin_general_recoit_403_sur_toutes_les_vues_metier_assures(self):
+        self.client.force_login(self.admin_general)
+        urls_get = [
+            reverse("liste_patients"),
+            reverse("ajouter_patient"),
+            reverse("modifier_patient", args=[self.patient_a.pk]),
+            reverse("supprimer_patient", args=[self.patient_a.pk]),
+            reverse("carte_patient", args=[self.patient_a.pk]),
+            reverse("liste_prises_en_charge"),
+            reverse("ajouter_prise_en_charge"),
+            reverse("modifier_prise_en_charge", args=[self.pec_a.pk]),
+            reverse("supprimer_prise_en_charge", args=[self.pec_a.pk]),
+            reverse("liste_paiements"),
+            reverse("exporter_paiements_csv"),
+            reverse("recu_paiement", args=[self.paiement_a.pk]),
+        ]
+        for url in urls_get:
+            resp = self.client.get(url)
+            self.assertEqual(resp.status_code, 403, f"GET {url} devrait renvoyer 403 à ADMIN")
+
+        urls_post = [
+            reverse("valider_ayant_droit", args=[self.ayant_droit_a.pk]),
+            reverse("refuser_ayant_droit", args=[self.ayant_droit_a.pk]),
+            reverse("valider_prise_en_charge", args=[self.pec_a.pk]),
+            reverse("refuser_prise_en_charge", args=[self.pec_a.pk]),
+            reverse("marquer_paiement_regle", args=[self.paiement_a.pk]),
+        ]
+        for url in urls_post:
+            resp = self.client.post(url, {"motif_refus": "Test", "mode_reglement": "ESPECES"})
+            self.assertEqual(resp.status_code, 403, f"POST {url} devrait renvoyer 403 à ADMIN")
+
+    def test_gestionnaire_a_isole_des_dossiers_de_b_en_lecture_et_ecriture(self):
+        self.client.force_login(self.gest_a)
+
+        # 1. Listes : ne montrent que les dossiers de A, jamais ceux de B
+        resp_patients = self.client.get(reverse("liste_patients"))
+        self.assertEqual(resp_patients.status_code, 200)
+        self.assertContains(resp_patients, "Ousmane")
+        self.assertNotContains(resp_patients, "Fatou")
+
+        resp_pecs = self.client.get(reverse("liste_prises_en_charge"))
+        self.assertEqual(resp_pecs.status_code, 200)
+        self.assertContains(resp_pecs, "Hospitalisation A")
+        self.assertNotContains(resp_pecs, "Hospitalisation B")
+
+        resp_paiements = self.client.get(reverse("liste_paiements"))
+        self.assertEqual(resp_paiements.status_code, 200)
+        self.assertContains(resp_paiements, "Ousmane")
+        self.assertNotContains(resp_paiements, "Fatou")
+
+        # 2. Accès direct par ID aux objets de B -> 404 systématique
+        self.assertEqual(
+            self.client.get(reverse("modifier_patient", args=[self.patient_b.pk])).status_code, 404
+        )
+        self.assertEqual(
+            self.client.post(reverse("supprimer_patient", args=[self.patient_b.pk])).status_code, 404
+        )
+        self.assertEqual(
+            self.client.get(reverse("carte_patient", args=[self.patient_b.pk])).status_code, 404
+        )
+        self.assertEqual(
+            self.client.post(reverse("valider_ayant_droit", args=[self.ayant_droit_b.pk])).status_code,
+            404,
+        )
+        self.assertEqual(
+            self.client.post(
+                reverse("refuser_ayant_droit", args=[self.ayant_droit_b.pk]),
+                {"motif_refus": "Tentative croisée"},
+            ).status_code,
+            404,
+        )
+        self.assertEqual(
+            self.client.get(reverse("modifier_prise_en_charge", args=[self.pec_b.pk])).status_code,
+            404,
+        )
+        self.assertEqual(
+            self.client.post(reverse("valider_prise_en_charge", args=[self.pec_b.pk])).status_code,
+            404,
+        )
+        self.assertEqual(
+            self.client.post(
+                reverse("refuser_prise_en_charge", args=[self.pec_b.pk]),
+                {"motif_refus": "Tentative croisée"},
+            ).status_code,
+            404,
+        )
+        self.assertEqual(
+            self.client.post(reverse("supprimer_prise_en_charge", args=[self.pec_b.pk])).status_code,
+            404,
+        )
+        self.assertEqual(
+            self.client.post(
+                reverse("marquer_paiement_regle", args=[self.paiement_b.pk]),
+                {"mode_reglement": "ESPECES"},
+            ).status_code,
+            404,
+        )
+        self.assertEqual(
+            self.client.get(reverse("recu_paiement", args=[self.paiement_b.pk])).status_code,
+            404,
+        )
+
+        # Vérifier qu'aucun objet de B n'a été altéré en base
+        self.ayant_droit_b.refresh_from_db()
+        self.assertEqual(self.ayant_droit_b.statut_validation, Patient.StatutValidation.EN_ATTENTE)
+        self.pec_b.refresh_from_db()
+        self.assertEqual(self.pec_b.statut, "en_attente")
+        self.paiement_b.refresh_from_db()
+        self.assertEqual(self.paiement_b.statut, Paiement.Statut.NON_REGLE)
+
+    def test_actions_en_masse_isolees_par_organisme(self):
+        self.client.force_login(self.gest_a)
+        # Tentative de validation en masse sur liste_prises_en_charge incluant une PEC de B
+        self.client.post(
+            reverse("liste_prises_en_charge"),
+            {"action": "valider_selection", "selection": [str(self.pec_b.pk)]},
+        )
+        self.pec_b.refresh_from_db()
+        self.assertEqual(self.pec_b.statut, "en_attente")
+
+        # Tentative de refus en masse sur liste_prises_en_charge incluant une PEC de B
+        self.client.post(
+            reverse("liste_prises_en_charge"),
+            {"action": "refuser_selection", "selection": [str(self.pec_b.pk)]},
+        )
+        self.pec_b.refresh_from_db()
+        self.assertEqual(self.pec_b.statut, "en_attente")
+
+        # Export CSV des paiements de A ne contient aucun paiement de B
+        resp_csv = self.client.get(reverse("exporter_paiements_csv"))
+        self.assertEqual(resp_csv.status_code, 200)
+        contenu_csv = resp_csv.content.decode("utf-8")
+        self.assertIn("Ousmane", contenu_csv)
+        self.assertNotIn("Fatou", contenu_csv)
+
+        # Bon de prise en charge et PDF de B inaccessibles au gestionnaire de A (404)
+        self.pec_b.statut = "validee"
+        self.pec_b.save(update_fields=["statut"])
+        self.assertEqual(
+            self.client.get(reverse("voir_bon_prise_en_charge", args=[self.pec_b.pk])).status_code,
+            404,
+        )
+        self.assertEqual(
+            self.client.get(
+                reverse("telecharger_bon_prise_en_charge_pdf", args=[self.pec_b.pk])
+            ).status_code,
+            404,
+        )
+
+    def test_gestionnaire_organisme_inactif_bloque_403(self):
+        self.org_a.actif = False
+        self.org_a.save(update_fields=["actif"])
+        self.client.force_login(self.gest_a)
+        resp = self.client.get(reverse("liste_patients"))
+        self.assertEqual(resp.status_code, 403)
+
+    def test_espace_admin_general_gestion_organismes_et_route_admin_logs(self):
+        self.client.force_login(self.admin_general)
+        # 1. Création d'un organisme
+        resp_add = self.client.post(
+            reverse("ajouter_organisme"),
+            {
+                "nom": "IPM Senelec",
+                "code": "ipm-senelec",
+                "type_organisme": Organisme.TypeOrganisme.IPM,
+                "telephone": "338001122",
+                "email": "ipm@senelec.sn",
+                "adresse": "Rue Vincens, Dakar",
+                "actif": True,
+            },
+        )
+        self.assertRedirects(resp_add, reverse("liste_organismes"))
+        org_cree = Organisme.objects.get(code="IPM-SENELEC")
+        self.assertEqual(org_cree.nom, "IPM Senelec")
+
+        # 2. Route /admin/logs fonctionne sans casser /admin/login/ de Django
+        resp_logs = self.client.get("/admin/logs")
+        self.assertEqual(resp_logs.status_code, 200)
+        self.assertContains(resp_logs, "IPM Senelec")
+
+        resp_django_admin = self.client.get("/admin/login/")
+        self.assertIn(resp_django_admin.status_code, (200, 302))
+
+        # 3. Un gestionnaire reçoit 403 sur /admin/logs et sur /organismes/
+        self.client.force_login(self.gest_a)
+        self.assertEqual(self.client.get("/admin/logs").status_code, 403)
+        self.assertEqual(self.client.get(reverse("liste_organismes")).status_code, 403)
+
+    def test_journal_activite_fige_organisme_libelle_et_reste_immuable(self):
+        self.client.force_login(self.gest_a)
+        self.client.post(reverse("valider_prise_en_charge", args=[self.pec_a.pk]))
+        entree = JournalActivite.objects.filter(
+            action=JournalActivite.Action.DECISION, auteur=self.gest_a
+        ).latest("id")
+        self.assertEqual(entree.organisme, self.org_a)
+        self.assertIn("IPM Sonatel", entree.organisme_libelle)
+        self.assertIn("IPM-SONATEL", entree.organisme_libelle)
+
+    def test_secret_medical_applique_au_gestionnaire_et_a_ladmin(self):
+        Ordonnance.objects.create(
+            consultation=self.consult_a, medicaments="Médicament ultra confidentiel A"
+        )
+        # L'administrateur système n'a aucun accès aux fiches médicales (403)
+        self.client.force_login(self.admin_general)
+        self.assertEqual(self.client.get(reverse("liste_consultations")).status_code, 403)
+        self.assertEqual(self.client.get(reverse("liste_ordonnances")).status_code, 403)
+
+        # Le gestionnaire y a accès mais sans voir les données cliniques secrètes
+        self.client.force_login(self.gest_a)
+        resp_c = self.client.get(reverse("liste_consultations"))
+        self.assertEqual(resp_c.status_code, 200)
+        self.assertNotContains(resp_c, "Diagnostic confidentiel A")
+        self.assertNotContains(resp_c, "Traitement secret A")
+
+        resp_o = self.client.get(reverse("liste_ordonnances"))
+        self.assertEqual(resp_o.status_code, 200)
+        self.assertNotContains(resp_o, "Médicament ultra confidentiel A")
+
+    def test_formulaire_prestataire_case_partenaire_alignee_et_accents_propres(self):
+        self.client.force_login(self.gest_a)
+        resp = self.client.get(reverse("ajouter_prestataire"))
+        self.assertEqual(resp.status_code, 200)
+        html = resp.content.decode("utf-8")
+        self.assertIn('class="champ-case"', html)
+        self.assertIn('input[type="checkbox"]', html)
+        self.assertIn(".panel-form > form", html)
+        self.assertIn("Type d&#x27;établissement", html)
+        self.assertIn("Fait partie du réseau conventionné.", html)
+        self.assertLess(
+            html.index('id="id_date_conventionnement"'),
+            html.index('id="id_partenaire"'),
+        )
+
+    def test_dashboard_sans_liens_403_selon_le_role_et_concurrence_idempotente(self):
+        # 1. Administrateur Général : aucun lien vers ajouter_patient / liste_paiements sur le dashboard
+        self.client.force_login(self.admin_general)
+        resp_admin = self.client.get(reverse("dashboard"))
+        self.assertEqual(resp_admin.status_code, 200)
+        # Évaluer derniers_journaux pour vérifier l'absence de FieldError sur select_related("auteur", "organisme")
+        list(resp_admin.context["derniers_journaux"])
+        self.assertNotContains(resp_admin, reverse("ajouter_patient"))
+        self.assertContains(resp_admin, reverse("ajouter_organisme"))
+
+        # 2. Gestionnaire : actions rapides adaptées à son organisme, aucun lien vers liste_utilisateurs dans le corps
+        self.client.force_login(self.gest_a)
+        resp_gest = self.client.get(reverse("dashboard"))
+        self.assertEqual(resp_gest.status_code, 200)
+        self.assertContains(resp_gest, reverse("ajouter_patient"))
+        self.assertContains(resp_gest, "IPM Sonatel")
+
+        # 3. Idempotence en cas de double soumission concurrente (select_for_update)
+        self.client.post(reverse("valider_prise_en_charge", args=[self.pec_a.pk]))
+        nb_decisions_avant = JournalActivite.objects.filter(
+            action=JournalActivite.Action.DECISION, auteur=self.gest_a
+        ).count()
+        self.client.post(reverse("valider_prise_en_charge", args=[self.pec_a.pk]))
+        nb_decisions_apres = JournalActivite.objects.filter(
+            action=JournalActivite.Action.DECISION, auteur=self.gest_a
+        ).count()
+        self.assertEqual(nb_decisions_avant, nb_decisions_apres)
+
+    def test_gestionnaire_acces_reseau_soins_et_rapports_filtres(self):
+        self.client.force_login(self.gest_a)
+        for url_name in (
+            "liste_prestataires",
+            "ajouter_prestataire",
+            "liste_medecins",
+            "ajouter_medecin",
+            "liste_pharmaciens",
+            "liste_services",
+            "ajouter_service",
+            "rapports",
+            "exporter_rapports_excel",
+            "exporter_rapports_pdf",
+        ):
+            resp = self.client.get(reverse(url_name))
+            self.assertEqual(resp.status_code, 200, f"GET {url_name} devrait renvoyer 200 au GESTIONNAIRE")
+
+        # Les rapports du gestionnaire A ne comptent que la consultation de A (1), pas celle de B
+        resp_rapports = self.client.get(reverse("rapports"))
+        self.assertEqual(resp_rapports.context["total_consultations"], 1)
+
+
+class ConventionPrestataireTests(TestCase):
+    """
+    Vérification de l'architecture du réseau de soins conventionné multi-organismes :
+    - Chaque assureur gère son propre réseau de conventions.
+    - Un prestataire peut être conventionné auprès de plusieurs organismes distincts.
+    - Isolation stricte : un gestionnaire ne voit ni n'altère les conventions d'une autre IPM.
+    """
+
+    def setUp(self):
+        self.org_a = Organisme.objects.create(nom="IPM Test Alpha", code="ORG-ALPHA", type_organisme="IPM")
+        self.org_b = Organisme.objects.create(nom="IPM Test Beta", code="ORG-BETA", type_organisme="IPM")
+
+        self.gest_a = User.objects.create_user(
+            email="gest.alpha@santesn.sn",
+            password="Password123!",
+            role=User.Role.GESTIONNAIRE,
+            organisme=self.org_a,
+        )
+        self.gest_b = User.objects.create_user(
+            email="gest.beta@santesn.sn",
+            password="Password123!",
+            role=User.Role.GESTIONNAIRE,
+            organisme=self.org_b,
+        )
+
+        self.hopital = Prestataire.objects.create(
+            nom="Hôpital Principal de Dakar",
+            type_prestataire=Prestataire.Type.HOPITAL,
+            ville="Dakar",
+            partenaire=True,
+        )
+        self.clinique = Prestataire.objects.create(
+            nom="Clinique Madeleine",
+            type_prestataire=Prestataire.Type.CLINIQUE,
+            ville="Dakar",
+            partenaire=True,
+        )
+
+        # Convention initiale pour l'organisme A
+        self.conv_a = ConventionPrestataire.objects.create(
+            organisme=self.org_a,
+            prestataire=self.hopital,
+            numero_convention="CONV-ALPHA-001",
+            statut=ConventionPrestataire.Statut.ACTIF,
+            tiers_payant_actif=True,
+            cree_par=self.gest_a,
+        )
+
+    def test_liste_conventions_isolee_par_organisme(self):
+        # A voit sa convention avec l'Hôpital
+        self.client.force_login(self.gest_a)
+        resp_a = self.client.get(reverse("liste_conventions"))
+        self.assertEqual(resp_a.status_code, 200)
+        self.assertContains(resp_a, "Hôpital Principal de Dakar")
+        self.assertContains(resp_a, "CONV-ALPHA-001")
+
+        # B ne voit aucune convention
+        self.client.force_login(self.gest_b)
+        resp_b = self.client.get(reverse("liste_conventions"))
+        self.assertEqual(resp_b.status_code, 200)
+        self.assertNotContains(resp_b, "CONV-ALPHA-001")
+
+    def test_conventionner_etablissement_par_gestionnaire(self):
+        self.client.force_login(self.gest_b)
+        resp = self.client.post(reverse("ajouter_convention"), {
+            "prestataire": self.hopital.pk,
+            "numero_convention": "CONV-BETA-777",
+            "statut": ConventionPrestataire.Statut.ACTIF,
+            "tiers_payant_actif": True,
+            "date_conventionnement": timezone.now().date().strftime("%Y-%m-%d"),
+            "remarques": "Tiers payant hospitalier 80%",
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.assertRedirects(resp, reverse("liste_conventions"))
+
+        # L'hôpital est maintenant conventionné à la fois par Alpha et Beta sans conflit !
+        self.assertTrue(self.hopital.est_conventionne_par(self.org_a))
+        self.assertTrue(self.hopital.est_conventionne_par(self.org_b))
+
+    def test_changer_statut_convention_isole(self):
+        self.client.force_login(self.gest_a)
+        # Gestionnaire A suspend sa convention
+        resp = self.client.post(reverse("changer_statut_convention", args=[self.conv_a.pk]), {
+            "statut": ConventionPrestataire.Statut.SUSPENDU,
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.conv_a.refresh_from_db()
+        self.assertEqual(self.conv_a.statut, ConventionPrestataire.Statut.SUSPENDU)
+
+        # Gestionnaire B ne peut pas modifier la convention de l'organisme A (404)
+        self.client.force_login(self.gest_b)
+        resp_b = self.client.post(reverse("changer_statut_convention", args=[self.conv_a.pk]), {
+            "statut": ConventionPrestataire.Statut.ACTIF,
+        })
+        self.assertEqual(resp_b.status_code, 404)
+
+
+class SupervisionTechniqueTests(TestCase):
+    """Tests du module de supervision informatique, de l'observabilité et du healthcheck DevOps."""
+
+    def setUp(self):
+        self.admin = User.objects.create_user(
+            email="admin-infra@santesn.sn",
+            password="Password123!",
+            role=User.Role.ADMIN,
+            first_name="Admin",
+            last_name="DevOps",
+            is_staff=True,
+        )
+        self.medecin_user = User.objects.create_user(
+            email="dr-infra@santesn.sn",
+            password="Password123!",
+            role=User.Role.MEDECIN,
+            first_name="Dr",
+            last_name="Test",
+        )
+        self.assure_user = User.objects.create_user(
+            email="assure-infra@santesn.sn",
+            password="Password123!",
+            role=User.Role.ASSURE,
+            first_name="Assure",
+            last_name="Test",
+        )
+
+        self.gestionnaire_user = User.objects.create_user(
+            email="gest-infra@santesn.sn",
+            password="Password123!",
+            role=User.Role.GESTIONNAIRE,
+            first_name="Gestionnaire",
+            last_name="Test",
+        )
+        self.pharmacien_user = User.objects.create_user(
+            email="pharma-infra@santesn.sn",
+            password="Password123!",
+            role=User.Role.PHARMACIEN,
+            first_name="Pharma",
+            last_name="Test",
+        )
+
+    def test_supervision_acces_interdit_anonyme(self):
+        """Un visiteur non connecté est redirigé vers la page de connexion."""
+        resp = self.client.get(reverse("supervision_systeme"))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn(reverse("login"), resp.url)
+
+    def test_supervision_acces_interdit_non_admin(self):
+        """Un gestionnaire, médecin, pharmacien ou assuré connecté reçoit une erreur 403 Forbidden."""
+        # Le gestionnaire NE DOIT JAMAIS avoir accès à la supervision informatique
+        self.client.force_login(self.gestionnaire_user)
+        resp_gest = self.client.get(reverse("supervision_systeme"))
+        self.assertEqual(resp_gest.status_code, 403)
+
+        self.client.force_login(self.medecin_user)
+        resp_med = self.client.get(reverse("supervision_systeme"))
+        self.assertEqual(resp_med.status_code, 403)
+
+        self.client.force_login(self.pharmacien_user)
+        resp_pharma = self.client.get(reverse("supervision_systeme"))
+        self.assertEqual(resp_pharma.status_code, 403)
+
+        self.client.force_login(self.assure_user)
+        resp_assure = self.client.get(reverse("supervision_systeme"))
+        self.assertEqual(resp_assure.status_code, 403)
+
+    def test_supervision_acces_autorise_admin(self):
+        """L'administrateur accède au tableau de bord de supervision."""
+        self.client.force_login(self.admin)
+        resp = self.client.get(reverse("supervision_systeme"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertTemplateUsed(resp, "supervision_systeme.html")
+        self.assertContains(resp, "Supervision Système & Infrastructure")
+        self.assertContains(resp, "Base de données")
+        self.assertContains(resp, "Stockage Système")
+
+    def test_supervision_export_json(self):
+        """L'administrateur peut exporter le diagnostic complet au format JSON."""
+        self.client.force_login(self.admin)
+        resp = self.client.get(reverse("supervision_systeme") + "?format=json")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp["Content-Type"], "application/json")
+        data = resp.json()
+        self.assertIn("statut_global", data)
+        self.assertIn("db", data)
+        self.assertIn("stockage", data)
+        self.assertIn("sauvegardes", data)
+        self.assertEqual(data["db"]["statut"], "Connecté & Opérationnel")
+
+    def test_healthcheck_endpoints(self):
+        """Les sondes de santé /health/ et /api/health/ répondent 200 sans exposer de secrets."""
+        for endpoint in ["health_check", "api_health_check"]:
+            resp = self.client.get(reverse(endpoint))
+            self.assertEqual(resp.status_code, 200)
+            data = resp.json()
+            self.assertEqual(data["status"], "healthy")
+            self.assertEqual(data["database"]["status"], "ok")
+            self.assertIn("latency_ms", data["database"])
+            # Aucun mot de passe ni secret dans le payload
+            self.assertNotIn("password", str(data).lower())
+            self.assertNotIn("secret", str(data).lower())
+
+    def test_commande_sauvegarder_base(self):
+        """La commande management sauvegarder_base s'exécute et certifie le hash SHA-256."""
+        import io
+        from django.conf import settings
+        from django.core.management import call_command
+        out = io.StringIO()
+        call_command("sauvegarder_base", stdout=out)
+        sortie = out.getvalue()
+        self.assertIn("Sauvegarde vérifiée avec succès", sortie)
+        self.assertIn("SHA-256", sortie)
+
+        # Vérifier la présence du fichier manifest.json
+        manifest_path = settings.BASE_DIR / "backups" / "manifest.json"
+        self.assertTrue(manifest_path.exists())
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            self.assertTrue(len(data.get("sauvegardes", [])) > 0)
+            derniere = data["sauvegardes"][-1]
+            self.assertEqual(derniere["statut"], "SUCCES_VERIFIE")
+            self.assertEqual(len(derniere["sha256"]), 64)  # Longueur d'un SHA-256 hex
+
+
+class RemboursementHorsReseauEtIsolationMultiTenantTests(TestCase):
+    """
+    Tests unitaires et d'intégration pour :
+    1. Le droit au remboursement hors réseau (DemandeRemboursement) :
+       - Soumission par l'assuré (avec calcul du taux de couverture et du plafond annuel restant).
+       - Instruction par le gestionnaire (validation, liquidation immédiate, refus motivé).
+       - Prise en compte des remboursements validés/réglés dans le plafond annuel du foyer.
+    2. L'isolation stricte par entreprise / organisme (Multi-Tenant RBAC) :
+       - Chaque gestionnaire ne voit et ne gère que les assurés, demandes de remboursement,
+         médecins, pharmaciens et prestataires conventionnés de son entreprise.
+       - L'administrateur (rôle ADMIN - infrastructure IT) n'a aucun accès aux vues métier.
+    """
+
+    def setUp(self):
+        self.org_a = Organisme.objects.create(
+            nom="IPM Sonatel",
+            code="IPM-SONATEL",
+            type_organisme=Organisme.TypeOrganisme.IPM,
+            actif=True,
+        )
+        self.org_b = Organisme.objects.create(
+            nom="Mutuelle Senelec",
+            code="MUT-SENELEC",
+            type_organisme=Organisme.TypeOrganisme.MUTUELLE,
+            actif=True,
+        )
+
+        self.admin = User.objects.create_user(
+            email="admin-rbac@santesn.sn",
+            password=PASSWORD,
+            role=User.Role.ADMIN,
+            first_name="Admin",
+            last_name="Infra",
+        )
+        self.gest_a = User.objects.create_user(
+            email="gest-a@sonatel.sn",
+            password=PASSWORD,
+            role=User.Role.GESTIONNAIRE,
+            organisme=self.org_a,
+            first_name="Fatou",
+            last_name="Diop",
+        )
+        self.gest_b = User.objects.create_user(
+            email="gest-b@senelec.sn",
+            password=PASSWORD,
+            role=User.Role.GESTIONNAIRE,
+            organisme=self.org_b,
+            first_name="Moussa",
+            last_name="Fall",
+        )
+
+        self.plan_a = PlanCouverture.objects.create(
+            nom="Formule Cadre 80%",
+            taux_couverture=Decimal("80.00"),
+            plafond_annuel=Decimal("100000.00"),
+        )
+        self.plan_b = PlanCouverture.objects.create(
+            nom="Formule Standard 70%",
+            taux_couverture=Decimal("70.00"),
+            plafond_annuel=Decimal("200000.00"),
+        )
+
+        self.user_assure_a = User.objects.create_user(
+            email="assure-a@sonatel.sn",
+            password=PASSWORD,
+            role=User.Role.ASSURE,
+            organisme=self.org_a,
+            first_name="Amadou",
+            last_name="Ndiaye",
+        )
+        self.patient_a = Patient.objects.create(
+            user=self.user_assure_a,
+            organisme=self.org_a,
+            nom="Ndiaye",
+            prenom="Amadou",
+            date_naissance=datetime.date(1988, 4, 12),
+            telephone="+221771112233",
+            adresse="Dakar Plateau",
+            type_beneficiaire=Patient.TypeBeneficiaire.PRINCIPAL,
+            plan_couverture=self.plan_a,
+        )
+
+        self.user_assure_b = User.objects.create_user(
+            email="assure-b@senelec.sn",
+            password=PASSWORD,
+            role=User.Role.ASSURE,
+            organisme=self.org_b,
+            first_name="Awa",
+            last_name="Sow",
+        )
+        self.patient_b = Patient.objects.create(
+            user=self.user_assure_b,
+            organisme=self.org_b,
+            nom="Sow",
+            prenom="Awa",
+            date_naissance=datetime.date(1992, 8, 20),
+            telephone="+221774445566",
+            adresse="Mermoz",
+            type_beneficiaire=Patient.TypeBeneficiaire.PRINCIPAL,
+            plan_couverture=self.plan_b,
+        )
+
+    def test_soumission_demande_remboursement_assure_et_calcul_automatique(self):
+        """L'assuré soumet une facture hors réseau : le taux (80%) et l'estimation sont calculés et son gestionnaire est notifié."""
+        self.client.force_login(self.user_assure_a)
+        resp = self.client.post(
+            reverse("demander_remboursement_assure"),
+            {
+                "patient": self.patient_a.pk,
+                "prestataire_nom": "Clinique Hors Réseau Pasteur",
+                "type_soin": "CONSULTATION",
+                "date_soins": datetime.date.today().isoformat(),
+                "montant_depense": "25000",
+                "coordonnees_remboursement": "Wave +221 77 111 22 33",
+                "motif": "Consultation d'urgence en déplacement hors réseau conventionné.",
+            },
+        )
+        self.assertEqual(resp.status_code, 302)
+        self.assertRedirects(resp, reverse("mes_remboursements_assure"))
+
+        demande = DemandeRemboursement.objects.get(patient=self.patient_a)
+        self.assertEqual(demande.organisme, self.org_a)
+        self.assertTrue(demande.numero_dossier.startswith("RMB-"))
+        self.assertEqual(demande.taux_applique, Decimal("80.00"))
+        self.assertEqual(demande.montant_rembourse_estime, Decimal("20000.00"))
+        self.assertEqual(demande.statut, DemandeRemboursement.Statut.EN_ATTENTE)
+
+        # Le gestionnaire de l'organisme A a reçu une notification, pas celui de B
+        self.assertTrue(Notification.objects.filter(destinataire=self.gest_a).exists())
+        self.assertFalse(Notification.objects.filter(destinataire=self.gest_b).exists())
+
+    def test_plafonnement_remboursement_selon_plafond_annuel_foyer(self):
+        """Si le montant théorique dépasse le plafond annuel restant, l'estimation est écrêtée au reliquat."""
+        # Plafond annuel de plan_a = 100 000 FCFA.
+        # Créons un premier remboursement déjà validé de 90 000 FCFA cette année.
+        DemandeRemboursement.objects.create(
+            patient=self.patient_a,
+            organisme=self.org_a,
+            prestataire_nom="Laboratoire Externe",
+            type_soin="BIOLOGIE",
+            date_soins=datetime.date.today(),
+            montant_depense=Decimal("120000.00"),
+            montant_rembourse_accorde=Decimal("90000.00"),
+            statut=DemandeRemboursement.Statut.REMBOURSEE,
+        )
+        self.assertEqual(self.patient_a.consommation_annuelle_assurance(), Decimal("90000.00"))
+        self.assertEqual(self.patient_a.plafond_annuel_restant(), Decimal("10000.00"))
+
+        # Nouvelle dépense de 50 000 FCFA (80% = 40 000 FCFA, mais reliquat = 10 000 FCFA)
+        nouvelle = DemandeRemboursement.objects.create(
+            patient=self.patient_a,
+            organisme=self.org_a,
+            prestataire_nom="Optique Hors Réseau",
+            type_soin="OPTIQUE",
+            date_soins=datetime.date.today(),
+            montant_depense=Decimal("50000.00"),
+            motif="Verres correcteurs",
+        )
+        self.assertEqual(nouvelle.montant_rembourse_estime, Decimal("10000.00"))
+
+    def test_instruction_validation_et_reglement_par_gestionnaire(self):
+        """Le gestionnaire de l'organisme instruit la demande, la valide puis confirme le virement."""
+        from Plateform_medicale.models import DemandeRemboursement
+        demande = DemandeRemboursement.objects.create(
+            patient=self.patient_a,
+            organisme=self.org_a,
+            prestataire_nom="Pharmacie Indépendante",
+            type_soin="PHARMACIE",
+            date_soins=datetime.date.today(),
+            montant_depense=Decimal("15000.00"),
+            motif="Médicaments achetés de garde",
+        )
+
+        self.client.force_login(self.gest_a)
+        # 1. Validation
+        resp = self.client.post(
+            reverse("instruire_demande_remboursement", args=[demande.pk]),
+            {
+                "decision": "valider",
+                "montant_rembourse_accorde": "12000.00",
+                "mode_remboursement": "MOBILE_MONEY",
+                "reference_reglement": "WAVE-998877",
+            },
+        )
+        self.assertEqual(resp.status_code, 302)
+        demande.refresh_from_db()
+        self.assertEqual(demande.statut, DemandeRemboursement.Statut.VALIDEE)
+        self.assertEqual(demande.montant_rembourse_accorde, Decimal("12000.00"))
+        self.assertEqual(demande.traite_par, self.gest_a)
+
+        # 2. Liquidation rapide (marquer réglé)
+        resp_regle = self.client.post(
+            reverse("marquer_remboursement_regle", args=[demande.pk]),
+            {
+                "mode_remboursement": "MOBILE_MONEY",
+                "reference_reglement": "WAVE-998877",
+            },
+        )
+        self.assertEqual(resp_regle.status_code, 302)
+        demande.refresh_from_db()
+        self.assertEqual(demande.statut, DemandeRemboursement.Statut.REMBOURSEE)
+        self.assertIsNotNone(demande.date_reglement)
+
+    def test_isolation_multi_tenant_remboursements_medecins_pharmaciens_prestataires(self):
+        """Le gestionnaire de l'organisme B ne peut ni voir ni instruire les dossiers ou praticiens de l'organisme A."""
+        from Plateform_medicale.models import DemandeRemboursement
+        demande_a = DemandeRemboursement.objects.create(
+            patient=self.patient_a,
+            organisme=self.org_a,
+            prestataire_nom="Clinique Hors Réseau A",
+            type_soin="CONSULTATION",
+            date_soins=datetime.date.today(),
+            montant_depense=Decimal("20000.00"),
+            motif="Soins hors réseau",
+        )
+
+        # Créons un médecin rattaché à l'organisme A
+        user_med_a = User.objects.create_user(
+            email="med-a@sonatel.sn",
+            password=PASSWORD,
+            role=User.Role.MEDECIN,
+            organisme=self.org_a,
+            first_name="Cheikh",
+            last_name="Sy",
+        )
+        med_a = Medecin.objects.create(
+            user=user_med_a,
+            nom="Sy",
+            prenom="Cheikh",
+            specialite="Cardiologie",
+            telephone="+221770001122",
+        )
+
+        # Créons un pharmacien rattaché à l'organisme A
+        user_pharma_a = User.objects.create_user(
+            email="pharma-a@sonatel.sn",
+            password=PASSWORD,
+            role=User.Role.PHARMACIEN,
+            organisme=self.org_a,
+            first_name="Aminata",
+            last_name="Ba",
+        )
+        pharma_a, _ = Pharmacien.objects.get_or_create(user=user_pharma_a)
+
+        # Connexion en tant que Gestionnaire B (Mutuelle Senelec)
+        self.client.force_login(self.gest_b)
+
+        # 1. Liste des remboursements de B ne contient pas demande_a
+        resp_liste = self.client.get(reverse("liste_demandes_remboursement"))
+        self.assertEqual(resp_liste.status_code, 200)
+        self.assertNotContains(resp_liste, demande_a.numero_dossier)
+
+        # 2. Tentative d'instruire demande_a par gest_b -> 404
+        resp_inst = self.client.get(reverse("instruire_demande_remboursement", args=[demande_a.pk]))
+        self.assertEqual(resp_inst.status_code, 404)
+
+        # 3. Médecin et Pharmacien de l'organisme A invisibles et non modifiables par gest_b
+        resp_meds_b = self.client.get(reverse("liste_medecins"))
+        self.assertNotContains(resp_meds_b, "Cheikh")
+        self.assertEqual(
+            self.client.get(reverse("modifier_medecin", args=[med_a.pk])).status_code,
+            404,
+        )
+
+        resp_pharmas_b = self.client.get(reverse("liste_pharmaciens"))
+        self.assertNotContains(resp_pharmas_b, "pharma-a@sonatel.sn")
+        self.assertEqual(
+            self.client.get(reverse("modifier_pharmacien", args=[pharma_a.pk])).status_code,
+            404,
+        )
+
+        # 4. L'administrateur IT (ADMIN) reçoit 403 sur les vues métier des remboursements
+        self.client.force_login(self.admin)
+        self.assertEqual(self.client.get(reverse("liste_demandes_remboursement")).status_code, 403)
+        self.assertEqual(
+            self.client.get(reverse("instruire_demande_remboursement", args=[demande_a.pk])).status_code,
+            403,
+        )
+
+    def test_dashboard_gestionnaire_isole_par_organisme(self):
+        """Le tableau de bord d'un gestionnaire n'affiche que les compteurs et flux de son propre organisme."""
+        from Plateform_medicale.models import DemandeRemboursement
+        DemandeRemboursement.objects.create(
+            patient=self.patient_a,
+            organisme=self.org_a,
+            prestataire_nom="Clinique Hors Réseau A",
+            type_soin="CONSULTATION",
+            date_soins=datetime.date.today(),
+            montant_depense=Decimal("20000.00"),
+            motif="Soins hors réseau",
+        )
+        # Gestionnaire A voit 1 patient et 1 remboursement en attente
+        self.client.force_login(self.gest_a)
+        resp_a = self.client.get(reverse("dashboard"))
+        self.assertEqual(resp_a.status_code, 200)
+        self.assertEqual(resp_a.context["total_patients"], 1)
+        self.assertEqual(resp_a.context["nb_remboursements_attente"], 1)
+
+        # Gestionnaire B voit uniquement son propre patient (1) et 0 remboursement en attente
+        self.client.force_login(self.gest_b)
+        resp_b = self.client.get(reverse("dashboard"))
+        self.assertEqual(resp_b.status_code, 200)
+        self.assertEqual(resp_b.context["total_patients"], 1)
+        self.assertEqual(resp_b.context["nb_remboursements_attente"], 0)
+
+
+class MultiTenantSecurityAndPenetrationTests(TestCase):
+    """
+    Tests de pénétration et d'étanchéité multi-tenant stricts :
+    Prouve qu'un gestionnaire d'un organisme B ne peut en aucun cas lire,
+    modifier, exporter ou accéder aux dossiers médicaux, consultations,
+    fichiers joints (/media/) ou flux financiers de l'organisme A.
+    """
+
+    def setUp(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from Plateform_medicale.models import (
+            Consultation,
+            ConventionPrestataire,
+            Delivrance,
+            DemandeRemboursement,
+            DemandeSupport,
+            Medecin,
+            Ordonnance,
+            Organisme,
+            Paiement,
+            Patient,
+            Pharmacien,
+            PlanCouverture,
+            Prestataire,
+            PriseEnCharge,
+            User,
+        )
+
+        # 1. Deux Organismes rivaux
+        self.org_a = Organisme.objects.create(nom="IPM Sonatel", code="IPM-SN-01", actif=True)
+        self.org_b = Organisme.objects.create(nom="Mutuelle Senelec", code="MUT-SN-02", actif=True)
+
+        # 2. Utilisateurs & Gestionnaires
+        self.admin = User.objects.create_user(
+            email="admin-infra@santesn.sn", password=PASSWORD, role=User.Role.ADMIN, is_staff=True
+        )
+        self.gest_a = User.objects.create_user(
+            email="gest-a@santesn.sn", password=PASSWORD, role=User.Role.GESTIONNAIRE, organisme=self.org_a
+        )
+        self.gest_b = User.objects.create_user(
+            email="gest-b@santesn.sn", password=PASSWORD, role=User.Role.GESTIONNAIRE, organisme=self.org_b
+        )
+
+        # Plans de couverture
+        self.plan_a = PlanCouverture.objects.create(nom="Plan Cadre Sonatel", taux_couverture=Decimal("80.00"), plafond_annuel=Decimal("1500000.00"))
+        self.plan_b = PlanCouverture.objects.create(nom="Plan Standard Senelec", taux_couverture=Decimal("70.00"), plafond_annuel=Decimal("1000000.00"))
+
+        # 3. Assurés (Patients)
+        date_naiss = datetime.date(1990, 5, 12)
+        self.user_pat_a = User.objects.create_user(
+            email="salarie-a@sonatel.sn", password=PASSWORD, role=User.Role.ASSURE, organisme=self.org_a
+        )
+        self.patient_a = Patient.objects.create(
+            user=self.user_pat_a,
+            organisme=self.org_a,
+            nom="Diop",
+            prenom="Moussa",
+            date_naissance=date_naiss,
+            plan_couverture=self.plan_a,
+        )
+
+        # Assuré A2 (Même IPM A, mais individu distinct)
+        self.user_pat_a2 = User.objects.create_user(
+            email="salarie-a2@sonatel.sn", password=PASSWORD, role=User.Role.ASSURE, organisme=self.org_a
+        )
+        self.patient_a2 = Patient.objects.create(
+            user=self.user_pat_a2,
+            organisme=self.org_a,
+            nom="Ndiaye",
+            prenom="Fatou",
+            date_naissance=date_naiss,
+            plan_couverture=self.plan_a,
+        )
+
+        self.user_pat_b = User.objects.create_user(
+            email="salarie-b@senelec.sn", password=PASSWORD, role=User.Role.ASSURE, organisme=self.org_b
+        )
+        self.patient_b = Patient.objects.create(
+            user=self.user_pat_b,
+            organisme=self.org_b,
+            nom="Fall",
+            prenom="Ousmane",
+            date_naissance=date_naiss,
+            plan_couverture=self.plan_b,
+        )
+
+        # 4. Établissements & Praticiens
+        self.clinique = Prestataire.objects.create(
+            nom="Clinique du Cap", type_prestataire=Prestataire.Type.CLINIQUE, partenaire=True
+        )
+        self.pharmacie = Prestataire.objects.create(
+            nom="Grande Pharmacie Dakaroise", type_prestataire=Prestataire.Type.PHARMACIE, partenaire=True
+        )
+
+        # CONVENTIONNEMENT : La pharmacie est conventionnée avec l'Organisme A, mais PAS avec l'Organisme B !
+        ConventionPrestataire.objects.create(
+            organisme=self.org_a,
+            prestataire=self.pharmacie,
+            statut=ConventionPrestataire.Statut.ACTIF,
+            tiers_payant_actif=True,
+        )
+
+        # Médecin
+        user_med = User.objects.create_user(email="docteur@cap.sn", password=PASSWORD, role=User.Role.MEDECIN)
+        self.medecin = Medecin.objects.create(user=user_med, nom="Sow", prenom="Abdou", specialite="Généraliste", prestataire=self.clinique)
+
+        # Pharmacien
+        self.user_pharma = User.objects.create_user(email="pharmacien@gpd.sn", password=PASSWORD, role=User.Role.PHARMACIEN)
+        self.pharmacien = Pharmacien.objects.create(user=self.user_pharma, prestataire=self.pharmacie)
+
+        # 5. Actes médicaux du Patient A
+        self.consultation_a = Consultation.objects.create(
+            patient=self.patient_a,
+            medecin=self.medecin,
+            diagnostic="Paludisme aigu confirmé",
+            date_consultation=timezone.now(),
+        )
+        self.paiement_a = Paiement.objects.create(
+            consultation=self.consultation_a,
+            montant_total=Decimal("20000.00"),
+            montant_part_assurance=Decimal("16000.00"),
+            montant_part_patient=Decimal("4000.00"),
+            statut=Paiement.Statut.NON_REGLE,
+        )
+        self.pec_a = PriseEnCharge.objects.create(
+            patient=self.patient_a,
+            motif="Intervention programmée",
+            montant_estime=Decimal("150000.00"),
+            statut="en_attente",
+        )
+        self.support_a = DemandeSupport.objects.create(
+            auteur=self.user_pat_a,
+            patient=self.patient_a,
+            objet="Question sur mes remboursements",
+            categorie=DemandeSupport.Categorie.PRISE_EN_CHARGE,
+        )
+
+        # Fichier justificatif médical sensible pour le remboursement de A
+        fichier_test = SimpleUploadedFile(
+            "facture_confidentielle_a.pdf",
+            b"%PDF-1.4 Facture medicale confidentielle Patient A",
+            content_type="application/pdf",
+        )
+        self.remboursement_a = DemandeRemboursement.objects.create(
+            patient=self.patient_a,
+            organisme=self.org_a,
+            prestataire_nom="Laboratoire Externe Privé",
+            type_soin=DemandeRemboursement.TypeSoin.BIOLOGIE,
+            date_soins=timezone.now().date(),
+            montant_depense=Decimal("50000.00"),
+            justificatif=fichier_test,
+            motif="Bilan biologique complet",
+        )
+
+        # Ordonnance pour le Patient B (IPM B non conventionnée avec cette pharmacie)
+        self.consultation_b = Consultation.objects.create(
+            patient=self.patient_b,
+            medecin=self.medecin,
+            diagnostic="Infection ORL",
+            date_consultation=timezone.now(),
+        )
+        self.ordonnance_b = Ordonnance.objects.create(
+            consultation=self.consultation_b,
+            medicaments="Amoxicilline 1g x 3/j",
+        )
+
+    # -------------------------------------------------------------------------
+    # TEST DE FAILLE N°1 : liste_consultations ne doit PAS exposer les soins de A à Gest B
+    # -------------------------------------------------------------------------
+    def test_liste_consultations_gestionnaire_b_ne_doit_pas_voir_consultations_patient_a(self):
+        """
+        FAILLE AUDITÉE : Le Gestionnaire B ne doit voir aucune consultation des assurés de l'IPM A.
+        """
+        self.client.force_login(self.gest_b)
+        response = self.client.get(reverse("liste_consultations"))
+        self.assertEqual(response.status_code, 200)
+        # La consultation de Diop Moussa (IPM Sonatel) NE DOIT PAS figurer sur l'écran du gestionnaire Senelec
+        self.assertNotContains(response, self.patient_a.nom)
+        self.assertNotContains(response, "Paludisme aigu confirmé")
+
+    # -------------------------------------------------------------------------
+    # TEST DE FAILLE N°2 : Le pharmacien ne peut appliquer le tiers payant que si convention ACTIVE
+    # -------------------------------------------------------------------------
+    def test_pharmacien_delivrance_tiers_payant_refusee_sans_convention(self):
+        """
+        LOGIQUE MÉTIER RÉELLE : Si la pharmacie n'a pas de convention active avec l'IPM de l'assuré B,
+        la délivrance avec prise en charge tiers payant doit être strictement REFUSÉE (l'assuré doit payer 100%).
+        """
+        self.client.force_login(self.user_pharma)
+        # Tentative de délivrer avec tiers payant pour le patient B dont l'IPM n'est pas conventionnée
+        response = self.client.post(
+            reverse("valider_delivrance", args=[self.ordonnance_b.pk]),
+            {
+                "code_qr": self.ordonnance_b.code_qr,
+                "montant_total": "15000.00",
+                "taux_couverture": "70.00", # Tentative d'appliquer le tiers payant
+            },
+        )
+        from Plateform_medicale.models import Delivrance
+        delivrance = Delivrance.objects.filter(ordonnance=self.ordonnance_b).first()
+        self.assertIsNotNone(delivrance, "La délivrance aurait dû être enregistrée")
+        # MAIS la part assurance DOIT ÊTRE 0 car pas de convention active !
+        self.assertEqual(
+            delivrance.montant_part_assurance,
+            Decimal("0.00"),
+            "FAILLE MÉTIER : Le tiers payant a été accordé alors qu'aucune convention active n'existe avec cette IPM !",
+        )
+
+    # -------------------------------------------------------------------------
+    # TEST DE FAILLE N°3 : Protection absolue des fichiers sensibles (/media/)
+    # -------------------------------------------------------------------------
+    def test_media_acces_securise_matrice_de_droits(self):
+        """
+        MATRICE D'ACCÈS AUX JUSTIFICATIFS SENSIBLES :
+        - Assuré A propriétaire : OK (200)
+        - Gestionnaire de son organisme (IPM A) : OK (200)
+        - Autre assuré du même organisme A (Patient A2) : REFUSÉ (403/404)
+        - Gestionnaire d'un autre organisme B (Gest B) : REFUSÉ (403/404)
+        - Administrateur IT (Secret médical) : REFUSÉ (403)
+        - Visiteur anonyme : REFUSÉ (302/401/403)
+        """
+        url_telechargement = reverse("telecharger_justificatif_remboursement", args=[self.remboursement_a.pk])
+
+        # 1. Visiteur anonyme
+        self.client.logout()
+        resp_anon = self.client.get(url_telechargement)
+        self.assertIn(resp_anon.status_code, [302, 401, 403])
+
+        # 2. Assuré A (Propriétaire légitime) -> 200 OK
+        self.client.force_login(self.user_pat_a)
+        resp_pat_a = self.client.get(url_telechargement)
+        self.assertEqual(resp_pat_a.status_code, 200)
+
+        # 3. Gestionnaire de son IPM A -> 200 OK
+        self.client.force_login(self.gest_a)
+        resp_gest_a = self.client.get(url_telechargement)
+        self.assertEqual(resp_gest_a.status_code, 200)
+
+        # 4. Autre assuré de la même IPM A (Patient A2) -> 403 ou 404
+        self.client.force_login(self.user_pat_a2)
+        resp_pat_a2 = self.client.get(url_telechargement)
+        self.assertIn(resp_pat_a2.status_code, [403, 404])
+
+        # 5. Gestionnaire d'un autre organisme (Gest B) -> 404 Not Found (Prévention énumération)
+        self.client.force_login(self.gest_b)
+        resp_gest_b = self.client.get(url_telechargement)
+        self.assertEqual(resp_gest_b.status_code, 404)
+
+        # 6. Administrateur IT de la plateforme -> 403 Forbidden (Pas d'accès aux pièces médicales)
+        self.client.force_login(self.admin)
+        resp_admin = self.client.get(url_telechargement)
+        self.assertEqual(resp_admin.status_code, 403)
+
+        # 7. Tentative d'accès direct par URL brute /media/... (Contournement d'authentification) -> 404
+        url_brute_media = f"/media/{self.remboursement_a.justificatif.name}"
+        self.client.logout()
+        resp_brute = self.client.get(url_brute_media)
+        self.assertEqual(resp_brute.status_code, 404, "L'accès direct par /media/ à une pièce médicale confidentielle DOIT être bloqué !")
+
+    # -------------------------------------------------------------------------
+    # TESTS D'ÉNUMÉRATION & ATTAQUE PAR ID DIRECT (404 systématique pour Gest B)
+    # -------------------------------------------------------------------------
+    def test_gestionnaire_b_404_sur_modification_patient_a(self):
+        self.client.force_login(self.gest_b)
+        resp = self.client.get(reverse("modifier_patient", args=[self.patient_a.pk]))
+        self.assertEqual(resp.status_code, 404)
+
+    def test_gestionnaire_b_404_sur_dossier_remboursement_a(self):
+        self.client.force_login(self.gest_b)
+        resp = self.client.get(reverse("instruire_demande_remboursement", args=[self.remboursement_a.pk]))
+        self.assertEqual(resp.status_code, 404)
+
+    def test_gestionnaire_b_404_sur_prise_en_charge_a(self):
+        self.client.force_login(self.gest_b)
+        resp_val = self.client.post(reverse("valider_prise_en_charge", args=[self.pec_a.pk]))
+        self.assertEqual(resp_val.status_code, 404)
+        resp_mod = self.client.get(reverse("modifier_prise_en_charge", args=[self.pec_a.pk]))
+        self.assertEqual(resp_mod.status_code, 404)
+
+    def test_gestionnaire_b_404_sur_recu_paiement_a(self):
+        self.client.force_login(self.gest_b)
+        resp = self.client.get(reverse("recu_paiement", args=[self.paiement_a.pk]))
+        self.assertEqual(resp.status_code, 404)
+
+    def test_gestionnaire_b_404_sur_support_patient_a(self):
+        self.client.force_login(self.gest_b)
+        resp = self.client.get(reverse("admin_detail_demande_support", args=[self.support_a.pk]))
+        self.assertEqual(resp.status_code, 404)
+
+    def test_metriques_prometheus_interdites_au_gestionnaire(self):
+        self.client.force_login(self.gest_a)
+        resp = self.client.get(reverse("metrics_prometheus"))
+        self.assertEqual(resp.status_code, 403)
+
+
+class OrganismeScopedQuerySetTests(TestCase):
+    """
+    Vérification unitaire du QuerySet fail-closed :
+    - Sans organisme -> QuerySet vide (none())
+    - Avec organisme -> filtré strictement
+    - Modèle inconnu sans chemin d'isolation -> NotImplementedError levée
+    - for_user() respecte strictement les périmètres
+    """
+
+    def setUp(self):
+        self.org_a = Organisme.objects.create(nom="IPM Test A", type_organisme="IPM", code="IPM-A")
+        self.org_b = Organisme.objects.create(nom="IPM Test B", type_organisme="IPM", code="IPM-B")
+        self.user_a = User.objects.create_user(email="gest_a@test.sn", role=User.Role.GESTIONNAIRE, organisme=self.org_a)
+        self.user_b = User.objects.create_user(email="gest_b@test.sn", role=User.Role.GESTIONNAIRE, organisme=self.org_b)
+        self.user_sans_org = User.objects.create_user(email="gest_none@test.sn", role=User.Role.GESTIONNAIRE)
+        self.admin = User.objects.create_user(email="admin_tech@test.sn", role=User.Role.ADMIN)
+
+        self.patient_a = Patient.objects.create(
+            user=User.objects.create_user(email="pata@test.sn"),
+            nom="Patient A", prenom="Test",
+            organisme=self.org_a, date_naissance=datetime.date(1990, 1, 1),
+        )
+        self.patient_b = Patient.objects.create(
+            user=User.objects.create_user(email="patb@test.sn"),
+            nom="Patient B", prenom="Test",
+            organisme=self.org_b, date_naissance=datetime.date(1992, 2, 2),
+        )
+
+    def test_for_organisme_sans_argument_renvoie_none(self):
+        from Plateform_medicale.managers import OrganismeScopedQuerySet
+        qs = OrganismeScopedQuerySet(model=Patient)
+        self.assertEqual(qs.for_organisme(None).count(), 0)
+        self.assertFalse(qs.for_organisme(None).exists())
+
+    def test_for_organisme_allow_admin_renvoie_tout(self):
+        from Plateform_medicale.managers import OrganismeScopedQuerySet
+        qs = OrganismeScopedQuerySet(model=Patient)
+        self.assertGreaterEqual(qs.for_organisme(None, allow_admin=True).count(), 2)
+
+    def test_for_organisme_isole_strictement(self):
+        from Plateform_medicale.managers import OrganismeScopedQuerySet
+        qs = OrganismeScopedQuerySet(model=Patient)
+        patients_a = qs.for_organisme(self.org_a)
+        self.assertIn(self.patient_a, patients_a)
+        self.assertNotIn(self.patient_b, patients_a)
+
+    def test_modele_inconnu_leve_not_implemented_error(self):
+        from Plateform_medicale.managers import OrganismeScopedQuerySet
+        qs = OrganismeScopedQuerySet(model=User)
+        with self.assertRaises(NotImplementedError):
+            qs.for_organisme(self.org_a)
+
+    def test_for_user_gestionnaire(self):
+        from Plateform_medicale.managers import OrganismeScopedQuerySet
+        qs = OrganismeScopedQuerySet(model=Patient)
+        self.assertIn(self.patient_a, qs.for_user(self.user_a))
+        self.assertNotIn(self.patient_b, qs.for_user(self.user_a))
+        self.assertEqual(qs.for_user(self.user_sans_org).count(), 0)
+
+    def test_for_user_admin(self):
+        from Plateform_medicale.managers import OrganismeScopedQuerySet
+        qs = OrganismeScopedQuerySet(model=Patient)
+        self.assertGreaterEqual(qs.for_user(self.admin).count(), 2)
+

@@ -19,8 +19,21 @@
     <form method="post">
         {% csrf_token %}
         {% for field in form %}
-        {% if not field.is_hidden %}<label for="{{ field.id_for_label }}">{{ field.label }}</label>{% endif %}
+        {% if field.is_hidden %}
         {{ field }}
+        {% elif field.field.widget.input_type == "checkbox" %}
+        <div class="champ-case">
+            {{ field }}
+            <div class="champ-case-texte">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {% if field.help_text %}<p class="subtitle">{{ field.help_text }}</p>{% endif %}
+            </div>
+        </div>
+        {% else %}
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {% if field.help_text %}<p class="subtitle" style="margin-top:-4px;margin-bottom:6px;font-size:13px;">{{ field.help_text }}</p>{% endif %}
+        {{ field }}
+        {% endif %}
         {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
         {% endfor %}
 
@@ -30,7 +43,7 @@
             <span id="statut-recherche-lieu" class="subtitle" style="margin:0;" role="status" aria-live="polite"></span>
         </div>
         <div id="carte-prestataire" role="group" aria-labelledby="titre-carte-prestataire" aria-describedby="aide-carte-prestataire" style="height: 320px; border-radius: 12px; margin-bottom: 8px;"></div>
-        <p id="aide-carte-prestataire" class="subtitle" style="margin-top:0;margin-bottom:16px;">Cliquez sur la carte pour placer ou deplacer le prestataire, ou renseignez l'adresse et/ou la ville ci-dessus puis utilisez "Rechercher sur la carte" (accessible au clavier).</p>
+        <p id="aide-carte-prestataire" class="subtitle" style="margin-top:0;margin-bottom:16px;">Cliquez sur la carte pour placer ou déplacer le prestataire, ou renseignez l'adresse et/ou la ville ci-dessus puis utilisez "Rechercher sur la carte" (accessible au clavier).</p>
 
         <div class="actions" style="margin-top: 16px; display: flex; gap: 10px;">
             <button class="button primary" type="submit">Enregistrer</button>

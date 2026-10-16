@@ -110,7 +110,7 @@
         L'inscription reste votre décision, à l'enregistrement.
     </p>
     <div class="decouverte-ligne">
-        <input type="search" id="recherche-etablissement" placeholder="Ex. : hopital Dakar, pharmacie Sangalkam, centre de sante Thies"
+        <input type="search" id="recherche-etablissement" placeholder="Ex. : hôpital Dakar, pharmacie Sangalkam, centre de santé Thiès"
                aria-label="Nom ou type d'établissement à rechercher">
         <button type="button" id="bouton-chercher-etablissement" class="button primary btn">Rechercher</button>
     </div>
@@ -126,8 +126,21 @@
     <form method="post">
         {% csrf_token %}
         {% for field in form %}
-        {% if not field.is_hidden %}<label for="{{ field.id_for_label }}">{{ field.label }}</label>{% endif %}
+        {% if field.is_hidden %}
         {{ field }}
+        {% elif field.field.widget.input_type == "checkbox" %}
+        <div class="champ-case">
+            {{ field }}
+            <div class="champ-case-texte">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {% if field.help_text %}<p class="subtitle">{{ field.help_text }}</p>{% endif %}
+            </div>
+        </div>
+        {% else %}
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {% if field.help_text %}<p class="subtitle" style="margin-top:-4px;margin-bottom:6px;font-size:13px;">{{ field.help_text }}</p>{% endif %}
+        {{ field }}
+        {% endif %}
         {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
         {% endfor %}
 
@@ -295,8 +308,8 @@
                 }
             }
             statutEtab.textContent =
-                'Formulaire pre-rempli depuis OpenStreetMap. Verifiez les informations, '
-                + 'completez ce qui manque, puis enregistrez pour inscrire ce prestataire.';
+                'Formulaire pré-rempli depuis OpenStreetMap. Vérifiez les informations, '
+                + 'complétez ce qui manque, puis enregistrez pour inscrire ce prestataire.';
             document.getElementById('titre-carte-prestataire').scrollIntoView({
                 behavior: 'smooth', block: 'center',
             });
@@ -313,15 +326,15 @@
                 etiquette.className = 'etiquette-source';
                 if (etab.inscrit) {
                     etiquette.className += ' etiquette-deja-inscrit';
-                    etiquette.textContent = 'Deja inscrit sur la plateforme';
+                    etiquette.textContent = 'Déjà inscrit sur la plateforme';
                 } else {
-                    etiquette.textContent = 'Trouve sur OpenStreetMap';
+                    etiquette.textContent = 'Trouvé sur OpenStreetMap';
                 }
                 bloc.appendChild(etiquette);
 
                 var nom = document.createElement('p');
                 nom.className = 'resultat-osm-nom';
-                nom.textContent = etab.nom || 'Etablissement sans nom';
+                nom.textContent = etab.nom || 'Établissement sans nom';
                 bloc.appendChild(nom);
 
                 var adresse = document.createElement('p');
@@ -333,7 +346,7 @@
                 var bouton = document.createElement('button');
                 bouton.type = 'button';
                 bouton.className = 'button btn btn-sm' + (etab.inscrit ? '' : ' primary');
-                bouton.textContent = etab.inscrit ? 'Utiliser quand meme' : 'Utiliser cet etablissement';
+                bouton.textContent = etab.inscrit ? 'Utiliser quand même' : 'Utiliser cet établissement';
                 bouton.addEventListener('click', function () { appliquerEtablissement(etab); });
                 item.appendChild(bouton);
 
@@ -346,7 +359,7 @@
                 var requete = (champRecherche.value || '').trim();
                 listeEtab.textContent = '';
                 if (requete.length < 3) {
-                    statutEtab.textContent = 'Saisissez au moins trois caracteres.';
+                    statutEtab.textContent = 'Saisissez au moins trois caractères.';
                     return;
                 }
                 statutEtab.textContent = 'Recherche en cours...';
@@ -358,23 +371,23 @@
                         if (data && data.erreur) {
                             statutEtab.textContent =
                                 "Le service de recherche est indisponible. Vous pouvez saisir "
-                                + "l'etablissement a la main et placer le point sur la carte.";
+                                + "l'établissement à la main et placer le point sur la carte.";
                             return;
                         }
                         var resultats = (data && data.resultats) || [];
                         if (!resultats.length) {
                             statutEtab.textContent =
-                                'Aucun etablissement trouve. Essayez un autre libelle, ou '
-                                + 'saisissez-le a la main : tous les lieux ne sont pas encore '
-                                + 'cartographies au Senegal.';
+                                'Aucun établissement trouvé. Essayez un autre libellé, ou '
+                                + 'saisissez-le à la main : tous les lieux ne sont pas encore '
+                                + 'cartographiés au Sénégal.';
                             return;
                         }
-                        statutEtab.textContent = resultats.length + ' etablissement(s) trouve(s) dans OpenStreetMap.';
+                        statutEtab.textContent = resultats.length + ' établissement(s) trouvé(s) dans OpenStreetMap.';
                         afficherResultats(resultats);
                     })
                     .catch(function () {
                         statutEtab.textContent =
-                            "Recherche indisponible. Saisissez l'etablissement a la main.";
+                            "Recherche indisponible. Saisissez l'établissement à la main.";
                     })
                     .finally(function () { boutonChercher.disabled = false; });
             };

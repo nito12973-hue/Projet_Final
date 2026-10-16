@@ -2,15 +2,17 @@ import datetime
 from django.db.models import Q
 from django.shortcuts import render
 
-from ..models import Consultation, JournalActivite
-from .utils import _paginer, _trier, admin_required
+from ..models import Consultation, JournalActivite, Organisme, User
+from .utils import _paginer, _trier, admin_required, filtrer_par_organisme, role_required
 
 
-@admin_required
+@role_required(User.Role.GESTIONNAIRE)
 def liste_consultations(request):
     consultations = Consultation.objects.select_related(
-        "patient", "medecin", "service", "prise_en_charge"
+        "patient", "patient__organisme", "medecin", "service", "prise_en_charge"
     )
+    if request.user.role == User.Role.GESTIONNAIRE:
+        consultations = filtrer_par_organisme(request, consultations, champ="patient__organisme")
 
     recherche = request.GET.get("q", "").strip() or request.GET.get("recherche", "").strip()
     if recherche:
@@ -52,19 +54,28 @@ def liste_consultations(request):
 
 @admin_required
 def journal_activite(request):
-    entrees = JournalActivite.objects.select_related("auteur").order_by("-date")
+    # Confidentialite : l'administrateur est limite a l'infrastructure. La recherche
+    # ne porte donc pas sur l'objet (nom/email d'une personne) : elle servirait a
+    # tester l'existence d'un nom. Le gabarit n'affiche que le type d'objet.
+    entrees = JournalActivite.objects.select_related("auteur", "organisme").order_by("-date")
 
     recherche = request.GET.get("q", "").strip() or request.GET.get("recherche", "").strip()
     if recherche:
         entrees = entrees.filter(
             Q(auteur_libelle__icontains=recherche)
+            | Q(organisme_libelle__icontains=recherche)
             | Q(action__icontains=recherche)
-            | Q(objet__icontains=recherche)
         )
 
     action = request.GET.get("action", "")
     if action in JournalActivite.Action.values:
         entrees = entrees.filter(action=action)
+
+    organisme_id = request.GET.get("organisme", "").strip()
+    if organisme_id.isdigit():
+        entrees = entrees.filter(organisme_id=int(organisme_id))
+    else:
+        organisme_id = ""
 
     date_str = request.GET.get("date", "")
     if date_str:
@@ -79,4 +90,7 @@ def journal_activite(request):
         "recherche": recherche,
         "action_choisie": action,
         "actions": JournalActivite.Action.choices,
+        "organisme_choisi": organisme_id,
+        "organismes": Organisme.objects.all(),
+        "date_choisie": date_str,
     })

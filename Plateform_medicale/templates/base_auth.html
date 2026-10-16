@@ -16,28 +16,22 @@
     feuille ; 1040 ms apres. {# #} de Django est MONO-LIGNE : un commentaire
     multi-lignes fuit dans la sortie (un test le verrouille).
     {% endcomment %}
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap"></noscript>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap"></noscript>
     <style>
         :root {
-            /* Navy : degrades fonces, titres — identique au reste de l'appli. */
-            --primary-dark: #0b2027;
-            /* Turquoise vif : bordure/focus uniquement (pas assez de contraste
-               pour du texte blanc en aplat). */
+            --primary-dark: #0f172a;
             --primary: #0e7c86;
-            /* Teal fonce : seule variante sure pour texte blanc en degrade
-               (panneau de marque, bouton principal). */
-            --primary-strong: #095059;
-            --primary-soft: #dcece9;
-            --primary-light: #4fb8ae;
-            --primary-accent: #4fb8ae;
-            /* Terracotta : accent ponctuel uniquement (jamais en fond/aplat large). */
-            --accent: #e0824f;
-            --texte: #1f2933;
-            --muted: #5f6f7d;
+            --primary-strong: #0a5f67;
+            --primary-soft: #f0fdfa;
+            --primary-light: #14b8a6;
+            --primary-accent: #0d9488;
+            --accent: #f97316;
+            --texte: #0f172a;
+            --muted: #64748b;
             --surface: #ffffff;
-            --border: #d9e2ea;
-            --danger: #b3261e;
+            --border: #e2e8f0;
+            --danger: #ef4444;
             --masque-croix: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M12 3v18M3 12h18'/%3E%3C/svg%3E");
         }
 
@@ -49,9 +43,9 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: 'Public Sans', 'Segoe UI', Arial, sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
             color: var(--texte);
-            background: linear-gradient(150deg, var(--primary-soft) 0%, #f2f9f8 55%, #eaf6f4 100%);
+            background: linear-gradient(150deg, #f0fdfa 0%, #f8fafc 55%, #e6f4f2 100%);
             padding: 24px;
             position: relative;
             overflow-x: hidden;
@@ -163,7 +157,7 @@
             display: inline-flex;
             align-items: center;
             gap: 12px;
-            font-family: 'Manrope', 'Public Sans', 'Segoe UI', Arial, sans-serif;
+            font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
             font-size: 27px;
             font-weight: 800;
             color: #ffffff;
@@ -251,7 +245,7 @@
 
         h1 {
             margin: 0 0 6px;
-            font-family: 'Manrope', 'Public Sans', 'Segoe UI', Arial, sans-serif;
+            font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
             font-size: 24px;
             font-weight: 800;
             color: var(--primary-dark);
@@ -320,15 +314,17 @@
             border-radius: 10px;
             font: inherit;
             font-size: 14.5px;
-            background: #fbfdfc;
+            background: #ffffff;
             box-sizing: border-box;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+            transition: border-color 0.18s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.18s cubic-bezier(0.4, 0, 0.2, 1), transform 0.18s ease;
         }
 
         .form-control:hover,
         input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):hover,
         select:hover,
-        textarea:hover { border-color: #9ecbc6; }
+        textarea:hover { 
+            border-color: #94a3b8;
+        }
 
         .form-control:focus,
         input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):focus,
@@ -337,7 +333,7 @@
             outline: none;
             border-color: var(--primary);
             background: #ffffff;
-            box-shadow: 0 0 0 4px rgba(14, 124, 134, 0.16);
+            box-shadow: 0 0 0 4px rgba(14, 124, 134, 0.18);
         }
 
         .btn-principal {
@@ -345,25 +341,25 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 9px;
             width: 100%;
             height: 44px;
             min-height: 44px;
             padding: 0 20px;
             border: none;
             border-radius: 10px;
-            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-strong) 100%);
+            background: linear-gradient(135deg, #0F172A 0%, #0E7C86 100%);
             color: #ffffff !important;
             font: inherit;
             font-size: 14.5px;
-            font-weight: 600;
+            font-weight: 700;
             text-decoration: none;
             cursor: pointer;
             overflow: hidden;
             box-sizing: border-box;
             line-height: 1;
-            transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.15s ease;
-            box-shadow: 0 3px 10px rgba(14, 124, 134, 0.22);
+            transition: transform 0.16s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.16s ease;
+            box-shadow: 0 4px 14px rgba(14, 124, 134, 0.28);
         }
 
         .btn-principal .icone-nav,
@@ -371,11 +367,17 @@
             width: 17px;
             height: 17px;
             flex-shrink: 0;
+            transition: transform 0.16s ease;
         }
 
         .btn-principal:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(14, 124, 134, 0.32);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 22px rgba(14, 124, 134, 0.38);
+        }
+
+        .btn-principal:hover .icone-nav,
+        .btn-principal:hover > svg {
+            transform: scale(1.08);
         }
 
         .btn-principal:active { transform: translateY(0) scale(0.99); }
@@ -535,12 +537,12 @@
                     </svg>
                     Santé<span style="color: var(--primary-light);">SN</span>
                 </span>
-                <p class="slogan">La santé connectée au service de tous.</p>
+                <p class="slogan">Prise en charge médicale d'entreprise &amp; Tiers-payant dématérialisé.</p>
             </div>
             <ul class="points-forts">
-                <li><span class="puce">{% icone "shield-check" %}</span>Données médicales sécurisées</li>
-                <li><span class="puce">{% icone "users" %}</span>Assurés, médecins et pharmaciens réunis</li>
-                <li><span class="puce">{% icone "zap" %}</span>Prise en charge simplifiée et rapide</li>
+                <li><span class="puce">{% icone "shield-check" %}</span>Couverture santé des salariés &amp; familles</li>
+                <li><span class="puce">{% icone "qr-scan" %}</span>Délivrance instantanée en pharmacie</li>
+                <li><span class="puce">{% icone "lock" %}</span>Conformité CDP Sénégal &amp; chiffrement fort</li>
             </ul>
         </aside>
 

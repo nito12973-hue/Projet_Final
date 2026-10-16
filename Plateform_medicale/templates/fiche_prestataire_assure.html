@@ -80,7 +80,7 @@
             {% if prestataire.ville %} · {{ prestataire.ville }}{% endif %}
         </p>
     </div>
-    <a class="button" href="{% url 'prestataires_proches' %}">{% icone "chevron-left" %} Retour</a>
+    <a class="button btn btn-retour-expand" href="{% url 'prestataires_proches' %}" title="Retour" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
 </section>
 
 <section class="panel panel-bloc" style="border-radius: 16px; box-shadow: var(--ombre-douce);">

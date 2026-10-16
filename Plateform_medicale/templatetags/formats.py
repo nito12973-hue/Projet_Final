@@ -9,6 +9,19 @@ register = template.Library()
 
 
 @register.filter
+def type_objet(libelle):
+    """Ne garde que le TYPE d'un libelle de journal ('Medecin : Dr X' -> 'Medecin').
+
+    Confidentialite : l'administrateur est limite a l'infrastructure ; il voit
+    qui a agi, quand et sur quel type d'objet, mais jamais l'identite d'une
+    personne (le libelle complet contient un nom ou un email).
+    """
+    premier = str(libelle or "").strip().split(" ")[0]
+    return premier.rstrip(":") or "—"
+
+
+@register.filter(name="franc_cfa")
+@register.filter(name="fcfa")
 def franc_cfa(montant):
     """Formate un montant en francs CFA : separateur de milliers (espace
     insecable), sans decimales (le franc CFA n'a pas de sous-unite d'usage
@@ -20,8 +33,8 @@ def franc_cfa(montant):
     except (TypeError, ValueError):
         return montant
     signe = "-" if valeur < 0 else ""
-    groupes = f"{abs(valeur):,}".replace(",", " ")
-    return f"{signe}{groupes} FCFA"
+    groupes = f"{abs(valeur):,}".replace(",", "\u00a0")
+    return f"{signe}{groupes}\u00a0FCFA"
 
 
 # Libelle affiche dans le fil d'ariane de la barre superieure, par nom de
@@ -40,6 +53,9 @@ _LIBELLES_PAGE = {
     "ajouter_utilisateur": "Utilisateurs",
     "modifier_utilisateur": "Utilisateurs",
     "importer_utilisateurs_excel": "Utilisateurs",
+    "liste_organismes": "Organismes",
+    "ajouter_organisme": "Organismes",
+    "modifier_organisme": "Organismes",
     "liste_patients": "Assurés",
     "ajouter_patient": "Assurés",
     "modifier_patient": "Assurés",
@@ -48,6 +64,7 @@ _LIBELLES_PAGE = {
     "modifier_medecin": "Médecins",
     "liste_pharmaciens": "Pharmaciens",
     "modifier_pharmacien": "Pharmaciens",
+    "ajouter_pharmacien": "Nouveau pharmacien",
     "liste_prestataires": "Prestataires",
     "ajouter_prestataire": "Prestataires",
     "modifier_prestataire": "Prestataires",
@@ -60,17 +77,23 @@ _LIBELLES_PAGE = {
     "liste_prises_en_charge": "Prises en charge",
     "ajouter_prise_en_charge": "Prises en charge",
     "modifier_prise_en_charge": "Prises en charge",
+    "liste_demandes_remboursement": "Remboursements hors réseau",
+    "instruire_demande_remboursement": "Instruction remboursement",
     "liste_rendez_vous": "Rendez-vous",
     "liste_ordonnances": "Ordonnances",
     "liste_paiements": "Paiements",
     "rapports": "Rapports",
     "journal_activite": "Journal d'activité",
+    "admin_logs": "Journal d'activité",
+    "admin_logs_sans_slash": "Journal d'activité",
     "envoyer_notification": "Notifications",
     "liste_notifications_envoyees": "Notifications",
     "liste_consultations": "Consultations",
     "carte_patient": "Assurés",
     "carte_scan": "Carte de prise en charge",
     "mes_prises_en_charge_assure": "Mes prises en charge",
+    "mes_remboursements_assure": "Mes remboursements",
+    "demander_remboursement_assure": "Demander un remboursement",
     "assistant_sante": "Assistant SantéSN",
     "mes_demandes_support": "Support & Réclamations",
     "creer_demande_support": "Nouvelle demande de support",
@@ -81,7 +104,8 @@ _LIBELLES_PAGE = {
     "parametres": "Paramètres",
     "parametres_section": "Paramètres",
     "mon_compte": "Paramètres",
-    "changer_mot_de_passe": "Paramètres",
+    "supervision_systeme": "Supervision Système",
+    "metrics_prometheus": "Métriques Prometheus",
 }
 
 

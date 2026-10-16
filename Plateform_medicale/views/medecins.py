@@ -8,12 +8,27 @@ from django.shortcuts import get_object_or_404, redirect, render
 from ..forms import MedecinForm, generer_mot_de_passe
 from ..models import JournalActivite, Medecin, Ordonnance, Paiement, User
 from ..services.onboarding import construire_bilan_onboarding, envoyer_activation_utilisateur
-from .utils import _avertissement_cascade, _paginer, _trier, admin_required, journaliser
+from .utils import _avertissement_cascade, _paginer, _trier, admin_required, journaliser, organisme_gestionnaire, role_required
 
 
-@admin_required
+def _medecins_organisme(organisme):
+    """Retourne les médecins rattachés à l'organisme ou aux prestataires conventionnés de l'organisme."""
+    return (
+        Medecin.objects.select_related("prestataire", "user")
+        .filter(
+            Q(user__isnull=True)
+            | Q(user__organisme__isnull=True)
+            | Q(user__organisme=organisme)
+            | Q(prestataire__conventions_organismes__organisme=organisme)
+        )
+        .distinct()
+    )
+
+
+@role_required(User.Role.GESTIONNAIRE)
 def liste_medecins(request):
-    medecins = Medecin.objects.select_related("prestataire")
+    organisme = organisme_gestionnaire(request)
+    medecins = _medecins_organisme(organisme)
 
     # Seul referentiel admin qui grandit sans filtre : au-dela d'une page,
     # retrouver un medecin obligeait a feuilleter.
@@ -33,8 +48,9 @@ def liste_medecins(request):
     })
 
 
-@admin_required
+@role_required(User.Role.GESTIONNAIRE)
 def ajouter_medecin(request):
+    organisme = organisme_gestionnaire(request)
     if request.method == "POST":
         form = MedecinForm(request.POST)
         if form.is_valid():
@@ -48,6 +64,7 @@ def ajouter_medecin(request):
                     first_name=medecin.prenom,
                     last_name=medecin.nom,
                     phone_number=medecin.telephone,
+                    organisme=organisme,
                 )
                 medecin.user = utilisateur
                 medecin.save()
@@ -64,9 +81,10 @@ def ajouter_medecin(request):
     return render(request, "ajouter_medecin.html", {"form": form})
 
 
-@admin_required
+@role_required(User.Role.GESTIONNAIRE)
 def modifier_medecin(request, pk):
-    medecin = get_object_or_404(Medecin, pk=pk)
+    organisme = organisme_gestionnaire(request)
+    medecin = get_object_or_404(_medecins_organisme(organisme), pk=pk)
     if request.method == "POST":
         form = MedecinForm(request.POST, instance=medecin)
         if form.is_valid():
@@ -78,9 +96,10 @@ def modifier_medecin(request, pk):
     return render(request, "modifier_medecin.html", {"form": form, "medecin": medecin})
 
 
-@admin_required
+@role_required(User.Role.GESTIONNAIRE)
 def supprimer_medecin(request, pk):
-    medecin = get_object_or_404(Medecin, pk=pk)
+    organisme = organisme_gestionnaire(request)
+    medecin = get_object_or_404(_medecins_organisme(organisme), pk=pk)
     nb_consultations = medecin.consultation_set.count()
     est_protege = (nb_consultations > 0)
 

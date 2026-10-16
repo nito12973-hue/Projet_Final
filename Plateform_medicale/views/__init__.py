@@ -42,6 +42,10 @@ from .utils import (  # noqa: F401
     _cellule_csv,
     role_required,
     admin_required,
+    gestionnaire_required,
+    organisme_gestionnaire,
+    filtrer_par_organisme,
+    get_object_or_404_organisme,
     compteurs_files_attente,
     user_role,
 )
@@ -117,6 +121,7 @@ from .medecins import (  # noqa: F401
 
 # Pharmaciens
 from .pharmaciens import (  # noqa: F401
+    ajouter_pharmacien,
     liste_pharmaciens,
     modifier_pharmacien,
 )
@@ -167,6 +172,9 @@ from .prestataires import (  # noqa: F401
     ajouter_plan_couverture,
     modifier_plan_couverture,
     supprimer_plan_couverture,
+    liste_conventions,
+    ajouter_convention,
+    changer_statut_convention,
 )
 
 # Gestion des utilisateurs
@@ -188,6 +196,10 @@ from .utilisateurs import (  # noqa: F401
     reinitialiser_mot_de_passe,
     renvoyer_activation,
     supprimer_utilisateur,
+    liste_organismes,
+    ajouter_organisme,
+    modifier_organisme,
+    activer_desactiver_organisme,
 )
 
 # Listes administrateur et rendez-vous
@@ -256,9 +268,18 @@ from .assure_espace import (  # noqa: F401
     voir_ordonnance_assure,
     mes_prises_en_charge_assure,
     demander_prise_en_charge_assure,
+    mes_remboursements_assure,
+    demander_remboursement_assure,
     mon_historique_assure,
     carte_assure,
     attestation_droits_assure,
+)
+
+# Remboursements hors réseau (Gestionnaire IPM)
+from .remboursements import (  # noqa: F401
+    liste_demandes_remboursement,
+    instruire_demande_remboursement,
+    marquer_remboursement_regle,
 )
 
 # Notifications
@@ -281,3 +302,17 @@ from .assistant import (  # noqa: F401
     admin_detail_demande_support,
 )
 
+# Supervision technique & DevOps
+from .supervision import (  # noqa: F401
+    supervision_systeme,
+    tester_sentry,
+    health_check,
+    metrics_prometheus,
+)
+
+# Médias sécurisés & Pièces justificatives
+from .media_securise import (  # noqa: F401
+    telecharger_justificatif_remboursement,
+    telecharger_piece_identite_patient,
+    telecharger_devis_prise_en_charge,
+)

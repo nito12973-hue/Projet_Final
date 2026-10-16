@@ -9,7 +9,7 @@
         <h1>Prises en charge</h1>
         <p class="subtitle">Suivi des demandes de prise en charge.</p>
     </div>
-    <a class="button primary" href="{% url 'ajouter_prise_en_charge' %}">Ajouter</a>
+    <a class="button primary btn-expand primary" href="{% url 'ajouter_prise_en_charge' %}" title="Nouvelle demande de prise en charge" aria-label="Nouvelle demande de prise en charge">{% icone "plus" %} <span class="expand-text">Nouvelle prise en charge</span></a>
 </section>
 
 <form method="get" class="filtres">
@@ -36,7 +36,7 @@
 </form>
 
 {% if prises_en_charge %}
-<form method="post" id="form-selection-masse" style="margin-bottom: 12px; display: flex; gap: 10px; align-items: center;">
+<form method="post" id="form-selection-masse" class="actions-masse" style="margin-bottom: 12px; display: flex; gap: 10px; align-items: center;">
     {% csrf_token %}
     <input type="hidden" name="action" id="action-masse" value="">
     <button type="submit" onclick="document.getElementById('action-masse').value='valider_selection'" class="button primary btn btn-sm">{% icone "check-circle" %} Valider la sélection</button>
@@ -80,7 +80,7 @@
                         </div>
                         {% endif %}
                         {% if prise.devis_fichier %}
-                        <a href="{{ prise.devis_fichier.url }}" target="_blank" style="font-size:11px;color:var(--primary);text-decoration:underline;display:inline-flex;align-items:center;gap:4px;margin-top:3px;">
+                        <a href="{% url 'telecharger_devis_prise_en_charge' prise.pk %}" target="_blank" style="font-size:11px;color:var(--primary);text-decoration:underline;display:inline-flex;align-items:center;gap:4px;margin-top:3px;">
                             {% icone "file-text" %} Devis joint &nearr;
                         </a>
                         {% endif %}
@@ -102,7 +102,7 @@
                 <td>
                     <div class="actions" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
                         {% if prise.statut == 'en_attente' %}
-                        <form method="post" action="{% url 'valider_prise_en_charge' prise.pk %}" style="display:inline;margin:0;padding:0;background:none;border:none;box-shadow:none;">
+                        <form method="post" action="{% url 'valider_prise_en_charge' prise.pk %}" class="action-ligne">
                             {% csrf_token %}
                             <button type="submit" class="button primary btn btn-sm" title="Valider cette prise en charge" style="padding:4px 10px;font-size:12px;">{% icone "check" %} Valider</button>
                         </form>
@@ -112,8 +112,8 @@
                         <a href="{% url 'voir_bon_prise_en_charge' prise.pk %}" class="button btn btn-sm" title="Voir l'accord officiel à l'écran" style="padding:4px 9px;font-size:12px;">
                             {% icone "file-text" %} Accord
                         </a>
-                        <a href="{% url 'telecharger_bon_prise_en_charge_pdf' prise.pk %}" class="button btn btn-sm" target="_blank" title="Télécharger le bon officiel de prise en charge (PDF)" style="padding:4px 9px;font-size:12px;">
-                            {% icone "download" %} PDF
+                        <a href="{% url 'telecharger_bon_prise_en_charge_pdf' prise.pk %}" class="button btn btn-expand" target="_blank" title="Télécharger le bon officiel de prise en charge (PDF)" aria-label="Télécharger PDF">
+                            {% icone "download" %} <span class="expand-text">Télécharger PDF</span>
                         </a>
                         {% endif %}
                         <a href="{% url 'modifier_prise_en_charge' prise.pk %}" class="button btn btn-sm">{% icone "edit-2" %} Modifier</a>

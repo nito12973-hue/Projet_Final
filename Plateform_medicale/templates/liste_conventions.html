@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% load formats icones %}
+
+{% block title %}Réseau conventionné — {{ organisme.nom }}{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Réseau conventionné</h1>
+        <p class="subtitle">Gestion des conventions d'établissements de soins rattachés à <strong>{{ organisme.nom }}</strong>.</p>
+    </div>
+    <div class="actions" style="display:flex;gap:10px;flex-wrap:wrap;">
+        <a class="button primary btn-expand primary" href="{% url 'ajouter_convention' %}" title="Conventionner un établissement" aria-label="Conventionner un établissement">{% icone "plus" %} <span class="expand-text">Conventionner un établissement</span></a>
+        <a class="button btn btn-expand" href="{% url 'liste_prestataires' %}" title="Consulter l'annuaire national" aria-label="Annuaire national">{% icone "building" %} <span class="expand-text">Annuaire national</span></a>
+    </div>
+</section>
+
+<form method="get" class="filtres">
+    <div style="min-width:200px;">
+        <label for="statut">Statut de la convention</label>
+        <select id="statut" name="statut" style="margin-bottom:0;">
+            <option value="">Tous les statuts</option>
+            {% for code, libelle in statuts_conventions %}
+            <option value="{{ code }}" {% if statut_choisi == code %}selected{% endif %}>{{ libelle }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div style="min-width:200px;">
+        <label for="type">Type d'établissement</label>
+        <select id="type" name="type" style="margin-bottom:0;">
+            <option value="">Tous les types</option>
+            {% for code, libelle in types_prestataires %}
+            <option value="{{ code }}" {% if type_choisi == code %}selected{% endif %}>{{ libelle }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit" class="button primary btn">Filtrer</button>
+    {% if statut_choisi or type_choisi %}
+    <a href="{% url 'liste_conventions' %}" class="button btn">Réinitialiser</a>
+    {% endif %}
+</form>
+
+{% if conventions %}
+<section class="panel">
+    <table>
+        <thead>
+            <tr>
+                {% entete_tri request.GET "prestataire__nom" "Établissement" %}
+                <th class="col-optionnelle">Type</th>
+                <th class="col-optionnelle">Ville</th>
+                <th class="col-optionnelle">Réf. Convention</th>
+                <th class="col-optionnelle">Tiers payant</th>
+                {% entete_tri request.GET "statut" "Statut" %}
+                {% entete_tri request.GET "date_conventionnement" "Date" "col-optionnelle" %}
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for conv in conventions %}
+            <tr>
+                <td>
+                    <div style="font-weight:600;color:var(--text);">{{ conv.prestataire.nom }}</div>
+                    {% if conv.prestataire.telephone %}
+                    <div style="font-size:0.8rem;color:var(--text-muted);">{{ conv.prestataire.telephone }}</div>
+                    {% endif %}
+                </td>
+                <td class="col-optionnelle">{{ conv.prestataire.get_type_prestataire_display }}</td>
+                <td class="col-optionnelle">{{ conv.prestataire.ville|default:"-" }}</td>
+                <td class="col-optionnelle">
+                    <code>{{ conv.numero_convention|default:"—" }}</code>
+                </td>
+                <td class="col-optionnelle">
+                    {% if conv.tiers_payant_actif %}
+                    <span class="badge validee">Actif ({{ conv.taux_couverture_defaut }}%)</span>
+                    {% else %}
+                    <span class="badge refusee">Suspendu</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if conv.statut == "ACTIVE" %}
+                    <span class="badge validee">Active</span>
+                    {% elif conv.statut == "SUSPENDUE" %}
+                    <span class="badge en_attente">Suspendue</span>
+                    {% else %}
+                    <span class="badge refusee">Résiliée</span>
+                    {% endif %}
+                </td>
+                <td class="col-optionnelle">{{ conv.date_conventionnement|date:"d/m/Y" }}</td>
+                <td>
+                    <div class="actions">
+                        <form method="post" action="{% url 'changer_statut_convention' conv.pk %}" class="action-ligne">
+                            {% csrf_token %}
+                            {% if conv.statut == "ACTIVE" %}
+                            <input type="hidden" name="statut" value="SUSPENDUE">
+                            <button type="submit" class="button btn btn-danger btn-sm" title="Suspendre temporairement le conventionnement" onclick="return confirm('Suspendre la convention avec cet établissement ?');">
+                                {% icone "pause" %} Suspendre
+                            </button>
+                            {% else %}
+                            <input type="hidden" name="statut" value="ACTIVE">
+                            <button type="submit" class="button primary btn btn-sm" title="Réactiver la convention">
+                                {% icone "check" %} Activer
+                            </button>
+                            {% endif %}
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+
+{% if conventions.paginator.num_pages > 1 %}
+<nav class="pagination" aria-label="Pagination">
+    {% if conventions.has_previous %}
+    <a href="?{% prefixe_pagination request.GET %}page={{ conventions.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Précédent</a>
+    {% endif %}
+    <span>Page {{ conventions.number }} sur {{ conventions.paginator.num_pages }}</span>
+    {% if conventions.has_next %}
+    <a href="?{% prefixe_pagination request.GET %}page={{ conventions.next_page_number }}" class="button btn btn-sm">Suivant {% icone "chevron-right" %}</a>
+    {% endif %}
+</nav>
+{% endif %}
+
+{% else %}
+<div class="etat-vide">
+    {% illustration_vide "building" %}
+    <h3>Aucune convention enregistrée</h3>
+    <p>
+        {% if statut_choisi or type_choisi %}
+        Aucun établissement ne correspond aux critères de recherche.
+        {% else %}
+        Votre organisme n'a pas encore conventionné d'établissements de santé. Conventionnez vos hôpitaux, cliniques et pharmacies partenaires pour activer la prise en charge tiers payant.
+        {% endif %}
+    </p>
+    <div class="actions" style="justify-content: center; margin-top: 14px;">
+        <a class="button primary" href="{% url 'ajouter_convention' %}">{% icone "plus" %} Conventionner un établissement</a>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

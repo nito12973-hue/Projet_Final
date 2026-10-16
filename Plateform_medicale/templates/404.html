@@ -6,6 +6,9 @@
     <title>Page introuvable - SantéSN</title>
     <meta name="theme-color" content="#0b2027">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect x='18' y='6' width='12' height='36' rx='4' fill='%230e7c86'/%3E%3Crect x='6' y='18' width='36' height='12' rx='4' fill='%230e7c86'/%3E%3Cpath d='M6 24H14L17 16L21 32L25 19L27.5 24H42' fill='none' stroke='%23e0824f' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         body {
             margin: 0;
@@ -13,32 +16,51 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #eff4f3;
-            color: #1f2933;
-            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f8fafc;
+            color: #0f172a;
+            font-family: 'Inter', -apple-system, sans-serif;
             text-align: center;
             padding: 24px;
         }
         .carte {
-            max-width: 440px;
+            max-width: 460px;
+            background: #ffffff;
+            padding: 40px 32px;
+            border-radius: 20px;
+            box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.08);
+            border: 1px solid #e2e8f0;
         }
         h1 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
             font-size: 64px;
             margin: 0 0 8px;
-            color: #0b2027;
+            color: #0f172a;
+            font-weight: 800;
         }
         p {
-            color: #5f6f7d;
+            color: #64748b;
             margin: 0 0 24px;
+            font-size: 14.5px;
+            line-height: 1.5;
         }
         a {
-            display: inline-block;
-            padding: 12px 22px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 24px;
+            min-height: 44px;
             border-radius: 10px;
-            background: linear-gradient(135deg, #0b2027 0%, #095059 100%);
+            background: linear-gradient(135deg, #064e3b 0%, #0f766e 100%);
             color: #ffffff;
             text-decoration: none;
             font-weight: 600;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(6, 78, 59, 0.2);
+            transition: all 0.15s ease;
+        }
+        a:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(6, 78, 59, 0.3);
         }
     </style>
 </head>

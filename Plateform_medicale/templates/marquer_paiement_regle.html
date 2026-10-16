@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load formats %}
+{% load formats icones %}
 
 {% block title %}Marquer un paiement réglé{% endblock %}
 
@@ -9,7 +9,7 @@
         <h1>Marquer le paiement comme réglé</h1>
         <p class="subtitle">{{ paiement.consultation.patient }} - {{ paiement.montant_part_patient|franc_cfa }} a la charge du patient.</p>
     </div>
-    <a class="button" href="{% url 'liste_paiements' %}">Retour</a>
+    <a class="button btn btn-retour-expand" href="{% url 'liste_paiements' %}" title="Retour" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
 </section>
 
 <section class="panel panel-form">

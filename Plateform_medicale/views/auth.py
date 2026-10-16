@@ -12,6 +12,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.sessions.models import Session
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
@@ -33,7 +34,7 @@ from ..models import (
     TentativeConnexion,
     User,
 )
-from .utils import admin_required, journaliser
+from .utils import admin_required, journaliser, role_required
 
 
 # ---------------------------------------------------------------------------
@@ -62,10 +63,14 @@ def login_view(request):
     )
     destination = 'post_login_redirect'
     if next_valide:
-        # Seul un ADMIN peut être renvoyé vers le tableau de bord ou les rapports d'administration
-        admin_only_prefixes = ('/tableau-de-bord', '/rapports', '/parametres', '/utilisateurs', '/plans-couverture')
+        # Seul un ADMIN ou GESTIONNAIRE peut être renvoyé vers le tableau de bord
+        admin_only_prefixes = ('/rapports', '/utilisateurs', '/organismes', '/journal', '/admin/logs')
+        admin_or_gest_prefixes = ('/tableau-de-bord', '/plans-couverture', '/plans-de-couverture')
         if any(next_url.startswith(p) for p in admin_only_prefixes):
             if request.user.is_authenticated and request.user.role == User.Role.ADMIN:
+                destination = next_url
+        elif any(next_url.startswith(p) for p in admin_or_gest_prefixes):
+            if request.user.is_authenticated and request.user.role in (User.Role.ADMIN, User.Role.GESTIONNAIRE):
                 destination = next_url
         else:
             destination = next_url
@@ -77,8 +82,11 @@ def login_view(request):
     if request.method == 'POST' and form.is_valid():
         login(request, form.user)
         if next_valide:
-            admin_only_prefixes = ('/tableau-de-bord', '/rapports', '/parametres', '/utilisateurs', '/plans-couverture')
+            admin_only_prefixes = ('/rapports', '/utilisateurs', '/organismes', '/journal', '/admin/logs')
+            admin_or_gest_prefixes = ('/tableau-de-bord', '/plans-couverture', '/plans-de-couverture')
             if any(next_url.startswith(p) for p in admin_only_prefixes) and form.user.role != User.Role.ADMIN:
+                return redirect('post_login_redirect')
+            if any(next_url.startswith(p) for p in admin_or_gest_prefixes) and form.user.role not in (User.Role.ADMIN, User.Role.GESTIONNAIRE):
                 return redirect('post_login_redirect')
             return redirect(next_url)
         return redirect('post_login_redirect')
@@ -97,7 +105,7 @@ def logout_view(request):
 def post_login_redirect(request):
     """Redirection automatique vers le dashboard correspondant au role."""
     role = request.user.role
-    if role == User.Role.ADMIN:
+    if role in (User.Role.ADMIN, User.Role.GESTIONNAIRE):
         return redirect('dashboard')
     if role == User.Role.ASSURE:
         return redirect('dashboard_assure')
@@ -358,7 +366,7 @@ def _comptes_bloques(request):
     return comptes, role_choisi, recherche
 
 
-@admin_required
+@role_required(User.Role.ADMIN, User.Role.GESTIONNAIRE)
 @require_POST
 def debloquer_compte(request, pk):
     """Deblocage manuel par un administrateur.
@@ -373,21 +381,27 @@ def debloquer_compte(request, pk):
     clic annulerait la protection au pire moment.
     """
     utilisateur = get_object_or_404(User, pk=pk)
+    if request.user.role == User.Role.GESTIONNAIRE:
+        if utilisateur.organisme_id != request.user.organisme_id:
+            raise PermissionDenied
     ligne_tentative = TentativeConnexion.objects.filter(email=utilisateur.email.lower()).first()
-    nb_echecs = ligne_tentative.tentatives if ligne_tentative else 0
-    supprimees = TentativeConnexion.objects.filter(email=utilisateur.email.lower()).delete()[0]
-    if supprimees:
-        details = f"Déblocage manuel par l'administration ({nb_echecs} échec{'s' if nb_echecs > 1 else ''} réinitialisé{'s' if nb_echecs > 1 else ''})"
-        journaliser(request, JournalActivite.Action.DEBLOCAGE, f"Utilisateur {utilisateur.email}", details=details)
-        messages.success(
-            request,
-            f"Le compte de {utilisateur} peut de nouveau se connecter.",
-            extra_tags="succes-critique",
-        )
-    else:
-        # Expiration survenue entre l'affichage et le clic : ce n'est pas une
-        # erreur, le resultat voulu est deja atteint.
-        messages.info(request, f"Le compte de {utilisateur} n'était plus bloqué.")
+    if ligne_tentative is None or not ligne_tentative.est_bloque():
+        # Compte non bloque (ou blocage expire entre l'affichage et le clic) :
+        # aucun nom n'est affiche, l'admin ne doit pas pouvoir identifier un
+        # compte qui n'est pas signale.
+        messages.info(request, "Ce compte n'est plus bloqué.")
+        if request.POST.get("source") == "utilisateurs":
+            return redirect("liste_utilisateurs")
+        return redirect(f"{reverse('parametres_section', args=['securite'])}#comptes-bloques")
+    nb_echecs = ligne_tentative.tentatives
+    TentativeConnexion.objects.filter(email=utilisateur.email.lower()).delete()
+    details = f"Déblocage manuel par l'administration ({nb_echecs} échec{'s' if nb_echecs > 1 else ''} réinitialisé{'s' if nb_echecs > 1 else ''})"
+    journaliser(request, JournalActivite.Action.DEBLOCAGE, f"Utilisateur {utilisateur.email}", details=details)
+    messages.success(
+        request,
+        f"Le compte de {utilisateur} peut de nouveau se connecter.",
+        extra_tags="succes-critique",
+    )
     if request.POST.get("source") == "utilisateurs":
         return redirect("liste_utilisateurs")
     return redirect(f"{reverse('parametres_section', args=['securite'])}#comptes-bloques")

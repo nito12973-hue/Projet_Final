@@ -16,13 +16,15 @@ from django.db.models import ProtectedError, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
-from ..forms import PlanCouvertureForm, PrestataireForm
-from ..models import JournalActivite, PlanCouverture, Prestataire
-from .utils import _avertissement_cascade, _paginer, _trier, admin_required, journaliser
+from ..forms import ConventionPrestataireForm, PlanCouvertureForm, PrestataireForm
+from ..models import ConventionPrestataire, JournalActivite, PlanCouverture, Prestataire, User
+from .utils import _avertissement_cascade, _paginer, _trier, journaliser, organisme_gestionnaire, role_required
 
 
-@admin_required
+@role_required(User.Role.GESTIONNAIRE)
 def liste_prestataires(request):
+    if request.user.role == User.Role.GESTIONNAIRE:
+        organisme_gestionnaire(request)
     prestataires = Prestataire.objects.all()
 
     localisation = request.GET.get("localisation", "")
@@ -174,7 +176,7 @@ def _resultat_osm(lieu):
     }
 
 
-@admin_required
+@role_required(User.Role.GESTIONNAIRE)
 def recherche_lieu_prestataire(request):
     """
     Relais serveur vers Nominatim (recherche OpenStreetMap) pour la recherche
@@ -188,6 +190,8 @@ def recherche_lieu_prestataire(request):
     contrat (trouve/lat/lon/nom, premier resultat) est conserve pour ne pas
     casser le bouton "Rechercher sur la carte" existant.
     """
+    if request.user.role == User.Role.GESTIONNAIRE:
+        organisme_gestionnaire(request)
     requete = request.GET.get("q", "").strip()
     if not requete:
         return JsonResponse({"trouve": False, "resultats": []})
@@ -215,12 +219,24 @@ def recherche_lieu_prestataire(request):
     })
 
 
-@admin_required
+@role_required(User.Role.GESTIONNAIRE)
 def ajouter_prestataire(request):
+    organisme = organisme_gestionnaire(request)
     if request.method == "POST":
         form = PrestataireForm(request.POST)
         if form.is_valid():
-            form.save()
+            with transaction.atomic():
+                prestataire = form.save()
+                if prestataire.partenaire:
+                    ConventionPrestataire.objects.get_or_create(
+                        organisme=organisme,
+                        prestataire=prestataire,
+                        defaults={
+                            "statut": ConventionPrestataire.Statut.ACTIF,
+                            "tiers_payant_actif": True,
+                            "cree_par": request.user,
+                        },
+                    )
             messages.success(request, "Prestataire ajouté.")
             return redirect("liste_prestataires")
     else:
@@ -228,8 +244,10 @@ def ajouter_prestataire(request):
     return render(request, "ajouter_prestataire.html", {"form": form})
 
 
-@admin_required
+@role_required(User.Role.GESTIONNAIRE)
 def modifier_prestataire(request, pk):
+    if request.user.role == User.Role.GESTIONNAIRE:
+        organisme_gestionnaire(request)
     prestataire = get_object_or_404(Prestataire, pk=pk)
     if request.method == "POST":
         form = PrestataireForm(request.POST, instance=prestataire)
@@ -242,8 +260,10 @@ def modifier_prestataire(request, pk):
     return render(request, "modifier_prestataire.html", {"form": form, "prestataire": prestataire})
 
 
-@admin_required
+@role_required(User.Role.GESTIONNAIRE)
 def supprimer_prestataire(request, pk):
+    if request.user.role == User.Role.GESTIONNAIRE:
+        organisme_gestionnaire(request)
     prestataire = get_object_or_404(Prestataire, pk=pk)
     if request.method == "POST":
         try:
@@ -263,14 +283,22 @@ def supprimer_prestataire(request, pk):
 # Plans de couverture
 # ---------------------------------------------------------------------------
 
-@admin_required
+from ..models import User  # noqa: E402
+from .utils import organisme_gestionnaire, role_required  # noqa: E402
+
+
+@role_required(User.Role.GESTIONNAIRE)
 def liste_plans_couverture(request):
+    if request.user.role == User.Role.GESTIONNAIRE:
+        organisme_gestionnaire(request)
     plans = _trier(request, PlanCouverture.objects.all(), ["nom", "taux_couverture", "plafond_annuel"], "nom")
     return render(request, "liste_plans_couverture.html", {"plans": _paginer(request, plans)})
 
 
-@admin_required
+@role_required(User.Role.GESTIONNAIRE)
 def ajouter_plan_couverture(request):
+    if request.user.role == User.Role.GESTIONNAIRE:
+        organisme_gestionnaire(request)
     if request.method == "POST":
         form = PlanCouvertureForm(request.POST)
         if form.is_valid():
@@ -282,8 +310,10 @@ def ajouter_plan_couverture(request):
     return render(request, "ajouter_plan_couverture.html", {"form": form})
 
 
-@admin_required
+@role_required(User.Role.GESTIONNAIRE)
 def modifier_plan_couverture(request, pk):
+    if request.user.role == User.Role.GESTIONNAIRE:
+        organisme_gestionnaire(request)
     plan = get_object_or_404(PlanCouverture, pk=pk)
     if request.method == "POST":
         form = PlanCouvertureForm(request.POST, instance=plan)
@@ -296,8 +326,10 @@ def modifier_plan_couverture(request, pk):
     return render(request, "modifier_plan_couverture.html", {"form": form, "plan": plan})
 
 
-@admin_required
+@role_required(User.Role.GESTIONNAIRE)
 def supprimer_plan_couverture(request, pk):
+    if request.user.role == User.Role.GESTIONNAIRE:
+        organisme_gestionnaire(request)
     plan = get_object_or_404(PlanCouverture, pk=pk)
     if request.method == "POST":
         try:
@@ -322,3 +354,78 @@ def supprimer_plan_couverture(request, pk):
         "confirmer_suppression.html",
         {"objet": plan, "type": "Plan de couverture", "avertissement": avertissement},
     )
+
+
+@role_required(User.Role.GESTIONNAIRE)
+def liste_conventions(request):
+    """
+    Réseau de soins conventionné propre à l'organisme assureur (IPM).
+    Permet à chaque gestionnaire de piloter ses conventions de tiers payant.
+    """
+    organisme = organisme_gestionnaire(request)
+    conventions = ConventionPrestataire.objects.filter(organisme=organisme).select_related("prestataire")
+
+    # Filtres par statut et type d'établissement
+    statut = request.GET.get("statut", "")
+    if statut in ConventionPrestataire.Statut.values:
+        conventions = conventions.filter(statut=statut)
+    type_p = request.GET.get("type", "")
+    if type_p in Prestataire.Type.values:
+        conventions = conventions.filter(prestataire__type_prestataire=type_p)
+
+    conventions = _trier(request, conventions, ["prestataire__nom", "statut", "date_conventionnement"], "prestataire__nom")
+
+    contexte = {
+        "conventions": _paginer(request, conventions),
+        "organisme": organisme,
+        "statut_choisi": statut,
+        "type_choisi": type_p,
+        "types_prestataires": Prestataire.Type.choices,
+        "statuts_conventions": ConventionPrestataire.Statut.choices,
+    }
+    return render(request, "liste_conventions.html", contexte)
+
+
+@role_required(User.Role.GESTIONNAIRE)
+def ajouter_convention(request):
+    """Conventionnement d'un établissement auprès de son organisme."""
+    organisme = organisme_gestionnaire(request)
+    if request.method == "POST":
+        form = ConventionPrestataireForm(request.POST, organisme=organisme)
+        if form.is_valid():
+            convention = form.save(commit=False)
+            convention.organisme = organisme
+            convention.cree_par = request.user
+            convention.save()
+            journaliser(
+                request,
+                JournalActivite.Action.CREATION,
+                f"Convention : {convention.prestataire.nom}",
+                f"Réseau conventionné de {organisme.nom} (Réf : {convention.numero_convention or 'N/A'})",
+            )
+            messages.success(request, f"L'établissement {convention.prestataire.nom} a été conventionné avec succès.")
+            return redirect("liste_conventions")
+    else:
+        form = ConventionPrestataireForm(organisme=organisme)
+    return render(request, "ajouter_convention.html", {"form": form, "organisme": organisme})
+
+
+@role_required(User.Role.GESTIONNAIRE)
+def changer_statut_convention(request, pk):
+    """Active, suspend ou résilie une convention pour son organisme."""
+    organisme = organisme_gestionnaire(request)
+    convention = get_object_or_404(ConventionPrestataire, pk=pk, organisme=organisme)
+    if request.method == "POST":
+        nouveau_statut = request.POST.get("statut")
+        if nouveau_statut in ConventionPrestataire.Statut.values:
+            convention.statut = nouveau_statut
+            convention.save(update_fields=["statut"])
+            journaliser(
+                request,
+                JournalActivite.Action.MODIFICATION,
+                f"Convention {convention.prestataire.nom}",
+                f"Statut passé à {convention.get_statut_display()}",
+            )
+            messages.success(request, f"Statut de la convention mis à jour : {convention.get_statut_display()}.")
+    return redirect("liste_conventions")
+

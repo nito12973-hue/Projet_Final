@@ -14,14 +14,14 @@
         </p>
     </div>
     <div class="actions">
-        <a class="button btn" href="{% url 'mes_patients' %}">{% icone "chevron-left" %} Mes patients</a>
+        <a class="button btn btn-retour-expand" href="{% url 'mes_patients' %}" title="Retour à mes patients" aria-label="Mes patients">{% icone "chevron-left" %} <span class="expand-text">Mes patients</span></a>
         {% if rdv_confirme %}
-        <a class="button primary" href="{% url 'ajouter_consultation_medecin' %}?rdv_id={{ rdv_confirme.pk }}">
-            {% icone "stethoscope" %} Démarrer la consultation (RDV programmé)
+        <a class="button primary btn-expand primary" href="{% url 'ajouter_consultation_medecin' %}?rdv_id={{ rdv_confirme.pk }}" title="Démarrer la consultation (RDV programmé)" aria-label="Démarrer consultation">
+            {% icone "stethoscope" %} <span class="expand-text">Démarrer consultation</span>
         </a>
         {% else %}
-        <a class="button secondary" href="{% url 'ajouter_consultation_medecin' %}?mode=spontane&numero_carte={{ patient.numero_carte }}">
-            {% icone "alert-triangle" %} Consultation spontanée / urgence
+        <a class="button secondary btn-expand" href="{% url 'ajouter_consultation_medecin' %}?mode=spontane&numero_carte={{ patient.numero_carte }}" title="Consultation spontanée ou urgence" aria-label="Consultation spontanée">
+            {% icone "alert-triangle" %} <span class="expand-text">Consultation spontanée</span>
         </a>
         {% endif %}
     </div>
@@ -120,7 +120,7 @@
                 <td>{{ pec.date_demande|date:"d/m/Y" }}</td>
                 <td>
                     {% if pec.statut == 'validee' %}
-                    <span class="badge validee">{% icone "check" %} Validée &bull; Accord Actif</span>
+                    <span class="badge validee">{% icone "check" %} Validée · Accord Actif</span>
                     {% elif pec.statut == 'refusee' %}
                     <span class="badge refusee">Refusée</span>
                     {% else %}
@@ -139,7 +139,7 @@
                         </a>
                         {% endif %}
                         {% if pec.devis_fichier %}
-                        <a href="{{ pec.devis_fichier.url }}" target="_blank" rel="noopener noreferrer" style="font-size:11.5px;color:var(--muted);text-decoration:underline;">
+                        <a href="{% url 'telecharger_devis_prise_en_charge' pec.pk %}" target="_blank" rel="noopener noreferrer" style="font-size:11.5px;color:var(--muted);text-decoration:underline;">
                             Devis source
                         </a>
                         {% endif %}

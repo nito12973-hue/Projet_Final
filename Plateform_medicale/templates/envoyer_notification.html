@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% load icones %}
+
 {% block title %}Envoyer une notification{% endblock %}
 
 {% block content %}
@@ -8,7 +10,7 @@
         <h1>Envoyer une notification</h1>
         <p class="subtitle">À un utilisateur précis, ou à tous les utilisateurs d'un rôle.</p>
     </div>
-    <a class="button" href="{% url 'liste_notifications_envoyees' %}">Historique des envois</a>
+    <a class="button btn btn-expand" href="{% url 'liste_notifications_envoyees' %}" title="Consulter l'historique des envois" aria-label="Historique des envois">{% icone "clock-history" %} <span class="expand-text">Historique des envois</span></a>
 </section>
 
 <section class="panel panel-form">

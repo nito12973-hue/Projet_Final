@@ -16,6 +16,10 @@ fi
 echo "Application des migrations de base de données..."
 python manage.py migrate --noinput
 
+# Initialisation idempotente des comptes et données de démonstration
+echo "Vérification / initialisation des comptes de démonstration..."
+python manage.py seed_demo || true
+
 # Collecte des fichiers statiques
 echo "Collecte des fichiers statiques (WhiteNoise)..."
 python manage.py collectstatic --noinput --clear || true

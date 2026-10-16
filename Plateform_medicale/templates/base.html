@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Plateforme medicale{% endblock %}</title>
+    <title>{% block title %}SantéSN — Plateforme Médicale{% endblock %}</title>
     <meta name="description" content="SantéSN : plateforme digitale de dématérialisation du tiers payant et de l'ordonnance médicale au Sénégal.">
     <meta property="og:site_name" content="SantéSN">
     <meta property="og:type" content="website">
@@ -46,64 +46,48 @@
     feuille ; 1040 ms apres. {# #} de Django est MONO-LIGNE : un commentaire
     multi-lignes fuit dans la sortie (un test le verrouille).
     {% endcomment %}
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap"></noscript>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap"></noscript>
     <style>
         :root {
+            /* Palette Maître SantéSN : Médicale Sobre, Reposante & Ultra-Lisible (WCAG AAA) */
             --bg: #eff4f3;
             --surface: #ffffff;
-            /* Turquoise vif : bordures, decoratif, fonds derriere du texte fonce.
-               Pas assez de contraste pour du texte/icone blancs en aplat. */
+            /* Turquoise médical : signature identitaire, bordures, accents */
             --primary: #0e7c86;
-            /* Teal fonce : seule variante sure pour texte/icone blancs en aplat
-               (boutons pleins) et pour texte/icone colores sur fond clair. */
+            /* Teal profond : variante haute lisibilité garantie pour texte/icônes (contraste 9:1 sur blanc) */
             --primary-strong: #095059;
-            /* Navy : titres, texte fonce — identique au menu lateral. */
+            /* Navy sombre : titres, repères architecturaux et fond de menu */
             --primary-dark: #0b2027;
-            /* Variante claire : texte/icone colores sur fond sombre (sidebar). */
+            /* Nuance claire pour éléments sur fonds sombres */
             --primary-light: #4fb8ae;
-            /* Reserve aux degrades decoratifs (barres, non-texte). */
-            --primary-accent: #4fb8ae;
+            --primary-accent: #0e7c86;
             --primary-soft: #dcece9;
-            /* Terracotta : accent ponctuel uniquement (jamais en fond/aplat large). */
+            /* Accent chaleureux terre cuite / terracotta */
             --accent: #e0824f;
             --border: #d9e2ea;
-            /* Fond des champs de saisie. Doit exister dans LES DEUX themes :
-               code en dur, il laissait un champ blanc en theme sombre. */
-            --champ-bg: #fbfdfc;
+            --champ-bg: #ffffff;
             --text: #1f2933;
             --muted: #5f6f7d;
             --danger: #b3261e;
-            /* Fond des boutons destructifs, distinct de --danger qui sert
-               AUSSI de couleur de TEXTE. En sombre, --danger doit s'eclaircir
-               pour rester lisible sur fond sombre -- mais un aplat clair sous
-               un libelle blanc tombe alors a 3,26:1 (mesure). Un jeton, un
-               role : celui-ci reste toujours assez fonce pour du blanc. */
             --danger-surface: #b3261e;
-            /* Survol des boutons de suppression : seule variante sombre du rouge --danger. */
             --danger-strong: #8f1e18;
             --success: #1e7a4c;
             --warning: #8a5a00;
 
-            /* Menu lateral : memes teintes navy/turquoise que ci-dessus, tokens
-               dedies pour les nuances propres au fond tres sombre de l'aside. */
+            /* Menu latéral : Teinte signature d'origine Navy Médical (#0B2027) */
             --sb-bg: #0B2027;
-            --sb-hover: rgba(255, 255, 255, 0.07);
-            --sb-border: rgba(255, 255, 255, 0.09);
-            --sb-text-muted: rgba(231, 236, 243, 0.66);
-            --sb-text-faint: rgba(231, 236, 243, 0.42);
-            /* Texte pose SUR les tuiles de verre du bandeau sombre. Le verre
-               eclaircit le fond : --primary-light (4.44:1) et --accent (3.04:1)
-               y tombent sous le seuil WCAG AA. Ces deux variantes plus claires
-               remontent a 5.8 et 5.4:1. Ne pas les utiliser sur fond clair. */
+            --sb-hover: rgba(255, 255, 255, 0.08);
+            --sb-border: rgba(255, 255, 255, 0.10);
+            --sb-text-muted: #cbd5e1;
+            --sb-icon-muted: #94a3b8;
+            --sb-text-faint: rgba(231, 236, 243, 0.55);
             --sur-verre-teal: #6fd0c6;
             --sur-verre-accent: #f7c4a3;
-            --accent-turquoise: #0e7c86;
+            --accent-turquoise: #4fb8ae;
             --accent-turquoise-wash: rgba(14, 124, 134, 0.16);
 
-            /* Jetons semantiques des pastilles et alertes. Extraits ici pour
-               qu'ils basculent avec le theme : en dur dans les regles, ils
-               restaient clairs sur fond sombre. */
+            /* Jetons sémantiques des pastilles et alertes haute lisibilité */
             --ok-bg: #dcfce7;
             --ok-fg: #15683f;
             --attente-bg: #fff1d6;
@@ -111,25 +95,35 @@
             --refus-bg: #fee4e2;
             --refus-fg: #b3261e;
             --neutre-bg: #eef3f3;
-            --neutre-fg: #5f6f7d;
-            /* Titres et libelles forts. Distinct de --primary-dark, qui est
-               une couleur de SURFACE (menu, bandeau, boutons pleins) et doit
-               rester sombre dans les deux themes. */
+            --neutre-fg: #475569;
             --titre: #0b2027;
-            --topbar-bg: rgba(239, 244, 243, 0.92);
-            --fiche-bg: linear-gradient(150deg, #f8fbfb, #eff5f5);
+            --topbar-bg: rgba(239, 244, 243, 0.94);
+            --fiche-bg: #ffffff;
             --btn-a: #0b2027;
             --btn-b: #095059;
 
-            /* Jetons d'espacement & d'élévation harmonisés (Phase 1) */
+            /* Jetons d'espacement & d'élévation doux et nets */
             --space-xs: 4px;
             --space-sm: 8px;
             --space-md: 16px;
             --space-lg: 24px;
             --space-xl: 32px;
-            --ombre-douce: 0 4px 20px -2px rgba(11, 32, 39, 0.04);
-            --ombre-forte: 0 8px 24px -4px rgba(11, 32, 39, 0.08);
-            --table-hover: rgba(14, 124, 134, 0.04);
+            --ombre-douce: 0 1px 3px 0 rgba(11, 32, 39, 0.04), 0 1px 2px -1px rgba(11, 32, 39, 0.03);
+            --ombre-forte: 0 10px 15px -3px rgba(11, 32, 39, 0.07), 0 4px 6px -4px rgba(11, 32, 39, 0.04);
+            --table-hover: #f1f6f5;
+
+            /* Typographie Pro (Plus Jakarta Sans & Inter) */
+            --font-headings: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --font-body: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+            /* Alias et compatibilité des jetons transversaux */
+            --bordure: var(--border);
+            --texte: var(--text);
+            --ink: var(--text);
+            --fond-doux: var(--primary-soft);
+            --bg-hover: var(--table-hover);
+            --masque-croix: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M12 3v18M3 12h18'/%3E%3C/svg%3E");
         }
 
         /* ===== Theme sombre =====
@@ -179,6 +173,11 @@
             --ombre-douce: 0 4px 20px -2px rgba(0, 0, 0, 0.28);
             --ombre-forte: 0 8px 24px -4px rgba(0, 0, 0, 0.45);
             --table-hover: rgba(79, 184, 174, 0.07);
+            --bordure: var(--border);
+            --texte: var(--text);
+            --ink: var(--text);
+            --fond-doux: var(--primary-soft);
+            --bg-hover: var(--table-hover);
         }
 
         * {
@@ -191,17 +190,18 @@
            ancrees a la fenetre et ne defilent pas avec le contenu. */
         html {
             scrollbar-gutter: stable;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
         }
 
         body {
             margin: 0;
-            font-family: 'Public Sans', 'Segoe UI', Arial, Helvetica, sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
             color: var(--text);
             background: var(--bg);
-            background-image:
-                radial-gradient(1000px 560px at 88% -10%, rgba(79, 184, 174, 0.26), transparent 64%),
-                radial-gradient(780px 480px at -4% 102%, rgba(224, 130, 79, 0.14), transparent 62%);
-            background-attachment: fixed;
             min-height: 100vh;
         }
 
@@ -235,14 +235,14 @@
         /* ===== Structure generale : sidebar + contenu ===== */
         .shell {
             display: grid;
-            grid-template-columns: 272px minmax(0, 1fr);
-            gap: 16px;
+            grid-template-columns: 268px minmax(0, 1fr);
+            gap: 0;
             min-height: 100vh;
             transition: grid-template-columns 0.28s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         body.sidebar-reduite .shell {
-            grid-template-columns: 84px minmax(0, 1fr);
+            grid-template-columns: 80px minmax(0, 1fr);
         }
 
         /* Mode sans barre laterale (pages publiques sans menu, utilisateur non connecte) */
@@ -266,47 +266,36 @@
             padding: 24px 0 64px;
         }
 
-        /* Selecteur d'ID (#barre-laterale), pas l'element aside seul : 4
-           templates (dashboard.html, rapports.html, voir_ordonnance.html,
-           scanner_ordonnance.html) ont un second <aside class="governance-card">
-           qui heritait sinon de tout le style et du comportement du menu
-           lateral (position fixed hors ecran sous 980px, cf. plus bas) --
-           sous ce seuil, ces cartes disparaissaient purement et simplement,
-           y compris le bouton "Valider la delivrance" de
-           scanner_ordonnance.html. */
-        /* Collante : sans cela, la barre laterale est un element de grille
-           ordinaire et disparait au defilement, alors que la barre du haut
-           reste -- l'en-tete restait, la navigation partait.
-           align-self: start est indispensable : un element de grille etire
-           (comportement par defaut) ne peut pas coller. height + overflow
-           lui donnent son propre defilement si le menu depasse l'ecran.
-           Neutralise sous 981px par le position: fixed du tiroir mobile. */
+        /* Selecteur d'ID (#barre-laterale) : colonne architecturale verticale continue */
         #barre-laterale {
             position: sticky;
             top: 0;
             align-self: start;
             height: 100vh;
-            overflow-y: auto;
+            max-height: 100vh;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            gap: 18px;
-            padding: 24px 16px;
+            padding: 16px 12px 14px 12px;
             color: #e7ecf3;
-            /* Degrade en diagonale (et non vertical) : la lumiere semble venir
-               du haut du menu, coherente avec le halo de la page. Le liseré
-               turquoise interieur detache le menu du fond clair. */
-            background: linear-gradient(168deg, #12303a 0%, var(--sb-bg) 46%, #081920 100%);
-            border-radius: 0 22px 22px 0;
-            box-shadow:
-                8px 0 32px rgba(8, 15, 30, 0.28),
-                inset -1px 0 0 rgba(79, 184, 174, 0.18);
-            transition: padding 0.25s ease;
+            background: var(--sb-bg);
+            border-radius: 0;
+            border-right: 1px solid var(--sb-border);
+            box-shadow: none;
+            transition: width 0.25s ease, padding 0.25s ease;
+            box-sizing: border-box;
+            z-index: 90;
         }
 
         .sidebar-head {
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 8px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--sb-border);
+            flex-shrink: 0;
+            min-height: 44px;
         }
 
         .brand {
@@ -314,7 +303,7 @@
             align-items: center;
             gap: 10px;
             color: #ffffff;
-            font-size: 20px;
+            font-size: 19px;
             font-weight: 800;
             text-decoration: none;
             white-space: nowrap;
@@ -323,45 +312,90 @@
             overflow: hidden;
         }
 
+        .brand svg {
+            flex-shrink: 0;
+        }
+
         .btn-reduire {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 32px;
-            height: 32px;
+            width: 30px;
+            height: 30px;
             flex-shrink: 0;
-            border-radius: 9px;
+            border-radius: 8px;
             border: 1px solid var(--sb-border);
             background: transparent;
             color: var(--sb-text-muted);
             cursor: pointer;
             transition: background 0.16s ease, color 0.16s ease;
+            margin-left: auto;
         }
 
         .btn-reduire:hover { background: var(--sb-hover); color: #ffffff; }
-        .btn-reduire .icone-nav { width: 16px; height: 16px; }
+        .btn-reduire .icone-nav { width: 15px; height: 15px; }
 
-        body.sidebar-reduite .brand-texte { display: none; }
+        body.sidebar-reduite .brand-texte { display: none !important; }
+        body.sidebar-reduite .sidebar-head {
+            justify-content: center;
+            gap: 6px;
+            padding-left: 0;
+            padding-right: 0;
+        }
+        body.sidebar-reduite .brand {
+            flex: 0 0 auto;
+            justify-content: center;
+        }
+        body.sidebar-reduite .btn-reduire {
+            margin-left: 0;
+            width: 26px;
+            height: 26px;
+        }
 
         @media (max-width: 980px) {
             .btn-reduire { display: none; }
         }
 
-        .user-card {
-            padding: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 16px;
-            background: rgba(255, 255, 255, 0.07);
+        aside nav {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 12px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
         }
 
-        .user-card strong { display: block; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .user-card span { color: rgba(239, 255, 247, 0.72); font-weight: 700; font-size: 13px; }
+        aside nav::-webkit-scrollbar {
+            width: 4px;
+        }
+        aside nav::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        aside nav::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 4px;
+        }
+        aside nav::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
 
-        body.sidebar-reduite .user-card { display: none; }
+        aside nav .nav-section {
+            display: block;
+            padding: 18px 10px 6px 10px;
+            font-size: 11.5px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: #cbd5e1;
+            user-select: none;
+            line-height: 1.3;
+        }
 
-        aside nav {
-            display: grid;
-            gap: 4px;
+        aside nav .nav-section:first-child {
+            padding-top: 4px;
         }
 
         aside nav a {
@@ -369,14 +403,25 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            min-height: 42px;
-            padding: 10px 12px 10px 15px;
-            border-radius: 10px;
+            min-height: 38px;
+            padding: 8px 12px;
+            border-radius: 8px;
             color: var(--sb-text-muted);
             text-decoration: none;
-            font-weight: 700;
-            font-size: 14px;
-            transition: background 0.18s ease, color 0.18s ease;
+            font-family: var(--font-headings);
+            font-weight: 500;
+            font-size: 13.5px;
+            line-height: 1.4;
+            transition: background 0.14s cubic-bezier(0.4, 0, 0.2, 1),
+                        color 0.14s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        aside nav a .icone-nav {
+            width: 17px;
+            height: 17px;
+            flex-shrink: 0;
+            color: var(--sb-icon-muted);
+            transition: color 0.14s ease;
         }
 
         aside nav a:hover {
@@ -384,9 +429,15 @@
             background: var(--sb-hover);
         }
 
+        aside nav a:hover .icone-nav {
+            color: var(--accent-turquoise);
+        }
+
         aside nav a.active {
             color: #ffffff;
-            background: var(--accent-turquoise-wash);
+            background: rgba(45, 212, 191, 0.10);
+            font-weight: 600;
+            box-shadow: inset 0 0 0 1px rgba(45, 212, 191, 0.2);
         }
 
         aside nav a.active .icone-nav {
@@ -397,40 +448,131 @@
             content: "";
             position: absolute;
             left: 0;
-            top: 8px;
-            bottom: 8px;
+            top: 6px;
+            bottom: 6px;
             width: 3px;
-            border-radius: 3px;
+            border-radius: 0 3px 3px 0;
             background: var(--accent-turquoise);
+            box-shadow: 0 0 8px rgba(45, 212, 191, 0.6);
+        }
+
+        .sidebar-footer {
+            flex-shrink: 0;
+            margin-top: auto;
+            padding-top: 10px;
+            border-top: 1px solid var(--sb-border);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .user-card {
+            padding: 8px 10px;
+            border: 1px solid var(--sb-border);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.025);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background 0.15s ease, border-color 0.15s ease;
+        }
+
+        .user-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .user-card-avatar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: var(--primary);
+            color: #ffffff;
+            font-family: var(--font-headings);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            flex-shrink: 0;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .user-card-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .user-card strong {
+            display: block;
+            font-family: var(--font-headings);
+            font-size: 13px;
+            font-weight: 600;
+            color: #f8fafc;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.25;
+        }
+        .user-card span {
+            color: var(--sb-text-muted);
+            font-weight: 500;
+            font-size: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.25;
+        }
+
+        .sidebar-systeme-status {
+            padding: 4px 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--sb-text-muted);
+            letter-spacing: 0.01em;
+        }
+
+        .status-pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            flex-shrink: 0;
+            display: inline-block;
         }
 
         body.sidebar-reduite aside nav a {
             justify-content: center;
-            padding: 10px;
+            padding: 9px;
+            transform: none !important;
         }
 
         body.sidebar-reduite .nav-texte,
-        body.sidebar-reduite .badge-non-lues {
-            display: none;
-        }
-
-        /* Separateurs de section dans la nav admin (12 entrees a plat,
-           Etape 7 de la demande de decongestion : "navigation comprehensible
-           immediatement" sans rien renommer/fusionner). display:none en
-           sidebar reduite (icones seules) : un texte de section n'a aucun
-           sens sans les libelles a cote, et `nav { gap: 4px }` (regle de
-           base) ne laisse pas de trou visuel derriere un enfant absent. */
-        .nav-section {
-            padding: 14px 12px 4px;
-            font-size: 10.5px;
-            font-weight: 700;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: var(--sb-text-faint);
-        }
-
+        body.sidebar-reduite .badge-non-lues,
+        body.sidebar-reduite .brand-texte,
+        body.sidebar-reduite .user-card-info,
+        body.sidebar-reduite .sidebar-systeme-status span:not(.status-pulse-dot),
         body.sidebar-reduite .nav-section {
-            display: none;
+            display: none !important;
+        }
+
+        body.sidebar-reduite .user-card {
+            justify-content: center;
+            padding: 4px;
+            border: none;
+            background: transparent;
+        }
+
+        body.sidebar-reduite .sidebar-systeme-status {
+            justify-content: center;
+            padding: 4px 0;
         }
 
         /* Info-bulle on-brand : sidebar reduite = icones seules, le
@@ -535,12 +677,6 @@
             width: min(1120px, calc(100% - 64px));
             margin: 0 auto;
             padding: 32px 0 48px;
-            animation: entree-page 0.45s ease-out both;
-        }
-
-        @keyframes entree-page {
-            from { opacity: 0; transform: translateY(14px); }
-            to   { opacity: 1; transform: translateY(0); }
         }
 
         .page-title {
@@ -554,24 +690,37 @@
         h1 {
             margin: 0 0 6px;
             color: var(--titre);
-            font-family: 'Manrope', 'Public Sans', 'Segoe UI', Arial, sans-serif;
-            font-size: 26px;
+            font-family: var(--font-headings);
+            font-size: 22px;
             font-weight: 700;
-            letter-spacing: -0.02em;
+            letter-spacing: -0.015em;
             line-height: 1.25;
         }
 
-        h2, h3 {
+        h2 {
+            margin: 0 0 8px;
             color: var(--titre);
-            font-family: 'Manrope', 'Public Sans', 'Segoe UI', Arial, sans-serif;
-            font-weight: 600;
+            font-family: var(--font-headings);
+            font-size: 16px;
+            font-weight: 700;
             letter-spacing: -0.01em;
+            line-height: 1.3;
+        }
+
+        h3 {
+            margin: 0 0 6px;
+            color: var(--titre);
+            font-family: var(--font-headings);
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: -0.005em;
+            line-height: 1.35;
         }
 
         .subtitle {
             margin: 0;
             color: var(--muted);
-            font-size: 13.5px;
+            font-size: 13px;
             line-height: 1.45;
             font-weight: 400;
         }
@@ -626,19 +775,25 @@
 
         th,
         td {
-            padding: 14px 16px;
+            padding: 13px 16px;
             text-align: left;
             border-bottom: 1px solid var(--border);
             vertical-align: middle;
         }
 
+        td {
+            font-size: 13.5px;
+            color: var(--text);
+            line-height: 1.45;
+        }
+
         th {
             color: var(--muted);
             background: var(--surface);
-            font-size: 11.5px;
+            font-size: 12px;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.04em;
         }
 
         /* En-tete de tableau collant : reste visible en scrollant une
@@ -682,7 +837,15 @@
         }
 
         tbody tr {
-            transition: background 0.15s ease;
+            transition: background 0.16s ease, transform 0.16s ease;
+        }
+
+        tbody tr:nth-child(even) {
+            background: rgba(14, 124, 134, 0.015);
+        }
+
+        :root[data-theme="sombre"] tbody tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.02);
         }
 
         tbody tr:hover {
@@ -842,28 +1005,26 @@
         }
 
         
-        @keyframes entree-carte {
-            from { opacity: 0; transform: translateY(16px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
+
 
         .badge {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            min-height: 24px;
-            padding: 3px 10px;
+            gap: 5px;
+            min-height: 22px;
+            padding: 3px 9px;
             border-radius: 999px;
             background: var(--neutre-bg);
             color: var(--neutre-fg);
-            font-size: 12px;
-            font-weight: 600;
-            letter-spacing: 0.01em;
-            line-height: 1.3;
-            border: 1px solid transparent;
+            font-size: 11.5px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            line-height: 1.35;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
         }
 
-        .badge::before {
+        .badge--dot::before {
             content: "";
             display: inline-block;
             width: 6px;
@@ -873,14 +1034,10 @@
             flex-shrink: 0;
         }
 
-        .badge:has(svg)::before {
-            display: none;
-        }
-
         .badge.en_attente {
             background: var(--attente-bg);
             color: var(--attente-fg);
-            border-color: rgba(224, 130, 79, 0.2);
+            border-color: rgba(245, 158, 11, 0.28);
         }
 
         .badge.validee,
@@ -890,14 +1047,14 @@
         .badge.regle {
             background: var(--ok-bg);
             color: var(--success);
-            border-color: rgba(46, 125, 50, 0.18);
+            border-color: rgba(30, 122, 76, 0.25);
         }
 
         .badge.refusee,
         .badge.annule {
             background: var(--refus-bg);
             color: var(--danger);
-            border-color: rgba(217, 83, 79, 0.2);
+            border-color: rgba(179, 38, 30, 0.25);
         }
 
         form {
@@ -909,19 +1066,49 @@
             box-shadow: var(--ombre-douce);
         }
 
-        label {
-            display: block;
-            margin-bottom: 7px;
-            font-weight: 700;
-            font-size: 14px;
+        .panel-form > form,
+        .panel-bloc > form,
+        .page-title form,
+        .page-title .actions form,
+        .actions form,
+        table form,
+        .modal form,
+        dialog form {
+            max-width: none;
+            padding: 0;
+            background: transparent;
+            border: 0;
+            border-radius: 0;
+            box-shadow: none;
         }
 
-        /* La COULEUR DU TEXTE etait absente et le fond code en dur (#fbfdfc).
-           En theme sombre, le champ gardait donc un fond quasi blanc pendant
-           que le texte heritait de la couleur claire de body : on tapait dans
-           un champ SANS RIEN VOIR. Les deux valeurs sont desormais des jetons,
-           et la couleur du texte est explicite -- un champ de saisie ne doit
-           jamais dependre de ce dont il herite. */
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            font-size: 13.5px;
+            color: var(--titre);
+            letter-spacing: -0.01em;
+        }
+
+        .champ-groupe {
+            margin-bottom: 18px;
+            position: relative;
+        }
+
+        .champ-groupe label {
+            margin-bottom: 5px;
+        }
+
+        .champ-aide,
+        p.aide {
+            margin: 4px 0 0;
+            font-size: 12.5px;
+            color: var(--muted);
+            line-height: 1.4;
+        }
+
+        /* Champs de saisie modernes, fluides et accessibles */
         input,
         select,
         textarea {
@@ -936,7 +1123,16 @@
             color: var(--titre);
             background: var(--champ-bg);
             box-sizing: border-box;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+            box-shadow: 0 1px 2px rgba(11, 32, 39, 0.03);
+            transition: border-color 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+                        box-shadow 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+                        background 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .champ-groupe input,
+        .champ-groupe select,
+        .champ-groupe textarea {
+            margin-bottom: 0;
         }
 
         input::placeholder,
@@ -965,6 +1161,77 @@
             border-color: var(--primary);
             background: var(--surface);
             box-shadow: 0 0 0 3px rgba(14, 124, 134, 0.14);
+        }
+
+        /* Cases à cocher et boutons radio : ne doivent JAMAIS hériter du
+           width: 100% / min-height: 44px des champs texte (qui faisait flotter
+           la coche "signe valide" seule au milieu de la page). */
+        input[type="checkbox"],
+        input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            min-height: 20px;
+            margin: 0;
+            padding: 0;
+            accent-color: var(--primary);
+            cursor: pointer;
+            flex-shrink: 0;
+            vertical-align: middle;
+        }
+
+        input[type="checkbox"]:focus,
+        input[type="radio"]:focus {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+            box-shadow: none;
+        }
+
+        .champ-case {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 16px;
+            margin-top: 4px;
+            margin-bottom: 18px;
+            background: var(--champ-bg);
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .champ-case:hover {
+            border-color: var(--primary);
+            background: var(--surface);
+        }
+
+        .champ-case input[type="checkbox"],
+        .champ-case input[type="radio"] {
+            width: 20px !important;
+            height: 20px !important;
+            min-height: 20px !important;
+            margin: 0 !important;
+            flex-shrink: 0;
+        }
+
+        .champ-case-texte {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .champ-case-texte label {
+            display: block;
+            margin: 0;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--titre);
+            line-height: 1.3;
+        }
+
+        .champ-case-texte .subtitle {
+            margin: 3px 0 0;
+            font-size: 13px;
+            line-height: 1.4;
         }
 
         textarea {
@@ -1013,17 +1280,17 @@
         }
 
         .button.primary {
-            border-color: transparent;
-            background: linear-gradient(135deg, var(--btn-a) 0%, var(--btn-b) 100%);
+            border-color: var(--primary);
+            background: var(--primary);
             color: #ffffff;
-            box-shadow: 0 2px 8px rgba(14, 124, 134, 0.22);
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
         }
 
         .button.primary:hover {
-            background: linear-gradient(135deg, var(--btn-b) 0%, var(--btn-a) 100%);
-            border-color: transparent;
+            background: var(--primary-strong);
+            border-color: var(--primary-strong);
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(14, 124, 134, 0.30);
+            box-shadow: 0 4px 12px rgba(14, 124, 134, 0.25);
         }
 
         .button.btn {
@@ -1349,13 +1616,20 @@
             color: var(--primary) !important;
         }
 
-        form.action-ligne {
-            display: inline;
+        table td form,
+        .actions form,
+        form.action-ligne,
+        form.actions-masse,
+        form#form-selection-masse,
+        form.action-inline {
+            display: inline-flex;
+            align-items: center;
             max-width: none;
             padding: 0;
             border: 0;
             background: transparent;
             box-shadow: none;
+            margin: 0;
         }
 
         /* Recherche rapide de patients (medecin) : champ + liste de resultats
@@ -1777,20 +2051,12 @@
             padding: 18px;
             box-shadow: 0 6px 20px rgba(11, 32, 39, 0.07);
             transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-            animation: entree-carte 0.5s ease-out both;
+            transition: box-shadow 0.15s ease, border-color 0.15s ease;
         }
 
-        .dash-grid .dash-stat:nth-child(1) { animation-delay: 0.04s; }
-        .dash-grid .dash-stat:nth-child(2) { animation-delay: 0.08s; }
-        .dash-grid .dash-stat:nth-child(3) { animation-delay: 0.12s; }
-        .dash-grid .dash-stat:nth-child(4) { animation-delay: 0.16s; }
-        .dash-grid .dash-stat:nth-child(5) { animation-delay: 0.20s; }
-        .dash-grid .dash-stat:nth-child(6) { animation-delay: 0.24s; }
-
         a.dash-stat:hover {
-            transform: translateY(-4px);
-            border-color: #8fcac2;
-            box-shadow: 0 14px 32px rgba(14, 124, 134, 0.18);
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(11, 32, 39, 0.08);
         }
 
         .dash-stat-icon {
@@ -1916,22 +2182,7 @@
            donnee reelle. */
         
         
-        @keyframes dc-trace {
-            to { stroke-dashoffset: 0; }
-        }
 
-        /* Point "vivant" : reserve aux endroits qui refletent reellement une
-           donnee qui bouge (ex. titre "Aujourd'hui"), jamais decoratif seul.
-           Anneau anime capte par la regle globale prefers-reduced-motion
-           (animation-duration forcee a 0.01ms) -- pas de media query dediee
-           ici. */
-        
-        
-        @keyframes pulse-anneau {
-            0% { opacity: 0.65; transform: scale(0.6); }
-            75% { opacity: 0; transform: scale(1.6); }
-            100% { opacity: 0; transform: scale(1.6); }
-        }
 
         /* .contenu main plafonne toutes les pages a 1120px (formulaires,
            tableaux -- une largeur volontairement etroite pour rester
@@ -2274,7 +2525,7 @@
 
         .feuille-marque-nom {
             margin: 0;
-            font-family: 'Manrope', 'Public Sans', 'Segoe UI', Arial, sans-serif;
+            font-family: var(--font-headings);
             font-size: 20px;
             font-weight: 800;
             color: var(--primary-dark);
@@ -3369,7 +3620,7 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            font-family: 'Manrope', system-ui, sans-serif;
+            font-family: var(--font-headings);
             font-size: 11.5px;
             font-weight: 800;
             letter-spacing: 0.13em;
@@ -3384,36 +3635,24 @@
             background: var(--border);
         }
 
-        /* --- Bandeau "A traiter" (le seul bloc sombre de la page) --- */
-        /* Le seul bloc sombre de la page, traite comme une piece sculptee :
-           degrade diagonal + lueur turquoise hors-cadre + liseré interieur
-           clair sur l'arete haute. L'ombre portee est plus profonde que celle
-           des cartes pour qu'il flotte au-dessus d'elles dans la hierarchie. */
+        /* --- Bandeau "A traiter" : Surface lumineuse, lisible et épurée --- */
         .file-attente {
             position: relative;
             overflow: hidden;
             margin-top: 20px;
-            padding: 22px;
-            border-radius: 22px;
-            background: linear-gradient(150deg, #123540 0%, #0b2027 52%, #071920 100%);
-            box-shadow:
-                0 20px 50px rgba(11, 32, 39, 0.28),
-                inset 0 1px 0 rgba(255, 255, 255, 0.07);
+            margin-bottom: 24px;
+            padding: 24px 26px;
+            border-radius: 16px;
+            background: #ffffff;
+            box-shadow: 0 1px 3px rgba(11, 32, 39, 0.04), 0 1px 2px rgba(11, 32, 39, 0.02);
+            border: 1px solid var(--border);
         }
 
         .file-attente::before {
-            content: "";
-            position: absolute;
-            top: -140px;
-            right: -90px;
-            width: 420px;
-            height: 420px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(79, 184, 174, 0.24), transparent 66%);
-            pointer-events: none;
+            display: none;
         }
 
-        /* Le contenu repasse au-dessus de la lueur (qui est en position absolue). */
+        /* Le contenu au-dessus */
         .file-titre,
         .file-grille,
         .file-vide {
@@ -3424,46 +3663,45 @@
             display: flex;
             align-items: center;
             gap: 9px;
-            margin: 0 0 14px;
-            font-size: 11.5px;
+            margin: 0 0 16px;
+            font-size: 12px;
             font-weight: 800;
-            letter-spacing: 0.13em;
+            letter-spacing: 0.08em;
             text-transform: uppercase;
-            color: rgba(231, 236, 243, 0.72);
+            color: var(--titre);
         }
 
         .file-titre .icone-nav {
-            width: 15px;
-            height: 15px;
+            width: 16px;
+            height: 16px;
+            color: var(--primary);
         }
 
         .file-grille {
             display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 12px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 14px;
         }
 
         .file-tuile {
             display: flex;
             flex-direction: column;
             gap: 6px;
-            padding: 17px;
-            border: 1px solid rgba(255, 255, 255, 0.11);
-            border-radius: 15px;
-            /* Verre depoli : degrade tres leger + liseré interieur clair sur
-               l'arete haute, qui simule l'epaisseur de la tuile. */
-            background: linear-gradient(160deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.028));
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09);
-            color: #ffffff;
+            padding: 16px 18px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: #f8fafc;
+            color: var(--text);
             text-decoration: none;
-            transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .file-tuile:hover,
         .file-tuile:focus-visible {
-            background: linear-gradient(160deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.05));
-            border-color: rgba(79, 184, 174, 0.42);
-            transform: translateY(-3px);
+            background: #ffffff;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px -4px rgba(14, 124, 134, 0.12);
         }
 
         .file-entete {
@@ -3472,66 +3710,82 @@
             gap: 7px;
             font-size: 11.5px;
             font-weight: 700;
-            color: rgba(231, 236, 243, 0.82);
+            color: var(--muted);
         }
 
         .file-entete .icone-nav {
             width: 14px;
             height: 14px;
+            color: var(--primary);
         }
 
-        /* Echelle reprise de la direction "Editorial" : le chiffre de file est
-           traite comme un titre, pas comme une donnee. C'est lui qu'on doit
-           lire de loin en arrivant sur la page. */
         .file-nombre {
-            font-family: 'Manrope', 'Segoe UI', Arial, sans-serif;
-            font-size: 42px;
-            font-weight: 800;
-            line-height: 0.9;
-            letter-spacing: -0.045em;
+            font-family: var(--font-headings);
+            font-size: 24px;
+            font-weight: 700;
+            line-height: 1.15;
+            letter-spacing: -0.015em;
             margin: 4px 0 2px;
+            color: var(--titre);
             font-variant-numeric: tabular-nums;
         }
 
         .file-libelle {
-            font-size: 12.5px;
+            font-size: 12px;
             font-weight: 600;
-            color: rgba(231, 236, 243, 0.82);
+            color: var(--text);
         }
 
         .file-note {
             font-size: 11.5px;
-            font-weight: 700;
-            color: var(--sur-verre-teal);
+            font-weight: 600;
+            color: var(--muted);
         }
 
-        /* Terracotta reserve a l'urgence : une seule couleur d'alerte sur le
-           bandeau sombre, elle ressort donc immediatement. */
+        /* Urgence : fond rouge doux et bordure alerte */
         .file-tuile.urgent {
-            border-color: rgba(224, 130, 79, 0.55);
-            background: linear-gradient(150deg, rgba(224, 130, 79, 0.30), rgba(224, 130, 79, 0.07) 70%);
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+            border-color: #fecdd3;
+            background: #fff1f2;
         }
 
-        .file-tuile.urgent .file-entete,
+        .file-tuile.urgent .file-entete {
+            color: #be123c;
+        }
+
+        .file-tuile.urgent .file-entete .icone-nav {
+            color: #e11d48;
+        }
+
+        .file-tuile.urgent .file-nombre {
+            color: #be123c;
+        }
+
+        .file-tuile.urgent .file-libelle {
+            color: #9f1239;
+        }
+
         .file-tuile.urgent .file-note {
-            color: var(--sur-verre-accent);
+            color: #e11d48;
         }
 
         .file-vide {
             display: flex;
             align-items: center;
-            gap: 9px;
+            gap: 10px;
             margin: 0;
             font-size: 13.5px;
             font-weight: 600;
-            color: rgba(231, 236, 243, 0.82);
+            color: var(--muted);
+            padding: 14px 18px;
+            background: #f8fafc;
+            border: 1px dashed var(--border);
+            border-radius: 12px;
         }
 
         .file-vide .icone-nav {
-            width: 17px;
-            height: 17px;
-            color: var(--primary-light);
+            width: 18px;
+            height: 18px;
+            color: #10b981;
         }
 
         /* --- Bande couverture & finances --- */
@@ -3590,28 +3844,31 @@
         .finances-corps {
             display: flex;
             flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
             gap: 24px;
-            padding: 0 24px;
+            padding: 4px 24px 12px;
+        }
+
+        .finances-principal {
+            flex: 1 1 200px;
         }
 
         .finances-principal .montant {
             display: block;
-            font-family: 'Manrope', 'Segoe UI', Arial, sans-serif;
-            font-size: 38px;
-            font-weight: 800;
-            line-height: 1.05;
-            letter-spacing: -0.04em;
+            font-family: var(--font-headings);
+            font-size: 26px;
+            font-weight: 700;
+            line-height: 1.15;
+            letter-spacing: -0.02em;
             color: var(--titre);
             font-variant-numeric: tabular-nums;
         }
 
-        /* Degrade navy -> turquoise sur le montant principal. La couleur pleine
-           ci-dessus reste la valeur par defaut : @supports garantit qu'un
-           navigateur sans background-clip:text affiche un chiffre lisible
-           plutot qu'un texte transparent, donc invisible. */
+        /* Dégradé signature Deep Navy vers Turquoise sur le montant principal */
         @supports ((-webkit-background-clip: text) or (background-clip: text)) {
             .finances-principal .montant {
-                background: linear-gradient(150deg, var(--titre) 10%, var(--primary) 90%);
+                background: linear-gradient(135deg, var(--titre) 15%, var(--primary) 85%);
                 -webkit-background-clip: text;
                 background-clip: text;
                 color: transparent;
@@ -3621,7 +3878,7 @@
         .finances-libelle {
             display: block;
             margin-top: 4px;
-            font-size: 12.5px;
+            font-size: 13px;
             font-weight: 600;
             color: var(--muted);
         }
@@ -3629,10 +3886,11 @@
         .finances-delta {
             display: inline-block;
             margin-top: 9px;
-            padding: 3px 10px;
+            padding: 3px 12px;
             border-radius: 20px;
-            background: linear-gradient(140deg, var(--ok-bg), var(--ok-bg));
+            background: var(--ok-bg);
             color: var(--ok-fg);
+            border: 1px solid rgba(13, 148, 104, 0.2);
             font-size: 11.5px;
             font-weight: 800;
         }
@@ -3640,13 +3898,12 @@
         .finances-taux {
             display: block;
             margin-top: 7px;
-            font-size: 11.5px;
+            font-size: 12px;
             font-weight: 700;
             color: var(--muted);
         }
 
-        /* Mouvement sur 7 jours : meme role que l'ancien .dc-kpi-delta, teinte
-           accent pour se distinguer du libelle qui le precede. */
+        /* Mouvement sur 7 jours : teinte accent */
         .kpi-delta {
             color: var(--primary-strong);
             font-weight: 800;
@@ -3655,13 +3912,14 @@
         .finances-secondaires {
             display: flex;
             flex-direction: column;
-            gap: 14px;
-            padding-left: 24px;
-            border-left: 1px solid var(--border);
+            gap: 16px;
+            padding-left: 28px;
+            border-left: 2px solid var(--border);
+            min-width: 170px;
         }
 
         .finances-secondaires strong {
-            font-size: 18px;
+            font-size: 19px;
             font-weight: 800;
             letter-spacing: -0.02em;
             color: var(--titre);
@@ -3669,16 +3927,14 @@
         }
 
         .finances-secondaires strong.attente {
-            color: var(--attente-fg);
+            color: var(--warning);
         }
 
         .finances-graphe {
-            height: 96px;
-            margin: 18px 24px 0;
+            height: 100px;
+            margin: 10px 24px 0;
         }
 
-        /* Legende SOUS le graphique : l'ancienne version la posait par-dessus
-           le trace, elle en devenait illisible. */
         .finances-legende {
             margin: 8px 24px 22px;
             font-size: 11px;
@@ -3702,9 +3958,9 @@
         }
 
         .assures-total strong {
-            font-size: 32px;
-            font-weight: 800;
-            letter-spacing: -0.03em;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.015em;
             color: var(--titre);
             font-variant-numeric: tabular-nums;
         }
@@ -3786,72 +4042,71 @@
             flex: 0 0 15px;
         }
 
-        /* --- Cartes KPI --- */
+        /* --- Cartes KPI Modernes & Épurées --- */
         .kpi-grille {
             display: grid;
             grid-template-columns: repeat(5, minmax(0, 1fr));
-            gap: 14px;
+            gap: 16px;
         }
 
         .kpi {
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            padding: 16px 17px;
+            gap: 10px;
+            padding: 20px 22px;
             border: 1px solid var(--border);
-            border-radius: 15px;
+            border-radius: 12px;
             background: var(--surface);
             text-decoration: none;
-            box-shadow:
-                0 1px 2px rgba(11, 32, 39, 0.05),
-                0 4px 14px rgba(11, 32, 39, 0.045);
-            transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+            box-shadow: var(--ombre-douce);
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+            position: relative;
         }
 
         .kpi:hover,
         .kpi:focus-visible {
-            border-color: var(--primary-light);
-            transform: translateY(-3px);
-            box-shadow:
-                0 2px 5px rgba(11, 32, 39, 0.06),
-                0 16px 40px rgba(14, 124, 134, 0.16);
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.05);
         }
 
         .kpi-entete {
             display: flex;
             align-items: center;
-            gap: 7px;
-            font-size: 11.5px;
-            font-weight: 700;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
             color: var(--muted);
         }
 
         .kpi-entete .icone-nav {
-            width: 14px;
-            height: 14px;
-            flex: 0 0 14px;
-            color: var(--primary-strong);
+            width: 16px;
+            height: 16px;
+            flex: 0 0 16px;
+            color: var(--primary);
         }
 
         .kpi strong {
-            font-size: 26px;
-            font-weight: 800;
-            line-height: 1;
-            letter-spacing: -0.03em;
+            font-size: 22px;
+            font-weight: 700;
+            line-height: 1.2;
+            letter-spacing: -0.015em;
             color: var(--titre);
             font-variant-numeric: tabular-nums;
         }
 
-        .kpi-pied {
-            font-size: 11.5px;
-            font-weight: 700;
-            color: var(--muted);
+        .kpi strong.code {
+            font-size: 20px;
         }
 
-        /* Seule l'information secondaire vire a l'ambre quand elle signale un
-           manque : les cartes restent homogenes (l'ancien liseré terracotta
-           sur 2 cartes sur 6 n'etait explique par rien). */
-        .kpi-pied.manque { color: var(--attente-fg); }
+        .kpi-pied {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--muted);
+            line-height: 1.4;
+        }
+
+        /* Information secondaire qui alerte sur un manque */
+        .kpi-pied.manque { color: var(--attente-fg); font-weight: 700; }
 
         /* --- Listes d'activite --- */
         .duo-listes,
@@ -3877,10 +4132,17 @@
         .liste-lignes a {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 11px 0;
+            gap: 14px;
+            padding: 13px 12px;
             text-decoration: none;
             color: inherit;
+            border-radius: 10px;
+            transition: all 0.16s ease;
+        }
+
+        .liste-lignes a:hover {
+            background: var(--primary-soft);
+            transform: translateX(4px);
         }
 
         .liste-lignes a:hover .ligne-nom {
@@ -3890,15 +4152,16 @@
         .ligne-avatar {
             display: grid;
             place-items: center;
-            flex: 0 0 32px;
-            width: 32px;
-            height: 32px;
-            border-radius: 11px;
-            background: linear-gradient(145deg, #e4f0ef, #d3e6e4);
+            flex: 0 0 34px;
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary-soft), #d3e8eb);
             color: var(--primary-strong);
-            font-size: 11px;
+            font-size: 11.5px;
             font-weight: 800;
             text-transform: uppercase;
+            box-shadow: 0 1px 3px rgba(11, 32, 39, 0.08);
         }
 
         .ligne-texte {
@@ -3907,7 +4170,7 @@
 
         .ligne-nom {
             display: block;
-            font-size: 13px;
+            font-size: 13.5px;
             font-weight: 700;
             color: var(--titre);
         }
@@ -3916,6 +4179,7 @@
             display: block;
             font-size: 11.5px;
             color: var(--muted);
+            margin-top: 1px;
         }
 
         .liste-lignes .badge,
@@ -3925,40 +4189,45 @@
         }
 
         .etiquette-role {
-            padding: 3px 9px;
+            padding: 4px 10px;
             border-radius: 20px;
             background: var(--neutre-bg);
-            color: var(--muted);
-            font-size: 10.5px;
-            font-weight: 800;
+            color: var(--neutre-fg);
+            font-size: 11px;
+            font-weight: 700;
+            border: 1px solid rgba(0, 0, 0, 0.05);
         }
 
-        /* --- Fiches a completer + actions rapides --- */
+        /* --- Fiches à compléter + actions rapides --- */
         .fiches-grille {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 11px;
+            gap: 12px;
             padding: 0 24px 24px;
         }
 
         .fiche {
             display: flex;
             align-items: center;
-            gap: 11px;
-            padding: 12px 13px;
+            gap: 12px;
+            padding: 14px 16px;
             border: 1px solid var(--border);
-            border-radius: 12px;
-            background: var(--fiche-bg);
+            border-radius: 14px;
+            background: var(--surface);
             color: var(--text);
             text-decoration: none;
-            font-size: 11.5px;
+            font-size: 12.5px;
             font-weight: 600;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+            transition: all 0.2s ease;
         }
 
         .fiche:hover,
         .fiche:focus-visible {
-            border-color: var(--primary-light);
+            border-color: var(--primary);
             background: var(--surface);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(14, 124, 134, 0.12);
         }
 
         .fiche .icone-nav {
@@ -3979,20 +4248,23 @@
         .actions-grille {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 10px;
+            gap: 12px;
             padding: 0 24px 24px;
         }
 
         .actions-grille .button {
             justify-content: flex-start;
-            gap: 8px;
-            font-size: 12.5px;
+            gap: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            padding: 12px 16px;
+            border-radius: 12px;
         }
 
         .actions-grille .icone-nav {
-            width: 15px;
-            height: 15px;
-            flex: 0 0 15px;
+            width: 17px;
+            height: 17px;
+            flex: 0 0 17px;
         }
 
         @media (max-width: 1180px) {
@@ -4651,7 +4923,7 @@
 
         .param-resume strong {
             display: block;
-            font-family: 'Manrope', system-ui, sans-serif;
+            font-family: var(--font-headings);
             font-size: 16.5px;
             font-weight: 800;
             letter-spacing: -0.02em;
@@ -5370,6 +5642,21 @@
                 display: inline-flex;
             }
 
+            #bouton-fermer-menu-mobile {
+                background: rgba(255, 255, 255, 0.08) !important;
+                border: 1px solid rgba(255, 255, 255, 0.16) !important;
+                color: #ffffff !important;
+                border-radius: 8px !important;
+                width: 32px !important;
+                height: 32px !important;
+                padding: 0 !important;
+            }
+
+            #bouton-fermer-menu-mobile:hover {
+                background: rgba(255, 255, 255, 0.16) !important;
+                color: var(--accent-turquoise) !important;
+            }
+
             .sidebar-overlay {
                 display: none;
                 position: fixed;
@@ -5917,12 +6204,14 @@
            CHIPS ET BOUTONS EXPANSIBLES AU SURVOL (EXPANDABLE ACTION CHIPS)
            ========================================================================== */
         .btn-expand,
-        .btn-retour-expand {
+        .btn-retour-expand,
+        .btn-action-expand,
+        .action-chip {
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
             border-radius: 999px !important;
-            padding: 7px 11px !important;
+            padding: 7px 12px !important;
             min-height: 36px !important;
             height: 36px !important;
             box-sizing: border-box !important;
@@ -5938,7 +6227,9 @@
         }
 
         .btn-expand .expand-text,
-        .btn-retour-expand .expand-text {
+        .btn-retour-expand .expand-text,
+        .btn-action-expand .expand-text,
+        .action-chip .expand-text {
             max-width: 0;
             opacity: 0;
             overflow: hidden;
@@ -5956,8 +6247,12 @@
         .btn-expand:hover,
         .btn-expand:focus-visible,
         .btn-retour-expand:hover,
-        .btn-retour-expand:focus-visible {
-            padding: 7px 15px !important;
+        .btn-retour-expand:focus-visible,
+        .btn-action-expand:hover,
+        .btn-action-expand:focus-visible,
+        .action-chip:hover,
+        .action-chip:focus-visible {
+            padding: 7px 16px !important;
             border-color: var(--primary) !important;
             color: var(--primary-strong) !important;
             box-shadow: 0 4px 14px rgba(14, 124, 134, 0.2) !important;
@@ -5966,29 +6261,79 @@
         .btn-expand:hover .expand-text,
         .btn-expand:focus-visible .expand-text,
         .btn-retour-expand:hover .expand-text,
-        .btn-retour-expand:focus-visible .expand-text {
-            max-width: 220px;
+        .btn-retour-expand:focus-visible .expand-text,
+        .btn-action-expand:hover .expand-text,
+        .btn-action-expand:focus-visible .expand-text,
+        .action-chip:hover .expand-text,
+        .action-chip:focus-visible .expand-text {
+            max-width: 260px;
             opacity: 1;
             margin-left: 6px;
             color: var(--primary-strong);
         }
 
-        .btn-expand.primary {
+        .btn-expand.primary,
+        .btn-action-expand.primary,
+        .action-chip.primary {
             background: var(--primary-strong) !important;
             border-color: var(--primary-strong) !important;
             color: #ffffff !important;
         }
 
         .btn-expand.primary:hover,
-        .btn-expand.primary:focus-visible {
+        .btn-expand.primary:focus-visible,
+        .btn-action-expand.primary:hover,
+        .btn-action-expand.primary:focus-visible,
+        .action-chip.primary:hover,
+        .action-chip.primary:focus-visible {
             background: var(--primary) !important;
             border-color: var(--primary) !important;
             color: #ffffff !important;
             box-shadow: 0 4px 14px rgba(14, 124, 134, 0.35) !important;
         }
 
-        .btn-expand.primary .expand-text {
+        .btn-expand.primary .expand-text,
+        .btn-action-expand.primary .expand-text,
+        .action-chip.primary .expand-text {
             color: #ffffff !important;
+        }
+
+        /* Variante Danger (Suppression, Annulation) */
+        .btn-expand.danger,
+        .btn-action-expand.danger,
+        .action-chip.danger {
+            color: var(--danger) !important;
+            border-color: rgba(179, 38, 30, 0.3) !important;
+        }
+        .btn-expand.danger:hover,
+        .btn-action-expand.danger:hover,
+        .action-chip.danger:hover {
+            border-color: var(--danger) !important;
+            color: var(--danger-strong) !important;
+            box-shadow: 0 4px 14px rgba(179, 38, 30, 0.2) !important;
+        }
+        .btn-expand.danger .expand-text,
+        .btn-action-expand.danger .expand-text,
+        .action-chip.danger .expand-text {
+            color: var(--danger) !important;
+        }
+
+        /* Sur mobile / écran tactile sans pointeur précis : le texte reste déployé pour préserver l'accessibilité */
+        @media (hover: none), (max-width: 640px) {
+            .btn-expand,
+            .btn-retour-expand,
+            .btn-action-expand,
+            .action-chip {
+                padding: 7px 14px !important;
+            }
+            .btn-expand .expand-text,
+            .btn-retour-expand .expand-text,
+            .btn-action-expand .expand-text,
+            .action-chip .expand-text {
+                max-width: none !important;
+                opacity: 1 !important;
+                margin-left: 6px !important;
+            }
         }
 
         /* ==========================================================================
@@ -6322,39 +6667,53 @@
                 </button>
             </div>
 
-            <div class="user-card">
-                <strong>{{ user.get_full_name|default:user.email }}</strong>
-                <span>{{ current_role_label }}</span>
-            </div>
-
             <nav aria-label="Navigation principale">
                 {% if current_role == "ADMIN" %}
                 {% with url_name=request.resolver_match.url_name %}
+                <span class="nav-section">Supervision Plateforme</span>
+                <a href="{% url 'dashboard' %}" aria-label="Tableau de bord système" data-tooltip="Tableau de bord système" class="{% if url_name == 'dashboard' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord système</span></a>
+                <a href="{% url 'liste_organismes' %}" aria-label="Entreprises / IPM" data-tooltip="Entreprises / IPM" class="{% if url_name == 'liste_organismes' or url_name == 'ajouter_organisme' or url_name == 'modifier_organisme' %}active{% endif %}">{% icone "building" %} <span class="nav-texte">Entreprises / IPM</span></a>
+
+                <span class="nav-section">Comptes & Sécurité</span>
+                <a href="{% url 'liste_utilisateurs' %}" aria-label="Comptes signalés" data-tooltip="Comptes signalés" class="{% if url_name == 'liste_utilisateurs' or url_name == 'ajouter_utilisateur' or url_name == 'modifier_utilisateur' or url_name == 'importer_utilisateurs_excel' or url_name == 'reinitialiser_mot_de_passe' or url_name == 'supprimer_utilisateur' %}active{% endif %}">{% icone "users" %} <span class="nav-texte">Comptes signalés</span></a>
+                <a href="{% url 'journal_activite' %}" aria-label="Journal de sécurité" data-tooltip="Journal de sécurité" class="{% if url_name == 'journal_activite' or url_name == 'admin_logs' %}active{% endif %}">{% icone "shield" %} <span class="nav-texte">Journal de sécurité</span></a>
+
+                <span class="nav-section">Infrastructure & Support</span>
+                <a href="{% url 'supervision_systeme' %}" aria-label="Supervision Système" data-tooltip="Supervision Système" class="{% if url_name == 'supervision_systeme' %}active{% endif %}">{% icone "cpu" %} <span class="nav-texte">Supervision Système</span></a>
+                <a href="{% url 'metrics_prometheus' %}" aria-label="Métriques Prometheus" data-tooltip="Métriques Prometheus" class="{% if url_name == 'metrics_prometheus' %}active{% endif %}">{% icone "bar-chart" %} <span class="nav-texte">Métriques Prometheus</span></a>
+                <a href="{% url 'admin_liste_demandes_support' %}" aria-label="Support informatique" data-tooltip="Support informatique" class="{% if url_name == 'admin_liste_demandes_support' or url_name == 'admin_detail_demande_support' %}active{% endif %}">{% icone "chat" %} <span class="nav-texte">Support informatique</span>{% if nb_demandes_support_attente %} <span class="badge-non-lues">{{ nb_demandes_support_attente }}</span>{% endif %}</a>
+                <a href="{% url 'envoyer_notification' %}" aria-label="Notifications système" data-tooltip="Notifications système" class="{% if url_name == 'envoyer_notification' or url_name == 'liste_notifications_envoyees' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications système</span></a>
+                <a href="{% url 'parametres' %}" aria-label="Paramètres" data-tooltip="Paramètres serveur" class="{% if url_name == 'parametres' or url_name == 'parametres_section' or url_name == 'mon_compte' or url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "settings" %} <span class="nav-texte">Paramètres serveur</span></a>
+                {% endwith %}
+                {% elif current_role == "GESTIONNAIRE" %}
+                {% with url_name=request.resolver_match.url_name %}
+                <span class="nav-section">Pilotage</span>
                 <a href="{% url 'dashboard' %}" aria-label="Tableau de bord" data-tooltip="Tableau de bord" class="{% if url_name == 'dashboard' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord</span></a>
-                <span class="nav-section">Pilotage & Opérations</span>
-                <a href="{% url 'liste_prises_en_charge' %}" aria-label="Prises en charge" data-tooltip="Prises en charge" class="{% if url_name == 'liste_prises_en_charge' or url_name == 'ajouter_prise_en_charge' or url_name == 'modifier_prise_en_charge' or url_name == 'supprimer_prise_en_charge' %}active{% endif %}">{% icone "shield-check" %} <span class="nav-texte">Prises en charge</span></a>
-                
-                <span class="nav-section">Acteurs & Établissements</span>
-                <a href="{% url 'liste_utilisateurs' %}" aria-label="Utilisateurs" data-tooltip="Utilisateurs" class="{% if url_name == 'liste_utilisateurs' or url_name == 'ajouter_utilisateur' or url_name == 'modifier_utilisateur' or url_name == 'importer_utilisateurs_excel' or url_name == 'reinitialiser_mot_de_passe' or url_name == 'supprimer_utilisateur' %}active{% endif %}">{% icone "users" %} <span class="nav-texte">Utilisateurs</span></a>
-                <a href="{% url 'liste_patients' %}" aria-label="Assurés" data-tooltip="Assurés" class="{% if url_name == 'liste_patients' or url_name == 'ajouter_patient' or url_name == 'modifier_patient' or url_name == 'supprimer_patient' %}active{% endif %}">{% icone "id-card" %} <span class="nav-texte">Assurés</span></a>
-                <a href="{% url 'liste_medecins' %}" aria-label="Médecins" data-tooltip="Médecins" class="{% if url_name == 'liste_medecins' or url_name == 'ajouter_medecin' or url_name == 'modifier_medecin' or url_name == 'supprimer_medecin' %}active{% endif %}">{% icone "stethoscope" %} <span class="nav-texte">Médecins</span></a>
-                <a href="{% url 'liste_pharmaciens' %}" aria-label="Pharmaciens" data-tooltip="Pharmaciens" class="{% if url_name == 'liste_pharmaciens' or url_name == 'modifier_pharmacien' %}active{% endif %}">{% icone "pill" %} <span class="nav-texte">Pharmaciens</span></a>
-                <a href="{% url 'liste_prestataires' %}" aria-label="Prestataires" data-tooltip="Prestataires" class="{% if url_name == 'liste_prestataires' or url_name == 'ajouter_prestataire' or url_name == 'modifier_prestataire' or url_name == 'supprimer_prestataire' %}active{% endif %}">{% icone "building" %} <span class="nav-texte">Prestataires</span></a>
-                
-                <span class="nav-section">Activité Médicale & Finances</span>
-                <a href="{% url 'liste_services' %}" aria-label="Services médicaux" data-tooltip="Services médicaux" class="{% if url_name == 'liste_services' or url_name == 'ajouter_service' or url_name == 'modifier_service' or url_name == 'supprimer_service' %}active{% endif %}">{% icone "credit-card" %} <span class="nav-texte">Services médicaux</span></a>
+                <a href="{% url 'rapports' %}" aria-label="Rapports & Statistiques" data-tooltip="Rapports & Statistiques" class="{% if url_name == 'rapports' %}active{% endif %}">{% icone "bar-chart" %} <span class="nav-texte">Rapports & Statistiques</span></a>
+
+                <span class="nav-section">Adhérents & Contrats</span>
+                <a href="{% url 'liste_patients' %}" aria-label="Assurés & Ayants droit" data-tooltip="Assurés & Ayants droit" class="{% if url_name == 'liste_patients' or url_name == 'ajouter_patient' or url_name == 'modifier_patient' or url_name == 'supprimer_patient' or url_name == 'carte_patient' %}active{% endif %}">{% icone "id-card" %} <span class="nav-texte">Assurés & Ayants droit</span>{% if nb_ayants_droit_en_attente %} <span class="badge-non-lues">{{ nb_ayants_droit_en_attente }}</span>{% endif %}</a>
                 <a href="{% url 'liste_plans_couverture' %}" aria-label="Plans de couverture" data-tooltip="Plans de couverture" class="{% if url_name == 'liste_plans_couverture' or url_name == 'ajouter_plan_couverture' or url_name == 'modifier_plan_couverture' or url_name == 'supprimer_plan_couverture' %}active{% endif %}">{% icone "clipboard-list" %} <span class="nav-texte">Plans de couverture</span></a>
+                <a href="{% url 'admin_liste_demandes_support' %}" aria-label="Assistance assurés" data-tooltip="Assistance assurés" class="{% if url_name == 'admin_liste_demandes_support' or url_name == 'admin_detail_demande_support' %}active{% endif %}">{% icone "chat" %} <span class="nav-texte">Assistance assurés</span>{% if nb_demandes_support_attente %} <span class="badge-non-lues">{{ nb_demandes_support_attente }}</span>{% endif %}</a>
+
+                <span class="nav-section">Prises en charge & Activité</span>
+                <a href="{% url 'liste_prises_en_charge' %}" aria-label="Prises en charge" data-tooltip="Prises en charge" class="{% if url_name == 'liste_prises_en_charge' or url_name == 'ajouter_prise_en_charge' or url_name == 'modifier_prise_en_charge' or url_name == 'supprimer_prise_en_charge' %}active{% endif %}">{% icone "shield-check" %} <span class="nav-texte">Prises en charge</span>{% if nb_prises_en_charge_attente %} <span class="badge-non-lues">{{ nb_prises_en_charge_attente }}</span>{% endif %}</a>
                 <a href="{% url 'liste_rendez_vous' %}" aria-label="Rendez-vous" data-tooltip="Rendez-vous" class="{% if url_name == 'liste_rendez_vous' %}active{% endif %}">{% icone "calendar" %} <span class="nav-texte">Rendez-vous</span></a>
                 <a href="{% url 'liste_consultations' %}" aria-label="Consultations" data-tooltip="Consultations" class="{% if url_name == 'liste_consultations' %}active{% endif %}">{% icone "clock-history" %} <span class="nav-texte">Consultations</span></a>
                 <a href="{% url 'liste_ordonnances' %}" aria-label="Ordonnances" data-tooltip="Ordonnances" class="{% if url_name == 'liste_ordonnances' %}active{% endif %}">{% icone "qr-scan" %} <span class="nav-texte">Ordonnances</span></a>
-                <a href="{% url 'liste_paiements' %}" aria-label="Paiements" data-tooltip="Paiements" class="{% if url_name == 'liste_paiements' or url_name == 'marquer_paiement_regle' %}active{% endif %}">{% icone "receipt" %} <span class="nav-texte">Paiements</span></a>
-                <a href="{% url 'bordereau_teletransmission' %}" aria-label="Télétransmission IPM" data-tooltip="Télétransmission IPM" class="{% if url_name == 'bordereau_teletransmission' %}active{% endif %}">{% icone "file-text" %} <span class="nav-texte">Télétransmission IPM</span></a>
-                
-                <span class="nav-section">Analyse & Configuration</span>
-                <a href="{% url 'envoyer_notification' %}" aria-label="Notifications" data-tooltip="Notifications" class="{% if url_name == 'envoyer_notification' or url_name == 'liste_notifications_envoyees' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications</span></a>
-                <a href="{% url 'admin_liste_demandes_support' %}" aria-label="Support & Demandes" data-tooltip="Support & Demandes" class="{% if url_name == 'admin_liste_demandes_support' or url_name == 'admin_detail_demande_support' %}active{% endif %}">{% icone "chat" %} <span class="nav-texte">Support & Demandes</span>{% if nb_demandes_support_attente %} <span class="badge-non-lues">{{ nb_demandes_support_attente }}</span>{% endif %}</a>
-                <a href="{% url 'rapports' %}" aria-label="Rapports" data-tooltip="Rapports" class="{% if url_name == 'rapports' %}active{% endif %}">{% icone "bar-chart" %} <span class="nav-texte">Rapports</span></a>
-                <a href="{% url 'parametres' %}" aria-label="Paramètres" data-tooltip="Paramètres" class="{% if url_name == 'parametres' or url_name == 'parametres_section' or url_name == 'journal_activite' or url_name == 'mon_compte' or url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "settings" %} <span class="nav-texte">Paramètres</span></a>
+
+                <span class="nav-section">Réseau de Soins Conventionné</span>
+                <a href="{% url 'liste_conventions' %}" aria-label="Conventions IPM" data-tooltip="Conventions IPM" class="{% if url_name == 'liste_conventions' or url_name == 'ajouter_convention' %}active{% endif %}">{% icone "shield-check" %} <span class="nav-texte">Conventions IPM</span></a>
+                <a href="{% url 'liste_prestataires' %}" aria-label="Prestataires" data-tooltip="Prestataires" class="{% if url_name == 'liste_prestataires' or url_name == 'ajouter_prestataire' or url_name == 'modifier_prestataire' or url_name == 'supprimer_prestataire' %}active{% endif %}">{% icone "building" %} <span class="nav-texte">Prestataires</span></a>
+                <a href="{% url 'liste_medecins' %}" aria-label="Médecins partenaires" data-tooltip="Médecins partenaires" class="{% if url_name == 'liste_medecins' or url_name == 'ajouter_medecin' or url_name == 'modifier_medecin' or url_name == 'supprimer_medecin' %}active{% endif %}">{% icone "stethoscope" %} <span class="nav-texte">Médecins partenaires</span></a>
+                <a href="{% url 'liste_pharmaciens' %}" aria-label="Pharmaciens partenaires" data-tooltip="Pharmaciens partenaires" class="{% if url_name == 'liste_pharmaciens' or url_name == 'ajouter_pharmacien' or url_name == 'modifier_pharmacien' %}active{% endif %}">{% icone "pill" %} <span class="nav-texte">Pharmaciens partenaires</span></a>
+                <a href="{% url 'liste_services' %}" aria-label="Actes & Tarifs médicaux" data-tooltip="Actes & Tarifs médicaux" class="{% if url_name == 'liste_services' or url_name == 'ajouter_service' or url_name == 'modifier_service' or url_name == 'supprimer_service' %}active{% endif %}">{% icone "credit-card" %} <span class="nav-texte">Actes & Tarifs médicaux</span></a>
+
+                <span class="nav-section">Finances & Règlements</span>
+                <a href="{% url 'liste_paiements' %}" aria-label="Paiements & Factures" data-tooltip="Paiements & Factures" class="{% if url_name == 'liste_paiements' or url_name == 'marquer_paiement_regle' %}active{% endif %}">{% icone "receipt" %} <span class="nav-texte">Paiements & Factures</span>{% if nb_paiements_non_regles %} <span class="badge-non-lues">{{ nb_paiements_non_regles }}</span>{% endif %}</a>
+                <a href="{% url 'liste_demandes_remboursement' %}" aria-label="Remboursements hors réseau" data-tooltip="Remboursements hors réseau" class="{% if url_name == 'liste_demandes_remboursement' or url_name == 'instruire_demande_remboursement' or url_name == 'marquer_remboursement_regle' %}active{% endif %}">{% icone "credit-card" %} <span class="nav-texte">Remboursements</span>{% if nb_remboursements_attente %} <span class="badge-non-lues">{{ nb_remboursements_attente }}</span>{% endif %}</a>
+                <a href="{% url 'bordereau_teletransmission' %}" aria-label="Bordereau Tiers-Payant" data-tooltip="Bordereau Tiers-Payant" class="{% if url_name == 'bordereau_teletransmission' %}active{% endif %}">{% icone "file-text" %} <span class="nav-texte">Bordereau Tiers-Payant</span></a>
+                <a href="{% url 'parametres' %}" aria-label="Paramètres" data-tooltip="Paramètres" class="{% if url_name == 'parametres' or url_name == 'parametres_section' or url_name == 'mon_compte' or url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "settings" %} <span class="nav-texte">Paramètres</span></a>
                 {% endwith %}
                 {% elif current_role == "MEDECIN" %}
                 {% with url_name=request.resolver_match.url_name %}
@@ -6382,6 +6741,7 @@
                 <a href="{% url 'mes_rendez_vous_assure' %}" aria-label="Mes rendez-vous" data-tooltip="Mes rendez-vous" class="{% if url_name == 'mes_rendez_vous_assure' or url_name == 'ajouter_rendez_vous_assure' %}active{% endif %}">{% icone "calendar" %} <span class="nav-texte">Mes rendez-vous</span></a>
                 <a href="{% url 'mes_ordonnances_assure' %}" aria-label="Mes ordonnances" data-tooltip="Mes ordonnances" class="{% if url_name == 'mes_ordonnances_assure' or url_name == 'voir_ordonnance_assure' %}active{% endif %}">{% icone "pill" %} <span class="nav-texte">Mes ordonnances</span></a>
                 <a href="{% url 'mes_prises_en_charge_assure' %}" aria-label="Mes prises en charge" data-tooltip="Mes prises en charge" class="{% if url_name == 'mes_prises_en_charge_assure' or url_name == 'demander_prise_en_charge_assure' %}active{% endif %}">{% icone "shield-check" %} <span class="nav-texte">Mes prises en charge</span></a>
+                <a href="{% url 'mes_remboursements_assure' %}" aria-label="Mes remboursements" data-tooltip="Mes remboursements" class="{% if url_name == 'mes_remboursements_assure' or url_name == 'demander_remboursement_assure' %}active{% endif %}">{% icone "receipt" %} <span class="nav-texte">Mes remboursements</span></a>
                 
                 <span class="nav-section">Réseau & Foyer</span>
                 <a href="{% url 'prestataires_proches' %}" aria-label="Prestataires conventionnés" data-tooltip="Prestataires conventionnés" class="{% if url_name == 'prestataires_proches' %}active{% endif %}">{% icone "map-pin" %} <span class="nav-texte">Prestataires conventionnés</span></a>
@@ -6390,6 +6750,20 @@
                 {% endwith %}
                 {% endif %}
             </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-card">
+                    <span class="user-card-avatar">{{ user.first_name|slice:":1"|default:user.email|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}</span>
+                    <div class="user-card-info">
+                        <strong>{{ user.get_full_name|default:user.email }}</strong>
+                        <span>{{ current_role_label }}{% if current_organisme %} · {{ current_organisme.code }}{% endif %}</span>
+                    </div>
+                </div>
+                <div class="sidebar-systeme-status">
+                    <span class="status-pulse-dot" aria-hidden="true"></span>
+                    <span>SantéSN Cloud · Opérationnel</span>
+                </div>
+            </div>
         </aside>
         {% endif %}
 
@@ -6415,11 +6789,11 @@
                     <nav class="fil-ariane" aria-label="Fil d'ariane">
                         <b>{{ request.resolver_match.url_name|libelle_page }}</b>
                     </nav>
-                    {% if current_role == "ADMIN" %}
-                    <form class="topbar-recherche" method="get" action="{% url 'liste_utilisateurs' %}" role="search">
-                        <label class="sr-only" for="recherche-globale">Rechercher un utilisateur</label>
+                    {% if current_role == "GESTIONNAIRE" %}
+                    <form class="topbar-recherche" method="get" action="{% url 'liste_patients' %}" role="search">
+                        <label class="sr-only" for="recherche-globale">Rechercher un assuré</label>
                         {% icone "search" %}
-                        <input id="recherche-globale" type="search" name="q" placeholder="Rechercher un utilisateur">
+                        <input id="recherche-globale" type="search" name="q" placeholder="Rechercher un assuré">
                     </form>
                     {% endif %}
                     <div class="topbar-droite">
@@ -6482,7 +6856,7 @@
                                 <span class="topbar-avatar" aria-hidden="true">{{ user.get_full_name|default:user.email|slice:":2"|upper }}</span>
                                 <span class="topbar-identite">
                                     <b>{{ user.get_full_name|default:user.email }}</b>
-                                    <span>{{ current_role_label }}</span>
+                                    <span>{{ current_role_label }}{% if current_organisme %} · {{ current_organisme.nom }}{% endif %}</span>
                                 </span>
                                 {% icone "chevron-down" %}
                             </summary>
@@ -6497,7 +6871,7 @@
                                 <a href="{% url 'dashboard_pharmacien' %}">{% icone "grid" %} Tableau de bord</a>
                                 {% elif current_role == "ASSURE" %}
                                 <a href="{% url 'dashboard_assure' %}">{% icone "grid" %} Tableau de bord</a>
-                                {% elif current_role == "ADMIN" %}
+                                {% elif current_role == "ADMIN" or current_role == "GESTIONNAIRE" %}
                                 <a href="{% url 'dashboard' %}">{% icone "grid" %} Tableau de bord</a>
                                 {% endif %}
                                 <a href="{% url 'mon_compte' %}">{% icone "user-circle" %} Mon compte</a>
@@ -6634,6 +7008,83 @@
             window.addEventListener('resize', function () {
                 appliquer(window.localStorage.getItem(CLE_STOCKAGE) === '1');
             });
+
+            // Mémorisation et préservation du défilement de la barre latérale
+            // Empêche la sidebar de remonter tout en haut lors d'un clic sur un élément ou rechargement
+            var nav = barreLaterale.querySelector('nav');
+            if (nav) {
+                var CLE_SCROLL = 'santesn-sidebar-scroll';
+                try {
+                    var positionPrecedente = window.sessionStorage.getItem(CLE_SCROLL);
+                    if (positionPrecedente !== null) {
+                        nav.scrollTop = parseInt(positionPrecedente, 10) || 0;
+                    } else {
+                        // S'il n'y a pas de position enregistrée, faire défiler doucement vers le lien actif s'il est en bas
+                        var lienActif = nav.querySelector('a.active');
+                        if (lienActif) {
+                            var rectLien = lienActif.getBoundingClientRect();
+                            var rectNav = nav.getBoundingClientRect();
+                            if (rectLien.bottom > rectNav.bottom || rectLien.top < rectNav.top) {
+                                lienActif.scrollIntoView({ block: 'nearest' });
+                            }
+                        }
+                    }
+                } catch (e) {}
+
+                // Mémoriser la position lors du clic sur un lien
+                nav.addEventListener('click', function (e) {
+                    var lien = e.target.closest('a');
+                    if (lien) {
+                        try {
+                            window.sessionStorage.setItem(CLE_SCROLL, String(nav.scrollTop));
+                        } catch (err) {}
+                    }
+                });
+
+                // Enregistrer avant de quitter la page
+                window.addEventListener('beforeunload', function () {
+                    try {
+                        window.sessionStorage.setItem(CLE_SCROLL, String(nav.scrollTop));
+                    } catch (err) {}
+                });
+            }
+        })();
+
+        (function () {
+            // Auto-encapsulation et initialisation universelle des boutons extensibles
+            // Cible les classes explicites ainsi que les boutons d'actions d'en-tête (sauf soumission de formulaire)
+            function initialiserBoutonsExtensibles() {
+                var selecteurs = '.btn-expand, .btn-retour-expand, .btn-action-expand, .action-chip, .btn-export, .btn-imprimer, .btn-telecharger, .page-title > a.button:not(.btn-statique), .page-title > div:last-child > a.button:not(.btn-statique)';
+                var boutons = document.querySelectorAll(selecteurs);
+                boutons.forEach(function (btn) {
+                    if (btn.classList.contains('btn-statique') || (btn.closest('form:not([role="search"])') && btn.tagName === 'BUTTON')) {
+                        return; // Préserver les boutons de soumission stables
+                    }
+                    if (!btn.classList.contains('btn-expand') && !btn.classList.contains('btn-retour-expand') && !btn.classList.contains('btn-action-expand')) {
+                        btn.classList.add('btn-expand');
+                    }
+                    if (!btn.querySelector('.expand-text')) {
+                        var textNodes = [];
+                        btn.childNodes.forEach(function (node) {
+                            if (node.nodeType === Node.TEXT_NODE && node.textContent.trim().length > 0) {
+                                textNodes.push(node);
+                            }
+                        });
+                        if (textNodes.length > 0) {
+                            var span = document.createElement('span');
+                            span.className = 'expand-text';
+                            span.textContent = textNodes.map(function (n) { return n.textContent.trim(); }).join(' ');
+                            textNodes.forEach(function (n) { btn.removeChild(n); });
+                            btn.appendChild(span);
+                        }
+                    }
+                });
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initialiserBoutonsExtensibles);
+            } else {
+                initialiserBoutonsExtensibles();
+            }
         })();
 
         (function () {

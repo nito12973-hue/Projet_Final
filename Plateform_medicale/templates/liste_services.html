@@ -9,7 +9,7 @@
         <h1>Services médicaux</h1>
         <p class="subtitle">Catalogue des actes et prestations médicales tarifées du réseau conventionné.</p>
     </div>
-    <a class="button primary" href="{% url 'ajouter_service' %}">{% icone "plus-circle" %} Ajouter un service médical</a>
+    <a class="button primary btn-expand primary" href="{% url 'ajouter_service' %}" title="Ajouter un acte ou service médical" aria-label="Ajouter un service médical">{% icone "plus-circle" %} <span class="expand-text">Ajouter un service médical</span></a>
 </section>
 
 {% if services %}

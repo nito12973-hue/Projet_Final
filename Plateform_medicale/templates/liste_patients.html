@@ -1,27 +1,27 @@
 {% extends "base.html" %}
 {% load formats icones %}
 
-{% block title %}Assures{% endblock %}
+{% block title %}Assurés{% endblock %}
 
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>Assures et ayants droit</h1>
-        <p class="subtitle">Liste des assures principaux et de leurs ayants droit.</p>
+        <h1>Assurés et ayants droit</h1>
+        <p class="subtitle">Liste des assurés principaux et de leurs ayants droit.</p>
     </div>
     <div class="actions">
-        <a class="button" href="{% url 'liste_plans_couverture' %}">Plans de couverture</a>
-        <a class="button primary" href="{% url 'ajouter_patient' %}">Ajouter</a>
+        <a class="button btn btn-expand" href="{% url 'liste_plans_couverture' %}" title="Consulter les plans de couverture" aria-label="Plans de couverture">{% icone "clipboard-list" %} <span class="expand-text">Plans de couverture</span></a>
+        <a class="button primary btn-expand primary" href="{% url 'ajouter_patient' %}" title="Ajouter un nouvel assuré" aria-label="Nouvel assuré">{% icone "plus" %} <span class="expand-text">Nouvel assuré</span></a>
     </div>
 </section>
 
 {% if nb_en_attente > 0 %}
-<div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-left: 4px solid #d97706; padding: 12px 18px; border-radius: 10px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+<div class="message-banner warning" style="margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 14px 18px; border-radius: 10px;">
     <div>
-        <strong style="color: #b45309; font-size: 14px;">Contrôle anti-fraude &bull; {{ nb_en_attente }} demande(s) d'ayant(s) droit en attente d'instruction</strong>
-        <p style="margin: 3px 0 0; font-size: 12.5px; color: var(--texte);">Des déclarations d'ayants droit nécessitent la vérification des pièces justificatives d'état civil avant activation de leurs cartes.</p>
+        <strong>Contrôle anti-fraude · {{ nb_en_attente }} demande{{ nb_en_attente|pluralize }} d'ayant{{ nb_en_attente|pluralize:"s" }} droit en attente d'instruction</strong>
+        <p style="margin: 3px 0 0; font-size: 13px; color: var(--muted);">Des déclarations d'ayants droit nécessitent la vérification des pièces justificatives d'état civil avant activation de leurs cartes.</p>
     </div>
-    <a href="?type=AYANT_DROIT&statut=EN_ATTENTE" class="button btn btn-sm" style="background: #d97706; color: white; border: none; font-weight: 600;">
+    <a href="?type=AYANT_DROIT&statut=EN_ATTENTE" class="button btn btn-sm" style="background: #d97706; color: #ffffff; border: none; font-weight: 600;">
         Voir les demandes à instruire ({{ nb_en_attente }}) &rarr;
     </a>
 </div>
@@ -81,25 +81,20 @@
                 <td>
                     <strong>{{ patient.prenom }} {{ patient.nom }}</strong>
                     {% if patient.lien_parente %}<span style="font-size: 11px; color: var(--muted); display: block;">({{ patient.get_lien_parente_display }})</span>{% endif %}
+                    {% if patient.entreprise %}<span style="font-size: 11px; color: var(--primary-strong); display: block;">Entreprise : {{ patient.entreprise }}</span>{% endif %}
                 </td>
                 <td>{{ patient.get_type_beneficiaire_display }}</td>
                 <td>
                     {% if patient.statut_validation == "VALIDE" %}
-                    <span class="badge" style="background: rgba(16, 185, 129, 0.12); color: #059669; border: 1px solid rgba(16, 185, 129, 0.25); font-size: 11px; font-weight: 600;">
-                        ● Validé
-                    </span>
+                    <span class="badge validee">Validé</span>
                     {% elif patient.statut_validation == "EN_ATTENTE" %}
-                    <span class="badge" style="background: rgba(245, 158, 11, 0.12); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.25); font-size: 11px; font-weight: 600;">
-                        ● En attente
-                    </span>
+                    <span class="badge en_attente">En attente</span>
                     {% elif patient.statut_validation == "REFUSE" %}
-                    <span class="badge" style="background: rgba(239, 68, 68, 0.12); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.25); font-size: 11px; font-weight: 600;" title="{{ patient.motif_refus }}">
-                        ● Refusé
-                    </span>
+                    <span class="badge refusee" title="{{ patient.motif_refus }}">Refusé</span>
                     {% endif %}
 
                     {% if patient.document_justificatif %}
-                    <a href="{{ patient.document_justificatif.url }}" target="_blank" style="display: block; font-size: 11px; color: var(--primary); text-decoration: underline; margin-top: 4px;">
+                    <a href="{% url 'telecharger_piece_identite_patient' patient.pk %}" target="_blank" style="display: block; font-size: 11px; color: var(--primary); text-decoration: underline; margin-top: 4px;">
                         {% icone "file-text" %} Pièce jointe &nearr;
                     </a>
                     {% endif %}
@@ -110,7 +105,7 @@
                 <td>
                     <div class="actions" style="gap: 4px; flex-wrap: wrap;">
                         {% if patient.type_beneficiaire == "AYANT_DROIT" and patient.statut_validation == "EN_ATTENTE" %}
-                        <form method="post" action="{% url 'valider_ayant_droit' patient.pk %}" style="display: inline;">
+                        <form method="post" action="{% url 'valider_ayant_droit' patient.pk %}" class="action-ligne">
                             {% csrf_token %}
                             <button type="submit" class="button btn btn-sm" style="background: #059669; color: white; border: none; padding: 4px 8px;" title="Valider cet ayant droit">
                                 {% icone "check" %} Valider

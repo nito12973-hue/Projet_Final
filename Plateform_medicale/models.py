@@ -13,7 +13,7 @@ from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
-from django.db import models
+from django.db import IntegrityError, models, transaction
 from django.utils import timezone
 from django.utils.crypto import constant_time_compare, salted_hmac
 
@@ -100,6 +100,56 @@ class UserManager(BaseUserManager):
         return self._create_user(email, password, **extra_fields)
 
 
+class Organisme(models.Model):
+    """Organisme assureur (IPM, compagnie d'assurance, mutuelle ou entreprise)."""
+
+    class TypeOrganisme(models.TextChoices):
+        IPM = "IPM", "Institution de Prévoyance Maladie (IPM)"
+        ASSURANCE = "ASSURANCE", "Compagnie d'assurance"
+        MUTUELLE = "MUTUELLE", "Mutuelle de santé"
+        ENTREPRISE = "ENTREPRISE", "Entreprise"
+
+    CODE_DEFAUT = "IPM-DEFAUT"
+    NOM_DEFAUT = "IPM SantéSN Défaut"
+
+    nom = models.CharField("nom de l'organisme", max_length=150)
+    code = models.CharField("code unique", max_length=50, unique=True)
+    type_organisme = models.CharField(
+        "type d'organisme",
+        max_length=20,
+        choices=TypeOrganisme.choices,
+        default=TypeOrganisme.IPM,
+    )
+    adresse = models.CharField("adresse", max_length=255, blank=True, default="")
+    telephone = models.CharField(
+        "téléphone", max_length=30, blank=True, default="", validators=[valider_telephone]
+    )
+    email = models.EmailField("adresse email", blank=True, default="")
+    actif = models.BooleanField("organisme actif", default=True)
+    date_creation = models.DateTimeField("date de création", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "organisme"
+        verbose_name_plural = "organismes"
+        ordering = ["nom"]
+
+    def __str__(self):
+        return f"{self.nom} ({self.code})"
+
+    @classmethod
+    def obtenir_defaut(cls):
+        """Retourne l'organisme par défaut (en le créant si nécessaire)."""
+        organisme, _ = cls.objects.get_or_create(
+            code=cls.CODE_DEFAUT,
+            defaults={
+                "nom": cls.NOM_DEFAUT,
+                "type_organisme": cls.TypeOrganisme.IPM,
+                "actif": True,
+            },
+        )
+        return organisme
+
+
 class User(AbstractBaseUser, PermissionsMixin):
     """
     Modèle utilisateur unique de SantéSN.
@@ -111,7 +161,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     """
 
     class Role(models.TextChoices):
-        ADMIN = 'ADMIN', 'Administrateur'
+        ADMIN = 'ADMIN', 'Administrateur Général'
+        GESTIONNAIRE = 'GESTIONNAIRE', 'Gestionnaire'
         ASSURE = 'ASSURE', 'Assuré'
         MEDECIN = 'MEDECIN', 'Médecin'
         PHARMACIEN = 'PHARMACIEN', 'Pharmacien'
@@ -125,6 +176,15 @@ class User(AbstractBaseUser, PermissionsMixin):
         max_length=20,
         choices=Role.choices,
         db_index=True,
+    )
+    organisme = models.ForeignKey(
+        Organisme,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='utilisateurs',
+        verbose_name='organisme',
+        help_text="Obligatoire pour un compte Gestionnaire.",
     )
 
     is_staff = models.BooleanField('accès au back-office', default=False)
@@ -145,6 +205,13 @@ class User(AbstractBaseUser, PermissionsMixin):
         full_name = self.get_full_name()
         return f'{full_name} ({self.email})' if full_name else self.email
 
+    def clean(self):
+        super().clean()
+        if self.role == self.Role.GESTIONNAIRE and not self.organisme_id:
+            raise ValidationError(
+                {"organisme": "Un gestionnaire doit obligatoirement être rattaché à un organisme."}
+            )
+
     def get_full_name(self):
         return f'{self.first_name} {self.last_name}'.strip()
 
@@ -155,6 +222,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     @property
     def is_admin_role(self):
         return self.role == self.Role.ADMIN
+
+    @property
+    def is_gestionnaire(self):
+        return self.role == self.Role.GESTIONNAIRE
 
     @property
     def is_assure(self):
@@ -228,6 +299,104 @@ class Prestataire(models.Model):
 
     def __str__(self):
         return f"{self.nom} ({self.get_type_prestataire_display()})"
+
+    def est_conventionne_par(self, organisme):
+        """Vérifie si le prestataire fait partie du réseau conventionné d'un organisme donné."""
+        if not organisme:
+            return self.partenaire
+        convention = self.conventions_organismes.filter(organisme=organisme).first()
+        if convention:
+            return convention.statut == ConventionPrestataire.Statut.ACTIF and convention.tiers_payant_actif
+        # Si des conventions spécifiques existent pour d'autres organismes, le prestataire n'est pas conventionné par défaut pour celui-ci
+        if self.conventions_organismes.exists():
+            return False
+        return self.partenaire
+
+
+class ConventionPrestataire(models.Model):
+    """
+    Rattachement conventionnel d'un établissement de santé (Prestataire)
+    auprès d'un organisme assureur (IPM / Compagnie d'assurance / Mutuelle).
+    Permet à chaque organisme de gérer son propre réseau conventionné de manière
+    strictement indépendante, sans doublonner les comptes des professionnels.
+    """
+    class Statut(models.TextChoices):
+        ACTIF = "ACTIF", "Conventionné actif"
+        SUSPENDU = "SUSPENDU", "Convention suspendue"
+        EN_ATTENTE = "EN_ATTENTE", "Instruction en cours"
+        RESILIE = "RESILIE", "Convention résiliée"
+
+    organisme = models.ForeignKey(
+        Organisme,
+        on_delete=models.CASCADE,
+        related_name="conventions_prestataires",
+        verbose_name="organisme assureur",
+    )
+    prestataire = models.ForeignKey(
+        Prestataire,
+        on_delete=models.CASCADE,
+        related_name="conventions_organismes",
+        verbose_name="établissement de soins",
+    )
+    numero_convention = models.CharField(
+        "numéro de convention",
+        max_length=60,
+        blank=True,
+        default="",
+        help_text="Référence contractuelle spécifique à cet organisme.",
+    )
+    statut = models.CharField(
+        "statut du conventionnement",
+        max_length=20,
+        choices=Statut.choices,
+        default=Statut.ACTIF,
+        db_index=True,
+    )
+    tiers_payant_actif = models.BooleanField(
+        "tiers payant autorisé",
+        default=True,
+        help_text="Dispense d'avance des frais pour les assurés de cet organisme.",
+    )
+    date_conventionnement = models.DateField(
+        "date d'effet",
+        default=timezone.now,
+    )
+    date_fin = models.DateField(
+        "date d'échéance",
+        null=True,
+        blank=True,
+        help_text="Optionnel : date d'échéance ou de renouvellement annuel.",
+    )
+    remarques = models.CharField(
+        "accords / barèmes négociés",
+        max_length=255,
+        blank=True,
+        default="",
+    )
+    cree_par = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="conventions_creees",
+        verbose_name="conventionné par",
+    )
+    date_creation = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "convention prestataire"
+        verbose_name_plural = "conventions prestataires"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["organisme", "prestataire"],
+                name="convention_unique_organisme_prestataire",
+                violation_error_message="Cet établissement possède déjà un dossier de conventionnement auprès de cet organisme.",
+            )
+        ]
+        ordering = ["-date_conventionnement"]
+
+    def __str__(self):
+        return f"{self.organisme.nom} ⇄ {self.prestataire.nom} ({self.get_statut_display()})"
 
 
 class Patient(models.Model):
@@ -313,6 +482,20 @@ class Patient(models.Model):
         related_name="beneficiaires",
         help_text="Renseigne pour l'assure principal ; les ayants droit heritent de ce plan.",
     )
+    organisme = models.ForeignKey(
+        Organisme,
+        on_delete=models.PROTECT,
+        related_name="patients",
+        verbose_name="organisme",
+        help_text="Organisme (IPM / assureur) de rattachement de l'assuré.",
+    )
+    entreprise = models.CharField(
+        "entreprise",
+        max_length=150,
+        blank=True,
+        default="",
+        help_text="Entreprise employeur de l'assuré (optionnel).",
+    )
 
     class Meta:
         ordering = ["nom", "prenom"]
@@ -323,6 +506,17 @@ class Patient(models.Model):
     def save(self, *args, **kwargs):
         if not self.numero_carte:
             self.numero_carte = self._generer_numero_carte()
+        if (
+            self.est_ayant_droit
+            and self.assure_principal_id
+            and self.assure_principal
+            and self.assure_principal.organisme_id
+        ):
+            self.organisme_id = self.assure_principal.organisme_id
+        elif not self.organisme_id and self.user_id and getattr(self.user, "organisme_id", None):
+            self.organisme_id = self.user.organisme_id
+        elif not self.organisme_id:
+            self.organisme = Organisme.obtenir_defaut()
         super().save(*args, **kwargs)
 
     @staticmethod
@@ -387,7 +581,7 @@ class Patient(models.Model):
         return plan.taux_couverture if plan else None
 
     def consommation_annuelle_assurance(self, annee=None):
-        """Total des remboursements (parts assurance) consommés par le foyer sur l'année civile (consultations + pharmacie)."""
+        """Total des remboursements (parts assurance) consommés par le foyer sur l'année civile (consultations + pharmacie + remboursements directs)."""
         from django.apps import apps
         from django.db.models import Sum
         if annee is None:
@@ -397,6 +591,7 @@ class Patient(models.Model):
 
         PaiementModel = apps.get_model("Plateform_medicale", "Paiement")
         DelivranceModel = apps.get_model("Plateform_medicale", "Delivrance")
+        RemboursementModel = apps.get_model("Plateform_medicale", "DemandeRemboursement")
 
         total_consultations = PaiementModel.objects.filter(
             consultation__patient_id__in=membres_foyer,
@@ -408,7 +603,13 @@ class Patient(models.Model):
             date_delivrance__year=annee,
         ).aggregate(total=Sum("montant_part_assurance"))["total"] or Decimal("0")
 
-        return total_consultations + total_pharmacie
+        total_remboursements = RemboursementModel.objects.filter(
+            patient_id__in=membres_foyer,
+            date_soins__year=annee,
+            statut__in=["validee", "remboursee"],
+        ).aggregate(total=Sum("montant_rembourse_accorde"))["total"] or Decimal("0")
+
+        return total_consultations + total_pharmacie + total_remboursements
 
     def plafond_annuel_restant(self, annee=None):
         """Montant restant sous le plafond annuel pour l'année civile (None si illimité)."""
@@ -1279,11 +1480,20 @@ class TentativeConnexion(models.Model):
         """Incremente le compteur. Repart de 1 si le blocage precedent a
         expire : sans cela, un compte reste bloque a vie apres 5 echecs
         espaces dans le temps."""
-        ligne, _ = cls.objects.get_or_create(email=email.lower())
-        expire = timezone.now() >= ligne.fin_blocage
-        ligne.tentatives = 1 if expire else ligne.tentatives + 1
-        ligne.save()
-        return ligne
+        email_norm = email.lower()
+        with transaction.atomic():
+            ligne = cls.objects.select_for_update().filter(email=email_norm).first()
+            if ligne is None:
+                try:
+                    with transaction.atomic():
+                        ligne = cls.objects.create(email=email_norm, tentatives=1)
+                        return ligne
+                except IntegrityError:
+                    ligne = cls.objects.select_for_update().get(email=email_norm)
+            expire = timezone.now() >= ligne.fin_blocage
+            ligne.tentatives = 1 if expire else ligne.tentatives + 1
+            ligne.save()
+            return ligne
 
     @classmethod
     def reussite(cls, email):
@@ -1373,6 +1583,17 @@ class JournalActivite(models.Model):
         related_name="actions_journalisees",
     )
     auteur_libelle = models.CharField("auteur (figé)", max_length=254)
+    organisme = models.ForeignKey(
+        Organisme,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="journaux",
+        verbose_name="organisme",
+    )
+    organisme_libelle = models.CharField(
+        "organisme (figé)", max_length=200, blank=True, default=""
+    )
     action = models.CharField(max_length=20, choices=Action.choices, db_index=True)
     objet = models.CharField("objet concerné", max_length=200)
     details = models.CharField("détail", max_length=300, blank=True)
@@ -1382,6 +1603,11 @@ class JournalActivite(models.Model):
         verbose_name = "entrée du journal"
         verbose_name_plural = "journal d'activité"
         ordering = ["-date"]
+
+    def save(self, *args, **kwargs):
+        if self.organisme_id and not self.organisme_libelle and self.organisme:
+            self.organisme_libelle = str(self.organisme)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return (f"{self.date:%d/%m/%Y %H:%M} · {self.auteur_libelle} · "
@@ -1511,3 +1737,213 @@ class FichierMedia(models.Model):
 
     def __str__(self):
         return f"{self.chemin} ({self.taille} octets)"
+
+
+class DemandeRemboursement(models.Model):
+    """
+    Demande de remboursement soumise par un assuré ayant consulté ou acheté des
+    médicaments auprès d'un établissement HORS RÉSEAU (non conventionné avec son
+    organisme / entreprise). L'assuré avance les frais et transmet la facture
+    acquittée pour instruction et remboursement par le gestionnaire de son IPM.
+    """
+
+    class TypeSoin(models.TextChoices):
+        CONSULTATION = "CONSULTATION", "Consultation médicale"
+        PHARMACIE = "PHARMACIE", "Pharmacie / Médicaments"
+        BIOLOGIE = "BIOLOGIE", "Analyses / Laboratoire"
+        IMAGERIE = "IMAGERIE", "Radiologie / Imagerie"
+        DENTAIRE = "DENTAIRE", "Soins dentaires"
+        OPTIQUE = "OPTIQUE", "Optique / Lunetterie"
+        HOSPITALISATION = "HOSPITALISATION", "Hospitalisation"
+        AUTRE = "AUTRE", "Autre acte médical"
+
+    class Statut(models.TextChoices):
+        EN_ATTENTE = "en_attente", "En attente d'instruction"
+        VALIDEE = "validee", "Validée (en cours de règlement)"
+        REMBOURSEE = "remboursee", "Remboursée"
+        REFUSEE = "refusee", "Refusée"
+
+    class ModeRemboursement(models.TextChoices):
+        VIREMENT = "VIREMENT", "Virement bancaire"
+        MOBILE_MONEY = "MOBILE_MONEY", "Mobile Money (Wave / Orange Money)"
+        CHEQUE = "CHEQUE", "Chèque"
+        ESPECES = "ESPECES", "Espèces / Guichet"
+
+    numero_dossier = models.CharField(
+        "numéro de dossier",
+        max_length=32,
+        unique=True,
+        editable=False,
+        db_index=True,
+    )
+    patient = models.ForeignKey(
+        Patient,
+        on_delete=models.PROTECT,
+        related_name="demandes_remboursement",
+        verbose_name="bénéficiaire des soins",
+    )
+    organisme = models.ForeignKey(
+        Organisme,
+        on_delete=models.PROTECT,
+        related_name="demandes_remboursement",
+        verbose_name="organisme assureur",
+    )
+    prestataire_nom = models.CharField(
+        "établissement / praticien hors réseau",
+        max_length=150,
+        help_text="Nom de la clinique, du cabinet ou de la pharmacie où les soins ont été réglés.",
+    )
+    prestataire = models.ForeignKey(
+        Prestataire,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="demandes_remboursement",
+        verbose_name="prestataire répertorié (optionnel)",
+    )
+    type_soin = models.CharField(
+        "nature des soins",
+        max_length=25,
+        choices=TypeSoin.choices,
+        default=TypeSoin.CONSULTATION,
+        db_index=True,
+    )
+    date_soins = models.DateField("date des soins")
+    montant_depense = models.DecimalField(
+        "montant payé par l'assuré (FCFA)",
+        max_digits=12,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("1"), message="Le montant dépensé doit être strictement positif.")],
+    )
+    taux_applique = models.DecimalField(
+        "taux de couverture (%)",
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal("0"),
+    )
+    montant_rembourse_estime = models.DecimalField(
+        "montant remboursable estimé (FCFA)",
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal("0"),
+    )
+    montant_rembourse_accorde = models.DecimalField(
+        "montant accordé par l'organisme (FCFA)",
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal("0"),
+    )
+    justificatif = models.FileField(
+        "facture acquittée / feuille de soins",
+        upload_to="justificatifs_remboursements/",
+        blank=True,
+        null=True,
+        help_text="Facture acquittée, ticket de caisse ou feuille de soins (PDF, JPG, PNG - max 10 Mo).",
+    )
+    motif = models.TextField("détails ou observations", blank=True, default="")
+    coordonnees_remboursement = models.CharField(
+        "numéro Mobile Money ou IBAN souhaité",
+        max_length=120,
+        blank=True,
+        default="",
+        help_text="Optionnel : numéro Wave / Orange Money ou IBAN pour recevoir le remboursement.",
+    )
+    statut = models.CharField(
+        "statut",
+        max_length=20,
+        choices=Statut.choices,
+        default=Statut.EN_ATTENTE,
+        db_index=True,
+    )
+    mode_remboursement = models.CharField(
+        "mode de règlement",
+        max_length=25,
+        choices=ModeRemboursement.choices,
+        blank=True,
+        default="",
+    )
+    reference_reglement = models.CharField(
+        "référence de virement / transaction",
+        max_length=100,
+        blank=True,
+        default="",
+    )
+    date_demande = models.DateTimeField("date de soumission", auto_now_add=True, db_index=True)
+    date_decision = models.DateTimeField("date d'instruction", null=True, blank=True)
+    date_reglement = models.DateTimeField("date de remboursement effectif", null=True, blank=True)
+    traite_par = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="remboursements_instruits",
+        verbose_name="instruit par",
+    )
+    motif_refus = models.CharField("motif du refus", max_length=255, blank=True, default="")
+
+    class Meta:
+        verbose_name = "demande de remboursement"
+        verbose_name_plural = "demandes de remboursement"
+        ordering = ["-date_demande"]
+
+    def __str__(self):
+        return f"[{self.numero_dossier}] Remboursement {self.patient} - {self.prestataire_nom} ({self.get_statut_display()})"
+
+    def calculer_estimation(self):
+        """Calcule (taux, montant_remboursable) selon le plan de couverture et le plafond annuel restant."""
+        if not self.patient_id or not self.montant_depense:
+            return Decimal("0"), Decimal("0")
+        taux = Decimal(str(self.patient.taux_couverture or 0))
+        montant_brut = (Decimal(str(self.montant_depense)) * taux / Decimal("100")).quantize(Decimal("0.01"))
+
+        plan = self.patient.titulaire.plan_couverture if self.patient.titulaire else None
+        if plan and plan.plafond_annuel is not None and plan.plafond_annuel > 0:
+            annee = self.date_soins.year if self.date_soins else timezone.now().year
+            from django.db.models import Sum
+            titulaire = self.patient.titulaire
+            membres_foyer = [titulaire.pk] + list(titulaire.ayants_droit.values_list("pk", flat=True))
+            consomme_consult = Paiement.objects.filter(
+                consultation__patient_id__in=membres_foyer,
+                consultation__date_consultation__year=annee,
+            ).aggregate(total=Sum("montant_part_assurance"))["total"] or Decimal("0")
+            consomme_pharma = Delivrance.objects.filter(
+                ordonnance__consultation__patient_id__in=membres_foyer,
+                date_delivrance__year=annee,
+            ).aggregate(total=Sum("montant_part_assurance"))["total"] or Decimal("0")
+            consomme_remb = DemandeRemboursement.objects.filter(
+                patient_id__in=membres_foyer,
+                date_soins__year=annee,
+                statut__in=[self.Statut.VALIDEE, self.Statut.REMBOURSEE],
+            ).exclude(pk=self.pk).aggregate(total=Sum("montant_rembourse_accorde"))["total"] or Decimal("0")
+            deja_consomme = consomme_consult + consomme_pharma + consomme_remb
+            reliquat = max(Decimal("0"), Decimal(str(plan.plafond_annuel)) - deja_consomme)
+            if montant_brut > reliquat:
+                montant_brut = reliquat
+
+        return taux, montant_brut
+
+    @property
+    def reste_a_charge(self):
+        montant_ref = self.montant_rembourse_accorde if self.statut in (self.Statut.VALIDEE, self.Statut.REMBOURSEE) else self.montant_rembourse_estime
+        return max(Decimal("0"), (self.montant_depense or Decimal("0")) - (montant_ref or Decimal("0")))
+
+    def clean(self):
+        super().clean()
+        if self.date_soins and self.date_soins > timezone.now().date():
+            raise ValidationError({"date_soins": "La date des soins ne peut pas être dans le futur."})
+
+    def save(self, *args, **kwargs):
+        if not self.numero_dossier:
+            self.numero_dossier = f"RMB-{uuid.uuid4().hex[:8].upper()}"
+        if not self.organisme_id and self.patient_id and self.patient.organisme_id:
+            self.organisme_id = self.patient.organisme_id
+        elif not self.organisme_id:
+            self.organisme = Organisme.obtenir_defaut()
+        if self.prestataire_id and not self.prestataire_nom:
+            self.prestataire_nom = self.prestataire.nom
+        if self.patient_id and self.montant_depense and self.statut == self.Statut.EN_ATTENTE:
+            taux, estime = self.calculer_estimation()
+            self.taux_applique = taux
+            self.montant_rembourse_estime = estime
+        super().save(*args, **kwargs)
+
