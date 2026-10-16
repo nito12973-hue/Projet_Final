@@ -253,4 +253,15 @@ Ce document consigne de façon claire et sans jargon chaque décision d'architec
   2. **CGU (`cgu.html`) & Confidentialité (`politique_confidentialite.html`) :** Suppression des mentions `dpo@santesn.sn` au profit de la ligne directe WhatsApp et de l'adresse physique à Dakar.
 - **Vérifications :** Tests unitaires conformes (**100% OK**), 0 adresse email fictive présente dans les templates.
 
+---
+
+## [2026-10-16] Épuration des Pages Légales (Suppression du Bouton d'Impression sur CGU & Confidentialité)
+- **Objectifs :**
+  1. Éliminer le bouton d'impression et les bandeaux d'impression superflus sur les pages [CGU](file:///c:/Users/nito1/Desktop/Projet_Final/Plateform_medicale/templates/cgu.html) et [Politique de Confidentialité](file:///c:/Users/nito1/Desktop/Projet_Final/Plateform_medicale/templates/politique_confidentialite.html).
+  2. Aligner l'affichage sur les standards des portails web où les documents légaux sont consultés en ligne avec retour accueil direct.
+- **Décisions ergonomiques & techniques :**
+  1. Suppression du bouton `btn-action-legal` déclenchant `window.print()`.
+  2. Suppression des en-têtes d'impression statiques dédiés, ne conservant qu'un bouton de retour clair vers l'accueil.
+- **Vérifications :** 16 tests légaux et landing validés avec succès (**100% OK**), vérification système Django sans anomalie.
+
 
