@@ -28,31 +28,51 @@
 </div>
 {% endif %}
 
-<form method="post" novalidate>
+<form method="post" novalidate id="form-connexion">
     {% csrf_token %}
 
-    <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
-    {{ form.email }}
-    {% if form.email.errors %}<div class="erreurs" role="alert">{{ form.email.errors }}</div>{% endif %}
-
-    <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 14px; margin-bottom: 6px;">
-        <label for="{{ form.password.id_for_label }}" style="margin: 0;">{{ form.password.label }}</label>
-        <a href="{% url 'mot_de_passe_oublie' %}" style="font-size: 12.5px; color: var(--primary); text-decoration: none; font-weight: 600;">Mot de passe oublié ?</a>
+    <div class="champ-groupe">
+        <label for="{{ form.email.id_for_label }}">
+            <span>{{ form.email.label }} <span class="champ-requis" aria-hidden="true">*</span></span>
+        </label>
+        <div class="champ-icone-wrapper">
+            <span class="champ-icone-prefix" aria-hidden="true">{% icone "mail" %}</span>
+            {{ form.email }}
+        </div>
+        {% if form.email.errors %}
+        <div class="erreur-champ" role="alert">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span>{{ form.email.errors.0 }}</span>
+        </div>
+        {% endif %}
     </div>
-    <div style="position: relative; margin-bottom: 0;">
-        <div style="position: relative; display: flex; align-items: center;">
+
+    <div class="champ-groupe">
+        <label for="{{ form.password.id_for_label }}">
+            <span>{{ form.password.label }} <span class="champ-requis" aria-hidden="true">*</span></span>
+            <a href="{% url 'mot_de_passe_oublie' %}" class="lien-oubli">Mot de passe oublié ?</a>
+        </label>
+        <div class="champ-icone-wrapper">
+            <span class="champ-icone-prefix" aria-hidden="true">{% icone "lock" %}</span>
             {{ form.password }}
-            <button type="button" id="btn-toggle-mdp" onclick="toggleMdp()" style="position: absolute; right: 12px; top: 11px; background: none; border: none; cursor: pointer; color: var(--muted); padding: 4px; display: inline-flex; align-items: center; border-radius: 6px;" title="Afficher/masquer" aria-label="Afficher ou masquer le mot de passe">
-                <svg id="icone-oeil" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <button type="button" id="btn-toggle-mdp" onclick="toggleMdp()" class="btn-toggle-oeil" title="Afficher ou masquer le mot de passe" aria-label="Afficher ou masquer le mot de passe">
+                <svg id="icone-oeil" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/>
                     <circle cx="12" cy="12" r="2.5"/>
                 </svg>
             </button>
         </div>
+        {% if form.password.errors %}
+        <div class="erreur-champ" role="alert">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span>{{ form.password.errors.0 }}</span>
+        </div>
+        {% endif %}
     </div>
-    {% if form.password.errors %}<div class="erreurs" role="alert">{{ form.password.errors }}</div>{% endif %}
 
-    <button type="submit" class="btn-principal" style="margin-top: 4px;">{% icone "lock" %} Se connecter</button>
+    <button type="submit" class="btn-principal" id="btn-submit-connexion" style="margin-top: 6px;">
+        <span class="btn-label" style="display:inline-flex;align-items:center;gap:8px;">{% icone "lock" %} Se connecter</span>
+    </button>
 </form>
 
 <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
@@ -77,5 +97,19 @@ function toggleMdp() {
         }
     }
 }
+
+document.getElementById('form-connexion')?.addEventListener('submit', function () {
+    var btn = document.getElementById('btn-submit-connexion');
+    if (btn) {
+        setTimeout(function () {
+            btn.disabled = true;
+            btn.classList.add('chargement');
+            var label = btn.querySelector('.btn-label');
+            if (label) {
+                label.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="icone-spin"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/></svg> Connexion en cours...';
+            }
+        }, 10);
+    }
+});
 </script>
 {% endblock %}

@@ -150,3 +150,22 @@ Ce document consigne de façon claire et sans jargon chaque décision d'architec
      - **Courbe des consultations médicales (`rapports.html`) :** Les tooltips indiquent explicitement le nombre d'actes (« X consultations »), les axes disposent de pas entiers et de grilles douces adaptées au thème.
      - **Graphique en anneau des prises en charge (`rapports.html`) :** Découpe interne aérée (`cutout: 62%`) et affichage automatique du pourcentage calculé en temps réel dans les infobulles survolées.
 - **Vérifications :** Suite complète de tests validée avec succès (**893 tests OK à 100%**).
+
+---
+
+## [2026-10-16] Modernisation des Formulaires et Refonte Ergonomique de l'Authentification
+- **Objectifs :**
+  1. Offrir une page de connexion moderne, élégante, équilibrée et épurée, avec affichage/masquage du mot de passe et icônes d'aide à la saisie.
+  2. Rendre tous les formulaires (connexion, mot de passe oublié, activation de compte, création et modification de profil, assurés, praticiens) parfaitement lisibles, centrés et ergonomiques sur ordinateur, tablette et mobile.
+  3. Protéger contre la double-soumission et apporter un retour visuel immédiat (spinner et désactivation pendant l'envoi) avec restauration BFCache propre au retour arrière.
+- **Décisions ergonomiques & techniques :**
+  1. **Page de connexion & écrans d'authentification (`base_auth.html`, `login.html`, `mot_de_passe_oublie.html`, `mot_de_passe_reinitialiser.html`, `activer_compte.html`) :**
+     - **Champs avec icônes contextuelles intégrées :** Préfixes visuels discrets (icône enveloppe pour l'email, cadenas pour le mot de passe) alignés élégamment dans le champ sans altérer le flux de saisie.
+     - **Affichage / masquage dynamique du mot de passe :** Bouton œil interactif avec bascule du pictogramme SVG et respect des standards d'accessibilité (`aria-label`).
+     - **Indicateur de champ obligatoire :** Étoile rouge `*` nette sur chaque label requis.
+     - **Protection anti-double clic :** À la soumission, le bouton principal passe en état `chargement` (opacité, curseur d'attente, spinner SVG doux et libellé d'état « Connexion en cours... »).
+  2. **Harmonisation globale des formulaires de l'application (`base.html`) :**
+     - **Centrage et dimensions équilibrées :** `.panel-form` calibré avec padding aéré (`24px 28px`), bordures subtiles et ombre douce, évitant les formulaires flottants ou asymétriques.
+     - **Mobile-first ergonomique :** Sur écran <= 640px, les conteneurs passent en pleine largeur confortable, les boutons d'action s'empilent verticalement à 46px de hauteur pour un clic tactile sans erreur ni débordement horizontal.
+     - **Messages d'erreurs contextuels :** Messages d'erreur stylisés sous le champ concerné avec icône d'alerte, vocabulaire clair et suppression de tout traceback ou détail technique.
+- **Vérifications :** Suite complète de tests validée avec succès (**893 tests OK à 100%**).

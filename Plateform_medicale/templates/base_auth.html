@@ -306,12 +306,12 @@
         select,
         textarea {
             width: 100%;
-            min-height: 44px;
-            height: 44px;
+            min-height: 46px;
+            height: 46px;
             margin-bottom: 16px;
-            padding: 10px 14px;
+            padding: 11px 15px;
             border: 1.5px solid var(--border);
-            border-radius: 10px;
+            border-radius: 11px;
             font: inherit;
             font-size: 14.5px;
             background: #ffffff;
@@ -336,6 +336,120 @@
             box-shadow: 0 0 0 4px rgba(14, 124, 134, 0.18);
         }
 
+        .champ-groupe {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .champ-groupe label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 7px;
+            font-weight: 600;
+            font-size: 13.5px;
+            color: var(--texte);
+        }
+
+        .champ-requis {
+            color: var(--danger);
+            margin-left: 2px;
+            font-weight: bold;
+        }
+
+        .champ-icone-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .champ-icone-prefix {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted);
+            pointer-events: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+            transition: color 0.18s ease;
+        }
+
+        .champ-icone-prefix svg,
+        .champ-icone-prefix .icone-nav {
+            width: 18px;
+            height: 18px;
+        }
+
+        .champ-icone-wrapper input.form-control,
+        .champ-icone-wrapper input {
+            padding-left: 42px !important;
+            padding-right: 42px !important;
+            margin-bottom: 0 !important;
+            min-height: 48px;
+            height: 48px;
+            border-radius: 12px;
+            font-size: 14.5px;
+        }
+
+        .champ-icone-wrapper:focus-within .champ-icone-prefix {
+            color: var(--primary);
+        }
+
+        .btn-toggle-oeil {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--muted);
+            padding: 6px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            z-index: 2;
+            transition: color 0.18s ease, background-color 0.18s ease;
+        }
+
+        .btn-toggle-oeil:hover {
+            color: var(--texte);
+            background: rgba(14, 124, 134, 0.08);
+        }
+
+        .btn-toggle-oeil:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 2px var(--primary);
+        }
+
+        .erreur-champ {
+            color: var(--danger);
+            font-size: 12.5px;
+            font-weight: 500;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .lien-oubli {
+            font-size: 12.5px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.15s ease, text-decoration 0.15s ease;
+        }
+
+        .lien-oubli:hover {
+            color: var(--primary-strong);
+            text-decoration: underline;
+        }
+
         .btn-principal {
             position: relative;
             display: inline-flex;
@@ -343,15 +457,15 @@
             justify-content: center;
             gap: 9px;
             width: 100%;
-            height: 44px;
-            min-height: 44px;
-            padding: 0 20px;
+            height: 48px;
+            min-height: 48px;
+            padding: 0 22px;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             background: linear-gradient(135deg, #0F172A 0%, #0E7C86 100%);
             color: #ffffff !important;
             font: inherit;
-            font-size: 14.5px;
+            font-size: 15px;
             font-weight: 700;
             text-decoration: none;
             cursor: pointer;
@@ -360,6 +474,21 @@
             line-height: 1;
             transition: transform 0.16s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.16s ease;
             box-shadow: 0 4px 14px rgba(14, 124, 134, 0.28);
+        }
+
+        .btn-principal.chargement {
+            opacity: 0.82;
+            pointer-events: none;
+            cursor: not-allowed;
+        }
+
+        .btn-principal .icone-spin {
+            animation: tourner 0.8s linear infinite;
+        }
+
+        @keyframes tourner {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
         .btn-principal .icone-nav,
