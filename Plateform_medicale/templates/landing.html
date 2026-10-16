@@ -814,7 +814,8 @@
         #onglet-admin:checked ~ .onglets-liste label[for="onglet-admin"],
         #onglet-assure:checked ~ .onglets-liste label[for="onglet-assure"],
         #onglet-medecin:checked ~ .onglets-liste label[for="onglet-medecin"],
-        #onglet-pharmacien:checked ~ .onglets-liste label[for="onglet-pharmacien"] {
+        #onglet-pharmacien:checked ~ .onglets-liste label[for="onglet-pharmacien"],
+        #onglet-gestionnaire:checked ~ .onglets-liste label[for="onglet-gestionnaire"] {
             background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-strong) 100%);
             border-color: transparent;
             color: #fff;
@@ -823,14 +824,16 @@
         #onglet-admin:checked ~ .onglets-panneaux .panneau-admin,
         #onglet-assure:checked ~ .onglets-panneaux .panneau-assure,
         #onglet-medecin:checked ~ .onglets-panneaux .panneau-medecin,
-        #onglet-pharmacien:checked ~ .onglets-panneaux .panneau-pharmacien {
+        #onglet-pharmacien:checked ~ .onglets-panneaux .panneau-pharmacien,
+        #onglet-gestionnaire:checked ~ .onglets-panneaux .panneau-gestionnaire {
             display: block;
         }
 
         #onglet-admin:focus-visible ~ .onglets-liste label[for="onglet-admin"],
         #onglet-assure:focus-visible ~ .onglets-liste label[for="onglet-assure"],
         #onglet-medecin:focus-visible ~ .onglets-liste label[for="onglet-medecin"],
-        #onglet-pharmacien:focus-visible ~ .onglets-liste label[for="onglet-pharmacien"] {
+        #onglet-pharmacien:focus-visible ~ .onglets-liste label[for="onglet-pharmacien"],
+        #onglet-gestionnaire:focus-visible ~ .onglets-liste label[for="onglet-gestionnaire"] {
             outline: none;
             box-shadow: 0 0 0 4px rgba(14, 124, 134, 0.35);
         }
@@ -1502,12 +1505,14 @@
                 <input type="radio" name="onglet-dashboard" id="onglet-assure" class="onglet-input">
                 <input type="radio" name="onglet-dashboard" id="onglet-medecin" class="onglet-input">
                 <input type="radio" name="onglet-dashboard" id="onglet-pharmacien" class="onglet-input">
+                <input type="radio" name="onglet-dashboard" id="onglet-gestionnaire" class="onglet-input">
 
                 <div class="onglets-liste">
                     <label for="onglet-admin" class="onglet-label">Admin</label>
                     <label for="onglet-assure" class="onglet-label">Assuré</label>
                     <label for="onglet-medecin" class="onglet-label">Médecin</label>
                     <label for="onglet-pharmacien" class="onglet-label">Pharmacien</label>
+                    <label for="onglet-gestionnaire" class="onglet-label">Gestionnaire IPM</label>
                 </div>
 
                 <p class="disclosure-demo">Interface de pilotage unifiée SantéSN adaptée aux exigences opérationnelles du secteur de la santé.</p>
@@ -1620,6 +1625,37 @@
                                 <div class="mini-stat">
                                     <span class="mini-stat-icon">{% icone "pill" %}</span>
                                     <div><strong>3</strong><span>Médicaments</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="onglet-panneau panneau-gestionnaire">
+                        <p class="lecture-ecran">Espace Gestionnaire IPM : pilotage du tiers-payant, conventions avec les cliniques et suivi des plafonds de soins.</p>
+                        <div class="carte-demo" aria-hidden="true">
+                            <div class="entete-carte">
+                                <span class="pastille">{% icone "shield-check" %}</span>
+                                <div>
+                                    <h3>IPM Santé &amp; Prévoyance</h3>
+                                    <span class="sous">Pilotage Conventions &amp; Prises en charge</span>
+                                </div>
+                            </div>
+                            <div class="mini-stats-grille">
+                                <div class="mini-stat">
+                                    <span class="mini-stat-icon">{% icone "check" %}</span>
+                                    <div><strong>100%</strong><span>Tiers-payant dématérialisé</span></div>
+                                </div>
+                                <div class="mini-stat">
+                                    <span class="mini-stat-icon">{% icone "file-text" %}</span>
+                                    <div><strong>24</strong><span>Prises en charge actives</span></div>
+                                </div>
+                                <div class="mini-stat">
+                                    <span class="mini-stat-icon">{% icone "building" %}</span>
+                                    <div><strong>18</strong><span>Prestataires conventionnés</span></div>
+                                </div>
+                                <div class="mini-stat">
+                                    <span class="mini-stat-icon">{% icone "activity" %}</span>
+                                    <div><strong>0</strong><span>Dépassement de plafond</span></div>
                                 </div>
                             </div>
                         </div>

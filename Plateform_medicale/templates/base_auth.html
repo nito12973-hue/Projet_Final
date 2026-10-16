@@ -14,13 +14,14 @@
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap"></noscript>
     <style>
         :root {
-            --primary-dark: #0f172a;
+            --primary-dark: #071f25;
             --primary: #0e7c86;
             --primary-strong: #0a5f67;
             --primary-soft: #f0fdfa;
-            --primary-light: #14b8a6;
+            --primary-light: #2dd4bf;
             --accent: #f97316;
             --texte: #0f172a;
+            --texte-doux: #334155;
             --muted: #64748b;
             --surface: #ffffff;
             --border: #e2e8f0;
@@ -53,11 +54,11 @@
             width: 100%;
         }
 
-        /* ----- Colonne Gauche : Vitrine & Marque (50% Desktop) ----- */
+        /* ----- Colonne Gauche : Vitrine Visuelle & Marque (50% Desktop) ----- */
         .auth-brand-side {
             flex: 1 1 50%;
             max-width: 50%;
-            background: linear-gradient(155deg, #061c22 0%, #0d4c55 52%, #082930 100%);
+            background: linear-gradient(150deg, #031317 0%, #08343c 45%, #051d23 100%);
             color: #ffffff;
             display: flex;
             flex-direction: column;
@@ -68,40 +69,40 @@
             box-sizing: border-box;
         }
 
-        /* Filigrane d'ambiance géométrique */
+        /* Halos lumineux d'ambiance */
         .auth-brand-side::before {
             content: '';
             position: absolute;
-            top: -20%;
-            right: -20%;
-            width: 600px;
-            height: 600px;
+            top: -15%;
+            right: -15%;
+            width: 550px;
+            height: 550px;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(20, 184, 166, 0.15) 0%, rgba(14, 124, 134, 0) 70%);
+            background: radial-gradient(circle, rgba(45, 212, 191, 0.16) 0%, rgba(14, 124, 134, 0) 70%);
             pointer-events: none;
         }
 
         .auth-brand-side::after {
             content: '';
             position: absolute;
-            bottom: -15%;
+            bottom: -20%;
             left: -15%;
             width: 500px;
             height: 500px;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(249, 115, 22, 0.08) 0%, rgba(249, 115, 22, 0) 70%);
+            background: radial-gradient(circle, rgba(249, 115, 22, 0.1) 0%, rgba(249, 115, 22, 0) 70%);
             pointer-events: none;
         }
 
         .brand-side-inner {
             position: relative;
             z-index: 2;
-            max-width: 500px;
+            max-width: 480px;
             width: 100%;
             margin: auto;
             display: flex;
             flex-direction: column;
-            gap: 40px;
+            gap: 36px;
         }
 
         .brand-side-header {
@@ -131,10 +132,10 @@
             width: 48px;
             height: 48px;
             border-radius: 14px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.22);
             backdrop-filter: blur(8px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
         }
 
         .auth-brand-title {
@@ -152,110 +153,162 @@
         .brand-badge-pill {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            padding: 4px 12px;
+            gap: 8px;
+            padding: 5px 14px;
             border-radius: 999px;
-            background: rgba(45, 212, 191, 0.12);
-            border: 1px solid rgba(45, 212, 191, 0.3);
+            background: rgba(45, 212, 191, 0.14);
+            border: 1px solid rgba(45, 212, 191, 0.35);
             color: #5eead4;
-            font-size: 12px;
-            font-weight: 600;
-            letter-spacing: 0.02em;
+            font-size: 11.5px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .brand-badge-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #2dd4bf;
+            box-shadow: 0 0 8px #2dd4bf;
         }
 
         .brand-side-body {
             display: flex;
             flex-direction: column;
-            gap: 24px;
+            gap: 20px;
         }
 
         .brand-hero-title {
             margin: 0;
             font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-            font-size: 30px;
-            line-height: 1.25;
+            font-size: 28px;
+            line-height: 1.3;
             font-weight: 800;
-            letter-spacing: -0.02em;
+            letter-spacing: -0.025em;
             color: #ffffff;
         }
 
         .brand-hero-desc {
             margin: 0;
-            font-size: 15px;
+            font-size: 14.5px;
             line-height: 1.6;
-            color: rgba(255, 255, 255, 0.8);
+            color: rgba(255, 255, 255, 0.82);
         }
 
-        .brand-features-list {
+        /* ===== Aperçu Visuel Glassmorphism en direct ===== */
+        .brand-preview-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 18px;
+            padding: 22px 24px;
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.45);
             display: flex;
             flex-direction: column;
-            gap: 18px;
-            margin-top: 8px;
+            gap: 16px;
         }
 
-        .brand-feature-item {
+        .preview-card-header {
             display: flex;
-            align-items: flex-start;
-            gap: 14px;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+            padding-bottom: 12px;
         }
 
-        .brand-feature-icon {
+        .preview-badge-status {
             display: inline-flex;
             align-items: center;
-            justify-content: center;
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.12);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            color: #5eead4;
-            flex-shrink: 0;
-            margin-top: 2px;
+            gap: 6px;
+            background: rgba(45, 212, 191, 0.2);
+            border: 1px solid rgba(45, 212, 191, 0.4);
+            color: #a7f3d0;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.03em;
         }
 
-        .brand-feature-content h4 {
-            margin: 0 0 3px 0;
-            font-size: 14.5px;
-            font-weight: 700;
+        .preview-pulse {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #34d399;
+            box-shadow: 0 0 10px #34d399;
+            animation: pulse-green 2s infinite;
+        }
+
+        @keyframes pulse-green {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(52, 211, 153, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); }
+        }
+
+        .preview-card-body {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .preview-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+        }
+
+        .preview-label {
+            color: rgba(255, 255, 255, 0.65);
+        }
+
+        .preview-value {
+            font-weight: 600;
             color: #ffffff;
         }
 
-        .brand-feature-content p {
-            margin: 0;
+        .preview-badge-val {
+            background: rgba(255, 255, 255, 0.12);
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: monospace;
+        }
+
+        .brand-quote-box {
+            font-style: italic;
             font-size: 13px;
-            line-height: 1.45;
-            color: rgba(255, 255, 255, 0.72);
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.78);
+            border-left: 2px solid #2dd4bf;
+            padding-left: 12px;
+            margin: 4px 0 0 0;
         }
 
         .brand-side-footer {
-            margin-top: 8px;
-            padding-top: 20px;
+            padding-top: 18px;
             border-top: 1px solid rgba(255, 255, 255, 0.12);
-        }
-
-        .brand-footer-info {
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-size: 12.5px;
+            justify-content: space-between;
+            font-size: 12px;
             color: rgba(255, 255, 255, 0.65);
             flex-wrap: wrap;
+            gap: 10px;
         }
 
-        .brand-footer-info .sep {
-            color: rgba(255, 255, 255, 0.3);
-        }
-
-        /* ----- Colonne Droite : Formulaire (50% Desktop) ----- */
+        /* ----- Colonne Droite : Formulaire d'Accès (50% Desktop) ----- */
         .auth-form-side {
             flex: 1 1 50%;
             max-width: 50%;
-            background: #f8fafc;
+            background: #ffffff;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 48px 36px;
+            padding: 48px 40px;
             box-sizing: border-box;
             position: relative;
             overflow-y: auto;
@@ -267,12 +320,12 @@
             margin: auto;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 22px;
             animation: apparaitre 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
 
         @keyframes apparaitre {
-            from { opacity: 0; transform: translateY(14px); }
+            from { opacity: 0; transform: translateY(12px); }
             to   { opacity: 1; transform: translateY(0); }
         }
 
@@ -301,34 +354,33 @@
             color: var(--primary);
         }
 
-        /* Carte de formulaire blanche */
+        /* Conteneur principal fluide et aéré (pas de double boîte étriquée) */
         .auth-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 32px 28px;
-            box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.05), 0 10px 25px -5px rgba(15, 23, 42, 0.06);
+            background: transparent;
+            border: none;
+            padding: 0;
+            box-shadow: none;
             width: 100%;
             box-sizing: border-box;
         }
 
         .auth-card-top {
-            margin-bottom: 20px;
+            margin-bottom: 24px;
         }
 
         h1 {
-            margin: 0 0 6px;
+            margin: 0 0 8px;
             font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-            font-size: 22px;
+            font-size: 26px;
             font-weight: 800;
-            color: var(--primary-dark);
-            letter-spacing: -0.02em;
+            color: #0f172a;
+            letter-spacing: -0.025em;
         }
 
         .sous-titre {
-            margin: 0 0 20px;
+            margin: 0;
             color: var(--muted);
-            font-size: 14px;
+            font-size: 14.5px;
             line-height: 1.5;
         }
 
@@ -339,14 +391,14 @@
             gap: 0;
             padding: 7px 11px;
             border-radius: 999px;
-            background: #f1f5f9;
+            background: #f8fafc;
             border: 1px solid #e2e8f0;
             color: var(--muted);
             text-decoration: none;
             font-weight: 600;
             font-size: 13px;
             width: fit-content;
-            margin-bottom: 18px;
+            margin-bottom: 20px;
             transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
@@ -398,7 +450,7 @@
 
         /* Groupes de champs */
         .champ-groupe {
-            margin-bottom: 18px;
+            margin-bottom: 20px;
             position: relative;
         }
 
@@ -407,10 +459,10 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 6px;
+            margin-bottom: 7px;
             font-weight: 600;
             font-size: 13.5px;
-            color: var(--texte);
+            color: #1e293b;
         }
 
         .champ-requis {
@@ -432,7 +484,7 @@
             left: 14px;
             top: 50%;
             transform: translateY(-50%);
-            color: var(--muted);
+            color: #94a3b8;
             pointer-events: none;
             display: inline-flex;
             align-items: center;
@@ -443,18 +495,18 @@
 
         .champ-icone-prefix svg,
         .champ-icone-prefix .icone-nav {
-            width: 17px;
-            height: 17px;
+            width: 18px;
+            height: 18px;
         }
 
         .champ-icone-wrapper input.form-control,
         .champ-icone-wrapper input {
-            padding-left: 42px !important;
-            padding-right: 42px !important;
+            padding-left: 44px !important;
+            padding-right: 44px !important;
             margin-bottom: 0 !important;
-            min-height: 46px;
-            height: 46px;
-            border-radius: 11px;
+            min-height: 48px;
+            height: 48px;
+            border-radius: 12px;
             font-size: 14.5px;
         }
 
@@ -468,12 +520,12 @@
         select,
         textarea {
             width: 100%;
-            min-height: 46px;
-            height: 46px;
+            min-height: 48px;
+            height: 48px;
             margin-bottom: 14px;
             padding: 10px 14px;
             border: 1.5px solid var(--border);
-            border-radius: 11px;
+            border-radius: 12px;
             font: inherit;
             font-size: 14.5px;
             background: #ffffff;
@@ -496,7 +548,7 @@
             outline: none;
             border-color: var(--primary);
             background: #ffffff;
-            box-shadow: 0 0 0 3px rgba(14, 124, 134, 0.18);
+            box-shadow: 0 0 0 4px rgba(14, 124, 134, 0.14);
         }
 
         /* Bouton œil toggle mot de passe */
@@ -508,7 +560,7 @@
             background: none;
             border: none;
             cursor: pointer;
-            color: var(--muted);
+            color: #94a3b8;
             padding: 6px;
             display: inline-flex;
             align-items: center;
@@ -560,12 +612,12 @@
             justify-content: center;
             gap: 8px;
             width: 100%;
-            height: 46px;
-            min-height: 46px;
+            height: 48px;
+            min-height: 48px;
             padding: 0 20px;
             border: none;
-            border-radius: 11px;
-            background: linear-gradient(135deg, #0f172a 0%, #0e7c86 100%);
+            border-radius: 12px;
+            background: linear-gradient(135deg, #0b2027 0%, #0e7c86 100%);
             color: #ffffff !important;
             font: inherit;
             font-size: 14.5px;
@@ -595,14 +647,14 @@
 
         .btn-principal .icone-nav,
         .btn-principal > svg {
-            width: 16px;
-            height: 16px;
+            width: 17px;
+            height: 17px;
             flex-shrink: 0;
         }
 
         .btn-principal:hover {
             transform: translateY(-1px);
-            box-shadow: 0 6px 18px rgba(14, 124, 134, 0.32);
+            box-shadow: 0 8px 22px rgba(14, 124, 134, 0.35);
         }
 
         .btn-principal:active {
@@ -642,8 +694,8 @@
         /* Alertes et erreurs */
         .erreurs {
             margin: 0 0 16px;
-            padding: 11px 14px;
-            border-radius: 10px;
+            padding: 12px 16px;
+            border-radius: 11px;
             background: var(--danger-bg);
             border: 1px solid var(--danger-border);
             color: var(--danger);
@@ -657,8 +709,8 @@
             align-items: flex-start;
             gap: 10px;
             margin: 0 0 16px;
-            padding: 11px 14px;
-            border-radius: 10px;
+            padding: 12px 16px;
+            border-radius: 11px;
             background: var(--primary-soft);
             border: 1px solid var(--border);
             color: var(--primary-strong);
@@ -693,6 +745,9 @@
             gap: 8px;
             font-size: 12.5px;
             color: var(--muted);
+            margin-top: 8px;
+            padding-top: 16px;
+            border-top: 1px solid #f1f5f9;
         }
 
         .auth-footer-brand {
@@ -736,7 +791,7 @@
                 flex: 1 1 100%;
                 max-width: 100%;
                 min-height: 100vh;
-                padding: 32px 20px;
+                padding: 36px 20px;
                 justify-content: center;
             }
 
@@ -748,12 +803,7 @@
 
         @media (max-width: 480px) {
             .auth-form-side {
-                padding: 24px 14px;
-            }
-
-            .auth-card {
-                padding: 24px 18px;
-                border-radius: 14px;
+                padding: 24px 16px;
             }
 
             .form-control, input, select, textarea {
@@ -787,54 +837,56 @@
                         </span>
                         <span class="auth-brand-title">Santé<span class="accent">SN</span></span>
                     </a>
-                    <span class="brand-badge-pill">Sénégal · Tiers-Payant &amp; Santé Numérique</span>
+                    <span class="brand-badge-pill">
+                        <span class="brand-badge-dot" aria-hidden="true"></span>
+                        Plateforme Nationale · Tiers-Payant Sénégal
+                    </span>
                 </div>
 
                 <div class="brand-side-body">
-                    <h2 class="brand-hero-title">L'infrastructure médicale unifiée au service du Sénégal.</h2>
+                    <h2 class="brand-hero-title">L'infrastructure de santé connectée au service du Sénégal.</h2>
                     <p class="brand-hero-desc">
-                        Connectez médecins prescripteurs, pharmaciens, mutuelles et assurés au sein d'une plateforme sécurisée, conforme aux exigences réglementaires nationales.
+                        Connectez médecins prescripteurs, pharmaciens, mutuelles et assurés au sein d'une plateforme unifiée, sécurisée et conforme aux exigences nationales.
                     </p>
 
-                    <div class="brand-features-list">
-                        <div class="brand-feature-item">
-                            <div class="brand-feature-icon">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-                            </div>
-                            <div class="brand-feature-content">
-                                <h4>Tiers-payant dématérialisé</h4>
-                                <p>Vérification des droits en temps réel, calcul automatique des quotes-parts et transmission instantanée aux mutuelles et IPM.</p>
-                            </div>
+                    <!-- Carte de démonstration interactive Glassmorphism -->
+                    <div class="brand-preview-card" aria-hidden="true">
+                        <div class="preview-card-header">
+                            <span class="preview-badge-status">
+                                <span class="preview-pulse"></span>
+                                PRISE EN CHARGE VALIDÉE
+                            </span>
+                            <span style="font-size: 11.5px; color: rgba(255,255,255,0.7);">Temps réel</span>
                         </div>
-
-                        <div class="brand-feature-item">
-                            <div class="brand-feature-icon">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                        <div class="preview-card-body">
+                            <div class="preview-line">
+                                <span class="preview-label">Bénéficiaire :</span>
+                                <span class="preview-value">Mamadou Diallo · <span style="color:#5eead4;">IPM Sonatel</span></span>
                             </div>
-                            <div class="brand-feature-content">
-                                <h4>Ordonnances infalsifiables &amp; QR Code</h4>
-                                <p>Authentification univoque de chaque prescription médicale et traçabilité stricte des délivrances en officine.</p>
+                            <div class="preview-line">
+                                <span class="preview-label">Couverture Tiers-Payant :</span>
+                                <span class="preview-value" style="color:#5eead4; font-weight:700;">80% Dispense d'avance</span>
                             </div>
-                        </div>
-
-                        <div class="brand-feature-item">
-                            <div class="brand-feature-icon">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            <div class="preview-line">
+                                <span class="preview-label">Praticien :</span>
+                                <span class="preview-value">Dr M. Ndiaye · Clinique Pasteur</span>
                             </div>
-                            <div class="brand-feature-content">
-                                <h4>Secret médical &amp; CDP Sénégal</h4>
-                                <p>Isolation multi-tenant stricte, chiffrement des données de santé et conformité intégrale avec la Loi n° 2008-12.</p>
+                            <div class="preview-line">
+                                <span class="preview-label">Ordonnance :</span>
+                                <span class="preview-badge-val">RX-246A17BBDE (QR Code Sécurisé)</span>
                             </div>
                         </div>
                     </div>
+
+                    <p class="brand-quote-box">
+                        « SantéSN fluidifie le tiers-payant, protège le secret médical et accélère la prise en charge sans avance de frais. »
+                    </p>
                 </div>
 
                 <div class="brand-side-footer">
-                    <div class="brand-footer-info">
-                        <span>Dakar, République du Sénégal</span>
-                        <span class="sep">•</span>
-                        <span>Support : +221 78 957 61 45</span>
-                    </div>
+                    <span>Dakar, République du Sénégal</span>
+                    <span>Loi n° 2008-12 (CDP)</span>
+                    <span>Support : +221 78 957 61 45</span>
                 </div>
             </div>
         </aside>
