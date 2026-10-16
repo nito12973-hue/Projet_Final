@@ -80,22 +80,6 @@
     </button>
 </form>
 
-<div class="roles-badges-connexion" style="margin-top: 22px; padding: 14px 16px; border-radius: 12px; background: #f8fafc; border: 1px solid #e2e8f0; text-align: center;">
-    <p style="margin: 0 0 8px; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);">Espaces &amp; Rôles SantéSN</p>
-    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;">
-        <span style="font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; background: #ffffff; border: 1px solid #cbd5e1; color: #1e293b;">Assuré</span>
-        <span style="font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; background: #ffffff; border: 1px solid #cbd5e1; color: #1e293b;">Médecin</span>
-        <span style="font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; background: #ffffff; border: 1px solid #cbd5e1; color: #1e293b;">Pharmacien</span>
-        <span style="font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; background: #ffffff; border: 1px solid #cbd5e1; color: #1e293b;">Gestionnaire IPM</span>
-        <span style="font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; background: #ffffff; border: 1px solid #cbd5e1; color: #1e293b;">Admin</span>
-    </div>
-    <p style="margin: 8px 0 0; font-size: 11.5px; color: var(--muted);">Redirection automatique vers votre espace dédié dès la connexion.</p>
-</div>
-
-<div class="aide-connexion-bas" style="margin-top: 18px; padding-top: 14px; border-top: 1px solid #f1f5f9; text-align: center; font-size: 13px; color: var(--muted);">
-    <span>Une question sur votre compte ? <a href="{% url 'landing' %}#faq" style="color: var(--primary); text-decoration: none; font-weight: 600;">Consultez la FAQ</a></span>
-</div>
-
 <script>
 function toggleMdp() {
     var passInput = document.getElementById("{{ form.password.id_for_label }}");
