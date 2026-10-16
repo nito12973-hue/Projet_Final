@@ -169,3 +169,22 @@ Ce document consigne de façon claire et sans jargon chaque décision d'architec
      - **Mobile-first ergonomique :** Sur écran <= 640px, les conteneurs passent en pleine largeur confortable, les boutons d'action s'empilent verticalement à 46px de hauteur pour un clic tactile sans erreur ni débordement horizontal.
      - **Messages d'erreurs contextuels :** Messages d'erreur stylisés sous le champ concerné avec icône d'alerte, vocabulaire clair et suppression de tout traceback ou détail technique.
 - **Vérifications :** Suite complète de tests validée avec succès (**893 tests OK à 100%**).
+
+---
+
+## [2026-10-16] Refonte de la Page de Connexion en Carte Centrée Compacte (440px) & Calibrage des Formulaires
+- **Contexte & Constat :**
+  - L'écran de connexion initial utilisait une mise en page bi-colonne large de 920px avec un panneau latéral marketing et des arrière-plans animés, occupant tout le champ visuel de l'écran sur ordinateur de bureau.
+  - Les formulaires applicatifs internes utilisaient une largeur de 720px qui étirait inutilement les champs de saisie simples (nom, prénom, téléphone, email).
+- **Décisions ergonomiques & techniques :**
+  1. **Format carte centrée épurée pour l'authentification (`base_auth.html` & `login.html`) :**
+     - Remplacement de la grille 920px à 2 colonnes par une **carte d'authentification compacte centrée de 440px**, équilibrée verticalement et horizontalement.
+     - En-tête sobre avec le logotype officiel SantéSN, titre et sous-titre rassurant.
+     - Suppression des animations de fond volumineuses pour un rendu propre, immédiat et professionnel (background doux `#f8fafc`).
+     - Carte blanche avec ombre portée subtile, coins arrondis à 16px, bordure fine (`#e2e8f0`).
+     - Pied de page allégé et discret sous la carte contenant les liens légaux (Accueil, CGU, Confidentialité).
+  2. **Calibrage des formulaires internes (`base.html`) :**
+     - Calibrage de `.panel-form` et de `form` à une largeur maximale raisonnable de `580px` (variante `.panel-form-large` à 820px pour ordonnances/tableaux multi-lignes, et `.panel-form-etroit` à 440px pour actions rapides).
+     - Suppression de l'étirement des champs de saisie pour une lecture plus rapide et un confort de frappe naturel.
+- **Vérifications :** Suite complète de 893 tests validée (**100% succès**).
+
