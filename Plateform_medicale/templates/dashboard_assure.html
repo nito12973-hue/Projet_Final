@@ -104,14 +104,19 @@
             </span>
         </div>
         <div style="margin-bottom: 8px;">
-            <strong style="font-size: 26px; font-weight: 800; color: var(--titre); font-variant-numeric: tabular-nums; line-height: 1.1; display: block;">
-                {% if plafond_restant is not None %}{{ plafond_restant|franc_cfa }}{% else %}Illimité{% endif %}
-            </strong>
+            <a href="https://wa.me/{{ whatsapp_bot_phone }}?text=1" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: inherit; display: block;" title="Consulter mon solde et plafond directement sur WhatsApp">
+                <strong style="font-size: 26px; font-weight: 800; color: var(--titre); font-variant-numeric: tabular-nums; line-height: 1.1; display: block;">
+                    {% if plafond_restant is not None %}{{ plafond_restant|franc_cfa }}{% else %}Illimité{% endif %}
+                </strong>
+            </a>
             <span style="font-size: 12px; color: var(--muted);">sur {{ plafond_annuel|franc_cfa|default:"Plafond standard" }} de garantie</span>
         </div>
-        <div style="padding-top: 10px; border-top: 1px solid var(--border); font-size: 12px;">
+        <div style="padding-top: 10px; border-top: 1px solid var(--border); font-size: 12px; display: flex; align-items: center; justify-content: space-between;">
             <a href="{% url 'mes_remboursements_assure' %}" style="color: var(--primary); text-decoration: none; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
                 Mes remboursements &rarr;
+            </a>
+            <a href="https://wa.me/{{ whatsapp_bot_phone }}?text=1" target="_blank" rel="noopener noreferrer" style="color: #128C7E; text-decoration: none; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;" title="Vérifier mon solde restant sur WhatsApp">
+                {% icone "chat-dots" %} Sur WhatsApp
             </a>
         </div>
     </div>
@@ -425,6 +430,11 @@
                         <strong style="color: {% if plafond_restant and plafond_restant > 0 %}var(--success){% else %}var(--danger){% endif %}; font-size: 12.5px;">
                             {{ plafond_restant|franc_cfa }}
                         </strong>
+                    </div>
+                    <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--border); display: flex; justify-content: flex-end;">
+                        <a href="https://wa.me/{{ whatsapp_bot_phone }}?text=1" target="_blank" rel="noopener noreferrer" style="color: #128C7E; font-size: 12px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                            {% icone "chat-dots" %} Recevoir mon solde détaillé par WhatsApp &rarr;
+                        </a>
                     </div>
                     {% else %}
                     <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">

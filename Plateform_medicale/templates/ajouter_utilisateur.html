@@ -9,7 +9,7 @@
         <h1>Ajouter un utilisateur</h1>
         <p class="subtitle">Un compte sera créé et un lien d'activation sécurisé valable 24 heures sera envoyé via le canal disponible.</p>
     </div>
-    <a class="button btn btn-retour-expand" href="{% url 'liste_utilisateurs' %}" title="Retour" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
+    <a class="button btn btn-retour-expand" href="{% url 'dashboard' %}" title="Retour au tableau de bord" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
 </section>
 
 <section class="panel panel-form" style="max-width: 640px;">
@@ -34,7 +34,7 @@
         {% endfor %}
         <div style="margin-top: 24px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
             <button class="button primary" type="submit">Créer le compte et envoyer l'activation</button>
-            <a class="button btn" href="{% url 'liste_utilisateurs' %}">Annuler</a>
+            <a class="button btn" href="{% url 'dashboard' %}">Annuler</a>
         </div>
     </form>
 </section>
