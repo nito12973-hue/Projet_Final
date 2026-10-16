@@ -26,24 +26,12 @@
                 <p class="sous-titre-legal">Garanties de protection de la vie privée, secret médical, chiffrement des données et droits des assurés conformément aux directives de la Commission de Protection des Données Personnelles du Sénégal (CDP).</p>
             </div>
             <div class="actions-document-legal">
-                <button type="button" class="btn-action-legal" onclick="window.print()" title="Imprimer ou enregistrer au format PDF">
-                    {% icone "printer" %} <span>Imprimer / PDF</span>
-                </button>
                 <a href="{% url 'landing' %}" class="btn-action-legal secondaire">
-                    {% icone "chevron-left" %} <span>Retour</span>
+                    {% icone "chevron-left" %} <span>Retour à l'accueil</span>
                 </a>
             </div>
         </div>
     </header>
-
-    <!-- En-tête officiel imprimable uniquement -->
-    <div class="entete-impression-officielle">
-        <div class="logo-impression">
-            <strong>SantéSN</strong> · Protection des Données Personnelles & Secret Médical
-        </div>
-        <h2>Politique de Confidentialité & Données de Santé — Document Officiel</h2>
-        <p class="meta-impression">Loi sénégalaise n° 2008-12 · Homologation CDP Sénégal · Version 2.4 · 16 Octobre 2026</p>
-    </div>
 
     <!-- Corps du document en 2 colonnes (Sommaire Sticky + Contenu) -->
     <div class="grille-juridique">
