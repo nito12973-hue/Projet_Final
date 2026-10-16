@@ -187,10 +187,19 @@
 
 <style>
 @media print {
-    .sans-impression, header, nav, aside, footer, #barre-laterale, .topbar, .public-topbar, .topbar-droite, .menu-theme, #menu-theme-topbar, .menu-notifications, .menu-compte, .fil-ariane, .page-title, .actions, .button, button, #modal-annulation {
+    .sans-impression, header.topbar, header.public-topbar, nav, aside, footer, #barre-laterale, .topbar, .public-topbar, .topbar-droite, .menu-theme, #menu-theme-topbar, .menu-notifications, .menu-compte, .fil-ariane, .page-title, .actions, .button, button, #modal-annulation {
         display: none !important;
         visibility: hidden !important;
         height: 0 !important;
+    }
+    .feuille, .feuille-entete, .feuille-marque, .feuille-praticien, .feuille-patient, .feuille-prescription {
+        display: block !important;
+        visibility: visible !important;
+        height: auto !important;
+        opacity: 1 !important;
+    }
+    .feuille-entete {
+        display: flex !important;
     }
     body {
         background: #ffffff !important;

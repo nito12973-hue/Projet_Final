@@ -265,10 +265,19 @@
 }
 
 @media print {
-    .sans-impression, header, nav, aside, footer, #barre-laterale, .topbar, .public-topbar, .topbar-droite, .menu-theme, #menu-theme-topbar, .menu-notifications, .menu-compte, .fil-ariane, .page-title, .actions, .button, button {
+    .sans-impression, header.topbar, header.public-topbar, nav, aside, footer, #barre-laterale, .topbar, .public-topbar, .topbar-droite, .menu-theme, #menu-theme-topbar, .menu-notifications, .menu-compte, .fil-ariane, .page-title, .actions, .button, button {
         display: none !important;
         visibility: hidden !important;
         height: 0 !important;
+    }
+    .feuille-recu, .recu-entete, .recu-marque, .recu-reference-bloc {
+        display: block !important;
+        visibility: visible !important;
+        height: auto !important;
+        opacity: 1 !important;
+    }
+    .recu-entete {
+        display: flex !important;
     }
     body {
         background: #ffffff !important;
