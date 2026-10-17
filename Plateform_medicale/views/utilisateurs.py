@@ -967,6 +967,8 @@ def modifier_organisme(request, pk):
             else:
                 messages.success(request, f"Entreprise « {organisme.nom} » modifiée avec succès.")
             return redirect("liste_organismes")
+    else:
+        form = OrganismeForm(instance=organisme, request=request)
     return render(
         request,
         "modifier_organisme.html",
