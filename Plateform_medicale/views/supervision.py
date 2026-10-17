@@ -207,7 +207,7 @@ def metrics_prometheus(request):
     try:
         maintenant = timezone.now()
         h24 = maintenant - timezone.timedelta(hours=24)
-        echecs_24h = TentativeConnexion.objects.filter(succes=False, date_tentative__gte=h24).count()
+        echecs_24h = TentativeConnexion.objects.filter(dernier_echec__gte=h24).count()
         lignes.extend([
             "",
             "# HELP santesn_security_failed_logins_24h Tentatives de connexion echouees sur les dernieres 24h",

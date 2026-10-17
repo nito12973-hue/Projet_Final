@@ -17,6 +17,7 @@ from django.db import transaction
 from django.db.models import Count, ProtectedError, Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 logger = logging.getLogger("Plateform_medicale")
@@ -164,6 +165,16 @@ def liste_utilisateurs(request):
             u.est_temporairement_bloque = False
             u.minutes_restantes_blocage = 0
 
+    maintenant = timezone.now()
+    tentatives_adresses_inconnues = []
+    if request.user.role == User.Role.ADMIN:
+        tentatives_adresses_inconnues = list(
+            TentativeConnexion.objects.filter(
+                tentatives__gte=TentativeConnexion.MAX_TENTATIVES,
+                dernier_echec__gt=maintenant - TentativeConnexion.DUREE_BLOCAGE,
+            ).exclude(email__in=User.objects.values_list("email", flat=True))
+        )
+
     contexte = {
         "utilisateurs": page_utilisateurs,
         "roles": User.Role.choices,
@@ -179,6 +190,7 @@ def liste_utilisateurs(request):
         "total_pharmaciens": comptes_par_role.get(User.Role.PHARMACIEN, 0),
         "total_admins": comptes_par_role.get(User.Role.ADMIN, 0),
         "total_comptes_signales": len(filtres["emails_bloques"]),
+        "tentatives_adresses_inconnues": tentatives_adresses_inconnues,
     }
     return render(request, "liste_utilisateurs.html", contexte)
 
