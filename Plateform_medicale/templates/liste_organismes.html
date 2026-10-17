@@ -91,7 +91,10 @@
                         {% endfor %}
                         </div>
                     {% else %}
-                        <span class="subtitle" style="font-size:12px;color:var(--muted);display:block;">Aucun gestionnaire</span>
+                        <span class="subtitle" style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">Aucun gestionnaire</span>
+                        <a href="{% url 'ajouter_utilisateur' %}?role=GESTIONNAIRE&organisme={{ org.pk }}" class="button btn btn-sm" style="font-size:11px;padding:2px 8px;min-height:26px;height:26px;" title="Créer un gestionnaire pour {{ org.nom }}">
+                            Créer un gestionnaire
+                        </a>
                     {% endif %}
                 </td>
                 <td class="col-optionnelle">{{ org.nb_patients }}</td>
