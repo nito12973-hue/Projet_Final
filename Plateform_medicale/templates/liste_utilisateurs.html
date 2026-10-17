@@ -15,6 +15,21 @@
     </div>
 </section>
 
+{% if tentatives_adresses_inconnues %}
+<div class="panel-bloc" style="margin-bottom: 20px; border-left: 4px solid var(--danger); background: rgba(220, 38, 38, 0.06); padding: 14px 18px; border-radius: 10px;">
+    <strong style="color: var(--danger); font-size: 13.5px; display: inline-flex; align-items: center; gap: 6px;">
+        {% icone "shield" %} Alerte Sécurité : Intrusion / Force brute bloquée
+    </strong>
+    <p style="font-size: 13px; margin: 6px 0 0; color: var(--texte); line-height: 1.5;">
+        Le pare-feu a bloqué des tentatives de connexion répétées sur des adresses qui ne correspondent à aucun compte existant :
+        {% for t in tentatives_adresses_inconnues %}
+        <br>
+        <span class="code" style="font-weight: 600; color: var(--danger);">{{ t.email }}</span> — <strong>{{ t.tentatives }} échecs consécutifs</strong> (accès temporairement bloqué pendant 5 minutes)
+        {% endfor %}
+    </p>
+</div>
+{% endif %}
+
 <!-- Effectifs par rôle : aucune donnée nominative -->
 <div class="kpi-grille" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); margin-bottom: 20px;" aria-label="Effectifs par rôle">
     <div class="kpi">
