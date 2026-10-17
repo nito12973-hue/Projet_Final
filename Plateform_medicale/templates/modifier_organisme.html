@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% load icones %}
 
-{% block title %}Modifier {{ organisme }}{% endblock %}
+{% block title %}Modifier l'entreprise {{ organisme.nom }}{% endblock %}
 
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>Modifier {{ organisme }}</h1>
-        <p class="subtitle">Mise à jour des informations de l'organisme ({{ organisme.code }}).</p>
+        <h1>Modifier l'entreprise {{ organisme.nom }}</h1>
+        <p class="subtitle">Mise à jour des coordonnées de l'entreprise ({{ organisme.code }}).</p>
     </div>
     <a class="button btn btn-retour-expand" href="{% url 'liste_organismes' %}" title="Retour" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
 </section>

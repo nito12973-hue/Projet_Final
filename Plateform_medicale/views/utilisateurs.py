@@ -840,15 +840,22 @@ def ajouter_organisme(request):
     if request.method == "POST":
         form = OrganismeForm(request.POST)
         if form.is_valid():
-            organisme = form.save()
+            organisme = form.save(request=request)
+            gestionnaire = getattr(form, "gestionnaire_cree", None)
+            details = f"Code : {organisme.code}"
+            if gestionnaire:
+                details += f" — Gestionnaire : {gestionnaire.get_full_name()} ({gestionnaire.email})"
             journaliser(
                 request,
                 JournalActivite.Action.CREATION,
-                f"Organisme {organisme.nom}",
-                f"Code : {organisme.code} — Type : {organisme.get_type_organisme_display()}",
+                f"Entreprise {organisme.nom}",
+                details,
                 organisme=organisme,
             )
-            messages.success(request, f"Organisme « {organisme.nom} » ({organisme.code}) créé avec succès.")
+            if gestionnaire:
+                messages.success(request, f"Entreprise « {organisme.nom} » et compte gestionnaire ({gestionnaire.email}) créés avec succès.")
+            else:
+                messages.success(request, f"Entreprise « {organisme.nom} » créée avec succès.")
             return redirect("liste_organismes")
     else:
         form = OrganismeForm()
@@ -865,11 +872,11 @@ def modifier_organisme(request, pk):
             journaliser(
                 request,
                 JournalActivite.Action.MODIFICATION,
-                f"Organisme {organisme.nom}",
-                f"Code : {organisme.code} — Type : {organisme.get_type_organisme_display()}",
+                f"Entreprise {organisme.nom}",
+                f"Code : {organisme.code}",
                 organisme=organisme,
             )
-            messages.success(request, f"Organisme « {organisme.nom} » modifié.")
+            messages.success(request, f"Entreprise « {organisme.nom} » modifiée avec succès.")
             return redirect("liste_organismes")
     else:
         form = OrganismeForm(instance=organisme)

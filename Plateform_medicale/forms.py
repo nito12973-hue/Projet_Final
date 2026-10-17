@@ -242,7 +242,31 @@ class SetupWizardForm(forms.ModelForm):
 
 
 class OrganismeForm(forms.ModelForm):
-    """Création ou modification d'un organisme assureur (IPM / Assurance / Mutuelle / Entreprise)."""
+    """Création ou modification d'une entreprise partenaire avec gestionnaire intégré."""
+
+    gestionnaire_prenom = forms.CharField(
+        label="Prénom du gestionnaire",
+        max_length=150,
+        required=False,
+        widget=forms.TextInput(attrs={"placeholder": "Ex : Fatou"}),
+    )
+    gestionnaire_nom = forms.CharField(
+        label="Nom du gestionnaire",
+        max_length=150,
+        required=False,
+        widget=forms.TextInput(attrs={"placeholder": "Ex : Ndiaye"}),
+    )
+    gestionnaire_email = forms.EmailField(
+        label="Email de connexion du gestionnaire",
+        required=False,
+        widget=forms.EmailInput(attrs={"placeholder": "gestionnaire@entreprise.sn"}),
+    )
+    gestionnaire_telephone = forms.CharField(
+        label="Téléphone du gestionnaire (pour activation)",
+        max_length=20,
+        required=False,
+        widget=forms.TextInput(attrs={"placeholder": "Ex : 771234567"}),
+    )
 
     class Meta:
         model = Organisme
@@ -256,23 +280,65 @@ class OrganismeForm(forms.ModelForm):
             "actif",
         ]
         widgets = {
-            "nom": forms.TextInput(attrs={"placeholder": "Ex : IPM Sonatel"}),
-            "code": forms.TextInput(attrs={"placeholder": "Ex : IPM-SONATEL"}),
+            "nom": forms.TextInput(attrs={"placeholder": "Ex : Sonatel, Total, Orange..."}),
+            "code": forms.TextInput(attrs={"placeholder": "Ex : SONATEL"}),
             "adresse": forms.TextInput(attrs={"placeholder": "Ex : Dakar, Plateau"}),
-            "telephone": forms.TextInput(attrs={"placeholder": "Ex : 770000000"}),
-            "email": forms.EmailInput(attrs={"placeholder": "contact@organisme.sn"}),
+            "telephone": forms.TextInput(attrs={"placeholder": "Ex : 338391200"}),
+            "email": forms.EmailInput(attrs={"placeholder": "contact@entreprise.sn"}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            self.fields.pop("gestionnaire_prenom", None)
+            self.fields.pop("gestionnaire_nom", None)
+            self.fields.pop("gestionnaire_email", None)
+            self.fields.pop("gestionnaire_telephone", None)
+        else:
+            self.fields["type_organisme"].initial = Organisme.TypeOrganisme.ENTREPRISE
+            self.fields["type_organisme"].required = False
+            self.fields["type_organisme"].widget = forms.HiddenInput()
 
     def clean_code(self):
         code = (self.cleaned_data.get("code") or "").strip().upper()
         if not code:
-            raise forms.ValidationError("Le code de l'organisme est obligatoire.")
+            raise forms.ValidationError("Le code de l'entreprise est obligatoire.")
         qs = Organisme.objects.filter(code__iexact=code)
         if self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)
         if qs.exists():
-            raise forms.ValidationError("Ce code d'organisme est déjà utilisé.")
+            raise forms.ValidationError("Ce code d'entreprise est déjà utilisé.")
         return code
+
+    def clean_gestionnaire_email(self):
+        email = (self.cleaned_data.get("gestionnaire_email") or "").strip().lower()
+        if email and User.objects.filter(email=email).exists():
+            raise forms.ValidationError("Un compte utilisateur avec cette adresse email existe déjà.")
+        return email
+
+    def save(self, commit=True, request=None):
+        if not self.cleaned_data.get("type_organisme"):
+            self.instance.type_organisme = Organisme.TypeOrganisme.ENTREPRISE
+        organisme = super().save(commit=commit)
+        self.gestionnaire_cree = None
+        email = (self.cleaned_data.get("gestionnaire_email") or "").strip().lower()
+        if commit and email:
+            from .services.onboarding import envoyer_activation_utilisateur
+            prenom = (self.cleaned_data.get("gestionnaire_prenom") or "").strip()
+            nom = (self.cleaned_data.get("gestionnaire_nom") or "").strip()
+            tel = (self.cleaned_data.get("gestionnaire_telephone") or "").strip()
+            gestionnaire = User.objects.create(
+                email=email,
+                first_name=prenom,
+                last_name=nom,
+                phone_number=tel,
+                role=User.Role.GESTIONNAIRE,
+                organisme=organisme,
+                is_active=True,
+            )
+            envoyer_activation_utilisateur(gestionnaire, request=request)
+            self.gestionnaire_cree = gestionnaire
+        return organisme
 
 
 class UtilisateurCreationForm(forms.ModelForm):
@@ -302,14 +368,15 @@ class UtilisateurCreationForm(forms.ModelForm):
             self.fields['organisme'].required = False
             self.fields['organisme'].widget = forms.HiddenInput()
         else:
-            # L'administrateur peut creer tout compte sauf ADMIN.
+            # L'administrateur supervise les entreprises : il crée uniquement des Gestionnaires.
             self.fields['role'].choices = [
-                choix for choix in User.Role.choices if choix[0] != User.Role.ADMIN
+                (User.Role.GESTIONNAIRE, 'Gestionnaire d\'entreprise'),
             ]
             self.fields['role'].initial = User.Role.GESTIONNAIRE
             self.fields['organisme'].queryset = Organisme.objects.filter(actif=True)
-            self.fields['organisme'].required = False
-            self.fields['organisme'].empty_label = "— Aucun organisme —"
+            self.fields['organisme'].required = True
+            self.fields['organisme'].empty_label = "— Sélectionner l'entreprise —"
+            self.fields['organisme'].label = "Entreprise rattachée"
 
     def clean(self):
         cleaned_data = super().clean()
