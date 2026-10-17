@@ -4,15 +4,133 @@
 {% block title %}Assistant SantéSN{% endblock %}
 
 {% block content %}
+<style>
+@keyframes spin { 100% { transform: rotate(360deg); } }
+@keyframes pulseDot {
+    0%, 100% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.3); opacity: 1; }
+}
+@keyframes ecoutePulse {
+    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
+    70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.bulle-typing {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 12px 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    border-top-left-radius: 4px;
+    box-shadow: 0 2px 8px rgba(11,32,39,0.04);
+}
+.bulle-typing .point {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--primary);
+    animation: pulseDot 1.2s infinite ease-in-out;
+}
+.bulle-typing .point:nth-child(2) { animation-delay: 0.2s; }
+.bulle-typing .point:nth-child(3) { animation-delay: 0.4s; }
+
+.btn-vocal-actif {
+    background: var(--danger) !important;
+    color: #ffffff !important;
+    animation: ecoutePulse 1.4s infinite !important;
+}
+
+.btn-audio-lecture {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    padding: 3px 6px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    margin-top: 6px;
+    transition: all 0.15s ease;
+}
+.btn-audio-lecture:hover {
+    color: var(--primary);
+    background: var(--primary-soft);
+}
+
+.btn-suggestion {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: var(--champ-bg);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--titre);
+    cursor: pointer;
+    transition: all 0.18s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.btn-suggestion:hover {
+    background: var(--primary-soft);
+    border-color: var(--primary);
+    color: var(--primary-strong);
+    transform: translateY(-1px);
+}
+
+.assistant-markdown p { margin: 0 0 8px 0; }
+.assistant-markdown p:last-child { margin-bottom: 0; }
+.assistant-markdown ul { margin: 6px 0 8px 18px; padding: 0; }
+.assistant-markdown li { margin-bottom: 4px; }
+.assistant-markdown strong { color: var(--titre); font-weight: 700; }
+.assistant-markdown code {
+    background: rgba(14, 124, 134, 0.08);
+    color: var(--primary-strong);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 12.5px;
+}
+
+@media (max-width: 640px) {
+    .assistant-panel-container {
+        height: calc(100vh - 210px) !important;
+        min-height: 420px !important;
+    }
+    .page-title .actions {
+        display: flex;
+        flex-direction: row;
+        gap: 6px;
+        width: 100%;
+    }
+    .page-title .actions .button {
+        flex: 1;
+        justify-content: center;
+    }
+}
+</style>
+
 <section class="page-title">
     <div>
-        <div style="display:flex;align-items:center;gap:10px;">
-            <div style="width:38px;height:38px;border-radius:10px;background:var(--primary);color:#fff;display:grid;place-items:center;">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <div style="width:40px;height:40px;border-radius:12px;background:var(--primary);color:#fff;display:grid;place-items:center;box-shadow:0 4px 12px rgba(14,124,134,0.3);">
                 {% icone "chat" %}
             </div>
             <div>
-                <h1 style="margin:0;font-size:24px;">Assistant SantéSN</h1>
-                <p class="subtitle" style="margin:0;">Votre conseiller interactif pour vos démarches de santé et votre couverture.</p>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <h1 style="margin:0;font-size:22px;">Assistant SantéSN</h1>
+                    <span class="badge validee" style="font-size:11px;padding:2px 8px;display:inline-flex;align-items:center;gap:5px;">
+                        <span class="status-pulse-dot" style="display:inline-block;"></span> En ligne
+                    </span>
+                </div>
+                <p class="subtitle" style="margin:0;font-size:13px;">Votre conseiller interactif dédié pour vos démarches, soins et tiers payant.</p>
             </div>
         </div>
     </div>
@@ -28,47 +146,52 @@
 </section>
 
 <!-- Avertissement déontologique médical sobre -->
-<div style="background:var(--primary-soft);border:1px solid rgba(14, 124, 134, 0.2);border-radius:12px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;gap:12px;">
+<div style="background:var(--primary-soft);border:1px solid rgba(14, 124, 134, 0.2);border-radius:12px;padding:10px 14px;margin-bottom:16px;display:flex;align-items:center;gap:10px;">
     <span style="color:var(--primary);flex-shrink:0;">{% icone "shield-check" %}</span>
-    <span style="font-size:13px;color:var(--primary-dark);line-height:1.4;">
-        <strong>Information confidentielle & sécurisée :</strong> Cet assistant vous guide dans vos démarches administratives SantéSN. 
+    <span style="font-size:12.5px;color:var(--primary-dark);line-height:1.4;">
+        <strong>Information confidentielle &amp; sécurisée :</strong> Cet assistant vous guide dans vos démarches administratives SantéSN. 
         En cas d'urgence médicale vitale, contactez directement le <strong>SAMU (15 15)</strong> ou les <strong>Sapeurs-Pompiers (18)</strong>.
     </span>
 </div>
 
 <!-- Fenêtre conversationnelle principale -->
-<div class="panel" style="border-radius:18px;box-shadow:var(--ombre-douce);padding:0;overflow:hidden;display:flex;flex-direction:column;height:65vh;min-height:480px;">
+<div class="panel assistant-panel-container" style="border-radius:18px;box-shadow:var(--ombre-douce);padding:0;overflow:hidden;display:flex;flex-direction:column;height:65vh;min-height:500px;">
     
     <!-- Zone de défilement des messages -->
-    <div id="zone-messages-assistant" style="flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:18px;background:var(--champ-bg);">
+    <div id="zone-messages-assistant" style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;background:var(--champ-bg);">
         {% for msg in conversation %}
             {% if msg.expediteur == "assistant" %}
                 <!-- Message Assistant -->
-                <div style="display:flex;align-items:flex-start;gap:12px;max-width:85%;">
+                <div class="message-bloc message-assistant" style="display:flex;align-items:flex-start;gap:12px;max-width:85%;">
                     <div style="width:34px;height:34px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;flex-shrink:0;margin-top:2px;">
                         {% icone "chat" %}
                     </div>
-                    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;border-top-left-radius:4px;padding:16px 18px;box-shadow:0 2px 8px rgba(11,32,39,0.04);">
-                        <div style="font-size:14px;color:var(--titre);line-height:1.55;white-space:pre-wrap;">{{ msg.texte }}</div>
+                    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;border-top-left-radius:4px;padding:14px 18px;box-shadow:0 2px 8px rgba(11,32,39,0.04);position:relative;">
+                        <div class="contenu-texte assistant-markdown" style="font-size:14px;color:var(--titre);line-height:1.55;">{{ msg.texte }}</div>
                         
                         {% if msg.actions %}
-                        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;">
+                        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;">
                             {% for act in msg.actions %}
-                            <a href="{{ act.url }}" class="button {% if act.style == 'primary' %}primary{% else %}btn btn-sm{% endif %}" style="font-size:13px;padding:6px 14px;">
+                            <a href="{{ act.url }}" class="button {% if act.style == 'primary' %}primary{% else %}btn btn-sm{% endif %}" style="font-size:12.5px;padding:6px 12px;">
                                 {% icone "chevron-right" %} {{ act.libelle }}
                             </a>
                             {% endfor %}
                         </div>
                         {% endif %}
-                        <span style="display:block;margin-top:8px;font-size:11px;color:var(--muted);text-align:right;">{{ msg.date }}</span>
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;gap:8px;">
+                            <button type="button" class="btn-audio-lecture" onclick="lireMessageVocal(this)" title="Écouter la réponse à voix haute">
+                                {% icone "volume-2" %} <span>Écouter</span>
+                            </button>
+                            <span style="font-size:11px;color:var(--muted);">{{ msg.date }}</span>
+                        </div>
                     </div>
                 </div>
             {% else %}
                 <!-- Message Patient -->
-                <div style="display:flex;align-items:flex-start;justify-content:flex-end;gap:12px;margin-left:auto;max-width:80%;">
-                    <div style="background:var(--primary-strong);color:#ffffff;border-radius:16px;border-top-right-radius:4px;padding:14px 18px;box-shadow:0 2px 8px rgba(9,80,89,0.15);">
+                <div class="message-bloc message-patient" style="display:flex;align-items:flex-start;justify-content:flex-end;gap:12px;margin-left:auto;max-width:80%;">
+                    <div style="background:var(--primary-strong);color:#ffffff;border-radius:16px;border-top-right-radius:4px;padding:12px 16px;box-shadow:0 2px 8px rgba(9,80,89,0.15);">
                         <div style="font-size:14px;line-height:1.5;white-space:pre-wrap;">{{ msg.texte }}</div>
-                        <span style="display:block;margin-top:6px;font-size:11px;color:rgba(255,255,255,0.7);text-align:right;">{{ msg.date }}</span>
+                        <span style="display:block;margin-top:4px;font-size:10.5px;color:rgba(255,255,255,0.7);text-align:right;">{{ msg.date }}</span>
                     </div>
                     <div style="width:34px;height:34px;border-radius:50%;background:var(--border);color:var(--titre);display:grid;place-items:center;flex-shrink:0;margin-top:2px;">
                         {% icone "user-circle" %}
@@ -77,62 +200,138 @@
             {% endif %}
         {% endfor %}
 
-        <div id="indicateur-chargement-assistant" style="display:none;align-items:center;gap:10px;color:var(--muted);font-size:13px;padding:6px 12px;">
-            <div style="width:16px;height:16px;border:2px solid var(--primary);border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
-            L'Assistant SantéSN recherche vos informations...
+        <div id="indicateur-chargement-assistant" style="display:none;align-items:center;gap:10px;padding:4px 0;">
+            <div style="width:34px;height:34px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;flex-shrink:0;">
+                {% icone "chat" %}
+            </div>
+            <div class="bulle-typing">
+                <span class="point"></span>
+                <span class="point"></span>
+                <span class="point"></span>
+                <span style="font-size:12px;color:var(--muted);margin-left:6px;">L'assistant prépare sa réponse...</span>
+            </div>
         </div>
     </div>
 
-    <!-- Puces de suggestions rapides -->
-    <div id="barre-suggestions" style="padding:10px 18px;background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap;">
-        <span style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-right:4px;">Suggestions :</span>
-        <button type="button" class="btn-suggestion" data-texte="Quels sont mes prochains rendez-vous ?">{% icone "calendar" %} Mes prochains rendez-vous</button>
-        <button type="button" class="btn-suggestion" data-texte="Quel est mon taux de prise en charge ?">{% icone "shield-check" %} Mon taux de remboursement</button>
-        <button type="button" class="btn-suggestion" data-texte="Où trouver mes ordonnances ?">{% icone "pill" %} Mes ordonnances</button>
-        <button type="button" class="btn-suggestion" data-texte="Qui sont mes ayants droit ?">{% icone "family" %} Mes ayants droit</button>
-        <button type="button" class="btn-suggestion" data-texte="Je veux contacter l'administration">{% icone "mail" %} Contacter l'administration</button>
+    <!-- Puces de suggestions rapides dynamiques -->
+    <div id="barre-suggestions" style="padding:10px 16px;background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap;">
+        <span style="font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-right:2px;flex-shrink:0;">Suggestions :</span>
+        <div id="conteneur-puces-suggestions" style="display:inline-flex;align-items:center;gap:8px;">
+            <button type="button" class="btn-suggestion" data-texte="Bonjour !">{% icone "smile" %} Bonjour !</button>
+            <button type="button" class="btn-suggestion" data-texte="Quels sont mes prochains rendez-vous ?">{% icone "calendar" %} Mes rendez-vous</button>
+            <button type="button" class="btn-suggestion" data-texte="Quel est mon taux de prise en charge ?">{% icone "shield-check" %} Mon taux de remboursement</button>
+            <button type="button" class="btn-suggestion" data-texte="Où trouver mes ordonnances ?">{% icone "pill" %} Mes ordonnances</button>
+            <button type="button" class="btn-suggestion" data-texte="Qui sont mes ayants droit ?">{% icone "family" %} Mes ayants droit</button>
+            <button type="button" class="btn-suggestion" data-texte="Comment déposer une réclamation ?">{% icone "mail" %} Réclamation &amp; Support</button>
+        </div>
     </div>
 
-    <!-- Formulaire de saisie -->
-    <form id="form-assistant" method="post" style="margin:0;max-width:none;border:none;border-top:1px solid var(--border);border-radius:0;padding:14px 18px;background:var(--surface);display:flex;gap:10px;align-items:center;box-shadow:none;">
+    <!-- Formulaire de saisie interactif -->
+    <form id="form-assistant" method="post" style="margin:0;max-width:none;border:none;border-top:1px solid var(--border);border-radius:0;padding:12px 16px;background:var(--surface);display:flex;gap:8px;align-items:center;box-shadow:none;">
         {% csrf_token %}
-        <input type="text" id="champ-question-assistant" name="message" placeholder="Posez une question sur vos rendez-vous, votre carte, vos remboursements..." required autocomplete="off" style="margin-bottom:0;flex:1;min-height:46px;font-size:15px;padding-left:16px;border-radius:12px;">
-        <button type="submit" id="btn-envoyer-assistant" class="button primary" style="min-height:46px;padding:0 22px;border-radius:12px;gap:8px;font-weight:700;flex-shrink:0;">
+        <input type="text" id="champ-question-assistant" name="message" placeholder="Écrivez ou dictez votre question à l'assistant..." required autocomplete="off" style="margin-bottom:0;flex:1;min-height:46px;font-size:14.5px;padding-left:16px;border-radius:12px;">
+        
+        <!-- Bouton Microphone / Saisie Vocale -->
+        <button type="button" id="btn-vocal-assistant" class="button btn" title="Dicter vocalement" style="min-height:46px;width:46px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:12px;flex-shrink:0;">
+            {% icone "mic" %}
+        </button>
+
+        <button type="submit" id="btn-envoyer-assistant" class="button primary" style="min-height:46px;padding:0 20px;border-radius:12px;gap:6px;font-weight:700;flex-shrink:0;">
             {% icone "chevron-right" %} <span>Envoyer</span>
         </button>
     </form>
 </div>
 
-<style>
-@keyframes spin { 100% { transform: rotate(360deg); } }
-.btn-suggestion {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
-    background: var(--champ-bg);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    font-size: 12.5px;
-    font-weight: 600;
-    color: var(--titre);
-    cursor: pointer;
-    transition: all 0.18s ease;
-}
-.btn-suggestion:hover {
-    background: var(--primary-soft);
-    border-color: var(--primary);
-    color: var(--primary-strong);
-}
-</style>
-
 <script>
+// Synthèse vocale (Text-to-Speech)
+function lireMessageVocal(bouton) {
+    if (!('speechSynthesis' in window)) {
+        alert("La synthèse vocale n'est pas supportée par votre navigateur.");
+        return;
+    }
+    window.speechSynthesis.cancel();
+    
+    var parentBulle = bouton.closest('.message-assistant');
+    var contenuEl = parentBulle ? parentBulle.querySelector('.contenu-texte') : null;
+    var texte = contenuEl ? contenuEl.innerText : '';
+    if (!texte) return;
+
+    var utterance = new SpeechSynthesisUtterance(texte);
+    utterance.lang = 'fr-FR';
+    utterance.rate = 1.05;
+
+    var spanTexte = bouton.querySelector('span');
+    if (spanTexte) spanTexte.textContent = 'Lecture...';
+    bouton.style.color = 'var(--primary)';
+
+    utterance.onend = function () {
+        if (spanTexte) spanTexte.textContent = 'Écouter';
+        bouton.style.color = '';
+    };
+    utterance.onerror = function () {
+        if (spanTexte) spanTexte.textContent = 'Écouter';
+        bouton.style.color = '';
+    };
+
+    window.speechSynthesis.speak(utterance);
+}
+
+// Convertisseur Markdown basique et sûr
+function formaterMarkdown(texteBrut) {
+    var s = String(texteBrut || '');
+    // Échapper HTML
+    s = s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    
+    // Gras : **texte**
+    s = s.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    // Italique : *texte*
+    s = s.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    // Code inline : `texte`
+    s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+    
+    // Lignes de liste à puces : - texte ou * texte
+    var lignes = s.split('\n');
+    var resultat = [];
+    var dansListe = false;
+    for (var i = 0; i < lignes.length; i++) {
+        var ligne = lignes[i];
+        if (ligne.match(/^\s*[-*]\s+(.*)$/)) {
+            var contenuLigne = ligne.replace(/^\s*[-*]\s+/, '');
+            if (!dansListe) {
+                resultat.push('<ul>');
+                dansListe = true;
+            }
+            resultat.push('<li>' + contenuLigne + '</li>');
+        } else {
+            if (dansListe) {
+                resultat.push('</ul>');
+                dansListe = false;
+            }
+            if (ligne.trim()) {
+                resultat.push('<p>' + ligne + '</p>');
+            }
+        }
+    }
+    if (dansListe) resultat.push('</ul>');
+    return resultat.join('');
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     var zoneMessages = document.getElementById('zone-messages-assistant');
     var formAssistant = document.getElementById('form-assistant');
     var champQuestion = document.getElementById('champ-question-assistant');
     var btnEnvoyer = document.getElementById('btn-envoyer-assistant');
+    var btnVocal = document.getElementById('btn-vocal-assistant');
     var indicateur = document.getElementById('indicateur-chargement-assistant');
+    var conteneurPuces = document.getElementById('conteneur-puces-suggestions');
+
+    // Mettre en forme le markdown initial
+    document.querySelectorAll('.assistant-markdown').forEach(function (el) {
+        if (!el.dataset.formatted) {
+            el.innerHTML = formaterMarkdown(el.textContent);
+            el.dataset.formatted = "true";
+        }
+    });
 
     function scrollerBas() {
         if (zoneMessages) {
@@ -141,13 +340,80 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     scrollerBas();
 
-    // Remplir le champ et soumettre au clic sur une suggestion
-    document.querySelectorAll('.btn-suggestion').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            champQuestion.value = this.getAttribute('data-texte');
-            formAssistant.dispatchEvent(new Event('submit'));
+    // Attacher les clics sur les suggestions
+    function initialiserSuggestions() {
+        document.querySelectorAll('.btn-suggestion').forEach(function (btn) {
+            btn.onclick = function () {
+                champQuestion.value = this.getAttribute('data-texte');
+                formAssistant.dispatchEvent(new Event('submit'));
+            };
         });
-    });
+    }
+    initialiserSuggestions();
+
+    // Mettre à jour les suggestions dynamiquement
+    function majSuggestions(nouvellesSuggestions) {
+        if (!conteneurPuces || !nouvellesSuggestions || !nouvellesSuggestions.length) return;
+        conteneurPuces.innerHTML = '';
+        nouvellesSuggestions.forEach(function (sugg) {
+            var b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'btn-suggestion';
+            b.setAttribute('data-texte', sugg);
+            b.textContent = sugg;
+            conteneurPuces.appendChild(b);
+        });
+        initialiserSuggestions();
+    }
+
+    // Reconnaissance vocale (Speech-to-Text)
+    var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition && btnVocal) {
+        var recognition = new SpeechRecognition();
+        recognition.lang = 'fr-FR';
+        recognition.continuous = false;
+        recognition.interimResults = false;
+
+        var enEcoute = false;
+        btnVocal.addEventListener('click', function () {
+            if (enEcoute) {
+                recognition.stop();
+                return;
+            }
+            try {
+                recognition.start();
+                enEcoute = true;
+                btnVocal.classList.add('btn-vocal-actif');
+                champQuestion.placeholder = "Je vous écoute, parlez maintenant...";
+            } catch (err) {
+                console.error(err);
+            }
+        });
+
+        recognition.onresult = function (event) {
+            var texteVocal = event.results[0][0].transcript;
+            champQuestion.value = texteVocal;
+            btnVocal.classList.remove('btn-vocal-actif');
+            enEcoute = false;
+            champQuestion.placeholder = "Écrivez ou dictez votre question à l'assistant...";
+            // Auto-soumission vocale fluide
+            formAssistant.dispatchEvent(new Event('submit'));
+        };
+
+        recognition.onerror = function () {
+            btnVocal.classList.remove('btn-vocal-actif');
+            enEcoute = false;
+            champQuestion.placeholder = "Écrivez ou dictez votre question à l'assistant...";
+        };
+
+        recognition.onend = function () {
+            btnVocal.classList.remove('btn-vocal-actif');
+            enEcoute = false;
+            champQuestion.placeholder = "Écrivez ou dictez votre question à l'assistant...";
+        };
+    } else if (btnVocal) {
+        btnVocal.style.display = 'none';
+    }
 
     // Envoi AJAX asynchrone sans rechargement de page
     formAssistant.addEventListener('submit', function (e) {
@@ -157,10 +423,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Ajouter immédiatement le message du patient dans le DOM
         var divPatient = document.createElement('div');
+        divPatient.className = 'message-bloc message-patient';
         divPatient.style.cssText = 'display:flex;align-items:flex-start;justify-content:flex-end;gap:12px;margin-left:auto;max-width:80%;';
-        divPatient.innerHTML = '<div style="background:var(--primary-strong);color:#ffffff;border-radius:16px;border-top-right-radius:4px;padding:14px 18px;box-shadow:0 2px 8px rgba(9,80,89,0.15);">'
-            + '<div style="font-size:14px;line-height:1.5;white-space:pre-wrap;">' + escapeHtml(texte) + '</div>'
-            + '<span style="display:block;margin-top:6px;font-size:11px;color:rgba(255,255,255,0.7);text-align:right;">À l\'instant</span>'
+        divPatient.innerHTML = '<div style="background:var(--primary-strong);color:#ffffff;border-radius:16px;border-top-right-radius:4px;padding:12px 16px;box-shadow:0 2px 8px rgba(9,80,89,0.15);">'
+            + '<div style="font-size:14px;line-height:1.5;white-space:pre-wrap;">' + formaterMarkdown(texte) + '</div>'
+            + '<span style="display:block;margin-top:4px;font-size:10.5px;color:rgba(255,255,255,0.7);text-align:right;">À l\'instant</span>'
             + '</div>'
             + '<div style="width:34px;height:34px;border-radius:50%;background:var(--border);color:var(--titre);display:grid;place-items:center;flex-shrink:0;margin-top:2px;">'
             + '{% icone "user-circle" %}'
@@ -184,43 +451,53 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         .then(function (res) { return res.json(); })
         .then(function (data) {
-            indicateur.style.display = 'none';
-            btnEnvoyer.disabled = false;
-            if (data.success && data.reponse) {
-                var rep = data.reponse;
-                var divAssistant = document.createElement('div');
-                divAssistant.style.cssText = 'display:flex;align-items:flex-start;gap:12px;max-width:85%;';
-                
-                var actionsHtml = '';
-                if (rep.actions && rep.actions.length > 0) {
-                    actionsHtml = '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;">';
-                    rep.actions.forEach(function (act) {
-                        var cls = act.style === 'primary' ? 'primary' : 'btn btn-sm';
-                        actionsHtml += '<a href="' + act.url + '" class="button ' + cls + '" style="font-size:13px;padding:6px 14px;display:inline-flex;align-items:center;gap:6px;">'
-                            + '<svg class="icone-nav" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg> '
-                            + escapeHtml(act.libelle) + '</a>';
-                    });
-                    actionsHtml += '</div>';
+            setTimeout(function () {
+                indicateur.style.display = 'none';
+                btnEnvoyer.disabled = false;
+                if (data.success && data.reponse) {
+                    var rep = data.reponse;
+                    var divAssistant = document.createElement('div');
+                    divAssistant.className = 'message-bloc message-assistant';
+                    divAssistant.style.cssText = 'display:flex;align-items:flex-start;gap:12px;max-width:85%;';
+                    
+                    var actionsHtml = '';
+                    if (rep.actions && rep.actions.length > 0) {
+                        actionsHtml = '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;">';
+                        rep.actions.forEach(function (act) {
+                            var cls = act.style === 'primary' ? 'primary' : 'btn btn-sm';
+                            actionsHtml += '<a href="' + act.url + '" class="button ' + cls + '" style="font-size:12.5px;padding:6px 12px;display:inline-flex;align-items:center;gap:6px;">'
+                                + '<svg class="icone-nav" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg> '
+                                + act.libelle + '</a>';
+                        });
+                        actionsHtml += '</div>';
+                    }
+
+                    divAssistant.innerHTML = '<div style="width:34px;height:34px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;flex-shrink:0;margin-top:2px;">'
+                        + '{% icone "chat" %}'
+                        + '</div>'
+                        + '<div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;border-top-left-radius:4px;padding:14px 18px;box-shadow:0 2px 8px rgba(11,32,39,0.04);">'
+                        + '<div class="contenu-texte assistant-markdown" style="font-size:14px;color:var(--titre);line-height:1.55;">' + formaterMarkdown(rep.texte) + '</div>'
+                        + actionsHtml
+                        + '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;gap:8px;">'
+                        + '<button type="button" class="btn-audio-lecture" onclick="lireMessageVocal(this)" title="Écouter la réponse à voix haute">'
+                        + '{% icone "volume-2" %} <span>Écouter</span>'
+                        + '</button>'
+                        + '<span style="font-size:11px;color:var(--muted);">' + data.date + '</span>'
+                        + '</div>'
+                        + '</div>';
+
+                    zoneMessages.insertBefore(divAssistant, indicateur);
+                    if (rep.suggestions) {
+                        majSuggestions(rep.suggestions);
+                    }
+                    scrollerBas();
+                    champQuestion.focus();
                 }
-
-                divAssistant.innerHTML = '<div style="width:34px;height:34px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;flex-shrink:0;margin-top:2px;">'
-                    + '{% icone "chat" %}'
-                    + '</div>'
-                    + '<div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;border-top-left-radius:4px;padding:16px 18px;box-shadow:0 2px 8px rgba(11,32,39,0.04);">'
-                    + '<div style="font-size:14px;color:var(--titre);line-height:1.55;white-space:pre-wrap;">' + escapeHtml(rep.texte) + '</div>'
-                    + actionsHtml
-                    + '<span style="display:block;margin-top:8px;font-size:11px;color:var(--muted);text-align:right;">' + data.date + '</span>'
-                    + '</div>';
-
-                zoneMessages.insertBefore(divAssistant, indicateur);
-                scrollerBas();
-                champQuestion.focus();
-            }
+            }, 450); // Pause réaliste de calcul naturel
         })
         .catch(function () {
             indicateur.style.display = 'none';
             btnEnvoyer.disabled = false;
-            // Repli en cas d'erreur de réseau
             var divErr = document.createElement('div');
             divErr.style.cssText = 'color:var(--danger);font-size:13px;padding:8px;';
             divErr.textContent = 'Une erreur est survenue lors de l\'échange. Veuillez réessayer.';
@@ -228,10 +505,6 @@ document.addEventListener('DOMContentLoaded', function () {
             scrollerBas();
         });
     });
-
-    function escapeHtml(string) {
-        return String(string).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    }
 });
 </script>
 {% endblock %}

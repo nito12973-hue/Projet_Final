@@ -4,24 +4,159 @@
 {% block title %}Vérifier Carte & Prise en Charge - Espace Médecin{% endblock %}
 
 {% block content %}
+<style>
+@keyframes scanBeam {
+    0% { top: 8%; opacity: 0.6; }
+    50% { top: 88%; opacity: 1; box-shadow: 0 0 16px var(--primary); }
+    100% { top: 8%; opacity: 0.6; }
+}
+@keyframes pulseTarget {
+    0%, 100% { opacity: 0.85; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.02); }
+}
+
+.terminal-scan-cadre {
+    position: relative;
+    max-width: 380px;
+    margin: 16px auto 0;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #06151a;
+    box-shadow: 0 16px 40px rgba(6, 21, 26, 0.45);
+    border: 2px solid rgba(14, 124, 134, 0.4);
+}
+
+.viseur-reticule {
+    position: absolute;
+    inset: 15%;
+    border-radius: 14px;
+    pointer-events: none;
+    box-shadow: 0 0 0 9999px rgba(6, 21, 26, 0.6);
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    animation: pulseTarget 3s infinite ease-in-out;
+}
+.viseur-coin {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border-color: #2dd4bf;
+    border-style: solid;
+    pointer-events: none;
+}
+.coin-tl { top: -2px; left: -2px; border-width: 4px 0 0 4px; border-top-left-radius: 8px; }
+.coin-tr { top: -2px; right: -2px; border-width: 4px 4px 0 0; border-top-right-radius: 8px; }
+.coin-bl { bottom: -2px; left: -2px; border-width: 0 0 4px 4px; border-bottom-left-radius: 8px; }
+.coin-br { bottom: -2px; right: -2px; border-width: 0 4px 4px 0; border-bottom-right-radius: 8px; }
+
+.laser-faisceau {
+    position: absolute;
+    left: 4%;
+    right: 4%;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #2dd4bf, #14b8a6, transparent);
+    box-shadow: 0 0 12px #2dd4bf, 0 0 24px rgba(45, 212, 191, 0.6);
+    border-radius: 50%;
+    animation: scanBeam 2.4s infinite ease-in-out;
+    pointer-events: none;
+}
+
+.onglets-scanner {
+    display: flex;
+    background: var(--champ-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 4px;
+    gap: 4px;
+    margin-bottom: 18px;
+}
+.onglet-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.onglet-btn.actif {
+    background: var(--surface);
+    color: var(--primary-strong);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    font-weight: 700;
+}
+
+.terminal-hud-controles {
+    position: absolute;
+    bottom: 12px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    z-index: 10;
+}
+.btn-hud {
+    background: rgba(11, 32, 39, 0.75);
+    backdrop-filter: blur(8px);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-hud:hover {
+    background: rgba(14, 124, 134, 0.9);
+    border-color: #2dd4bf;
+}
+
+@media (max-width: 640px) {
+    .grille-info-scanner {
+        grid-template-columns: 1fr !important;
+    }
+    .onglets-scanner {
+        flex-direction: column;
+    }
+}
+</style>
+
 <section class="page-title">
     <div>
-        <h1>Vérification Carte &amp; Prise en Charge</h1>
-        <p class="subtitle">Scannez le QR code de la carte biométrique ou recherchez par N° de carte ou N° d'accord PEC.</p>
+        <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:38px;height:38px;border-radius:10px;background:var(--primary);color:#fff;display:grid;place-items:center;">
+                {% icone "shield-check" %}
+            </div>
+            <div>
+                <h1 style="margin:0;font-size:22px;">Terminal de Vérification Carte &amp; PEC</h1>
+                <p class="subtitle" style="margin:0;font-size:13px;">Scannez la carte biométrique d'un assuré ou vérifiez un accord de prise en charge en temps réel.</p>
+            </div>
+        </div>
     </div>
     <a class="button btn btn-retour-expand" href="{% url 'dashboard_medecin' %}" title="Retour au tableau de bord" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
 </section>
 
 <div style="max-width: 720px; margin: 0 auto;">
-    <section class="panel panel-form">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:12px;">
+    <section class="panel panel-form" style="padding: 22px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:14px;flex-wrap:wrap;gap:10px;">
             <div style="display:flex;align-items:center;gap:10px;">
                 <span style="display:inline-flex;padding:8px;border-radius:10px;background:var(--primary-soft);color:var(--primary-strong);">
-                    {% icone "shield-check" %}
+                    {% icone "id-card" %}
                 </span>
                 <div>
-                    <h2 style="margin:0;font-size:16px;color:var(--titre);">Terminal de contrôle des droits &amp; PEC</h2>
-                    <p class="subtitle" style="margin:0;font-size:12.5px;">Accès direct aux devis accordés et au dossier de soins</p>
+                    <h2 style="margin:0;font-size:16px;color:var(--titre);">Contrôle d'accès aux soins</h2>
+                    <p class="subtitle" style="margin:0;font-size:12.5px;">Certification de l'identité et validité des droits Tiers-Payant</p>
                 </div>
             </div>
             <span class="badge validee" style="font-size:11.5px;padding:4px 10px;">
@@ -29,52 +164,106 @@
             </span>
         </div>
 
+        <!-- Sélecteur d'onglets de scan -->
+        <div class="onglets-scanner">
+            <button type="button" class="onglet-btn actif" id="onglet-camera" onclick="changerModeScan('camera')">
+                {% icone "qr-scan" %} Caméra en direct
+            </button>
+            <button type="button" class="onglet-btn" id="onglet-manuel" onclick="changerModeScan('manuel')">
+                {% icone "search" %} Saisie manuelle
+            </button>
+            <button type="button" class="onglet-btn" id="onglet-fichier" onclick="changerModeScan('fichier')">
+                {% icone "upload" %} Importer une image
+            </button>
+        </div>
+
+        <!-- Formulaire principal unifié -->
         <form method="post" id="form-scan-medecin">
             {% csrf_token %}
-            <div style="margin-bottom:14px;">
+
+            <!-- SECTION 1 : SCAN CAMÉRA EN DIRECT -->
+            <div id="section-scan-camera" style="text-align:center;">
+                <p id="statut-scan-camera" class="subtitle" style="margin:0 0 10px;font-size:13px;font-weight:600;color:var(--primary-strong);" role="status" aria-live="polite">
+                    Initialisation du viseur optique...
+                </p>
+
+                <div class="terminal-scan-cadre" id="panneau-scan-camera">
+                    <video id="video-scan-camera" autoplay muted playsinline aria-hidden="true" style="width:100%;display:block;aspect-ratio:1/1;object-fit:cover;"></video>
+                    <canvas id="canvas-scan-camera" style="display:none;"></canvas>
+                    
+                    <!-- Réticule optique haute précision -->
+                    <div class="viseur-reticule" aria-hidden="true">
+                        <span class="viseur-coin coin-tl"></span>
+                        <span class="viseur-coin coin-tr"></span>
+                        <span class="viseur-coin coin-bl"></span>
+                        <span class="viseur-coin coin-br"></span>
+                        <div class="laser-faisceau"></div>
+                    </div>
+
+                    <!-- Contrôles HUD superposés -->
+                    <div class="terminal-hud-controles">
+                        <button type="button" id="btn-hud-torche" class="btn-hud" onclick="basculerTorche()" style="display:none;">
+                            {% icone "sun" %} <span id="lbl-torche">Flash</span>
+                        </button>
+                        <button type="button" id="btn-hud-switch" class="btn-hud" onclick="changerObjectifCamera()">
+                            {% icone "refresh-cw" %} <span>Inverser</span>
+                        </button>
+                        <button type="button" class="btn-hud" onclick="arreterScan()">
+                            {% icone "x" %} <span>Arrêter</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div style="margin-top:14px;">
+                    <button type="button" id="bouton-scan-camera" class="button primary" style="padding:10px 20px;font-weight:700;">
+                        {% icone "qr-scan" %} Activer la caméra
+                    </button>
+                </div>
+            </div>
+
+            <!-- SECTION 2 : SAISIE MANUELLE -->
+            <div id="section-scan-manuel" style="display:none;">
                 <label for="code" style="display:block;font-weight:700;margin-bottom:6px;font-size:13.5px;">
                     N° de Carte Assuré ou N° d'accord PEC
                 </label>
-                <div class="champ-recherche" style="margin-bottom:6px;">
+                <div class="champ-recherche" style="margin-bottom:12px;">
                     {% icone "qr-scan" %}
-                    <input id="code" name="code" type="text" placeholder="Ex. SN-2026-..., #PEC-260309... ou scannez" autofocus required style="font-family:'IBM Plex Mono',monospace;font-size:15px;letter-spacing:0.03em;">
+                    <input id="code" name="code" type="text" placeholder="Ex. SN-2026-..., #PEC-260309..." required style="font-family:'IBM Plex Mono',monospace;font-size:15px;letter-spacing:0.04em;text-transform:uppercase;">
                 </div>
-                <p style="font-size:11.5px;color:var(--muted);margin:0;">
-                    Compatible avec le numéro gravé sur la carte, le QR code optique ou la référence du bon de prise en charge.
+                <p style="font-size:12px;color:var(--muted);margin:0 0 14px;">
+                    Saisissez le matricule gravé sur la carte physique ou la référence d'accord préalable de prise en charge.
                 </p>
+                <button class="button primary" type="submit" style="width:100%;justify-content:center;font-weight:700;padding:12px;font-size:14px;">
+                    {% icone "search" %} Vérifier les droits &amp; accords
+                </button>
             </div>
 
-            <button class="button primary" type="submit" style="width:100%;justify-content:center;font-weight:700;padding:12px;font-size:14px;">
-                {% icone "search" %} Vérifier les droits &amp; accords
-            </button>
-
-            <div style="margin-top:20px;text-align:center;">
-                <button type="button" id="bouton-scan-camera" class="button btn" hidden style="padding:10px 18px;">
-                    {% icone "qr-scan" %} Scanner avec la caméra de l'appareil
-                </button>
-                <p id="statut-scan-camera" class="subtitle" style="margin:8px 0 0;font-size:12.5px;" role="status" aria-live="polite"></p>
-
-                <div id="panneau-scan-camera" hidden style="position:relative;max-width:340px;margin:14px auto 0;border-radius:16px;overflow:hidden;background:#0b2027;box-shadow:0 12px 32px rgba(11,32,39,0.35);">
-                    <video id="video-scan-camera" autoplay muted playsinline aria-hidden="true" style="width:100%;display:block;aspect-ratio:1/1;object-fit:cover;"></video>
-                    <canvas id="canvas-scan-camera" style="display:none;"></canvas>
-                    <div aria-hidden="true" style="position:absolute;inset:18%;border:2px solid rgba(255,255,255,0.85);border-radius:12px;pointer-events:none;box-shadow:0 0 0 9999px rgba(11,32,39,0.55);">
+            <!-- SECTION 3 : IMPORTER UNE IMAGE / PHOTO -->
+            <div id="section-scan-fichier" style="display:none;text-align:center;padding:16px 0;">
+                <div style="border:2px dashed var(--border);border-radius:14px;padding:24px 16px;background:var(--champ-bg);cursor:pointer;" onclick="document.getElementById('input-fichier-qr').click();">
+                    <div style="width:48px;height:48px;border-radius:50%;background:var(--primary-soft);color:var(--primary);display:grid;place-items:center;margin:0 auto 10px;">
+                        {% icone "upload" %}
                     </div>
-                    <button type="button" id="bouton-fermer-scan-camera" class="button btn btn-sm" style="position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.9);padding:6px 12px;font-size:12px;">Fermer</button>
+                    <strong style="font-size:14px;display:block;color:var(--titre);margin-bottom:4px;">Sélectionnez une photo ou capture du QR code</strong>
+                    <p style="font-size:12px;color:var(--muted);margin:0;">Idéal si l'assuré vous a partagé sa carte par WhatsApp ou par email</p>
+                    <input type="file" id="input-fichier-qr" accept="image/*" style="display:none;" onchange="analyserFichierQR(this)">
                 </div>
+                <p id="statut-fichier-qr" style="margin-top:10px;font-size:12.5px;color:var(--primary-strong);font-weight:600;"></p>
             </div>
         </form>
     </section>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px;">
-        <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:16px;">
+    <!-- Cartes explicatives adaptatives -->
+    <div class="grille-info-scanner" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px;">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:var(--ombre-douce);">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;color:var(--primary-strong);font-weight:700;font-size:13.5px;">
                 {% icone "file-text" %} Devis &amp; Accords PEC
             </div>
             <p style="font-size:12.5px;color:var(--muted);margin:0;line-height:1.45;">
-                Lorsqu'une prise en charge est validée, la part couverte (ex: 80%) est garantie à l'établissement de santé. Le patient ne paye que son ticket modérateur.
+                Lorsqu'une prise en charge est validée, la part couverte (ex: 80%) est garantie à l'établissement de santé. Le patient ne règle que son ticket modérateur.
             </p>
         </div>
-        <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:16px;">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:var(--ombre-douce);">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;color:#0369a1;font-weight:700;font-size:13.5px;">
                 {% icone "shield-check" %} Sécurité Tiers-Payant
             </div>
@@ -87,76 +276,201 @@
 
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" integrity="sha384-b5Ya4Bq3qCyz39m2ISh+4DxjAIljdeFwK/BsXLuj9gugaNwAcj/ia15fxNZL9Nlx" crossorigin="anonymous"></script>
 <script>
-    (function () {
-        var boutonScan = document.getElementById('bouton-scan-camera');
-        var boutonFermer = document.getElementById('bouton-fermer-scan-camera');
-        var panneau = document.getElementById('panneau-scan-camera');
-        var statut = document.getElementById('statut-scan-camera');
-        var video = document.getElementById('video-scan-camera');
-        var canvas = document.getElementById('canvas-scan-camera');
-        var contexte = canvas.getContext('2d');
-        var champCode = document.getElementById('code');
-        var flux = null;
-        var idAnimation = null;
+    var boutonScan = document.getElementById('bouton-scan-camera');
+    var panneau = document.getElementById('panneau-scan-camera');
+    var statut = document.getElementById('statut-scan-camera');
+    var video = document.getElementById('video-scan-camera');
+    var canvas = document.getElementById('canvas-scan-camera');
+    var contexte = canvas.getContext('2d');
+    var champCode = document.getElementById('code');
+    var flux = null;
+    var idAnimation = null;
+    var pisteVideo = null;
+    var torcheAllumee = false;
+    var modeCameraArriere = true;
 
-        var cameraDisponible = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
-        if (cameraDisponible && typeof jsQR === 'function' && boutonScan) {
-            boutonScan.hidden = false;
+    // Chime sonore médical lors de la détection
+    function emettreBipSucces() {
+        try {
+            var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            var osc = audioCtx.createOscillator();
+            var gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime); // La 5
+            osc.frequency.setValueAtTime(1320, audioCtx.currentTime + 0.08); // Mi 6
+            gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.25);
+        } catch (e) {}
+        if ('vibrate' in navigator) {
+            navigator.vibrate([70, 30, 70]);
         }
+    }
 
-        function arreterScan() {
-            if (idAnimation) {
-                window.cancelAnimationFrame(idAnimation);
-                idAnimation = null;
+    function changerModeScan(mode) {
+        document.getElementById('section-scan-camera').style.display = (mode === 'camera') ? 'block' : 'none';
+        document.getElementById('section-scan-manuel').style.display = (mode === 'manuel') ? 'block' : 'none';
+        document.getElementById('section-scan-fichier').style.display = (mode === 'fichier') ? 'block' : 'none';
+
+        document.getElementById('onglet-camera').classList.toggle('actif', mode === 'camera');
+        document.getElementById('onglet-manuel').classList.toggle('actif', mode === 'manuel');
+        document.getElementById('onglet-fichier').classList.toggle('actif', mode === 'fichier');
+
+        if (mode === 'camera') {
+            demarrerScan();
+        } else {
+            arreterScan();
+            if (mode === 'manuel') {
+                setTimeout(function () { champCode.focus(); }, 100);
             }
-            if (flux) {
-                flux.getTracks().forEach(function (piste) { piste.stop(); });
-                flux = null;
-            }
-            panneau.hidden = true;
         }
+    }
 
-        function analyserImage() {
-            if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                contexte.drawImage(video, 0, 0, canvas.width, canvas.height);
-                var image = contexte.getImageData(0, 0, canvas.width, canvas.height);
-                var resultat = jsQR(image.data, image.width, image.height);
+    function arreterScan() {
+        if (idAnimation) {
+            window.cancelAnimationFrame(idAnimation);
+            idAnimation = null;
+        }
+        if (flux) {
+            flux.getTracks().forEach(function (piste) { piste.stop(); });
+            flux = null;
+            pisteVideo = null;
+        }
+        statut.textContent = "Caméra arrêtée. Cliquez sur « Activer la caméra » pour relancer.";
+        boutonScan.style.display = 'inline-flex';
+    }
+
+    function basculerTorche() {
+        if (pisteVideo && typeof pisteVideo.applyConstraints === 'function') {
+            torcheAllumee = !torcheAllumee;
+            pisteVideo.applyConstraints({ advanced: [{ torch: torcheAllumee }] })
+                .then(function () {
+                    var lbl = document.getElementById('lbl-torche');
+                    if (lbl) lbl.textContent = torcheAllumee ? "Flash ON" : "Flash OFF";
+                })
+                .catch(function () {});
+        }
+    }
+
+    function changerObjectifCamera() {
+        modeCameraArriere = !modeCameraArriere;
+        demarrerScan();
+    }
+
+    function analyserImage() {
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            contexte.drawImage(video, 0, 0, canvas.width, canvas.height);
+            var image = contexte.getImageData(0, 0, canvas.width, canvas.height);
+            if (typeof jsQR === 'function') {
+                var resultat = jsQR(image.data, image.width, image.height, { inversionAttempts: "dontInvert" });
                 if (resultat && resultat.data) {
-                    statut.textContent = 'Code détecté, vérification...';
+                    emettreBipSucces();
+                    statut.textContent = '✓ Code détecté : ' + resultat.data + ' — Validation en cours...';
+                    statut.style.color = '#10b981';
                     arreterScan();
                     champCode.value = resultat.data;
                     champCode.form.requestSubmit();
                     return;
                 }
             }
+        }
+        idAnimation = window.requestAnimationFrame(analyserImage);
+    }
+
+    function demarrerScan() {
+        if (flux) {
+            flux.getTracks().forEach(function (piste) { piste.stop(); });
+            flux = null;
+        }
+        statut.textContent = "Demande d'accès à la caméra...";
+        statut.style.color = 'var(--primary-strong)';
+        boutonScan.style.display = 'none';
+
+        var facing = modeCameraArriere ? { ideal: 'environment' } : 'user';
+        navigator.mediaDevices.getUserMedia({
+            video: {
+                facingMode: facing,
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            }
+        })
+        .then(function (fluxObtenu) {
+            flux = fluxObtenu;
+            video.srcObject = flux;
+            pisteVideo = flux.getVideoTracks()[0];
+
+            // Détection du support de la torche
+            var btnTorche = document.getElementById('btn-hud-torche');
+            if (pisteVideo && typeof pisteVideo.getCapabilities === 'function') {
+                var caps = pisteVideo.getCapabilities();
+                if (caps.torch && btnTorche) {
+                    btnTorche.style.display = 'inline-flex';
+                }
+            }
+
+            statut.textContent = "Viseur actif · Alignez le QR code de la carte au centre";
             idAnimation = window.requestAnimationFrame(analyserImage);
-        }
+        })
+        .catch(function (erreur) {
+            boutonScan.style.display = 'inline-flex';
+            if (erreur.name === 'NotAllowedError') {
+                statut.textContent = "Accès à la caméra refusé. Vous pouvez utiliser la saisie manuelle.";
+            } else if (erreur.name === 'NotFoundError') {
+                statut.textContent = "Aucune caméra détectée. Passez à la saisie manuelle.";
+            } else {
+                statut.textContent = "Caméra indisponible. Utilisez la saisie manuelle ci-dessus.";
+            }
+            statut.style.color = 'var(--danger)';
+        });
+    }
 
-        function demarrerScan() {
-            statut.textContent = "Demande d'accès à la caméra...";
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } })
-                .then(function (fluxObtenu) {
-                    flux = fluxObtenu;
-                    video.srcObject = flux;
-                    panneau.hidden = false;
-                    statut.textContent = "Recherche d'un code QR...";
-                    idAnimation = window.requestAnimationFrame(analyserImage);
-                })
-                .catch(function (erreur) {
-                    if (erreur.name === 'NotAllowedError') {
-                        statut.textContent = "Accès à la caméra refusé. Autorisez la caméra dans les paramètres.";
-                    } else if (erreur.name === 'NotFoundError') {
-                        statut.textContent = 'Aucune caméra détectée.';
+    // Décodage depuis une photo / fichier importé
+    function analyserFichierQR(input) {
+        if (!input.files || !input.files[0]) return;
+        var fichier = input.files[0];
+        var statutFichier = document.getElementById('statut-fichier-qr');
+        statutFichier.textContent = "Analyse de l'image en cours...";
+
+        var lecteur = new FileReader();
+        lecteur.onload = function (e) {
+            var img = new Image();
+            img.onload = function () {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                contexte.drawImage(img, 0, 0);
+                var imgData = contexte.getImageData(0, 0, canvas.width, canvas.height);
+                if (typeof jsQR === 'function') {
+                    var codeDetecte = jsQR(imgData.data, imgData.width, imgData.height);
+                    if (codeDetecte && codeDetecte.data) {
+                        emettreBipSucces();
+                        statutFichier.textContent = "✓ QR Code reconnu : " + codeDetecte.data;
+                        statutFichier.style.color = '#10b981';
+                        champCode.value = codeDetecte.data;
+                        champCode.form.requestSubmit();
                     } else {
-                        statut.textContent = 'Scan par caméra indisponible. Utilisez la saisie manuelle.';
+                        statutFichier.textContent = "Aucun QR code lisible n'a été détecté dans cette image. Veuillez réessayer avec une photo plus nette.";
+                        statutFichier.style.color = 'var(--danger)';
                     }
-                });
-        }
+                }
+            };
+            img.src = e.target.result;
+        };
+        lecteur.readAsDataURL(fichier);
+    }
 
+    document.addEventListener('DOMContentLoaded', function () {
         if (boutonScan) { boutonScan.addEventListener('click', demarrerScan); }
-        if (boutonFermer) { boutonFermer.addEventListener('click', arreterScan); }
-    })();
+        // Démarrage automatique fluide si supporté
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            demarrerScan();
+        } else {
+            changerModeScan('manuel');
+        }
+    });
 </script>
 {% endblock %}

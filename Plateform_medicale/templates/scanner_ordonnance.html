@@ -1,74 +1,260 @@
 {% extends "base.html" %}
-{% load icones %}
+{% load icones formats %}
 
-{% block title %}Scanner un QR Code{% endblock %}
+{% block title %}Terminal de Délivrance & Scanner QR Ordonnance{% endblock %}
 
 {% block content %}
+<style>
+@keyframes scanBeam {
+    0% { top: 8%; opacity: 0.6; }
+    50% { top: 88%; opacity: 1; box-shadow: 0 0 16px var(--primary); }
+    100% { top: 8%; opacity: 0.6; }
+}
+@keyframes pulseTarget {
+    0%, 100% { opacity: 0.85; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.02); }
+}
+
+.terminal-scan-cadre {
+    position: relative;
+    max-width: 380px;
+    margin: 16px auto 0;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #06151a;
+    box-shadow: 0 16px 40px rgba(6, 21, 26, 0.45);
+    border: 2px solid rgba(14, 124, 134, 0.4);
+}
+
+.viseur-reticule {
+    position: absolute;
+    inset: 15%;
+    border-radius: 14px;
+    pointer-events: none;
+    box-shadow: 0 0 0 9999px rgba(6, 21, 26, 0.6);
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    animation: pulseTarget 3s infinite ease-in-out;
+}
+.viseur-coin {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border-color: #2dd4bf;
+    border-style: solid;
+    pointer-events: none;
+}
+.coin-tl { top: -2px; left: -2px; border-width: 4px 0 0 4px; border-top-left-radius: 8px; }
+.coin-tr { top: -2px; right: -2px; border-width: 4px 4px 0 0; border-top-right-radius: 8px; }
+.coin-bl { bottom: -2px; left: -2px; border-width: 0 0 4px 4px; border-bottom-left-radius: 8px; }
+.coin-br { bottom: -2px; right: -2px; border-width: 0 4px 4px 0; border-bottom-right-radius: 8px; }
+
+.laser-faisceau {
+    position: absolute;
+    left: 4%;
+    right: 4%;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #2dd4bf, #14b8a6, transparent);
+    box-shadow: 0 0 12px #2dd4bf, 0 0 24px rgba(45, 212, 191, 0.6);
+    border-radius: 50%;
+    animation: scanBeam 2.4s infinite ease-in-out;
+    pointer-events: none;
+}
+
+.onglets-scanner {
+    display: flex;
+    background: var(--champ-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 4px;
+    gap: 4px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+}
+.onglet-btn {
+    flex: 1;
+    min-width: 140px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.onglet-btn.actif {
+    background: var(--surface);
+    color: var(--primary-strong);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    font-weight: 700;
+}
+
+.terminal-hud-controles {
+    position: absolute;
+    bottom: 12px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    z-index: 10;
+}
+.btn-hud {
+    background: rgba(11, 32, 39, 0.75);
+    backdrop-filter: blur(8px);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-hud:hover {
+    background: rgba(14, 124, 134, 0.9);
+    border-color: #2dd4bf;
+}
+
+@media (max-width: 768px) {
+    .admin-layout {
+        grid-template-columns: 1fr !important;
+    }
+}
+</style>
+
 <section class="page-title">
     <div>
-        <h1>Scanner un QR Code</h1>
-        <p class="subtitle">Saisissez ou scannez le code affiché sur l'ordonnance du patient.</p>
+        <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:38px;height:38px;border-radius:10px;background:var(--primary);color:#fff;display:grid;place-items:center;">
+                {% icone "pill" %}
+            </div>
+            <div>
+                <h1 style="margin:0;font-size:22px;">Scanner une Ordonnance</h1>
+                <p class="subtitle" style="margin:0;font-size:13px;">Scannez le QR code de l'ordonnance ou recherchez par référence pour valider la délivrance en pharmacie.</p>
+            </div>
+        </div>
     </div>
     <a class="button btn btn-retour-expand" href="{% url 'dashboard_pharmacien' %}" title="Retour au tableau de bord" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
 </section>
 
-<section class="panel panel-form panel-form-etroit">
-    <form method="post">
-        {% csrf_token %}
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-            <label for="code_qr" style="margin:0;font-weight:700;">Code de l'ordonnance</label>
-            <span style="font-size:11.5px;color:var(--muted);background:var(--primary-soft);padding:3px 8px;border-radius:6px;font-weight:600;">
-                {% icone "shield-check" %} Contrôle ordonnance
-            </span>
-        </div>
-        <div class="champ-recherche" style="margin-bottom:14px;">
-            {% icone "qr-scan" %}
-            <input id="code_qr" name="code_qr" type="text" placeholder="Ex. RX-A1B2C3D4E5" autofocus required style="font-family:'IBM Plex Mono',monospace;font-size:15px;letter-spacing:0.04em;">
-        </div>
-        <button class="button primary" type="submit" style="width:100%;justify-content:center;font-weight:700;padding:12px;">
-            {% icone "check" %} Vérifier et charger l'ordonnance
+<section class="panel panel-form panel-form-etroit" style="padding:22px;margin-bottom:16px;">
+    <!-- Barre de bascule des modes -->
+    <div class="onglets-scanner">
+        <button type="button" class="onglet-btn actif" id="onglet-pharma-camera" onclick="changerModeScanPharma('camera')">
+            {% icone "qr-scan" %} Caméra en direct
         </button>
+        <button type="button" class="onglet-btn" id="onglet-pharma-manuel" onclick="changerModeScanPharma('manuel')">
+            {% icone "file-text" %} Code ordonnance
+        </button>
+        <button type="button" class="onglet-btn" id="onglet-pharma-recherche" onclick="changerModeScanPharma('recherche')">
+            {% icone "search" %} Recherche patient
+        </button>
+        <button type="button" class="onglet-btn" id="onglet-pharma-fichier" onclick="changerModeScanPharma('fichier')">
+            {% icone "upload" %} Importer photo
+        </button>
+    </div>
 
-        <div style="margin-top:18px;text-align:center;">
-            <button type="button" id="bouton-scan-camera" class="button btn" hidden>{% icone "qr-scan" %} Scanner avec la caméra</button>
-            <p id="statut-scan-camera" class="subtitle" style="margin:8px 0 0;font-size:12.5px;" role="status" aria-live="polite"></p>
+    <!-- SECTION 1 : SCAN CAMÉRA EN DIRECT -->
+    <div id="section-pharma-camera" style="text-align:center;">
+        <p id="statut-scan-camera" class="subtitle" style="margin:0 0 10px;font-size:13px;font-weight:600;color:var(--primary-strong);" role="status" aria-live="polite">
+            Initialisation du viseur optique...
+        </p>
 
-            <div id="panneau-scan-camera" hidden style="position:relative;max-width:340px;margin:14px auto 0;border-radius:16px;overflow:hidden;background:#0b2027;box-shadow:0 12px 32px rgba(11,32,39,0.35);">
-                <video id="video-scan-camera" autoplay muted playsinline aria-hidden="true" style="width:100%;display:block;aspect-ratio:1/1;object-fit:cover;"></video>
-                <canvas id="canvas-scan-camera" style="display:none;"></canvas>
-                <!-- Cadre de visée sobre pour lecture optique du QR code -->
-                <div aria-hidden="true" style="position:absolute;inset:18%;border:2px solid rgba(255,255,255,0.85);border-radius:12px;pointer-events:none;box-shadow:0 0 0 9999px rgba(11,32,39,0.55);">
-                </div>
-                <button type="button" id="bouton-fermer-scan-camera" class="button btn btn-sm" style="position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.9);padding:6px 12px;font-size:12px;">Fermer</button>
+        <div class="terminal-scan-cadre" id="panneau-scan-camera">
+            <video id="video-scan-camera" autoplay muted playsinline aria-hidden="true" style="width:100%;display:block;aspect-ratio:1/1;object-fit:cover;"></video>
+            <canvas id="canvas-scan-camera" style="display:none;"></canvas>
+            
+            <!-- Réticule optique haute précision -->
+            <div class="viseur-reticule" aria-hidden="true">
+                <span class="viseur-coin coin-tl"></span>
+                <span class="viseur-coin coin-tr"></span>
+                <span class="viseur-coin coin-bl"></span>
+                <span class="viseur-coin coin-br"></span>
+                <div class="laser-faisceau"></div>
+            </div>
+
+            <!-- Contrôles HUD superposés -->
+            <div class="terminal-hud-controles">
+                <button type="button" id="btn-hud-torche-pharma" class="btn-hud" onclick="basculerTorche()" style="display:none;">
+                    {% icone "sun" %} <span id="lbl-torche-pharma">Flash</span>
+                </button>
+                <button type="button" class="btn-hud" onclick="changerObjectifCamera()">
+                    {% icone "refresh-cw" %} <span>Inverser</span>
+                </button>
+                <button type="button" id="bouton-fermer-scan-camera" class="btn-hud" onclick="arreterScan()">
+                    {% icone "x" %} <span>Fermer</span>
+                </button>
             </div>
         </div>
-    </form>
-</section>
 
-{% comment %}
-Repli quand le code est inutilisable (QR froisse, impression pale, code mal
-recopie). Formulaire distinct du precedent : deux champs dans un meme
-formulaire laisseraient le pharmacien croire qu'il faut remplir les deux.
-{% endcomment %}
-<section class="panel panel-form panel-form-etroit" style="margin-top:16px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
-        <label for="recherche" style="margin:0;font-weight:700;display:flex;align-items:center;gap:6px;">
-            {% icone "search" %} Recherche manuelle de secours
-        </label>
-        <span style="font-size:11.5px;color:var(--muted);background:var(--champ-bg);padding:2px 8px;border-radius:6px;border:1px solid var(--border);">QR illisible / papier froissé</span>
-    </div>
-    <p class="subtitle" style="margin:0 0 12px;font-size:12.5px;">
-        Recherchez par nom du patient ou par fragment du code pour retrouver directement l'ordonnance.
-    </p>
-    <form method="post" style="display:flex;gap:10px;flex-wrap:wrap;">
-        {% csrf_token %}
-        <div class="champ-recherche" style="flex:1;min-width:200px;margin-bottom:0;">
-            {% icone "search" %}
-            <input id="recherche" name="recherche" type="text" value="{{ recherche }}"
-                   placeholder="Ex. Diop, Fall, ou RX-..." minlength="3" required style="margin-bottom:0;height:42px;">
+        <div style="margin-top:14px;">
+            <button type="button" id="bouton-scan-camera" class="button btn" hidden>{% icone "qr-scan" %} Scanner avec la caméra</button>
         </div>
-        <button class="button btn" type="submit" style="height:42px;padding:0 18px;">Rechercher</button>
-    </form>
+    </div>
+
+    <!-- SECTION 2 : SAISIE MANUELLE CODE ORDONNANCE -->
+    <div id="section-pharma-manuel" style="display:none;">
+        <form method="post" id="form-scan-pharma-exact">
+            {% csrf_token %}
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                <label for="code_qr" style="margin:0;font-weight:700;font-size:13.5px;">Code de l'ordonnance</label>
+                <span style="font-size:11.5px;color:var(--muted);background:var(--primary-soft);padding:3px 8px;border-radius:6px;font-weight:600;">
+                    {% icone "shield-check" %} Contrôle ordonnance
+                </span>
+            </div>
+            <div class="champ-recherche" style="margin-bottom:14px;">
+                {% icone "qr-scan" %}
+                <input id="code_qr" name="code_qr" type="text" placeholder="Ex. RX-A1B2C3D4E5" required style="font-family:'IBM Plex Mono',monospace;font-size:15px;letter-spacing:0.04em;text-transform:uppercase;">
+            </div>
+            <button class="button primary" type="submit" style="width:100%;justify-content:center;font-weight:700;padding:12px;">
+                {% icone "check" %} Vérifier et charger l'ordonnance
+            </button>
+        </form>
+    </div>
+
+    <!-- SECTION 3 : RECHERCHE PAR NOM DU PATIENT -->
+    <div id="section-pharma-recherche" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
+            <label for="recherche" style="margin:0;font-weight:700;display:flex;align-items:center;gap:6px;font-size:13.5px;">
+                {% icone "search" %} Recherche manuelle de secours
+            </label>
+            <span style="font-size:11.5px;color:var(--muted);background:var(--champ-bg);padding:2px 8px;border-radius:6px;border:1px solid var(--border);">QR illisible / papier froissé</span>
+        </div>
+        <p class="subtitle" style="margin:0 0 12px;font-size:12.5px;">
+            Recherchez par nom du patient ou par fragment du code pour retrouver directement l'ordonnance.
+        </p>
+        <form method="post" style="display:flex;gap:10px;flex-wrap:wrap;">
+            {% csrf_token %}
+            <div class="champ-recherche" style="flex:1;min-width:200px;margin-bottom:0;">
+                {% icone "search" %}
+                <input id="recherche" name="recherche" type="text" value="{{ recherche }}"
+                       placeholder="Ex. Diop, Fall, ou RX-..." minlength="3" required style="margin-bottom:0;height:44px;">
+            </div>
+            <button class="button primary btn" type="submit" style="height:44px;padding:0 20px;font-weight:700;">Rechercher</button>
+        </form>
+    </div>
+
+    <!-- SECTION 4 : IMPORTER UNE IMAGE / PHOTO DU QR -->
+    <div id="section-pharma-fichier" style="display:none;text-align:center;padding:16px 0;">
+        <div style="border:2px dashed var(--border);border-radius:14px;padding:24px 16px;background:var(--champ-bg);cursor:pointer;" onclick="document.getElementById('input-fichier-qr-pharma').click();">
+            <div style="width:48px;height:48px;border-radius:50%;background:var(--primary-soft);color:var(--primary);display:grid;place-items:center;margin:0 auto 10px;">
+                {% icone "upload" %}
+            </div>
+            <strong style="font-size:14px;display:block;color:var(--titre);margin-bottom:4px;">Sélectionnez une photo ou capture de l'ordonnance</strong>
+            <p style="font-size:12px;color:var(--muted);margin:0;">Idéal si le patient présente son ordonnance sur son smartphone</p>
+            <input type="file" id="input-fichier-qr-pharma" accept="image/*" style="display:none;" onchange="analyserFichierQRPharma(this)">
+        </div>
+        <p id="statut-fichier-qr-pharma" style="margin-top:10px;font-size:12.5px;color:var(--primary-strong);font-weight:600;"></p>
+    </div>
 </section>
 
 {% if resultats %}
@@ -79,50 +265,48 @@ formulaire laisseraient le pharmacien croire qu'il faut remplir les deux.
             <p class="subtitle">Vérifiez le patient et la date avant de sélectionner.</p>
         </div>
     </div>
-    <table>
-        <thead>
-            <tr>
-                <th scope="col">Patient</th>
-                <th scope="col">Médecin</th>
-                <th scope="col">Émise le</th>
-                <th scope="col">Code</th>
-                <th scope="col">État</th>
-                <th scope="col">Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for resultat in resultats %}
-            <tr>
-                <td>{{ resultat.consultation.patient }}</td>
-                <td>{{ resultat.consultation.medecin }}</td>
-                <td>{{ resultat.date_creation|date:"d/m/Y" }}</td>
-                <td><span class="code">{{ resultat.code_qr }}</span></td>
-                <td>
-                    {% if resultat.est_annulee %}
-                    <span class="badge refusee">Annulée</span>
-                    {% elif resultat.delivrance %}
-                    <span class="badge validee">Déjà délivrée</span>
-                    {% elif resultat.est_expiree %}
-                    <span class="badge refusee">Expirée</span>
-                    {% else %}
-                    <span class="badge en_attente">À délivrer</span>
-                    {% endif %}
-                </td>
-                <td>
-                    {% comment %}
-                    La selection renvoie le code EXACT dans le chemin normal :
-                    aucune seconde logique d'ouverture a securiser.
-                    {% endcomment %}
-                    <form method="post" class="action-ligne">
-                        {% csrf_token %}
-                        <input type="hidden" name="code_qr" value="{{ resultat.code_qr }}">
-                        <button type="submit" class="button primary btn btn-sm">Sélectionner</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th scope="col">Patient</th>
+                    <th scope="col">Médecin</th>
+                    <th scope="col">Émise le</th>
+                    <th scope="col">Code</th>
+                    <th scope="col">État</th>
+                    <th scope="col">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for resultat in resultats %}
+                <tr>
+                    <td><strong>{{ resultat.consultation.patient }}</strong></td>
+                    <td>{{ resultat.consultation.medecin }}</td>
+                    <td>{{ resultat.date_creation|date:"d/m/Y" }}</td>
+                    <td><span class="code">{{ resultat.code_qr }}</span></td>
+                    <td>
+                        {% if resultat.est_annulee %}
+                        <span class="badge refusee">Annulée</span>
+                        {% elif resultat.delivrance %}
+                        <span class="badge validee">Déjà délivrée</span>
+                        {% elif resultat.est_expiree %}
+                        <span class="badge refusee">Expirée</span>
+                        {% else %}
+                        <span class="badge en_attente">À délivrer</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <form method="post" class="action-ligne">
+                            {% csrf_token %}
+                            <input type="hidden" name="code_qr" value="{{ resultat.code_qr }}">
+                            <button type="submit" class="button primary btn btn-sm">Sélectionner</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </section>
 {% endif %}
 
@@ -158,11 +342,6 @@ formulaire laisseraient le pharmacien croire qu'il faut remplir les deux.
         </p>
         {% endif %}
         <p style="margin-bottom:6px;"><strong>Médicaments prescrits :</strong></p>
-        {% comment %}
-        Lecture seule : le pharmacien delivre, il ne prescrit pas. Tableau si
-        l'ordonnance est structuree, texte d'origine sinon -- jamais une
-        conversion de l'un vers l'autre.
-        {% endcomment %}
         {% if ordonnance.lignes.exists %}
         <div class="table-responsive">
         <table class="table-prescription">
@@ -303,77 +482,224 @@ formulaire laisseraient le pharmacien croire qu'il faut remplir les deux.
 
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" integrity="sha384-b5Ya4Bq3qCyz39m2ISh+4DxjAIljdeFwK/BsXLuj9gugaNwAcj/ia15fxNZL9Nlx" crossorigin="anonymous"></script>
 <script>
-    (function () {
-        var boutonScan = document.getElementById('bouton-scan-camera');
-        var boutonFermer = document.getElementById('bouton-fermer-scan-camera');
-        var panneau = document.getElementById('panneau-scan-camera');
-        var statut = document.getElementById('statut-scan-camera');
-        var video = document.getElementById('video-scan-camera');
-        var canvas = document.getElementById('canvas-scan-camera');
-        var contexte = canvas.getContext('2d');
-        var champCode = document.getElementById('code_qr');
-        var flux = null;
-        var idAnimation = null;
+    var boutonScan = document.getElementById('bouton-scan-camera');
+    var boutonFermer = document.getElementById('bouton-fermer-scan-camera');
+    var panneau = document.getElementById('panneau-scan-camera');
+    var statut = document.getElementById('statut-scan-camera');
+    var video = document.getElementById('video-scan-camera');
+    var canvas = document.getElementById('canvas-scan-camera');
+    var contexte = canvas.getContext('2d');
+    var champCode = document.getElementById('code_qr');
+    var flux = null;
+    var idAnimation = null;
+    var pisteVideo = null;
+    var torcheAllumeePharma = false;
+    var modeCameraArrierePharma = true;
 
-        var cameraDisponible = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
-        if (cameraDisponible && typeof jsQR === 'function' && boutonScan) {
-            boutonScan.hidden = false;
+    var cameraDisponible = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+    if (cameraDisponible && typeof jsQR === 'function' && boutonScan) {
+        boutonScan.hidden = false;
+    }
+
+    // Chime sonore médical lors de la détection
+    function emettreBipSuccesPharma() {
+        try {
+            var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            var osc = audioCtx.createOscillator();
+            var gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime); // La 5
+            osc.frequency.setValueAtTime(1320, audioCtx.currentTime + 0.08); // Mi 6
+            gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.25);
+        } catch (e) {}
+        if ('vibrate' in navigator) {
+            navigator.vibrate([70, 30, 70]);
         }
+    }
 
-        function arreterScan() {
-            if (idAnimation) {
-                window.cancelAnimationFrame(idAnimation);
-                idAnimation = null;
+    function changerModeScanPharma(mode) {
+        document.getElementById('section-pharma-camera').style.display = (mode === 'camera') ? 'block' : 'none';
+        document.getElementById('section-pharma-manuel').style.display = (mode === 'manuel') ? 'block' : 'none';
+        document.getElementById('section-pharma-recherche').style.display = (mode === 'recherche') ? 'block' : 'none';
+        document.getElementById('section-pharma-fichier').style.display = (mode === 'fichier') ? 'block' : 'none';
+
+        document.getElementById('onglet-pharma-camera').classList.toggle('actif', mode === 'camera');
+        document.getElementById('onglet-pharma-manuel').classList.toggle('actif', mode === 'manuel');
+        document.getElementById('onglet-pharma-recherche').classList.toggle('actif', mode === 'recherche');
+        document.getElementById('onglet-pharma-fichier').classList.toggle('actif', mode === 'fichier');
+
+        if (mode === 'camera') {
+            demarrerScan();
+        } else {
+            arreterScan();
+            if (mode === 'manuel' && champCode) {
+                setTimeout(function () { champCode.focus(); }, 100);
+            } else if (mode === 'recherche') {
+                var inp = document.getElementById('recherche');
+                if (inp) setTimeout(function () { inp.focus(); }, 100);
             }
-            if (flux) {
-                flux.getTracks().forEach(function (piste) { piste.stop(); });
-                flux = null;
-            }
-            panneau.hidden = true;
         }
+    }
 
-        function analyserImage() {
-            if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                contexte.drawImage(video, 0, 0, canvas.width, canvas.height);
-                var image = contexte.getImageData(0, 0, canvas.width, canvas.height);
-                var resultat = jsQR(image.data, image.width, image.height);
+    function arreterScan() {
+        if (idAnimation) {
+            window.cancelAnimationFrame(idAnimation);
+            idAnimation = null;
+        }
+        if (flux) {
+            flux.getTracks().forEach(function (piste) { piste.stop(); });
+            flux = null;
+            pisteVideo = null;
+        }
+        if (statut) statut.textContent = "Caméra arrêtée. Cliquez sur « Scanner avec la caméra » pour relancer.";
+        if (boutonScan) boutonScan.style.display = 'inline-flex';
+    }
+
+    function basculerTorche() {
+        if (pisteVideo && typeof pisteVideo.applyConstraints === 'function') {
+            torcheAllumeePharma = !torcheAllumeePharma;
+            pisteVideo.applyConstraints({ advanced: [{ torch: torcheAllumeePharma }] })
+                .then(function () {
+                    var lbl = document.getElementById('lbl-torche-pharma');
+                    if (lbl) lbl.textContent = torcheAllumeePharma ? "Flash ON" : "Flash OFF";
+                })
+                .catch(function () {});
+        }
+    }
+
+    function changerObjectifCamera() {
+        modeCameraArrierePharma = !modeCameraArrierePharma;
+        demarrerScan();
+    }
+
+    function analyserImage() {
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            contexte.drawImage(video, 0, 0, canvas.width, canvas.height);
+            var image = contexte.getImageData(0, 0, canvas.width, canvas.height);
+            if (typeof jsQR === 'function') {
+                var resultat = jsQR(image.data, image.width, image.height, { inversionAttempts: "dontInvert" });
                 if (resultat && resultat.data) {
-                    statut.textContent = 'Code detecte, verification...';
+                    emettreBipSuccesPharma();
+                    statut.textContent = '✓ Ordonnance détectée : ' + resultat.data + ' — Chargement...';
+                    statut.style.color = '#10b981';
                     arreterScan();
                     champCode.value = resultat.data;
                     champCode.form.requestSubmit();
                     return;
                 }
             }
+        }
+        idAnimation = window.requestAnimationFrame(analyserImage);
+    }
+
+    function demarrerScan() {
+        if (flux) {
+            flux.getTracks().forEach(function (piste) { piste.stop(); });
+            flux = null;
+        }
+        if (statut) {
+            statut.textContent = "Demande d'accès à la caméra...";
+            statut.style.color = 'var(--primary-strong)';
+        }
+        if (boutonScan) boutonScan.style.display = 'none';
+
+        var facing = modeCameraArrierePharma ? { ideal: 'environment' } : 'user';
+        navigator.mediaDevices.getUserMedia({
+            video: {
+                facingMode: facing,
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            }
+        })
+        .then(function (fluxObtenu) {
+            flux = fluxObtenu;
+            video.srcObject = flux;
+            pisteVideo = flux.getVideoTracks()[0];
+
+            // Détection du support de la torche
+            var btnTorche = document.getElementById('btn-hud-torche-pharma');
+            if (pisteVideo && typeof pisteVideo.getCapabilities === 'function') {
+                var caps = pisteVideo.getCapabilities();
+                if (caps.torch && btnTorche) {
+                    btnTorche.style.display = 'inline-flex';
+                }
+            }
+
+            if (statut) statut.textContent = "Viseur actif · Pointez l'ordonnance ou le smartphone du patient";
             idAnimation = window.requestAnimationFrame(analyserImage);
-        }
+        })
+        .catch(function (erreur) {
+            if (boutonScan) boutonScan.style.display = 'inline-flex';
+            if (statut) {
+                if (erreur.name === 'NotAllowedError') {
+                    statut.textContent = "Acces a la camera refuse. Autorisez la camera dans les parametres du navigateur, ou utilisez la saisie manuelle.";
+                } else if (erreur.name === 'NotFoundError') {
+                    statut.textContent = "Aucune camera detectee sur cet appareil.";
+                } else {
+                    statut.textContent = "Scan par camera indisponible sur cet appareil ou cette connexion (HTTPS requis). Utilisez la saisie manuelle ou une douchette ci-dessous.";
+                }
+                statut.style.color = 'var(--danger)';
+            }
+        });
+    }
 
-        function demarrerScan() {
-            statut.textContent = "Demande d'acces a la camera...";
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } })
-                .then(function (fluxObtenu) {
-                    flux = fluxObtenu;
-                    video.srcObject = flux;
-                    panneau.hidden = false;
-                    statut.textContent = "Recherche d'un code...";
-                    idAnimation = window.requestAnimationFrame(analyserImage);
-                })
-                .catch(function (erreur) {
-                    if (erreur.name === 'NotAllowedError') {
-                        statut.textContent = "Acces a la camera refuse. Autorisez la camera dans les parametres du navigateur, ou utilisez la saisie manuelle.";
-                    } else if (erreur.name === 'NotFoundError') {
-                        statut.textContent = 'Aucune camera detectee sur cet appareil.';
+    // Décodage depuis photo importée
+    function analyserFichierQRPharma(input) {
+        if (!input.files || !input.files[0]) return;
+        var fichier = input.files[0];
+        var statutFichier = document.getElementById('statut-fichier-qr-pharma');
+        statutFichier.textContent = "Analyse de l'image de l'ordonnance en cours...";
+
+        var lecteur = new FileReader();
+        lecteur.onload = function (e) {
+            var img = new Image();
+            img.onload = function () {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                contexte.drawImage(img, 0, 0);
+                var imgData = contexte.getImageData(0, 0, canvas.width, canvas.height);
+                if (typeof jsQR === 'function') {
+                    var codeDetecte = jsQR(imgData.data, imgData.width, imgData.height);
+                    if (codeDetecte && codeDetecte.data) {
+                        emettreBipSuccesPharma();
+                        statutFichier.textContent = "✓ Code ordonnance reconnu : " + codeDetecte.data;
+                        statutFichier.style.color = '#10b981';
+                        champCode.value = codeDetecte.data;
+                        champCode.form.requestSubmit();
                     } else {
-                        statut.textContent = 'Scan par camera indisponible sur cet appareil ou cette connexion (HTTPS requis). Utilisez la saisie manuelle ou une douchette ci-dessous.';
+                        statutFichier.textContent = "Aucun QR code lisible n'a été détecté dans cette image. Essayez avec une photo plus nette.";
+                        statutFichier.style.color = 'var(--danger)';
                     }
-                });
-        }
+                }
+            };
+            img.src = e.target.result;
+        };
+        lecteur.readAsDataURL(fichier);
+    }
 
+    document.addEventListener('DOMContentLoaded', function () {
         if (boutonScan) { boutonScan.addEventListener('click', demarrerScan); }
         if (boutonFermer) { boutonFermer.addEventListener('click', arreterScan); }
 
+        {% if not ordonnance and not resultats %}
+        // Démarrage automatique fluide si supporté et pas de résultat déjà chargé
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            demarrerScan();
+        } else {
+            changerModeScanPharma('manuel');
+        }
+        {% else %}
+        changerModeScanPharma('manuel');
+        {% endif %}
+
+        // Calcul dynamique temps réel IPM vs Ticket Modérateur
         var inputMontant = document.getElementById('id_montant_total');
         var blocRep = document.getElementById('repartition-directe');
         var partIpm = document.getElementById('part-ipm-val');
@@ -397,6 +723,6 @@ formulaire laisseraient le pharmacien croire qu'il faut remplir les deux.
                 }
             });
         }
-    })();
+    });
 </script>
 {% endblock %}

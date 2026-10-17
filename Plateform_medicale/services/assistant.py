@@ -59,6 +59,106 @@ def traiter_message_assistant(user, message_texte):
             }
 
     patient = getattr(user, "patient", None)
+    prenom_usuel = (patient.prenom if patient and patient.prenom else (user.first_name or "")).strip()
+    appel = f" {prenom_usuel}" if prenom_usuel else ""
+
+    # 2.5. INTENTION CONVERSATIONNELLE RÉALISTE : SALUTATIONS & POLITESSE
+    mots_salutation = ["bonjour", "bonsoir", "salut", "salam", "nanga def", "coucou", "hello", "hi"]
+    est_salutation_pure = any(texte_lower.startswith(s) or texte_lower == s for s in mots_salutation) and len(texte_lower.split()) <= 6
+    if est_salutation_pure:
+        return {
+            "type": "conversation",
+            "texte": (
+                f"**Bonjour{appel} ! Ravi de vous retrouver.**\n\n"
+                "Je suis votre assistant personnel SantéSN. Comment puis-je vous accompagner aujourd'hui ?\n\n"
+                "Vous pouvez me poser une question sur vos rendez-vous, vos ordonnances, votre taux de couverture ou vos réclamations."
+            ),
+            "actions": [
+                {"libelle": "Mes prochains rendez-vous", "url": reverse("mes_rendez_vous_assure"), "style": "primary"},
+                {"libelle": "Mon taux de couverture", "url": reverse("carte_assure"), "style": "secondary"}
+            ],
+            "suggestions": [
+                "Quels sont mes prochains rendez-vous ?",
+                "Quel est mon taux de prise en charge ?",
+                "Mes dernières ordonnances",
+                "Déposer une réclamation"
+            ]
+        }
+
+    mots_merci = ["merci", "merci beaucoup", "jerejef", "choukran", "super merci", "parfait", "c'est gentil", "top merci"]
+    if any(k in texte_lower for k in mots_merci) and len(texte_lower.split()) <= 7:
+        return {
+            "type": "conversation",
+            "texte": (
+                f"**Je vous en prie{appel} ! C'est un réel plaisir de vous aider.**\n\n"
+                "N'hésitez pas si vous avez la moindre question concernant vos soins, vos médicaments ou votre prise en charge SantéSN. Prenez bien soin de vous !"
+            ),
+            "actions": [],
+            "suggestions": [
+                "Quels sont mes prochains rendez-vous ?",
+                "Consulter mes ordonnances",
+                "Où trouver ma carte d'assuré ?"
+            ]
+        }
+
+    mots_humeur = ["comment vas-tu", "comment tu vas", "ça va", "ca va", "tu vas bien", "comment allez-vous"]
+    if any(k in texte_lower for k in mots_humeur) and len(texte_lower.split()) <= 6:
+        return {
+            "type": "conversation",
+            "texte": (
+                f"**Je vais très bien, merci beaucoup{appel} !** 😊\n\n"
+                "En tant qu'assistant SantéSN, je suis toujours actif et disponible pour vous aider dans vos démarches de santé. "
+                "Et vous, comment vous sentez-vous ? Que puis-je vérifier pour vous aujourd'hui ?"
+            ),
+            "actions": [
+                {"libelle": "Prendre un rendez-vous", "url": reverse("ajouter_rendez_vous_assure"), "style": "primary"}
+            ],
+            "suggestions": [
+                "Mes prochains rendez-vous",
+                "Mon taux de couverture",
+                "Mes ordonnances"
+            ]
+        }
+
+    mots_aurevoir = ["au revoir", "a bientôt", "à bientôt", "bonne journée", "bonne soirée", "bonne nuit", "a plus", "bye", "adieu"]
+    if any(k in texte_lower for k in mots_aurevoir) and len(texte_lower.split()) <= 6:
+        return {
+            "type": "conversation",
+            "texte": (
+                f"**Au revoir{appel} et excellente journée !** 👋\n\n"
+                "Prenez bien soin de votre santé. Je reste disponible 24h/24 dès que vous avez besoin d'une information."
+            ),
+            "actions": [],
+            "suggestions": [
+                "Bonjour !",
+                "Mes prochains rendez-vous",
+                "Mon taux de couverture"
+            ]
+        }
+
+    mots_qui = ["qui es-tu", "qui es tu", "tu es qui", "qui t'a créé", "c'est quoi ton rôle", "tu sers à quoi", "présente-toi", "presente-toi"]
+    if any(k in texte_lower for k in mots_qui):
+        return {
+            "type": "conversation",
+            "texte": (
+                "**Je suis l'Assistant Virtuel intelligent de la plateforme SantéSN.**\n\n"
+                "Mon objectif est de vous faciliter l'accès aux soins et au tiers payant :\n"
+                "- 📋 **Accords & Prise en charge** : Vérifier vos plafonds et votre taux garanti.\n"
+                "- 💊 **Pharmacie & Ordonnances** : Consulter vos prescriptions électroniques sécurisées.\n"
+                "- 📅 **Consultations & Médecins** : Suivre vos rendez-vous et trouver des praticiens partenaires.\n"
+                "- 🛡️ **Assistance directe** : Déposer vos réclamations administratives sans intermédiaire.\n\n"
+                "Je réponds en temps réel avec vos données certifiées SantéSN."
+            ),
+            "actions": [
+                {"libelle": "Voir mon tableau de bord", "url": reverse("dashboard_assure"), "style": "primary"},
+                {"libelle": "Trouver un médecin", "url": reverse("prestataires_proches"), "style": "secondary"}
+            ],
+            "suggestions": [
+                "Mes prochains rendez-vous",
+                "Mon taux de couverture",
+                "Mes ordonnances"
+            ]
+        }
 
     # 3. INTENTION : GESTION DIRECTE DU SUPPORT & DES RÉCLAMATIONS PAR L'ASSISTANT
     # 3.1. Dépôt direct d'une réclamation / problème / signalement
