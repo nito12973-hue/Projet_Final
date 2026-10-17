@@ -4,18 +4,341 @@
 {% block title %}Plans de couverture{% endblock %}
 
 {% block content %}
+<style>
+/* Statistiques d'en-tête thématiques */
+.stats-plans-grille {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 22px;
+}
+
+.stat-plan-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: var(--ombre-douce);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.stat-plan-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.stat-plan-icone {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: var(--primary-soft);
+    color: var(--primary-strong);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.stat-plan-chiffre {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--titre);
+    line-height: 1.1;
+}
+
+.stat-plan-libelle {
+    font-size: 12.5px;
+    color: var(--muted);
+    font-weight: 500;
+}
+
+/* Grille des cartes de plans */
+.plans-cartes-grille {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.plan-carte {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: var(--ombre-douce);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.plan-carte:hover {
+    transform: translateY(-3px);
+    border-color: var(--primary);
+    box-shadow: var(--ombre-forte);
+}
+
+.plan-carte-en-tete {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.plan-carte-icone-titre {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.plan-carte-icone {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--primary-soft);
+    color: var(--primary-strong);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.plan-carte-titre {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--titre);
+    margin: 0;
+}
+
+.plan-carte-taux-block {
+    margin: 14px 0 16px 0;
+    background: var(--neutre-bg);
+    border-radius: 10px;
+    padding: 14px 16px;
+}
+
+.plan-carte-taux-valeur {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--primary-strong);
+    line-height: 1;
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.plan-carte-taux-label {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.plan-jauge-fond {
+    width: 100%;
+    height: 7px;
+    background: var(--border);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.plan-jauge-remplissage {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--primary-light));
+    border-radius: 999px;
+    transition: width 0.4s ease;
+}
+
+.plan-carte-details {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 18px;
+    font-size: 13px;
+}
+
+.plan-carte-detail-ligne {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--border);
+}
+
+.plan-carte-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+}
+
+/* Commutateur de vue */
+.selecteur-vue-plans {
+    display: inline-flex;
+    background: var(--neutre-bg);
+    border-radius: 8px;
+    padding: 3px;
+    gap: 4px;
+}
+
+.selecteur-vue-btn {
+    border: none;
+    background: transparent;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.selecteur-vue-btn.actif {
+    background: var(--surface);
+    color: var(--primary-strong);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+</style>
+
 <section class="page-title">
     <div>
         <h1>Plans de couverture</h1>
-        <p class="subtitle">Formules d'assurance et règles de prise en charge pour les assurés et leurs ayants droit.</p>
+        <p class="subtitle">Formules de tiers-payant et plafonds de remboursement pour vos assurés et leurs ayants droit.</p>
     </div>
-    <a class="button primary btn-expand primary" href="{% url 'ajouter_plan_couverture' %}" title="Ajouter un nouveau plan de couverture" aria-label="Nouveau plan">
-        {% icone "plus" %} <span class="expand-text">Nouveau plan</span>
-    </a>
+    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <div class="selecteur-vue-plans" role="tablist" aria-label="Mode d'affichage">
+            <button type="button" class="selecteur-vue-btn actif" id="btn-vue-cartes" onclick="basculerVuePlans('cartes')">
+                {% icone "grid" %} Cartes
+            </button>
+            <button type="button" class="selecteur-vue-btn" id="btn-vue-tableau" onclick="basculerVuePlans('tableau')">
+                {% icone "list" %} Tableau
+            </button>
+        </div>
+        <a class="button primary btn-expand" href="{% url 'ajouter_plan_couverture' %}" title="Ajouter un nouveau plan de couverture" aria-label="Nouveau plan">
+            {% icone "plus" %} <span class="expand-text">Nouveau plan</span>
+        </a>
+    </div>
 </section>
 
 {% if plans %}
-<section class="panel">
+<!-- Indicateurs synthétiques simples -->
+<div class="stats-plans-grille">
+    <div class="stat-plan-card">
+        <div class="stat-plan-icone">
+            {% icone "shield-check" %}
+        </div>
+        <div>
+            <div class="stat-plan-chiffre">{{ stats.total_plans|default:plans|length }}</div>
+            <div class="stat-plan-libelle">Formules actives</div>
+        </div>
+    </div>
+    <div class="stat-plan-card">
+        <div class="stat-plan-icone" style="background: var(--ok-bg); color: var(--ok-fg);">
+            {% icone "percent" %}
+        </div>
+        <div>
+            <div class="stat-plan-chiffre">{% if stats.taux_moyen %}{{ stats.taux_moyen|floatformat:0 }}%{% else %}80%{% endif %}</div>
+            <div class="stat-plan-libelle">Taux moyen de couverture</div>
+        </div>
+    </div>
+    <div class="stat-plan-card">
+        <div class="stat-plan-icone" style="background: var(--primary-soft); color: var(--primary-strong);">
+            {% icone "users" %}
+        </div>
+        <div>
+            <div class="stat-plan-chiffre">{{ stats.total_beneficiaires|default:"0" }}</div>
+            <div class="stat-plan-libelle">Assurés bénéficiaires</div>
+        </div>
+    </div>
+</div>
+
+<!-- VUE 1 : CARTES MODERNES ET SIMPLES (Par défaut) -->
+<div id="conteneur-vue-cartes" class="plans-cartes-grille">
+    {% for plan in plans %}
+    <article class="plan-carte">
+        <div>
+            <div class="plan-carte-en-tete">
+                <div class="plan-carte-icone-titre">
+                    <span class="plan-carte-icone">
+                        {% icone "shield" %}
+                    </span>
+                    <div>
+                        <h2 class="plan-carte-titre">{{ plan.nom }}</h2>
+                        <span style="font-size: 12px; color: var(--muted);">Formule SantéSN</span>
+                    </div>
+                </div>
+                {% if plan.plafond_annuel %}
+                <span class="badge" style="background: var(--neutre-bg); color: var(--text); font-weight: 600;">
+                    Plafonné
+                </span>
+                {% else %}
+                <span class="badge" style="background: var(--ok-bg); color: var(--ok-fg); font-weight: 700;">
+                    Illimité
+                </span>
+                {% endif %}
+            </div>
+
+            <div class="plan-carte-taux-block">
+                <div class="plan-carte-taux-label">Prise en charge tiers-payant</div>
+                <div class="plan-carte-taux-valeur">
+                    {{ plan.taux_couverture|floatformat:0 }}<span style="font-size: 18px; color: var(--primary);">%</span>
+                </div>
+                <div class="plan-jauge-fond">
+                    <div class="plan-jauge-remplissage" style="width: {{ plan.taux_couverture }}%;"></div>
+                </div>
+            </div>
+
+            <div class="plan-carte-details">
+                <div class="plan-carte-detail-ligne">
+                    <span style="color: var(--muted); display: inline-flex; align-items: center; gap: 6px;">
+                        {% icone "credit-card" %} Plafond annuel
+                    </span>
+                    <strong style="color: var(--titre);">
+                        {% if plan.plafond_annuel %}
+                        {{ plan.plafond_annuel|franc_cfa }}
+                        {% else %}
+                        <span style="color: var(--ok-fg);">Sans limite</span>
+                        {% endif %}
+                    </strong>
+                </div>
+                <div class="plan-carte-detail-ligne" style="border-bottom: none; padding-bottom: 0;">
+                    <span style="color: var(--muted); display: inline-flex; align-items: center; gap: 6px;">
+                        {% icone "users" %} Bénéficiaires
+                    </span>
+                    <strong style="color: var(--primary-strong);">
+                        {{ plan.nb_beneficiaires|default:"0" }} rattaché(s)
+                    </strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="plan-carte-actions">
+            <a href="{% url 'modifier_plan_couverture' plan.pk %}" class="button primary btn-sm" style="flex: 1; justify-content: center;">
+                {% icone "edit-2" %} Modifier
+            </a>
+            <a href="{% url 'supprimer_plan_couverture' plan.pk %}" class="button btn btn-danger btn-sm" title="Supprimer ce plan" aria-label="Supprimer">
+                {% icone "trash-2" %}
+            </a>
+        </div>
+    </article>
+    {% endfor %}
+</div>
+
+<!-- VUE 2 : TABLEAU CLASSIQUE STRUCTURÉ (Pour consultation rapide) -->
+<section id="conteneur-vue-tableau" class="panel" style="display: none;">
     <table>
         <caption class="sr-only">Liste des formules de prise en charge</caption>
         <thead>
@@ -23,6 +346,7 @@
                 {% entete_tri request.GET "nom" "Formule" %}
                 {% entete_tri request.GET "taux_couverture" "Taux de prise en charge" %}
                 {% entete_tri request.GET "plafond_annuel" "Plafond annuel" "col-optionnelle" %}
+                <th scope="col">Bénéficiaires</th>
                 <th scope="col">Actions</th>
             </tr>
         </thead>
@@ -31,7 +355,7 @@
             <tr>
                 <td>
                     <div style="display: flex; align-items: center; gap: 10px;">
-                        <span style="display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 8px; background: rgba(14, 116, 144, 0.1); color: var(--primary);">
+                        <span class="plan-carte-icone" style="width: 32px; height: 32px;">
                             {% icone "shield" %}
                         </span>
                         <div>
@@ -40,12 +364,12 @@
                     </div>
                 </td>
                 <td>
-                    <div style="display: flex; align-items: center; gap: 10px; max-width: 220px;">
-                        <span class="badge {% if plan.taux_couverture >= 80 %}validee{% else %}en-attente{% endif %}" style="font-size: 13px; font-weight: 800; min-width: 52px; text-align: center;">
+                    <div style="display: flex; align-items: center; gap: 10px; max-width: 200px;">
+                        <span class="badge {% if plan.taux_couverture >= 80 %}validee{% else %}en-attente{% endif %}" style="font-size: 13px; font-weight: 800; min-width: 50px; text-align: center;">
                             {{ plan.taux_couverture|floatformat:0 }}%
                         </span>
-                        <div style="flex: 1; height: 6px; background: rgba(0,0,0,0.06); border-radius: 999px; overflow: hidden;">
-                            <div style="width: {{ plan.taux_couverture }}%; height: 100%; background: {% if plan.taux_couverture >= 90 %}#10b981{% elif plan.taux_couverture >= 80 %}var(--primary){% else %}#f59e0b{% endif %}; border-radius: 999px;"></div>
+                        <div class="plan-jauge-fond" style="flex: 1; margin: 0;">
+                            <div class="plan-jauge-remplissage" style="width: {{ plan.taux_couverture }}%;"></div>
                         </div>
                     </div>
                 </td>
@@ -53,8 +377,13 @@
                     {% if plan.plafond_annuel %}
                     <strong class="code">{{ plan.plafond_annuel|franc_cfa }}</strong>
                     {% else %}
-                    <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: #047857; font-weight: 700;">Illimité</span>
+                    <span class="badge" style="background: var(--ok-bg); color: var(--ok-fg); font-weight: 700;">Illimité</span>
                     {% endif %}
+                </td>
+                <td>
+                    <span class="badge" style="background: var(--neutre-bg); color: var(--text);">
+                        {{ plan.nb_beneficiaires|default:"0" }}
+                    </span>
                 </td>
                 <td>
                     <div class="actions" style="gap: 6px;">
@@ -84,10 +413,42 @@
 <div class="etat-vide">
     {% illustration_vide "shield-check" %}
     <h3>Aucun plan de couverture</h3>
-    <p>Créez votre première formule pour définir le taux de remboursement des soins.</p>
+    <p>Créez votre première formule pour définir le taux de remboursement des soins pour vos assurés.</p>
     <a href="{% url 'ajouter_plan_couverture' %}" class="button primary" style="margin-top: 12px;">
         {% icone "plus" %} Créer un plan
     </a>
 </div>
 {% endif %}
+
+<script>
+function basculerVuePlans(vue) {
+    var conteneurCartes = document.getElementById('conteneur-vue-cartes');
+    var conteneurTableau = document.getElementById('conteneur-vue-tableau');
+    var btnCartes = document.getElementById('btn-vue-cartes');
+    var btnTableau = document.getElementById('btn-vue-tableau');
+
+    if (vue === 'tableau') {
+        if (conteneurCartes) conteneurCartes.style.display = 'none';
+        if (conteneurTableau) conteneurTableau.style.display = 'block';
+        if (btnCartes) btnCartes.classList.remove('actif');
+        if (btnTableau) btnTableau.classList.add('actif');
+        try { localStorage.setItem('vue-plans-couverture', 'tableau'); } catch(e){}
+    } else {
+        if (conteneurCartes) conteneurCartes.style.display = 'grid';
+        if (conteneurTableau) conteneurTableau.style.display = 'none';
+        if (btnCartes) btnCartes.classList.add('actif');
+        if (btnTableau) btnTableau.classList.remove('actif');
+        try { localStorage.setItem('vue-plans-couverture', 'cartes'); } catch(e){}
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        var vuePreferee = localStorage.getItem('vue-plans-couverture');
+        if (vuePreferee === 'tableau') {
+            basculerVuePlans('tableau');
+        }
+    } catch(e){}
+});
+</script>
 {% endblock %}

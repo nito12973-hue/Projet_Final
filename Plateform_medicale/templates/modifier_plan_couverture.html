@@ -4,6 +4,43 @@
 {% block title %}Modifier le plan — {{ plan.nom }}{% endblock %}
 
 {% block content %}
+<style>
+.preset-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.preset-pill {
+    background: var(--neutre-bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 999px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.preset-pill:hover {
+    border-color: var(--primary);
+    color: var(--primary-strong);
+    background: var(--primary-soft);
+}
+
+.apercu-plan-wrapper {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+    box-shadow: var(--ombre-douce);
+    position: sticky;
+    top: 20px;
+}
+</style>
+
 <section class="page-title">
     <div>
         <h1>Modifier le plan de couverture</h1>
@@ -14,10 +51,10 @@
     </a>
 </section>
 
-<div style="display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start; max-width: 960px;">
+<div style="display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start; max-width: 1040px;">
     <!-- Formulaire -->
     <section class="panel panel-form" style="margin-bottom: 0;">
-        <h2 style="font-size: 16px; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">
+        <h2 style="font-size: 16px; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px; color: var(--titre);">
             {% icone "edit-2" %} Modification de la formule
         </h2>
 
@@ -28,59 +65,164 @@
         <form method="post" id="form-plan-couverture">
             {% csrf_token %}
 
-            <div class="champ-groupe" style="margin-bottom: 16px;">
-                <label for="{{ form.nom.id_for_label }}" style="font-weight: 600; margin-bottom: 4px; display: block;">
+            <div class="champ-groupe" style="margin-bottom: 18px;">
+                <label for="{{ form.nom.id_for_label }}" style="font-weight: 600; margin-bottom: 6px; display: block; color: var(--titre);">
                     {{ form.nom.label }} <span style="color:var(--danger);" aria-hidden="true">*</span>
                 </label>
                 {{ form.nom }}
+                <div class="preset-pills">
+                    <span style="font-size: 11.5px; color: var(--muted); align-self: center;">Exemples :</span>
+                    <button type="button" class="preset-pill" onclick="appliquerNom('Formule Standard')">Standard</button>
+                    <button type="button" class="preset-pill" onclick="appliquerNom('Formule Confort')">Confort</button>
+                    <button type="button" class="preset-pill" onclick="appliquerNom('Formule Cadres & Dirigeants')">Cadres</button>
+                    <button type="button" class="preset-pill" onclick="appliquerNom('Formule 100% Intégrale')">Intégrale</button>
+                </div>
                 {% if form.nom.errors %}<div class="erreurs" role="alert">{{ form.nom.errors }}</div>{% endif %}
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px;">
                 <div class="champ-groupe">
-                    <label for="{{ form.taux_couverture.id_for_label }}" style="font-weight: 600; margin-bottom: 4px; display: block;">
+                    <label for="{{ form.taux_couverture.id_for_label }}" style="font-weight: 600; margin-bottom: 6px; display: block; color: var(--titre);">
                         Taux de couverture (%) <span style="color:var(--danger);" aria-hidden="true">*</span>
                     </label>
                     {{ form.taux_couverture }}
-                    <p class="subtitle" style="font-size: 12px; margin-top: 4px;">Ex : 80 pour 80%</p>
+                    <div class="preset-pills">
+                        <button type="button" class="preset-pill" onclick="appliquerTaux(70)">70%</button>
+                        <button type="button" class="preset-pill" onclick="appliquerTaux(80)">80%</button>
+                        <button type="button" class="preset-pill" onclick="appliquerTaux(90)">90%</button>
+                        <button type="button" class="preset-pill" onclick="appliquerTaux(100)">100%</button>
+                    </div>
                     {% if form.taux_couverture.errors %}<div class="erreurs" role="alert">{{ form.taux_couverture.errors }}</div>{% endif %}
                 </div>
 
                 <div class="champ-groupe">
-                    <label for="{{ form.plafond_annuel.id_for_label }}" style="font-weight: 600; margin-bottom: 4px; display: block;">
+                    <label for="{{ form.plafond_annuel.id_for_label }}" style="font-weight: 600; margin-bottom: 6px; display: block; color: var(--titre);">
                         Plafond annuel (FCFA)
                     </label>
                     {{ form.plafond_annuel }}
-                    <p class="subtitle" style="font-size: 12px; margin-top: 4px;">Laisser vide pour illimité</p>
+                    <div class="preset-pills">
+                        <button type="button" class="preset-pill" onclick="appliquerPlafond('')">Illimité</button>
+                        <button type="button" class="preset-pill" onclick="appliquerPlafond('500000')">500 000</button>
+                        <button type="button" class="preset-pill" onclick="appliquerPlafond('1000000')">1 000 000</button>
+                    </div>
                     {% if form.plafond_annuel.errors %}<div class="erreurs" role="alert">{{ form.plafond_annuel.errors }}</div>{% endif %}
                 </div>
             </div>
 
             <div style="margin-top: 24px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                <button class="button primary" type="submit">
+                <button class="button primary" type="submit" style="padding: 10px 22px;">
                     {% icone "check" %} Enregistrer les modifications
                 </button>
                 <a class="button btn" href="{% url 'liste_plans_couverture' %}">Annuler</a>
-                <a class="button btn btn-danger" style="margin-left: auto;" href="{% url 'supprimer_plan_couverture' plan.pk %}">
-                    {% icone "trash-2" %} Supprimer le plan
+                <a class="button btn btn-danger" style="margin-left: auto;" href="{% url 'supprimer_plan_couverture' plan.pk %}" title="Supprimer définitivement ce plan">
+                    {% icone "trash-2" %} Supprimer
                 </a>
             </div>
         </form>
     </section>
 
-    <!-- Explications & Aperçu -->
+    <!-- Aperçu dynamique & impact aux couleurs SantéSN -->
     <aside style="display: flex; flex-direction: column; gap: 16px;">
-        <div class="panel" style="margin-bottom: 0; padding: 20px;">
-            <h3 style="font-size: 14px; font-weight: 700; margin: 0 0 10px 0; color: var(--primary);">
-                {% icone "info" %} Impact des modifications
+        <div class="apercu-plan-wrapper">
+            <h3 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 14px 0; color: var(--muted); display: flex; align-items: center; gap: 6px;">
+                {% icone "eye" %} Aperçu en direct
             </h3>
-            <p style="font-size: 13px; color: var(--texte-secondaire, #475569); line-height: 1.5; margin: 0 0 10px 0;">
-                Toute modification du taux ou du plafond s'appliquera instantanément à tous les assurés bénéficiant de cette formule.
-            </p>
-            <p style="font-size: 13px; color: var(--texte-secondaire, #475569); line-height: 1.5; margin: 0;">
-                Les prises en charge et factures antérieures restent inchangées conformément aux règles d'immuabilité comptable.
-            </p>
+
+            <div style="background: var(--neutre-bg); border-radius: 12px; padding: 16px; border: 1px solid var(--border);">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                    <span style="width: 36px; height: 36px; border-radius: 8px; background: var(--primary-soft); color: var(--primary-strong); display: inline-flex; align-items: center; justify-content: center;">
+                        {% icone "shield" %}
+                    </span>
+                    <div>
+                        <div id="apercu-nom" style="font-weight: 700; font-size: 15px; color: var(--titre);">{{ plan.nom }}</div>
+                        <div style="font-size: 11.5px; color: var(--muted);">Tiers-payant SantéSN</div>
+                    </div>
+                </div>
+
+                <div style="font-size: 26px; font-weight: 800; color: var(--primary-strong); line-height: 1;">
+                    <span id="apercu-taux">{{ plan.taux_couverture|floatformat:0 }}</span><span style="font-size: 18px; color: var(--primary);">%</span>
+                </div>
+                <div style="font-size: 11.5px; color: var(--muted); margin-top: 4px;">Prise en charge directe</div>
+
+                <div style="width: 100%; height: 6px; background: var(--border); border-radius: 999px; overflow: hidden; margin: 10px 0 12px 0;">
+                    <div id="apercu-jauge" style="width: {{ plan.taux_couverture }}%; height: 100%; background: linear-gradient(90deg, var(--primary), var(--primary-light)); border-radius: 999px;"></div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; padding-top: 10px; border-top: 1px dashed var(--border);">
+                    <span style="color: var(--muted);">Plafond annuel :</span>
+                    <strong id="apercu-plafond" style="{% if not plan.plafond_annuel %}color: var(--ok-fg);{% else %}color: var(--titre);{% endif %}">
+                        {% if plan.plafond_annuel %}{{ plan.plafond_annuel|floatformat:0 }} FCFA{% else %}Illimité{% endif %}
+                    </strong>
+                </div>
+            </div>
+
+            <div style="margin-top: 16px; font-size: 12.5px; color: var(--muted); line-height: 1.5;">
+                <strong style="color: var(--titre); display: block; margin-bottom: 4px;">{% icone "info" %} Application en temps réel :</strong>
+                La mise à jour s'appliquera immédiatement aux assurés et ayants droit rattachés à cette formule.
+            </div>
         </div>
     </aside>
 </div>
+
+<script>
+function mettreAJourApercu() {
+    var champNom = document.getElementById('id_nom');
+    var champTaux = document.getElementById('id_taux_couverture');
+    var champPlafond = document.getElementById('id_plafond_annuel');
+
+    var apercuNom = document.getElementById('apercu-nom');
+    var apercuTaux = document.getElementById('apercu-taux');
+    var apercuJauge = document.getElementById('apercu-jauge');
+    var apercuPlafond = document.getElementById('apercu-plafond');
+
+    if (champNom && apercuNom) {
+        apercuNom.textContent = champNom.value.trim() || 'Formule de couverture';
+    }
+
+    if (champTaux && apercuTaux && apercuJauge) {
+        var taux = parseFloat(champTaux.value) || 0;
+        if (taux < 0) taux = 0;
+        if (taux > 100) taux = 100;
+        apercuTaux.textContent = Math.round(taux);
+        apercuJauge.style.width = taux + '%';
+    }
+
+    if (champPlafond && apercuPlafond) {
+        var plafondVal = champPlafond.value.trim();
+        if (plafondVal) {
+            apercuPlafond.textContent = Number(plafondVal).toLocaleString('fr-FR') + ' FCFA';
+            apercuPlafond.style.color = 'var(--titre)';
+        } else {
+            apercuPlafond.textContent = 'Illimité';
+            apercuPlafond.style.color = 'var(--ok-fg)';
+        }
+    }
+}
+
+function appliquerNom(valeur) {
+    var c = document.getElementById('id_nom');
+    if (c) { c.value = valeur; mettreAJourApercu(); }
+}
+
+function appliquerTaux(valeur) {
+    var c = document.getElementById('id_taux_couverture');
+    if (c) { c.value = valeur; mettreAJourApercu(); }
+}
+
+function appliquerPlafond(valeur) {
+    var c = document.getElementById('id_plafond_annuel');
+    if (c) { c.value = valeur; mettreAJourApercu(); }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    var inputs = ['id_nom', 'id_taux_couverture', 'id_plafond_annuel'];
+    inputs.forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', mettreAJourApercu);
+        }
+    });
+    mettreAJourApercu();
+});
+</script>
 {% endblock %}
