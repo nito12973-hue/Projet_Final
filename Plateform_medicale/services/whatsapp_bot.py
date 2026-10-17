@@ -14,10 +14,11 @@ import re
 from decimal import Decimal
 
 from django.conf import settings
+from django.db.models import Q
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_time
 
-from Plateform_medicale.models import Medecin, Patient, Prestataire, RendezVous, User
+from Plateform_medicale.models import Medecin, Patient, Prestataire, RendezVous, User, distance_km
 from Plateform_medicale.services.notifications import notifier_demande_rdv
 
 logger = logging.getLogger("Plateform_medicale")
@@ -63,9 +64,70 @@ def trouver_patient_par_telephone(telephone):
     return None
 
 
-def lister_medecins_disponibles(limite=6):
-    """Retourne la liste ordonnée des médecins partenaires pour le bot."""
-    return list(Medecin.objects.select_related("prestataire").all()[:limite])
+def lister_medecins_disponibles(patient=None, ville=None, coords_gps=None, limite=6):
+    """
+    Retourne la liste des médecins partenaires en privilégiant la proximité géographique :
+    1. Si coordonnées GPS fournies (partage de position WhatsApp) : tri par distance (km)
+    2. Si une ville est précisée (ex: "RDV Thiès", "RDV Dakar") : filtre par cette ville
+    3. Si patient identifié : privilégie sa ville/région d'adresse
+    """
+    qs = Medecin.objects.select_related("prestataire")
+    qs = qs.filter(Q(user__is_active=True) | Q(user__isnull=True))
+
+    # 1. Si coordonnées GPS transmises sur WhatsApp
+    if coords_gps and len(coords_gps) == 2:
+        lat_u, lng_u = coords_gps
+        avec_dist = []
+        sans_dist = []
+        for m in qs:
+            if m.prestataire and m.prestataire.latitude is not None and m.prestataire.longitude is not None:
+                d = round(distance_km(lat_u, lng_u, float(m.prestataire.latitude), float(m.prestataire.longitude)), 1)
+                avec_dist.append((m, d))
+            else:
+                sans_dist.append((m, None))
+        avec_dist.sort(key=lambda x: x[1])
+        tous = [m for m, d in avec_dist] + [m for m, d in sans_dist]
+        d_map = dict(avec_dist)
+        for m in tous:
+            m._distance_km = d_map.get(m)
+        return tous[:limite]
+
+    # 2. Si une ville ou quartier spécifique est mentionné (ex: "Thiès", "Dakar", "Mbour", "Pikine")
+    if ville:
+        qs_ville = qs.filter(
+            Q(prestataire__ville__icontains=ville)
+            | Q(prestataire__adresse__icontains=ville)
+        )
+        if qs_ville.exists():
+            return list(qs_ville[:limite])
+
+    # 3. Si patient identifié : privilégier les médecins proches de son adresse
+    if patient:
+        ville_patient = ""
+        if patient.adresse:
+            villes_senegal = [
+                "Dakar", "Plateau", "Médina", "Fann", "Point E", "Mermoz", "Almadies",
+                "Yoff", "Pikine", "Guédiawaye", "Rufisque", "Thiès", "Mbour", "Saint-Louis",
+                "Touba", "Kaolack", "Ziguinchor", "Diourbel", "Fatick", "Kolda", "Tambacounda"
+            ]
+            for v in villes_senegal:
+                if v.lower() in patient.adresse.lower():
+                    ville_patient = v
+                    break
+
+        if ville_patient:
+            qs_proches = qs.filter(
+                Q(prestataire__ville__icontains=ville_patient)
+                | Q(prestataire__adresse__icontains=ville_patient)
+            )
+            if qs_proches.exists():
+                proches = list(qs_proches[:limite])
+                if len(proches) < limite:
+                    autres = list(qs.exclude(pk__in=[m.pk for m in proches])[:limite - len(proches)])
+                    return proches + autres
+                return proches
+
+    return list(qs[:limite])
 
 
 def formater_reponse_menu(patient=None):
@@ -115,25 +177,47 @@ def formater_reponse_droits(patient):
     )
 
 
-def formater_reponse_medecins():
-    """Présente la liste des praticiens et le guide de prise de rendez-vous."""
-    medecins = lister_medecins_disponibles()
+def formater_reponse_medecins(patient=None, ville=None, coords_gps=None):
+    """Présente la liste des praticiens ordonnée par proximité et conventionnement."""
+    medecins = lister_medecins_disponibles(patient=patient, ville=ville, coords_gps=coords_gps)
     if not medecins:
+        if ville:
+            return (
+                f"🩺 *Recherche de Médecins à {ville.capitalize()}*\n\n"
+                f"Aucun médecin partenaire n'a été trouvé à *{ville.capitalize()}* pour le moment.\n"
+                f"Envoyez *2* pour voir tous les praticiens conventionnés disponibles."
+            )
         return (
             "🩺 *Prise de Rendez-vous Médical*\n\n"
             "Aucun praticien n'est enregistré pour le moment. "
             "Veuillez vous rapprocher de votre centre de santé conventionné."
         )
 
-    lignes = ["📅 *Prendre un Rendez-vous Médical*\n", "Voici la liste des médecins partenaires :"]
+    titre_section = "Voici la liste des médecins partenaires :"
+    if coords_gps:
+        titre_section = "📍 Médecins les plus proches de *votre position GPS* :"
+    elif ville:
+        titre_section = f"📍 Médecins partenaires disponibles à *{ville.capitalize()}* :"
+    elif patient and getattr(patient, "adresse", ""):
+        titre_section = "📍 Médecins partenaires recommandés proches de chez vous :"
+
+    lignes = ["📅 *Prendre un Rendez-vous Médical*\n", titre_section]
     for idx, med in enumerate(medecins, start=1):
-        etab = f" ({med.prestataire.nom})" if med.prestataire else ""
-        lignes.append(f"{idx}. *Dr. {med.prenom} {med.nom}* - {med.specialite}{etab}")
+        etab_parts = []
+        if med.prestataire:
+            etab_parts.append(med.prestataire.nom)
+            if med.prestataire.ville:
+                etab_parts.append(med.prestataire.ville)
+        etab = f" ({' - '.join(etab_parts)})" if etab_parts else ""
+        dist = getattr(med, "_distance_km", None)
+        dist_str = f" [à {dist} km]" if dist is not None else ""
+        lignes.append(f"{idx}. *Dr. {med.prenom} {med.nom}* - {med.specialite}{etab}{dist_str}")
 
     lignes.append("\n👉 *Pour réserver, envoyez :*")
     lignes.append("*RDV [N° Médecin] [Date JJ/MM/AAAA] [Heure HH:MM] [Motif]*")
     lignes.append("\n*Exemple :* `RDV 1 25/10/2026 10:30 Consultation de routine`")
-    lignes.append("\nPour voir le menu, envoyez *MENU*.")
+    lignes.append("\n💡 *Pour filtrer par ville, écrivez :* `RDV [Ville]` (ex: *RDV Thiès* ou *RDV Dakar*).")
+    lignes.append("Vous pouvez aussi partager votre *position GPS* sur WhatsApp !")
 
     return "\n".join(lignes)
 
@@ -229,7 +313,7 @@ def parser_demande_rdv(texte, patient):
             "Rapprochez-vous de votre gestionnaire d'IPM ou de mutuelle."
         )
 
-    medecins = lister_medecins_disponibles()
+    medecins = lister_medecins_disponibles(patient=patient)
     if not medecins:
         return "⚠️ Aucun médecin n'est disponible pour la prise de rendez-vous pour le moment."
 
@@ -315,6 +399,17 @@ def traiter_message_entrant_whatsapp(expediteur_telephone, texte_message):
 
     texte_lower = texte.lower().strip()
 
+    # 0. Coordonnées GPS reçues (partage de position WhatsApp "LOCATION lat lng")
+    if texte_lower.startswith("location "):
+        morceaux_loc = texte.split()
+        if len(morceaux_loc) >= 3:
+            try:
+                lat = float(morceaux_loc[1])
+                lng = float(morceaux_loc[2])
+                return formater_reponse_medecins(patient=patient, coords_gps=(lat, lng))
+            except ValueError:
+                pass
+
     # 1. Tentative de parsing d'une réservation directe (ex: 'RDV 1 25/10/2026 10h00')
     reponse_rdv = parser_demande_rdv(texte, patient)
     if reponse_rdv:
@@ -330,7 +425,14 @@ def traiter_message_entrant_whatsapp(expediteur_telephone, texte_message):
 
     # 4. Choix 2 : Demande de rendez-vous / Liste des praticiens
     if texte_lower in ("2", "rdv", "rendez-vous", "rendez vous", "prendre rdv", "prendre un rdv", "docteur", "medecin"):
-        return formater_reponse_medecins()
+        return formater_reponse_medecins(patient=patient)
+
+    # Recherche par ville : ex: "rdv dakar", "rdv thies", "rdv mbour"
+    match_rdv_ville = re.match(r"^rdv\s+([a-zA-Zà-ÿ\s-]+)$", texte.strip(), re.IGNORECASE)
+    if match_rdv_ville:
+        nom_ville = match_rdv_ville.group(1).strip()
+        if nom_ville.lower() not in ("menu", "aide", "help", "docteur", "medecin", "partenaire"):
+            return formater_reponse_medecins(patient=patient, ville=nom_ville)
 
     # 5. Choix 3 : Partenaires & Réseau conventionné
     if texte_lower in ("3", "partenaire", "partenaires", "pharmacie", "pharmacies", "clinique", "prestataire"):
@@ -342,7 +444,7 @@ def traiter_message_entrant_whatsapp(expediteur_telephone, texte_message):
 
     # 7. Si le texte contient explicitement "rdv" ou "rendez" sans respecter la syntaxe complète
     if "rdv" in texte_lower or "rendez" in texte_lower:
-        return formater_reponse_medecins()
+        return formater_reponse_medecins(patient=patient)
 
     # Réponse par défaut : guidage bienveillant
     return (

@@ -13,44 +13,6 @@
 </section>
 
 <section class="panel panel-form" style="border-radius: 16px; box-shadow: var(--ombre-douce); padding: 24px;">
-    <!-- Option 1 : Rendez-vous direct sur WhatsApp -->
-    <div style="background: linear-gradient(135deg, rgba(37, 211, 102, 0.1) 0%, rgba(18, 140, 126, 0.14) 100%); border: 2px solid #25D366; border-radius: 14px; padding: 16px 20px; margin-bottom: 22px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
-        <div style="display: flex; align-items: center; gap: 14px;">
-            <div style="width: 44px; height: 44px; border-radius: 12px; background: #25D366; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 22px; flex-shrink: 0; box-shadow: 0 4px 12px rgba(37, 211, 102, 0.35);">
-                {% icone "chat-dots" %}
-            </div>
-            <div>
-                <strong style="color: var(--titre); font-size: 15px; display: block;">Option 1 (Recommandée) : Rendez-vous direct sur WhatsApp</strong>
-                <span style="font-size: 13px; color: var(--muted); margin-top: 2px;">Envoyez simplement <strong>"RDV"</strong> au bot SantéSN sur WhatsApp au <strong>+{{ whatsapp_bot_phone }}</strong> pour réserver en 1 clic.</span>
-            </div>
-        </div>
-        <a href="https://wa.me/{{ whatsapp_bot_phone }}?text=RDV" target="_blank" rel="noopener noreferrer" class="button" style="background: #25D366; color: #fff !important; border: none; font-weight: 700; border-radius: 10px; padding: 10px 18px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(37, 211, 102, 0.35);">
-            {% icone "chat-dots" %} Réserver sur WhatsApp
-        </a>
-    </div>
-
-    <div style="display: flex; align-items: center; gap: 14px; margin: 20px 0; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">
-        <div style="flex: 1; height: 1px; background: var(--border);"></div>
-        <span>Ou formulez votre demande en ligne</span>
-        <div style="flex: 1; height: 1px; background: var(--border);"></div>
-    </div>
-
-    <div id="encart-whatsapp-rdv" style="display: none; background: rgba(37, 211, 102, 0.08); border: 1.5px solid #25D366; border-radius: 12px; padding: 14px 18px; margin-bottom: 20px;">
-        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
-            <div>
-                <strong style="color: var(--titre); font-size: 14px; display: inline-flex; align-items: center; gap: 6px;">
-                    <span style="color: #25D366;">{% icone "share-2" %}</span> Discuter avec ce médecin sur WhatsApp
-                </strong>
-                <p style="margin: 3px 0 0; font-size: 12.5px; color: var(--muted);" id="texte-medecin-wa">
-                    Convenez d'un créneau en direct avec le praticien ou son secrétariat.
-                </p>
-            </div>
-            <a id="lien-whatsapp-dynamique" href="#" target="_blank" rel="noopener" class="button" style="background-color: #25D366; color: #FFFFFF !important; font-weight: 700; border: none; font-size: 13px; padding: 8px 16px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
-                {% icone "share-2" %} Discuter sur WhatsApp
-            </a>
-        </div>
-    </div>
-
     {% if form.non_field_errors %}
     <div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
     {% endif %}

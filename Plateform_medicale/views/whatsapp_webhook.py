@@ -65,6 +65,11 @@ def webhook_whatsapp(request):
                     texte_message = premier_message.get("text", {}).get("body", "")
                 elif premier_message.get("type") == "button":
                     texte_message = premier_message.get("button", {}).get("text", "")
+                elif premier_message.get("type") == "location":
+                    loc = premier_message.get("location", {})
+                    lat = loc.get("latitude")
+                    lng = loc.get("longitude")
+                    texte_message = f"LOCATION {lat} {lng}"
                 elif premier_message.get("type") == "interactive":
                     interactive = premier_message.get("interactive", {})
                     texte_message = (
