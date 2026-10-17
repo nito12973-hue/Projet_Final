@@ -10,7 +10,7 @@
         <p class="subtitle">Gestion des organismes de couverture santé : création, codes d'identification et activation.</p>
     </div>
     <div class="actions">
-        <a class="button primary btn-expand primary" href="{% url 'ajouter_organisme' %}" title="Enregistrer un nouvel organisme" aria-label="Nouvel organisme">{% icone "plus" %} <span class="expand-text">Nouvel organisme</span></a>
+        <a class="button primary" href="{% url 'ajouter_organisme' %}" title="Enregistrer un nouvel organisme">{% icone "plus" %} Nouvel organisme</a>
     </div>
 </section>
 
@@ -91,7 +91,23 @@
                 </td>
                 <td><span class="code">{{ org.code }}</span></td>
                 <td class="col-optionnelle"><span class="badge">{{ org.get_type_organisme_display }}</span></td>
-                <td class="col-optionnelle">{{ org.nb_gestionnaires }}</td>
+                <td class="col-optionnelle">
+                    {% if org.gestionnaires_assignes %}
+                        <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:6px;">
+                        {% for gest in org.gestionnaires_assignes %}
+                            <div style="font-size:12px;line-height:1.3;">
+                                <strong>{{ gest.get_full_name|default:gest.email }}</strong>
+                                <span class="subtitle" style="display:block;font-size:11px;color:var(--muted);">{{ gest.email }}</span>
+                            </div>
+                        {% endfor %}
+                        </div>
+                    {% else %}
+                        <span class="subtitle" style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">Aucun gestionnaire</span>
+                    {% endif %}
+                    <a href="{% url 'ajouter_utilisateur' %}?role=GESTIONNAIRE&organisme={{ org.pk }}" class="button btn btn-sm" style="font-size:11px;padding:3px 8px;min-height:28px;height:28px;" title="Ajouter un gestionnaire pour {{ org.nom }}">
+                        {% icone "plus" %} Gestionnaire
+                    </a>
+                </td>
                 <td class="col-optionnelle">{{ org.nb_patients }}</td>
                 <td>
                     {% if org.actif %}

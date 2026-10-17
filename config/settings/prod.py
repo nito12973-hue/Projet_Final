@@ -61,8 +61,8 @@ if 'test' not in sys.argv:
         or config('DATABASE_URL', default=None)
     )
     if not DATABASE_URL and (os.environ.get('VERCEL') or os.environ.get('RENDER')):
-        # Instance Neon PostgreSQL cloud officielle de SantéSN
-        DATABASE_URL = 'postgresql://neondb_owner:npg_mzGAUo8aKc4H@ep-round-tree-ay6jpqcs-pooler.c-5.us-east-2.aws.neon.tech/santesn?sslmode=require'
+        from django.core.exceptions import ImproperlyConfigured
+        raise ImproperlyConfigured("DATABASE_URL est obligatoire en environnement de production (Vercel/Render).")
 
     if DATABASE_URL:
         import re

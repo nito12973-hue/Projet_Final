@@ -6328,21 +6328,43 @@
         }
 
         .btn-expand,
-        .btn-retour-expand,
         .btn-action-expand,
         .action-chip {
+            padding: 8px 16px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 6px !important;
+            min-height: 40px !important;
+            transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+
+        .btn-expand .expand-text,
+        .btn-action-expand .expand-text,
+        .action-chip .expand-text {
+            max-width: none !important;
+            opacity: 1 !important;
+            overflow: visible !important;
+            white-space: nowrap !important;
+            display: inline-block !important;
+            margin-left: 6px !important;
+            vertical-align: middle !important;
+            font-size: 13px !important;
+            font-weight: 600 !important;
+        }
+
+        .btn-retour-expand {
             padding: 7px 11px !important;
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
             gap: 0 !important;
+            min-height: 36px !important;
+            border-radius: 999px !important;
             transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1) !important;
         }
 
-        .btn-expand .expand-text,
-        .btn-retour-expand .expand-text,
-        .btn-action-expand .expand-text,
-        .action-chip .expand-text {
+        .btn-retour-expand .expand-text {
             max-width: 0 !important;
             opacity: 0 !important;
             overflow: hidden !important;
@@ -6355,14 +6377,8 @@
             transition: max-width 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease, margin-left 0.24s ease !important;
         }
 
-        .btn-expand:hover,
-        .btn-expand:focus-visible,
         .btn-retour-expand:hover,
-        .btn-retour-expand:focus-visible,
-        .btn-action-expand:hover,
-        .btn-action-expand:focus-visible,
-        .action-chip:hover,
-        .action-chip:focus-visible {
+        .btn-retour-expand:focus-visible {
             padding: 7px 16px !important;
             gap: 6px !important;
             transform: translateY(-1px) !important;
@@ -6371,18 +6387,22 @@
             box-shadow: 0 4px 12px rgba(14, 124, 134, 0.2) !important;
         }
 
-        .btn-expand:hover .expand-text,
-        .btn-expand:focus-visible .expand-text,
         .btn-retour-expand:hover .expand-text,
-        .btn-retour-expand:focus-visible .expand-text,
-        .btn-action-expand:hover .expand-text,
-        .btn-action-expand:focus-visible .expand-text,
-        .action-chip:hover .expand-text,
-        .action-chip:focus-visible .expand-text {
+        .btn-retour-expand:focus-visible .expand-text {
             max-width: 160px !important;
             opacity: 1 !important;
             margin-left: 6px !important;
             color: var(--primary-strong) !important;
+        }
+
+        .page-title .actions .button,
+        .page-title > .button {
+            min-height: 42px !important;
+            padding: 0 18px !important;
+            border-radius: 8px !important;
+            font-size: 14px !important;
+            font-weight: 600 !important;
+            gap: 8px !important;
         }
 
         .btn-expand.primary,
@@ -7164,17 +7184,12 @@
         })();
 
         (function () {
-            // Auto-encapsulation et initialisation universelle des boutons extensibles
-            // Cible les classes explicites ainsi que les boutons d'actions d'en-tête (sauf soumission de formulaire)
-            function initialiserBoutonsExtensibles() {
-                var selecteurs = '.btn-expand, .btn-retour-expand, .btn-action-expand, .action-chip, .btn-export, .btn-imprimer, .btn-telecharger, .page-title > a.button:not(.btn-statique), .page-title > div:last-child > a.button:not(.btn-statique)';
-                var boutons = document.querySelectorAll(selecteurs);
+            // Initialisation ciblée du bouton Retour extensible
+            function initialiserBoutonRetour() {
+                var boutons = document.querySelectorAll('.btn-retour-expand');
                 boutons.forEach(function (btn) {
-                    if (btn.classList.contains('btn-statique') || (btn.closest('form:not([role="search"])') && btn.tagName === 'BUTTON')) {
-                        return; // Préserver les boutons de soumission stables
-                    }
-                    if (!btn.classList.contains('btn-expand') && !btn.classList.contains('btn-retour-expand') && !btn.classList.contains('btn-action-expand')) {
-                        btn.classList.add('btn-expand');
+                    if (btn.classList.contains('btn-statique')) {
+                        return;
                     }
                     if (!btn.querySelector('.expand-text')) {
                         var textNodes = [];
@@ -7194,9 +7209,9 @@
                 });
             }
             if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', initialiserBoutonsExtensibles);
+                document.addEventListener('DOMContentLoaded', initialiserBoutonRetour);
             } else {
-                initialiserBoutonsExtensibles();
+                initialiserBoutonRetour();
             }
         })();
 

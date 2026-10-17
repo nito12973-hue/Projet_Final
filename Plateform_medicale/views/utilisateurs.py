@@ -65,15 +65,19 @@ def _emails_comptes_signales():
 def _compte_accessible_ou_403(request, pk):
     """Renvoie le compte `pk` si l'utilisateur a le droit de le consulter, sinon 403.
 
-    Autorise : son propre compte, ou un compte signale (bloque). Tout refus
-    est trace dans le logger de securite.
+    Autorise : son propre compte, un gestionnaire (créé et supervisé par l'admin),
+    ou un compte signalé (bloqué). Tout refus est tracé dans le logger de sécurité.
 
-    Un GESTIONNAIRE ne peut acceder qu'aux utilisateurs de SON organisme.
-    L'ADMIN ne peut acceder qu'aux comptes malveillants/bloques (ou au sien).
+    Un GESTIONNAIRE ne peut accéder qu'aux utilisateurs de SON organisme.
+    L'ADMIN peut accéder aux gestionnaires et aux comptes malveillants/bloqués (ou au sien).
     """
     utilisateur = get_object_or_404(User, pk=pk)
     if request.user.role == User.Role.ADMIN:
-        if utilisateur != request.user and utilisateur.email not in _emails_comptes_signales():
+        if (
+            utilisateur != request.user
+            and utilisateur.email not in _emails_comptes_signales()
+            and utilisateur.role != User.Role.GESTIONNAIRE
+        ):
             raise PermissionDenied
     elif request.user.role == User.Role.GESTIONNAIRE:
         if utilisateur.organisme_id != request.user.organisme_id:
@@ -84,7 +88,8 @@ def _compte_accessible_ou_403(request, pk):
 def _filtrer_utilisateurs(request):
     """Filtres partages entre la liste et les exports des utilisateurs.
 
-    Le perimetre de l'administrateur est STRICTEMENT limite aux comptes signales (bloques).
+    Le périmètre de l'administrateur couvre les comptes signalés (bloqués)
+    ainsi que les gestionnaires d'organismes qu'il supervise.
     Un GESTIONNAIRE ne voit que les utilisateurs de SON organisme.
     """
     utilisateurs = User.objects.select_related("organisme").all()
@@ -92,14 +97,14 @@ def _filtrer_utilisateurs(request):
     dict_bloques = {u.email.lower(): ligne for u, ligne in comptes_bloques}
     emails_bloques = {u.email for u, _ in comptes_bloques}
 
+    role = request.GET.get("role", "")
+    organisme_id = request.GET.get("organisme", "").strip()
+    recherche = request.GET.get("q", "").strip()
+
     if request.user.role == User.Role.ADMIN:
         utilisateurs = utilisateurs.filter(email__in=emails_bloques)
     elif request.user.role == User.Role.GESTIONNAIRE:
         utilisateurs = utilisateurs.filter(organisme_id=request.user.organisme_id)
-
-    role = request.GET.get("role", "")
-    organisme_id = request.GET.get("organisme", "").strip()
-    recherche = request.GET.get("q", "").strip()
 
     if role:
         utilisateurs = utilisateurs.filter(role=role)
@@ -617,7 +622,14 @@ def ajouter_utilisateur(request):
             messages.success(request, bilan["texte_flash"])
             return redirect("liste_utilisateurs")
     else:
-        form = UtilisateurCreationForm(request=request)
+        initial = {}
+        role_param = request.GET.get("role", "").strip()
+        org_param = request.GET.get("organisme", "").strip()
+        if role_param in dict(User.Role.choices):
+            initial["role"] = role_param
+        if org_param.isdigit():
+            initial["organisme"] = int(org_param)
+        form = UtilisateurCreationForm(request=request, initial=initial)
     return render(request, "ajouter_utilisateur.html", {"form": form})
 
 
@@ -775,10 +787,16 @@ def supprimer_utilisateur(request, pk):
 
 @admin_required
 def liste_organismes(request):
-    from django.db.models import Count
+    from django.db.models import Count, Prefetch
     organismes = Organisme.objects.annotate(
         nb_gestionnaires=Count("utilisateurs", filter=Q(utilisateurs__role=User.Role.GESTIONNAIRE), distinct=True),
         nb_patients=Count("patients", distinct=True),
+    ).prefetch_related(
+        Prefetch(
+            "utilisateurs",
+            queryset=User.objects.filter(role=User.Role.GESTIONNAIRE).order_by("last_name", "first_name"),
+            to_attr="gestionnaires_assignes",
+        )
     )
 
     type_organisme = request.GET.get("type", "").strip()
