@@ -990,7 +990,7 @@ class ConventionPrestataireForm(forms.ModelForm):
         widgets = {
             'date_conventionnement': forms.DateInput(attrs={'type': 'date'}),
             'date_fin': forms.DateInput(attrs={'type': 'date'}),
-            'numero_convention': forms.TextInput(attrs={'placeholder': "Ex : CONV-IPM-2026-042"}),
+            'numero_convention': forms.TextInput(attrs={'placeholder': "Ex : CONV-2026-001"}),
             'remarques': forms.TextInput(attrs={'placeholder': "Ex : Tiers payant ambulatoire 80%, hospitalisation conventionnée"}),
         }
 

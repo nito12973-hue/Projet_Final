@@ -1855,21 +1855,30 @@
                 <h2>Parlons de votre couverture santé</h2>
                 <p>Entreprise, assurance, clinique ou pharmacie : rejoignez le réseau SantéSN.</p>
             </div>
-            <div class="grille-contact">
+            <div class="grille-contact" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
                 <div class="carte-contact revele">
-                    <span class="pastille">{% icone "map-pin" %}</span>
-                    <h3>Localisation</h3>
-                    <p>Dakar, Sénégal</p>
+                    <span class="pastille">{% icone "mail" %}</span>
+                    <h3>Support Email Professionnel</h3>
+                    <p><a href="mailto:contact@santesn.sn" style="color: var(--primary); font-weight: 600; text-decoration: none;">contact@santesn.sn</a></p>
+                    <span style="font-size: 11.5px; color: var(--muted); display: block; margin-top: 4px;">Assistance entreprise &amp; conventions</span>
                 </div>
                 <div class="carte-contact revele">
                     <span class="pastille">{% icone "phone" %}</span>
                     <h3>Téléphone direct</h3>
                     <p><a href="tel:+221789576145" style="color: var(--primary); font-weight: 600; text-decoration: none;">+221 78 957 61 45</a></p>
+                    <span style="font-size: 11.5px; color: var(--muted); display: block; margin-top: 4px;">Standard ouvert du lundi au vendredi</span>
                 </div>
                 <div class="carte-contact revele">
                     <span class="pastille">{% icone "message-circle" %}</span>
-                    <h3>Support WhatsApp</h3>
-                    <p><a href="https://wa.me/221789576145?text=Bonjour%20Sant%C3%A9SN" target="_blank" rel="noopener" style="color: var(--primary); font-weight: 600; text-decoration: none;">Assistance en direct</a></p>
+                    <h3>Canal WhatsApp</h3>
+                    <p><a href="https://wa.me/221789576145?text=Bonjour%20Sant%C3%A9SN" target="_blank" rel="noopener" style="color: var(--primary); font-weight: 600; text-decoration: none;">Assistance instantanée</a></p>
+                    <span style="font-size: 11.5px; color: var(--muted); display: block; margin-top: 4px;">Questions rapides &amp; suivi</span>
+                </div>
+                <div class="carte-contact revele">
+                    <span class="pastille">{% icone "map-pin" %}</span>
+                    <h3>Siège &amp; Localisation</h3>
+                    <p>Dakar, Sénégal</p>
+                    <span style="font-size: 11.5px; color: var(--muted); display: block; margin-top: 4px;">République du Sénégal</span>
                 </div>
             </div>
         </div>
@@ -1900,10 +1909,11 @@
                     </nav>
                 </div>
                 <div>
-                    <span class="pied-titre-colonne">Contact</span>
+                    <span class="pied-titre-colonne">Contact Officiel</span>
                     <ul class="pied-contact-liste">
+                        <li><a href="mailto:contact@santesn.sn" style="color: inherit; text-decoration: none; font-weight: 500;">{% icone "mail" %} contact@santesn.sn</a></li>
+                        <li><a href="tel:+221789576145" style="color: inherit; text-decoration: none; font-weight: 500;">{% icone "phone" %} +221 78 957 61 45</a></li>
                         <li>Dakar, Sénégal</li>
-                        <li><a href="https://wa.me/221789576145" target="_blank" rel="noopener" style="color: inherit; text-decoration: none; font-weight: 500;">+221 78 957 61 45 (WhatsApp)</a></li>
                     </ul>
                 </div>
             </div>
