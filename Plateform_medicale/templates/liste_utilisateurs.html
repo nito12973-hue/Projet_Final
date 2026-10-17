@@ -1,17 +1,17 @@
 {% extends "base.html" %}
 {% load formats icones %}
 
-{% block title %}Comptes signalés{% endblock %}
+{% block title %}Comptes utilisateurs{% endblock %}
 
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>Comptes signalés</h1>
-        <p class="subtitle">Effectifs par rôle. L'identité d'un utilisateur n'est visible ici que si son compte est bloqué après des tentatives de connexion suspectes.</p>
+        <h1>Comptes utilisateurs</h1>
+        <p class="subtitle">Vue d'ensemble des comptes et sécurité des accès. Vous pouvez débloquer les comptes suspendus ou ajouter un gestionnaire d'entreprise.</p>
     </div>
     <div class="actions">
         <a class="button btn btn-retour-expand" href="{% url 'dashboard' %}" title="Retour au tableau de bord" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
-        <a class="button primary" href="{% url 'ajouter_utilisateur' %}">{% icone "plus" %} Ajouter un utilisateur</a>
+        <a class="button primary" href="{% url 'ajouter_utilisateur' %}">{% icone "plus" %} Ajouter un gestionnaire</a>
     </div>
 </section>
 
@@ -40,7 +40,7 @@
     <div class="kpi">
         <span class="kpi-entete">{% icone "building" %} Gestionnaires</span>
         <strong class="code">{{ total_gestionnaires }}</strong>
-        <span class="kpi-pied">Organismes / IPM</span>
+        <span class="kpi-pied">Entreprises partenaires</span>
     </div>
     <div class="kpi">
         <span class="kpi-entete">{% icone "shield" %} Administrateurs</span>
@@ -48,9 +48,9 @@
         <span class="kpi-pied">Supervision</span>
     </div>
     <div class="kpi">
-        <span class="kpi-entete">{% icone "shield" %} Comptes signalés</span>
+        <span class="kpi-entete">{% icone "shield" %} Comptes bloqués</span>
         <strong class="code">{{ total_comptes_signales }}</strong>
-        <span class="kpi-pied">Bloqués actuellement</span>
+        <span class="kpi-pied">À débloquer</span>
     </div>
 </div>
 

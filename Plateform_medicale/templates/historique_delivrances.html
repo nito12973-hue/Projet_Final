@@ -10,8 +10,8 @@
         <p class="subtitle">Ordonnances que vous avez validées.</p>
     </div>
     <div class="actions">
-        <a class="button btn" href="{% url 'bordereau_teletransmission' %}" title="Bordereau mensuel Tiers Payant IPM">
-            {% icone "file-text" %} <span>Bordereau IPM</span>
+        <a class="button btn" href="{% url 'bordereau_teletransmission' %}" title="Bordereau mensuel Tiers-Payant">
+            {% icone "file-text" %} <span>Bordereau Tiers-Payant</span>
         </a>
         <a class="button primary" href="{% url 'scanner_ordonnance' %}">Scanner un QR Code</a>
     </div>
@@ -46,7 +46,7 @@
                 <th>Médecin prescripteur</th>
                 <th>Code ordonnance</th>
                 <th style="text-align:right;">Montant total</th>
-                <th style="text-align:right;">Prise en charge IPM</th>
+                <th style="text-align:right;">Part Tiers-Payant</th>
                 <th style="text-align:right;">Ticket modérateur</th>
             </tr>
         </thead>
