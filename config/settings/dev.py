@@ -18,6 +18,9 @@ CSRF_TRUSTED_ORIGINS = [
 
 # Base de données
 _database_url = os.environ.get('DATABASE_URL') or os.environ.get('POSTGRES_URL') or config('DATABASE_URL', default=None)
+if _database_url:
+    import re
+    _database_url = re.sub(r'/neondb(\?|$)', r'/santesn\1', str(_database_url).strip())
 
 if 'test' in sys.argv:
     DATABASES = {
