@@ -322,6 +322,21 @@ class OrganismeForm(forms.ModelForm):
             self.fields["type_organisme"].required = False
             self.fields["type_organisme"].widget = forms.HiddenInput()
 
+    def clean(self):
+        cleaned_data = super().clean()
+        if not (self.instance and self.instance.pk):
+            prenom = (cleaned_data.get("gestionnaire_prenom") or "").strip()
+            nom = (cleaned_data.get("gestionnaire_nom") or "").strip()
+            email = (cleaned_data.get("gestionnaire_email") or "").strip()
+            if email or prenom or nom:
+                if not prenom:
+                    self.add_error("gestionnaire_prenom", "Le prénom du gestionnaire est obligatoire.")
+                if not nom:
+                    self.add_error("gestionnaire_nom", "Le nom du gestionnaire est obligatoire.")
+                if not email:
+                    self.add_error("gestionnaire_email", "L'adresse email de connexion du gestionnaire est obligatoire.")
+        return cleaned_data
+
     def clean_code(self):
         code = (self.cleaned_data.get("code") or "").strip().upper()
         if not code:
@@ -393,9 +408,10 @@ class UtilisateurCreationForm(forms.ModelForm):
         else:
             # L'administrateur supervise les entreprises : il crée uniquement des Gestionnaires.
             self.fields['role'].choices = [
-                (User.Role.GESTIONNAIRE, 'Gestionnaire d\'entreprise'),
+                (User.Role.GESTIONNAIRE, 'Gestionnaire'),
             ]
             self.fields['role'].initial = User.Role.GESTIONNAIRE
+            self.fields['role'].widget = forms.HiddenInput()
             self.fields['organisme'].queryset = Organisme.objects.filter(actif=True)
             self.fields['organisme'].required = True
             self.fields['organisme'].empty_label = "— Sélectionner l'entreprise —"
@@ -414,13 +430,12 @@ class UtilisateurCreationForm(forms.ModelForm):
             if role == User.Role.ADMIN:
                 self.add_error('role', "Un gestionnaire ne peut pas creer un compte Administrateur.")
         else:
-            if role == User.Role.GESTIONNAIRE and not organisme:
+            cleaned_data['role'] = User.Role.GESTIONNAIRE
+            if not organisme:
                 self.add_error(
                     'organisme',
-                    "Un gestionnaire doit obligatoirement être rattaché à un organisme.",
+                    "Un gestionnaire doit obligatoirement être rattaché à une entreprise.",
                 )
-            elif role == User.Role.ADMIN:
-                cleaned_data['organisme'] = None
         return cleaned_data
 
     def save(self, commit=True):

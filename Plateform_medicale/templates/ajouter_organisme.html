@@ -84,14 +84,14 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
             <div class="champ-groupe">
                 <label for="{{ form.gestionnaire_prenom.id_for_label }}" style="font-weight: 600; margin-bottom: 4px; display: block;">
-                    Prénom du gestionnaire
+                    Prénom du gestionnaire <span style="color:var(--danger);" aria-hidden="true">*</span>
                 </label>
                 {{ form.gestionnaire_prenom }}
                 {% if form.gestionnaire_prenom.errors %}<div class="erreurs" role="alert">{{ form.gestionnaire_prenom.errors }}</div>{% endif %}
             </div>
             <div class="champ-groupe">
                 <label for="{{ form.gestionnaire_nom.id_for_label }}" style="font-weight: 600; margin-bottom: 4px; display: block;">
-                    Nom du gestionnaire
+                    Nom du gestionnaire <span style="color:var(--danger);" aria-hidden="true">*</span>
                 </label>
                 {{ form.gestionnaire_nom }}
                 {% if form.gestionnaire_nom.errors %}<div class="erreurs" role="alert">{{ form.gestionnaire_nom.errors }}</div>{% endif %}
@@ -101,14 +101,14 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
             <div class="champ-groupe">
                 <label for="{{ form.gestionnaire_email.id_for_label }}" style="font-weight: 600; margin-bottom: 4px; display: block;">
-                    Email de connexion gestionnaire
+                    Email de connexion gestionnaire <span style="color:var(--danger);" aria-hidden="true">*</span>
                 </label>
                 {{ form.gestionnaire_email }}
                 {% if form.gestionnaire_email.errors %}<div class="erreurs" role="alert">{{ form.gestionnaire_email.errors }}</div>{% endif %}
             </div>
             <div class="champ-groupe">
                 <label for="{{ form.gestionnaire_telephone.id_for_label }}" style="font-weight: 600; margin-bottom: 4px; display: block;">
-                    Téléphone portable (WhatsApp)
+                    Téléphone du gestionnaire (optionnel)
                 </label>
                 {{ form.gestionnaire_telephone }}
                 {% if form.gestionnaire_telephone.errors %}<div class="erreurs" role="alert">{{ form.gestionnaire_telephone.errors }}</div>{% endif %}

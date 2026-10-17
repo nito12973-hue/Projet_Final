@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% load icones %}
 
-{% block title %}{% if request.user.role == "ADMIN" %}Nouveau gestionnaire d'entreprise{% else %}Nouvel utilisateur{% endif %}{% endblock %}
+{% block title %}{% if request.user.role == "ADMIN" %}Nouveau gestionnaire{% else %}Nouvel utilisateur{% endif %}{% endblock %}
 
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>{% if request.user.role == "ADMIN" %}Nouveau gestionnaire d'entreprise{% else %}Nouvel utilisateur{% endif %}</h1>
+        <h1>{% if request.user.role == "ADMIN" %}Nouveau gestionnaire{% else %}Nouvel utilisateur{% endif %}</h1>
         <p class="subtitle">{% if request.user.role == "ADMIN" %}Créer un compte gestionnaire pour une entreprise partenaire.{% else %}Créer un compte d'accès à la plateforme.{% endif %}</p>
     </div>
     <a class="button btn btn-retour-expand" href="{% url 'liste_utilisateurs' %}" title="Retour aux utilisateurs" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
@@ -20,6 +20,9 @@
     <form method="post" id="form-ajout-utilisateur">
         {% csrf_token %}
         {% for field in form %}
+        {% if field.is_hidden %}
+            {{ field }}
+        {% else %}
         <div class="champ-groupe" style="margin-bottom: 16px;">
             <label for="{{ field.id_for_label }}" style="font-weight: 600; margin-bottom: 4px; display: block;">
                 {{ field.label }}
@@ -31,6 +34,7 @@
             {% endif %}
             {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
         </div>
+        {% endif %}
         {% endfor %}
         <div style="margin-top: 24px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
             <button class="button primary" type="submit">Créer le compte</button>
