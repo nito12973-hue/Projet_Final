@@ -218,5 +218,6 @@ urlpatterns = [
 
     # Webhook WhatsApp Cloud API (Meta) & Bot conversationnel
     path('api/whatsapp/webhook/', views.webhook_whatsapp, name='whatsapp_webhook'),
+    path('whatsapp/webhook/', views.webhook_whatsapp, name='whatsapp_webhook_alt'),
 ]
 
