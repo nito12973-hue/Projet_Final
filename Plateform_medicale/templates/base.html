@@ -6280,8 +6280,8 @@
             }
 
             .page-title .actions .button {
-                flex: 1 1 100% !important;
-                width: 100% !important;
+                flex: initial !important;
+                width: auto !important;
             }
 
             .dash-grid {
@@ -6296,13 +6296,14 @@
             }
 
             .button {
-                min-height: 44px !important;
-                padding: 10px 14px !important;
+                min-height: 34px !important;
+                padding: 6px 12px !important;
+                font-size: 13px !important;
             }
         }
 
         /* ==========================================================================
-           CHIPS ET BOUTONS EXPANSIBLES AU SURVOL (EXPANDABLE ACTION CHIPS)
+           CHIPS ET BOUTONS D'ACTION ÉLÉGANTS ET BIEN PROPORTIONNÉS
            ========================================================================== */
         .btn-expand,
         .btn-retour-expand,
@@ -6311,32 +6312,25 @@
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
-            border-radius: 999px !important;
-            padding: 7px 12px !important;
-            min-height: 36px !important;
-            height: 36px !important;
+            border-radius: 8px !important;
+            padding: 5px 12px !important;
+            min-height: 32px !important;
+            height: 32px !important;
             box-sizing: border-box !important;
-            transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            transition: all 0.2s ease !important;
             white-space: nowrap !important;
             text-decoration: none !important;
             cursor: pointer !important;
-            overflow: hidden !important;
             background: var(--surface) !important;
             color: var(--titre) !important;
             border: 1px solid var(--border) !important;
             box-shadow: var(--ombre-douce);
+            font-size: 13px !important;
+            gap: 5px !important;
         }
 
-        .btn-expand,
-        .btn-action-expand,
-        .action-chip {
-            padding: 8px 16px !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            gap: 6px !important;
-            min-height: 40px !important;
-            transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        .btn-retour-expand {
+            border-radius: 999px !important;
         }
 
         .btn-expand .expand-text,
@@ -6347,10 +6341,10 @@
             overflow: visible !important;
             white-space: nowrap !important;
             display: inline-block !important;
-            margin-left: 6px !important;
+            margin-left: 4px !important;
             vertical-align: middle !important;
-            font-size: 13px !important;
-            font-weight: 600 !important;
+            font-size: 12.5px !important;
+            font-weight: 500 !important;
         }
 
         .btn-retour-expand {
@@ -7365,28 +7359,7 @@
             });
         })();
 
-        (function () {
-            // Retour visuel generique sur un lien de telechargement (export
-            // Excel/PDF/CSV) : data-chargement="Texte" bascule le lien en
-            // etat "chargement" a la place du libelle habituel. Un <a href>
-            // vers une reponse Content-Disposition:attachment ne navigue pas
-            // et n'emet aucun evenement de fin cote client -- pas moyen de
-            // savoir precisement quand le fichier est pret, donc simple
-            // reversion par delai plutot qu'un etat bloque indefiniment en
-            // cas d'echec serveur.
-            document.addEventListener('click', function (evenement) {
-                var lien = evenement.target.closest('[data-chargement]');
-                if (!lien) { return; }
-                var libelleOriginal = lien.innerHTML;
-                var texte = lien.getAttribute('data-chargement') || 'Génération...';
-                lien.innerHTML = '<span class="tourniquet" aria-hidden="true"></span> ' + texte;
-                lien.setAttribute('aria-disabled', 'true');
-                window.setTimeout(function () {
-                    lien.innerHTML = libelleOriginal;
-                    lien.removeAttribute('aria-disabled');
-                }, 2500);
-            });
-        })();
+        // Gestion des liens de téléchargement directs et fluides sans blocage d'interface
 
         (function () {
             // Fermeture ergonomique des menus déroulants (clic extérieur & sortie du curseur / mouseleave)
@@ -7451,41 +7424,7 @@
             });
         })();
 
-        (function () {
-            // Protection anti-double soumission & état de chargement élégant sur tous les formulaires POST
-            document.addEventListener('submit', function (evt) {
-                var form = evt.target;
-                if (!(form instanceof HTMLFormElement)) { return; }
-                if (form.method && form.method.toUpperCase() !== 'POST') { return; }
-                if (form.getAttribute('data-confirmation') && form.dataset.confirme !== 'oui') { return; }
 
-                var bouton = form.querySelector('button[type="submit"]:not([data-sans-chargement])');
-                if (bouton && !bouton.disabled) {
-                    setTimeout(function () {
-                        bouton.disabled = true;
-                        bouton.classList.add('chargement');
-                        if (!bouton.querySelector('.icone-spin')) {
-                            var spinner = document.createElement('span');
-                            spinner.className = 'icone-spin';
-                            spinner.style.cssText = 'display:inline-block;width:13px;height:13px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;margin-right:7px;animation:tourner 0.8s linear infinite;vertical-align:middle;';
-                            bouton.prepend(spinner);
-                        }
-                    }, 20);
-                }
-            });
-
-            // Restauration si retour arrière ou restauration de cache de page
-            window.addEventListener('pageshow', function (evt) {
-                if (evt.persisted) {
-                    document.querySelectorAll('button[type="submit"].chargement').forEach(function (btn) {
-                        btn.disabled = false;
-                        btn.classList.remove('chargement');
-                        var sp = btn.querySelector('.icone-spin');
-                        if (sp) { sp.remove(); }
-                    });
-                }
-            });
-        })();
 
         (function () {
             // Bascule 'menu reduit' de la page Parametres. Elle ne duplique
