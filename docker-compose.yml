@@ -1,31 +1,10 @@
 services:
-  db:
-    image: postgres:17-alpine
-    container_name: santesn_db
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: ${DB_NAME:-santesn_db}
-      POSTGRES_USER: ${DB_USER:-santesn_user}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-SecretPassword2026!}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-santesn_user} -d ${DB_NAME:-santesn_db}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    networks:
-      - santesn_network
-
   web:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: santesn_web
     restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
     environment:
       DEBUG: ${DEBUG:-False}
       SECRET_KEY: ${SECRET_KEY:-santesn-docker-compose-production-secret-key-2026-dakar-ipm}
@@ -34,12 +13,7 @@ services:
       SECURE_SSL_REDIRECT: "False"
       SESSION_COOKIE_SECURE: "False"
       CSRF_COOKIE_SECURE: "False"
-      DB_ENGINE: postgresql
-      DB_NAME: ${DB_NAME:-santesn_db}
-      DB_USER: ${DB_USER:-santesn_user}
-      DB_PASSWORD: ${DB_PASSWORD:-SecretPassword2026!}
-      DB_HOST: db
-      DB_PORT: 5432
+      DATABASE_URL: ${DATABASE_URL:-postgresql://neondb_owner:npg_mzGAUo8aKc4H@ep-round-tree-ay6jpqcs-pooler.c-5.us-east-2.aws.neon.tech/santesn?sslmode=require}
       DELAI_VALIDITE_ORDONNANCE_JOURS: 90
       SENTRY_DSN: ${SENTRY_DSN:-}
     volumes:
@@ -76,7 +50,6 @@ services:
       - santesn_network
 
 volumes:
-  postgres_data:
   static_volume:
   media_volume:
   logs_volume:
