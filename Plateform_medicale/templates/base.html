@@ -4162,6 +4162,10 @@
             gap: 16px;
         }
 
+        .kpi-grille-4 {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
         .kpi {
             display: flex;
             flex-direction: column;
@@ -4381,13 +4385,14 @@
         }
 
         @media (max-width: 1180px) {
-            .kpi-grille { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .kpi-grille { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
             .file-grille { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .bande-couverture,
             .bande-bas { grid-template-columns: minmax(0, 1fr); }
         }
 
         @media (max-width: 900px) {
+            .kpi-grille { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
             .duo-listes { grid-template-columns: minmax(0, 1fr); }
 
             /* Sans cela le titre du panneau se casse sur trois lignes a cote de
@@ -4403,7 +4408,7 @@
             .kpi-grille,
             .file-grille,
             .fiches-grille,
-            .actions-grille { grid-template-columns: minmax(0, 1fr); }
+            .actions-grille { grid-template-columns: minmax(0, 1fr) !important; }
 
             .finances-secondaires {
                 padding-left: 0;
@@ -5672,6 +5677,14 @@
             .actions {
                 flex-direction: column;
                 align-items: stretch;
+            }
+
+            table td .actions,
+            table td .actions-tableau-user {
+                flex-direction: row !important;
+                flex-wrap: wrap !important;
+                align-items: center !important;
+                justify-content: flex-start !important;
             }
 
             .panel {
