@@ -213,7 +213,7 @@ def tenter_liaison_automatique(expediteur_telephone, texte):
 
     nom_complet = f"{patient.prenom} {patient.nom}".strip()
     msg = (
-        f"🎉 *Compte SantéSN associé avec succès !*\n\n"
+        f"*Compte SantéSN associé avec succès !*\n\n"
         f"Bonjour *{nom_complet}*,\n"
         f"Votre numéro WhatsApp (+{tel_norm}) est désormais relié à votre carte assuré *{patient.numero_carte}*.\n\n"
         f"Vous pouvez dès à présent gérer vos consultations et vos droits directement sur WhatsApp :\n"
@@ -221,7 +221,7 @@ def tenter_liaison_automatique(expediteur_telephone, texte):
         f"• *2* : Prendre un rendez-vous médical direct\n"
         f"• *3* : Établissements & pharmacies conventionnées\n"
         f"• *4* : Numéros d'urgence médicale\n\n"
-        f"👉 *Envoyez 2 ou RDV pour choisir un médecin proche de chez vous !*"
+        f"*Envoyez 2 ou RDV pour choisir un médecin proche de chez vous !*"
     )
     return patient, msg
 
@@ -354,13 +354,13 @@ def formater_reponse_menu(patient=None, contact_user=None):
     return (
         f"Bonjour{nom_affiche}, bienvenue sur l'assistance officielle SantéSN.\n"
         f"Votre plateforme d'assurance santé, prévoyance et tiers-payant au Sénégal.\n\n"
-        f"👉 *Options disponibles :*\n"
-        f"1. 📋 Consulter mes droits et mon plafond restant\n"
-        f"2. 🗓️ Prendre un rendez-vous médical direct par messagerie\n"
-        f"3. 🏥 Trouver un médecin ou une pharmacie conventionnée\n"
-        f"4. 🚨 Numéros d'urgence médicale (SAMU 1515, Pompiers 18)\n"
-        f"5. 🔐 Se connecter à mon espace en ligne ({site_url}/login/)\n\n"
-        f"💬 Répondez avec le chiffre de votre choix (1, 2, 3, 4 ou 5) ou formulez directement votre demande.\n"
+        f"*Options disponibles :*\n"
+        f"1. Consulter mes droits et mon plafond restant\n"
+        f"2. Prendre un rendez-vous médical direct par messagerie\n"
+        f"3. Trouver un médecin ou une pharmacie conventionnée\n"
+        f"4. Numéros d'urgence médicale (SAMU 1515, Pompiers 18)\n"
+        f"5. Se connecter à mon espace en ligne ({site_url}/login/)\n\n"
+        f"Répondez avec le chiffre de votre choix (1, 2, 3, 4 ou 5) ou formulez directement votre demande.\n"
         f"Nos équipes restent à votre entière disposition."
     )
 
@@ -852,8 +852,8 @@ def traiter_message_entrant_whatsapp(expediteur_telephone, texte_message):
         return (
             f"*SantéSN — Connexion à votre Espace Assuré*\n\n"
             f"Bonjour{nom_complet}, vous pouvez vous connecter à votre espace personnel en ligne (carte dématérialisée, remboursements, prises en charge) via ce lien sécurisé :\n"
-            f"👉 {site_url}/login/\n\n"
-            f"💡 *Prendre rendez-vous sans vous connecter :*\n"
+            f"{site_url}/login/\n\n"
+            f"*Prendre rendez-vous sans vous connecter :*\n"
             f"Vous pouvez également réserver directement une consultation médicale ici sur WhatsApp en écrivant « RDV » ou « 2 » !"
         )
 
@@ -1008,8 +1008,8 @@ def traiter_message_entrant_whatsapp(expediteur_telephone, texte_message):
         return (
             f"*SantéSN — Connexion à votre Espace Assuré*\n\n"
             f"Bonjour{nom_complet}, vous pouvez vous connecter à votre espace personnel en ligne (carte dématérialisée, remboursements, prises en charge) via ce lien sécurisé :\n"
-            f"👉 {site_url}/login/\n\n"
-            f"💡 *Prendre rendez-vous sans vous connecter :*\n"
+            f"{site_url}/login/\n\n"
+            f"*Prendre rendez-vous sans vous connecter :*\n"
             f"Vous pouvez également réserver directement une consultation médicale ici sur WhatsApp en écrivant « RDV » ou « 2 » !"
         )
 

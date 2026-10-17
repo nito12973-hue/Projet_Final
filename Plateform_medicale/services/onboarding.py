@@ -149,10 +149,10 @@ def envoyer_activation_utilisateur(utilisateur, request=None):
     # 1. Tentative WhatsApp en premier (Format SMS simple + fallback template officiel)
     whatsapp_texte = (
         f"SantéSN : Bonjour {prenom}, bienvenue sur votre plateforme santé !\n\n"
-        f"👉 Option 1 : Se connecter à votre espace assuré\n"
+        f"Option 1 : Se connecter à votre espace assuré\n"
         f"Cliquez sur le bouton ci-dessous (ou sur ce lien sécurisé valable 24h) pour activer votre compte et obtenir votre carte d'assurance :\n"
         f"{lien_activation}\n\n"
-        f"👉 Option 2 : Prendre rendez-vous directement par messagerie\n"
+        f"Option 2 : Prendre rendez-vous directement par messagerie\n"
         f"Vous pouvez également consulter vos droits et prendre rendez-vous directement ici sur WhatsApp en répondant à ce message (ex : écrivez « RDV » ou « 1 »).\n\n"
         f"L'équipe SantéSN"
     )
