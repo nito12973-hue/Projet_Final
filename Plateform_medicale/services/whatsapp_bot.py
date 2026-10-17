@@ -353,7 +353,7 @@ def formater_reponse_droits(patient):
         f"• Plafond annuel restant : {int(solde_restant):,} FCFA\n"
         f"• Statut : {statut_str}\n\n"
         f"Pour voir les médecins proches de vous et prendre RDV, tapez 2.\n"
-        f"Envoyez MENU pour revenir au sommaire."
+        f"Tapez 0 pour revenir au menu principal."
     )
 
 
@@ -451,7 +451,7 @@ def formater_reponse_medecins(patient=None, ville=None, coords_gps=None, special
     lignes.append("RDV [N° Médecin] [Date] [Heure]")
     lignes.append("*Exemple :* `RDV 1 demain à 10h30`")
     lignes.append("\nPour filtrer par ville : `RDV Thiès` ou `RDV Dakar`.")
-    lignes.append("Tapez MENU pour revenir au sommaire.")
+    lignes.append("Tapez 0 pour revenir au menu principal.")
 
     return "\n".join(lignes)
 
@@ -489,6 +489,7 @@ def formater_reponse_partenaires(type_filtre=None, ville=None):
         lignes.append(f"• *{p.nom}* ({p.get_type_prestataire_display()}) - {p.ville}{tel}")
 
     lignes.append("\nPour réserver avec un médecin, envoyez 2.")
+    lignes.append("Tapez 0 pour revenir au menu principal.")
     return "\n".join(lignes)
 
 
@@ -502,7 +503,7 @@ def formater_reponse_urgences():
         "• SOS Médecins Dakar : +221 33 889 15 15\n"
         "• Hôpital Principal : +221 33 839 50 50\n"
         "• Support SantéSN : +221 78 957 61 45\n\n"
-        "Envoyez MENU pour revenir au sommaire."
+        "Tapez 0 pour revenir au menu principal."
     )
 
 
@@ -770,7 +771,7 @@ def traiter_message_entrant_whatsapp(expediteur_telephone, texte_message):
             conv = None
 
     # Réinitialisation volontaire vers le menu principal
-    if texte_lower in ("menu", "start", "aide", "help", "annuler"):
+    if texte_lower in ("0", "menu", "start", "aide", "help", "annuler", "quitter"):
         if conv:
             conv.etape = ConversationWhatsApp.Etape.MENU
             conv.medecin_selectionne = None
@@ -796,13 +797,19 @@ def traiter_message_entrant_whatsapp(expediteur_telephone, texte_message):
                 f"• `lundi à 11h`\n"
                 f"• `25/10 à 15h00`\n\n"
                 f"Pour changer de médecin, tapez 2.\n"
-                f"Pour annuler, tapez MENU."
+                f"Pour annuler et revenir au menu principal, tapez 0."
             )
         else:
-            return f"Numéro de médecin invalide ({idx}). Choisissez un chiffre entre 1 et {len(medecins)}."
+            return f"Numéro de médecin invalide ({idx}). Choisissez un chiffre entre 1 et {len(medecins)} (ou 0 pour annuler)."
 
     # 2. Étape en cours : Attente de la date et de l'heure pour le médecin sélectionné
     if conv and conv.etape == ConversationWhatsApp.Etape.CHOIX_DATE and conv.medecin_selectionne:
+        if texte_lower in ("0", "annuler", "quitter", "menu"):
+            conv.etape = ConversationWhatsApp.Etape.MENU
+            conv.medecin_selectionne = None
+            conv.save()
+            return formater_reponse_menu(patient)
+
         if texte_lower in ("2", "rdv", "retour", "changer"):
             conv.etape = ConversationWhatsApp.Etape.CHOIX_MEDECIN
             conv.medecin_selectionne = None
@@ -832,19 +839,21 @@ def traiter_message_entrant_whatsapp(expediteur_telephone, texte_message):
         elif not date_obj and heure_val is not None:
             return (
                 f"Précisez le jour souhaité pour le Dr. {conv.medecin_selectionne.nom}.\n"
-                f"Exemple : `demain à {heure_val}h` ou `25/10 à {heure_val}h`."
+                f"Exemple : `demain à {heure_val}h` ou `25/10 à {heure_val}h`.\n"
+                f"Tapez 0 pour annuler."
             )
         elif date_obj and heure_val is None:
             return (
                 f"Précisez l'heure souhaitée pour le {date_obj.strftime('%d/%m/%Y')}.\n"
-                f"Exemple : `{date_token} à 10h30` ou `15h00`."
+                f"Exemple : `{date_token} à 10h30` ou `15h00`.\n"
+                f"Tapez 0 pour annuler."
             )
         else:
             return (
                 f"Pour fixer votre consultation avec le Dr. {conv.medecin_selectionne.nom}, "
                 f"veuillez préciser la date et l'heure souhaitée.\n"
                 f"Exemples : `demain à 10h30` ou `lundi à 11h`.\n"
-                f"Pour changer de médecin, tapez 2. Pour annuler, tapez MENU."
+                f"Pour changer de médecin, tapez 2. Pour annuler, tapez 0."
             )
 
     # 3. Coordonnées GPS reçues (partage de position WhatsApp "LOCATION lat lng")
