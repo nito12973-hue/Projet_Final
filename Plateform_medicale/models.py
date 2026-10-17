@@ -1947,3 +1947,32 @@ class DemandeRemboursement(models.Model):
             self.montant_rembourse_estime = estime
         super().save(*args, **kwargs)
 
+
+class ConversationWhatsApp(models.Model):
+    """Mémorise l'état conversationnel d'un assuré pour fluidifier le parcours WhatsApp."""
+
+    class Etape(models.TextChoices):
+        MENU = "MENU", "Menu principal"
+        CHOIX_MEDECIN = "CHOIX_MEDECIN", "En attente du choix de médecin"
+        CHOIX_DATE = "CHOIX_DATE", "En attente de la date et de l'heure"
+
+    telephone = models.CharField(max_length=30, unique=True, db_index=True)
+    etape = models.CharField(max_length=50, choices=Etape.choices, default=Etape.MENU)
+    medecin_selectionne = models.ForeignKey(
+        "Medecin",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="conversations_whatsapp",
+    )
+    date_mise_a_jour = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Conversation WhatsApp"
+        verbose_name_plural = "Conversations WhatsApp"
+        ordering = ["-date_mise_a_jour"]
+
+    def __str__(self):
+        return f"{self.telephone} ({self.etape})"
+
+

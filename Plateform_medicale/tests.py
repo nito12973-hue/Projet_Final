@@ -13140,6 +13140,39 @@ class WhatsAppBotAndWebhookTests(TestCase):
         self.assertIn("Orientation Médicale", reponse)
         self.assertIn("1515", reponse)
 
+    def test_bot_parcours_enchaîne_comme_vraie_plateforme(self):
+        """Valide l'enchaînement conversationnel fluide : 1 (droits) -> 2 (médecins) -> 1 (choix) -> demain 10h30 (confirmation)."""
+        from Plateform_medicale.services.whatsapp_bot import traiter_message_entrant_whatsapp
+        tel = "221771112233"
+        
+        # Étape 1 : Demande de solde
+        rep1 = traiter_message_entrant_whatsapp(tel, "1")
+        self.assertIn("Vos Droits", rep1)
+        self.assertIn("Pour voir les médecins", rep1)
+
+        # Étape 2 : L'utilisateur tape 2 suite à la suggestion
+        rep2 = traiter_message_entrant_whatsapp(tel, "2")
+        self.assertIn("Prendre un Rendez-vous Médical", rep2)
+        self.assertIn("Pour choisir votre médecin", rep2)
+
+        # Étape 3 : L'utilisateur tape 1 pour choisir le Dr. 1
+        rep3 = traiter_message_entrant_whatsapp(tel, "1")
+        self.assertIn("Vous avez choisi le Dr. Mamadou Diop", rep3)
+        self.assertIn("Pour quel jour et quelle heure", rep3)
+
+        # Étape 4 : L'utilisateur donne sa date et heure
+        rep4 = traiter_message_entrant_whatsapp(tel, "demain à 10h30")
+        self.assertIn("Votre rendez-vous a été enregistré", rep4)
+        self.assertIn("Dr. Mamadou Diop", rep4)
+        self.assertIn("10:30", rep4)
+
+        # Vérification en base de données
+        rdv_cree = RendezVous.objects.filter(patient=self.patient, medecin=self.medecin).order_by("-date_creation").first()
+        self.assertIsNotNone(rdv_cree)
+        self.assertEqual(rdv_cree.date_heure.hour, 10)
+        self.assertEqual(rdv_cree.date_heure.minute, 30)
+
+
 
 
 
