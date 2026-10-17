@@ -15,5 +15,8 @@
       "src": "/(.*)",
       "dest": "config/wsgi.py"
     }
-  ]
+  ],
+  "env": {
+    "DATABASE_URL": "postgresql://neondb_owner:npg_mzGAUo8aKc4H@ep-round-tree-ay6jpqcs-pooler.c-5.us-east-2.aws.neon.tech/santesn?sslmode=require"
+  }
 }
