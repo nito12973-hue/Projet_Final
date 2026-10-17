@@ -607,13 +607,15 @@ def extraire_heure_minute(chaine):
     """
     Extrait l'heure et la minute depuis des expressions variées :
     - '10h30', '10h', '10:30', '10:00', '14h00', 'à 10h', 'a 10h30'
+    N'interprète pas les chiffres isolés sans indicateur horaire (ex: '1', '2').
     """
-    m = re.search(r"(?:à\s*|a\s*)?(\b\d{1,2})(?:[h:]([0-5]?\d)?)?\b", chaine, re.IGNORECASE)
+    m = re.search(r"(?:(?:à|a)\s*(\d{1,2})(?:[h:]([0-5]?\d)?)?|(\d{1,2})[h:]([0-5]?\d)?)\b", chaine, re.IGNORECASE)
     if not m:
         return None, None
-    h = int(m.group(1))
-    minute_str = m.group(2)
-    m_val = int(minute_str) if minute_str else 0
+    g1, g2, g3, g4 = m.groups()
+    h = int(g1 if g1 is not None else g3)
+    min_str = g2 if g1 is not None else g4
+    m_val = int(min_str) if min_str else 0
     if 0 <= h <= 23 and 0 <= m_val <= 59:
         return h, m_val
     return None, None
@@ -836,6 +838,13 @@ def traiter_message_entrant_whatsapp(expediteur_telephone, texte_message):
             return (
                 f"Précisez l'heure souhaitée pour le {date_obj.strftime('%d/%m/%Y')}.\n"
                 f"Exemple : `{date_token} à 10h30` ou `15h00`."
+            )
+        else:
+            return (
+                f"Pour fixer votre consultation avec le Dr. {conv.medecin_selectionne.nom}, "
+                f"veuillez préciser la date et l'heure souhaitée.\n"
+                f"Exemples : `demain à 10h30` ou `lundi à 11h`.\n"
+                f"Pour changer de médecin, tapez 2. Pour annuler, tapez MENU."
             )
 
     # 3. Coordonnées GPS reçues (partage de position WhatsApp "LOCATION lat lng")
