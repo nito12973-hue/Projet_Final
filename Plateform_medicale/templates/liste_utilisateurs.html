@@ -4,6 +4,198 @@
 {% block title %}Comptes utilisateurs{% endblock %}
 
 {% block content %}
+<style>
+/* Grille KPI utilisateurs adaptative */
+.kpi-grille-utilisateurs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+}
+.kpi-grille-utilisateurs .kpi {
+    padding: 14px 16px;
+    border-radius: 12px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.kpi-grille-utilisateurs .kpi-entete {
+    font-size: 12.5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--muted);
+    font-weight: 600;
+}
+.kpi-grille-utilisateurs strong.code {
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-top: 4px;
+}
+.meta-user-mobile {
+    display: none;
+}
+.barre-export-import {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+.filtres-utilisateurs .filtre-groupe {
+    min-width: 170px;
+}
+.filtres-utilisateurs .filtre-groupe-recherche {
+    min-width: 220px;
+    flex: 1;
+}
+.filtres-boutons-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.table-responsive-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.cellule-actions .actions-tableau-user {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+}
+
+@media (max-width: 900px) {
+    .kpi-grille-utilisateurs {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 10px !important;
+    }
+    .kpi-grille-utilisateurs .kpi-bloque-card {
+        grid-column: 1 / -1;
+    }
+    .meta-user-mobile {
+        display: flex !important;
+        flex-direction: column;
+        gap: 5px;
+        margin-top: 8px;
+    }
+    .badge-role-tag {
+        font-size: 11px;
+        padding: 3px 8px;
+        background: rgba(14, 124, 134, 0.12);
+        color: var(--primary-strong);
+        font-weight: 700;
+        border-radius: 6px;
+        display: inline-block;
+    }
+    .meta-coordonnees-mobile {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        font-size: 12px;
+        color: var(--muted);
+    }
+    .meta-item-mobile {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--texte);
+        word-break: break-all;
+    }
+    .meta-item-mobile .icone-svg {
+        width: 13px;
+        height: 13px;
+        flex-shrink: 0;
+        opacity: 0.7;
+    }
+    .lien-wa-mobile {
+        color: #25D366;
+        display: inline-flex;
+        align-items: center;
+        margin-left: 2px;
+    }
+    .lien-wa-mobile .icone-svg {
+        width: 14px;
+        height: 14px;
+        opacity: 1;
+    }
+    .cellule-actions .actions-tableau-user {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        min-width: 160px;
+    }
+    .cellule-actions .actions-tableau-user .button,
+    .cellule-actions .actions-tableau-user button {
+        padding: 4px 9px !important;
+        font-size: 12px !important;
+        height: 32px !important;
+        min-height: 32px !important;
+        max-height: 32px !important;
+        line-height: 20px !important;
+        white-space: nowrap !important;
+        border-radius: 8px !important;
+    }
+    .cellule-actions .actions-tableau-user .action-ligne {
+        display: inline-flex !important;
+        margin: 0 !important;
+    }
+}
+
+@media (max-width: 640px) {
+    .page-title .actions {
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 8px !important;
+        width: 100% !important;
+    }
+    .page-title .actions .button {
+        flex: 1 1 auto !important;
+        justify-content: center !important;
+        text-align: center !important;
+    }
+    .barre-export-import {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        width: 100% !important;
+    }
+    .barre-export-import .button {
+        width: 100% !important;
+        justify-content: center !important;
+        text-align: center !important;
+    }
+    .filtres-utilisateurs .filtre-groupe,
+    .filtres-utilisateurs .filtre-groupe-recherche {
+        min-width: 100% !important;
+        width: 100% !important;
+    }
+    .filtres-boutons-actions {
+        width: 100% !important;
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px !important;
+    }
+    .filtres-boutons-actions .button,
+    .filtres-boutons-actions button {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+    .panel-utilisateurs {
+        padding: 12px 14px !important;
+        border-radius: 14px !important;
+    }
+    .cellule-utilisateur {
+        min-width: 160px;
+    }
+    .cellule-statut {
+        min-width: 90px;
+    }
+    .cellule-actions {
+        min-width: 150px;
+    }
+}
+</style>
+
 <section class="page-title">
     <div>
         <h1>Comptes utilisateurs</h1>
@@ -29,7 +221,7 @@
 {% endif %}
 
 <!-- Effectifs par rôle : aucune donnée nominative -->
-<div class="kpi-grille" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); margin-bottom: 20px;" aria-label="Effectifs par rôle">
+<div class="kpi-grille kpi-grille-utilisateurs" aria-label="Effectifs par rôle">
     <div class="kpi">
         <span class="kpi-entete">{% icone "users" %} Total</span>
         <strong class="code">{{ total_utilisateurs }}</strong>
@@ -54,19 +246,19 @@
         <span class="kpi-entete">{% icone "shield" %} Admins</span>
         <strong class="code">{{ total_admins }}</strong>
     </div>
-    <div class="kpi">
+    <div class="kpi kpi-bloque-card">
         <span class="kpi-entete">{% icone "shield" %} Bloqués</span>
         <strong class="code" style="{% if total_comptes_signales > 0 %}color: var(--danger);{% endif %}">{{ total_comptes_signales }}</strong>
     </div>
 </div>
 
-<div class="actions" style="justify-content:flex-end;margin-bottom:16px;gap:8px;">
+<div class="barre-export-import">
     <a class="button btn" data-chargement="Génération..." href="{% url 'exporter_utilisateurs_excel' %}?{{ request.GET.urlencode }}" title="Exporter en Excel">{% icone "download" %} Exporter</a>
     <a class="button btn" href="{% url 'importer_utilisateurs_excel' %}" title="Importer depuis Excel">{% icone "upload" %} Importer</a>
 </div>
 
-<form method="get" class="filtres">
-    <div style="min-width:180px;">
+<form method="get" class="filtres filtres-utilisateurs">
+    <div class="filtre-groupe">
         <label for="role">Rôle</label>
         <select id="role" name="role" style="margin-bottom:0;">
             <option value="">Tous les rôles</option>
@@ -75,7 +267,7 @@
             {% endfor %}
         </select>
     </div>
-    <div style="min-width:180px;">
+    <div class="filtre-groupe">
         <label for="organisme">Organisme</label>
         <select id="organisme" name="organisme" style="margin-bottom:0;">
             <option value="">Tous les organismes</option>
@@ -84,7 +276,7 @@
             {% endfor %}
         </select>
     </div>
-    <div style="min-width:180px;">
+    <div class="filtre-groupe">
         <label for="statut">Statut</label>
         <select id="statut" name="statut" style="margin-bottom:0;">
             <option value="">Tous les statuts</option>
@@ -93,110 +285,139 @@
             <option value="bloque" {% if statut_selectionne == "bloque" %}selected{% endif %}>Bloqué temporairement</option>
         </select>
     </div>
-    <div style="min-width:220px;flex:1;">
+    <div class="filtre-groupe filtre-groupe-recherche">
         <label for="q">Recherche</label>
         <div class="champ-recherche">
             {% icone "search" %}
             <input id="q" type="text" name="q" placeholder="Nom, prénom ou email..." value="{{ recherche }}" style="margin-bottom:0;">
         </div>
     </div>
-    <button type="submit" class="button primary btn">Filtrer</button>
-    {% if role_selectionne or organisme_selectionne or statut_selectionne or recherche %}
-    <a href="{% url 'liste_utilisateurs' %}" class="button btn">Réinitialiser</a>
-    {% endif %}
+    <div class="filtres-boutons-actions">
+        <button type="submit" class="button primary btn">Filtrer</button>
+        {% if role_selectionne or organisme_selectionne or statut_selectionne or recherche %}
+        <a href="{% url 'liste_utilisateurs' %}" class="button btn">Réinitialiser</a>
+        {% endif %}
+    </div>
 </form>
 
 {% if utilisateurs %}
-<section class="panel">
-    <table>
-        <caption class="sr-only">Liste des utilisateurs de la plateforme</caption>
-        <thead>
-            <tr>
-                {% entete_tri request.GET "last_name" "Utilisateur" %}
-                {% entete_tri request.GET "email" "Email" "col-optionnelle" %}
-                <th scope="col" class="col-optionnelle">Téléphone</th>
-                {% entete_tri request.GET "role" "Rôle" "col-optionnelle" %}
-                <th scope="col" class="col-optionnelle">Organisme</th>
-                {% entete_tri request.GET "is_active" "Statut" %}
-                <th scope="col">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for utilisateur in utilisateurs %}
-            <tr>
-                <td>
-                    <strong>{{ utilisateur.get_full_name|default:utilisateur.email }}</strong>
-                    {% if utilisateur.pk == request.user.pk %}
-                    <span class="badge" style="margin-left:6px;background:var(--primary-subtle);color:var(--primary-strong);">Vous</span>
-                    {% endif %}
-                </td>
-                <td class="col-optionnelle">{{ utilisateur.email }}</td>
-                <td class="col-optionnelle">
-                    {% if utilisateur.phone_number %}
-                    <span style="display: inline-flex; align-items: center; gap: 6px;">
-                        <span>{{ utilisateur.phone_number }}</span>
-                        <a href="https://wa.me/{{ utilisateur.phone_number|cut:' '|cut:'+'|cut:'-' }}" target="_blank" rel="noopener" title="Échanger sur WhatsApp avec {{ utilisateur }}" style="display: inline-flex; align-items: center; color: #25D366; text-decoration: none;">
-                            {% icone "chat" %}
-                        </a>
-                    </span>
-                    {% else %}
-                    <span style="color:var(--muted);">-</span>
-                    {% endif %}
-                </td>
-                <td class="col-optionnelle">
-                    <span class="badge">{{ utilisateur.get_role_display }}</span>
-                </td>
-                <td class="col-optionnelle">
-                    {% if utilisateur.organisme %}
-                    <span class="code">{{ utilisateur.organisme.code }}</span> <span class="subtitle">{{ utilisateur.organisme.nom }}</span>
-                    {% else %}
-                    <span style="color:var(--muted);">—</span>
-                    {% endif %}
-                </td>
-                <td>
-                    {% if utilisateur.est_temporairement_bloque %}
-                    <span class="badge refusee">Bloqué temporairement — {{ utilisateur.minutes_restantes_blocage }} min</span>
-                    {% elif utilisateur.is_active %}
-                    <span class="badge validee">Actif</span>
-                    {% else %}
-                    <span class="badge refusee">Inactif</span>
-                    {% endif %}
-                </td>
-                <td>
-                    <div class="actions" style="flex-wrap:nowrap;gap:6px;">
-                        {% if utilisateur.est_temporairement_bloque %}
-                        <form method="post" action="{% url 'debloquer_compte' utilisateur.pk %}" class="action-ligne"
-                              data-confirmation="Ce compte est temporairement bloqué après plusieurs tentatives de connexion échouées. Voulez-vous autoriser immédiatement une nouvelle connexion ?"
-                              data-confirmation-action="Oui, débloquer le compte">
-                            {% csrf_token %}
-                            <input type="hidden" name="source" value="utilisateurs">
-                            <button type="submit" class="button btn btn-sm" title="Débloquer l'accès immédiat">Débloquer</button>
-                        </form>
-                        {% endif %}
-                        <a href="{% url 'modifier_utilisateur' utilisateur.pk %}" class="button primary btn btn-sm" title="Modifier le compte">{% icone "edit-2" %} Modifier</a>
-                        <a href="{% url 'journal_activite' %}?q={{ utilisateur.email }}" class="button btn btn-sm" title="Consulter l'historique d'activité de cet utilisateur">{% icone "file-text" %} Historique</a>
-                        <form method="post" action="{% url 'renvoyer_activation' utilisateur.pk %}" class="action-ligne">
-                            {% csrf_token %}
-                            <button type="submit" class="button btn btn-sm" title="Transmettre le lien d'activation sur WhatsApp ou par email">{% icone "share-2" %} Lien d'accès</button>
-                        </form>
-                        {% if utilisateur.pk != request.user.pk %}
-                        <form method="post" action="{% url 'activer_desactiver_utilisateur' utilisateur.pk %}" class="action-ligne"
-                              {% if utilisateur.is_active %}data-confirmation="Désactiver le compte de {{ utilisateur }} ? Il ne pourra plus se connecter tant qu'il n'est pas réactivé." data-confirmation-action="Oui, désactiver le compte"{% endif %}>
-                            {% csrf_token %}
-                            {% if utilisateur.is_active %}
-                            <button type="submit" class="button btn btn-sm" title="Désactiver l'accès">Désactiver</button>
-                            {% else %}
-                            <button type="submit" class="button btn btn-sm" title="Activer l'accès">Activer</button>
+<section class="panel panel-utilisateurs">
+    <div class="table-responsive-wrapper">
+        <table class="table-utilisateurs">
+            <caption class="sr-only">Liste des utilisateurs de la plateforme</caption>
+            <thead>
+                <tr>
+                    {% entete_tri request.GET "last_name" "Utilisateur" %}
+                    {% entete_tri request.GET "email" "Email" "col-optionnelle" %}
+                    <th scope="col" class="col-optionnelle">Téléphone</th>
+                    {% entete_tri request.GET "role" "Rôle" "col-optionnelle" %}
+                    <th scope="col" class="col-optionnelle">Organisme</th>
+                    {% entete_tri request.GET "is_active" "Statut" %}
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for utilisateur in utilisateurs %}
+                <tr>
+                    <td class="cellule-utilisateur">
+                        <div class="user-nom-wrapper">
+                            <strong class="user-nom">{{ utilisateur.get_full_name|default:utilisateur.email }}</strong>
+                            {% if utilisateur.pk == request.user.pk %}
+                            <span class="badge" style="margin-left:6px;background:var(--primary-subtle);color:var(--primary-strong);">Vous</span>
                             {% endif %}
-                        </form>
-                        <a href="{% url 'supprimer_utilisateur' utilisateur.pk %}" class="button btn btn-danger btn-sm" title="Supprimer définitivement">{% icone "trash-2" %} Supprimer</a>
+                        </div>
+                        <div class="meta-user-mobile">
+                            <div class="meta-role-mobile">
+                                <span class="badge badge-role-tag">{{ utilisateur.get_role_display }}</span>
+                            </div>
+                            <div class="meta-coordonnees-mobile">
+                                <span class="meta-item-mobile">
+                                    {% icone "mail" %} {{ utilisateur.email }}
+                                </span>
+                                {% if utilisateur.phone_number %}
+                                <span class="meta-item-mobile">
+                                    {% icone "phone" %} {{ utilisateur.phone_number }}
+                                    <a href="https://wa.me/{{ utilisateur.phone_number|cut:' '|cut:'+'|cut:'-' }}" target="_blank" rel="noopener" class="lien-wa-mobile" title="WhatsApp">
+                                        {% icone "chat" %}
+                                    </a>
+                                </span>
+                                {% endif %}
+                                {% if utilisateur.organisme %}
+                                <span class="meta-item-mobile">
+                                    {% icone "building" %} {{ utilisateur.organisme.nom }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+                    <td class="col-optionnelle">{{ utilisateur.email }}</td>
+                    <td class="col-optionnelle">
+                        {% if utilisateur.phone_number %}
+                        <span style="display: inline-flex; align-items: center; gap: 6px;">
+                            <span>{{ utilisateur.phone_number }}</span>
+                            <a href="https://wa.me/{{ utilisateur.phone_number|cut:' '|cut:'+'|cut:'-' }}" target="_blank" rel="noopener" title="Échanger sur WhatsApp avec {{ utilisateur }}" style="display: inline-flex; align-items: center; color: #25D366; text-decoration: none;">
+                                {% icone "chat" %}
+                            </a>
+                        </span>
+                        {% else %}
+                        <span style="color:var(--muted);">-</span>
                         {% endif %}
-                    </div>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                    </td>
+                    <td class="col-optionnelle">
+                        <span class="badge">{{ utilisateur.get_role_display }}</span>
+                    </td>
+                    <td class="col-optionnelle">
+                        {% if utilisateur.organisme %}
+                        <span class="code">{{ utilisateur.organisme.code }}</span> <span class="subtitle">{{ utilisateur.organisme.nom }}</span>
+                        {% else %}
+                        <span style="color:var(--muted);">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="cellule-statut">
+                        {% if utilisateur.est_temporairement_bloque %}
+                        <span class="badge refusee">Bloqué temporairement — {{ utilisateur.minutes_restantes_blocage }} min</span>
+                        {% elif utilisateur.is_active %}
+                        <span class="badge validee">Actif</span>
+                        {% else %}
+                        <span class="badge refusee">Inactif</span>
+                        {% endif %}
+                    </td>
+                    <td class="cellule-actions">
+                        <div class="actions actions-tableau-user">
+                            {% if utilisateur.est_temporairement_bloque %}
+                            <form method="post" action="{% url 'debloquer_compte' utilisateur.pk %}" class="action-ligne"
+                                  data-confirmation="Ce compte est temporairement bloqué après plusieurs tentatives de connexion échouées. Voulez-vous autoriser immédiatement une nouvelle connexion ?"
+                                  data-confirmation-action="Oui, débloquer le compte">
+                                {% csrf_token %}
+                                <input type="hidden" name="source" value="utilisateurs">
+                                <button type="submit" class="button btn btn-sm" title="Débloquer l'accès immédiat">Débloquer</button>
+                            </form>
+                            {% endif %}
+                            <a href="{% url 'modifier_utilisateur' utilisateur.pk %}" class="button primary btn btn-sm" title="Modifier le compte">{% icone "edit-2" %} Modifier</a>
+                            <a href="{% url 'journal_activite' %}?q={{ utilisateur.email }}" class="button btn btn-sm" title="Consulter l'historique d'activité de cet utilisateur">{% icone "file-text" %} Historique</a>
+                            <form method="post" action="{% url 'renvoyer_activation' utilisateur.pk %}" class="action-ligne">
+                                {% csrf_token %}
+                                <button type="submit" class="button btn btn-sm" title="Transmettre le lien d'activation sur WhatsApp ou par email">{% icone "share-2" %} Lien d'accès</button>
+                            </form>
+                            {% if utilisateur.pk != request.user.pk %}
+                            <form method="post" action="{% url 'activer_desactiver_utilisateur' utilisateur.pk %}" class="action-ligne"
+                                  {% if utilisateur.is_active %}data-confirmation="Désactiver le compte de {{ utilisateur }} ? Il ne pourra plus se connecter tant qu'il n'est pas réactivé." data-confirmation-action="Oui, désactiver le compte"{% endif %}>
+                                {% csrf_token %}
+                                {% if utilisateur.is_active %}
+                                <button type="submit" class="button btn btn-sm" title="Désactiver l'accès">Désactiver</button>
+                                {% else %}
+                                <button type="submit" class="button btn btn-sm" title="Activer l'accès">Activer</button>
+                                {% endif %}
+                            </form>
+                            <a href="{% url 'supprimer_utilisateur' utilisateur.pk %}" class="button btn btn-danger btn-sm" title="Supprimer définitivement">{% icone "trash-2" %} Supprimer</a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </section>
 {% if utilisateurs.paginator.num_pages > 1 %}
 <nav class="pagination" aria-label="Pagination">
