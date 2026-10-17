@@ -462,13 +462,20 @@ def activer_compte(request, uidb64, token):
 # ---------------------------------------------------------------------------
 
 class MotDePasseOublieView(auth_views.PasswordResetView):
-    """Demande d'envoi du lien de réinitialisation par email."""
+    """Demande d'envoi du lien de réinitialisation par email avec protection anti-spam."""
     template_name = "mot_de_passe_oublie.html"
     email_template_name = "registration/password_reset_email.html"
     subject_template_name = "registration/password_reset_subject.txt"
     success_url = reverse_lazy("mot_de_passe_oublie_envoye")
 
     def form_valid(self, form):
+        email = (form.cleaned_data.get("email") or "").strip().lower()
+        cle_rate_limit = f"reset_{email}"
+        if TentativeConnexion.bloque(cle_rate_limit):
+            logger.warning("Demande de réinitialisation de mot de passe freinée pour : %s", email)
+            return redirect(self.success_url)
+
+        TentativeConnexion.enregistrer_echec(cle_rate_limit)
         try:
             return super().form_valid(form)
         except Exception as exc:

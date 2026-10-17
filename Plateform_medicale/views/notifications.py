@@ -9,7 +9,7 @@ from django.views.decorators.http import require_POST
 
 from ..forms import EnvoyerNotificationForm
 from ..models import Notification, User
-from .utils import _paginer, admin_required
+from .utils import _paginer, admin_required, redirect_securise
 
 
 @admin_required
@@ -98,8 +98,7 @@ def marquer_notification_lue(request, pk):
     notification = get_object_or_404(Notification, pk=pk, destinataire=request.user)
     notification.lue = True
     notification.save(update_fields=["lue"])
-    next_url = request.POST.get("next") or reverse("mes_notifications")
-    return redirect(next_url)
+    return redirect_securise(request, "mes_notifications")
 
 
 @login_required
@@ -107,8 +106,7 @@ def marquer_notification_lue(request, pk):
 def marquer_toutes_notifications_lues(request):
     request.user.notifications.filter(lue=False).update(lue=True)
     messages.success(request, "Toutes vos notifications ont été marquées comme lues.")
-    next_url = request.POST.get("next") or reverse("mes_notifications")
-    return redirect(next_url)
+    return redirect_securise(request, "mes_notifications")
 
 
 @login_required

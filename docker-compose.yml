@@ -7,13 +7,13 @@ services:
     restart: unless-stopped
     environment:
       DEBUG: ${DEBUG:-False}
-      SECRET_KEY: ${SECRET_KEY:-santesn-docker-compose-production-secret-key-2026-dakar-ipm}
+      SECRET_KEY: ${SECRET_KEY}
       ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1,santesn.sn,www.santesn.sn}
       CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-http://localhost,http://127.0.0.1,http://localhost:8000,http://127.0.0.1:8000}
-      SECURE_SSL_REDIRECT: "False"
-      SESSION_COOKIE_SECURE: "False"
-      CSRF_COOKIE_SECURE: "False"
-      DATABASE_URL: ${DATABASE_URL:-postgresql://neondb_owner:npg_mzGAUo8aKc4H@ep-round-tree-ay6jpqcs-pooler.c-5.us-east-2.aws.neon.tech/santesn?sslmode=require}
+      SECURE_SSL_REDIRECT: "${SECURE_SSL_REDIRECT:-False}"
+      SESSION_COOKIE_SECURE: "${SESSION_COOKIE_SECURE:-False}"
+      CSRF_COOKIE_SECURE: "${CSRF_COOKIE_SECURE:-False}"
+      DATABASE_URL: ${DATABASE_URL}
       DELAI_VALIDITE_ORDONNANCE_JOURS: 90
       SENTRY_DSN: ${SENTRY_DSN:-}
     volumes:

@@ -20,7 +20,26 @@ from django.utils import timezone
 
 logger = logging.getLogger("Plateform_medicale")
 
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
+from django.utils.http import url_has_allowed_host_and_scheme
+
+
+def redirect_securise(request, cible_fallback, parametre_url="next"):
+    """
+    Redirige en toute sécurité vers l'URL fournie en paramètre GET/POST
+    ou vers HTTP_REFERER, en validant strictement qu'elle appartient au même domaine.
+    Empêche les attaques Open Redirect (CWE-601).
+    """
+    candidat = (
+        request.POST.get(parametre_url)
+        or request.GET.get(parametre_url)
+        or request.META.get("HTTP_REFERER")
+    )
+    if candidat and url_has_allowed_host_and_scheme(
+        candidat, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        return redirect(candidat)
+    return redirect(cible_fallback)
 
 from ..models import (
     DemandeRemboursement,

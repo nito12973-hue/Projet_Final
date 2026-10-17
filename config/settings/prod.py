@@ -11,11 +11,12 @@ DEBUG = False
 
 # Vérification obligatoire de la clé secrète en production
 if SECRET_KEY == DEFAULT_SECRET_KEY:
-    if os.environ.get('VERCEL') or os.environ.get('RENDER'):
-        SECRET_KEY = config('SECRET_KEY', default='santesn-prod-secret-key-vercel-deployment-2026-secure')
+    is_build_command = any(cmd in sys.argv for cmd in ('collectstatic', 'check', 'makemigrations'))
+    if is_build_command:
+        SECRET_KEY = 'temporary-build-only-secret-key-not-used-for-runtime-traffic'
     else:
         raise ImproperlyConfigured(
-            "En production (DEBUG=False), une clé secrète SECRET_KEY unique et robuste doit être définie dans l'environnement."
+            "En production (DEBUG=False), une clé secrète SECRET_KEY unique et robuste doit obligatoirement être définie dans l'environnement."
         )
 
 _allowed_hosts_config = config(
@@ -99,16 +100,16 @@ if 'test' not in sys.argv:
 USE_X_ACCEL_REDIRECT = not bool(os.environ.get('VERCEL') or os.environ.get('RENDER'))
 
 # Durcissement HTTPS & Cookies sécurisés
-SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=False, cast=bool)
+SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool)
 SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=True, cast=bool)
 CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=True, cast=bool)
+CSRF_COOKIE_HTTPONLY = config('CSRF_COOKIE_HTTPONLY', default=True, cast=bool)
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_REFERRER_POLICY = 'same-origin'
 
-if SECURE_SSL_REDIRECT:
-    SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=31536000, cast=int)
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = config('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=True, cast=bool)
-    SECURE_HSTS_PRELOAD = config('SECURE_HSTS_PRELOAD', default=True, cast=bool)
+SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=31536000, cast=int)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = config('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=True, cast=bool)
+SECURE_HSTS_PRELOAD = config('SECURE_HSTS_PRELOAD', default=True, cast=bool)
 
 # Logging de production
 LOGS_DIR = BASE_DIR / 'logs'

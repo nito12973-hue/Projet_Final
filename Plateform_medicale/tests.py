@@ -13392,6 +13392,110 @@ class WhatsAppBotAndWebhookTests(TestCase):
         self.assertEqual(gest_modifie.first_name, "Moussa")
 
 
+class AuditSecuriteTests(TestCase):
+    def setUp(self):
+        self.organisme = Organisme.objects.create(nom="IPM Securite", code="IPM-SEC")
+        self.assure = creer_utilisateur(User.Role.ASSURE, "assure.sec@santesn.sn", organisme=self.organisme)
+        self.patient = Patient.objects.create(
+            user=self.assure,
+            nom="Sec",
+            prenom="Assure",
+            date_naissance=datetime.date(1990, 1, 1),
+            telephone="771112233",
+            organisme=self.organisme,
+        )
+        self.gestionnaire = creer_utilisateur(User.Role.GESTIONNAIRE, "gest.sec@santesn.sn", organisme=self.organisme)
+        self.admin = User.objects.create_superuser(email="admin.sec@santesn.sn", password=PASSWORD)
+
+    def test_validation_fichiers_bloque_extensions_dangereuses(self):
+        from django import forms
+        from .forms import valider_fichier_televerse
+
+        # Fichier malveillant .exe
+        fichier_exe = SimpleUploadedFile("payload.exe", b"binary content", content_type="application/x-msdownload")
+        with self.assertRaises(forms.ValidationError):
+            valider_fichier_televerse(fichier_exe, "Fichier test")
+
+        # Fichier malveillant .html
+        fichier_html = SimpleUploadedFile("xss.html", b"<script>alert(1)</script>", content_type="text/html")
+        with self.assertRaises(forms.ValidationError):
+            valider_fichier_televerse(fichier_html, "Fichier test")
+
+        # Fichier malveillant .sh
+        fichier_sh = SimpleUploadedFile("script.sh", b"rm -rf /", content_type="text/x-shellscript")
+        with self.assertRaises(forms.ValidationError):
+            valider_fichier_televerse(fichier_sh, "Fichier test")
+
+        # Fichier légitime .pdf
+        fichier_pdf = SimpleUploadedFile("devis.pdf", b"%PDF-1.4", content_type="application/pdf")
+        self.assertEqual(valider_fichier_televerse(fichier_pdf), fichier_pdf)
+
+        # Fichier légitime .png
+        fichier_png = SimpleUploadedFile("scan.png", b"\x89PNG\r\n\x1a\n", content_type="image/png")
+        self.assertEqual(valider_fichier_televerse(fichier_png), fichier_png)
+
+    def test_redirection_securisee_bloque_open_redirect(self):
+        from django.test.client import RequestFactory
+        from .views.utils import redirect_securise
+
+        factory = RequestFactory()
+
+        # Attaque Open Redirect externe (https://evil.com)
+        req_externe = factory.post("/test/", {"next": "https://evil.com"})
+        resp = redirect_securise(req_externe, "/tableau-de-bord/")
+        self.assertEqual(resp.url, "/tableau-de-bord/")
+
+        # Attaque Open Redirect relative au protocole (//evil.com)
+        req_proto = factory.post("/test/", {"next": "//evil.com/phishing"})
+        resp = redirect_securise(req_proto, "/tableau-de-bord/")
+        self.assertEqual(resp.url, "/tableau-de-bord/")
+
+        # Attaque via HTTP_REFERER falsifié
+        req_referer = factory.post("/test/", HTTP_REFERER="https://attacker.site/malware")
+        resp = redirect_securise(req_referer, "/tableau-de-bord/")
+        self.assertEqual(resp.url, "/tableau-de-bord/")
+
+        # Redirection interne valide
+        req_interne = factory.post("/test/", {"next": "/espace/assure/"})
+        resp = redirect_securise(req_interne, "/tableau-de-bord/")
+        self.assertEqual(resp.url, "/espace/assure/")
+
+    def test_metrics_bloque_spoofing_ip(self):
+        # Un client machine non-admin tente d'usurper X-Forwarded-For: 127.0.0.1
+        resp = self.client.get(
+            reverse("metrics_prometheus"),
+            HTTP_X_FORWARDED_FOR="127.0.0.1",
+            HTTP_USER_AGENT="curl/7.88.1",
+            HTTP_ACCEPT="*/*",
+            REMOTE_ADDR="198.51.100.1",  # IP publique distante
+        )
+        self.assertEqual(resp.status_code, 403)
+
+    def test_mot_de_passe_oublie_limite_tentatives(self):
+        email_cible = "assure.sec@santesn.sn"
+        # 5 tentatives rapides successives
+        for _ in range(5):
+            resp = self.client.post(reverse("mot_de_passe_oublie"), {"email": email_cible})
+            self.assertEqual(resp.status_code, 302)
+
+        # La 6ème tentative est freinée et redirige silencieusement vers la page de confirmation
+        resp = self.client.post(reverse("mot_de_passe_oublie"), {"email": email_cible})
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn("envoye", resp.url)
+
+    def test_nosniff_header_sur_telechargement_media(self):
+        pec = PriseEnCharge.objects.create(
+            patient=self.patient,
+            montant_estime=Decimal("50000"),
+            devis_fichier=SimpleUploadedFile("devis.pdf", b"%PDF-1.4 test devis", content_type="application/pdf"),
+        )
+        self.client.force_login(self.assure)
+        resp = self.client.get(reverse("telecharger_devis_prise_en_charge", args=[pec.pk]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.headers.get("X-Content-Type-Options"), "nosniff")
+
+
+
 
 
 

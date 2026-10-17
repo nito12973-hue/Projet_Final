@@ -19,6 +19,14 @@ from django.shortcuts import get_object_or_404
 from ..models import DemandeRemboursement, FichierMedia, Patient, User
 
 
+def _finaliser_reponse_fichier(reponse, nom_fichier):
+    """Sécurise les headers de téléchargement : nosniff et assainissement du nom de fichier."""
+    nom_propre = os.path.basename(nom_fichier).replace('"', '').replace('\n', '').replace('\r', '')
+    reponse["Content-Disposition"] = f'inline; filename="{nom_propre}"'
+    reponse["X-Content-Type-Options"] = "nosniff"
+    return reponse
+
+
 @login_required
 def telecharger_justificatif_remboursement(request, pk):
     """
@@ -58,20 +66,16 @@ def telecharger_justificatif_remboursement(request, pk):
     type_mime = type_mime or "application/octet-stream"
 
     # 1. Mode Production Nginx (X-Accel-Redirect)
-    # Si le header HTTP_X_ACCEL_SUPPORT est présent ou si configuré pour Nginx
     if getattr(settings, "USE_X_ACCEL_REDIRECT", False):
         reponse = HttpResponse(content_type=type_mime)
-        # /protected_media/ correspond au location internal de Nginx
         reponse["X-Accel-Redirect"] = f"/protected_media/{remboursement.justificatif.name}"
-        reponse["Content-Disposition"] = f'inline; filename="{nom_fichier}"'
-        return reponse
+        return _finaliser_reponse_fichier(reponse, nom_fichier)
 
     # 2. Mode standard avec fichier présent sur le système de fichiers
     try:
         fichier_disque = remboursement.justificatif.open("rb")
         reponse = FileResponse(fichier_disque, content_type=type_mime)
-        reponse["Content-Disposition"] = f'inline; filename="{nom_fichier}"'
-        return reponse
+        return _finaliser_reponse_fichier(reponse, nom_fichier)
     except (FileNotFoundError, OSError):
         pass
 
@@ -80,8 +84,7 @@ def telecharger_justificatif_remboursement(request, pk):
     fichier_db = FichierMedia.objects.filter(chemin__icontains=nom_fichier).first()
     if fichier_db and fichier_db.contenu:
         reponse = HttpResponse(fichier_db.contenu, content_type=fichier_db.type_mime or type_mime)
-        reponse["Content-Disposition"] = f'inline; filename="{nom_fichier}"'
-        return reponse
+        return _finaliser_reponse_fichier(reponse, nom_fichier)
 
     raise Http404("Le fichier physique est introuvable sur le stockage.")
 
@@ -119,22 +122,19 @@ def telecharger_piece_identite_patient(request, pk):
     if getattr(settings, "USE_X_ACCEL_REDIRECT", False):
         reponse = HttpResponse(content_type=type_mime)
         reponse["X-Accel-Redirect"] = f"/protected_media/{patient.document_justificatif.name}"
-        reponse["Content-Disposition"] = f'inline; filename="{nom_fichier}"'
-        return reponse
+        return _finaliser_reponse_fichier(reponse, nom_fichier)
 
     try:
         fichier_disque = patient.document_justificatif.open("rb")
         reponse = FileResponse(fichier_disque, content_type=type_mime)
-        reponse["Content-Disposition"] = f'inline; filename="{nom_fichier}"'
-        return reponse
+        return _finaliser_reponse_fichier(reponse, nom_fichier)
     except (FileNotFoundError, OSError):
         pass
 
     fichier_db = FichierMedia.objects.filter(chemin__icontains=nom_fichier).first()
     if fichier_db and fichier_db.contenu:
         reponse = HttpResponse(fichier_db.contenu, content_type=fichier_db.type_mime or type_mime)
-        reponse["Content-Disposition"] = f'inline; filename="{nom_fichier}"'
-        return reponse
+        return _finaliser_reponse_fichier(reponse, nom_fichier)
 
     raise Http404("Le fichier physique est introuvable.")
 
@@ -185,21 +185,18 @@ def telecharger_devis_prise_en_charge(request, pk):
     if getattr(settings, "USE_X_ACCEL_REDIRECT", False):
         reponse = HttpResponse(content_type=type_mime)
         reponse["X-Accel-Redirect"] = f"/protected_media/{prise.devis_fichier.name}"
-        reponse["Content-Disposition"] = f'inline; filename="{nom_fichier}"'
-        return reponse
+        return _finaliser_reponse_fichier(reponse, nom_fichier)
 
     try:
         fichier_disque = prise.devis_fichier.open("rb")
         reponse = FileResponse(fichier_disque, content_type=type_mime)
-        reponse["Content-Disposition"] = f'inline; filename="{nom_fichier}"'
-        return reponse
+        return _finaliser_reponse_fichier(reponse, nom_fichier)
     except (FileNotFoundError, OSError):
         pass
 
     fichier_db = FichierMedia.objects.filter(chemin__icontains=nom_fichier).first()
     if fichier_db and fichier_db.contenu:
         reponse = HttpResponse(fichier_db.contenu, content_type=fichier_db.type_mime or type_mime)
-        reponse["Content-Disposition"] = f'inline; filename="{nom_fichier}"'
-        return reponse
+        return _finaliser_reponse_fichier(reponse, nom_fichier)
 
     raise Http404("Le fichier physique est introuvable sur le stockage.")

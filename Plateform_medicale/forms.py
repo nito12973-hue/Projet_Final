@@ -38,6 +38,23 @@ from .models import (
 MAX_TENTATIVES_CONNEXION = TentativeConnexion.MAX_TENTATIVES
 DUREE_BLOCAGE_SECONDES = int(TentativeConnexion.DUREE_BLOCAGE.total_seconds())
 
+EXTENSIONS_DOCUMENTS_AUTORISEES = ('.pdf', '.jpg', '.jpeg', '.png', '.webp')
+TAILLE_MAX_FICHIER_DOCUMENTS = 10 * 1024 * 1024  # 10 Mo
+
+
+def valider_fichier_televerse(fichier, libelle="Le fichier"):
+    """Contrôle strict de sécurité sur la taille et l'extension des fichiers téléversés."""
+    if not fichier:
+        return fichier
+    if hasattr(fichier, "size") and fichier.size > TAILLE_MAX_FICHIER_DOCUMENTS:
+        raise forms.ValidationError(f"{libelle} ne doit pas dépasser 10 Mo.")
+    nom = (getattr(fichier, "name", "") or "").lower()
+    if nom and not nom.endswith(EXTENSIONS_DOCUMENTS_AUTORISEES):
+        raise forms.ValidationError(
+            f"Format de fichier non autorisé pour {libelle.lower()}. Formats acceptés : PDF, JPG, PNG, WEBP."
+        )
+    return fichier
+
 
 def generer_mot_de_passe():
     """Genere un mot de passe temporaire aleatoire (creation ou reinitialisation)."""
@@ -849,9 +866,7 @@ class AyantDroitForm(forms.ModelForm):
 
     def clean_document_justificatif(self):
         doc = self.cleaned_data.get('document_justificatif')
-        if doc and hasattr(doc, 'size') and doc.size > 10 * 1024 * 1024:
-            raise forms.ValidationError("Le document justificatif ne doit pas dépasser 10 Mo.")
-        return doc
+        return valider_fichier_televerse(doc, "Le document justificatif")
 
     def clean(self):
         cleaned_data = super().clean()
@@ -1501,9 +1516,7 @@ class PriseEnChargeForm(forms.ModelForm):
 
     def clean_devis_fichier(self):
         doc = self.cleaned_data.get('devis_fichier')
-        if doc and hasattr(doc, 'size') and doc.size > 10 * 1024 * 1024:
-            raise forms.ValidationError("Le fichier du devis ne doit pas dépasser 10 Mo.")
-        return doc
+        return valider_fichier_televerse(doc, "Le fichier du devis")
 
 
 class DemandePriseEnChargeAssureForm(forms.ModelForm):
@@ -1547,9 +1560,7 @@ class DemandePriseEnChargeAssureForm(forms.ModelForm):
 
     def clean_devis_fichier(self):
         doc = self.cleaned_data.get('devis_fichier')
-        if doc and hasattr(doc, 'size') and doc.size > 10 * 1024 * 1024:
-            raise forms.ValidationError("Le fichier du devis ne doit pas dépasser 10 Mo.")
-        return doc
+        return valider_fichier_televerse(doc, "Le fichier du devis")
 
     def clean_patient(self):
         patient = self.cleaned_data.get('patient')
@@ -1861,15 +1872,7 @@ class DemandeRemboursementAssureForm(FormControlMixin, forms.ModelForm):
 
     def clean_justificatif(self):
         doc = self.cleaned_data.get("justificatif")
-        if doc:
-            if hasattr(doc, "size") and doc.size > self.TAILLE_MAX_OCTETS:
-                raise forms.ValidationError("Le fichier justificatif ne doit pas dépasser 10 Mo.")
-            nom_fichier = (getattr(doc, "name", "") or "").lower()
-            if nom_fichier and not nom_fichier.endswith(self.EXTENSIONS_AUTORISEES):
-                raise forms.ValidationError(
-                    "Format non supporté. Formats acceptés : PDF, JPG, PNG, WEBP."
-                )
-        return doc
+        return valider_fichier_televerse(doc, "Le fichier justificatif")
 
     def clean_patient(self):
         patient = self.cleaned_data.get("patient")
