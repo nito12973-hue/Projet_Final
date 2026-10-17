@@ -311,12 +311,19 @@ class OrganismeForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        self._request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk:
             self.fields.pop("gestionnaire_prenom", None)
             self.fields.pop("gestionnaire_nom", None)
             self.fields.pop("gestionnaire_email", None)
             self.fields.pop("gestionnaire_telephone", None)
+            self.fields["mot_de_passe_admin"] = forms.CharField(
+                label="Confirmation par mot de passe administrateur",
+                widget=forms.PasswordInput(attrs={"placeholder": "Saisissez votre mot de passe actuel pour valider"}),
+                required=True,
+                help_text="Pour des raisons de sécurité, confirmez avec votre mot de passe pour enregistrer les modifications de cette entreprise.",
+            )
         else:
             self.fields["type_organisme"].initial = Organisme.TypeOrganisme.ENTREPRISE
             self.fields["type_organisme"].required = False
@@ -324,7 +331,14 @@ class OrganismeForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        if not (self.instance and self.instance.pk):
+        if self.instance and self.instance.pk:
+            mot_de_passe = cleaned_data.get("mot_de_passe_admin")
+            user = getattr(self._request, "user", None) if self._request else None
+            if not mot_de_passe:
+                self.add_error("mot_de_passe_admin", "Le mot de passe administrateur est obligatoire pour valider la modification.")
+            elif user and not user.check_password(mot_de_passe):
+                self.add_error("mot_de_passe_admin", "Mot de passe administrateur incorrect.")
+        else:
             prenom = (cleaned_data.get("gestionnaire_prenom") or "").strip()
             nom = (cleaned_data.get("gestionnaire_nom") or "").strip()
             email = (cleaned_data.get("gestionnaire_email") or "").strip()

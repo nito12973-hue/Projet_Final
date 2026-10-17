@@ -65,6 +65,15 @@
 <section class="panel panel-form" style="max-width:540px;">
     <form method="post">
         {% csrf_token %}
+        {% if type|lower == "entreprise" or type|lower == "organisme" %}
+        <div class="champ-groupe" style="margin-bottom: 20px;">
+            <label for="id_mot_de_passe_admin" style="font-weight: 600; margin-bottom: 6px; display: block;">
+                {% icone "lock" %} Confirmation de sécurité : Mot de passe administrateur <span style="color:var(--danger);" aria-hidden="true">*</span>
+            </label>
+            <input type="password" name="mot_de_passe_admin" id="id_mot_de_passe_admin" class="champ" required placeholder="Entrez votre mot de passe pour confirmer la suppression">
+            <p class="subtitle" style="font-size: 12px; margin-top: 4px;">Cette mesure de sécurité garantit que seul le super-administrateur peut détruire une entreprise.</p>
+        </div>
+        {% endif %}
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
             <button type="submit" class="button btn-danger">
                 {% icone "trash-2" %} Supprimer définitivement

@@ -937,7 +937,7 @@ def ajouter_organisme(request):
 def modifier_organisme(request, pk):
     organisme = get_object_or_404(Organisme, pk=pk)
     if request.method == "POST":
-        form = OrganismeForm(request.POST, instance=organisme)
+        form = OrganismeForm(request.POST, instance=organisme, request=request)
         if form.is_valid():
             organisme = form.save()
             journaliser(
@@ -950,7 +950,7 @@ def modifier_organisme(request, pk):
             messages.success(request, f"Entreprise « {organisme.nom} » modifiée avec succès.")
             return redirect("liste_organismes")
     else:
-        form = OrganismeForm(instance=organisme)
+        form = OrganismeForm(instance=organisme, request=request)
     return render(request, "modifier_organisme.html", {"form": form, "organisme": organisme})
 
 
@@ -997,6 +997,13 @@ def supprimer_organisme(request, pk):
         if est_protege:
             messages.error(request, motif_blocage)
             return redirect("liste_organismes")
+
+        # Vérification du mot de passe administrateur pour la suppression
+        mot_de_passe = (request.POST.get("mot_de_passe_admin") or "").strip()
+        if not mot_de_passe or not request.user.check_password(mot_de_passe):
+            messages.error(request, "Mot de passe administrateur incorrect. La suppression a été annulée par sécurité.")
+            return redirect("liste_organismes")
+
         nom = organisme.nom
         try:
             with transaction.atomic():
