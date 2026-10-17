@@ -311,28 +311,27 @@ def lister_medecins_disponibles(patient=None, ville=None, coords_gps=None, speci
 
 
 def formater_reponse_menu(patient=None):
-    """Génère le menu d'accueil du bot SantéSN."""
+    """Génère le menu d'accueil sobre et clair du bot SantéSN."""
     nom_affiche = f" {patient.prenom}" if patient else ""
     return (
-        f"👋 *Bonjour{nom_affiche} ! Bienvenue sur l'assistant WhatsApp SantéSN.*\n"
+        f"Bonjour{nom_affiche}, bienvenue sur SantéSN.\n"
         f"Votre plateforme d'assurance santé & prévoyance au Sénégal.\n\n"
-        f"Comment pouvons-nous vous aider aujourd'hui ?\n"
-        f"1️⃣ *Consulter mes droits et mon plafond restant*\n"
-        f"2️⃣ *Prendre un rendez-vous médical direct*\n"
-        f"3️⃣ *Trouver un médecin ou une pharmacie partenaire*\n"
-        f"4️⃣ *Numéros d'urgence médicale (SAMU 1515, Pompiers 18)*\n\n"
-        f"👉 *Répondez simplement avec le chiffre de votre choix (ex: 2).*"
+        f"1. Consulter mes droits et mon plafond restant\n"
+        f"2. Prendre un rendez-vous médical direct\n"
+        f"3. Trouver un médecin ou une pharmacie\n"
+        f"4. Numéros d'urgence médicale\n\n"
+        f"Répondez avec le chiffre de votre choix (1, 2, 3 ou 4)."
     )
 
 
 def formater_reponse_droits(patient):
-    """Présente l'état des droits et le solde annuel du foyer de l'assuré."""
+    """Présente l'état des droits et le solde annuel sobrement."""
     if not patient:
         return (
-            "⚠️ *Numéro non reconnu*\n\n"
+            "Numéro non reconnu.\n\n"
             "Votre numéro WhatsApp n'est pas encore associé à un dossier assuré SantéSN.\n"
-            "👉 Pour l'associer en 5 secondes, envoyez votre *numéro de carte assuré* "
-            "(ex: `SN-36D66F3046`) ou votre *adresse email*."
+            "Pour l'associer, envoyez votre numéro de carte assuré "
+            "(ex: SN-36D66F3046) ou votre adresse email."
         )
 
     organisme_nom = str(patient.organisme) if patient.organisme else "IPM SantéSN"
@@ -347,22 +346,22 @@ def formater_reponse_droits(patient):
     statut_str = "Actif (Validé)" if patient.est_valide else "En attente de validation"
 
     return (
-        f"💳 *Vos Droits d'Assurance SantéSN*\n\n"
-        f"👤 *Bénéficiaire :* {patient.nom_complet}\n"
-        f"🏛️ *Organisme :* {organisme_nom}\n"
-        f"📊 *Taux de prise en charge :* {taux_str}\n"
-        f"💰 *Plafond annuel restant :* {int(solde_restant):,} FCFA\n"
-        f"📋 *Statut couverture :* {statut_str}\n\n"
-        f"Pour revenir au menu principal, envoyez *MENU*."
+        f"*SantéSN - Vos Droits*\n\n"
+        f"• Bénéficiaire : {patient.nom_complet}\n"
+        f"• Organisme : {organisme_nom}\n"
+        f"• Taux de prise en charge : {taux_str}\n"
+        f"• Plafond annuel restant : {int(solde_restant):,} FCFA\n"
+        f"• Statut : {statut_str}\n\n"
+        f"Envoyez MENU pour revenir au sommaire."
     )
 
 
 def formater_reponse_mes_rdv(patient):
-    """Affiche les prochains rendez-vous de l'assuré."""
+    """Affiche les prochains rendez-vous de l'assuré sobrement."""
     if not patient:
         return (
-            "⚠️ *Compte non identifié*\n\n"
-            "Pour consulter vos rendez-vous, envoyez votre *numéro de carte assuré* (ex: `SN-36D66F3046`)."
+            "Compte non identifié.\n\n"
+            "Pour consulter vos rendez-vous, envoyez votre numéro de carte assuré (ex: SN-36D66F3046)."
         )
     rdvs = RendezVous.objects.filter(
         patient=patient,
@@ -371,23 +370,23 @@ def formater_reponse_mes_rdv(patient):
 
     if not rdvs.exists():
         return (
-            "📅 *Vos Rendez-vous SantéSN*\n\n"
+            "*SantéSN - Vos Rendez-vous*\n\n"
             "Vous n'avez aucun rendez-vous programmé pour le moment.\n\n"
-            "👉 *Pour en prendre un, envoyez 2 ou RDV !*"
+            "Pour en prendre un, envoyez 2 ou RDV."
         )
 
-    lignes = ["📅 *Vos Rendez-vous Programmés :*\n"]
+    lignes = ["*SantéSN - Vos Rendez-vous Programmés :*\n"]
     for r in rdvs:
         statut_libelle = r.get_statut_display()
         med_nom = f"Dr. {r.medecin.prenom} {r.medecin.nom}" if r.medecin else "Praticien partenaire"
         etab_nom = r.prestataire.nom if r.prestataire else "Cabinet conventionné"
         lignes.append(
             f"• *{med_nom}* ({r.medecin.specialite if r.medecin else 'Général'})\n"
-            f"  📆 {r.date_heure.strftime('%d/%m/%Y à %H:%M')}\n"
-            f"  🏥 {etab_nom}\n"
-            f"  📋 Statut : {statut_libelle}\n"
+            f"  Date : {r.date_heure.strftime('%d/%m/%Y à %H:%M')}\n"
+            f"  Lieu : {etab_nom}\n"
+            f"  Statut : {statut_libelle}\n"
         )
-    lignes.append("Pour planifier une nouvelle consultation, envoyez *2*.")
+    lignes.append("Pour planifier une nouvelle consultation, envoyez 2.")
     return "\n".join(lignes)
 
 
@@ -403,37 +402,37 @@ def formater_reponse_medecins(patient=None, ville=None, coords_gps=None, special
     if not medecins:
         if specialite and ville:
             return (
-                f"🩺 *Recherche {specialite} à {ville.capitalize()}*\n\n"
-                f"Aucun praticien en {specialite} n'a été trouvé à *{ville.capitalize()}*.\n"
-                f"Envoyez *2* pour voir tous les praticiens disponibles dans le réseau."
+                f"*Recherche {specialite} à {ville.capitalize()}*\n\n"
+                f"Aucun praticien en {specialite} n'a été trouvé à {ville.capitalize()}.\n"
+                f"Envoyez 2 pour voir tous les praticiens disponibles."
             )
         if ville:
             return (
-                f"🩺 *Recherche de Médecins à {ville.capitalize()}*\n\n"
-                f"Aucun médecin partenaire n'a été trouvé à *{ville.capitalize()}* pour le moment.\n"
-                f"Envoyez *2* pour voir tous les praticiens conventionnés disponibles."
+                f"*Recherche de Médecins à {ville.capitalize()}*\n\n"
+                f"Aucun médecin partenaire n'a été trouvé à {ville.capitalize()}.\n"
+                f"Envoyez 2 pour voir tous les praticiens disponibles."
             )
         return (
-            "🩺 *Prise de Rendez-vous Médical*\n\n"
-            "Aucun praticien n'est enregistré pour le moment. "
-            "Veuillez vous rapprocher de votre centre de santé conventionné."
+            "*Prise de Rendez-vous Médical*\n\n"
+            "Aucun praticien n'est disponible pour le moment. "
+            "Veuillez contacter votre centre conventionné."
         )
 
-    titre_section = "Voici la liste des médecins partenaires :"
+    titre_section = "Médecins partenaires disponibles :"
     if specialite and ville:
-        titre_section = f"📍 Spécialistes en *{specialite}* disponibles à *{ville.capitalize()}* :"
+        titre_section = f"Spécialistes en {specialite} à {ville.capitalize()} :"
     elif specialite:
-        titre_section = f"📍 Spécialistes en *{specialite}* conventionnés SantéSN :"
+        titre_section = f"Spécialistes en {specialite} conventionnés :"
     elif nom_medecin:
-        titre_section = f"📍 Résultat de recherche pour *Dr. {nom_medecin}* :"
+        titre_section = f"Résultat pour Dr. {nom_medecin} :"
     elif coords_gps:
-        titre_section = "📍 Médecins les plus proches de *votre position GPS* :"
+        titre_section = "Médecins les plus proches de votre position GPS :"
     elif ville:
-        titre_section = f"📍 Médecins partenaires disponibles à *{ville.capitalize()}* :"
+        titre_section = f"Médecins partenaires disponibles à {ville.capitalize()} :"
     elif patient and getattr(patient, "adresse", ""):
-        titre_section = "📍 Médecins partenaires recommandés proches de chez vous :"
+        titre_section = "Médecins recommandés proches de chez vous :"
 
-    lignes = ["📅 *Prendre un Rendez-vous Médical*\n", titre_section]
+    lignes = ["*Prendre un Rendez-vous Médical*\n", titre_section]
     for idx, med in enumerate(medecins, start=1):
         etab_parts = []
         if med.prestataire:
@@ -443,23 +442,20 @@ def formater_reponse_medecins(patient=None, ville=None, coords_gps=None, special
         etab = f" ({' - '.join(etab_parts)})" if etab_parts else ""
         dist = getattr(med, "_distance_km", None)
         dist_str = f" [à {dist} km]" if dist is not None else ""
-        lignes.append(f"{idx}. *Dr. {med.prenom} {med.nom}* - {med.specialite}{etab}{dist_str}")
+        lignes.append(f"{idx}. Dr. {med.prenom} {med.nom} - {med.specialite}{etab}{dist_str}")
 
-    lignes.append("\n👉 *Pour réserver en direct, écrivez :*")
-    lignes.append("*RDV [N° Médecin] [Date JJ/MM/AAAA] [Heure HH:MM] [Motif]*")
-    lignes.append("\n*Exemple :* `RDV 1 25/10/2026 10:30 Consultation de routine`")
-    lignes.append("\n*Exemples rapides :*")
-    lignes.append("• `RDV 1 demain à 10h30`")
+    lignes.append("\n*Pour réserver, écrivez :*")
+    lignes.append("RDV [N° Médecin] [Date] [Heure]")
+    lignes.append("\n*Exemple :* `RDV 1 demain à 10h30`")
     lignes.append("• `RDV 1 25/10 15:00`")
-    lignes.append("• `RDV 1` (pour être guidé étape par étape)")
-    lignes.append("\n💡 *Pour filtrer par ville :* envoyez `RDV [Ville]` (ex: *RDV Thiès* ou *RDV Dakar*).")
-    lignes.append("Vous pouvez aussi envoyer votre *position GPS* sur WhatsApp !")
+    lignes.append("• `RDV 1` (guidage pas à pas)")
+    lignes.append("\nPour filtrer par ville : `RDV Thiès` ou `RDV Dakar`.")
 
     return "\n".join(lignes)
 
 
 def formater_reponse_partenaires(type_filtre=None, ville=None):
-    """Liste les établissements de soins et pharmacies partenaires avec adaptation exacte."""
+    """Liste les établissements de soins et pharmacies partenaires sobrement."""
     qs = Prestataire.objects.filter(partenaire=True)
     if type_filtre:
         if isinstance(type_filtre, (list, tuple)):
@@ -474,37 +470,37 @@ def formater_reponse_partenaires(type_filtre=None, ville=None):
 
     prestataires = list(qs[:6])
     if not prestataires:
-        return "🏥 Aucun prestataire partenaire n'est actuellement répertorié."
+        return "Aucun prestataire partenaire n'est actuellement répertorié."
 
     if type_filtre == Prestataire.Type.PHARMACIE:
-        ville_txt = f" à *{ville.capitalize()}*" if ville else ""
-        titre = f"💊 *Pharmacies Partenaires Conventionnées{ville_txt} :*\n"
+        ville_txt = f" à {ville.capitalize()}" if ville else ""
+        titre = f"*Pharmacies Partenaires{ville_txt} :*\n"
     elif type_filtre in (Prestataire.Type.HOPITAL, Prestataire.Type.CLINIQUE) or (isinstance(type_filtre, (list, tuple)) and Prestataire.Type.HOPITAL in type_filtre):
-        ville_txt = f" à *{ville.capitalize()}*" if ville else ""
-        titre = f"🏥 *Hôpitaux & Cliniques Partenaires{ville_txt} :*\n"
+        ville_txt = f" à {ville.capitalize()}" if ville else ""
+        titre = f"*Hôpitaux & Cliniques Partenaires{ville_txt} :*\n"
     else:
-        titre = "🏥 *Établissements & Réseau Conventionné :*\n"
+        titre = "*Établissements Conventionnés :*\n"
 
     lignes = [titre]
     for p in prestataires:
-        tel = f" - 📞 {p.telephone}" if p.telephone else ""
+        tel = f" - Tél: {p.telephone}" if p.telephone else ""
         lignes.append(f"• *{p.nom}* ({p.get_type_prestataire_display()}) - {p.ville}{tel}")
 
-    lignes.append("\nPour réserver avec un médecin, envoyez *2*.")
+    lignes.append("\nPour réserver avec un médecin, envoyez 2.")
     return "\n".join(lignes)
 
 
 def formater_reponse_urgences():
-    """Affiche les numéros d'urgence utiles au Sénégal."""
+    """Affiche les numéros d'urgence utiles au Sénégal sobrement."""
     return (
-        "🚨 *Numéros d'Urgence Médicale au Sénégal*\n\n"
-        "🚑 *SAMU National :* 1515\n"
-        "🚒 *Sapeurs-Pompiers :* 18\n"
-        "👮 *Police Secours :* 17\n"
-        "🏥 *SOS Médecins Dakar :* +221 33 889 15 15\n"
-        "🏥 *Hôpital Principal de Dakar :* +221 33 839 50 50\n"
-        "📞 *Assistance Plateforme SantéSN :* +221 78 957 61 45\n\n"
-        "Envoyez *MENU* pour revenir au sommaire."
+        "*Numéros d'Urgence Médicale au Sénégal*\n\n"
+        "• SAMU National : 1515\n"
+        "• Sapeurs-Pompiers : 18\n"
+        "• Police Secours : 17\n"
+        "• SOS Médecins Dakar : +221 33 889 15 15\n"
+        "• Hôpital Principal : +221 33 839 50 50\n"
+        "• Support SantéSN : +221 78 957 61 45\n\n"
+        "Envoyez MENU pour revenir au sommaire."
     )
 
 
@@ -519,7 +515,7 @@ def reserver_rendez_vous_whatsapp(patient, medecin, date_heure, motif=""):
 
     if conflit:
         return False, (
-            f"⚠️ *Créneau indisponible*\n\n"
+            f"Créneau indisponible.\n\n"
             f"Le Dr. {medecin.prenom} {medecin.nom} est déjà occupé le "
             f"{date_heure.strftime('%d/%m/%Y à %H:%M')}.\n"
             f"Veuillez choisir un autre jour ou une heure différente."
@@ -539,16 +535,15 @@ def reserver_rendez_vous_whatsapp(patient, medecin, date_heure, motif=""):
     except Exception as exc:
         logger.warning("Échec notification pour RDV WhatsApp %s: %s", rdv.pk, exc)
 
-    prestataire_str = f"🏥 *Lieu :* {rdv.prestataire.nom}\n" if rdv.prestataire else ""
+    prestataire_str = f"Lieu : {rdv.prestataire.nom}\n" if rdv.prestataire else ""
     return True, (
-        f"✅ *Votre rendez-vous a été enregistré !*\n\n"
-        f"🩺 *Médecin :* Dr. {medecin.prenom} {medecin.nom} ({medecin.specialite})\n"
-        f"📅 *Date & Heure :* {date_heure.strftime('%d/%m/%Y à %H:%M')}\n"
+        f"*Votre rendez-vous a été enregistré*\n\n"
+        f"• Médecin : Dr. {medecin.prenom} {medecin.nom} ({medecin.specialite})\n"
+        f"• Date & Heure : {date_heure.strftime('%d/%m/%Y à %H:%M')}\n"
         f"{prestataire_str}"
-        f"📋 *Motif :* {rdv.motif}\n"
-        f"⏳ *Statut :* Demande transmise au praticien (en attente de confirmation).\n\n"
-        f"Vous recevrez une alerte de confirmation dès que le praticien aura validé le créneau.\n"
-        f"Retrouvez votre rendez-vous à tout moment sur votre espace SantéSN."
+        f"• Motif : {rdv.motif}\n"
+        f"• Statut : Demande transmise au praticien (en attente de confirmation)\n\n"
+        f"Vous recevrez une confirmation dès validation par le praticien."
     )
 
 
@@ -657,33 +652,33 @@ def parser_demande_rdv(texte, patient):
 
     if not patient:
         return (
-            "⚠️ *Compte assuré non identifié*\n\n"
-            "Pour prendre rendez-vous automatiquement sur WhatsApp, votre numéro doit être "
+            "Compte assuré non identifié.\n\n"
+            "Pour prendre rendez-vous sur WhatsApp, votre numéro doit être "
             "associé à votre dossier assuré SantéSN.\n\n"
-            "👉 *Envoyez simplement votre numéro de carte (ex: SN-36D66F3046) ou votre adresse email pour l'activer !*"
+            "Envoyez votre numéro de carte (ex: SN-36D66F3046) ou votre adresse email pour l'activer."
         )
 
     medecins = lister_medecins_disponibles(patient=patient)
     if not medecins:
-        return "⚠️ Aucun médecin n'est disponible pour la prise de rendez-vous pour le moment."
+        return "Aucun médecin n'est disponible pour la prise de rendez-vous pour le moment."
 
     try:
         idx = int(idx_str)
         if idx < 1 or idx > len(medecins):
-            return f"⚠️ Numéro de praticien invalide ({idx}). Choisissez un chiffre entre 1 et {len(medecins)}."
+            return f"Numéro de praticien invalide ({idx}). Choisissez un chiffre entre 1 et {len(medecins)}."
         medecin = medecins[idx - 1]
     except Exception:
-        return "⚠️ Choix du praticien invalide."
+        return "Choix du praticien invalide."
 
     # Si l'utilisateur a envoyé UNIQUEMENT le numéro du médecin (ex: 'RDV 1')
     if not reste_texte:
         etab_nom = medecin.prestataire.nom if medecin.prestataire else "Cabinet conventionné"
         return (
-            f"🩺 *Vous avez sélectionné le Dr. {medecin.prenom} {medecin.nom}*\n"
+            f"*Vous avez sélectionné le Dr. {medecin.prenom} {medecin.nom}*\n"
             f"• Spécialité : {medecin.specialite}\n"
             f"• Établissement : {etab_nom}\n\n"
             f"Pour quel jour et quelle heure souhaitez-vous votre rendez-vous ?\n\n"
-            f"👉 *Répondez simplement par exemple :*\n"
+            f"Exemples de réponse :\n"
             f"• `RDV {idx} demain à 10h30`\n"
             f"• `RDV {idx} 25/10 à 15h00`\n"
             f"• `RDV {idx} lundi à 11h Consultation`"
@@ -693,8 +688,8 @@ def parser_demande_rdv(texte, patient):
     date_obj, date_token = extraire_date_naturelle(reste_texte)
     if not date_obj:
         return (
-            f"⚠️ *Date de rendez-vous non reconnue*\n\n"
-            f"Veuillez préciser la date voulue pour le Dr. {medecin.prenom} {medecin.nom}.\n"
+            f"Date de rendez-vous non reconnue.\n\n"
+            f"Précisez la date voulue pour le Dr. {medecin.prenom} {medecin.nom}.\n"
             f"Exemples valides :\n"
             f"• `RDV {idx} demain à 10h`\n"
             f"• `RDV {idx} 25/10 à 15h00`\n"
@@ -710,15 +705,15 @@ def parser_demande_rdv(texte, patient):
     heure_val, minute_val = extraire_heure_minute(texte_sans_date)
     if heure_val is None:
         return (
-            f"⚠️ *Heure de rendez-vous manquante*\n\n"
-            f"Veuillez préciser l'heure souhaitée pour le {date_obj.strftime('%d/%m/%Y')}.\n"
+            f"Heure de rendez-vous manquante.\n\n"
+            f"Précisez l'heure souhaitée pour le {date_obj.strftime('%d/%m/%Y')}.\n"
             f"Exemple : `RDV {idx} {date_token} à 10h30` ou `RDV {idx} {date_token} 15:00`"
         )
 
     try:
         heure_obj = datetime.time(heure_val, minute_val)
     except ValueError:
-        return "⚠️ Heure invalide. Utilisez un format comme 10:30 ou 15h00."
+        return "Heure invalide. Utilisez un format comme 10:30 ou 15h00."
 
     # Motif restant (texte restant après extraction de date et heure)
     motif = re.sub(r"(?:à\s*|a\s*)?\b\d{1,2}(?:[h:]\d{0,2})?\b", "", texte_sans_date, flags=re.IGNORECASE).strip()
@@ -728,7 +723,7 @@ def parser_demande_rdv(texte, patient):
 
     if rdv_datetime < timezone.now():
         return (
-            "⚠️ *Date déjà dépassée*\n\n"
+            "Date déjà dépassée.\n\n"
             "Vous avez sélectionné une date ou une heure passée. "
             "Veuillez choisir un créneau futur pour votre consultation."
         )
@@ -777,15 +772,13 @@ def traiter_message_entrant_whatsapp(expediteur_telephone, texte_message):
     # 2. Formules de politesse & remerciements
     if texte_lower in ("merci", "merci beaucoup", "jerejef", "jërëjëf", "chokran", "thanks", "thx"):
         return (
-            "🙏 *Avec grand plaisir !*\n\n"
-            "L'équipe SantéSN reste à votre entière disposition.\n"
-            "Envoyez *MENU* à tout moment pour afficher les options disponibles."
+            "Avec grand plaisir. L'équipe SantéSN reste à votre entière disposition.\n"
+            "Envoyez MENU à tout moment pour afficher les options disponibles."
         )
 
     if texte_lower in ("au revoir", "bonne journee", "bonne journée", "bonne soiree", "bonne soirée", "a bientot", "à bientôt", "bye"):
         return (
-            "👋 *Au revoir et très bonne journée !*\n\n"
-            "Prenez grand soin de vous et de votre santé avec SantéSN."
+            "Au revoir et très bonne journée. Prenez soin de vous."
         )
 
     # 3. Commandes de menu / salutations
@@ -854,10 +847,10 @@ def traiter_message_entrant_whatsapp(expediteur_telephone, texte_message):
     # 14. Orientation médicale en cas d'expression de symptômes
     if any(k in texte_lower for k in ("malade", "douleur", "mal de", "fievre", "fièvre", "toux", "grippe", "ventre", "tete", "tête", "blessure")):
         return (
-            "🩺 *Conseil d'Orientation Médicale SantéSN*\n\n"
-            "Vous présentez des symptômes ? Nous vous conseillons de consulter rapidement un praticien conventionné.\n\n"
-            "👉 *Envoyez 2 ou RDV pour voir les médecins généralistes et spécialistes proches de chez vous.*\n"
-            "🚨 En cas de situation critique, appelez sans attendre le SAMU au *1515* (appel gratuit)."
+            "*Conseil d'Orientation Médicale SantéSN*\n\n"
+            "Vous présentez des symptômes ? Nous vous conseillons de consulter un praticien conventionné.\n\n"
+            "Envoyez 2 ou RDV pour voir les médecins proches de chez vous.\n"
+            "En cas d'urgence critique, appelez le SAMU au 1515 (gratuit)."
         )
 
     # 15. Si le texte contient le mot clé "rdv" sans syntaxe reconnue
@@ -867,15 +860,15 @@ def traiter_message_entrant_whatsapp(expediteur_telephone, texte_message):
     # 16. Réponse par défaut bienveillante et adaptée
     if not patient:
         return (
-            "👋 *Bienvenue sur l'assistant WhatsApp SantéSN !*\n\n"
+            "Bienvenue sur l'assistant WhatsApp SantéSN.\n\n"
             "Votre numéro WhatsApp n'est pas encore associé à votre dossier assuré.\n\n"
-            "👉 *Pour activer votre compte en 5 secondes, écrivez simplement :*\n"
-            "• Votre *numéro de carte assuré* (ex: `SN-36D66F3046`)\n"
-            "• OU votre *adresse email* (ex: `lamaranitodiallo2908@gmail.com`)\n\n"
-            "Dès réception, vous pourrez prendre vos rendez-vous et consulter vos droits directement ici !"
+            "Pour activer votre compte, écrivez simplement :\n"
+            "• Votre numéro de carte assuré (ex: SN-36D66F3046)\n"
+            "• OU votre adresse email\n\n"
+            "Dès réception, vous pourrez prendre vos rendez-vous et consulter vos droits."
         )
 
     return (
-        "🤖 Je n'ai pas bien compris votre message.\n\n"
+        "Message non reconnu.\n\n"
         + formater_reponse_menu(patient)
     )
