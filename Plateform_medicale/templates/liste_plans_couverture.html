@@ -7,32 +7,59 @@
 <section class="page-title">
     <div>
         <h1>Plans de couverture</h1>
-        <p class="subtitle">Règles de remboursement applicables aux assurés et leurs ayants droit.</p>
+        <p class="subtitle">Formules d'assurance et règles de prise en charge pour les assurés et leurs ayants droit.</p>
     </div>
-    <a class="button primary btn-expand primary" href="{% url 'ajouter_plan_couverture' %}" title="Ajouter un nouveau plan de couverture" aria-label="Nouveau plan">{% icone "plus" %} <span class="expand-text">Nouveau plan</span></a>
+    <a class="button primary btn-expand primary" href="{% url 'ajouter_plan_couverture' %}" title="Ajouter un nouveau plan de couverture" aria-label="Nouveau plan">
+        {% icone "plus" %} <span class="expand-text">Nouveau plan</span>
+    </a>
 </section>
 
 {% if plans %}
 <section class="panel">
     <table>
+        <caption class="sr-only">Liste des formules de prise en charge</caption>
         <thead>
             <tr>
-                {% entete_tri request.GET "nom" "Nom" %}
-                {% entete_tri request.GET "taux_couverture" "Taux de couverture" %}
+                {% entete_tri request.GET "nom" "Formule" %}
+                {% entete_tri request.GET "taux_couverture" "Taux de prise en charge" %}
                 {% entete_tri request.GET "plafond_annuel" "Plafond annuel" "col-optionnelle" %}
-                <th>Actions</th>
+                <th scope="col">Actions</th>
             </tr>
         </thead>
         <tbody>
             {% for plan in plans %}
             <tr>
-                <td>{{ plan.nom }}</td>
-                <td>{{ plan.taux_couverture }}%</td>
-                <td class="col-optionnelle">{{ plan.plafond_annuel|franc_cfa|default:"Illimité" }}</td>
                 <td>
-                    <div class="actions">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 8px; background: rgba(14, 116, 144, 0.1); color: var(--primary);">
+                            {% icone "shield" %}
+                        </span>
+                        <div>
+                            <strong>{{ plan.nom }}</strong>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 10px; max-width: 220px;">
+                        <span class="badge {% if plan.taux_couverture >= 80 %}validee{% else %}en-attente{% endif %}" style="font-size: 13px; font-weight: 800; min-width: 52px; text-align: center;">
+                            {{ plan.taux_couverture|floatformat:0 }}%
+                        </span>
+                        <div style="flex: 1; height: 6px; background: rgba(0,0,0,0.06); border-radius: 999px; overflow: hidden;">
+                            <div style="width: {{ plan.taux_couverture }}%; height: 100%; background: {% if plan.taux_couverture >= 90 %}#10b981{% elif plan.taux_couverture >= 80 %}var(--primary){% else %}#f59e0b{% endif %}; border-radius: 999px;"></div>
+                        </div>
+                    </div>
+                </td>
+                <td class="col-optionnelle">
+                    {% if plan.plafond_annuel %}
+                    <strong class="code">{{ plan.plafond_annuel|franc_cfa }}</strong>
+                    {% else %}
+                    <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: #047857; font-weight: 700;">Illimité</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="actions" style="gap: 6px;">
                         <a href="{% url 'modifier_plan_couverture' plan.pk %}" class="button primary btn btn-sm">{% icone "edit-2" %} Modifier</a>
-                        <a href="{% url 'supprimer_plan_couverture' plan.pk %}" class="button btn btn-danger btn-sm">{% icone "trash-2" %} Supprimer</a>
+                        <a href="{% url 'supprimer_plan_couverture' plan.pk %}" class="button btn btn-danger btn-sm" title="Supprimer ce plan">{% icone "trash-2" %} Supprimer</a>
                     </div>
                 </td>
             </tr>
@@ -40,6 +67,7 @@
         </tbody>
     </table>
 </section>
+
 {% if plans.paginator.num_pages > 1 %}
 <nav class="pagination" aria-label="Pagination">
     {% if plans.has_previous %}
@@ -51,10 +79,15 @@
     {% endif %}
 </nav>
 {% endif %}
+
 {% else %}
 <div class="etat-vide">
     {% illustration_vide "shield-check" %}
-    <p>Aucun plan de couverture enregistré.</p>
+    <h3>Aucun plan de couverture</h3>
+    <p>Créez votre première formule pour définir le taux de remboursement des soins.</p>
+    <a href="{% url 'ajouter_plan_couverture' %}" class="button primary" style="margin-top: 12px;">
+        {% icone "plus" %} Créer un plan
+    </a>
 </div>
 {% endif %}
 {% endblock %}
