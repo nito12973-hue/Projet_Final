@@ -13087,5 +13087,59 @@ class WhatsAppBotAndWebhookTests(TestCase):
         self.patient.refresh_from_db()
         self.assertIn("709876543", self.patient.telephone)
 
+    def test_bot_recherche_specialite_cardiologue(self):
+        from Plateform_medicale.services.whatsapp_bot import traiter_message_entrant_whatsapp
+        # Création d'un cardiologue de test
+        Medecin.objects.create(
+            nom="Fall",
+            prenom="Babacar",
+            specialite="Cardiologie",
+            prestataire=self.prestataire,
+            telephone="775678901",
+        )
+        reponse = traiter_message_entrant_whatsapp("221771112233", "Je cherche un cardiologue")
+        self.assertIn("Cardiologie", reponse)
+        self.assertIn("Dr. Babacar Fall", reponse)
+
+    def test_bot_recherche_pharmacie_par_ville(self):
+        from Plateform_medicale.services.whatsapp_bot import traiter_message_entrant_whatsapp
+        Prestataire.objects.create(
+            nom="Pharmacie Centrale Dakar",
+            type_prestataire=Prestataire.Type.PHARMACIE,
+            ville="Dakar",
+            partenaire=True,
+            telephone="338212121",
+        )
+        reponse = traiter_message_entrant_whatsapp("221771112233", "Pharmacie Dakar")
+        self.assertIn("Pharmacie", reponse)
+        self.assertIn("Pharmacie Centrale Dakar", reponse)
+
+    def test_bot_mes_rdv(self):
+        from Plateform_medicale.services.whatsapp_bot import traiter_message_entrant_whatsapp
+        demain = timezone.now() + datetime.timedelta(days=1)
+        RendezVous.objects.create(
+            patient=self.patient,
+            medecin=self.medecin,
+            prestataire=self.prestataire,
+            date_heure=demain,
+            motif="Consultation semestrielle",
+            statut=RendezVous.Statut.CONFIRME,
+        )
+        reponse = traiter_message_entrant_whatsapp("221771112233", "Mes rdv")
+        self.assertIn("Vos Rendez-vous", reponse)
+        self.assertIn("Dr. Mamadou Diop", reponse)
+
+    def test_bot_politesse_merci(self):
+        from Plateform_medicale.services.whatsapp_bot import traiter_message_entrant_whatsapp
+        reponse = traiter_message_entrant_whatsapp("221771112233", "Merci beaucoup")
+        self.assertIn("Avec grand plaisir", reponse)
+
+    def test_bot_orientation_symptomes(self):
+        from Plateform_medicale.services.whatsapp_bot import traiter_message_entrant_whatsapp
+        reponse = traiter_message_entrant_whatsapp("221771112233", "J'ai de la fièvre et mal à la tête")
+        self.assertIn("Orientation Médicale", reponse)
+        self.assertIn("1515", reponse)
+
+
 
 
