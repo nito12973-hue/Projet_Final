@@ -7,41 +7,143 @@
 <section class="page-title">
     <div>
         <h1>Modifier l'entreprise {{ organisme.nom }}</h1>
-        <p class="subtitle">Mise à jour des coordonnées de l'entreprise ({{ organisme.code }}).</p>
+        <p class="subtitle">Mise à jour des informations de l'entreprise et de son gestionnaire de compte ({{ organisme.code }}).</p>
     </div>
-    <a class="button btn btn-retour-expand" href="{% url 'liste_organismes' %}" title="Retour" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
+    <a class="button btn btn-retour-expand" href="{% url 'liste_organismes' %}" title="Retour aux entreprises" aria-label="Retour">
+        {% icone "chevron-left" %} <span class="expand-text">Retour</span>
+    </a>
 </section>
 
-<section class="panel panel-form" style="max-width: 640px;">
+<section class="panel panel-form" style="max-width: 680px;">
     {% if form.non_field_errors %}
     <div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
     {% endif %}
 
-    <form method="post">
+    <form method="post" id="form-modifier-organisme">
         {% csrf_token %}
-        {% for field in form %}
-        {% if field.field.widget.input_type == "checkbox" %}
-        <div class="champ-case">
-            {{ field }}
-            <div class="champ-case-texte">
-                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                {% if field.help_text %}<p class="subtitle">{{ field.help_text }}</p>{% endif %}
+        {{ form.type_organisme }}
+
+        <!-- SECTION 1 : ENTREPRISE -->
+        <h2 style="font-size: 16px; margin: 0 0 14px 0; display: flex; align-items: center; gap: 8px;">
+            {% icone "building" %} <span>Informations de l'entreprise</span>
+        </h2>
+
+        <div class="champ-groupe" style="margin-bottom: 14px;">
+            <label for="{{ form.nom.id_for_label }}" style="font-weight: 600; margin-bottom: 4px; display: block;">
+                Nom de l'entreprise <span style="color:var(--danger);" aria-hidden="true">*</span>
+            </label>
+            {{ form.nom }}
+            {% if form.nom.errors %}<div class="erreurs" role="alert">{{ form.nom.errors }}</div>{% endif %}
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+            <div class="champ-groupe">
+                <label for="{{ form.code.id_for_label }}" style="font-weight: 600; margin-bottom: 4px; display: block;">
+                    Code unique <span style="color:var(--danger);" aria-hidden="true">*</span>
+                </label>
+                {{ form.code }}
+                {% if form.code.errors %}<div class="erreurs" role="alert">{{ form.code.errors }}</div>{% endif %}
+            </div>
+            <div class="champ-groupe">
+                <label for="{{ form.telephone.id_for_label }}" style="font-weight: 600; margin-bottom: 4px; display: block;">
+                    Téléphone entreprise
+                </label>
+                {{ form.telephone }}
+                {% if form.telephone.errors %}<div class="erreurs" role="alert">{{ form.telephone.errors }}</div>{% endif %}
             </div>
         </div>
-        {% else %}
-        <div class="champ-groupe" style="margin-bottom: 16px;">
-            <label for="{{ field.id_for_label }}" style="font-weight: 600; margin-bottom: 4px; display: block;">
-                {{ field.label }}
-            </label>
-            {{ field }}
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+            <div class="champ-groupe">
+                <label for="{{ form.email.id_for_label }}" style="font-weight: 600; margin-bottom: 4px; display: block;">
+                    Email de contact entreprise
+                </label>
+                {{ form.email }}
+                {% if form.email.errors %}<div class="erreurs" role="alert">{{ form.email.errors }}</div>{% endif %}
+            </div>
+            <div class="champ-groupe">
+                <label for="{{ form.adresse.id_for_label }}" style="font-weight: 600; margin-bottom: 4px; display: block;">
+                    Adresse
+                </label>
+                {{ form.adresse }}
+                {% if form.adresse.errors %}<div class="erreurs" role="alert">{{ form.adresse.errors }}</div>{% endif %}
+            </div>
         </div>
-        {% endif %}
-        {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
-        {% endfor %}
-        <div class="actions" style="margin-top: 16px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-            <button class="button primary" type="submit">Enregistrer</button>
+
+        <div class="champ-case" style="margin-bottom: 20px;">
+            {{ form.actif }}
+            <div class="champ-case-texte">
+                <label for="{{ form.actif.id_for_label }}">Entreprise active (autoriser les opérations et le tiers-payant)</label>
+            </div>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid var(--border); margin: 24px 0 20px 0;">
+
+        <!-- SECTION 2 : GESTIONNAIRE DE COMPTE -->
+        <h2 style="font-size: 16px; margin: 0 0 6px 0; display: flex; align-items: center; gap: 8px;">
+            {% icone "users" %} <span>Gestionnaire de l'entreprise</span>
+        </h2>
+        <p class="subtitle" style="margin-bottom: 16px; font-size: 13px;">
+            Modifiez ici l'adresse email, le nom ou le téléphone du gestionnaire de cette entreprise.
+        </p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+            <div class="champ-groupe">
+                <label for="{{ form.gestionnaire_prenom.id_for_label }}" style="font-weight: 600; margin-bottom: 4px; display: block;">
+                    Prénom du gestionnaire
+                </label>
+                {{ form.gestionnaire_prenom }}
+                {% if form.gestionnaire_prenom.errors %}<div class="erreurs" role="alert">{{ form.gestionnaire_prenom.errors }}</div>{% endif %}
+            </div>
+            <div class="champ-groupe">
+                <label for="{{ form.gestionnaire_nom.id_for_label }}" style="font-weight: 600; margin-bottom: 4px; display: block;">
+                    Nom du gestionnaire
+                </label>
+                {{ form.gestionnaire_nom }}
+                {% if form.gestionnaire_nom.errors %}<div class="erreurs" role="alert">{{ form.gestionnaire_nom.errors }}</div>{% endif %}
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+            <div class="champ-groupe">
+                <label for="{{ form.gestionnaire_email.id_for_label }}" style="font-weight: 600; margin-bottom: 4px; display: block;">
+                    Email de connexion du gestionnaire
+                </label>
+                {{ form.gestionnaire_email }}
+                {% if form.gestionnaire_email.errors %}<div class="erreurs" role="alert">{{ form.gestionnaire_email.errors }}</div>{% endif %}
+            </div>
+            <div class="champ-groupe">
+                <label for="{{ form.gestionnaire_telephone.id_for_label }}" style="font-weight: 600; margin-bottom: 4px; display: block;">
+                    Téléphone portable
+                </label>
+                {{ form.gestionnaire_telephone }}
+                {% if form.gestionnaire_telephone.errors %}<div class="erreurs" role="alert">{{ form.gestionnaire_telephone.errors }}</div>{% endif %}
+            </div>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid var(--border); margin: 24px 0 20px 0;">
+
+        <!-- SECTION 3 : SÉCURITÉ ADMIN -->
+        <div style="background: rgba(14, 116, 144, 0.04); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 24px;">
+            <label for="{{ form.mot_de_passe_admin.id_for_label }}" style="font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                {% icone "lock" %} Confirmation de sécurité : Votre mot de passe administrateur <span style="color:var(--danger);" aria-hidden="true">*</span>
+            </label>
+            <p class="subtitle" style="font-size: 12.5px; margin-bottom: 10px;">
+                Veuillez saisir votre mot de passe administrateur pour enregistrer ces modifications.
+            </p>
+            {{ form.mot_de_passe_admin }}
+            {% if form.mot_de_passe_admin.errors %}<div class="erreurs" role="alert">{{ form.mot_de_passe_admin.errors }}</div>{% endif %}
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="actions" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <button class="button primary" type="submit" style="padding: 10px 20px;">
+                {% icone "check" %} Enregistrer les modifications
+            </button>
             <a class="button btn" href="{% url 'liste_organismes' %}">Annuler</a>
-            <a class="button btn btn-danger" style="margin-left: auto;" href="{% url 'supprimer_organisme' organisme.pk %}">{% icone "trash-2" %} Supprimer l'entreprise</a>
+            <a class="button btn btn-danger" style="margin-left: auto;" href="{% url 'supprimer_organisme' organisme.pk %}">
+                {% icone "trash-2" %} Supprimer l'entreprise
+            </a>
         </div>
     </form>
 </section>

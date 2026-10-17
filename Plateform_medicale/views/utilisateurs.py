@@ -939,15 +939,27 @@ def modifier_organisme(request, pk):
     if request.method == "POST":
         form = OrganismeForm(request.POST, instance=organisme, request=request)
         if form.is_valid():
-            organisme = form.save()
+            organisme = form.save(request=request)
+            gestionnaire_modifie = getattr(form, "gestionnaire_modifie", None)
+            gestionnaire_cree = getattr(form, "gestionnaire_cree", None)
+            details = f"Code : {organisme.code}"
+            if gestionnaire_modifie:
+                details += f" — Gestionnaire mis à jour : {gestionnaire_modifie.get_full_name()} ({gestionnaire_modifie.email})"
+            elif gestionnaire_cree:
+                details += f" — Gestionnaire créé : {gestionnaire_cree.get_full_name()} ({gestionnaire_cree.email})"
             journaliser(
                 request,
                 JournalActivite.Action.MODIFICATION,
                 f"Entreprise {organisme.nom}",
-                f"Code : {organisme.code}",
+                details,
                 organisme=organisme,
             )
-            messages.success(request, f"Entreprise « {organisme.nom} » modifiée avec succès.")
+            if gestionnaire_modifie:
+                messages.success(request, f"Entreprise « {organisme.nom} » et données du gestionnaire ({gestionnaire_modifie.email}) mises à jour avec succès.")
+            elif gestionnaire_cree:
+                messages.success(request, f"Entreprise « {organisme.nom} » modifiée et compte gestionnaire ({gestionnaire_cree.email}) créé.")
+            else:
+                messages.success(request, f"Entreprise « {organisme.nom} » modifiée avec succès.")
             return redirect("liste_organismes")
     else:
         form = OrganismeForm(instance=organisme, request=request)
