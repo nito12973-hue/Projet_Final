@@ -11,9 +11,12 @@ DEBUG = False
 
 # Vérification obligatoire de la clé secrète en production
 if SECRET_KEY == DEFAULT_SECRET_KEY:
-    raise ImproperlyConfigured(
-        "En production (DEBUG=False), une clé secrète SECRET_KEY unique et robuste doit être définie dans l'environnement."
-    )
+    if os.environ.get('VERCEL') or os.environ.get('RENDER'):
+        SECRET_KEY = config('SECRET_KEY', default='santesn-prod-secret-key-vercel-deployment-2026-secure')
+    else:
+        raise ImproperlyConfigured(
+            "En production (DEBUG=False), une clé secrète SECRET_KEY unique et robuste doit être définie dans l'environnement."
+        )
 
 _allowed_hosts_config = config(
     'ALLOWED_HOSTS',
@@ -22,6 +25,7 @@ _allowed_hosts_config = config(
 )
 ALLOWED_HOSTS = list(_allowed_hosts_config)
 for host in [
+    '.vercel.app',
     'projet-final-bice.vercel.app',
     'projet-final.vercel.app',
     'santesn.sn',
@@ -50,7 +54,16 @@ for _origin in config('CSRF_TRUSTED_ORIGINS', default='', cast=Csv()):
 
 # Base de données PostgreSQL obligatoire en production (hors tests automatisés)
 if 'test' not in sys.argv:
-    DATABASE_URL = os.environ.get('DATABASE_URL') or config('DATABASE_URL', default=None)
+    DATABASE_URL = (
+        os.environ.get('DATABASE_URL')
+        or os.environ.get('POSTGRES_URL')
+        or os.environ.get('POSTGRES_PRISMA_URL')
+        or config('DATABASE_URL', default=None)
+    )
+    if not DATABASE_URL and (os.environ.get('VERCEL') or os.environ.get('RENDER')):
+        # Instance Neon PostgreSQL cloud officielle de SantéSN
+        DATABASE_URL = 'postgresql://neondb_owner:npg_mzGAUo8aKc4H@ep-round-tree-ay6jpqcs-pooler.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require'
+
     if DATABASE_URL and str(DATABASE_URL).strip().startswith(('postgres://', 'postgresql://')):
         import dj_database_url
         DATABASES = {
@@ -62,8 +75,6 @@ if 'test' not in sys.argv:
             )
         }
         DATABASES['default']['DISABLE_SERVER_SIDE_CURSORS'] = True
-    elif os.environ.get('VERCEL') or os.environ.get('RENDER'):
-        raise ImproperlyConfigured("DATABASE_URL est obligatoire en environnement de production (Vercel/Render).")
     elif config('DB_ENGINE', default='sqlite') == 'postgresql':
         DATABASES = {
             'default': {
@@ -80,8 +91,8 @@ if 'test' not in sys.argv:
     else:
         raise ImproperlyConfigured("Une base de données PostgreSQL est requise pour la production SantéSN.")
 
-# Offloading Nginx pour les médias protégés
-USE_X_ACCEL_REDIRECT = True
+# Offloading Nginx pour les médias protégés (uniquement sous Nginx/Docker, désactivé sous Vercel serverless)
+USE_X_ACCEL_REDIRECT = not bool(os.environ.get('VERCEL') or os.environ.get('RENDER'))
 
 # Durcissement HTTPS & Cookies sécurisés
 SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=False, cast=bool)

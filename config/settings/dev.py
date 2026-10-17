@@ -17,6 +17,8 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 # Base de données
+_database_url = os.environ.get('DATABASE_URL') or os.environ.get('POSTGRES_URL') or config('DATABASE_URL', default=None)
+
 if 'test' in sys.argv:
     DATABASES = {
         'default': {
@@ -25,6 +27,17 @@ if 'test' in sys.argv:
         }
     }
     PASSWORD_HASHERS = ['django.contrib.auth.hashers.MD5PasswordHasher']
+elif _database_url and str(_database_url).strip().startswith(('postgres://', 'postgresql://')):
+    import dj_database_url
+    DATABASES = {
+        'default': dj_database_url.parse(
+            str(_database_url).strip(),
+            conn_max_age=60,
+            conn_health_checks=True,
+            ssl_require=True,
+        )
+    }
+    DATABASES['default']['DISABLE_SERVER_SIDE_CURSORS'] = True
 elif config('DB_ENGINE', default='sqlite') == 'postgresql':
     DATABASES = {
         'default': {
