@@ -781,6 +781,22 @@ def traiter_message_entrant_whatsapp(expediteur_telephone, texte_message):
             conv.save()
         return formater_reponse_menu(patient)
 
+    # Accès direct à la connexion / Espace assuré à tout moment
+    if texte_lower in ("5", "connexion", "connecter", "se connecter", "login", "espace", "mon espace", "mot de passe", "activer", "lien"):
+        if conv:
+            conv.etape = ConversationWhatsApp.Etape.MENU
+            conv.medecin_selectionne = None
+            conv.save()
+        site_url = str(getattr(settings, "SITE_URL", "https://projet-final-bice.vercel.app") or "").strip().rstrip("/")
+        nom_complet = f" {patient.prenom}" if patient else ""
+        return (
+            f"*SantéSN — Connexion à votre Espace Assuré*\n\n"
+            f"Bonjour{nom_complet}, vous pouvez vous connecter à votre espace personnel en ligne (carte dématérialisée, remboursements, prises en charge) via ce lien sécurisé :\n"
+            f"👉 {site_url}/login/\n\n"
+            f"💡 *Prendre rendez-vous sans vous connecter :*\n"
+            f"Vous pouvez également réserver directement une consultation médicale ici sur WhatsApp en écrivant « RDV » ou « 2 » !"
+        )
+
     # 1. Étape en cours : Attente du choix de médecin par son numéro (ex: '1' ou '2')
     if conv and conv.etape == ConversationWhatsApp.Etape.CHOIX_MEDECIN and texte.isdigit():
         idx = int(texte)
