@@ -63,8 +63,8 @@
             {% if montant_total_jour > 0 %}
             <div style="font-size:12px;display:flex;flex-direction:column;gap:3px;background:var(--champ-bg);padding:8px 10px;border-radius:6px;border:1px solid var(--border);">
                 <div><strong>Volume total :</strong> <span style="font-family:'IBM Plex Mono',monospace;">{{ montant_total_jour|franc_cfa }}</span></div>
-                <div style="color:var(--primary-dark);"><strong>Prise en charge IPM :</strong> <span style="font-family:'IBM Plex Mono',monospace;">{{ part_assurance_jour|franc_cfa }}</span></div>
-                <div style="color:var(--text-muted);"><strong>Ticket modérateur :</strong> <span style="font-family:'IBM Plex Mono',monospace;">{{ part_patient_jour|franc_cfa }}</span></div>
+                <div style="color:var(--primary-strong);"><strong>Prise en charge IPM :</strong> <span style="font-family:'IBM Plex Mono',monospace;">{{ part_assurance_jour|franc_cfa }}</span></div>
+                <div style="color:var(--muted);"><strong>Ticket modérateur :</strong> <span style="font-family:'IBM Plex Mono',monospace;">{{ part_patient_jour|franc_cfa }}</span></div>
             </div>
             {% endif %}
         </div>

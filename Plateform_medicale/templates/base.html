@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>{% block title %}SantéSN — Plateforme Médicale{% endblock %}</title>
     <meta name="description" content="SantéSN : plateforme digitale de dématérialisation du tiers payant et de l'ordonnance médicale au Sénégal.">
     <meta property="og:site_name" content="SantéSN">
@@ -13,7 +13,7 @@
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="SantéSN — Plateforme Médicale">
     <meta name="twitter:description" content="Plateforme digitale de prise en charge médicale au Sénégal.">
-    <meta name="theme-color" content="#0e7c86">
+    <meta name="theme-color" content="#0e7c86" id="meta-theme-color">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -32,6 +32,8 @@
                         && window.matchMedia('(prefers-color-scheme: dark)').matches);
                 if (sombre) {
                     document.documentElement.setAttribute('data-theme', 'sombre');
+                    var metaTC = document.getElementById('meta-theme-color') || document.querySelector('meta[name="theme-color"]');
+                    if (metaTC) metaTC.setAttribute('content', '#08161b');
                 }
             } catch (e) { /* localStorage indisponible : on reste en clair */ }
         })();
@@ -117,10 +119,30 @@
             --font-body: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
+            /* Encoches et barres système des smartphones (Safe Area Insets) */
+            --sat: env(safe-area-inset-top, 0px);
+            --sar: env(safe-area-inset-right, 0px);
+            --sab: env(safe-area-inset-bottom, 0px);
+            --sal: env(safe-area-inset-left, 0px);
+
             /* Alias et compatibilité des jetons transversaux */
             --bordure: var(--border);
             --texte: var(--text);
             --ink: var(--text);
+            --text-main: var(--text);
+            --texte-principal: var(--text);
+            --text-muted: var(--muted);
+            --texte-secondaire: var(--muted);
+            --fond-general: var(--bg);
+            --surface-alt: var(--champ-bg);
+            --surface-carte: var(--surface);
+            --surface-muted: var(--primary-soft);
+            --primary-subtle: var(--primary-soft);
+            --danger-bg: #fee2e2;
+            --danger-border: #fecaca;
+            --verre-flou: blur(12px);
+            --verre-fond: rgba(255, 255, 255, 0.85);
+            --ombre-flottante: 0 12px 32px rgba(11, 32, 39, 0.12);
             --fond-doux: var(--primary-soft);
             --bg-hover: var(--table-hover);
             --masque-croix: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M12 3v18M3 12h18'/%3E%3C/svg%3E");
@@ -142,15 +164,15 @@
             /* Sur fond sombre, la variante "sure pour du texte" doit etre
                CLAIRE : l'inverse exact du theme clair. */
             --primary-strong: #6fd0c6;
-            /* Servait aux titres en navy ; en sombre, un titre doit etre clair. */
+            --primary-dark: #ecf2f5;
             --primary-light: #4fb8ae;
             --primary-accent: #4fb8ae;
             --primary-soft: #133b43;
             --accent: #e0824f;
             --border: #21404a;
             --champ-bg: #0d2027;
-            --text: #e2e9ea;
-            --muted: #9db2ba;
+            --text: #e2e8f0;
+            --muted: #94a3b8;
             --danger: #e5675e;
             --danger-strong: #f08a82;
             --danger-surface: #b5453c;
@@ -165,7 +187,7 @@
             --refus-fg: #f0a09a;
             --neutre-bg: #17323a;
             --neutre-fg: #a6bcc4;
-            --titre: #e9eff0;
+            --titre: #f8fafc;
             --topbar-bg: rgba(8, 22, 27, 0.88);
             --fiche-bg: linear-gradient(150deg, #14303a, #102830);
             --btn-a: #0e7c86;
@@ -176,6 +198,20 @@
             --bordure: var(--border);
             --texte: var(--text);
             --ink: var(--text);
+            --text-main: var(--text);
+            --texte-principal: var(--text);
+            --text-muted: var(--muted);
+            --texte-secondaire: var(--muted);
+            --fond-general: var(--bg);
+            --surface-alt: var(--champ-bg);
+            --surface-carte: var(--surface);
+            --surface-muted: var(--primary-soft);
+            --primary-subtle: var(--primary-soft);
+            --danger-bg: rgba(239, 68, 68, 0.15);
+            --danger-border: rgba(239, 68, 68, 0.3);
+            --verre-flou: blur(12px);
+            --verre-fond: rgba(16, 38, 45, 0.85);
+            --ombre-flottante: 0 12px 32px rgba(0, 0, 0, 0.4);
             --fond-doux: var(--primary-soft);
             --bg-hover: var(--table-hover);
         }
@@ -197,9 +233,9 @@
 
         body {
             margin: 0;
-            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            font-size: 14px;
-            line-height: 1.5;
+            font-family: var(--font-body, 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif);
+            font-size: clamp(14px, 0.92rem + 0.15vw, 15px);
+            line-height: 1.55;
             color: var(--text);
             background: var(--bg);
             min-height: 100vh;
@@ -692,9 +728,9 @@
             margin: 0 0 6px;
             color: var(--titre);
             font-family: var(--font-headings);
-            font-size: 22px;
-            font-weight: 700;
-            letter-spacing: -0.015em;
+            font-size: clamp(20px, 1.25rem + 0.8vw, 24px);
+            font-weight: 800;
+            letter-spacing: -0.02em;
             line-height: 1.25;
         }
 
@@ -702,9 +738,9 @@
             margin: 0 0 8px;
             color: var(--titre);
             font-family: var(--font-headings);
-            font-size: 16px;
+            font-size: clamp(16px, 1.05rem + 0.4vw, 18px);
             font-weight: 700;
-            letter-spacing: -0.01em;
+            letter-spacing: -0.015em;
             line-height: 1.3;
         }
 
@@ -712,9 +748,9 @@
             margin: 0 0 6px;
             color: var(--titre);
             font-family: var(--font-headings);
-            font-size: 14px;
+            font-size: clamp(14px, 0.95rem + 0.2vw, 15px);
             font-weight: 700;
-            letter-spacing: -0.005em;
+            letter-spacing: -0.01em;
             line-height: 1.35;
         }
 
@@ -3803,7 +3839,7 @@
             padding: 16px 18px;
             border: 1px solid var(--border);
             border-radius: 12px;
-            background: #f8fafc;
+            background: var(--surface);
             color: var(--text);
             text-decoration: none;
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -3811,7 +3847,7 @@
 
         .file-tuile:hover,
         .file-tuile:focus-visible {
-            background: #ffffff;
+            background: var(--surface);
             border-color: var(--primary);
             transform: translateY(-2px);
             box-shadow: 0 8px 24px -4px rgba(14, 124, 134, 0.12);
@@ -3861,6 +3897,21 @@
             background: #fff1f2;
         }
 
+        :root[data-theme="sombre"] .file-tuile.urgent {
+            border-color: rgba(225, 29, 72, 0.4);
+            background: rgba(225, 29, 72, 0.14);
+        }
+        :root[data-theme="sombre"] .file-tuile.urgent .file-entete,
+        :root[data-theme="sombre"] .file-tuile.urgent .file-nombre {
+            color: #fb7185;
+        }
+        :root[data-theme="sombre"] .file-tuile.urgent .file-libelle {
+            color: #f43f5e;
+        }
+        :root[data-theme="sombre"] .file-tuile.urgent .file-note {
+            color: #fda4af;
+        }
+
         .file-tuile.urgent .file-entete {
             color: #be123c;
         }
@@ -3890,7 +3941,7 @@
             font-weight: 600;
             color: var(--muted);
             padding: 14px 18px;
-            background: #f8fafc;
+            background: var(--champ-bg);
             border: 1px dashed var(--border);
             border-radius: 12px;
         }
@@ -5999,8 +6050,8 @@
             /* Menu Thème Mobile */
             .menu-theme-panneau {
                 position: fixed !important;
-                top: 62px !important;
-                right: 12px !important;
+                top: calc(62px + var(--sat, 0px)) !important;
+                right: max(12px, env(safe-area-inset-right)) !important;
                 width: 200px !important;
                 max-width: calc(100vw - 24px) !important;
                 background: var(--surface) !important;
@@ -6017,15 +6068,16 @@
 
             .menu-notifications-panneau {
                 position: fixed !important;
-                top: 62px !important;
-                left: 12px !important;
-                right: 12px !important;
+                top: calc(62px + var(--sat, 0px)) !important;
+                left: max(12px, env(safe-area-inset-left)) !important;
+                right: max(12px, env(safe-area-inset-right)) !important;
                 width: auto !important;
                 max-width: none !important;
                 max-height: calc(100vh - 80px) !important;
                 overflow-y: auto !important;
                 -webkit-overflow-scrolling: touch !important;
-                background: #ffffff !important;
+                background: var(--surface) !important;
+                color: var(--text) !important;
                 border: 1px solid var(--border) !important;
                 border-radius: 16px !important;
                 padding: 16px !important;
@@ -6062,11 +6114,13 @@
 
             .notif-titre {
                 font-size: 14px !important;
+                color: var(--titre) !important;
             }
 
             .notif-txt {
                 font-size: 13px !important;
                 line-height: 1.4 !important;
+                color: var(--text) !important;
             }
 
             .menu-notifications-pied {
@@ -6082,12 +6136,13 @@
 
             .menu-compte-panneau {
                 position: fixed !important;
-                top: 62px !important;
-                left: 12px !important;
-                right: 12px !important;
+                top: calc(62px + var(--sat, 0px)) !important;
+                left: max(12px, env(safe-area-inset-left)) !important;
+                right: max(12px, env(safe-area-inset-right)) !important;
                 width: auto !important;
                 max-width: none !important;
-                background: #ffffff !important;
+                background: var(--surface) !important;
+                color: var(--text) !important;
                 border: 1px solid var(--border) !important;
                 border-radius: 16px !important;
                 padding: 14px !important;
@@ -6095,12 +6150,21 @@
                 z-index: 99999 !important;
             }
 
+            .menu-compte-panneau a,
+            .menu-compte-panneau button {
+                color: var(--text) !important;
+            }
+
+            .menu-compte-panneau button[type="submit"] {
+                color: var(--danger) !important;
+            }
+
             /* 4. Toasts / Messages Flash */
             .toasts {
                 position: fixed !important;
-                top: 12px !important;
-                left: 12px !important;
-                right: 12px !important;
+                top: max(12px, env(safe-area-inset-top)) !important;
+                left: max(12px, env(safe-area-inset-left)) !important;
+                right: max(12px, env(safe-area-inset-right)) !important;
                 max-width: none !important;
                 width: auto !important;
                 z-index: 999999 !important;
@@ -7488,6 +7552,10 @@
                 if (sombre) {
                     document.documentElement.setAttribute('data-theme', 'sombre');
                 }
+                var metaTC = document.getElementById('meta-theme-color') || document.querySelector('meta[name="theme-color"]');
+                if (metaTC) {
+                    metaTC.setAttribute('content', sombre ? '#08161b' : '#0e7c86');
+                }
                 boutons.forEach(function (b) {
                     b.setAttribute('aria-checked',
                         b.dataset.themeChoix === choix ? 'true' : 'false');
@@ -7507,6 +7575,18 @@
             var actuel = 'systeme';
             try { actuel = localStorage.getItem('theme-santesn') || 'systeme'; } catch (e) {}
             appliquer(actuel);
+
+            // Écoute dynamique du changement de mode sombre/clair de l'appareil (téléphone, tablette, OS)
+            var mqSombre = window.matchMedia('(prefers-color-scheme: dark)');
+            if (mqSombre && mqSombre.addEventListener) {
+                mqSombre.addEventListener('change', function () {
+                    var courant = 'systeme';
+                    try { courant = localStorage.getItem('theme-santesn') || 'systeme'; } catch (e) {}
+                    if (courant === 'systeme') {
+                        appliquer('systeme');
+                    }
+                });
+            }
 
             boutons.forEach(function (bouton) {
                 bouton.addEventListener('click', function () {
@@ -7708,7 +7788,7 @@
 
     {% if current_role == "ASSURE" %}
     {# Widget Flottant Assistant SantéSN - Design Institutionnel #}
-    <div id="widget-assistant-sn" style="position: fixed; bottom: 24px; right: 24px; z-index: 9999; font-family: inherit;">
+    <div id="widget-assistant-sn" style="position: fixed; bottom: calc(20px + var(--sab, 0px)); right: max(16px, env(safe-area-inset-right)); z-index: 9999; font-family: inherit;">
         {# Panneau de discussion flottant #}
         <div id="panneau-flottant-assistant" style="display: none; flex-direction: column; width: 390px; max-width: calc(100vw - 32px); height: 540px; max-height: calc(100vh - 120px); background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 16px 48px rgba(15, 23, 42, 0.18); margin-bottom: 12px; overflow: hidden; animation: popInAssistant 0.22s cubic-bezier(0.16, 1, 0.3, 1);">
             {# En-tête du widget #}

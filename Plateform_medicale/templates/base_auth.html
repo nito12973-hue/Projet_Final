@@ -2,10 +2,25 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>{% block title %}SantéSN{% endblock %}</title>
-    <meta name="theme-color" content="#0e7c86">
-    <meta name="color-scheme" content="light">
+    <meta name="theme-color" content="#0e7c86" id="meta-theme-color">
+    <meta name="color-scheme" content="light dark">
+    <script>
+        (function () {
+            try {
+                var choix = localStorage.getItem('theme-santesn') || 'systeme';
+                var sombre = choix === 'sombre'
+                    || (choix === 'systeme'
+                        && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                if (sombre) {
+                    document.documentElement.setAttribute('data-theme', 'sombre');
+                    var metaTC = document.getElementById('meta-theme-color') || document.querySelector('meta[name="theme-color"]');
+                    if (metaTC) metaTC.setAttribute('content', '#08161b');
+                }
+            } catch (e) {}
+        })();
+    </script>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect x='18' y='6' width='12' height='36' rx='4' fill='%230e7c86'/%3E%3Crect x='6' y='18' width='36' height='12' rx='4' fill='%230e7c86'/%3E%3Cpath d='M6 24H14L17 16L21 32L25 19L27.5 24H42' fill='none' stroke='%23e0824f' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,6 +51,23 @@
             --danger-border: #fecaca;
         }
 
+        :root[data-theme="sombre"] {
+            --primary-dark: #f8fafc;
+            --primary: #2a9aa4;
+            --primary-strong: #6fd0c6;
+            --primary-soft: #133b43;
+            --primary-light: #4fb8ae;
+            --accent: #f97316;
+            --texte: #e2e8f0;
+            --muted: #94a3b8;
+            --surface: #10262d;
+            --border: #21404a;
+            --border-hover: #2d5563;
+            --danger: #f87171;
+            --danger-bg: rgba(239, 68, 68, 0.15);
+            --danger-border: rgba(239, 68, 68, 0.3);
+        }
+
         * { box-sizing: border-box; }
 
         body {
@@ -48,7 +80,22 @@
             color: var(--texte);
             background: #f8fafc;
             background-image: radial-gradient(circle at 50% 0%, #edf7f6 0%, #f8fafc 70%);
-            padding: 32px 16px;
+            padding: max(24px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+        }
+
+        :root[data-theme="sombre"] body {
+            background: #08161b;
+            background-image: radial-gradient(circle at 50% 0%, #0d2830 0%, #08161b 70%);
+            color: var(--texte);
+        }
+
+        :root[data-theme="sombre"] .auth-brand-title {
+            color: #ffffff;
+        }
+
+        :root[data-theme="sombre"] .auth-brand-icon {
+            background: #133b43;
+            border-color: rgba(79, 184, 174, 0.3);
         }
 
         ::selection {
@@ -301,7 +348,7 @@
             border-radius: 11px;
             font: inherit;
             font-size: 14.5px;
-            background: #ffffff;
+            background: var(--surface);
             color: var(--texte);
             box-sizing: border-box;
             transition: border-color 0.18s ease, box-shadow 0.18s ease;
