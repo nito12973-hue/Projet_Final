@@ -13244,8 +13244,21 @@ class WhatsAppBotAndWebhookTests(TestCase):
         self.assertEqual(resp_confirm.status_code, 200)
         self.assertContains(resp_confirm, "Entreprise Test Suppression")
 
-        # Suppression POST
-        resp_del = self.client.post(reverse("supprimer_organisme", args=[org_vide.pk]), follow=True)
+        # 1a. Suppression avec mauvais mot de passe : rejetée
+        resp_mauvais_pass = self.client.post(
+            reverse("supprimer_organisme", args=[org_vide.pk]),
+            {"mot_de_passe_admin": "mauvais_pass"},
+            follow=True,
+        )
+        self.assertEqual(resp_mauvais_pass.status_code, 200)
+        self.assertTrue(Organisme.objects.filter(pk=org_vide.pk).exists())
+
+        # 1b. Suppression avec bon mot de passe : succès
+        resp_del = self.client.post(
+            reverse("supprimer_organisme", args=[org_vide.pk]),
+            {"mot_de_passe_admin": PASSWORD},
+            follow=True,
+        )
         self.assertEqual(resp_del.status_code, 200)
         self.assertFalse(Organisme.objects.filter(pk=org_vide.pk).exists())
 
@@ -13260,9 +13273,44 @@ class WhatsAppBotAndWebhookTests(TestCase):
             role=User.Role.GESTIONNAIRE,
             organisme=org_avec_user,
         )
-        resp_bloque = self.client.post(reverse("supprimer_organisme", args=[org_avec_user.pk]), follow=True)
+        resp_bloque = self.client.post(
+            reverse("supprimer_organisme", args=[org_avec_user.pk]),
+            {"mot_de_passe_admin": PASSWORD},
+            follow=True,
+        )
         self.assertEqual(resp_bloque.status_code, 200)
         self.assertTrue(Organisme.objects.filter(pk=org_avec_user.pk).exists())
+
+        # 3. Modification d'une entreprise exige le mot de passe administrateur
+        resp_mod_sans_pass = self.client.post(
+            reverse("modifier_organisme", args=[org_avec_user.pk]),
+            {
+                "nom": "Nouveau Nom",
+                "code": "AVEC-COMPTES",
+                "type_organisme": Organisme.TypeOrganisme.ENTREPRISE,
+                "actif": True,
+                "mot_de_passe_admin": "faux_pass",
+            },
+            follow=True,
+        )
+        self.assertContains(resp_mod_sans_pass, "Mot de passe administrateur incorrect.")
+        org_avec_user.refresh_from_db()
+        self.assertEqual(org_avec_user.nom, "Entreprise Avec Comptes")
+
+        resp_mod_bon_pass = self.client.post(
+            reverse("modifier_organisme", args=[org_avec_user.pk]),
+            {
+                "nom": "Nouveau Nom Reussi",
+                "code": "AVEC-COMPTES",
+                "type_organisme": Organisme.TypeOrganisme.ENTREPRISE,
+                "actif": True,
+                "mot_de_passe_admin": PASSWORD,
+            },
+            follow=True,
+        )
+        self.assertEqual(resp_mod_bon_pass.status_code, 200)
+        org_avec_user.refresh_from_db()
+        self.assertEqual(org_avec_user.nom, "Nouveau Nom Reussi")
 
 
 
