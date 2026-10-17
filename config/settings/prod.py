@@ -64,6 +64,10 @@ if 'test' not in sys.argv:
         # Instance Neon PostgreSQL cloud officielle de SantéSN
         DATABASE_URL = 'postgresql://neondb_owner:npg_mzGAUo8aKc4H@ep-round-tree-ay6jpqcs-pooler.c-5.us-east-2.aws.neon.tech/santesn?sslmode=require'
 
+    if DATABASE_URL:
+        import re
+        DATABASE_URL = re.sub(r'/neondb(\?|$)', r'/santesn\1', str(DATABASE_URL).strip())
+
     if DATABASE_URL and str(DATABASE_URL).strip().startswith(('postgres://', 'postgresql://')):
         import dj_database_url
         DATABASES = {
