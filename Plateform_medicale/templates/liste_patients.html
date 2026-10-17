@@ -10,6 +10,7 @@
         <p class="subtitle">Liste des assurés principaux et de leurs ayants droit.</p>
     </div>
     <div class="actions">
+        <a class="button btn btn-expand" href="{% url 'importer_utilisateurs_excel' %}?role=ASSURE" title="Importer des assurés depuis Excel" aria-label="Importer des assurés">{% icone "upload" %} <span class="expand-text">Importer des assurés</span></a>
         <a class="button btn btn-expand" href="{% url 'liste_plans_couverture' %}" title="Consulter les plans de couverture" aria-label="Plans de couverture">{% icone "clipboard-list" %} <span class="expand-text">Plans de couverture</span></a>
         <a class="button primary btn-expand primary" href="{% url 'ajouter_patient' %}" title="Ajouter un nouvel assuré" aria-label="Nouvel assuré">{% icone "plus" %} <span class="expand-text">Nouvel assuré</span></a>
     </div>

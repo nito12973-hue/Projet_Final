@@ -9,7 +9,10 @@
         <h1>Pharmaciens</h1>
         <p class="subtitle">Creez les comptes pharmaciens ici et affectez-les a une pharmacie partenaire.</p>
     </div>
-    <a class="button primary btn-expand primary" href="{% url 'ajouter_pharmacien' %}" title="Créer un nouveau compte pharmacien">{% icone "plus" %} <span class="expand-text">Créer un pharmacien</span> &rarr;</a>
+    <div class="actions">
+        <a class="button btn btn-expand" href="{% url 'importer_utilisateurs_excel' %}?role=PHARMACIEN" title="Importer des pharmaciens depuis Excel" aria-label="Importer des pharmaciens">{% icone "upload" %} <span class="expand-text">Importer des pharmaciens</span></a>
+        <a class="button primary btn-expand primary" href="{% url 'ajouter_pharmacien' %}" title="Créer un nouveau compte pharmacien">{% icone "plus" %} <span class="expand-text">Créer un pharmacien</span> &rarr;</a>
+    </div>
 </section>
 
 {% if pharmaciens %}

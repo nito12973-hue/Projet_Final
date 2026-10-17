@@ -17,6 +17,7 @@ from django.db import transaction
 from django.db.models import Count, ProtectedError, Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST
@@ -300,7 +301,7 @@ for _valeur_role, _label_role in User.Role.choices:
     _ROLES_PAR_LIBELLE_IMPORT[_normaliser_texte_import(_label_role)] = _valeur_role
 
 
-def _detecter_mapping_colonnes(entetes_brutes):
+def _detecter_mapping_colonnes(entetes_brutes, role_par_defaut=None):
     """
     Associe chaque champ à l'index de sa colonne de manière intelligente :
     insensible à la casse, aux accents, à l'ordre des colonnes et aux alias courants.
@@ -326,15 +327,19 @@ def _detecter_mapping_colonnes(entetes_brutes):
             "date_naissance": 5, "specialite": 6, "prestataire": 7, "plan_couverture": 8,
         }
 
+    champs_obligatoires = ["email", "prenom", "nom"]
+    if not role_par_defaut:
+        champs_obligatoires.append("role")
+
     colonnes_manquantes = []
-    for obligatoire in ["email", "prenom", "nom", "role"]:
+    for obligatoire in champs_obligatoires:
         if obligatoire not in mapping:
             colonnes_manquantes.append(obligatoire.capitalize())
 
     return mapping, colonnes_manquantes
 
 
-def _analyser_ligne_import_utilisateurs(numero_ligne, valeurs, mapping=None):
+def _analyser_ligne_import_utilisateurs(numero_ligne, valeurs, mapping=None, role_par_defaut=None):
     """
     Valide une ligne du fichier d'import (voir COLONNES_IMPORT_UTILISATEURS).
 
@@ -369,17 +374,20 @@ def _analyser_ligne_import_utilisateurs(numero_ligne, valeurs, mapping=None):
     if not email or not prenom or not nom:
         return None, f"Ligne {numero_ligne} : email, prenom et nom sont obligatoires."
 
-    role = _ROLES_PAR_LIBELLE_IMPORT.get(_normaliser_texte_import(role_brut))
+    role = _ROLES_PAR_LIBELLE_IMPORT.get(_normaliser_texte_import(role_brut)) if role_brut else None
+    if not role and role_par_defaut:
+        role = role_par_defaut
+
     if not role:
         return None, (
-            f"Ligne {numero_ligne} : role '{role_brut}' inconnu "
-            "(attendu : Assure, Medecin ou Pharmacien)."
+            f"Ligne {numero_ligne} : rôle '{role_brut}' inconnu "
+            "(attendu : Assuré, Médecin ou Pharmacien)."
         )
     if role in (User.Role.ADMIN, User.Role.GESTIONNAIRE):
-        # Securite : un import ne doit jamais creer un compte privilegie.
+        # Sécurité : un import ne doit jamais créer un compte privilégié.
         return None, (
-            f"Ligne {numero_ligne} : le role '{role_brut}' ne peut pas etre cree par import "
-            "(attendu : Assure, Medecin ou Pharmacien)."
+            f"Ligne {numero_ligne} : le rôle '{role_brut}' ne peut pas être créé par import "
+            "(attendu : Assuré, Médecin ou Pharmacien)."
         )
 
     if telephone:
@@ -440,8 +448,9 @@ def _analyser_ligne_import_utilisateurs(numero_ligne, valeurs, mapping=None):
 
 
 def _creer_comptes_import_utilisateurs(lignes_validees, request=None):
-    """Cree en une transaction tous les comptes (et fiches metier) valides par l'import et genere l'onboarding."""
+    """Crée en une transaction tous les comptes (et fiches métier) validés par l'import et génère l'onboarding."""
     comptes_crees = []
+    organisme_connecte = getattr(request.user, "organisme", None) if request and hasattr(request, "user") else None
     with transaction.atomic():
         for donnees in lignes_validees:
             utilisateur = User.objects.create_user(
@@ -450,6 +459,7 @@ def _creer_comptes_import_utilisateurs(lignes_validees, request=None):
                 first_name=donnees["prenom"],
                 last_name=donnees["nom"],
                 phone_number=donnees["telephone"],
+                organisme=organisme_connecte,
             )
             if donnees["role"] == User.Role.MEDECIN:
                 Medecin.objects.create(
@@ -499,17 +509,35 @@ def _creer_comptes_import_utilisateurs(lignes_validees, request=None):
 @role_required(User.Role.GESTIONNAIRE)
 def importer_utilisateurs_excel(request):
     """
-    Creation en masse de comptes (Assure principal / Medecin / Pharmacien /
-    Administrateur) depuis un fichier Excel : voir COLONNES_IMPORT_UTILISATEURS.
-
-    Regle "tout ou rien" : la moindre ligne invalide bloque tout l'import
-    (aucun compte cree), pour eviter un import partiel difficile a auditer.
+    Création en masse de comptes (Assuré principal / Médecin / Pharmacien)
+    depuis un fichier Excel : supporte l'import général ou ciblé par rôle.
     """
     erreurs = []
+    role_filtre = (request.GET.get("role") or request.POST.get("role") or "").strip().upper()
+    role_par_defaut = role_filtre if role_filtre in (User.Role.ASSURE, User.Role.MEDECIN, User.Role.PHARMACIEN) else None
+
+    # Contextualiser l'interface et les redirections selon la section
+    if role_filtre == User.Role.ASSURE:
+        titre_page = "Importer des assurés depuis Excel"
+        sous_titre_page = "Créez plusieurs dossiers et comptes d'assurés en une seule fois depuis un fichier Excel."
+        url_retour = reverse("liste_patients")
+    elif role_filtre == User.Role.MEDECIN:
+        titre_page = "Importer des médecins depuis Excel"
+        sous_titre_page = "Inscrivez plusieurs praticiens de santé au réseau médical en une seule fois."
+        url_retour = reverse("liste_medecins")
+    elif role_filtre == User.Role.PHARMACIEN:
+        titre_page = "Importer des pharmaciens depuis Excel"
+        sous_titre_page = "Créez plusieurs comptes pharmaciens rattachés aux officines conventionnées."
+        url_retour = reverse("liste_pharmaciens")
+    else:
+        titre_page = "Importer des utilisateurs depuis Excel"
+        sous_titre_page = "Créez plusieurs comptes (Assuré, Médecin, Pharmacien) en une seule fois."
+        url_retour = reverse("liste_utilisateurs")
+
     if request.method == "POST":
         fichier = request.FILES.get("fichier")
         if not fichier:
-            erreurs.append("Choisissez un fichier Excel (.xlsx) a importer.")
+            erreurs.append("Choisissez un fichier Excel (.xlsx) à importer.")
         elif not getattr(fichier, "name", "").lower().endswith(".xlsx"):
             erreurs.append("Format non pris en charge : seul le format Excel (.xlsx) est accepté.")
         elif getattr(fichier, "size", 0) > 5 * 1024 * 1024:
@@ -519,17 +547,17 @@ def importer_utilisateurs_excel(request):
                 classeur = openpyxl.load_workbook(fichier, data_only=True)
             except Exception:
                 erreurs.append(
-                    "Fichier illisible : verifiez qu'il s'agit bien d'un fichier Excel (.xlsx) valide."
+                    "Fichier illisible : vérifiez qu'il s'agit bien d'un fichier Excel (.xlsx) valide."
                 )
             else:
                 feuille = classeur.active
                 entetes = next(feuille.iter_rows(min_row=1, max_row=1, values_only=True), ())
-                mapping, colonnes_manquantes = _detecter_mapping_colonnes(entetes)
+                mapping, colonnes_manquantes = _detecter_mapping_colonnes(entetes, role_par_defaut=role_par_defaut)
 
                 if colonnes_manquantes:
                     erreurs.append(
                         f"En-têtes de colonnes invalides ou manquantes : {', '.join(colonnes_manquantes)}. "
-                        "Vérifiez que les colonnes indispensables (Email, Prénom, Nom, Rôle) sont présentes, ou téléchargez le modèle officiel ci-dessous."
+                        "Vérifiez que les colonnes indispensables (Email, Prénom, Nom) sont présentes, ou téléchargez le modèle officiel ci-dessous."
                     )
                 else:
                     lignes_brutes = [
@@ -540,12 +568,14 @@ def importer_utilisateurs_excel(request):
                         if valeurs and not all(valeur in (None, "") for valeur in valeurs)
                     ]
                     if not lignes_brutes:
-                        erreurs.append("Le fichier ne contient aucune ligne a importer.")
+                        erreurs.append("Le fichier ne contient aucune ligne à importer.")
                     else:
                         donnees_valides = []
                         emails_vus = set()
                         for numero_ligne, valeurs in lignes_brutes:
-                            donnees, erreur = _analyser_ligne_import_utilisateurs(numero_ligne, valeurs, mapping=mapping)
+                            donnees, erreur = _analyser_ligne_import_utilisateurs(
+                                numero_ligne, valeurs, mapping=mapping, role_par_defaut=role_par_defaut
+                            )
                             if erreur:
                                 erreurs.append(erreur)
                                 continue
@@ -557,8 +587,7 @@ def importer_utilisateurs_excel(request):
                                 continue
                             if User.objects.filter(email__iexact=donnees["email"]).exists():
                                 erreurs.append(
-                                    f"Ligne {numero_ligne} : email '{donnees['email']}' "
-                                    "deja utilise par un compte existant."
+                                    f"Ligne {numero_ligne} : email '{donnees['email']}' déjà utilisé par un compte existant."
                                 )
                                 continue
                             emails_vus.add(email_normalise)
@@ -571,9 +600,10 @@ def importer_utilisateurs_excel(request):
                             total_whatsapp = sum(1 for r in resultats if r["whatsapp_envoye"])
                             total_email = sum(1 for r in resultats if r["email_envoye"])
 
+                            libelle_journal = f"Import {titre_page.lower()}"
                             journaliser(
                                 request, JournalActivite.Action.IMPORT,
-                                "Import d'utilisateurs",
+                                libelle_journal,
                                 f"{total_crees} compte(s) créé(s) ({total_whatsapp} WhatsApp, {total_email} Email)",
                             )
                             return render(
@@ -584,34 +614,80 @@ def importer_utilisateurs_excel(request):
                                     "total_crees": total_crees,
                                     "total_whatsapp": total_whatsapp,
                                     "total_email": total_email,
+                                    "titre_page": titre_page,
+                                    "url_retour": url_retour,
+                                    "role_filtre": role_filtre,
                                 },
                             )
 
-    return render(request, "importer_utilisateurs.html", {"erreurs": erreurs})
+    return render(
+        request,
+        "importer_utilisateurs.html",
+        {
+            "erreurs": erreurs,
+            "titre_page": titre_page,
+            "sous_titre_page": sous_titre_page,
+            "role_filtre": role_filtre,
+            "url_retour": url_retour,
+        },
+    )
 
 
 @role_required(User.Role.GESTIONNAIRE)
 def telecharger_modele_import_utilisateurs(request):
+    """Télécharge le gabarit Excel officiel d'importation adapté au rôle ou général."""
+    role_param = (request.GET.get("role") or "").strip().upper()
     classeur = openpyxl.Workbook()
     feuille = classeur.active
-    feuille.title = "Import utilisateurs"
-    feuille.append(COLONNES_IMPORT_UTILISATEURS)
-    feuille.append([
-        "email@domaine.com", "Prenom", "Nom", "770000000",
-        "Assure / Medecin / Pharmacien / Administrateur",
-        "JJ/MM/AAAA (uniquement pour un Assure)",
-        "Ex: Medecine generale (uniquement pour un Medecin)",
-        "Nom exact d'un prestataire existant (optionnel)",
-        "Nom exact d'un plan de couverture existant (optionnel)",
-    ])
 
-    for index, nom_colonne in enumerate(COLONNES_IMPORT_UTILISATEURS, start=1):
-        feuille.column_dimensions[get_column_letter(index)].width = max(len(nom_colonne), 20)
+    if role_param == User.Role.ASSURE:
+        feuille.title = "Import Assures"
+        colonnes = ["Email", "Prenom", "Nom", "Telephone", "Date de naissance", "Plan de couverture"]
+        feuille.append(colonnes)
+        feuille.append([
+            "fatou.diop@entreprise.sn", "Fatou", "Diop", "771234567",
+            "15/05/1990", "Nom exact du plan de couverture (optionnel)"
+        ])
+        nom_fichier = "modele_import_assures.xlsx"
+    elif role_param == User.Role.MEDECIN:
+        feuille.title = "Import Medecins"
+        colonnes = ["Email", "Prenom", "Nom", "Telephone", "Specialite", "Prestataire"]
+        feuille.append(colonnes)
+        feuille.append([
+            "dr.diouf@hopital.sn", "Moussa", "Diouf", "779876543",
+            "Cardiologie", "Nom exact de l'établissement rattaché (optionnel)"
+        ])
+        nom_fichier = "modele_import_medecins.xlsx"
+    elif role_param == User.Role.PHARMACIEN:
+        feuille.title = "Import Pharmaciens"
+        colonnes = ["Email", "Prenom", "Nom", "Telephone", "Prestataire"]
+        feuille.append(colonnes)
+        feuille.append([
+            "pharma.fann@officine.sn", "Awa", "Sow", "776543210",
+            "Nom exact de la pharmacie rattachée (optionnel)"
+        ])
+        nom_fichier = "modele_import_pharmaciens.xlsx"
+    else:
+        feuille.title = "Import utilisateurs"
+        colonnes = COLONNES_IMPORT_UTILISATEURS
+        feuille.append(colonnes)
+        feuille.append([
+            "email@domaine.com", "Prenom", "Nom", "770000000",
+            "Assure / Medecin / Pharmacien",
+            "JJ/MM/AAAA (uniquement pour un Assure)",
+            "Ex: Medecine generale (uniquement pour un Medecin)",
+            "Nom exact d'un prestataire existant (optionnel)",
+            "Nom exact d'un plan de couverture existant (optionnel)",
+        ])
+        nom_fichier = "modele_import_utilisateurs.xlsx"
+
+    for index, nom_colonne in enumerate(colonnes, start=1):
+        feuille.column_dimensions[get_column_letter(index)].width = max(len(nom_colonne), 22)
 
     reponse = HttpResponse(
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-    reponse["Content-Disposition"] = 'attachment; filename="modele_import_utilisateurs.xlsx"'
+    reponse["Content-Disposition"] = f'attachment; filename="{nom_fichier}"'
     classeur.save(reponse)
     return reponse
 

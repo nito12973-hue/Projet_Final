@@ -3414,6 +3414,77 @@ class ImportUtilisateursExcelTests(TestCase):
         response = self.client.post(reverse('importer_utilisateurs_excel'), {'fichier': fichier})
         self.assertFalse(User.objects.filter(email='x@ex.sn').exists())
 
+    def test_modeles_specialises_par_role(self):
+        # Assuré
+        resp_assure = self.client.get(reverse('telecharger_modele_import_utilisateurs'), {'role': 'ASSURE'})
+        self.assertEqual(resp_assure.status_code, 200)
+        self.assertIn('modele_import_assures.xlsx', resp_assure['Content-Disposition'])
+        wb_assure = openpyxl.load_workbook(io.BytesIO(resp_assure.content))
+        self.assertEqual(
+            [c.value for c in next(wb_assure.active.iter_rows(min_row=1, max_row=1))],
+            ['Email', 'Prenom', 'Nom', 'Telephone', 'Date de naissance', 'Plan de couverture']
+        )
+
+        # Médecin
+        resp_med = self.client.get(reverse('telecharger_modele_import_utilisateurs'), {'role': 'MEDECIN'})
+        self.assertEqual(resp_med.status_code, 200)
+        self.assertIn('modele_import_medecins.xlsx', resp_med['Content-Disposition'])
+        wb_med = openpyxl.load_workbook(io.BytesIO(resp_med.content))
+        self.assertEqual(
+            [c.value for c in next(wb_med.active.iter_rows(min_row=1, max_row=1))],
+            ['Email', 'Prenom', 'Nom', 'Telephone', 'Specialite', 'Prestataire']
+        )
+
+        # Pharmacien
+        resp_pharm = self.client.get(reverse('telecharger_modele_import_utilisateurs'), {'role': 'PHARMACIEN'})
+        self.assertEqual(resp_pharm.status_code, 200)
+        self.assertIn('modele_import_pharmaciens.xlsx', resp_pharm['Content-Disposition'])
+        wb_pharm = openpyxl.load_workbook(io.BytesIO(resp_pharm.content))
+        self.assertEqual(
+            [c.value for c in next(wb_pharm.active.iter_rows(min_row=1, max_row=1))],
+            ['Email', 'Prenom', 'Nom', 'Telephone', 'Prestataire']
+        )
+
+    def test_import_specifique_assure_sans_colonne_role(self):
+        plan = PlanCouverture.objects.create(nom='Formule Or', taux_couverture=Decimal('90.00'))
+        entetes_assure = ['Email', 'Prenom', 'Nom', 'Telephone', 'Date de naissance', 'Plan de couverture']
+        lignes = [
+            ['assure.spec@ex.sn', 'Moussa', 'Sow', '771234567', '12/04/1988', 'Formule Or']
+        ]
+        fichier = creer_fichier_import_utilisateurs(lignes, entetes=entetes_assure)
+        response = self.client.post(
+            reverse('importer_utilisateurs_excel'),
+            {'fichier': fichier, 'role': 'ASSURE'}
+        )
+        self.assertEqual(response.status_code, 200)
+        utilisateur = User.objects.get(email='assure.spec@ex.sn')
+        self.assertEqual(utilisateur.role, User.Role.ASSURE)
+        self.assertEqual(utilisateur.first_name, 'Moussa')
+        self.assertEqual(utilisateur.last_name, 'Sow')
+        self.assertEqual(utilisateur.phone_number, '771234567')
+        self.assertEqual(utilisateur.organisme, self.organisme)
+        patient = Patient.objects.get(user=utilisateur)
+        self.assertEqual(patient.telephone, '771234567')
+        self.assertEqual(patient.plan_couverture, plan)
+
+    def test_import_specifique_medecin_sans_colonne_role(self):
+        prestataire = Prestataire.objects.create(nom='Clinique Pasteur', type_prestataire='CLINIQUE')
+        entetes_medecin = ['Email', 'Prenom', 'Nom', 'Telephone', 'Specialite', 'Prestataire']
+        lignes = [
+            ['dr.kone@ex.sn', 'Ibrahima', 'Kone', '781234567', 'Pediatrie', 'Clinique Pasteur']
+        ]
+        fichier = creer_fichier_import_utilisateurs(lignes, entetes=entetes_medecin)
+        response = self.client.post(
+            reverse('importer_utilisateurs_excel'),
+            {'fichier': fichier, 'role': 'MEDECIN'}
+        )
+        self.assertEqual(response.status_code, 200)
+        utilisateur = User.objects.get(email='dr.kone@ex.sn')
+        self.assertEqual(utilisateur.role, User.Role.MEDECIN)
+        medecin = Medecin.objects.get(user=utilisateur)
+        self.assertEqual(medecin.specialite, 'Pediatrie')
+        self.assertEqual(medecin.prestataire, prestataire)
+
 
 class PrestatairesProchesTests(TestCase):
     def setUp(self):
