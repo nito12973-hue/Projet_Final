@@ -1,12 +1,16 @@
 """
 Service de Chatbot et Webhook WhatsApp pour SantéSN.
 
-Permet aux assurés d'interagir directement via l'application WhatsApp pour :
-1. Consulter leurs droits de couverture et leur plafond annuel restant
-2. Rechercher un médecin ou une pharmacie conventionnée avec tri par proximité
-3. Prendre un rendez-vous médical directement en envoyant un message WhatsApp
-4. Obtenir les numéros d'urgence médicale au Sénégal
-5. Lier instantanément un compte assuré via son numéro de carte ou son email
+Permet aux assurés d'interagir directement via l'application WhatsApp avec un bot
+hautement adapté à chaque demande :
+1. Consultation personnalisée des droits et du solde restant
+2. Recherche ciblée par spécialité médicale (cardiologue, pédiatre, ophtalmologue...)
+3. Recherche ciblée par praticien, par ville ou par géolocalisation GPS
+4. Recherche distincte de pharmacies conventionnées et d'établissements de soins
+5. Consultation de ses prochains rendez-vous programmés
+6. Prise de rendez-vous directe en langage naturel ou étape par étape
+7. Numéros d'urgence médicale nationale
+8. Association instantanée de compte via numéro de carte ou email
 """
 
 import datetime
@@ -32,6 +36,54 @@ JOURS_SEMAINE = {
     "samedi": 5,
     "dimanche": 6,
 }
+
+SPECIALITES_CONNUES = {
+    "cardio": "Cardiologie",
+    "cardiologue": "Cardiologie",
+    "cardiologie": "Cardiologie",
+    "coeur": "Cardiologie",
+    "cœur": "Cardiologie",
+    "pediatre": "Pédiatrie",
+    "pédiatre": "Pédiatrie",
+    "pediatrie": "Pédiatrie",
+    "pédiatrie": "Pédiatrie",
+    "enfant": "Pédiatrie",
+    "enfants": "Pédiatrie",
+    "ophtalmo": "Ophtalmologie",
+    "ophtalmologue": "Ophtalmologie",
+    "ophtalmologie": "Ophtalmologie",
+    "yeux": "Ophtalmologie",
+    "oeil": "Ophtalmologie",
+    "vision": "Ophtalmologie",
+    "gyneco": "Gynécologie Obstétrique",
+    "gynéco": "Gynécologie Obstétrique",
+    "gynecologue": "Gynécologie Obstétrique",
+    "gynécologue": "Gynécologie Obstétrique",
+    "gynecologie": "Gynécologie Obstétrique",
+    "maternite": "Gynécologie Obstétrique",
+    "maternité": "Gynécologie Obstétrique",
+    "grossesse": "Gynécologie Obstétrique",
+    "generaliste": "Médecine Générale",
+    "généraliste": "Médecine Générale",
+    "generale": "Médecine Générale",
+    "générale": "Médecine Générale",
+    "interne": "Médecine Interne",
+    "interniste": "Médecine Interne",
+    "dentiste": "Dentisterie",
+    "dent": "Dentisterie",
+    "dents": "Dentisterie",
+    "dentaire": "Dentisterie",
+    "dermato": "Dermatologie",
+    "dermatologue": "Dermatologie",
+    "dermatologie": "Dermatologie",
+    "peau": "Dermatologie",
+}
+
+VILLES_SENEGAL = [
+    "Dakar", "Thiès", "Thies", "Mbour", "Saly", "Touba", "Saint-Louis",
+    "Ziguinchor", "Kaolack", "Diourbel", "Fatick", "Kolda", "Tambacounda",
+    "Rufisque", "Pikine", "Guédiawaye", "Guediawaye", "Plateau", "Almadies"
+]
 
 
 def normaliser_numero_telephone(telephone):
@@ -147,15 +199,64 @@ def tenter_liaison_automatique(expediteur_telephone, texte):
     return patient, msg
 
 
-def lister_medecins_disponibles(patient=None, ville=None, coords_gps=None, limite=6):
+def detecter_specialite(texte):
+    """Extrait une spécialité médicale mentionnée dans le message."""
+    if not texte:
+        return None
+    texte_lower = texte.lower()
+    for mot_cle, spe in SPECIALITES_CONNUES.items():
+        if re.search(rf"\b{re.escape(mot_cle)}\b", texte_lower):
+            return spe
+    return None
+
+
+def detecter_ville(texte):
+    """Extrait une ville sénégalaise mentionnée dans le message."""
+    if not texte:
+        return None
+    texte_lower = texte.lower()
+    for v in VILLES_SENEGAL:
+        if re.search(rf"\b{re.escape(v.lower())}\b", texte_lower):
+            if v.lower() == "thies":
+                return "Thiès"
+            if v.lower() == "guediawaye":
+                return "Guédiawaye"
+            return v
+    return None
+
+
+def detecter_nom_medecin(texte):
+    """Extrait le nom d'un médecin mentionné dans le message."""
+    if not texte:
+        return None
+    match = re.search(r"(?:dr|docteur)\.?\s+([a-zA-Zà-ÿ-]+)", texte, re.IGNORECASE)
+    if match:
+        nom_cherche = match.group(1).strip()
+        if nom_cherche.lower() not in ("rdv", "menu", "aide", "urgence", "partenaire"):
+            return nom_cherche
+    return None
+
+
+def lister_medecins_disponibles(patient=None, ville=None, coords_gps=None, specialite=None, nom_medecin=None, limite=6):
     """
-    Retourne la liste des médecins partenaires en privilégiant la proximité géographique :
-    1. Si coordonnées GPS fournies (partage de position WhatsApp) : tri par distance (km)
-    2. Si une ville est précisée (ex: "RDV Thiès", "RDV Dakar") : filtre par cette ville
-    3. Si patient identifié : privilégie sa ville/région d'adresse
+    Retourne la liste des médecins partenaires en appliquant les critères demandés :
+    1. Spécialité médicale (ex: Cardiologie, Pédiatrie) si précisée
+    2. Nom du médecin si précisé
+    3. Coordonnées GPS (tri par km réel) si fournies
+    4. Ville demandée ou ville de résidence du patient
     """
     qs = Medecin.objects.select_related("prestataire")
     qs = qs.filter(Q(user__is_active=True) | Q(user__isnull=True))
+
+    if specialite:
+        qs_spe = qs.filter(specialite__icontains=specialite)
+        if qs_spe.exists():
+            qs = qs_spe
+
+    if nom_medecin:
+        qs_nom = qs.filter(Q(nom__icontains=nom_medecin) | Q(prenom__icontains=nom_medecin))
+        if qs_nom.exists():
+            qs = qs_nom
 
     # 1. Si coordonnées GPS transmises sur WhatsApp
     if coords_gps and len(coords_gps) == 2:
@@ -175,7 +276,7 @@ def lister_medecins_disponibles(patient=None, ville=None, coords_gps=None, limit
             m._distance_km = d_map.get(m)
         return tous[:limite]
 
-    # 2. Si une ville ou quartier spécifique est mentionné (ex: "Thiès", "Dakar", "Mbour", "Touba")
+    # 2. Si une ville spécifique est mentionnée (ex: "Thiès", "Dakar", "Mbour", "Touba")
     if ville:
         qs_ville = qs.filter(
             Q(prestataire__ville__icontains=ville)
@@ -189,12 +290,7 @@ def lister_medecins_disponibles(patient=None, ville=None, coords_gps=None, limit
         ville_patient = ""
         adresse_patient = getattr(patient, "adresse", "") or ""
         if adresse_patient:
-            villes_senegal = [
-                "Dakar", "Plateau", "Médina", "Fann", "Point E", "Mermoz", "Almadies",
-                "Yoff", "Pikine", "Guédiawaye", "Rufisque", "Thiès", "Mbour", "Saly",
-                "Saint-Louis", "Touba", "Kaolack", "Ziguinchor", "Diourbel", "Fatick", "Kolda"
-            ]
-            for v in villes_senegal:
+            for v in VILLES_SENEGAL:
                 if v.lower() in adresse_patient.lower():
                     ville_patient = v
                     break
@@ -261,10 +357,56 @@ def formater_reponse_droits(patient):
     )
 
 
-def formater_reponse_medecins(patient=None, ville=None, coords_gps=None):
+def formater_reponse_mes_rdv(patient):
+    """Affiche les prochains rendez-vous de l'assuré."""
+    if not patient:
+        return (
+            "⚠️ *Compte non identifié*\n\n"
+            "Pour consulter vos rendez-vous, envoyez votre *numéro de carte assuré* (ex: `SN-36D66F3046`)."
+        )
+    rdvs = RendezVous.objects.filter(
+        patient=patient,
+        date_heure__gte=timezone.now() - datetime.timedelta(hours=2),
+    ).select_related("medecin", "prestataire").order_by("date_heure")[:4]
+
+    if not rdvs.exists():
+        return (
+            "📅 *Vos Rendez-vous SantéSN*\n\n"
+            "Vous n'avez aucun rendez-vous programmé pour le moment.\n\n"
+            "👉 *Pour en prendre un, envoyez 2 ou RDV !*"
+        )
+
+    lignes = ["📅 *Vos Rendez-vous Programmés :*\n"]
+    for r in rdvs:
+        statut_libelle = r.get_statut_display()
+        med_nom = f"Dr. {r.medecin.prenom} {r.medecin.nom}" if r.medecin else "Praticien partenaire"
+        etab_nom = r.prestataire.nom if r.prestataire else "Cabinet conventionné"
+        lignes.append(
+            f"• *{med_nom}* ({r.medecin.specialite if r.medecin else 'Général'})\n"
+            f"  📆 {r.date_heure.strftime('%d/%m/%Y à %H:%M')}\n"
+            f"  🏥 {etab_nom}\n"
+            f"  📋 Statut : {statut_libelle}\n"
+        )
+    lignes.append("Pour planifier une nouvelle consultation, envoyez *2*.")
+    return "\n".join(lignes)
+
+
+def formater_reponse_medecins(patient=None, ville=None, coords_gps=None, specialite=None, nom_medecin=None):
     """Présente la liste des praticiens ordonnée par proximité et conventionnement."""
-    medecins = lister_medecins_disponibles(patient=patient, ville=ville, coords_gps=coords_gps)
+    medecins = lister_medecins_disponibles(
+        patient=patient,
+        ville=ville,
+        coords_gps=coords_gps,
+        specialite=specialite,
+        nom_medecin=nom_medecin,
+    )
     if not medecins:
+        if specialite and ville:
+            return (
+                f"🩺 *Recherche {specialite} à {ville.capitalize()}*\n\n"
+                f"Aucun praticien en {specialite} n'a été trouvé à *{ville.capitalize()}*.\n"
+                f"Envoyez *2* pour voir tous les praticiens disponibles dans le réseau."
+            )
         if ville:
             return (
                 f"🩺 *Recherche de Médecins à {ville.capitalize()}*\n\n"
@@ -278,7 +420,13 @@ def formater_reponse_medecins(patient=None, ville=None, coords_gps=None):
         )
 
     titre_section = "Voici la liste des médecins partenaires :"
-    if coords_gps:
+    if specialite and ville:
+        titre_section = f"📍 Spécialistes en *{specialite}* disponibles à *{ville.capitalize()}* :"
+    elif specialite:
+        titre_section = f"📍 Spécialistes en *{specialite}* conventionnés SantéSN :"
+    elif nom_medecin:
+        titre_section = f"📍 Résultat de recherche pour *Dr. {nom_medecin}* :"
+    elif coords_gps:
         titre_section = "📍 Médecins les plus proches de *votre position GPS* :"
     elif ville:
         titre_section = f"📍 Médecins partenaires disponibles à *{ville.capitalize()}* :"
@@ -310,13 +458,34 @@ def formater_reponse_medecins(patient=None, ville=None, coords_gps=None):
     return "\n".join(lignes)
 
 
-def formater_reponse_partenaires():
-    """Liste les établissements de soins et pharmacies partenaires."""
-    prestataires = list(Prestataire.objects.filter(partenaire=True)[:6])
+def formater_reponse_partenaires(type_filtre=None, ville=None):
+    """Liste les établissements de soins et pharmacies partenaires avec adaptation exacte."""
+    qs = Prestataire.objects.filter(partenaire=True)
+    if type_filtre:
+        if isinstance(type_filtre, (list, tuple)):
+            qs = qs.filter(type_prestataire__in=type_filtre)
+        else:
+            qs = qs.filter(type_prestataire=type_filtre)
+
+    if ville:
+        qs_ville = qs.filter(Q(ville__icontains=ville) | Q(adresse__icontains=ville))
+        if qs_ville.exists():
+            qs = qs_ville
+
+    prestataires = list(qs[:6])
     if not prestataires:
         return "🏥 Aucun prestataire partenaire n'est actuellement répertorié."
 
-    lignes = ["🏥 *Établissements & Réseau Conventionné :*\n"]
+    if type_filtre == Prestataire.Type.PHARMACIE:
+        ville_txt = f" à *{ville.capitalize()}*" if ville else ""
+        titre = f"💊 *Pharmacies Partenaires Conventionnées{ville_txt} :*\n"
+    elif type_filtre in (Prestataire.Type.HOPITAL, Prestataire.Type.CLINIQUE) or (isinstance(type_filtre, (list, tuple)) and Prestataire.Type.HOPITAL in type_filtre):
+        ville_txt = f" à *{ville.capitalize()}*" if ville else ""
+        titre = f"🏥 *Hôpitaux & Cliniques Partenaires{ville_txt} :*\n"
+    else:
+        titre = "🏥 *Établissements & Réseau Conventionné :*\n"
+
+    lignes = [titre]
     for p in prestataires:
         tel = f" - 📞 {p.telephone}" if p.telephone else ""
         lignes.append(f"• *{p.nom}* ({p.get_type_prestataire_display()}) - {p.ville}{tel}")
@@ -465,13 +634,12 @@ def parser_demande_rdv(texte, patient):
        - 'RDV 2 lundi 10h Consultation générale'
        - '1 25/10 10:00'
     2. Sélection de praticien seule (guidage interactif) :
-       - 'RDV 1' ou '1'
+       - 'RDV 1' ou 'RDV Dr 1'
     """
     if not texte:
         return None
 
     texte_propre = texte.strip()
-    texte_lower = texte_propre.lower()
 
     # Détecte le numéro du médecin sélectionné
     # Motifs : "RDV 1 ...", "RDV Dr 1 ...", ou "1 [date/heure]..."
@@ -572,12 +740,19 @@ def parser_demande_rdv(texte, patient):
 def traiter_message_entrant_whatsapp(expediteur_telephone, texte_message):
     """
     Point d'entrée du moteur conversationnel WhatsApp SantéSN.
-    Traite le message reçu, résout l'assuré ou lie son compte, et renvoie la réponse adaptée.
+    Adapte rigoureusement la réponse selon la demande exacte de l'assuré :
+    - Droits & solde
+    - Prochains rendez-vous programmés
+    - Recherche de médecins par spécialité, nom ou proximité
+    - Recherche de pharmacies ou cliniques
+    - Urgences médicales
+    - Courtoisie et petits messages
+    - Réservation directe
     """
     texte = (texte_message or "").strip()
     patient = trouver_patient_par_telephone(expediteur_telephone)
 
-    # 0. Si le patient n'est pas encore lié : tentative de liaison automatique
+    # 0. Si le patient n'est pas encore lié : tentative de liaison automatique immédiate
     if not patient and texte:
         patient_lie, msg_liaison = tenter_liaison_automatique(expediteur_telephone, texte)
         if patient_lie:
@@ -599,45 +774,97 @@ def traiter_message_entrant_whatsapp(expediteur_telephone, texte_message):
             except ValueError:
                 pass
 
-    # 2. Commandes de menu / salutations
+    # 2. Formules de politesse & remerciements
+    if texte_lower in ("merci", "merci beaucoup", "jerejef", "jërëjëf", "chokran", "thanks", "thx"):
+        return (
+            "🙏 *Avec grand plaisir !*\n\n"
+            "L'équipe SantéSN reste à votre entière disposition.\n"
+            "Envoyez *MENU* à tout moment pour afficher les options disponibles."
+        )
+
+    if texte_lower in ("au revoir", "bonne journee", "bonne journée", "bonne soiree", "bonne soirée", "a bientot", "à bientôt", "bye"):
+        return (
+            "👋 *Au revoir et très bonne journée !*\n\n"
+            "Prenez grand soin de vous et de votre santé avec SantéSN."
+        )
+
+    # 3. Commandes de menu / salutations
     if texte_lower in ("bonjour", "salut", "bonsoir", "hello", "hi", "menu", "aide", "help", "start"):
         return formater_reponse_menu(patient)
 
-    # 3. Choix 1 : Droits & Solde
-    if texte_lower in ("1", "solde", "droit", "droits", "couverture", "plafond", "mon solde"):
+    # 4. Consultation de ses propres rendez-vous
+    if any(k in texte_lower for k in ("mes rdv", "mon rdv", "mes rendez-vous", "mes rendez vous", "mon rendez vous", "mon agenda")):
+        return formater_reponse_mes_rdv(patient)
+
+    # 5. Choix 1 : Droits & Solde restant
+    if texte_lower in ("1", "solde", "droit", "droits", "couverture", "plafond", "mon solde", "combien me reste"):
         return formater_reponse_droits(patient)
 
-    # 4. Choix 2 : Demande de rendez-vous / Liste des praticiens
-    if texte_lower in ("2", "rdv", "rendez-vous", "rendez vous", "prendre rdv", "prendre un rdv", "docteur", "medecin"):
-        return formater_reponse_medecins(patient=patient)
+    # 6. Pharmacies spécifiquement demandées
+    if any(k in texte_lower for k in ("pharmacie", "pharmacies", "medicament", "médicament", "ordonnance")):
+        ville = detecter_ville(texte)
+        return formater_reponse_partenaires(type_filtre=Prestataire.Type.PHARMACIE, ville=ville)
 
-    # 5. Choix 3 : Partenaires & Réseau conventionné
-    if texte_lower in ("3", "partenaire", "partenaires", "pharmacie", "pharmacies", "clinique", "prestataire"):
+    # 7. Hôpitaux & Cliniques spécifiquement demandés
+    if any(k in texte_lower for k in ("hopital", "hôpital", "clinique", "centre de sante", "centre de santé")):
+        ville = detecter_ville(texte)
+        return formater_reponse_partenaires(
+            type_filtre=[Prestataire.Type.HOPITAL, Prestataire.Type.CLINIQUE],
+            ville=ville,
+        )
+
+    # 8. Choix 3 général : Établissements & Réseau conventionné
+    if texte_lower in ("3", "partenaire", "partenaires", "prestataire", "prestataires", "reseau", "réseau"):
         return formater_reponse_partenaires()
 
-    # 6. Choix 4 : Urgences
-    if texte_lower in ("4", "urgence", "urgences", "samu", "pompier", "pompiers", "secours"):
+    # 9. Choix 4 : Urgences nationales
+    if texte_lower in ("4", "urgence", "urgences", "samu", "pompier", "pompiers", "secours", "ambulance", "police"):
         return formater_reponse_urgences()
 
-    # 7. Recherche par ville : ex: "rdv dakar", "rdv thies", "rdv mbour", "rdv touba"
+    # 10. Recherche ciblée par spécialité médicale (ex: 'cardiologue', 'pediatre', 'rdv cardiologue', 'yeux')
+    spe_detectee = detecter_specialite(texte)
+    ville_detectee = detecter_ville(texte)
+    nom_dr_detecte = detecter_nom_medecin(texte)
+
+    if spe_detectee or nom_dr_detecte:
+        return formater_reponse_medecins(
+            patient=patient,
+            ville=ville_detectee,
+            specialite=spe_detectee,
+            nom_medecin=nom_dr_detecte,
+        )
+
+    # 11. Recherche par ville seule (ex: "rdv dakar", "rdv thies", "rdv mbour")
     match_rdv_ville = re.match(r"^rdv\s+([a-zA-Zà-ÿ\s-]+)$", texte.strip(), re.IGNORECASE)
     if match_rdv_ville:
         nom_ville = match_rdv_ville.group(1).strip()
         if nom_ville.lower() not in ("menu", "aide", "help", "docteur", "medecin", "partenaire"):
-            # Si ce n'est pas un chiffre, on filtre par cette ville
             if not nom_ville.isdigit():
                 return formater_reponse_medecins(patient=patient, ville=nom_ville)
 
-    # 8. Tentative de parsing d'une réservation directe ou choix de médecin (ex: 'RDV 1 25/10 10h', 'RDV 1 demain 10h', 'RDV 1')
+    # 12. Choix 2 direct : Prendre un rendez-vous / Liste générale des praticiens
+    if texte_lower in ("2", "rdv", "rendez-vous", "rendez vous", "prendre rdv", "prendre un rdv", "docteur", "medecin"):
+        return formater_reponse_medecins(patient=patient, ville=ville_detectee)
+
+    # 13. Tentative de parsing d'une réservation directe (ex: 'RDV 1 25/10 10h', 'RDV 1 demain 10h', 'RDV 1')
     reponse_rdv = parser_demande_rdv(texte, patient)
     if reponse_rdv:
         return reponse_rdv
 
-    # 9. Si le texte contient explicitement "rdv" ou "rendez"
-    if "rdv" in texte_lower or "rendez" in texte_lower:
-        return formater_reponse_medecins(patient=patient)
+    # 14. Orientation médicale en cas d'expression de symptômes
+    if any(k in texte_lower for k in ("malade", "douleur", "mal de", "fievre", "fièvre", "toux", "grippe", "ventre", "tete", "tête", "blessure")):
+        return (
+            "🩺 *Conseil d'Orientation Médicale SantéSN*\n\n"
+            "Vous présentez des symptômes ? Nous vous conseillons de consulter rapidement un praticien conventionné.\n\n"
+            "👉 *Envoyez 2 ou RDV pour voir les médecins généralistes et spécialistes proches de chez vous.*\n"
+            "🚨 En cas de situation critique, appelez sans attendre le SAMU au *1515* (appel gratuit)."
+        )
 
-    # 9. Réponse par défaut bienveillante
+    # 15. Si le texte contient le mot clé "rdv" sans syntaxe reconnue
+    if "rdv" in texte_lower or "rendez" in texte_lower:
+        return formater_reponse_medecins(patient=patient, ville=ville_detectee)
+
+    # 16. Réponse par défaut bienveillante et adaptée
     if not patient:
         return (
             "👋 *Bienvenue sur l'assistant WhatsApp SantéSN !*\n\n"
