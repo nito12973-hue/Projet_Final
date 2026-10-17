@@ -15,14 +15,12 @@
 </section>
 
 <div class="panel" style="max-width:800px;margin:0 auto;padding:28px 32px;">
-    <div style="background:var(--bg-subtle, #f8fafc);border-left:4px solid var(--primary);padding:14px 18px;border-radius:6px;margin-bottom:24px;">
-        <div style="font-weight:600;color:var(--text);margin-bottom:4px;">
-            {% icone "shield" %} Principe de conventionnement multi-organismes
+    <div style="background:var(--champ-bg);border-left:4px solid var(--primary);padding:14px 18px;border-radius:6px;margin-bottom:24px;">
+        <div style="font-weight:600;color:var(--titre);margin-bottom:4px;">
+            {% icone "shield" %} Partenariat de soins
         </div>
-        <p style="margin:0;font-size:0.875rem;color:var(--text-muted);line-height:1.5;">
-            Un hôpital, une clinique ou une pharmacie peut être partenaire de plusieurs assureurs.
-            Cette convention lie l'établissement choisi spécifiquement à votre organisme <strong>{{ organisme.nom }}</strong>,
-            lui ouvrant le droit d'effectuer des prises en charge en tiers payant pour vos assurés.
+        <p style="margin:0;font-size:0.875rem;color:var(--muted);line-height:1.5;">
+            Liez un établissement de soins (hôpital, clinique, pharmacie) à votre entreprise <strong>{{ organisme.nom }}</strong> pour permettre à vos salariés de bénéficier du tiers payant.
         </p>
     </div>
 
@@ -36,16 +34,20 @@
         {% endif %}
 
         <div class="form-group" style="margin-bottom:20px;">
-            <label for="{{ form.prestataire.id_for_label }}" style="font-weight:600;display:block;margin-bottom:6px;">
-                {{ form.prestataire.label }} <span style="color:var(--danger, #dc2626);">*</span>
-            </label>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                <label for="{{ form.prestataire.id_for_label }}" style="font-weight:600;margin:0;">
+                    {{ form.prestataire.label }} <span style="color:var(--danger, #dc2626);">*</span>
+                </label>
+                <a href="{% url 'ajouter_prestataire' %}" class="button btn btn-sm" style="font-size:12px;padding:3px 8px;">
+                    {% icone "plus" %} Nouvel établissement
+                </a>
+            </div>
             {{ form.prestataire }}
             {% if form.prestataire.errors %}
             <div class="champ-erreur" style="color:var(--danger);font-size:0.85rem;margin-top:4px;">{{ form.prestataire.errors }}</div>
             {% endif %}
             <small style="color:var(--text-muted);display:block;margin-top:4px;">
-                Seuls les établissements non encore conventionnés par votre organisme sont listés.
-                Si le prestataire n'existe pas encore, il peut être créé dans l'<a href="{% url 'ajouter_prestataire' %}" target="_blank">annuaire des prestataires</a>.
+                Sélectionnez un établissement existant ou cliquez sur « Nouvel établissement » s'il n'est pas encore enregistré.
             </small>
         </div>
 

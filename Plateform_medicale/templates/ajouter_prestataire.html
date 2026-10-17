@@ -100,25 +100,24 @@
     }
 </style>
 
-<section class="panel panel-bloc decouverte-osm">
-    <h2 style="margin-top:0;">Rechercher un établissement réel</h2>
-    <p class="subtitle">
-        Cherche dans les données publiques d'OpenStreetMap (hôpitaux, cliniques,
-        centres de santé, pharmacies, cabinets) au Sénégal. Les résultats sont
-        des établissements <strong>réels</strong> : les sélectionner pré-remplit
-        le formulaire, mais <strong>ne les inscrit pas</strong> sur la plateforme.
-        L'inscription reste votre décision, à l'enregistrement.
-    </p>
-    <div class="decouverte-ligne">
-        <input type="search" id="recherche-etablissement" placeholder="Ex. : hôpital Dakar, pharmacie Sangalkam, centre de santé Thiès"
-               aria-label="Nom ou type d'établissement à rechercher">
-        <button type="button" id="bouton-chercher-etablissement" class="button primary btn">Rechercher</button>
-    </div>
-    <p id="statut-etablissement" class="subtitle" style="margin:10px 0 0;" role="status" aria-live="polite"></p>
-    <ul id="resultats-etablissement" class="resultats-osm"></ul>
-</section>
+<section class="panel panel-form" style="max-width:760px;margin:0 auto;">
+    <details class="decouverte-osm" style="margin-bottom:20px;border:1px solid var(--border);border-radius:10px;padding:12px;background:var(--champ-bg);">
+        <summary style="cursor:pointer;font-weight:600;color:var(--primary);font-size:13.5px;">
+            {% icone "search" %} Pré-remplir depuis l'annuaire des établissements réels (facultatif)
+        </summary>
+        <div style="margin-top:10px;">
+            <p class="subtitle" style="margin-top:0;margin-bottom:10px;font-size:12.5px;">
+                Recherchez un établissement de santé au Sénégal pour pré-remplir les champs. Cette recherche facilite la saisie mais <strong>ne les inscrit pas</strong> automatiquement sur la plateforme : l'inscription est validée lors de l'enregistrement ci-dessous.
+            </p>
+            <div class="decouverte-ligne" style="display:flex;gap:8px;max-width:600px;">
+                <input type="search" id="recherche-etablissement" placeholder="Ex. : hôpital Dakar, clinique Thiès..." aria-label="Nom ou type d'établissement à rechercher" style="flex:1;">
+                <button type="button" id="bouton-chercher-etablissement" class="button btn btn-sm">Rechercher</button>
+            </div>
+            <p id="statut-etablissement" class="subtitle" style="margin:8px 0 0;font-size:12px;" role="status" aria-live="polite"></p>
+            <ul id="resultats-etablissement" class="resultats-osm" style="margin-top:8px;"></ul>
+        </div>
+    </details>
 
-<section class="panel panel-form">
     {% if form.non_field_errors %}
     <div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
     {% endif %}
@@ -129,7 +128,7 @@
         {% if field.is_hidden %}
         {{ field }}
         {% elif field.field.widget.input_type == "checkbox" %}
-        <div class="champ-case">
+        <div class="champ-case" style="margin-top:14px;margin-bottom:14px;">
             {{ field }}
             <div class="champ-case-texte">
                 <label for="{{ field.id_for_label }}">{{ field.label }}</label>
@@ -137,23 +136,31 @@
             </div>
         </div>
         {% else %}
-        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-        {% if field.help_text %}<p class="subtitle" style="margin-top:-4px;margin-bottom:6px;font-size:13px;">{{ field.help_text }}</p>{% endif %}
-        {{ field }}
+        <div style="margin-bottom:14px;">
+            <label for="{{ field.id_for_label }}" style="font-weight:600;display:block;margin-bottom:4px;">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}<p class="subtitle" style="margin-top:2px;margin-bottom:4px;font-size:12.5px;">{{ field.help_text }}</p>{% endif %}
+            {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
+        </div>
         {% endif %}
-        {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
         {% endfor %}
 
-        <label id="titre-carte-prestataire">Emplacement sur la carte (facultatif)</label>
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
-            <button type="button" id="bouton-recherche-lieu" class="button btn">Rechercher sur la carte</button>
-            <span id="statut-recherche-lieu" class="subtitle" style="margin:0;" role="status" aria-live="polite"></span>
-        </div>
-        <div id="carte-prestataire" role="group" aria-labelledby="titre-carte-prestataire" aria-describedby="aide-carte-prestataire" style="height: 320px; border-radius: 12px; margin-bottom: 8px;"></div>
-        <p id="aide-carte-prestataire" class="subtitle" style="margin-top:0;margin-bottom:16px;">Cliquez sur la carte pour placer le prestataire, ou renseignez l'adresse et/ou la ville ci-dessus puis utilisez "Rechercher sur la carte" (accessible au clavier).</p>
+        <details style="margin-top:18px;margin-bottom:18px;border:1px solid var(--border);border-radius:10px;padding:12px;background:var(--champ-bg);">
+            <summary style="cursor:pointer;font-weight:600;color:var(--primary);font-size:13.5px;">
+                {% icone "map-pin" %} Positionner sur la carte géographique (facultatif)
+            </summary>
+            <div style="margin-top:12px;">
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
+                    <button type="button" id="bouton-recherche-lieu" class="button btn btn-sm">Placer l'adresse sur la carte</button>
+                    <span id="statut-recherche-lieu" class="subtitle" style="margin:0;" role="status" aria-live="polite"></span>
+                </div>
+                <div id="carte-prestataire" role="group" aria-labelledby="titre-carte-prestataire" style="height: 260px; border-radius: 8px; margin-bottom: 6px;"></div>
+                <p id="aide-carte-prestataire" class="subtitle" style="margin:0;font-size:12px;">Cliquez sur la carte pour affiner l'emplacement si souhaité.</p>
+            </div>
+        </details>
 
-        <div class="actions" style="margin-top: 16px; display: flex; gap: 10px;">
-            <button class="button primary" type="submit">Enregistrer</button>
+        <div class="actions" style="margin-top: 20px; display: flex; gap: 10px;">
+            <button class="button primary" type="submit">Enregistrer l'établissement</button>
             <a class="button btn" href="{% url 'liste_prestataires' %}">Annuler</a>
         </div>
     </form>
