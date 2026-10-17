@@ -91,17 +91,24 @@ def webhook_whatsapp(request):
 
         logger.info("Message WhatsApp reçu du %s : '%s'", expediteur, texte_message)
 
-        # Traitement conversationnel
-        reponse_bot = traiter_message_entrant_whatsapp(expediteur, texte_message)
+        try:
+            # Traitement conversationnel
+            reponse_bot = traiter_message_entrant_whatsapp(expediteur, texte_message)
 
-        # Envoi de la réponse sur WhatsApp
-        statut_envoi = envoyer_message_whatsapp(expediteur, reponse_bot)
-        logger.info("Réponse WhatsApp transmise au %s : statut %s", expediteur, statut_envoi.get("statut"))
+            # Envoi de la réponse sur WhatsApp
+            statut_envoi = envoyer_message_whatsapp(expediteur, reponse_bot)
+            logger.info("Réponse WhatsApp transmise au %s : statut %s", expediteur, statut_envoi.get("statut"))
 
-        return JsonResponse({
-            "status": "ok",
-            "reponse": reponse_bot,
-            "statut_envoi": statut_envoi,
-        })
+            return JsonResponse({
+                "status": "ok",
+                "reponse": reponse_bot,
+                "statut_envoi": statut_envoi,
+            })
+        except Exception as exc:
+            logger.error("Erreur inattendue dans le traitement du message WhatsApp : %s", exc, exc_info=True)
+            return JsonResponse({
+                "status": "error",
+                "detail": "Erreur interne traitée gracieusement",
+            }, status=200)
 
     return HttpResponse("Méthode non autorisée", status=405)

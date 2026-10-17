@@ -5,9 +5,12 @@ Contient : login, logout, redirection post-connexion, assistant d'installation,
 mon compte, changement de mot de passe, déconnexion partout, paramètres,
 comptes bloqués et déblocage.
 """
+import logging
 
 from django.contrib import messages
 from django.contrib.auth import login, logout, update_session_auth_hash, views as auth_views
+
+logger = logging.getLogger("Plateform_medicale")
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.sessions.models import Session
@@ -464,6 +467,13 @@ class MotDePasseOublieView(auth_views.PasswordResetView):
     email_template_name = "registration/password_reset_email.html"
     subject_template_name = "registration/password_reset_subject.txt"
     success_url = reverse_lazy("mot_de_passe_oublie_envoye")
+
+    def form_valid(self, form):
+        try:
+            return super().form_valid(form)
+        except Exception as exc:
+            logger.warning("Échec d'envoi d'email de réinitialisation : %s", exc)
+            return redirect(self.success_url)
 
 
 class MotDePasseOublieEnvoyeView(auth_views.PasswordResetDoneView):
