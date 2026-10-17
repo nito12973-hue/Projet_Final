@@ -358,18 +358,30 @@
             justify-content: center;
             width: 30px;
             height: 30px;
+            min-width: 30px;
+            min-height: 30px;
             flex-shrink: 0;
             border-radius: 8px;
             border: 1px solid var(--sb-border);
             background: transparent;
             color: var(--sb-text-muted);
             cursor: pointer;
-            transition: background 0.16s ease, color 0.16s ease;
+            transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
             margin-left: auto;
+            transform: none !important;
         }
 
         .btn-reduire:hover { background: var(--sb-hover); color: #ffffff; }
-        .btn-reduire .icone-nav { width: 15px; height: 15px; }
+        .btn-reduire svg,
+        .btn-reduire .icone-nav {
+            width: 15px;
+            height: 15px;
+            transition: transform 0.22s ease;
+        }
+        body.sidebar-reduite .btn-reduire svg,
+        body.sidebar-reduite .btn-reduire .icone-nav {
+            transform: rotate(180deg);
+        }
 
         body.sidebar-reduite .brand-texte { display: none !important; }
         body.sidebar-reduite .sidebar-head {
@@ -384,8 +396,8 @@
         }
         body.sidebar-reduite .btn-reduire {
             margin-left: 0;
-            width: 26px;
-            height: 26px;
+            width: 30px;
+            height: 30px;
         }
 
         @media (max-width: 980px) {
@@ -450,6 +462,15 @@
             line-height: 1.4;
             transition: background 0.14s cubic-bezier(0.4, 0, 0.2, 1),
                         color 0.14s cubic-bezier(0.4, 0, 0.2, 1);
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        aside nav a:active,
+        .logout-button:active,
+        .btn-reduire:active {
+            transform: none !important;
         }
 
         aside nav a .icone-nav {
@@ -586,7 +607,8 @@
 
         body.sidebar-reduite aside nav a {
             justify-content: center;
-            padding: 9px;
+            padding: 8px 0;
+            min-height: 38px;
             transform: none !important;
         }
 
@@ -7206,9 +7228,6 @@
                 corps.classList.toggle('sidebar-reduite', actif);
                 bouton.setAttribute('aria-pressed', actif ? 'true' : 'false');
                 bouton.setAttribute('aria-label', actif ? 'Déployer le menu' : 'Réduire le menu');
-                bouton.innerHTML = actif
-                    ? '{% icone "chevron-right" %}'
-                    : '{% icone "chevron-left" %}';
             }
 
             var etatEnregistre = window.localStorage.getItem(CLE_STOCKAGE) === '1';
@@ -7234,13 +7253,12 @@
                     if (positionPrecedente !== null) {
                         nav.scrollTop = parseInt(positionPrecedente, 10) || 0;
                     } else {
-                        // S'il n'y a pas de position enregistrée, faire défiler doucement vers le lien actif s'il est en bas
+                        // S'il n'y a pas de position enregistrée, aligner doucement vers le lien actif sans secouer la page
                         var lienActif = nav.querySelector('a.active');
                         if (lienActif) {
-                            var rectLien = lienActif.getBoundingClientRect();
-                            var rectNav = nav.getBoundingClientRect();
-                            if (rectLien.bottom > rectNav.bottom || rectLien.top < rectNav.top) {
-                                lienActif.scrollIntoView({ block: 'nearest' });
+                            var decalageHaut = lienActif.offsetTop - nav.offsetTop;
+                            if (decalageHaut < nav.scrollTop || decalageHaut + lienActif.offsetHeight > nav.scrollTop + nav.clientHeight) {
+                                nav.scrollTop = Math.max(0, decalageHaut - 24);
                             }
                         }
                     }
