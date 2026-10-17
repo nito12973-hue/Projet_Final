@@ -1,16 +1,242 @@
 {% extends "base.html" %}
-{% load icones %}
+{% load icones formats %}
 
-{% block title %}Plan de couverture — {{ patient }}{% endblock %}
+{% block title %}Attribuer un plan de couverture — {{ patient }}{% endblock %}
 
 {% block content %}
+<style>
+/* Grille principale moderne */
+.attribution-container {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 28px;
+    align-items: start;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+@media (max-width: 960px) {
+    .attribution-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Grille des cartes de formules */
+.formules-grille {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin: 18px 0 24px 0;
+}
+
+.formule-carte {
+    position: relative;
+    border: 2px solid var(--border);
+    background: var(--bg-surface, #ffffff);
+    border-radius: 14px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+.formule-carte:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(14, 116, 144, 0.1);
+}
+
+.formule-carte.active {
+    border-color: var(--primary);
+    background: linear-gradient(to bottom right, var(--bg-surface, #ffffff), rgba(14, 116, 144, 0.04));
+    box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.15), 0 8px 20px rgba(14, 116, 144, 0.08);
+}
+
+.formule-carte-radio {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.formule-carte.active .formule-carte-radio {
+    border-color: var(--primary);
+    background: var(--primary);
+}
+
+.formule-carte.active .formule-carte-radio::after {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ffffff;
+}
+
+.formule-taux-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--primary);
+    line-height: 1;
+    margin-bottom: 8px;
+}
+
+.formule-jauge-fond {
+    width: 100%;
+    height: 6px;
+    background: rgba(0, 0, 0, 0.06);
+    border-radius: 999px;
+    overflow: hidden;
+    margin: 10px 0 14px 0;
+}
+
+.formule-jauge-barre {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), #10b981);
+    border-radius: 999px;
+    transition: width 0.4s ease;
+}
+
+.formule-carte-titre {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+    color: var(--texte);
+}
+
+.formule-carte-plafond {
+    font-size: 13px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.formule-avantages {
+    font-size: 12.5px;
+    color: var(--texte-secondaire, #475569);
+    border-top: 1px dashed var(--border);
+    padding-top: 12px;
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.formule-avantage-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Carte Santé Dématérialisée Stylisée */
+.carte-sante-visuelle {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0e7490 100%);
+    color: #ffffff;
+    border-radius: 18px;
+    padding: 24px;
+    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.25);
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 1.58 / 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.carte-sante-visuelle::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -30%;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+    pointer-events: none;
+}
+
+.carte-puce {
+    width: 38px;
+    height: 28px;
+    background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+    border-radius: 5px;
+    border: 1px solid rgba(0,0,0,0.15);
+    position: relative;
+    box-shadow: inset 0 1px 2px rgba(255,255,255,0.4);
+}
+
+.carte-puce::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: rgba(0,0,0,0.2);
+}
+
+.carte-puce::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 1px;
+    height: 100%;
+    background: rgba(0,0,0,0.2);
+}
+
+.carte-numero {
+    font-family: 'SF Mono', 'Courier New', monospace;
+    font-size: 17px;
+    letter-spacing: 2px;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    font-weight: 600;
+}
+
+.carte-titulaire {
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.carte-formule-badge {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+</style>
+
 <section class="page-title">
     <div>
         <h1>Attribuer un plan de couverture</h1>
         <p class="subtitle">
-            Bénéficiaire : <strong>{{ patient.prenom }} {{ patient.nom }}</strong> 
-            &bull; Carte : <span class="code">{{ patient.numero_carte }}</span>
-            {% if patient.organisme %}&bull; Entreprise : <span class="badge" style="background:var(--primary-subtle);color:var(--primary-strong);">{{ patient.organisme.nom }}</span>{% endif %}
+            Bénéficiaire principal : <strong>{{ patient.prenom }} {{ patient.nom }}</strong> 
+            &bull; N° Carte : <span class="code">{{ patient.numero_carte }}</span>
+            {% if patient.organisme %}
+            &bull; Entreprise : <span class="badge" style="background:var(--primary-subtle);color:var(--primary-strong);font-weight:600;">{{ patient.organisme.nom }}</span>
+            {% endif %}
         </p>
     </div>
     <a class="button btn btn-retour-expand" href="{% if next %}{{ next }}{% else %}{% url 'liste_utilisateurs' %}{% endif %}" title="Retour" aria-label="Retour">
@@ -18,93 +244,248 @@
     </a>
 </section>
 
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; align-items: start; max-width: 1000px;">
-    <!-- Panneau Formulaire -->
-    <section class="panel panel-form" style="margin-bottom: 0;">
-        <h2 style="font-size: 1.15rem; margin-top: 0; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
-            {% icone "shield" %} Sélection de la formule de prise en charge
-        </h2>
-
-        {% if form.non_field_errors %}
-        <div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
-        {% endif %}
-
-        <form method="post">
-            {% csrf_token %}
-            {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
-
-            <div class="champ-groupe" style="margin-bottom: 20px;">
-                <label for="{{ form.plan_couverture.id_for_label }}">
-                    {{ form.plan_couverture.label }}
-                </label>
-                {{ form.plan_couverture }}
-                {% if form.plan_couverture.help_text %}
-                <p class="champ-aide" style="margin-top: 6px;">{{ form.plan_couverture.help_text }}</p>
-                {% endif %}
-                {% if form.plan_couverture.errors %}
-                <div class="erreurs" role="alert" style="margin-top: 6px;">{{ form.plan_couverture.errors }}</div>
-                {% endif %}
+<div class="attribution-container">
+    <!-- COLONNE GAUCHE : SÉLECTION DES FORMULES -->
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+        <section class="panel panel-form" style="margin-bottom: 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <h2 style="font-size: 17px; margin: 0; display: flex; align-items: center; gap: 8px;">
+                    {% icone "shield-check" %} Formule de couverture santé
+                </h2>
+                <span style="font-size: 12px; color: var(--muted);">Cliquez sur une formule pour la sélectionner</span>
             </div>
+            <p class="subtitle" style="font-size: 13px; margin-bottom: 16px;">
+                La formule choisie s'applique en temps réel à l'assuré et à l'ensemble de ses ayants droit déclarés.
+            </p>
 
-            <div style="background: var(--bg-subtle, #f8fafc); border-left: 4px solid var(--primary); padding: 12px 16px; border-radius: 4px; font-size: 0.9rem; margin-bottom: 24px;">
-                <strong>Règle de gestion :</strong> Le taux de prise en charge s'appliquera immédiatement aux consultations, soins médicaux et ordonnances délivrés aux prestataires de santé partenaires.
-            </div>
+            {% if form.non_field_errors %}
+            <div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
+            {% endif %}
 
-            <div class="actions" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                <button class="button primary" type="submit">{% icone "check" %} Enregistrer l'attribution</button>
-                <a class="button btn" href="{% if next %}{{ next }}{% else %}{% url 'liste_utilisateurs' %}{% endif %}">Annuler</a>
-            </div>
-        </form>
-    </section>
+            <form method="post" id="form-attribution-plan">
+                {% csrf_token %}
+                {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
 
-    <!-- Panneau Informations & Ayants droit -->
-    <aside style="display: flex; flex-direction: column; gap: 16px;">
-        <div class="panel" style="margin-bottom: 0;">
-            <h3 style="font-size: 1rem; margin-top: 0; margin-bottom: 12px; color: var(--texte-secondaire, #64748b);">
-                Situation actuelle
+                <!-- Sélecteur natif masqué mais synchronisé pour accessibilité et formulaire Django -->
+                <div style="display: none;">
+                    {{ form.plan_couverture }}
+                </div>
+
+                <!-- Grille visuelle et moderne des cartes -->
+                <div class="formules-grille" role="radiogroup" aria-label="Plans de couverture disponibles">
+                    <!-- Option 0 : Sans couverture -->
+                    <div class="formule-carte {% if not patient.plan_couverture %}active{% endif %}" 
+                         data-plan-id="" 
+                         data-taux="0" 
+                         data-nom="Aucun plan" 
+                         data-plafond="Sans couverture"
+                         onclick="selectionnerFormule(this)">
+                        <div class="formule-carte-radio"></div>
+                        <div>
+                            <div class="formule-taux-badge" style="color: var(--muted); font-size: 20px;">0%</div>
+                            <div class="formule-jauge-fond">
+                                <div class="formule-jauge-barre" style="width: 0%;"></div>
+                            </div>
+                            <h3 class="formule-carte-titre">Aucune couverture</h3>
+                            <div class="formule-carte-plafond">{% icone "slash" %} Frais à la charge du patient</div>
+                        </div>
+                        <div class="formule-avantages">
+                            <div class="formule-avantage-item">{% icone "x" %} Pas de tiers-payant automatique</div>
+                            <div class="formule-avantage-item">{% icone "x" %} Remboursements non couverts</div>
+                        </div>
+                    </div>
+
+                    <!-- Liste des plans de couverture -->
+                    {% for p in plans %}
+                    <div class="formule-carte {% if patient.plan_couverture_id == p.pk %}active{% endif %}" 
+                         data-plan-id="{{ p.pk }}" 
+                         data-taux="{{ p.taux_couverture }}" 
+                         data-nom="{{ p.nom }}" 
+                         data-plafond="{% if p.plafond_annuel %}{{ p.plafond_annuel|franc_cfa }}{% else %}Illimité{% endif %}"
+                         onclick="selectionnerFormule(this)">
+                        <div class="formule-carte-radio"></div>
+                        <div>
+                            <div class="formule-taux-badge">
+                                {{ p.taux_couverture|floatformat:0 }}%
+                            </div>
+                            <div class="formule-jauge-fond">
+                                <div class="formule-jauge-barre" style="width: {{ p.taux_couverture }}%;"></div>
+                            </div>
+                            <h3 class="formule-carte-titre">{{ p.nom }}</h3>
+                            <div class="formule-carte-plafond">
+                                {% icone "credit-card" %} 
+                                Plafond : <strong>{% if p.plafond_annuel %}{{ p.plafond_annuel|franc_cfa }}{% else %}Illimité{% endif %}</strong>
+                            </div>
+                        </div>
+                        <div class="formule-avantages">
+                            <div class="formule-avantage-item" style="color: var(--succes, #16a34a);">
+                                {% icone "check" %} Prise en charge à {{ p.taux_couverture|floatformat:0 }}%
+                            </div>
+                            <div class="formule-avantage-item">
+                                {% icone "check" %} Tiers-payant pharmacie & consultations
+                            </div>
+                            <div class="formule-avantage-item">
+                                {% icone "users" %} Étendu automatiquement aux ayants droit
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div style="background: rgba(14, 116, 144, 0.05); border-left: 4px solid var(--primary); padding: 14px 16px; border-radius: 8px; font-size: 13.5px; margin-bottom: 24px; line-height: 1.5;">
+                    <strong style="color: var(--primary);">Application immédiate :</strong>
+                    Le taux de couverture s'appliquera dès l'enregistrement lors des vérifications de droits par les médecins conventionnés et les pharmacies partenaires.
+                </div>
+
+                <div class="actions" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                    <button class="button primary" type="submit" style="padding: 10px 22px; font-size: 14px;">
+                        {% icone "check" %} Confirmer et enregistrer l'attribution
+                    </button>
+                    <a class="button btn" href="{% if next %}{{ next }}{% else %}{% url 'liste_utilisateurs' %}{% endif %}">
+                        Annuler
+                    </a>
+                </div>
+            </form>
+        </section>
+    </div>
+
+    <!-- COLONNE DROITE : APERÇU CARTE DE SANTÉ & FAMILLE -->
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+        <!-- Aperçu Carte d'Assuré Stylisée -->
+        <section class="panel" style="margin-bottom: 0; padding: 20px;">
+            <h3 style="font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 16px 0; color: var(--muted); display: flex; align-items: center; gap: 6px;">
+                {% icone "eye" %} Aperçu Carte d'Assuré
             </h3>
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="color: var(--muted);">Plan actuel :</span>
-                    {% if patient.plan_couverture %}
-                    <span class="badge validee">{{ patient.plan_couverture.nom }} ({{ patient.plan_couverture.taux_couverture }}%)</span>
-                    {% else %}
-                    <span class="badge refusee">Non attribué</span>
-                    {% endif %}
-                </div>
-                {% if patient.plan_couverture and patient.plan_couverture.plafond_annuel %}
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="color: var(--muted);">Plafond annuel :</span>
-                    <strong class="code">{{ patient.plan_couverture.plafond_annuel }} FCFA</strong>
-                </div>
-                {% endif %}
-                {% if utilisateur %}
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="color: var(--muted);">Compte de connexion :</span>
-                    <span class="code" style="font-size: 12px;">{{ utilisateur.email }}</span>
-                </div>
-                {% endif %}
-            </div>
-        </div>
 
-        {% if ayants_droit %}
-        <div class="panel" style="margin-bottom: 0;">
-            <h3 style="font-size: 1rem; margin-top: 0; margin-bottom: 8px; color: var(--texte-secondaire, #64748b);">
-                Ayants droit rattachés ({{ ayants_droit|length }})
-            </h3>
-            <p style="font-size: 0.85rem; color: var(--muted); margin-bottom: 12px;">
+            <div class="carte-sante-visuelle" id="apercu-carte">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <div style="font-size: 11px; letter-spacing: 1px; opacity: 0.8; font-weight: 600;">SANTÉSN ASSURANCE</div>
+                        <div style="font-size: 15px; font-weight: 800; letter-spacing: 0.5px;">{{ patient.organisme.nom|default:"MUTUELLE ENTREPRISE" }}</div>
+                    </div>
+                    <span class="carte-formule-badge" id="carte-badge-taux">
+                        {% if patient.plan_couverture %}
+                        {{ patient.plan_couverture.nom }} ({{ patient.plan_couverture.taux_couverture|floatformat:0 }}%)
+                        {% else %}
+                        Sans formule
+                        {% endif %}
+                    </span>
+                </div>
+
+                <div style="margin: 10px 0;">
+                    <div class="carte-puce"></div>
+                </div>
+
+                <div>
+                    <div class="carte-numero">{{ patient.numero_carte }}</div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 8px;">
+                        <div>
+                            <div style="font-size: 9px; opacity: 0.7; letter-spacing: 0.5px;">ASSURÉ PRINCIPAL</div>
+                            <div class="carte-titulaire">{{ patient.prenom }} {{ patient.nom }}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 9px; opacity: 0.7; letter-spacing: 0.5px;">PLAFOND ANNUEL</div>
+                            <div style="font-size: 12px; font-weight: 700;" id="carte-plafond-texte">
+                                {% if patient.plan_couverture and patient.plan_couverture.plafond_annuel %}
+                                {{ patient.plan_couverture.plafond_annuel|franc_cfa }}
+                                {% else %}
+                                Illimité
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 14px; font-size: 12.5px; color: var(--muted); display: flex; align-items: center; gap: 6px;">
+                {% icone "smartphone" %} Carte dématérialisée accessible en direct sur l'espace assuré
+            </div>
+        </section>
+
+        <!-- Ayants droit rattachés -->
+        <section class="panel" style="margin-bottom: 0; padding: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h3 style="font-size: 15px; margin: 0; display: flex; align-items: center; gap: 6px;">
+                    {% icone "users" %} Ayants droit rattachés
+                </h3>
+                <span class="badge" style="background: rgba(0,0,0,0.06); font-weight: 700;">{{ ayants_droit|length }}</span>
+            </div>
+
+            {% if ayants_droit %}
+            <p style="font-size: 13px; color: var(--muted); margin-bottom: 14px;">
                 Ces membres de la famille bénéficient automatiquement de la même formule.
             </p>
-            <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; flex-direction: column; gap: 8px;">
                 {% for ad in ayants_droit %}
-                <li style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: var(--bg-subtle, #f8fafc); border-radius: 6px; font-size: 0.9rem;">
-                    <span><strong>{{ ad.prenom }} {{ ad.nom }}</strong> <span style="color: var(--muted); font-size: 0.8rem;">({{ ad.get_lien_parente_display }})</span></span>
-                    <span class="code" style="font-size: 11px;">{{ ad.numero_carte }}</span>
-                </li>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: var(--bg-subtle, #f8fafc); border-radius: 8px; border: 1px solid var(--border);">
+                    <div>
+                        <div style="font-weight: 600; font-size: 13.5px;">{{ ad.prenom }} {{ ad.nom }}</div>
+                        <div style="font-size: 11.5px; color: var(--muted);">
+                            {{ ad.get_lien_parente_display|default:"Bénéficiaire" }} &bull; <span class="code">{{ ad.numero_carte }}</span>
+                        </div>
+                    </div>
+                    <span class="badge validee" style="font-size: 11px;">Couvert</span>
+                </div>
                 {% endfor %}
-            </ul>
-        </div>
-        {% endif %}
-    </aside>
+            </div>
+            {% else %}
+            <div style="text-align: center; padding: 20px 10px; color: var(--muted); font-size: 13px;">
+                {% icone "user-x" %}
+                <p style="margin: 6px 0 0 0;">Aucun ayant droit rattaché pour l'instant.</p>
+                <p style="font-size: 12px; margin-top: 4px;">L'employé pourra déclarer ses proches depuis son propre espace.</p>
+            </div>
+            {% endif %}
+        </section>
+    </div>
 </div>
+
+<script>
+function selectionnerFormule(element) {
+    // 1. Mise à jour de la classe active sur les cartes
+    document.querySelectorAll('.formule-carte').forEach(function(c) {
+        c.classList.remove('active');
+    });
+    element.classList.add('active');
+
+    // 2. Synchronisation avec le select HTML caché du formulaire Django
+    var planId = element.getAttribute('data-plan-id');
+    var selectPlan = document.getElementById('id_plan_couverture');
+    if (selectPlan) {
+        selectPlan.value = planId;
+    }
+
+    // 3. Mise à jour dynamique de l'aperçu de la carte d'assuré
+    var nom = element.getAttribute('data-nom');
+    var taux = element.getAttribute('data-taux');
+    var plafond = element.getAttribute('data-plafond');
+
+    var badgeTaux = document.getElementById('carte-badge-taux');
+    var plafondTexte = document.getElementById('carte-plafond-texte');
+
+    if (badgeTaux) {
+        if (planId) {
+            badgeTaux.textContent = nom + ' (' + Math.round(taux) + '%)';
+            badgeTaux.style.background = 'rgba(255, 255, 255, 0.25)';
+        } else {
+            badgeTaux.textContent = 'Sans formule';
+            badgeTaux.style.background = 'rgba(239, 68, 68, 0.3)';
+        }
+    }
+
+    if (plafondTexte) {
+        plafondTexte.textContent = plafond || 'Illimité';
+    }
+}
+
+// Initialisation au chargement de la page
+document.addEventListener('DOMContentLoaded', function() {
+    var selectPlan = document.getElementById('id_plan_couverture');
+    if (selectPlan && selectPlan.value) {
+        var card = document.querySelector('.formule-carte[data-plan-id="' + selectPlan.value + '"]');
+        if (card) {
+            selectionnerFormule(card);
+        }
+    }
+});
+</script>
 {% endblock %}

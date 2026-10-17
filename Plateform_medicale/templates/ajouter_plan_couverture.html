@@ -6,28 +6,80 @@
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>Ajouter un plan de couverture</h1>
-        <p class="subtitle">Formule d'assurance définissant le taux de prise en charge et le plafond annuel.</p>
+        <h1>Nouveau plan de couverture</h1>
+        <p class="subtitle">Créez une formule de prise en charge pour vos salariés et leurs familles.</p>
     </div>
-    <a class="button btn btn-retour-expand" href="{% url 'liste_plans_couverture' %}" title="Retour" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
+    <a class="button btn btn-retour-expand" href="{% url 'liste_plans_couverture' %}" title="Retour aux plans" aria-label="Retour">
+        {% icone "chevron-left" %} <span class="expand-text">Retour</span>
+    </a>
 </section>
 
-<section class="panel panel-form">
-    {% if form.non_field_errors %}
-    <div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
-    {% endif %}
+<div style="display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start; max-width: 960px;">
+    <!-- Formulaire -->
+    <section class="panel panel-form" style="margin-bottom: 0;">
+        <h2 style="font-size: 16px; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px;">
+            {% icone "shield-check" %} Caractéristiques de la formule
+        </h2>
 
-    <form method="post">
-        {% csrf_token %}
-        {% for field in form %}
-        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-        {{ field }}
-        {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
-        {% endfor %}
-        <div class="actions" style="margin-top: 16px; display: flex; gap: 10px;">
-            <button class="button primary" type="submit">Enregistrer</button>
-            <a class="button btn" href="{% url 'liste_plans_couverture' %}">Annuler</a>
+        {% if form.non_field_errors %}
+        <div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <form method="post" id="form-plan-couverture">
+            {% csrf_token %}
+
+            <div class="champ-groupe" style="margin-bottom: 16px;">
+                <label for="{{ form.nom.id_for_label }}" style="font-weight: 600; margin-bottom: 4px; display: block;">
+                    {{ form.nom.label }} <span style="color:var(--danger);" aria-hidden="true">*</span>
+                </label>
+                {{ form.nom }}
+                {% if form.nom.errors %}<div class="erreurs" role="alert">{{ form.nom.errors }}</div>{% endif %}
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
+                <div class="champ-groupe">
+                    <label for="{{ form.taux_couverture.id_for_label }}" style="font-weight: 600; margin-bottom: 4px; display: block;">
+                        Taux de couverture (%) <span style="color:var(--danger);" aria-hidden="true">*</span>
+                    </label>
+                    <div style="position: relative;">
+                        {{ form.taux_couverture }}
+                    </div>
+                    <p class="subtitle" style="font-size: 12px; margin-top: 4px;">Ex : 80 pour 80%</p>
+                    {% if form.taux_couverture.errors %}<div class="erreurs" role="alert">{{ form.taux_couverture.errors }}</div>{% endif %}
+                </div>
+
+                <div class="champ-groupe">
+                    <label for="{{ form.plafond_annuel.id_for_label }}" style="font-weight: 600; margin-bottom: 4px; display: block;">
+                        Plafond annuel (FCFA)
+                    </label>
+                    {{ form.plafond_annuel }}
+                    <p class="subtitle" style="font-size: 12px; margin-top: 4px;">Laisser vide pour illimité</p>
+                    {% if form.plafond_annuel.errors %}<div class="erreurs" role="alert">{{ form.plafond_annuel.errors }}</div>{% endif %}
+                </div>
+            </div>
+
+            <div style="margin-top: 24px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                <button class="button primary" type="submit">
+                    {% icone "check" %} Enregistrer le plan
+                </button>
+                <a class="button btn" href="{% url 'liste_plans_couverture' %}">Annuler</a>
+            </div>
+        </form>
+    </section>
+
+    <!-- Explications & Aperçu -->
+    <aside style="display: flex; flex-direction: column; gap: 16px;">
+        <div class="panel" style="margin-bottom: 0; padding: 20px;">
+            <h3 style="font-size: 14px; font-weight: 700; margin: 0 0 10px 0; color: var(--primary);">
+                {% icone "info" %} Bon à savoir
+            </h3>
+            <p style="font-size: 13px; color: var(--texte-secondaire, #475569); line-height: 1.5; margin: 0 0 10px 0;">
+                Le taux de prise en charge détermine la part couverte automatiquement par le tiers-payant lors des consultations chez les médecins conventionnés et des délivrances en pharmacie.
+            </p>
+            <p style="font-size: 13px; color: var(--texte-secondaire, #475569); line-height: 1.5; margin: 0;">
+                Le solde restant (ticket modérateur) est réglé par le patient ou son ayant droit.
+            </p>
         </div>
-    </form>
-</section>
+    </aside>
+</div>
 {% endblock %}
