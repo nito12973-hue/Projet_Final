@@ -1,18 +1,18 @@
 {% extends "base.html" %}
 {% load icones %}
 
-{% block title %}{% if request.user.role == "ADMIN" %}Ajouter un gestionnaire d'entreprise{% else %}Ajouter un utilisateur{% endif %}{% endblock %}
+{% block title %}{% if request.user.role == "ADMIN" %}Nouveau gestionnaire d'entreprise{% else %}Nouvel utilisateur{% endif %}{% endblock %}
 
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>{% if request.user.role == "ADMIN" %}Ajouter un gestionnaire d'entreprise{% else %}Ajouter un utilisateur{% endif %}</h1>
-        <p class="subtitle">{% if request.user.role == "ADMIN" %}Créez un compte gestionnaire rattaché à une entreprise pour piloter ses assurés et prises en charge.{% else %}Un compte sera créé et un lien d'activation sécurisé valable 24 heures sera transmis.{% endif %}</p>
+        <h1>{% if request.user.role == "ADMIN" %}Nouveau gestionnaire d'entreprise{% else %}Nouvel utilisateur{% endif %}</h1>
+        <p class="subtitle">{% if request.user.role == "ADMIN" %}Créer un compte gestionnaire pour une entreprise partenaire.{% else %}Créer un compte d'accès à la plateforme.{% endif %}</p>
     </div>
-    <a class="button btn btn-retour-expand" href="{% if request.user.role == 'ADMIN' %}{% url 'liste_organismes' %}{% else %}{% url 'dashboard' %}{% endif %}" title="Retour" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
+    <a class="button btn btn-retour-expand" href="{% url 'liste_utilisateurs' %}" title="Retour aux utilisateurs" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
 </section>
 
-<section class="panel panel-form" style="max-width: 640px;">
+<section class="panel panel-form" style="max-width: 600px;">
     {% if form.non_field_errors %}
     <div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
     {% endif %}
@@ -33,8 +33,8 @@
         </div>
         {% endfor %}
         <div style="margin-top: 24px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-            <button class="button primary" type="submit">Créer le compte et envoyer l'activation</button>
-            <a class="button btn" href="{% url 'dashboard' %}">Annuler</a>
+            <button class="button primary" type="submit">Créer le compte</button>
+            <a class="button btn" href="{% url 'liste_utilisateurs' %}">Annuler</a>
         </div>
     </form>
 </section>
@@ -46,10 +46,10 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!selectRole || !aideRole) return;
 
     var descriptions = {
-        'GESTIONNAIRE': 'Le rôle Gestionnaire gère les assurés, ayants droit, prises en charge et paiements de l\'organisme sélectionné (obligatoire).',
-        'MEDECIN': 'Le rôle Médecin créera automatiquement sa fiche professionnelle (agenda, consultations et prescriptions).',
-        'PHARMACIEN': 'Le rôle Pharmacien créera son profil d\'officine pour la vérification et délivrance d\'ordonnances.',
-        'ASSURE': 'Le rôle Assuré permettra la prise de rendez-vous et la consultation des ordonnances.'
+        'GESTIONNAIRE': 'Pilote les assurés, ayants droit et prises en charge de l\'organisme.',
+        'MEDECIN': 'Accède aux dossiers patients, consultations et prescriptions.',
+        'PHARMACIEN': 'Accède à la délivrance des ordonnances et vérification des droits.',
+        'ASSURE': 'Accède à son espace personnel, rendez-vous et ordonnances.'
     };
 
     function majAide() {

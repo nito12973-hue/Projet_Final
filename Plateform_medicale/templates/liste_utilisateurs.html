@@ -7,71 +7,62 @@
 <section class="page-title">
     <div>
         <h1>Comptes utilisateurs</h1>
-        <p class="subtitle">Vue d'ensemble des comptes et sécurité des accès. Vous pouvez débloquer les comptes suspendus ou ajouter un gestionnaire d'entreprise.</p>
+        <p class="subtitle">Gestion des comptes et sécurité des accès.</p>
     </div>
     <div class="actions">
         <a class="button btn btn-retour-expand" href="{% url 'dashboard' %}" title="Retour au tableau de bord" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
-        <a class="button primary" href="{% url 'ajouter_utilisateur' %}">{% icone "plus" %} Ajouter un gestionnaire</a>
+        <a class="button primary" href="{% url 'ajouter_utilisateur' %}">{% icone "plus" %} Nouveau compte</a>
     </div>
 </section>
 
 {% if tentatives_adresses_inconnues %}
-<div class="panel-bloc" style="margin-bottom: 20px; border-left: 4px solid var(--danger); background: rgba(220, 38, 38, 0.06); padding: 14px 18px; border-radius: 10px;">
+<div class="panel-bloc" style="margin-bottom: 20px; border-left: 4px solid var(--danger); background: rgba(220, 38, 38, 0.06); padding: 12px 16px; border-radius: 10px;">
     <strong style="color: var(--danger); font-size: 13.5px; display: inline-flex; align-items: center; gap: 6px;">
-        {% icone "shield" %} Alerte Sécurité : Intrusion / Force brute bloquée
+        {% icone "shield" %} Alerte Sécurité : Tentatives répétées sur adresses inconnues
     </strong>
-    <p style="font-size: 13px; margin: 6px 0 0; color: var(--texte); line-height: 1.5;">
-        Le pare-feu a bloqué des tentatives de connexion répétées sur des adresses qui ne correspondent à aucun compte existant :
+    <p style="font-size: 13px; margin: 4px 0 0; color: var(--texte); line-height: 1.4;">
         {% for t in tentatives_adresses_inconnues %}
-        <br>
-        <span class="code" style="font-weight: 600; color: var(--danger);">{{ t.email }}</span> — <strong>{{ t.tentatives }} échecs consécutifs</strong> (accès temporairement bloqué pendant 5 minutes)
+        <span class="code" style="font-weight: 600; color: var(--danger);">{{ t.email }}</span> ({{ t.tentatives }} échecs bloqués 5 min){% if not forloop.last %} · {% endif %}
         {% endfor %}
     </p>
 </div>
 {% endif %}
 
 <!-- Effectifs par rôle : aucune donnée nominative -->
-<div class="kpi-grille" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); margin-bottom: 20px;" aria-label="Effectifs par rôle">
+<div class="kpi-grille" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); margin-bottom: 20px;" aria-label="Effectifs par rôle">
     <div class="kpi">
-        <span class="kpi-entete">{% icone "users" %} Total comptes</span>
+        <span class="kpi-entete">{% icone "users" %} Total</span>
         <strong class="code">{{ total_utilisateurs }}</strong>
-        <span class="kpi-pied">Inscrits sur la plateforme</span>
     </div>
     <div class="kpi">
         <span class="kpi-entete">{% icone "heart-pulse" %} Médecins</span>
         <strong class="code">{{ total_medecins }}</strong>
-        <span class="kpi-pied">Praticiens</span>
     </div>
     <div class="kpi">
         <span class="kpi-entete">{% icone "family" %} Assurés</span>
         <strong class="code">{{ total_assures }}</strong>
-        <span class="kpi-pied">Bénéficiaires de soins</span>
     </div>
     <div class="kpi">
         <span class="kpi-entete">{% icone "pill" %} Pharmaciens</span>
         <strong class="code">{{ total_pharmaciens }}</strong>
-        <span class="kpi-pied">Officines</span>
     </div>
     <div class="kpi">
         <span class="kpi-entete">{% icone "building" %} Gestionnaires</span>
         <strong class="code">{{ total_gestionnaires }}</strong>
-        <span class="kpi-pied">Entreprises partenaires</span>
     </div>
     <div class="kpi">
-        <span class="kpi-entete">{% icone "shield" %} Administrateurs</span>
+        <span class="kpi-entete">{% icone "shield" %} Admins</span>
         <strong class="code">{{ total_admins }}</strong>
-        <span class="kpi-pied">Supervision</span>
     </div>
     <div class="kpi">
-        <span class="kpi-entete">{% icone "shield" %} Comptes bloqués</span>
-        <strong class="code">{{ total_comptes_signales }}</strong>
-        <span class="kpi-pied">À débloquer</span>
+        <span class="kpi-entete">{% icone "shield" %} Bloqués</span>
+        <strong class="code" style="{% if total_comptes_signales > 0 %}color: var(--danger);{% endif %}">{{ total_comptes_signales }}</strong>
     </div>
 </div>
 
 <div class="actions" style="justify-content:flex-end;margin-bottom:16px;gap:8px;">
-    <a class="button btn" data-chargement="Génération..." href="{% url 'exporter_utilisateurs_excel' %}?{{ request.GET.urlencode }}" title="Exporter en Excel">{% icone "download" %} Exporter en Excel</a>
-    <a class="button btn" href="{% url 'importer_utilisateurs_excel' %}" title="Importer depuis Excel">{% icone "upload" %} Importer depuis Excel</a>
+    <a class="button btn" data-chargement="Génération..." href="{% url 'exporter_utilisateurs_excel' %}?{{ request.GET.urlencode }}" title="Exporter en Excel">{% icone "download" %} Exporter</a>
+    <a class="button btn" href="{% url 'importer_utilisateurs_excel' %}" title="Importer depuis Excel">{% icone "upload" %} Importer</a>
 </div>
 
 <form method="get" class="filtres">
@@ -186,7 +177,7 @@
                         <a href="{% url 'journal_activite' %}?q={{ utilisateur.email }}" class="button btn btn-sm" title="Consulter l'historique d'activité de cet utilisateur">{% icone "file-text" %} Historique</a>
                         <form method="post" action="{% url 'renvoyer_activation' utilisateur.pk %}" class="action-ligne">
                             {% csrf_token %}
-                            <button type="submit" class="button btn btn-sm" title="Transmettre le lien d'activation sur WhatsApp ou par email">{% icone "share-2" %} Activer</button>
+                            <button type="submit" class="button btn btn-sm" title="Transmettre le lien d'activation sur WhatsApp ou par email">{% icone "share-2" %} Lien d'accès</button>
                         </form>
                         {% if utilisateur.pk != request.user.pk %}
                         <form method="post" action="{% url 'activer_desactiver_utilisateur' utilisateur.pk %}" class="action-ligne"
@@ -221,8 +212,8 @@
 {% else %}
 <div class="etat-vide">
     {% illustration_vide "users" %}
-    <h3>Aucun compte signalé</h3>
-    <p>{% if role_selectionne or recherche %}Aucun compte utilisateur ne correspond à vos critères de recherche ou de filtre.{% else %}Aucun compte n'est actuellement bloqué : aucune activité suspecte à signaler.{% endif %}</p>
+    <h3>Aucun compte trouvé</h3>
+    <p>{% if role_selectionne or recherche %}Aucun compte ne correspond à vos filtres.{% else %}Aucun compte bloqué ou suspect à signaler.{% endif %}</p>
     <div class="actions">
         <a href="{% url 'dashboard' %}" class="button primary">{% icone "chevron-left" %} Retour au tableau de bord</a>
         {% if role_selectionne or organisme_selectionne or statut_selectionne or recherche %}
