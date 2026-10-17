@@ -143,6 +143,7 @@ MAX_CONJOINTS_PAR_ASSURE = config('MAX_CONJOINTS_PAR_ASSURE', default=4, cast=in
 MAX_ENFANTS_PAR_ASSURE = config('MAX_ENFANTS_PAR_ASSURE', default=6, cast=int)
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+SENTRY_DSN = config('SENTRY_DSN', default=None)
 
 # Base de données et hashers pour les tests automatisés : isolation absolue
 if 'test' in sys.argv:
