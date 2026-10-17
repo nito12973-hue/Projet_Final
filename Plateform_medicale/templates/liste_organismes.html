@@ -1,47 +1,38 @@
 {% extends "base.html" %}
 {% load formats icones %}
 
-{% block title %}Organismes{% endblock %}
+{% block title %}Entreprises{% endblock %}
 
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>Organismes (IPM & Assureurs)</h1>
-        <p class="subtitle">Gestion des organismes de couverture santé : création, codes d'identification et activation.</p>
+        <h1>Entreprises</h1>
+        <p class="subtitle">Gestion des entreprises partenaires et de leurs gestionnaires de compte.</p>
     </div>
     <div class="actions">
-        <a class="button primary" href="{% url 'ajouter_organisme' %}" title="Enregistrer un nouvel organisme">{% icone "plus" %} Nouvel organisme</a>
+        <a class="button primary" href="{% url 'ajouter_organisme' %}" title="Enregistrer une nouvelle entreprise">{% icone "plus" %} Nouvelle entreprise</a>
     </div>
 </section>
 
-<div class="kpi-grille" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 20px;" aria-label="Statistiques organismes">
+<div class="kpi-grille" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 20px;" aria-label="Statistiques entreprises">
     <div class="kpi">
-        <span class="kpi-entete">{% icone "building" %} Total Organismes</span>
+        <span class="kpi-entete">{% icone "building" %} Total Entreprises</span>
         <strong class="code">{{ total_organismes }}</strong>
-        <span class="kpi-pied">IPM & Assureurs enregistrés</span>
+        <span class="kpi-pied">Entreprises enregistrées</span>
     </div>
     <div class="kpi">
-        <span class="kpi-entete">{% icone "check" %} Actifs</span>
+        <span class="kpi-entete">{% icone "check" %} Actives</span>
         <strong class="code">{{ total_organismes_actifs }}</strong>
-        <span class="kpi-pied">Organismes opérationnels</span>
+        <span class="kpi-pied">Entreprises opérationnelles</span>
     </div>
     <div class="kpi">
-        <span class="kpi-entete">{% icone "x" %} Inactifs</span>
+        <span class="kpi-entete">{% icone "x" %} Inactives</span>
         <strong class="code">{{ total_organismes_inactifs }}</strong>
-        <span class="kpi-pied">Organismes suspendus</span>
+        <span class="kpi-pied">Entreprises suspendues</span>
     </div>
 </div>
 
 <form method="get" class="filtres">
-    <div style="min-width:180px;">
-        <label for="type">Type d'organisme</label>
-        <select id="type" name="type" style="margin-bottom:0;">
-            <option value="">Tous les types</option>
-            {% for value, label in types_organisme %}
-            <option value="{{ value }}" {% if value == type_selectionne %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-        </select>
-    </div>
     <div style="min-width:180px;">
         <label for="statut">Statut</label>
         <select id="statut" name="statut" style="margin-bottom:0;">
@@ -58,7 +49,7 @@
         </div>
     </div>
     <button type="submit" class="button primary btn">Filtrer</button>
-    {% if type_selectionne or statut_selectionne or recherche %}
+    {% if statut_selectionne or recherche %}
     <a href="{% url 'liste_organismes' %}" class="button btn">Réinitialiser</a>
     {% endif %}
 </form>
@@ -66,13 +57,12 @@
 {% if organismes %}
 <section class="panel">
     <table>
-        <caption class="sr-only">Liste des organismes de couverture santé</caption>
+        <caption class="sr-only">Liste des entreprises partenaires</caption>
         <thead>
             <tr>
-                {% entete_tri request.GET "nom" "Organisme" %}
+                {% entete_tri request.GET "nom" "Entreprise" %}
                 {% entete_tri request.GET "code" "Code" %}
-                {% entete_tri request.GET "type_organisme" "Type" "col-optionnelle" %}
-                <th scope="col" class="col-optionnelle">Gestionnaires</th>
+                <th scope="col">Gestionnaires de compte</th>
                 <th scope="col" class="col-optionnelle">Assurés</th>
                 {% entete_tri request.GET "actif" "Statut" %}
                 <th scope="col">Actions</th>
@@ -90,8 +80,7 @@
                     {% endif %}
                 </td>
                 <td><span class="code">{{ org.code }}</span></td>
-                <td class="col-optionnelle"><span class="badge">{{ org.get_type_organisme_display }}</span></td>
-                <td class="col-optionnelle">
+                <td>
                     {% if org.gestionnaires_assignes %}
                         <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:6px;">
                         {% for gest in org.gestionnaires_assignes %}
@@ -148,8 +137,8 @@
 {% else %}
 <div class="etat-vide">
     {% illustration_vide "building" %}
-    <h3>Aucun organisme trouvé</h3>
-    <p>{% if type_selectionne or statut_selectionne or recherche %}Aucun organisme ne correspond à vos critères.{% else %}Aucun organisme n'est encore enregistré.{% endif %}</p>
+    <h3>Aucune entreprise trouvée</h3>
+    <p>{% if statut_selectionne or recherche %}Aucune entreprise ne correspond à vos critères.{% else %}Aucune entreprise n'est encore enregistrée.{% endif %}</p>
 </div>
 {% endif %}
 {% endblock %}

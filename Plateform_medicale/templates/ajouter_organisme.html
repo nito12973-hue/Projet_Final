@@ -1,46 +1,122 @@
 {% extends "base.html" %}
 {% load icones %}
 
-{% block title %}Ajouter un organisme{% endblock %}
+{% block title %}Ajouter une entreprise{% endblock %}
 
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>Ajouter un organisme</h1>
-        <p class="subtitle">Enregistrez une IPM, une compagnie d'assurance, une mutuelle ou une entreprise auto-assurée.</p>
+        <h1>Ajouter une entreprise</h1>
+        <p class="subtitle">Enregistrez une entreprise et définissez son gestionnaire de compte en une seule étape.</p>
     </div>
     <a class="button btn btn-retour-expand" href="{% url 'liste_organismes' %}" title="Retour" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
 </section>
 
-<section class="panel panel-form" style="max-width: 640px;">
+<section class="panel panel-form" style="max-width: 680px;">
     {% if form.non_field_errors %}
     <div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
     {% endif %}
 
     <form method="post">
         {% csrf_token %}
-        {% for field in form %}
-        {% if field.field.widget.input_type == "checkbox" %}
-        <div class="champ-case">
-            {{ field }}
-            <div class="champ-case-texte">
-                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                {% if field.help_text %}<p class="subtitle">{{ field.help_text }}</p>{% endif %}
+        {{ form.type_organisme }}
+
+        <h2 style="font-size: 16px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+            {% icone "building" %} <span>Informations de l'entreprise</span>
+        </h2>
+
+        <div class="champ-groupe" style="margin-bottom: 14px;">
+            <label for="{{ form.nom.id_for_label }}" style="font-weight: 600; margin-bottom: 4px; display: block;">
+                Nom de l'entreprise <span style="color:var(--danger);" aria-hidden="true">*</span>
+            </label>
+            {{ form.nom }}
+            {% if form.nom.errors %}<div class="erreurs" role="alert">{{ form.nom.errors }}</div>{% endif %}
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+            <div class="champ-groupe">
+                <label for="{{ form.code.id_for_label }}" style="font-weight: 600; margin-bottom: 4px; display: block;">
+                    Code unique <span style="color:var(--danger);" aria-hidden="true">*</span>
+                </label>
+                {{ form.code }}
+                {% if form.code.errors %}<div class="erreurs" role="alert">{{ form.code.errors }}</div>{% endif %}
+            </div>
+            <div class="champ-groupe">
+                <label for="{{ form.telephone.id_for_label }}" style="font-weight: 600; margin-bottom: 4px; display: block;">
+                    Téléphone entreprise
+                </label>
+                {{ form.telephone }}
+                {% if form.telephone.errors %}<div class="erreurs" role="alert">{{ form.telephone.errors }}</div>{% endif %}
             </div>
         </div>
-        {% else %}
-        <div class="champ-groupe" style="margin-bottom: 16px;">
-            <label for="{{ field.id_for_label }}" style="font-weight: 600; margin-bottom: 4px; display: block;">
-                {{ field.label }}
-                {% if field.field.required %}<span style="color:var(--danger);" aria-hidden="true">*</span>{% endif %}
-            </label>
-            {{ field }}
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+            <div class="champ-groupe">
+                <label for="{{ form.email.id_for_label }}" style="font-weight: 600; margin-bottom: 4px; display: block;">
+                    Email de contact
+                </label>
+                {{ form.email }}
+                {% if form.email.errors %}<div class="erreurs" role="alert">{{ form.email.errors }}</div>{% endif %}
+            </div>
+            <div class="champ-groupe">
+                <label for="{{ form.adresse.id_for_label }}" style="font-weight: 600; margin-bottom: 4px; display: block;">
+                    Adresse
+                </label>
+                {{ form.adresse }}
+                {% if form.adresse.errors %}<div class="erreurs" role="alert">{{ form.adresse.errors }}</div>{% endif %}
+            </div>
         </div>
-        {% endif %}
-        {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
-        {% endfor %}
+
+        <div class="champ-case" style="margin-bottom: 24px;">
+            {{ form.actif }}
+            <div class="champ-case-texte">
+                <label for="{{ form.actif.id_for_label }}">Entreprise active</label>
+            </div>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid var(--border); margin: 24px 0 20px 0;">
+
+        <h2 style="font-size: 16px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
+            {% icone "users" %} <span>Gestionnaire du compte (responsable entreprise)</span>
+        </h2>
+        <p class="subtitle" style="margin-bottom: 16px; font-size: 13px;">Le gestionnaire administrera directement les assurés, ayants droit et prises en charge de cette entreprise.</p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+            <div class="champ-groupe">
+                <label for="{{ form.gestionnaire_prenom.id_for_label }}" style="font-weight: 600; margin-bottom: 4px; display: block;">
+                    Prénom du gestionnaire
+                </label>
+                {{ form.gestionnaire_prenom }}
+                {% if form.gestionnaire_prenom.errors %}<div class="erreurs" role="alert">{{ form.gestionnaire_prenom.errors }}</div>{% endif %}
+            </div>
+            <div class="champ-groupe">
+                <label for="{{ form.gestionnaire_nom.id_for_label }}" style="font-weight: 600; margin-bottom: 4px; display: block;">
+                    Nom du gestionnaire
+                </label>
+                {{ form.gestionnaire_nom }}
+                {% if form.gestionnaire_nom.errors %}<div class="erreurs" role="alert">{{ form.gestionnaire_nom.errors }}</div>{% endif %}
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+            <div class="champ-groupe">
+                <label for="{{ form.gestionnaire_email.id_for_label }}" style="font-weight: 600; margin-bottom: 4px; display: block;">
+                    Email de connexion gestionnaire
+                </label>
+                {{ form.gestionnaire_email }}
+                {% if form.gestionnaire_email.errors %}<div class="erreurs" role="alert">{{ form.gestionnaire_email.errors }}</div>{% endif %}
+            </div>
+            <div class="champ-groupe">
+                <label for="{{ form.gestionnaire_telephone.id_for_label }}" style="font-weight: 600; margin-bottom: 4px; display: block;">
+                    Téléphone portable (WhatsApp)
+                </label>
+                {{ form.gestionnaire_telephone }}
+                {% if form.gestionnaire_telephone.errors %}<div class="erreurs" role="alert">{{ form.gestionnaire_telephone.errors }}</div>{% endif %}
+            </div>
+        </div>
+
         <div style="margin-top: 24px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-            <button class="button primary" type="submit">Créer l'organisme</button>
+            <button class="button primary" type="submit">Enregistrer l'entreprise et son gestionnaire</button>
             <a class="button btn" href="{% url 'liste_organismes' %}">Annuler</a>
         </div>
     </form>

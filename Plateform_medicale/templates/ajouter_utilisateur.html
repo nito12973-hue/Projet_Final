@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 {% load icones %}
 
-{% block title %}Ajouter un utilisateur{% endblock %}
+{% block title %}{% if request.user.role == "ADMIN" %}Ajouter un gestionnaire d'entreprise{% else %}Ajouter un utilisateur{% endif %}{% endblock %}
 
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>Ajouter un utilisateur</h1>
-        <p class="subtitle">Un compte sera créé et un lien d'activation sécurisé valable 24 heures sera envoyé via le canal disponible.</p>
+        <h1>{% if request.user.role == "ADMIN" %}Ajouter un gestionnaire d'entreprise{% else %}Ajouter un utilisateur{% endif %}</h1>
+        <p class="subtitle">{% if request.user.role == "ADMIN" %}Créez un compte gestionnaire rattaché à une entreprise pour piloter ses assurés et prises en charge.{% else %}Un compte sera créé et un lien d'activation sécurisé valable 24 heures sera transmis.{% endif %}</p>
     </div>
-    <a class="button btn btn-retour-expand" href="{% url 'dashboard' %}" title="Retour au tableau de bord" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
+    <a class="button btn btn-retour-expand" href="{% if request.user.role == 'ADMIN' %}{% url 'liste_organismes' %}{% else %}{% url 'dashboard' %}{% endif %}" title="Retour" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
 </section>
 
 <section class="panel panel-form" style="max-width: 640px;">
