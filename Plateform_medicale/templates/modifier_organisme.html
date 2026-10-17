@@ -121,32 +121,6 @@
             </div>
         </div>
 
-        {% if gestionnaire and lien_activation %}
-        <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 10px; padding: 14px 16px; margin-top: 14px; margin-bottom: 8px;">
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
-                <span style="font-size: 13px; font-weight: 700; color: #065F46; display: inline-flex; align-items: center; gap: 6px;">
-                    {% icone "shield-check" %} Lien direct d'activation du gestionnaire
-                </span>
-                <span class="badge" style="font-size: 11px; background: #E0E7FF; color: #3730A3;">
-                    {% if gestionnaire.has_usable_password %}Compte configuré{% else %}En attente d'activation{% endif %}
-                </span>
-            </div>
-            <p style="font-size: 12px; color: var(--text-muted); margin: 0 0 10px 0;">
-                Vous pouvez transmettre ou tester ce lien sécurisé (valable 24h) pour activer le compte et définir le mot de passe :
-            </p>
-            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                <a href="{{ lien_activation }}" target="_blank" class="button" style="font-size: 12px; padding: 6px 12px; background: #0E7490; color: #fff; text-decoration: none; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;">
-                    {% icone "external-link" %} Ouvrir l'activation
-                </a>
-                {% if whatsapp_url %}
-                <a href="{{ whatsapp_url }}" target="_blank" rel="noopener" class="button" style="font-size: 12px; padding: 6px 12px; background: #25D366; color: #fff; text-decoration: none; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; font-weight: 600;">
-                    {% icone "message-circle" %} Envoyer par WhatsApp
-                </a>
-                {% endif %}
-            </div>
-        </div>
-        {% endif %}
-
         <hr style="border: none; border-top: 1px solid var(--border); margin: 24px 0 20px 0;">
 
         <!-- SECTION 3 : SÉCURITÉ ADMIN -->

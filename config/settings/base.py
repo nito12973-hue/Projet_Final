@@ -111,28 +111,32 @@ CSRF_COOKIE_SAMESITE = 'Lax'
 X_FRAME_OPTIONS = 'DENY'
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
-# Messagerie transactionnelle (Email)
+# Messagerie transactionnelle (Email SMTP)
 EMAIL_BACKEND = config(
     'EMAIL_BACKEND',
-    default='django.core.mail.backends.console.EmailBackend',
+    default='django.core.mail.backends.smtp.EmailBackend',
 )
-EMAIL_HOST = config('EMAIL_HOST', default='localhost')
+EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
-EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@santesn.sn')
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='lamaranamamadousdiallo@gmail.com')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='yinprgglnfbmxxut')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='lamaranamamadousdiallo@gmail.com')
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 # Notification WhatsApp Business
-WHATSAPP_ENABLED = config('WHATSAPP_ENABLED', default=False, cast=bool)
-WHATSAPP_API_TOKEN = config('WHATSAPP_API_TOKEN', default='')
-WHATSAPP_PHONE_NUMBER_ID = config('WHATSAPP_PHONE_NUMBER_ID', default='')
+WHATSAPP_ENABLED = config('WHATSAPP_ENABLED', default=True, cast=bool)
+WHATSAPP_API_TOKEN = config(
+    'WHATSAPP_API_TOKEN',
+    default='EAAXGE8OjzPIBSob502MA3fYZATbQgOZCXhykrgxUiF51ItqwCApwGsXhH9OAp2kBmGKK8VlHVw6WpoSEK0Xp44EOGVZCgprnV0UjZBO4iMdFL1BqycKtGDhDw8ZBG8V6ZB14CM1J5VZCZBOUlQY4r0csF1WK7piPqlHEjD46laq1HPkLhhP9i4qbr365XZAdYWnhqFgZDZD',
+)
+WHATSAPP_PHONE_NUMBER_ID = config('WHATSAPP_PHONE_NUMBER_ID', default='1372241212628957')
 WHATSAPP_TEMPLATE_NAME = config('WHATSAPP_TEMPLATE_NAME', default=None)
 WHATSAPP_SENDER_PHONE = config('WHATSAPP_SENDER_PHONE', default='221789576145')
 WHATSAPP_WEBHOOK_VERIFY_TOKEN = config('WHATSAPP_WEBHOOK_VERIFY_TOKEN', default='santesn_webhook_secret_2026')
 
 if 'test' in sys.argv:
+    EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
     WHATSAPP_ENABLED = False
 
 # Règles métier de l'assurance santé (Sénégal)
