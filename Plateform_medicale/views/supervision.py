@@ -118,9 +118,15 @@ def metrics_prometheus(request):
         TentativeConnexion, JournalActivite
     )
 
-    client_ip = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', '')).split(',')[0].strip()
-    est_local = client_ip in ('127.0.0.1', 'localhost', '::1') or client_ip.startswith('172.') or client_ip.startswith('10.')
+    # Contrôle strict anti-usurpation : ne jamais faire confiance à HTTP_X_FORWARDED_FOR pour l'authentification réseau
+    remote_addr = (request.META.get('REMOTE_ADDR', '') or '').strip()
+    est_local = remote_addr in ('127.0.0.1', '::1')
     est_admin = request.user.is_authenticated and getattr(request.user, 'role', None) == User.Role.ADMIN
+
+    # Support d'un jeton d'authentification Bearer dédié pour collecteurs distants
+    auth_header = request.headers.get('Authorization', '').strip()
+    metrics_token = getattr(settings, 'PROMETHEUS_METRICS_TOKEN', '')
+    est_token_valide = bool(metrics_token) and auth_header == f"Bearer {metrics_token}"
 
     user_agent = request.headers.get('User-Agent', '').lower()
     accept = request.headers.get('Accept', '').lower()
@@ -140,8 +146,8 @@ def metrics_prometheus(request):
         if not est_admin:
             return HttpResponseForbidden("Accès réservé aux administrateurs de la plateforme SantéSN.")
     else:
-        # Collecteurs automatiques (Prometheus scraper sur réseau local / docker interne)
-        if not (est_local or est_admin):
+        # Collecteurs automatiques machine-to-machine
+        if not (est_local or est_admin or est_token_valide):
             return HttpResponseForbidden("Accès réservé aux administrateurs ou collecteurs Prometheus autorisés.")
 
     db = diagnostiquer_base_de_donnees()

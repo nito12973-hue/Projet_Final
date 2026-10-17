@@ -22,6 +22,7 @@ from .utils import (
     get_object_or_404_organisme,
     journaliser,
     organisme_gestionnaire,
+    redirect_securise,
     role_required,
 )
 from .medecin_espace import _medecin_courant
@@ -320,7 +321,7 @@ def valider_ayant_droit(request, pk):
         verrou = Patient.objects.select_for_update().get(pk=ayant_droit.pk)
         if verrou.statut_validation == Patient.StatutValidation.VALIDE:
             messages.info(request, f"L'ayant droit {ayant_droit.prenom} {ayant_droit.nom} est déjà validé.")
-            return redirect(request.META.get("HTTP_REFERER") or "liste_patients")
+            return redirect_securise(request, "liste_patients")
         ayant_droit.statut_validation = Patient.StatutValidation.VALIDE
         ayant_droit.date_decision = timezone.now()
         ayant_droit.valide_par = request.user
@@ -348,7 +349,7 @@ def valider_ayant_droit(request, pk):
             )
 
     messages.success(request, f"L'ayant droit {ayant_droit.prenom} {ayant_droit.nom} a été validé avec succès.")
-    return redirect(request.META.get("HTTP_REFERER") or "liste_patients")
+    return redirect_securise(request, "liste_patients")
 
 
 @gestionnaire_required
@@ -365,7 +366,7 @@ def refuser_ayant_droit(request, pk):
         verrou = Patient.objects.select_for_update().get(pk=ayant_droit.pk)
         if verrou.statut_validation == Patient.StatutValidation.REFUSE and verrou.motif_refus == motif:
             messages.info(request, f"L'ayant droit {ayant_droit.prenom} {ayant_droit.nom} est déjà refusé.")
-            return redirect(request.META.get("HTTP_REFERER") or "liste_patients")
+            return redirect_securise(request, "liste_patients")
         ayant_droit.statut_validation = Patient.StatutValidation.REFUSE
         ayant_droit.date_decision = timezone.now()
         ayant_droit.valide_par = request.user
@@ -394,7 +395,7 @@ def refuser_ayant_droit(request, pk):
             )
 
     messages.warning(request, f"L'ayant droit {ayant_droit.prenom} {ayant_droit.nom} a été refusé.")
-    return redirect(request.META.get("HTTP_REFERER") or "liste_patients")
+    return redirect_securise(request, "liste_patients")
 
 
 @gestionnaire_required

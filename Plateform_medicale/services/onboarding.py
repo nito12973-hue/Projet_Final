@@ -67,7 +67,7 @@ def construire_bilan_onboarding(statut, utilisateur, action="creation"):
     if whatsapp_envoye and email_envoye:
         texte_dest = f" au {telephone}" if telephone else ""
         mail_dest = f" et à {email}" if email else ""
-        texte_flash = mark_safe(f"{prefixe_creation}Le lien d'activation a été envoyé automatiquement par WhatsApp{texte_dest}{mail_dest} par e-mail.")
+        texte_flash = f"{prefixe_creation}Le lien d'activation a été envoyé automatiquement par WhatsApp{texte_dest}{mail_dest} par e-mail."
         titre = "Activation envoyée par WhatsApp et Email"
         note = "Le lien d'activation a été transmis automatiquement sur WhatsApp et sur la boîte e-mail."
         niveau = "success"
@@ -76,7 +76,7 @@ def construire_bilan_onboarding(statut, utilisateur, action="creation"):
     # CAS 2 : WhatsApp uniquement envoyé
     elif whatsapp_envoye:
         texte_dest = f" au {telephone}" if telephone else ""
-        texte_flash = mark_safe(f"{prefixe_creation}Le lien d'activation a été envoyé automatiquement par WhatsApp{texte_dest}.")
+        texte_flash = f"{prefixe_creation}Le lien d'activation a été envoyé automatiquement par WhatsApp{texte_dest}."
         titre = "Activation envoyée par WhatsApp"
         note = "Le lien d'activation a été transmis sur le numéro WhatsApp de l'utilisateur."
         niveau = "success"
@@ -85,7 +85,7 @@ def construire_bilan_onboarding(statut, utilisateur, action="creation"):
     # CAS 3 : Email uniquement envoyé
     elif email_envoye:
         texte_dest = f" à {email}" if email else ""
-        texte_flash = mark_safe(
+        texte_flash = (
             f"{prefixe_creation}Le lien d'activation a été envoyé automatiquement par email{texte_dest}."
         )
         titre = "Activation envoyée par Email"
@@ -95,7 +95,7 @@ def construire_bilan_onboarding(statut, utilisateur, action="creation"):
 
     # CAS 4 : Aucun canal n'a pu délivrer le message
     else:
-        texte_flash = mark_safe(
+        texte_flash = (
             f"{prefixe_creation}Échec de l'envoi automatique : aucun message n'a pu être délivré par WhatsApp ni par Email. "
             "Veuillez vérifier les coordonnées de l'utilisateur."
         )

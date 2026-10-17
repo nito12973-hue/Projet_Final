@@ -53,6 +53,7 @@ from .utils import (
     _trier,
     admin_required,
     journaliser,
+    redirect_securise,
     role_required,
 )
 
@@ -796,10 +797,7 @@ def attribuer_plan_utilisateur(request, pk):
                 request,
                 f"Le plan de couverture « {libelle} » a été attribué avec succès à {patient}.",
             )
-            next_url = request.GET.get("next") or request.POST.get("next")
-            if next_url and next_url.startswith("/"):
-                return redirect(next_url)
-            return redirect("liste_utilisateurs")
+            return redirect_securise(request, "liste_utilisateurs")
     else:
         form = AttribuerPlanForm(initial={'plan_couverture': patient.plan_couverture})
 
@@ -1006,7 +1004,7 @@ def ajouter_organisme(request):
                 flash_extra = f" {statut_onboarding['bilan']['texte_flash']}"
 
             if gestionnaire:
-                messages.success(request, mark_safe(f"Entreprise « {organisme.nom} » et compte gestionnaire ({gestionnaire.email}) créés avec succès.{flash_extra}"))
+                messages.success(request, f"Entreprise « {organisme.nom} » et compte gestionnaire ({gestionnaire.email}) créés avec succès.{flash_extra}")
             else:
                 messages.success(request, f"Entreprise « {organisme.nom} » créée avec succès.")
             return redirect("liste_organismes")
@@ -1042,9 +1040,9 @@ def modifier_organisme(request, pk):
                 flash_extra = f" {statut_onboarding['bilan']['texte_flash']}"
 
             if gestionnaire_modifie:
-                messages.success(request, mark_safe(f"Entreprise « {organisme.nom} » et données du gestionnaire ({gestionnaire_modifie.email}) mises à jour avec succès.{flash_extra}"))
+                messages.success(request, f"Entreprise « {organisme.nom} » et données du gestionnaire ({gestionnaire_modifie.email}) mises à jour avec succès.{flash_extra}")
             elif gestionnaire_cree:
-                messages.success(request, mark_safe(f"Entreprise « {organisme.nom} » modifiée et compte gestionnaire ({gestionnaire_cree.email}) créé.{flash_extra}"))
+                messages.success(request, f"Entreprise « {organisme.nom} » modifiée et compte gestionnaire ({gestionnaire_cree.email}) créé.{flash_extra}")
             else:
                 messages.success(request, f"Entreprise « {organisme.nom} » modifiée avec succès.")
             return redirect("liste_organismes")

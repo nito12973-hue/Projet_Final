@@ -17,18 +17,6 @@
     }
   ],
   "env": {
-    "DATABASE_URL": "postgresql://neondb_owner:npg_mzGAUo8aKc4H@ep-round-tree-ay6jpqcs-pooler.c-5.us-east-2.aws.neon.tech/santesn?sslmode=require",
-    "SENTRY_DSN": "https://62f051053735a37f44b9fbfabaaaf54c@o4512251337834496.ingest.de.sentry.io/4512251347468368",
-    "WHATSAPP_ENABLED": "True",
-    "WHATSAPP_API_TOKEN": "EAAXGE8OjzPIBSob502MA3fYZATbQgOZCXhykrgxUiF51ItqwCApwGsXhH9OAp2kBmGKK8VlHVw6WpoSEK0Xp44EOGVZCgprnV0UjZBO4iMdFL1BqycKtGDhDw8ZBG8V6ZB14CM1J5VZCZBOUlQY4r0csF1WK7piPqlHEjD46laq1HPkLhhP9i4qbr365XZAdYWnhqFgZDZD",
-    "WHATSAPP_PHONE_NUMBER_ID": "1372241212628957",
-    "EMAIL_BACKEND": "django.core.mail.backends.smtp.EmailBackend",
-    "EMAIL_HOST": "smtp.gmail.com",
-    "EMAIL_PORT": "587",
-    "EMAIL_USE_TLS": "True",
-    "EMAIL_HOST_USER": "lamaranamamadousdiallo@gmail.com",
-    "EMAIL_HOST_PASSWORD": "yinprgglnfbmxxut",
-    "DEFAULT_FROM_EMAIL": "lamaranamamadousdiallo@gmail.com",
     "DJANGO_SETTINGS_MODULE": "config.settings.prod"
   }
 }
