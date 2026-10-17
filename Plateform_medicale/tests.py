@@ -13024,4 +13024,24 @@ class WhatsAppBotAndWebhookTests(TestCase):
             self.assertIn("Vos Droits", data["reponse"])
             mock_envoyer.assert_called_once()
 
+    def test_bot_liste_medecins_proximite_ville(self):
+        from Plateform_medicale.services.whatsapp_bot import traiter_message_entrant_whatsapp
+        # Recherche par ville explicite "RDV Dakar"
+        reponse = traiter_message_entrant_whatsapp("221771112233", "RDV Dakar")
+        self.assertIn("Dakar", reponse)
+        self.assertIn("Dr. Mamadou Diop", reponse)
+
+    def test_bot_liste_medecins_proximite_gps(self):
+        from Plateform_medicale.services.whatsapp_bot import traiter_message_entrant_whatsapp
+        # Mise à jour des coordonnées du prestataire
+        self.prestataire.latitude = Decimal("14.6738")
+        self.prestataire.longitude = Decimal("-17.4372")
+        self.prestataire.save()
+
+        # Envoi de la position GPS via WhatsApp
+        reponse = traiter_message_entrant_whatsapp("221771112233", "LOCATION 14.6700 -17.4350")
+        self.assertIn("votre position GPS", reponse)
+        self.assertIn("Dr. Mamadou Diop", reponse)
+        self.assertIn("km", reponse)
+
 
