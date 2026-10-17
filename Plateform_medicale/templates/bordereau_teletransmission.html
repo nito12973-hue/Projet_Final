@@ -16,10 +16,10 @@
         </p>
     </div>
     <div class="actions">
-        <a class="button btn btn-expand" data-chargement="Génération PDF..." href="{% url 'exporter_bordereau_teletransmission_pdf' %}?{{ request.GET.urlencode }}" title="Exporter le bordereau en PDF" aria-label="Exporter en PDF">
+        <a class="button btn btn-expand" href="{% url 'exporter_bordereau_teletransmission_pdf' %}?{{ request.GET.urlencode }}" title="Exporter le bordereau en PDF" aria-label="Exporter en PDF">
             {% icone "download" %} <span class="expand-text">Bordereau PDF Officiel</span>
         </a>
-        <a class="button btn btn-expand" data-chargement="Génération Excel..." href="{% url 'exporter_bordereau_teletransmission_excel' %}?{{ request.GET.urlencode }}" title="Exporter le bordereau en Excel" aria-label="Exporter en Excel">
+        <a class="button btn btn-expand" href="{% url 'exporter_bordereau_teletransmission_excel' %}?{{ request.GET.urlencode }}" title="Exporter le bordereau en Excel" aria-label="Exporter en Excel">
             {% icone "download" %} <span class="expand-text">Export Excel (.xlsx)</span>
         </a>
         <a class="button btn btn-retour-expand" href="{% url 'liste_paiements' %}" title="Retour aux paiements">
@@ -27,6 +27,18 @@
         </a>
     </div>
 </section>
+
+<!-- Notice d'explication du Bordereau Tiers Payant -->
+<div class="panel-bloc" style="margin-bottom: 22px; padding: 14px 18px; border-radius: 12px; background: rgba(14, 124, 134, 0.05); border: 1px solid rgba(14, 124, 134, 0.18);">
+    <div style="display: flex; gap: 12px; align-items: flex-start;">
+        <span style="color: var(--primary); font-size: 18px; line-height: 1.2;">{% icone "info" %}</span>
+        <div style="font-size: 13px; line-height: 1.5; color: var(--texte);">
+            <strong>Qu'est-ce que le Bordereau de Tiers Payant ?</strong><br>
+            C'est le <strong>relevé officiel des actes médicaux et médicaments</strong> pris en charge par l'entreprise ou l'IPM pour ses collaborateurs.
+            Il récapitule les soins réalisés et calcule le montant net exact dû aux cliniques et pharmacies conventionnées (part Tiers Payant). Vous pouvez télécharger ce bordereau en <strong>PDF certifié</strong> ou <strong>Excel</strong> pour le transmettre directement à la comptabilité pour paiement.
+        </div>
+    </div>
+</div>
 
 <!-- Synthèse Financière du Bordereau -->
 <section class="dash-grid" style="margin-bottom: 22px;">

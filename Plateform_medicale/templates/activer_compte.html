@@ -38,7 +38,7 @@
             </button>
         </div>
         {% if form.nouveau_mot_de_passe.help_text %}
-        <p class="aide">{{ form.nouveau_mot_de_passe.help_text }}</p>
+        <div class="aide" style="margin-top: 8px;">{{ form.nouveau_mot_de_passe.help_text|safe }}</div>
         {% endif %}
         {% if form.nouveau_mot_de_passe.errors %}
         <div class="erreur-champ" role="alert">

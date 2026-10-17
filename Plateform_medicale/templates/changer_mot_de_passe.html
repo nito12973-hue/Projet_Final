@@ -14,23 +14,58 @@
     </div>
 </section>
 
-<section class="panel panel-form">
+<section class="panel panel-form" style="max-width: 580px; padding: 26px 28px;">
     {% if form.non_field_errors %}
-    <div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
+    <div class="erreurs-formulaire" role="alert" style="margin-bottom: 20px;">{{ form.non_field_errors }}</div>
     {% endif %}
 
     <form method="post">
         {% csrf_token %}
         {% for field in form %}
-        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-        {{ field }}
-        {% if field.help_text %}<p class="subtitle" style="margin:-10px 0 16px;font-size:12px;">{{ field.help_text|safe }}</p>{% endif %}
-        {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
+        <div class="champ-groupe" style="margin-bottom: 22px;">
+            <label for="{{ field.id_for_label }}" style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--titre);">
+                {{ field.label }}
+            </label>
+            <div style="position: relative; display: flex; align-items: center;">
+                {{ field }}
+                <button type="button" class="btn-toggle-oeil" onclick="toggleChampMdp('{{ field.id_for_label }}', this)" title="Afficher ou masquer" aria-label="Afficher ou masquer le mot de passe" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; color: var(--muted); padding: 6px; display: inline-flex; align-items: center;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/>
+                        <circle cx="12" cy="12" r="2.5"/>
+                    </svg>
+                </button>
+            </div>
+            {% if field.help_text %}
+            <div class="champ-aide" style="margin-top: 8px; font-size: 12.5px; color: var(--muted); line-height: 1.5;">
+                {{ field.help_text|safe }}
+            </div>
+            {% endif %}
+            {% if field.errors %}
+            <div class="erreurs" role="alert" style="margin-top: 6px;">{{ field.errors }}</div>
+            {% endif %}
+        </div>
         {% endfor %}
-        <div class="actions" style="margin-top: 16px; display: flex; gap: 10px;">
-            <button class="button primary" type="submit">Enregistrer</button>
+
+        <div class="actions" style="margin-top: 26px; display: flex; gap: 12px; align-items: center;">
+            <button class="button primary" type="submit">Enregistrer le nouveau mot de passe</button>
             <a class="button btn" href="{% url 'mon_compte' %}">Annuler</a>
         </div>
     </form>
 </section>
+
+<script>
+function toggleChampMdp(inputId, btn) {
+    var input = document.getElementById(inputId);
+    if (input && btn) {
+        var svg = btn.querySelector('svg');
+        if (input.type === 'password') {
+            input.type = 'text';
+            if (svg) svg.innerHTML = '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="2.5"/><line x1="3" y1="3" x2="21" y2="21"/>';
+        } else {
+            input.type = 'password';
+            if (svg) svg.innerHTML = '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="2.5"/>';
+        }
+    }
+}
+</script>
 {% endblock %}
