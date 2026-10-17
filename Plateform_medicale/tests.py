@@ -13304,6 +13304,10 @@ class WhatsAppBotAndWebhookTests(TestCase):
                 "code": "AVEC-COMPTES",
                 "type_organisme": Organisme.TypeOrganisme.ENTREPRISE,
                 "actif": True,
+                "gestionnaire_prenom": "Moussa",
+                "gestionnaire_nom": "Diallo",
+                "gestionnaire_email": "user.corrige@santesn.sn",
+                "gestionnaire_telephone": "771234567",
                 "mot_de_passe_admin": PASSWORD,
             },
             follow=True,
@@ -13311,6 +13315,10 @@ class WhatsAppBotAndWebhookTests(TestCase):
         self.assertEqual(resp_mod_bon_pass.status_code, 200)
         org_avec_user.refresh_from_db()
         self.assertEqual(org_avec_user.nom, "Nouveau Nom Reussi")
+        gest_modifie = org_avec_user.utilisateurs.filter(role=User.Role.GESTIONNAIRE).first()
+        self.assertIsNotNone(gest_modifie)
+        self.assertEqual(gest_modifie.email, "user.corrige@santesn.sn")
+        self.assertEqual(gest_modifie.first_name, "Moussa")
 
 
 

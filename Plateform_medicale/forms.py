@@ -314,10 +314,13 @@ class OrganismeForm(forms.ModelForm):
         self._request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk:
-            self.fields.pop("gestionnaire_prenom", None)
-            self.fields.pop("gestionnaire_nom", None)
-            self.fields.pop("gestionnaire_email", None)
-            self.fields.pop("gestionnaire_telephone", None)
+            gestionnaire = self.instance.utilisateurs.filter(role=User.Role.GESTIONNAIRE).order_by("id").first()
+            self._gestionnaire_existant = gestionnaire
+            if gestionnaire:
+                self.fields["gestionnaire_prenom"].initial = gestionnaire.first_name
+                self.fields["gestionnaire_nom"].initial = gestionnaire.last_name
+                self.fields["gestionnaire_email"].initial = gestionnaire.email
+                self.fields["gestionnaire_telephone"].initial = gestionnaire.phone_number
             self.fields["mot_de_passe_admin"] = forms.CharField(
                 label="Confirmation par mot de passe administrateur",
                 widget=forms.PasswordInput(attrs={"placeholder": "Saisissez votre mot de passe actuel pour valider"}),
@@ -338,17 +341,17 @@ class OrganismeForm(forms.ModelForm):
                 self.add_error("mot_de_passe_admin", "Le mot de passe administrateur est obligatoire pour valider la modification.")
             elif user and not user.check_password(mot_de_passe):
                 self.add_error("mot_de_passe_admin", "Mot de passe administrateur incorrect.")
-        else:
-            prenom = (cleaned_data.get("gestionnaire_prenom") or "").strip()
-            nom = (cleaned_data.get("gestionnaire_nom") or "").strip()
-            email = (cleaned_data.get("gestionnaire_email") or "").strip()
-            if email or prenom or nom:
-                if not prenom:
-                    self.add_error("gestionnaire_prenom", "Le prénom du gestionnaire est obligatoire.")
-                if not nom:
-                    self.add_error("gestionnaire_nom", "Le nom du gestionnaire est obligatoire.")
-                if not email:
-                    self.add_error("gestionnaire_email", "L'adresse email de connexion du gestionnaire est obligatoire.")
+
+        prenom = (cleaned_data.get("gestionnaire_prenom") or "").strip()
+        nom = (cleaned_data.get("gestionnaire_nom") or "").strip()
+        email = (cleaned_data.get("gestionnaire_email") or "").strip()
+        if email or prenom or nom:
+            if not prenom:
+                self.add_error("gestionnaire_prenom", "Le prénom du gestionnaire est obligatoire.")
+            if not nom:
+                self.add_error("gestionnaire_nom", "Le nom du gestionnaire est obligatoire.")
+            if not email:
+                self.add_error("gestionnaire_email", "L'adresse email de connexion du gestionnaire est obligatoire.")
         return cleaned_data
 
     def clean_code(self):
@@ -364,8 +367,13 @@ class OrganismeForm(forms.ModelForm):
 
     def clean_gestionnaire_email(self):
         email = (self.cleaned_data.get("gestionnaire_email") or "").strip().lower()
-        if email and User.objects.filter(email=email).exists():
-            raise forms.ValidationError("Un compte utilisateur avec cette adresse email existe déjà.")
+        if email:
+            qs = User.objects.filter(email=email)
+            gest_existant = getattr(self, "_gestionnaire_existant", None)
+            if gest_existant:
+                qs = qs.exclude(pk=gest_existant.pk)
+            if qs.exists():
+                raise forms.ValidationError("Un compte utilisateur avec cette adresse email existe déjà.")
         return email
 
     def save(self, commit=True, request=None):
@@ -373,23 +381,35 @@ class OrganismeForm(forms.ModelForm):
             self.instance.type_organisme = Organisme.TypeOrganisme.ENTREPRISE
         organisme = super().save(commit=commit)
         self.gestionnaire_cree = None
+        self.gestionnaire_modifie = None
         email = (self.cleaned_data.get("gestionnaire_email") or "").strip().lower()
+        prenom = (self.cleaned_data.get("gestionnaire_prenom") or "").strip()
+        nom = (self.cleaned_data.get("gestionnaire_nom") or "").strip()
+        tel = (self.cleaned_data.get("gestionnaire_telephone") or "").strip()
+
         if commit and email:
-            from .services.onboarding import envoyer_activation_utilisateur
-            prenom = (self.cleaned_data.get("gestionnaire_prenom") or "").strip()
-            nom = (self.cleaned_data.get("gestionnaire_nom") or "").strip()
-            tel = (self.cleaned_data.get("gestionnaire_telephone") or "").strip()
-            gestionnaire = User.objects.create(
-                email=email,
-                first_name=prenom,
-                last_name=nom,
-                phone_number=tel,
-                role=User.Role.GESTIONNAIRE,
-                organisme=organisme,
-                is_active=True,
-            )
-            envoyer_activation_utilisateur(gestionnaire, request=request)
-            self.gestionnaire_cree = gestionnaire
+            gest_existant = getattr(self, "_gestionnaire_existant", None)
+            if gest_existant:
+                gest_existant.first_name = prenom
+                gest_existant.last_name = nom
+                gest_existant.email = email
+                gest_existant.phone_number = tel
+                gest_existant.save(update_fields=["first_name", "last_name", "email", "phone_number"])
+                self.gestionnaire_modifie = gest_existant
+            else:
+                from .services.onboarding import envoyer_activation_utilisateur
+                gestionnaire = User.objects.create(
+                    email=email,
+                    first_name=prenom,
+                    last_name=nom,
+                    phone_number=tel,
+                    role=User.Role.GESTIONNAIRE,
+                    organisme=organisme,
+                    is_active=True,
+                )
+                req = request or self._request
+                envoyer_activation_utilisateur(gestionnaire, request=req)
+                self.gestionnaire_cree = gestionnaire
         return organisme
 
 
