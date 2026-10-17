@@ -910,7 +910,7 @@ def liste_organismes(request):
 @admin_required
 def ajouter_organisme(request):
     if request.method == "POST":
-        form = OrganismeForm(request.POST)
+        form = OrganismeForm(request.POST, request=request)
         if form.is_valid():
             organisme = form.save(request=request)
             gestionnaire = getattr(form, "gestionnaire_cree", None)
@@ -935,7 +935,7 @@ def ajouter_organisme(request):
                 messages.success(request, f"Entreprise « {organisme.nom} » créée avec succès.")
             return redirect("liste_organismes")
     else:
-        form = OrganismeForm()
+        form = OrganismeForm(request=request)
     return render(request, "ajouter_organisme.html", {"form": form})
 
 
