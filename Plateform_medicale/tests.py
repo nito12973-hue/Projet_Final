@@ -3031,6 +3031,14 @@ class PlanCouvertureAdminTests(TestCase):
         self.assertRedirects(response, reverse('liste_plans_couverture'))
         self.assertFalse(PlanCouverture.objects.filter(pk=plan.pk).exists())
 
+    def test_liste_affiche_statistiques_et_plans(self):
+        PlanCouverture.objects.create(nom='Confort', taux_couverture=80)
+        response = self.client.get(reverse('liste_plans_couverture'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Confort')
+        self.assertContains(response, '80%')
+        self.assertIn('stats', response.context)
+
 
 class SuppressionCascadeTests(TestCase):
     def setUp(self):
