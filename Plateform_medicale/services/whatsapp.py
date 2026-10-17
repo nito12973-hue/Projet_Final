@@ -123,7 +123,7 @@ def envoyer_message_whatsapp(
             "messaging_product": "whatsapp",
             "to": numero_nettoye,
             "type": "text",
-            "text": {"preview_url": False, "body": texte_message},
+            "text": {"preview_url": False, "body": str(texte_message or "")[:4000]},
         }
 
     def _executer_envoi(payload_dict):
@@ -170,7 +170,7 @@ def envoyer_message_whatsapp(
 
         # Si le message texte libre a échoué à cause de la restriction de fenêtre 24h ou nouveau contact,
         # on effectue un fallback automatique vers le modèle officiel approuvé pour garantir la délivrabilité
-        if not template_nom and code_meta in (131047, 131026, 131030, 100, 132000, 132001, 131051, 131052):
+        if not template_nom and code_meta in (131047, 131026, 131030, 132000, 132001, 131051, 131052):
             try:
                 logger.info("Bascule automatique vers le modèle officiel '%s' pour le numéro %s", TEMPLATE_DEFAUT, numero_nettoye)
                 payload_fb = _preparer_payload(

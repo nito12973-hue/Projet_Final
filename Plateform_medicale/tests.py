@@ -13044,4 +13044,48 @@ class WhatsAppBotAndWebhookTests(TestCase):
         self.assertIn("Dr. Mamadou Diop", reponse)
         self.assertIn("km", reponse)
 
+    def test_bot_rdv_demain_naturel(self):
+        from Plateform_medicale.services.whatsapp_bot import traiter_message_entrant_whatsapp
+        reponse = traiter_message_entrant_whatsapp("221771112233", "RDV 1 demain à 11h Consultation de routine")
+        self.assertIn("Votre rendez-vous a été enregistré", reponse)
+        self.assertIn("Dr. Mamadou Diop", reponse)
+        self.assertIn("11:00", reponse)
+
+    def test_bot_rdv_sans_annee(self):
+        from Plateform_medicale.services.whatsapp_bot import traiter_message_entrant_whatsapp
+        reponse = traiter_message_entrant_whatsapp("221771112233", "RDV 1 25/12 15h30 Contrôle annuel")
+        self.assertIn("Votre rendez-vous a été enregistré", reponse)
+        self.assertIn("25/12", reponse)
+        self.assertIn("15:30", reponse)
+
+    def test_bot_rdv_selection_etape_par_etape(self):
+        from Plateform_medicale.services.whatsapp_bot import traiter_message_entrant_whatsapp
+        reponse = traiter_message_entrant_whatsapp("221771112233", "RDV 1")
+        self.assertIn("Vous avez sélectionné le Dr. Mamadou Diop", reponse)
+        self.assertIn("Médecine Générale", reponse)
+        self.assertIn("Pour quel jour et quelle heure", reponse)
+
+    def test_bot_liaison_automatique_par_carte(self):
+        from Plateform_medicale.services.whatsapp_bot import traiter_message_entrant_whatsapp
+        nouveau_tel = "221701234567"
+        reponse = traiter_message_entrant_whatsapp(nouveau_tel, self.patient.numero_carte)
+        self.assertIn("Compte SantéSN associé avec succès", reponse)
+        self.assertIn(self.patient.numero_carte, reponse)
+
+        # Vérification en base de données
+        self.patient.refresh_from_db()
+        self.assertIn("701234567", self.patient.telephone)
+
+    def test_bot_liaison_automatique_par_email(self):
+        from Plateform_medicale.services.whatsapp_bot import traiter_message_entrant_whatsapp
+        nouveau_tel = "221709876543"
+        reponse = traiter_message_entrant_whatsapp(nouveau_tel, self.user_assure.email)
+        self.assertIn("Compte SantéSN associé avec succès", reponse)
+        self.assertIn(self.patient.prenom, reponse)
+
+        # Vérification en base de données
+        self.patient.refresh_from_db()
+        self.assertIn("709876543", self.patient.telephone)
+
+
 
