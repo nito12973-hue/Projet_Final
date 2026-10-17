@@ -109,6 +109,7 @@ from .patients import (  # noqa: F401
     carte_scan,
     valider_ayant_droit,
     refuser_ayant_droit,
+    attribuer_plan_patient,
 )
 
 # Médecins
@@ -195,6 +196,7 @@ from .utilisateurs import (  # noqa: F401
     activer_desactiver_utilisateur,
     reinitialiser_mot_de_passe,
     renvoyer_activation,
+    attribuer_plan_utilisateur,
     supprimer_utilisateur,
     liste_organismes,
     ajouter_organisme,

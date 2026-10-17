@@ -6,8 +6,8 @@
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>Ajouter un assuré ou un ayant droit</h1>
-        <p class="subtitle">La carte de prise en charge est générée automatiquement.</p>
+        <h1>Ajouter un assuré (salarié)</h1>
+        <p class="subtitle">Création du compte salarié dans votre entreprise. Les accès et la carte d'assurance sont générés automatiquement.</p>
     </div>
     <a class="button btn btn-retour-expand" href="{% url 'liste_patients' %}" title="Retour" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
 </section>
@@ -20,6 +20,9 @@
     <form method="post">
         {% csrf_token %}
         {% for field in form %}
+        {% if field.is_hidden %}
+            {{ field }}
+        {% else %}
         <div class="champ-groupe">
             <label for="{{ field.id_for_label }}">
                 {{ field.label }}
@@ -29,6 +32,7 @@
             {% if field.help_text %}<p class="champ-aide">{{ field.help_text }}</p>{% endif %}
             {% if field.errors %}<div class="erreurs" role="alert" style="margin-top: 6px;">{{ field.errors }}</div>{% endif %}
         </div>
+        {% endif %}
         {% endfor %}
         <div class="actions" style="margin-top: 24px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
             <button class="button primary" type="submit">Enregistrer l'assuré</button>

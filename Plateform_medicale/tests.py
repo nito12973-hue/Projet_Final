@@ -2185,6 +2185,42 @@ class AdminPatientFormTests(TestCase):
         self.assertRedirects(response, reverse('liste_patients'))
         self.assertFalse(Patient.objects.filter(pk=ayant_droit.pk).exists())
 
+    def test_attribution_plan_couverture_utilisateur_et_patient(self):
+        """Attribution directe d'un plan de couverture depuis /utilisateurs/ ou /patients/."""
+        user_assure = creer_utilisateur(User.Role.ASSURE, 'salarie-test-plan@santesn.sn', organisme=self.admin.organisme)
+        patient = Patient.objects.create(
+            user=user_assure,
+            nom='Diallo',
+            prenom='Ibrahima',
+            date_naissance=datetime.date(1992, 6, 15),
+            organisme=self.admin.organisme,
+            type_beneficiaire=Patient.TypeBeneficiaire.PRINCIPAL,
+        )
+        plan = PlanCouverture.objects.create(nom='Formule Entreprise 85%', taux_couverture=Decimal('85.00'))
+
+        # 1. Page de formulaire d'attribution
+        url_attribuer = reverse('attribuer_plan_utilisateur', args=[user_assure.pk])
+        resp_get = self.client.get(url_attribuer)
+        self.assertEqual(resp_get.status_code, 200)
+        self.assertContains(resp_get, "Formule Entreprise 85%")
+
+        # 2. POST attribution
+        resp_post = self.client.post(url_attribuer, {'plan_couverture': plan.pk}, follow=True)
+        self.assertEqual(resp_post.status_code, 200)
+        patient.refresh_from_db()
+        self.assertEqual(patient.plan_couverture, plan)
+
+        # 3. Visibilité du badge et bouton dans la liste des utilisateurs
+        resp_liste_users = self.client.get(reverse('liste_utilisateurs'))
+        self.assertEqual(resp_liste_users.status_code, 200)
+        self.assertContains(resp_liste_users, "Formule Entreprise 85%")
+        self.assertContains(resp_liste_users, url_attribuer)
+
+        # 4. Raccourci depuis la liste des patients
+        resp_shortcut = self.client.get(reverse('attribuer_plan_patient', args=[patient.pk]))
+        self.assertEqual(resp_shortcut.status_code, 302)
+
+
 
 class NotificationsTests(TestCase):
     @override_settings(WHATSAPP_ENABLED=True)
@@ -13171,6 +13207,23 @@ class WhatsAppBotAndWebhookTests(TestCase):
         self.assertIsNotNone(rdv_cree)
         self.assertEqual(rdv_cree.date_heure.hour, 10)
         self.assertEqual(rdv_cree.date_heure.minute, 30)
+
+    def test_bot_option_connexion_espace_et_menu(self):
+        """Vérifie le menu d'accueil enrichi et l'accès à la connexion en ligne (Option 5)."""
+        from Plateform_medicale.services.whatsapp_bot import traiter_message_entrant_whatsapp
+        tel = "221771112233"
+
+        # 1. Menu d'accueil mentionnant Option 1, 2 et 5
+        rep_menu = traiter_message_entrant_whatsapp(tel, "menu")
+        self.assertIn("Prendre un rendez-vous médical direct par messagerie", rep_menu)
+        self.assertIn("Se connecter à mon espace en ligne", rep_menu)
+
+        # 2. Demande d'accès / connexion
+        rep_connexion = traiter_message_entrant_whatsapp(tel, "se connecter")
+        self.assertIn("Connexion à votre Espace Assuré", rep_connexion)
+        self.assertIn("/login/", rep_connexion)
+        self.assertIn("Prendre rendez-vous sans vous connecter", rep_connexion)
+
 
 
 

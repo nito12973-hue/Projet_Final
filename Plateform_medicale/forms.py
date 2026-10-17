@@ -99,6 +99,29 @@ def lier_fiche_pharmacien(utilisateur):
     Pharmacien.objects.create(user=utilisateur)
 
 
+def lier_fiche_assure(utilisateur):
+    """
+    Garantit l'existence d'une fiche métier Patient pour un compte de rôle ASSURE.
+    Si elle n'existe pas, crée un profil d'assuré principal rattaché automatiquement
+    à l'organisme / entreprise de l'utilisateur.
+    """
+    if utilisateur.role != User.Role.ASSURE or hasattr(utilisateur, 'patient'):
+        return getattr(utilisateur, 'patient', None)
+    nom = utilisateur.last_name or (utilisateur.email.split('@')[0].capitalize())
+    prenom = utilisateur.first_name or "Salarié"
+    patient = Patient.objects.create(
+        user=utilisateur,
+        nom=nom,
+        prenom=prenom,
+        date_naissance=datetime.date(1990, 1, 1),
+        telephone=utilisateur.phone_number or '',
+        organisme=utilisateur.organisme,
+        entreprise=getattr(utilisateur.organisme, 'nom', ''),
+        type_beneficiaire=Patient.TypeBeneficiaire.PRINCIPAL,
+    )
+    return patient
+
+
 def aligner_patient_vers_user(patient):
     """La source métier Patient met à jour l'identité d'affichage du compte User (Nom/Prénom uniquement)."""
     if patient.user_id:
@@ -411,6 +434,7 @@ class UtilisateurCreationForm(forms.ModelForm):
             utilisateur.save()
             lier_fiche_medecin(utilisateur)
             lier_fiche_pharmacien(utilisateur)
+            lier_fiche_assure(utilisateur)
         return utilisateur
 
 
@@ -1087,7 +1111,35 @@ class PatientForm(forms.ModelForm):
     def __init__(self, *args, organisme=None, **kwargs):
         self._organisme = organisme
         super().__init__(*args, **kwargs)
-        if organisme is not None and 'assure_principal' in self.fields:
+
+        # 1. Entreprise : masquée et assignée automatiquement à l'organisme de l'entreprise
+        if 'entreprise' in self.fields:
+            self.fields['entreprise'].widget = forms.HiddenInput()
+            self.fields['entreprise'].required = False
+            if organisme and hasattr(organisme, 'nom') and not self.initial.get('entreprise'):
+                self.fields['entreprise'].initial = organisme.nom
+
+        # 2. Si modification d'un patient existant : adapter les champs visibles au type réel
+        if self.instance and self.instance.pk:
+            if self.instance.type_beneficiaire == Patient.TypeBeneficiaire.PRINCIPAL:
+                if 'type_beneficiaire' in self.fields:
+                    self.fields['type_beneficiaire'].widget = forms.HiddenInput()
+                    self.fields['type_beneficiaire'].required = False
+                if 'assure_principal' in self.fields:
+                    self.fields['assure_principal'].widget = forms.HiddenInput()
+                    self.fields['assure_principal'].required = False
+                if 'lien_parente' in self.fields:
+                    self.fields['lien_parente'].widget = forms.HiddenInput()
+                    self.fields['lien_parente'].required = False
+            elif self.instance.type_beneficiaire == Patient.TypeBeneficiaire.AYANT_DROIT:
+                if 'type_beneficiaire' in self.fields:
+                    self.fields['type_beneficiaire'].widget = forms.HiddenInput()
+                    self.fields['type_beneficiaire'].required = False
+                if 'plan_couverture' in self.fields:
+                    self.fields['plan_couverture'].widget = forms.HiddenInput()
+                    self.fields['plan_couverture'].required = False
+
+        if organisme is not None and 'assure_principal' in self.fields and not self.fields['assure_principal'].widget.is_hidden:
             self.fields['assure_principal'].queryset = Patient.objects.filter(
                 type_beneficiaire=Patient.TypeBeneficiaire.PRINCIPAL,
                 organisme=organisme,
@@ -1104,7 +1156,7 @@ class PatientForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        type_beneficiaire = cleaned_data.get('type_beneficiaire')
+        type_beneficiaire = cleaned_data.get('type_beneficiaire') or (self.instance.type_beneficiaire if self.instance.pk else None)
         assure_principal = cleaned_data.get('assure_principal')
 
         if assure_principal and self.instance.pk and assure_principal.pk == self.instance.pk:
@@ -1114,7 +1166,7 @@ class PatientForm(forms.ModelForm):
                 'assure_principal',
                 "Un assuré principal ne doit pas avoir son propre assuré principal renseigné.",
             )
-        elif type_beneficiaire == Patient.TypeBeneficiaire.AYANT_DROIT and not assure_principal:
+        elif type_beneficiaire == Patient.TypeBeneficiaire.AYANT_DROIT and not assure_principal and not (self.instance.pk and self.instance.assure_principal_id):
             self.add_error(
                 'assure_principal',
                 "Un ayant droit doit être rattaché à un assuré principal.",
@@ -1131,6 +1183,9 @@ class PatientForm(forms.ModelForm):
 
         if self._organisme is not None:
             self.instance.organisme = self._organisme
+            if not cleaned_data.get('entreprise'):
+                cleaned_data['entreprise'] = getattr(self._organisme, 'nom', '')
+                self.instance.entreprise = cleaned_data['entreprise']
         elif assure_principal and assure_principal.organisme_id:
             self.instance.organisme_id = assure_principal.organisme_id
         return cleaned_data
@@ -1146,32 +1201,87 @@ class PatientForm(forms.ModelForm):
 
 class PatientCreationForm(PatientForm):
     """
-    Creation d'un patient par l'administrateur (ajouter_patient).
-
-    Ajoute un champ email transitoire (non stocke sur Patient, qui n'a pas
-    d'email) : pour un assure principal, il sert a creer son compte de
-    connexion (comme pour Medecin/Pharmacien) ; pour un ayant droit, il est
-    ignore (les ayants droit n'ont pas de compte propre, geres par leur
-    assure principal).
+    Création d'un assuré (salarié) par le gestionnaire d'organisme/entreprise.
+    Le gestionnaire inscrit uniquement des assurés principaux (salariés).
+    L'entreprise et l'organisme sont automatiquement ceux du gestionnaire.
+    Les ayants droit (famille) sont ajoutés par l'assuré lui-même depuis son espace personnel.
     """
 
     email = forms.EmailField(
         required=False,
-        label='Email',
-        help_text="Requis uniquement pour un assuré principal : sert à créer son compte de connexion.",
+        label='Adresse email',
+        help_text="L'assuré recevra ses identifiants de connexion sur cette adresse.",
     )
+
+    def __init__(self, *args, organisme=None, **kwargs):
+        super().__init__(*args, organisme=organisme, **kwargs)
+
+        # 1. Entreprise : masquée et assignée automatiquement à l'organisme du gestionnaire
+        if 'entreprise' in self.fields:
+            self.fields['entreprise'].widget = forms.HiddenInput()
+            self.fields['entreprise'].required = False
+            if organisme and hasattr(organisme, 'nom'):
+                self.fields['entreprise'].initial = organisme.nom
+
+        # 2. Type de bénéficiaire : par défaut PRINCIPAL pour le gestionnaire (masqué dans l'UI)
+        if 'type_beneficiaire' in self.fields:
+            self.fields['type_beneficiaire'].widget = forms.HiddenInput()
+            self.fields['type_beneficiaire'].initial = Patient.TypeBeneficiaire.PRINCIPAL
+            self.fields['type_beneficiaire'].required = False
+
+        # 3. Assuré principal et Lien de parenté : masqués car réservés aux ayants droit gérés par l'assuré
+        if 'assure_principal' in self.fields:
+            self.fields['assure_principal'].widget = forms.HiddenInput()
+            self.fields['assure_principal'].required = False
+            if organisme is not None:
+                from django.db.models import Q
+                self.fields['assure_principal'].queryset = Patient.objects.filter(
+                    Q(organisme=organisme) | Q(organisme__isnull=True),
+                    type_beneficiaire=Patient.TypeBeneficiaire.PRINCIPAL,
+                )
+
+        if 'lien_parente' in self.fields:
+            self.fields['lien_parente'].widget = forms.HiddenInput()
+            self.fields['lien_parente'].required = False
+
+        # 4. Ordre ergonomique des champs visibles pour le gestionnaire
+        self.order_fields(['nom', 'prenom', 'email', 'telephone', 'date_naissance', 'adresse', 'plan_couverture'])
 
     def clean(self):
         cleaned_data = super().clean()
-        type_beneficiaire = cleaned_data.get('type_beneficiaire')
+        type_beneficiaire = cleaned_data.get('type_beneficiaire') or Patient.TypeBeneficiaire.PRINCIPAL
+        cleaned_data['type_beneficiaire'] = type_beneficiaire
         email = cleaned_data.get('email')
 
+        # Auto-remplissage entreprise et organisme
+        if self._organisme is not None:
+            cleaned_data['entreprise'] = getattr(self._organisme, 'nom', '')
+            self.instance.organisme = self._organisme
+            self.instance.entreprise = getattr(self._organisme, 'nom', '')
+
         if type_beneficiaire == Patient.TypeBeneficiaire.PRINCIPAL:
+            self.instance.type_beneficiaire = Patient.TypeBeneficiaire.PRINCIPAL
+            self.instance.assure_principal = None
+            self.instance.lien_parente = ""
             if not email:
-                self.add_error('email', "L'email est requis pour un assuré principal (création du compte).")
+                self.add_error('email', "L'email est requis pour créer le compte de l'assuré.")
             elif User.objects.filter(email=email).exists():
                 self.add_error('email', "Cet email est déjà utilisé par un compte existant.")
+
         return cleaned_data
+
+
+class AttribuerPlanForm(forms.Form):
+    """Attribution ou modification rapide d'un plan de couverture pour un assuré."""
+
+    plan_couverture = forms.ModelChoiceField(
+        queryset=PlanCouverture.objects.all(),
+        required=False,
+        empty_label="— Aucun plan de couverture —",
+        label="Plan de couverture",
+        help_text="Les ayants droit rattachés à cet assuré bénéficieront automatiquement du même plan.",
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )
 
 
 class EnvoyerNotificationForm(forms.Form):

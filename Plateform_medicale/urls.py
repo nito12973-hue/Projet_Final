@@ -60,6 +60,7 @@ urlpatterns = [
     path('utilisateurs/<int:pk>/activer-desactiver/', views.activer_desactiver_utilisateur, name='activer_desactiver_utilisateur'),
     path('utilisateurs/<int:pk>/reinitialiser-mot-de-passe/', views.reinitialiser_mot_de_passe, name='reinitialiser_mot_de_passe'),
     path('utilisateurs/<int:pk>/renvoyer-activation/', views.renvoyer_activation, name='renvoyer_activation'),
+    path('utilisateurs/<int:pk>/attribuer-plan/', views.attribuer_plan_utilisateur, name='attribuer_plan_utilisateur'),
     path('utilisateurs/<int:pk>/supprimer/', views.supprimer_utilisateur, name='supprimer_utilisateur'),
 
     path('organismes/', views.liste_organismes, name='liste_organismes'),
@@ -70,6 +71,7 @@ urlpatterns = [
     path('patients/', views.liste_patients, name='liste_patients'),
     path('patients/ajouter/', views.ajouter_patient, name='ajouter_patient'),
     path('patients/<int:pk>/modifier/', views.modifier_patient, name='modifier_patient'),
+    path('patients/<int:pk>/attribuer-plan/', views.attribuer_plan_patient, name='attribuer_plan_patient'),
     path('patients/<int:pk>/supprimer/', views.supprimer_patient, name='supprimer_patient'),
     path('patients/<int:pk>/valider/', views.valider_ayant_droit, name='valider_ayant_droit'),
     path('patients/<int:pk>/refuser/', views.refuser_ayant_droit, name='refuser_ayant_droit'),

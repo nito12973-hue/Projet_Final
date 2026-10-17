@@ -9,8 +9,8 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from ..forms import PatientCreationForm, PatientForm, generer_mot_de_passe
-from ..models import JournalActivite, Notification, Patient, User
+from ..forms import AttribuerPlanForm, PatientCreationForm, PatientForm, generer_mot_de_passe
+from ..models import JournalActivite, Notification, Patient, PlanCouverture, User
 from ..services.notifications import emettre_notification
 from ..services.onboarding import construire_bilan_onboarding, envoyer_activation_utilisateur
 from .utils import (
@@ -395,4 +395,48 @@ def refuser_ayant_droit(request, pk):
 
     messages.warning(request, f"L'ayant droit {ayant_droit.prenom} {ayant_droit.nom} a été refusé.")
     return redirect(request.META.get("HTTP_REFERER") or "liste_patients")
+
+
+@gestionnaire_required
+def attribuer_plan_patient(request, pk):
+    """Permet au gestionnaire d'attribuer ou modifier directement le plan de couverture d'un patient."""
+    patient = get_object_or_404_organisme(request, Patient, pk=pk)
+    if patient.user_id:
+        return redirect(f"{reverse('attribuer_plan_utilisateur', args=[patient.user_id])}?next={reverse('liste_patients')}")
+
+    if request.method == "POST":
+        form = AttribuerPlanForm(request.POST)
+        if form.is_valid():
+            nouveau_plan = form.cleaned_data['plan_couverture']
+            ancien_plan = patient.plan_couverture
+            patient.plan_couverture = nouveau_plan
+            patient.save(update_fields=['plan_couverture'])
+            libelle = str(nouveau_plan) if nouveau_plan else "Aucun plan"
+            journaliser(
+                request,
+                JournalActivite.Action.MODIFICATION,
+                f"Plan {patient}",
+                f"Attribution du plan : {libelle} (précédent : {ancien_plan or 'Aucun'})",
+                organisme=patient.organisme,
+            )
+            messages.success(request, f"Plan de couverture « {libelle} » attribué avec succès à {patient}.")
+            return redirect("liste_patients")
+    else:
+        form = AttribuerPlanForm(initial={'plan_couverture': patient.plan_couverture})
+
+    plans = PlanCouverture.objects.all()
+    ayants_droit = patient.ayants_droit.all() if hasattr(patient, 'ayants_droit') else []
+    return render(
+        request,
+        "attribuer_plan_utilisateur.html",
+        {
+            "utilisateur": None,
+            "patient": patient,
+            "form": form,
+            "plans": plans,
+            "ayants_droit": ayants_droit,
+            "next": reverse("liste_patients"),
+        },
+    )
+
 
