@@ -18,6 +18,7 @@ from django.db.models import Count, ProtectedError, Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST
 
 logger = logging.getLogger("Plateform_medicale")
@@ -942,6 +943,7 @@ def modifier_organisme(request, pk):
             organisme = form.save(request=request)
             gestionnaire_modifie = getattr(form, "gestionnaire_modifie", None)
             gestionnaire_cree = getattr(form, "gestionnaire_cree", None)
+            statut_onboarding = getattr(form, "statut_onboarding", None)
             details = f"Code : {organisme.code}"
             if gestionnaire_modifie:
                 details += f" — Gestionnaire mis à jour : {gestionnaire_modifie.get_full_name()} ({gestionnaire_modifie.email})"
@@ -954,16 +956,49 @@ def modifier_organisme(request, pk):
                 details,
                 organisme=organisme,
             )
+            flash_extra = ""
+            if statut_onboarding and statut_onboarding.get("bilan"):
+                flash_extra = f" {statut_onboarding['bilan']['texte_flash']}"
+
             if gestionnaire_modifie:
-                messages.success(request, f"Entreprise « {organisme.nom} » et données du gestionnaire ({gestionnaire_modifie.email}) mises à jour avec succès.")
+                messages.success(request, mark_safe(f"Entreprise « {organisme.nom} » et données du gestionnaire ({gestionnaire_modifie.email}) mises à jour avec succès.{flash_extra}"))
             elif gestionnaire_cree:
-                messages.success(request, f"Entreprise « {organisme.nom} » modifiée et compte gestionnaire ({gestionnaire_cree.email}) créé.")
+                messages.success(request, mark_safe(f"Entreprise « {organisme.nom} » modifiée et compte gestionnaire ({gestionnaire_cree.email}) créé.{flash_extra}"))
             else:
                 messages.success(request, f"Entreprise « {organisme.nom} » modifiée avec succès.")
             return redirect("liste_organismes")
     else:
         form = OrganismeForm(instance=organisme, request=request)
-    return render(request, "modifier_organisme.html", {"form": form, "organisme": organisme})
+
+    gestionnaire = organisme.utilisateurs.filter(role=User.Role.GESTIONNAIRE).order_by("id").first()
+    lien_activation = None
+    whatsapp_url = None
+    if gestionnaire:
+        from ..services.onboarding import generer_lien_activation
+        import urllib.parse
+        lien_activation = generer_lien_activation(gestionnaire, request=request)
+        num = "".join(filter(str.isdigit, str(gestionnaire.phone_number or "")))
+        if num:
+            if not num.startswith("221") and len(num) == 9:
+                num = f"221{num}"
+            texte_wa = (
+                f"SantéSN : Bonjour {gestionnaire.first_name},\n"
+                f"Voici votre lien sécurisé pour activer votre compte gestionnaire de l'entreprise {organisme.nom} :\n"
+                f"{lien_activation}"
+            )
+            whatsapp_url = f"https://api.whatsapp.com/send?phone={num}&text={urllib.parse.quote(texte_wa)}"
+
+    return render(
+        request,
+        "modifier_organisme.html",
+        {
+            "form": form,
+            "organisme": organisme,
+            "gestionnaire": gestionnaire,
+            "lien_activation": lien_activation,
+            "whatsapp_url": whatsapp_url,
+        },
+    )
 
 
 @admin_required

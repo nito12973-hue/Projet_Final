@@ -141,6 +141,33 @@ def trouver_patient_par_telephone(telephone):
     return None
 
 
+def trouver_utilisateur_par_telephone(telephone):
+    """
+    Retrouve un compte utilisateur User (Admin, Gestionnaire, Medecin, Pharmacien, etc.)
+    associé au numéro WhatsApp, même sans profil Patient.
+    """
+    tel_norm = normaliser_numero_telephone(telephone)
+    if not tel_norm:
+        return None
+
+    variantes = {tel_norm}
+    if tel_norm.startswith("221") and len(tel_norm) == 12:
+        variantes.add(tel_norm[3:])
+        variantes.add(f"+{tel_norm}")
+        variantes.add(f"00{tel_norm}")
+
+    for v in variantes:
+        u = User.objects.filter(phone_number__icontains=v).first()
+        if u:
+            return u
+
+    for u in User.objects.exclude(phone_number="").only("id", "phone_number", "first_name", "last_name", "role", "email"):
+        if normaliser_numero_telephone(u.phone_number) == tel_norm:
+            return u
+
+    return None
+
+
 def tenter_liaison_automatique(expediteur_telephone, texte):
     """
     Permet à un assuré d'associer instantanément son numéro WhatsApp à son dossier
@@ -232,7 +259,12 @@ def detecter_nom_medecin(texte):
     match = re.search(r"(?:dr|docteur)\.?\s+([a-zA-Zà-ÿ-]+)", texte, re.IGNORECASE)
     if match:
         nom_cherche = match.group(1).strip()
-        if nom_cherche.lower() not in ("rdv", "menu", "aide", "urgence", "partenaire"):
+        mots_exclus = (
+            "rdv", "menu", "aide", "urgence", "partenaire", "comment", "je",
+            "bonjour", "salut", "bonsoir", "est", "sante", "santesn", "svp",
+            "merci", "allo", "consultation", "visite", "moi", "vous"
+        )
+        if nom_cherche.lower() not in mots_exclus:
             return nom_cherche
     return None
 
@@ -310,20 +342,26 @@ def lister_medecins_disponibles(patient=None, ville=None, coords_gps=None, speci
     return list(qs[:limite])
 
 
-def formater_reponse_menu(patient=None):
-    """Génère le menu d'accueil sobre et clair du bot SantéSN."""
+def formater_reponse_menu(patient=None, contact_user=None):
+    """Génère le menu d'accueil officiel SantéSN, sobre, chaleureux et institutionnel."""
     nom_affiche = f" {patient.prenom}" if patient else ""
+    if not nom_affiche and contact_user:
+        nom_u = f"{contact_user.get_full_name()}".strip() or f"{contact_user.first_name}".strip()
+        if nom_u:
+            nom_affiche = f" {nom_u}"
+
     site_url = str(getattr(settings, "SITE_URL", "https://projet-final-bice.vercel.app") or "").strip().rstrip("/")
     return (
-        f"Bonjour{nom_affiche}, bienvenue sur SantéSN.\n"
-        f"Votre plateforme d'assurance santé & prévoyance au Sénégal.\n\n"
+        f"Bonjour{nom_affiche}, bienvenue sur l'assistance officielle SantéSN.\n"
+        f"Votre plateforme d'assurance santé, prévoyance et tiers-payant au Sénégal.\n\n"
         f"👉 *Options disponibles :*\n"
         f"1. 📋 Consulter mes droits et mon plafond restant\n"
         f"2. 🗓️ Prendre un rendez-vous médical direct par messagerie\n"
         f"3. 🏥 Trouver un médecin ou une pharmacie conventionnée\n"
         f"4. 🚨 Numéros d'urgence médicale (SAMU 1515, Pompiers 18)\n"
         f"5. 🔐 Se connecter à mon espace en ligne ({site_url}/login/)\n\n"
-        f"Répondez avec le chiffre de votre choix (1, 2, 3, 4 ou 5) ou écrivez directement votre demande (ex : « RDV cardiologue à Dakar »)."
+        f"💬 Répondez avec le chiffre de votre choix (1, 2, 3, 4 ou 5) ou formulez directement votre demande.\n"
+        f"Nos équipes restent à votre entière disposition."
     )
 
 
@@ -754,6 +792,9 @@ def traiter_message_entrant_whatsapp(expediteur_telephone, texte_message):
     """
     texte = (texte_message or "").strip()
     patient = trouver_patient_par_telephone(expediteur_telephone)
+    contact_user = None
+    if not patient:
+        contact_user = trouver_utilisateur_par_telephone(expediteur_telephone)
 
     # 0. Si le patient n'est pas encore lié : tentative de liaison automatique immédiate
     if not patient and texte:
@@ -762,7 +803,7 @@ def traiter_message_entrant_whatsapp(expediteur_telephone, texte_message):
             return msg_liaison
 
     if not texte:
-        return formater_reponse_menu(patient)
+        return formater_reponse_menu(patient, contact_user)
 
     texte_lower = texte.lower().strip()
     tel_norm = normaliser_numero_telephone(expediteur_telephone) or expediteur_telephone
@@ -773,13 +814,32 @@ def traiter_message_entrant_whatsapp(expediteur_telephone, texte_message):
         except Exception:
             conv = None
 
+    # Détection des salutations prioritaires (Bonjour, Salut, Bonsoir, Salam, etc.)
+    # Réinitialise TOUT état en cours et affiche immédiatement le menu d'accueil institutionnel
+    salutations_cles = ("bonjour", "salut", "bonsoir", "hello", "hi", "salam", "coucou", "as salam", "assalam")
+    mots_texte = re.findall(r"\b\w+\b", texte_lower)
+    est_salutation = False
+    if any(texte_lower.startswith(s) for s in salutations_cles):
+        mots_specifiques = {"rdv", "rendez-vous", "rendez", "droit", "droits", "solde", "plafond", "ordonnance", "urgence", "remboursement"}
+        if not (set(mots_texte) & mots_specifiques):
+            est_salutation = True
+    elif texte_lower in salutations_cles:
+        est_salutation = True
+
+    if est_salutation:
+        if conv:
+            conv.etape = ConversationWhatsApp.Etape.MENU
+            conv.medecin_selectionne = None
+            conv.save()
+        return formater_reponse_menu(patient, contact_user)
+
     # Réinitialisation volontaire vers le menu principal
     if texte_lower in ("0", "menu", "start", "aide", "help", "annuler", "quitter"):
         if conv:
             conv.etape = ConversationWhatsApp.Etape.MENU
             conv.medecin_selectionne = None
             conv.save()
-        return formater_reponse_menu(patient)
+        return formater_reponse_menu(patient, contact_user)
 
     # Accès direct à la connexion / Espace assuré à tout moment
     if texte_lower in ("5", "connexion", "connecter", "se connecter", "login", "espace", "mon espace", "mot de passe", "activer", "lien"):
@@ -907,7 +967,7 @@ def traiter_message_entrant_whatsapp(expediteur_telephone, texte_message):
             conv.etape = ConversationWhatsApp.Etape.MENU
             conv.medecin_selectionne = None
             conv.save()
-        return formater_reponse_menu(patient)
+        return formater_reponse_menu(patient, contact_user)
 
     # 6. Consultation de ses propres rendez-vous
     if any(k in texte_lower for k in ("mes rdv", "mon rdv", "mes rendez-vous", "mes rendez vous", "mon rendez vous", "mon agenda")):
@@ -1016,17 +1076,14 @@ def traiter_message_entrant_whatsapp(expediteur_telephone, texte_message):
         return formater_reponse_medecins(patient=patient, ville=ville_detectee)
 
     # 18. Réponse par défaut bienveillante et adaptée
-    if not patient:
+    if not patient and not contact_user:
         return (
-            "Bienvenue sur l'assistant WhatsApp SantéSN.\n\n"
-            "Votre numéro WhatsApp n'est pas encore associé à votre dossier assuré.\n\n"
-            "Pour activer votre compte, écrivez simplement :\n"
-            "• Votre numéro de carte assuré (ex: SN-36D66F3046)\n"
-            "• OU votre adresse email\n\n"
-            "Dès réception, vous pourrez prendre vos rendez-vous et consulter vos droits."
+            "Bienvenue sur l'assistance WhatsApp *SantéSN*.\n\n"
+            "Votre numéro de téléphone n'est pas encore associé à un dossier assuré.\n\n"
+            "Pour activer votre compte et synchroniser vos droits, vous pouvez envoyer directement :\n"
+            "• Votre numéro de carte assuré (ex : SN-36D66F3046)\n"
+            "• Ou votre adresse email\n\n"
+            + formater_reponse_menu(None, None)
         )
 
-    return (
-        "Message non reconnu.\n\n"
-        + formater_reponse_menu(patient)
-    )
+    return formater_reponse_menu(patient, contact_user)

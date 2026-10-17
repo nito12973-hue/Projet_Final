@@ -382,6 +382,7 @@ class OrganismeForm(forms.ModelForm):
         organisme = super().save(commit=commit)
         self.gestionnaire_cree = None
         self.gestionnaire_modifie = None
+        self.statut_onboarding = None
         email = (self.cleaned_data.get("gestionnaire_email") or "").strip().lower()
         prenom = (self.cleaned_data.get("gestionnaire_prenom") or "").strip()
         nom = (self.cleaned_data.get("gestionnaire_nom") or "").strip()
@@ -389,15 +390,21 @@ class OrganismeForm(forms.ModelForm):
 
         if commit and email:
             gest_existant = getattr(self, "_gestionnaire_existant", None)
+            from .services.onboarding import envoyer_activation_utilisateur
+            req = request or self._request
+
             if gest_existant:
+                email_change = gest_existant.email != email
                 gest_existant.first_name = prenom
                 gest_existant.last_name = nom
                 gest_existant.email = email
                 gest_existant.phone_number = tel
                 gest_existant.save(update_fields=["first_name", "last_name", "email", "phone_number"])
                 self.gestionnaire_modifie = gest_existant
+                # Renvoyer automatiquement le lien d'activation sécurisé si l'email a changé ou si le compte n'a pas encore de mot de passe actif
+                if email_change or not gest_existant.has_usable_password():
+                    self.statut_onboarding = envoyer_activation_utilisateur(gest_existant, request=req)
             else:
-                from .services.onboarding import envoyer_activation_utilisateur
                 gestionnaire = User.objects.create(
                     email=email,
                     first_name=prenom,
@@ -407,8 +414,7 @@ class OrganismeForm(forms.ModelForm):
                     organisme=organisme,
                     is_active=True,
                 )
-                req = request or self._request
-                envoyer_activation_utilisateur(gestionnaire, request=req)
+                self.statut_onboarding = envoyer_activation_utilisateur(gestionnaire, request=req)
                 self.gestionnaire_cree = gestionnaire
         return organisme
 
