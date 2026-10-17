@@ -22,7 +22,7 @@ from django.conf import settings
 from django.db.models import Q
 from django.utils import timezone
 
-from Plateform_medicale.models import Medecin, Patient, Prestataire, RendezVous, User, distance_km
+from Plateform_medicale.models import ConversationWhatsApp, Medecin, Patient, Prestataire, RendezVous, User, distance_km
 from Plateform_medicale.services.notifications import notifier_demande_rdv
 
 logger = logging.getLogger("Plateform_medicale")
@@ -352,6 +352,7 @@ def formater_reponse_droits(patient):
         f"• Taux de prise en charge : {taux_str}\n"
         f"• Plafond annuel restant : {int(solde_restant):,} FCFA\n"
         f"• Statut : {statut_str}\n\n"
+        f"Pour voir les médecins proches de vous et prendre RDV, tapez 2.\n"
         f"Envoyez MENU pour revenir au sommaire."
     )
 
@@ -444,12 +445,13 @@ def formater_reponse_medecins(patient=None, ville=None, coords_gps=None, special
         dist_str = f" [à {dist} km]" if dist is not None else ""
         lignes.append(f"{idx}. Dr. {med.prenom} {med.nom} - {med.specialite}{etab}{dist_str}")
 
-    lignes.append("\n*Pour réserver, écrivez :*")
+    lignes.append("\n*Pour choisir votre médecin :*")
+    lignes.append("Tapez simplement son numéro (ex: 1 ou 2).")
+    lignes.append("\n*Ou réservez directement :*")
     lignes.append("RDV [N° Médecin] [Date] [Heure]")
-    lignes.append("\n*Exemple :* `RDV 1 demain à 10h30`")
-    lignes.append("• `RDV 1 25/10 15:00`")
-    lignes.append("• `RDV 1` (guidage pas à pas)")
+    lignes.append("*Exemple :* `RDV 1 demain à 10h30`")
     lignes.append("\nPour filtrer par ville : `RDV Thiès` ou `RDV Dakar`.")
+    lignes.append("Tapez MENU pour revenir au sommaire.")
 
     return "\n".join(lignes)
 
@@ -757,19 +759,100 @@ def traiter_message_entrant_whatsapp(expediteur_telephone, texte_message):
         return formater_reponse_menu(patient)
 
     texte_lower = texte.lower().strip()
+    tel_norm = normaliser_numero_telephone(expediteur_telephone) or expediteur_telephone
+    conv = None
+    if tel_norm:
+        try:
+            conv, _ = ConversationWhatsApp.objects.get_or_create(telephone=tel_norm)
+        except Exception:
+            conv = None
 
-    # 1. Coordonnées GPS reçues (partage de position WhatsApp "LOCATION lat lng")
+    # Réinitialisation volontaire vers le menu principal
+    if texte_lower in ("menu", "start", "aide", "help", "annuler"):
+        if conv:
+            conv.etape = ConversationWhatsApp.Etape.MENU
+            conv.medecin_selectionne = None
+            conv.save()
+        return formater_reponse_menu(patient)
+
+    # 1. Étape en cours : Attente du choix de médecin par son numéro (ex: '1' ou '2')
+    if conv and conv.etape == ConversationWhatsApp.Etape.CHOIX_MEDECIN and texte.isdigit():
+        idx = int(texte)
+        medecins = lister_medecins_disponibles(patient=patient)
+        if 1 <= idx <= len(medecins):
+            medecin = medecins[idx - 1]
+            conv.medecin_selectionne = medecin
+            conv.etape = ConversationWhatsApp.Etape.CHOIX_DATE
+            conv.save()
+            etab_nom = medecin.prestataire.nom if medecin.prestataire else "Cabinet conventionné"
+            return (
+                f"*Vous avez choisi le Dr. {medecin.prenom} {medecin.nom}* ({medecin.specialite})\n"
+                f"Lieu : {etab_nom}\n\n"
+                f"Pour quel jour et quelle heure souhaitez-vous votre rendez-vous ?\n\n"
+                f"Exemples simples :\n"
+                f"• `demain à 10h30`\n"
+                f"• `lundi à 11h`\n"
+                f"• `25/10 à 15h00`\n\n"
+                f"Pour changer de médecin, tapez 2.\n"
+                f"Pour annuler, tapez MENU."
+            )
+        else:
+            return f"Numéro de médecin invalide ({idx}). Choisissez un chiffre entre 1 et {len(medecins)}."
+
+    # 2. Étape en cours : Attente de la date et de l'heure pour le médecin sélectionné
+    if conv and conv.etape == ConversationWhatsApp.Etape.CHOIX_DATE and conv.medecin_selectionne:
+        if texte_lower in ("2", "rdv", "retour", "changer"):
+            conv.etape = ConversationWhatsApp.Etape.CHOIX_MEDECIN
+            conv.medecin_selectionne = None
+            conv.save()
+            return formater_reponse_medecins(patient=patient)
+
+        date_obj, date_token = extraire_date_naturelle(texte)
+        texte_sans_date = re.sub(re.escape(date_token), "", texte, flags=re.IGNORECASE).strip() if date_token else texte
+        heure_val, minute_val = extraire_heure_minute(texte_sans_date)
+
+        if date_obj and heure_val is not None:
+            try:
+                heure_obj = datetime.time(heure_val, minute_val)
+                tz = timezone.get_current_timezone()
+                rdv_datetime = timezone.make_aware(datetime.datetime.combine(date_obj, heure_obj), tz)
+                if rdv_datetime < timezone.now():
+                    return "Date déjà dépassée. Veuillez choisir un créneau futur pour votre consultation."
+                motif = re.sub(r"(?:à\s*|a\s*)?\b\d{1,2}(?:[h:]\d{0,2})?\b", "", texte_sans_date, flags=re.IGNORECASE).strip()
+                succes, message = reserver_rendez_vous_whatsapp(patient, conv.medecin_selectionne, rdv_datetime, motif)
+                if succes:
+                    conv.etape = ConversationWhatsApp.Etape.MENU
+                    conv.medecin_selectionne = None
+                    conv.save()
+                return message
+            except Exception:
+                pass
+        elif not date_obj and heure_val is not None:
+            return (
+                f"Précisez le jour souhaité pour le Dr. {conv.medecin_selectionne.nom}.\n"
+                f"Exemple : `demain à {heure_val}h` ou `25/10 à {heure_val}h`."
+            )
+        elif date_obj and heure_val is None:
+            return (
+                f"Précisez l'heure souhaitée pour le {date_obj.strftime('%d/%m/%Y')}.\n"
+                f"Exemple : `{date_token} à 10h30` ou `15h00`."
+            )
+
+    # 3. Coordonnées GPS reçues (partage de position WhatsApp "LOCATION lat lng")
     if texte_lower.startswith("location "):
         morceaux_loc = texte.split()
         if len(morceaux_loc) >= 3:
             try:
                 lat = float(morceaux_loc[1])
                 lng = float(morceaux_loc[2])
+                if conv:
+                    conv.etape = ConversationWhatsApp.Etape.CHOIX_MEDECIN
+                    conv.save()
                 return formater_reponse_medecins(patient=patient, coords_gps=(lat, lng))
             except ValueError:
                 pass
 
-    # 2. Formules de politesse & remerciements
+    # 4. Formules de politesse & remerciements
     if texte_lower in ("merci", "merci beaucoup", "jerejef", "jërëjëf", "chokran", "thanks", "thx"):
         return (
             "Avec grand plaisir. L'équipe SantéSN reste à votre entière disposition.\n"
@@ -781,24 +864,31 @@ def traiter_message_entrant_whatsapp(expediteur_telephone, texte_message):
             "Au revoir et très bonne journée. Prenez soin de vous."
         )
 
-    # 3. Commandes de menu / salutations
-    if texte_lower in ("bonjour", "salut", "bonsoir", "hello", "hi", "menu", "aide", "help", "start"):
+    # 5. Salutations
+    if texte_lower in ("bonjour", "salut", "bonsoir", "hello", "hi"):
+        if conv:
+            conv.etape = ConversationWhatsApp.Etape.MENU
+            conv.medecin_selectionne = None
+            conv.save()
         return formater_reponse_menu(patient)
 
-    # 4. Consultation de ses propres rendez-vous
+    # 6. Consultation de ses propres rendez-vous
     if any(k in texte_lower for k in ("mes rdv", "mon rdv", "mes rendez-vous", "mes rendez vous", "mon rendez vous", "mon agenda")):
         return formater_reponse_mes_rdv(patient)
 
-    # 5. Choix 1 : Droits & Solde restant
+    # 7. Choix 1 : Droits & Solde restant
     if texte_lower in ("1", "solde", "droit", "droits", "couverture", "plafond", "mon solde", "combien me reste"):
+        if conv:
+            conv.etape = ConversationWhatsApp.Etape.MENU
+            conv.save()
         return formater_reponse_droits(patient)
 
-    # 6. Pharmacies spécifiquement demandées
+    # 8. Pharmacies spécifiquement demandées
     if any(k in texte_lower for k in ("pharmacie", "pharmacies", "medicament", "médicament", "ordonnance")):
         ville = detecter_ville(texte)
         return formater_reponse_partenaires(type_filtre=Prestataire.Type.PHARMACIE, ville=ville)
 
-    # 7. Hôpitaux & Cliniques spécifiquement demandés
+    # 9. Hôpitaux & Cliniques spécifiquement demandés
     if any(k in texte_lower for k in ("hopital", "hôpital", "clinique", "centre de sante", "centre de santé")):
         ville = detecter_ville(texte)
         return formater_reponse_partenaires(
@@ -806,20 +896,24 @@ def traiter_message_entrant_whatsapp(expediteur_telephone, texte_message):
             ville=ville,
         )
 
-    # 8. Choix 3 général : Établissements & Réseau conventionné
+    # 10. Choix 3 général : Établissements & Réseau conventionné
     if texte_lower in ("3", "partenaire", "partenaires", "prestataire", "prestataires", "reseau", "réseau"):
         return formater_reponse_partenaires()
 
-    # 9. Choix 4 : Urgences nationales
+    # 11. Choix 4 : Urgences nationales
     if texte_lower in ("4", "urgence", "urgences", "samu", "pompier", "pompiers", "secours", "ambulance", "police"):
         return formater_reponse_urgences()
 
-    # 10. Recherche ciblée par spécialité médicale (ex: 'cardiologue', 'pediatre', 'rdv cardiologue', 'yeux')
+    # 12. Recherche ciblée par spécialité médicale (ex: 'cardiologue', 'pediatre', 'rdv cardiologue', 'yeux')
     spe_detectee = detecter_specialite(texte)
     ville_detectee = detecter_ville(texte)
     nom_dr_detecte = detecter_nom_medecin(texte)
 
     if spe_detectee or nom_dr_detecte:
+        if conv:
+            conv.etape = ConversationWhatsApp.Etape.CHOIX_MEDECIN
+            conv.medecin_selectionne = None
+            conv.save()
         return formater_reponse_medecins(
             patient=patient,
             ville=ville_detectee,
@@ -827,24 +921,36 @@ def traiter_message_entrant_whatsapp(expediteur_telephone, texte_message):
             nom_medecin=nom_dr_detecte,
         )
 
-    # 11. Recherche par ville seule (ex: "rdv dakar", "rdv thies", "rdv mbour")
+    # 13. Recherche par ville seule (ex: "rdv dakar", "rdv thies", "rdv mbour")
     match_rdv_ville = re.match(r"^rdv\s+([a-zA-Zà-ÿ\s-]+)$", texte.strip(), re.IGNORECASE)
     if match_rdv_ville:
         nom_ville = match_rdv_ville.group(1).strip()
         if nom_ville.lower() not in ("menu", "aide", "help", "docteur", "medecin", "partenaire"):
             if not nom_ville.isdigit():
+                if conv:
+                    conv.etape = ConversationWhatsApp.Etape.CHOIX_MEDECIN
+                    conv.medecin_selectionne = None
+                    conv.save()
                 return formater_reponse_medecins(patient=patient, ville=nom_ville)
 
-    # 12. Choix 2 direct : Prendre un rendez-vous / Liste générale des praticiens
+    # 14. Choix 2 direct : Prendre un rendez-vous / Liste générale des praticiens
     if texte_lower in ("2", "rdv", "rendez-vous", "rendez vous", "prendre rdv", "prendre un rdv", "docteur", "medecin"):
+        if conv:
+            conv.etape = ConversationWhatsApp.Etape.CHOIX_MEDECIN
+            conv.medecin_selectionne = None
+            conv.save()
         return formater_reponse_medecins(patient=patient, ville=ville_detectee)
 
-    # 13. Tentative de parsing d'une réservation directe (ex: 'RDV 1 25/10 10h', 'RDV 1 demain 10h', 'RDV 1')
+    # 15. Tentative de parsing d'une réservation directe complète (ex: 'RDV 1 25/10 10h', 'RDV 1 demain 10h', 'RDV 1')
     reponse_rdv = parser_demande_rdv(texte, patient)
     if reponse_rdv:
+        if conv:
+            conv.etape = ConversationWhatsApp.Etape.MENU
+            conv.medecin_selectionne = None
+            conv.save()
         return reponse_rdv
 
-    # 14. Orientation médicale en cas d'expression de symptômes
+    # 16. Orientation médicale en cas d'expression de symptômes
     if any(k in texte_lower for k in ("malade", "douleur", "mal de", "fievre", "fièvre", "toux", "grippe", "ventre", "tete", "tête", "blessure")):
         return (
             "*Conseil d'Orientation Médicale SantéSN*\n\n"
@@ -853,11 +959,14 @@ def traiter_message_entrant_whatsapp(expediteur_telephone, texte_message):
             "En cas d'urgence critique, appelez le SAMU au 1515 (gratuit)."
         )
 
-    # 15. Si le texte contient le mot clé "rdv" sans syntaxe reconnue
+    # 17. Si le texte contient le mot clé "rdv" sans syntaxe reconnue
     if "rdv" in texte_lower or "rendez" in texte_lower:
+        if conv:
+            conv.etape = ConversationWhatsApp.Etape.CHOIX_MEDECIN
+            conv.save()
         return formater_reponse_medecins(patient=patient, ville=ville_detectee)
 
-    # 16. Réponse par défaut bienveillante et adaptée
+    # 18. Réponse par défaut bienveillante et adaptée
     if not patient:
         return (
             "Bienvenue sur l'assistant WhatsApp SantéSN.\n\n"
