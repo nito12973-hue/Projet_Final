@@ -33,7 +33,7 @@
                 </button>
             </div>
             {% if field.help_text %}
-            <p style="font-size: 12px; color: var(--muted); margin: 5px 0 0 0; line-height: 1.4;">{{ field.help_text }}</p>
+            <div class="aide" style="margin-top: 8px;">{{ field.help_text|safe }}</div>
             {% endif %}
             {% if field.errors %}
             <div class="erreur-champ" role="alert">
