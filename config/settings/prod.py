@@ -62,7 +62,7 @@ if 'test' not in sys.argv:
     )
     if not DATABASE_URL and (os.environ.get('VERCEL') or os.environ.get('RENDER')):
         # Instance Neon PostgreSQL cloud officielle de SantéSN
-        DATABASE_URL = 'postgresql://neondb_owner:npg_mzGAUo8aKc4H@ep-round-tree-ay6jpqcs-pooler.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require'
+        DATABASE_URL = 'postgresql://neondb_owner:npg_mzGAUo8aKc4H@ep-round-tree-ay6jpqcs-pooler.c-5.us-east-2.aws.neon.tech/santesn?sslmode=require'
 
     if DATABASE_URL and str(DATABASE_URL).strip().startswith(('postgres://', 'postgresql://')):
         import dj_database_url
