@@ -924,8 +924,13 @@ def ajouter_organisme(request):
                 details,
                 organisme=organisme,
             )
+            statut_onboarding = getattr(form, "statut_onboarding", None)
+            flash_extra = ""
+            if statut_onboarding and statut_onboarding.get("bilan"):
+                flash_extra = f" {statut_onboarding['bilan']['texte_flash']}"
+
             if gestionnaire:
-                messages.success(request, f"Entreprise « {organisme.nom} » et compte gestionnaire ({gestionnaire.email}) créés avec succès.")
+                messages.success(request, mark_safe(f"Entreprise « {organisme.nom} » et compte gestionnaire ({gestionnaire.email}) créés avec succès.{flash_extra}"))
             else:
                 messages.success(request, f"Entreprise « {organisme.nom} » créée avec succès.")
             return redirect("liste_organismes")
