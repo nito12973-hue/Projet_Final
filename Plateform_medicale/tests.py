@@ -13224,6 +13224,47 @@ class WhatsAppBotAndWebhookTests(TestCase):
         self.assertIn("/login/", rep_connexion)
         self.assertIn("Prendre rendez-vous sans vous connecter", rep_connexion)
 
+    def test_suppression_organisme_vide_et_avec_comptes(self):
+        """Vérifie la suppression d'une entreprise vide et le blocage si elle contient des comptes."""
+        # Se connecter en administrateur
+        admin = User.objects.create_superuser(
+            email="superadmin.org@santesn.sn",
+            password=PASSWORD,
+            role=User.Role.ADMIN,
+        )
+        self.client.force_login(admin)
+
+        # 1. Création d'une entreprise vide
+        org_vide = Organisme.objects.create(
+            nom="Entreprise Test Suppression",
+            code="TEST-SUPPR",
+            type_organisme=Organisme.TypeOrganisme.ENTREPRISE,
+        )
+        resp_confirm = self.client.get(reverse("supprimer_organisme", args=[org_vide.pk]))
+        self.assertEqual(resp_confirm.status_code, 200)
+        self.assertContains(resp_confirm, "Entreprise Test Suppression")
+
+        # Suppression POST
+        resp_del = self.client.post(reverse("supprimer_organisme", args=[org_vide.pk]), follow=True)
+        self.assertEqual(resp_del.status_code, 200)
+        self.assertFalse(Organisme.objects.filter(pk=org_vide.pk).exists())
+
+        # 2. Tentative de suppression d'une entreprise avec comptes (protégée)
+        org_avec_user = Organisme.objects.create(
+            nom="Entreprise Avec Comptes",
+            code="AVEC-COMPTES",
+            type_organisme=Organisme.TypeOrganisme.ENTREPRISE,
+        )
+        User.objects.create(
+            email="user.protege@santesn.sn",
+            role=User.Role.GESTIONNAIRE,
+            organisme=org_avec_user,
+        )
+        resp_bloque = self.client.post(reverse("supprimer_organisme", args=[org_avec_user.pk]), follow=True)
+        self.assertEqual(resp_bloque.status_code, 200)
+        self.assertTrue(Organisme.objects.filter(pk=org_avec_user.pk).exists())
+
+
 
 
 
