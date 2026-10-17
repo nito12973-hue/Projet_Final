@@ -314,7 +314,7 @@
 <section class="admin-layout" style="margin-top: 22px;">
     <article class="panel panel-bloc">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
-            <h2 style="margin:0;color:var(--primary-dark);">Ordonnance <span class="code">{{ ordonnance.code_qr }}</span></h2>
+            <h2 style="margin:0;color:var(--titre);">Ordonnance <span class="code">{{ ordonnance.code_qr }}</span></h2>
             {% if ordonnance.est_annulee %}
             <span class="badge refusee">Annulée</span>
             {% elif ordonnance.delivrance %}
@@ -329,7 +329,7 @@
         <p><strong>Médecin prescripteur :</strong> {{ ordonnance.consultation.medecin }}</p>
         <p><strong>Date de prescription :</strong> {{ ordonnance.date_creation|date:"d/m/Y à H:i" }}</p>
         {% if integrite == "intacte" %}
-        <p class="sceau-statut" style="color:var(--primary-dark);font-weight:600;">
+        <p class="sceau-statut" style="color:var(--primary-strong);font-weight:600;">
             {% icone "shield-check" %} Sceau d'intégrité vérifié · <span class="code">{{ ordonnance.sceau_court }}</span>
         </p>
         {% elif integrite == "alteree" %}
@@ -337,7 +337,7 @@
             {% icone "alert-triangle" %} Sceau d'intégrité invalide — contenu modifié après prescription
         </p>
         {% else %}
-        <p class="sceau-statut" style="color:var(--text-muted);">
+        <p class="sceau-statut" style="color:var(--muted);">
             {% icone "info" %} Ordonnance antérieure au scellement (aucun sceau)
         </p>
         {% endif %}
@@ -437,11 +437,11 @@
             <p style="margin:0 0 4px;"><strong>Patient :</strong> {{ ordonnance.consultation.patient }}</p>
             <p style="margin:0 0 4px;"><strong>Carte :</strong> <span class="code">{{ ordonnance.consultation.patient.numero_carte }}</span></p>
             {% if ordonnance.consultation.patient.taux_couverture %}
-            <p style="margin:0;color:var(--primary-dark);font-weight:600;">
+            <p style="margin:0;color:var(--primary-strong);font-weight:600;">
                 {% icone "shield-check" %} Prise en charge : {{ ordonnance.consultation.patient.taux_couverture }}%
             </p>
             {% else %}
-            <p style="margin:0;color:var(--text-muted);">
+            <p style="margin:0;color:var(--muted);">
                 {% icone "info" %} Aucune prise en charge active (100% à la charge du patient).
             </p>
             {% endif %}
