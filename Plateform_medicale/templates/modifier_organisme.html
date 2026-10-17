@@ -38,9 +38,10 @@
         {% endif %}
         {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
         {% endfor %}
-        <div class="actions" style="margin-top: 16px; display: flex; gap: 10px;">
+        <div class="actions" style="margin-top: 16px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
             <button class="button primary" type="submit">Enregistrer</button>
             <a class="button btn" href="{% url 'liste_organismes' %}">Annuler</a>
+            <a class="button btn btn-danger" style="margin-left: auto;" href="{% url 'supprimer_organisme' organisme.pk %}">{% icone "trash-2" %} Supprimer l'entreprise</a>
         </div>
     </form>
 </section>

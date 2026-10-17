@@ -18,6 +18,8 @@
     {% url 'liste_services' as url_annulation %}
 {% elif type|lower == "utilisateur" %}
     {% url 'liste_utilisateurs' as url_annulation %}
+{% elif type|lower == "entreprise" or type|lower == "organisme" %}
+    {% url 'liste_organismes' as url_annulation %}
 {% else %}
     {% url 'post_login_redirect' as url_annulation %}
 {% endif %}

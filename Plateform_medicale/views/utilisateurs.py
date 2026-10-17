@@ -973,3 +973,59 @@ def activer_desactiver_organisme(request, pk):
         messages.success(request, f"Organisme « {organisme.nom} » désactivé.")
     return redirect("liste_organismes")
 
+
+@admin_required
+def supprimer_organisme(request, pk):
+    organisme = get_object_or_404(Organisme, pk=pk)
+
+    # Vérification des dépendances
+    nb_patients = organisme.patients.count()
+    nb_utilisateurs = organisme.utilisateurs.count()
+    est_protege = False
+    motif_blocage = ""
+    avertissement = ""
+
+    if nb_patients > 0 or nb_utilisateurs > 0:
+        est_protege = True
+        motif_blocage = (
+            f"Cette entreprise compte encore {nb_patients} assuré(s) et {nb_utilisateurs} utilisateur(s) rattaché(s). "
+            "Par sécurité et pour préserver la traçabilité des données de santé, vous devez d'abord supprimer ou réassigner ces comptes, ou simplement désactiver l'entreprise."
+        )
+        avertissement = f"{nb_patients} assuré(s), {nb_utilisateurs} compte(s) utilisateur(s)"
+
+    if request.method == "POST":
+        if est_protege:
+            messages.error(request, motif_blocage)
+            return redirect("liste_organismes")
+        nom = organisme.nom
+        try:
+            with transaction.atomic():
+                organisme.delete()
+                journaliser(
+                    request,
+                    JournalActivite.Action.SUPPRESSION,
+                    f"Entreprise {nom}",
+                    f"Suppression définitive de l'entreprise {nom}",
+                )
+                messages.success(request, f"L'entreprise « {nom} » a été supprimée avec succès.")
+                return redirect("liste_organismes")
+        except ProtectedError:
+            messages.error(
+                request,
+                f"Impossible de supprimer l'entreprise « {nom} » en raison de données liées protégées. Vous pouvez la désactiver pour bloquer tout accès.",
+            )
+            return redirect("liste_organismes")
+
+    return render(
+        request,
+        "confirmer_suppression.html",
+        {
+            "objet": organisme.nom,
+            "type": "Entreprise",
+            "est_protege": est_protege,
+            "motif_blocage": motif_blocage,
+            "avertissement": avertissement,
+        },
+    )
+
+

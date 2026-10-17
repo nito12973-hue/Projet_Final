@@ -202,6 +202,7 @@ from .utilisateurs import (  # noqa: F401
     ajouter_organisme,
     modifier_organisme,
     activer_desactiver_organisme,
+    supprimer_organisme,
 )
 
 # Listes administrateur et rendez-vous

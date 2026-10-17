@@ -116,6 +116,7 @@
                             <button type="submit" class="button btn btn-sm">Activer</button>
                             {% endif %}
                         </form>
+                        <a href="{% url 'supprimer_organisme' org.pk %}" class="button btn btn-danger btn-sm" title="Supprimer définitivement l'entreprise {{ org.nom }}">{% icone "trash-2" %} Supprimer</a>
                     </div>
                 </td>
             </tr>
