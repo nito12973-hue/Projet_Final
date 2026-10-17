@@ -23,9 +23,11 @@ from django.views.decorators.http import require_POST
 logger = logging.getLogger("Plateform_medicale")
 
 from ..forms import (
+    AttribuerPlanForm,
     OrganismeForm,
     UtilisateurCreationForm,
     UtilisateurModificationForm,
+    lier_fiche_assure,
     lier_fiche_medecin,
     lier_fiche_pharmacien,
 )
@@ -680,6 +682,63 @@ def modifier_utilisateur(request, pk):
         request,
         "modifier_utilisateur.html",
         {"form": form, "utilisateur": utilisateur},
+    )
+
+
+@role_required(User.Role.ADMIN, User.Role.GESTIONNAIRE)
+def attribuer_plan_utilisateur(request, pk):
+    """Permet au gestionnaire ou administrateur d'attribuer un plan de couverture à un assuré."""
+    utilisateur = get_object_or_404(User, pk=pk)
+    if request.user.role == User.Role.GESTIONNAIRE and utilisateur.organisme_id != request.user.organisme_id:
+        raise PermissionDenied
+
+    patient = getattr(utilisateur, 'patient', None)
+    if not patient and utilisateur.role == User.Role.ASSURE:
+        patient = lier_fiche_assure(utilisateur)
+
+    if not patient:
+        messages.error(request, f"L'utilisateur {utilisateur} n'a pas de dossier d'assuré associé.")
+        return redirect("liste_utilisateurs")
+
+    if request.method == "POST":
+        form = AttribuerPlanForm(request.POST)
+        if form.is_valid():
+            nouveau_plan = form.cleaned_data['plan_couverture']
+            ancien_plan = patient.plan_couverture
+            patient.plan_couverture = nouveau_plan
+            patient.save(update_fields=['plan_couverture'])
+            libelle = str(nouveau_plan) if nouveau_plan else "Aucun plan"
+            journaliser(
+                request,
+                JournalActivite.Action.MODIFICATION,
+                f"Plan de couverture {utilisateur.email}",
+                f"Attribution du plan : {libelle} (précédent : {ancien_plan or 'Aucun'})",
+                organisme=patient.organisme,
+            )
+            messages.success(
+                request,
+                f"Le plan de couverture « {libelle} » a été attribué avec succès à {patient}.",
+            )
+            next_url = request.GET.get("next") or request.POST.get("next")
+            if next_url and next_url.startswith("/"):
+                return redirect(next_url)
+            return redirect("liste_utilisateurs")
+    else:
+        form = AttribuerPlanForm(initial={'plan_couverture': patient.plan_couverture})
+
+    plans = PlanCouverture.objects.all()
+    ayants_droit = patient.ayants_droit.all() if hasattr(patient, 'ayants_droit') else []
+    return render(
+        request,
+        "attribuer_plan_utilisateur.html",
+        {
+            "utilisateur": utilisateur,
+            "patient": patient,
+            "form": form,
+            "plans": plans,
+            "ayants_droit": ayants_droit,
+            "next": request.GET.get("next", ""),
+        },
     )
 
 

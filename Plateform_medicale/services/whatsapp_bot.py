@@ -313,14 +313,17 @@ def lister_medecins_disponibles(patient=None, ville=None, coords_gps=None, speci
 def formater_reponse_menu(patient=None):
     """Génère le menu d'accueil sobre et clair du bot SantéSN."""
     nom_affiche = f" {patient.prenom}" if patient else ""
+    site_url = str(getattr(settings, "SITE_URL", "https://projet-final-bice.vercel.app") or "").strip().rstrip("/")
     return (
         f"Bonjour{nom_affiche}, bienvenue sur SantéSN.\n"
         f"Votre plateforme d'assurance santé & prévoyance au Sénégal.\n\n"
-        f"1. Consulter mes droits et mon plafond restant\n"
-        f"2. Prendre un rendez-vous médical direct\n"
-        f"3. Trouver un médecin ou une pharmacie\n"
-        f"4. Numéros d'urgence médicale\n\n"
-        f"Répondez avec le chiffre de votre choix (1, 2, 3 ou 4)."
+        f"👉 *Options disponibles :*\n"
+        f"1. 📋 Consulter mes droits et mon plafond restant\n"
+        f"2. 🗓️ Prendre un rendez-vous médical direct par messagerie\n"
+        f"3. 🏥 Trouver un médecin ou une pharmacie conventionnée\n"
+        f"4. 🚨 Numéros d'urgence médicale (SAMU 1515, Pompiers 18)\n"
+        f"5. 🔐 Se connecter à mon espace en ligne ({site_url}/login/)\n\n"
+        f"Répondez avec le chiffre de votre choix (1, 2, 3, 4 ou 5) ou écrivez directement votre demande (ex : « RDV cardiologue à Dakar »)."
     )
 
 
@@ -921,6 +924,18 @@ def traiter_message_entrant_whatsapp(expediteur_telephone, texte_message):
     # 11. Choix 4 : Urgences nationales
     if texte_lower in ("4", "urgence", "urgences", "samu", "pompier", "pompiers", "secours", "ambulance", "police"):
         return formater_reponse_urgences()
+
+    # 12. Choix 5 : Se connecter à son espace en ligne
+    if texte_lower in ("5", "connexion", "connecter", "se connecter", "login", "espace", "mon espace", "mot de passe", "activer", "lien"):
+        site_url = str(getattr(settings, "SITE_URL", "https://projet-final-bice.vercel.app") or "").strip().rstrip("/")
+        nom_complet = f" {patient.prenom}" if patient else ""
+        return (
+            f"*SantéSN — Connexion à votre Espace Assuré*\n\n"
+            f"Bonjour{nom_complet}, vous pouvez vous connecter à votre espace personnel en ligne (carte dématérialisée, remboursements, prises en charge) via ce lien sécurisé :\n"
+            f"👉 {site_url}/login/\n\n"
+            f"💡 *Prendre rendez-vous sans vous connecter :*\n"
+            f"Vous pouvez également réserver directement une consultation médicale ici sur WhatsApp en écrivant « RDV » ou « 2 » !"
+        )
 
     # 12. Recherche ciblée par spécialité médicale (ex: 'cardiologue', 'pediatre', 'rdv cardiologue', 'yeux')
     spe_detectee = detecter_specialite(texte)

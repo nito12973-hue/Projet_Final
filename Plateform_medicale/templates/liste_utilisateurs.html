@@ -365,6 +365,17 @@
                     </td>
                     <td class="col-optionnelle">
                         <span class="badge">{{ utilisateur.get_role_display }}</span>
+                        {% if utilisateur.role == "ASSURE" or utilisateur.patient %}
+                            {% if utilisateur.patient.plan_couverture %}
+                            <span class="badge" style="display:block;margin-top:4px;background:var(--primary-subtle);color:var(--primary-strong);font-size:11px;" title="Plan : {{ utilisateur.patient.plan_couverture }}">
+                                {% icone "shield" %} {{ utilisateur.patient.plan_couverture.nom }} ({{ utilisateur.patient.plan_couverture.taux_couverture }}%)
+                            </span>
+                            {% else %}
+                            <span class="badge" style="display:block;margin-top:4px;background:var(--bg-subtle);color:var(--muted);font-size:11px;" title="Aucun plan attribué">
+                                {% icone "shield" %} Sans plan
+                            </span>
+                            {% endif %}
+                        {% endif %}
                     </td>
                     <td class="col-optionnelle">
                         {% if utilisateur.organisme %}
@@ -392,6 +403,9 @@
                                 <input type="hidden" name="source" value="utilisateurs">
                                 <button type="submit" class="button btn btn-sm" title="Débloquer l'accès immédiat">Débloquer</button>
                             </form>
+                            {% endif %}
+                            {% if utilisateur.role == "ASSURE" or utilisateur.patient %}
+                            <a href="{% url 'attribuer_plan_utilisateur' utilisateur.pk %}" class="button btn btn-sm" title="Attribuer ou modifier le plan de couverture">{% icone "shield" %} Plan</a>
                             {% endif %}
                             <a href="{% url 'modifier_utilisateur' utilisateur.pk %}" class="button primary btn btn-sm" title="Modifier le compte">{% icone "edit-2" %} Modifier</a>
                             <a href="{% url 'journal_activite' %}?q={{ utilisateur.email }}" class="button btn btn-sm" title="Consulter l'historique d'activité de cet utilisateur">{% icone "file-text" %} Historique</a>

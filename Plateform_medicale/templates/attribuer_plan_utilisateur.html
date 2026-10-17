@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% load icones %}
+
+{% block title %}Plan de couverture — {{ patient }}{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Attribuer un plan de couverture</h1>
+        <p class="subtitle">
+            Bénéficiaire : <strong>{{ patient.prenom }} {{ patient.nom }}</strong> 
+            &bull; Carte : <span class="code">{{ patient.numero_carte }}</span>
+            {% if patient.organisme %}&bull; Entreprise : <span class="badge" style="background:var(--primary-subtle);color:var(--primary-strong);">{{ patient.organisme.nom }}</span>{% endif %}
+        </p>
+    </div>
+    <a class="button btn btn-retour-expand" href="{% if next %}{{ next }}{% else %}{% url 'liste_utilisateurs' %}{% endif %}" title="Retour" aria-label="Retour">
+        {% icone "chevron-left" %} <span class="expand-text">Retour</span>
+    </a>
+</section>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; align-items: start; max-width: 1000px;">
+    <!-- Panneau Formulaire -->
+    <section class="panel panel-form" style="margin-bottom: 0;">
+        <h2 style="font-size: 1.15rem; margin-top: 0; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+            {% icone "shield" %} Sélection de la formule de prise en charge
+        </h2>
+
+        {% if form.non_field_errors %}
+        <div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+
+            <div class="champ-groupe" style="margin-bottom: 20px;">
+                <label for="{{ form.plan_couverture.id_for_label }}">
+                    {{ form.plan_couverture.label }}
+                </label>
+                {{ form.plan_couverture }}
+                {% if form.plan_couverture.help_text %}
+                <p class="champ-aide" style="margin-top: 6px;">{{ form.plan_couverture.help_text }}</p>
+                {% endif %}
+                {% if form.plan_couverture.errors %}
+                <div class="erreurs" role="alert" style="margin-top: 6px;">{{ form.plan_couverture.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div style="background: var(--bg-subtle, #f8fafc); border-left: 4px solid var(--primary); padding: 12px 16px; border-radius: 4px; font-size: 0.9rem; margin-bottom: 24px;">
+                <strong>Règle de gestion :</strong> Le taux de prise en charge s'appliquera immédiatement aux consultations, soins médicaux et ordonnances délivrés aux prestataires de santé partenaires.
+            </div>
+
+            <div class="actions" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                <button class="button primary" type="submit">{% icone "check" %} Enregistrer l'attribution</button>
+                <a class="button btn" href="{% if next %}{{ next }}{% else %}{% url 'liste_utilisateurs' %}{% endif %}">Annuler</a>
+            </div>
+        </form>
+    </section>
+
+    <!-- Panneau Informations & Ayants droit -->
+    <aside style="display: flex; flex-direction: column; gap: 16px;">
+        <div class="panel" style="margin-bottom: 0;">
+            <h3 style="font-size: 1rem; margin-top: 0; margin-bottom: 12px; color: var(--texte-secondaire, #64748b);">
+                Situation actuelle
+            </h3>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--muted);">Plan actuel :</span>
+                    {% if patient.plan_couverture %}
+                    <span class="badge validee">{{ patient.plan_couverture.nom }} ({{ patient.plan_couverture.taux_couverture }}%)</span>
+                    {% else %}
+                    <span class="badge refusee">Non attribué</span>
+                    {% endif %}
+                </div>
+                {% if patient.plan_couverture and patient.plan_couverture.plafond_annuel %}
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--muted);">Plafond annuel :</span>
+                    <strong class="code">{{ patient.plan_couverture.plafond_annuel }} FCFA</strong>
+                </div>
+                {% endif %}
+                {% if utilisateur %}
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--muted);">Compte de connexion :</span>
+                    <span class="code" style="font-size: 12px;">{{ utilisateur.email }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if ayants_droit %}
+        <div class="panel" style="margin-bottom: 0;">
+            <h3 style="font-size: 1rem; margin-top: 0; margin-bottom: 8px; color: var(--texte-secondaire, #64748b);">
+                Ayants droit rattachés ({{ ayants_droit|length }})
+            </h3>
+            <p style="font-size: 0.85rem; color: var(--muted); margin-bottom: 12px;">
+                Ces membres de la famille bénéficient automatiquement de la même formule.
+            </p>
+            <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px;">
+                {% for ad in ayants_droit %}
+                <li style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: var(--bg-subtle, #f8fafc); border-radius: 6px; font-size: 0.9rem;">
+                    <span><strong>{{ ad.prenom }} {{ ad.nom }}</strong> <span style="color: var(--muted); font-size: 0.8rem;">({{ ad.get_lien_parente_display }})</span></span>
+                    <span class="code" style="font-size: 11px;">{{ ad.numero_carte }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </aside>
+</div>
+{% endblock %}

@@ -116,6 +116,7 @@
                         </button>
                         {% endif %}
                         <a href="{% url 'carte_patient' patient.pk %}" class="button btn btn-sm">{% icone "id-card" %} Carte</a>
+                        <a href="{% url 'attribuer_plan_patient' patient.pk %}" class="button btn btn-sm" title="Attribuer ou modifier le plan de couverture">{% icone "shield" %} Plan</a>
                         <a href="{% url 'modifier_patient' patient.pk %}" class="button primary btn btn-sm">{% icone "edit-2" %} Modifier</a>
                         <a href="{% url 'supprimer_patient' patient.pk %}" class="button btn btn-danger btn-sm">{% icone "trash-2" %}</a>
                     </div>

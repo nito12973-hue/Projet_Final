@@ -20,9 +20,13 @@
     <form method="post">
         {% csrf_token %}
         {% for field in form %}
+        {% if field.is_hidden %}
+            {{ field }}
+        {% else %}
         <label for="{{ field.id_for_label }}">{{ field.label }}</label>
         {{ field }}
         {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
+        {% endif %}
         {% endfor %}
         <div class="actions" style="display:flex;gap:10px;align-items:center;margin-top:16px;">
             <button class="button primary" type="submit">Enregistrer les modifications</button>
