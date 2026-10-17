@@ -168,7 +168,22 @@ def envoyer_message_whatsapp(
 
         logger.warning("Échec tentative initiale WhatsApp au %s (code %s): %s", numero_nettoye, code_meta, erreur_msg)
 
-        # Si le message texte libre a échoué à cause de la restriction de fenêtre 24h ou nouveau contact,
+        # 1. Si l'envoi par modèle (template) échoue, tenter en texte direct si un message texte est fourni
+        if template_nom and texte_message:
+            try:
+                logger.info("Tentative de secours en texte direct vers le %s", numero_nettoye)
+                payload_txt = _preparer_payload(None, None)
+                succes_txt, msg_id_txt, _ = _executer_envoi(payload_txt)
+                return {
+                    "succes": True,
+                    "statut": "ENVOYE",
+                    "message": "Délivré avec succès en texte direct",
+                    "message_id": msg_id_txt,
+                }
+            except Exception as txt_exc:
+                logger.debug("Échec de la tentative de secours texte direct vers %s : %s", numero_nettoye, txt_exc)
+
+        # 2. Si le message texte libre a échoué à cause de la restriction de fenêtre 24h ou nouveau contact,
         # on effectue un fallback automatique vers le modèle officiel approuvé pour garantir la délivrabilité
         if not template_nom and code_meta in (131047, 131026, 131030, 132000, 132001, 131051, 131052):
             try:
