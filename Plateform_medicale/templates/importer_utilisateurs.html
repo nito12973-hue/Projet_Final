@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 {% load icones %}
 
-{% block title %}Importer des utilisateurs{% endblock %}
+{% block title %}{{ titre_page|default:"Importer des utilisateurs" }}{% endblock %}
 
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>Importer des utilisateurs depuis Excel</h1>
-        <p class="subtitle">Créez plusieurs comptes (Assuré, Médecin, Pharmacien, Administrateur) en une seule fois.</p>
+        <h1>{{ titre_page|default:"Importer des utilisateurs depuis Excel" }}</h1>
+        <p class="subtitle">{{ sous_titre_page|default:"Créez plusieurs comptes (Assuré, Médecin, Pharmacien, Administrateur) en une seule fois." }}</p>
     </div>
-    <a class="button btn btn-retour-expand" href="{% url 'dashboard' %}" title="Retour au tableau de bord" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
+    <a class="button btn btn-retour-expand" href="{{ url_retour|default:'/utilisateurs/' }}" title="Retour" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
 </section>
 
 <section class="panel panel-bloc" style="margin-bottom:18px;">
@@ -18,7 +18,7 @@
         Téléchargez le modèle officiel ci-dessous, renseignez une ligne par compte à créer, puis déposez le fichier complété.
         Pour chaque compte, un lien d'activation sécurisé sera automatiquement expédié.
     </p>
-    <a class="button btn btn-expand primary" href="{% url 'telecharger_modele_import_utilisateurs' %}" title="Télécharger le modèle Excel officiel" aria-label="Télécharger le modèle Excel officiel">{% icone "download" %} <span class="expand-text">Télécharger le modèle Excel</span></a>
+    <a class="button btn btn-expand primary" href="{% url 'telecharger_modele_import_utilisateurs' %}{% if role_filtre %}?role={{ role_filtre }}{% endif %}" title="Télécharger le modèle Excel officiel" aria-label="Télécharger le modèle Excel officiel">{% icone "download" %} <span class="expand-text">Télécharger le modèle Excel</span></a>
 </section>
 
 {% if erreurs %}
@@ -38,6 +38,7 @@
 <section class="panel panel-bloc">
     <form method="post" enctype="multipart/form-data" id="form-import-excel">
         {% csrf_token %}
+        <input type="hidden" name="role" value="{{ role_filtre|default:'' }}">
         
         <!-- Zone Drag & Drop -->
         <div id="drop-zone" style="border: 2px dashed var(--border); border-radius: 12px; padding: 36px 20px; text-align: center; background: var(--surface-muted); cursor: pointer; transition: all 0.2s ease;">

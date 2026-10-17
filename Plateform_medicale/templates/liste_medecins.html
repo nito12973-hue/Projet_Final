@@ -9,7 +9,10 @@
         <h1>Médecins</h1>
         <p class="subtitle">Praticiens rattachés au réseau : spécialité, contact et prestataire.</p>
     </div>
-    <a class="button primary btn-expand primary" href="{% url 'ajouter_medecin' %}" title="Ajouter un nouveau médecin" aria-label="Ajouter un médecin">{% icone "plus" %} <span class="expand-text">Ajouter un médecin</span></a>
+    <div class="actions">
+        <a class="button btn btn-expand" href="{% url 'importer_utilisateurs_excel' %}?role=MEDECIN" title="Importer des médecins depuis Excel" aria-label="Importer des médecins">{% icone "upload" %} <span class="expand-text">Importer des médecins</span></a>
+        <a class="button primary btn-expand primary" href="{% url 'ajouter_medecin' %}" title="Ajouter un nouveau médecin" aria-label="Ajouter un médecin">{% icone "plus" %} <span class="expand-text">Ajouter un médecin</span></a>
+    </div>
 </section>
 
 <form method="get" class="filtres">
