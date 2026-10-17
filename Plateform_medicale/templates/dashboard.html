@@ -478,7 +478,7 @@
                 <h2>Comptes par rôle</h2>
                 <p class="subtitle">{{ total_comptes_actifs }} actifs, {{ total_comptes_inactifs }} désactivés — effectifs uniquement, sans identité</p>
             </div>
-            <a class="lien-discret" href="{% url 'liste_utilisateurs' %}">Comptes signalés{% if nb_comptes_bloques %} ({{ nb_comptes_bloques }}){% endif %}</a>
+            <a class="lien-discret" href="{% url 'liste_utilisateurs' %}">Comptes bloqués{% if nb_comptes_bloques %} ({{ nb_comptes_bloques }}){% endif %}</a>
         </div>
         <ul class="liste-lignes">
             {% for ligne in comptes_par_role %}

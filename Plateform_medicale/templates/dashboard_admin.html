@@ -34,14 +34,14 @@
         <span class="kpi-pied"><span class="status-pulse-dot" style="display:inline-block;vertical-align:middle;margin-right:4px;"></span> Cluster opérationnel · TLS 1.3</span>
     </div>
     <a class="kpi" href="{% url 'liste_utilisateurs' %}">
-        <span class="kpi-entete">{% icone "users" %} Comptes d'accès IAM</span>
+        <span class="kpi-entete">{% icone "users" %} Comptes d'accès</span>
         <strong class="code">{{ total_comptes_actifs }}</strong>
         <span class="kpi-pied">{{ total_comptes_inactifs }} inactif{{ total_comptes_inactifs|pluralize }} · Anti brute-force</span>
     </a>
     <a class="kpi" href="{% url 'journal_activite' %}">
         <span class="kpi-entete">{% icone "shield" %} Audit &amp; Sécurité</span>
         <strong class="code">{{ total_journaux_activite }}</strong>
-        <span class="kpi-pied">Traçabilité CDP · Inaltérable</span>
+        <span class="kpi-pied">Traçabilité des accès · Inaltérable</span>
     </a>
     <a class="kpi" href="{% url 'parametres_section' 'general' %}">
         <span class="kpi-entete">{% icone "bell" %} Passerelles Télécoms <span class="badge validee" style="margin-left:auto;font-size:10.5px;padding:2px 8px;">ACTIVES</span></span>
@@ -50,13 +50,13 @@
     </a>
 </section>
 
-<!-- Barre Observabilité DevOps : Sentry & Prometheus -->
+<!-- Barre Observabilité : Métriques & Surveillance -->
 <div style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
     <a href="{% url 'metrics_prometheus' %}" style="flex: 1; min-width: 240px; text-decoration: none; border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; background: var(--surface); display: flex; align-items: center; justify-content: space-between; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--primary)';" onmouseout="this.style.borderColor='var(--border)';">
         <div style="display: flex; align-items: center; gap: 10px;">
             <span style="color: var(--primary); display: flex; align-items: center;">{% icone "bar-chart" %}</span>
             <div>
-                <strong style="font-size: 13px; color: var(--titre); display: block;">Prometheus / OpenMetrics</strong>
+                <strong style="font-size: 13px; color: var(--titre); display: block;">Métriques &amp; Performance</strong>
                 <span style="font-size: 11.5px; color: var(--muted);">Flux actif &middot; Consulter la console</span>
             </div>
         </div>
@@ -66,8 +66,8 @@
         <div style="display: flex; align-items: center; gap: 10px;">
             <span style="color: var(--primary); display: flex; align-items: center;">{% icone "shield-check" %}</span>
             <div>
-                <strong style="font-size: 13px; color: var(--titre); display: block;">Sentry Télémétrie</strong>
-                <span style="font-size: 11.5px; color: var(--muted);">Traçage actif &middot; DSN connecté</span>
+                <strong style="font-size: 13px; color: var(--titre); display: block;">Surveillance des erreurs</strong>
+                <span style="font-size: 11.5px; color: var(--muted);">Traçage actif &middot; Service connecté</span>
             </div>
         </div>
         <span class="badge validee" style="font-size: 10.5px; padding: 2px 7px;">En ligne</span>
@@ -131,7 +131,7 @@
         <strong>{{ nb_comptes_bloques }} compte{{ nb_comptes_bloques|pluralize }} temporairement bloqué{{ nb_comptes_bloques|pluralize }}</strong>
         <span>Des comptes ne peuvent pas se connecter et attendent votre attention.</span>
     </span>
-    <span class="alerte-securite-action">Voir les comptes signalés {% icone "chevron-right" %}</span>
+    <span class="alerte-securite-action">Voir les comptes bloqués {% icone "chevron-right" %}</span>
 </a>
 {% endif %}
 
@@ -151,11 +151,11 @@
             </a>
             <a class="fiche" href="{% url 'journal_activite' %}">
                 {% icone "shield" %}
-                <span><strong class="code">Audit CDP</strong> Traçabilité des actions sensibles</span>
+                <span><strong class="code">Audit Sécurité</strong> Traçabilité des actions sensibles</span>
             </a>
             <a class="fiche" href="{% url 'parametres_section' 'securite' %}">
                 {% icone "lock" %}
-                <span><strong class="code">Politique IAM</strong> Protection brute-force</span>
+                <span><strong class="code">Sécurité d'accès</strong> Protection brute-force</span>
             </a>
             <a class="fiche" href="{% url 'admin_liste_demandes_support' %}">
                 {% icone "chat" %}
@@ -203,7 +203,7 @@
                 <h2>Comptes par rôle</h2>
                 <p class="subtitle">{{ total_comptes_actifs }} actifs, {{ total_comptes_inactifs }} désactivés — effectifs uniquement, sans identité</p>
             </div>
-            <a class="lien-discret" href="{% url 'liste_utilisateurs' %}">Comptes signalés{% if nb_comptes_bloques %} ({{ nb_comptes_bloques }}){% endif %}</a>
+            <a class="lien-discret" href="{% url 'liste_utilisateurs' %}">Comptes bloqués{% if nb_comptes_bloques %} ({{ nb_comptes_bloques }}){% endif %}</a>
         </div>
         <ul class="liste-lignes">
             {% for ligne in comptes_par_role %}
