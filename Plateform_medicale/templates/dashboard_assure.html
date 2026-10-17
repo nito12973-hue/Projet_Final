@@ -81,13 +81,13 @@
                 {% icone "wallet" %} Solde disponible {{ annee_civile }}
             </span>
             <span class="badge {% if pourcentage_plafond >= 90 %}refusee{% elif pourcentage_plafond >= 70 %}en_attente{% else %}validee{% endif %}" style="font-size: 11px;">
-                {% if plafond_annuel %}{{ pourcentage_plafond }}% consommé{% else %}Illimité{% endif %}
+                {% if plafond_annuel %}{{ pourcentage_plafond }}% consommé{% else %}Couverture active{% endif %}
             </span>
         </div>
         <div style="margin-bottom: 8px;">
             <a href="https://wa.me/{{ whatsapp_bot_phone }}?text=1" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: inherit; display: block;" title="Consulter mon solde et plafond directement sur WhatsApp">
                 <strong style="font-size: 26px; font-weight: 800; color: var(--titre); font-variant-numeric: tabular-nums; line-height: 1.1; display: block;">
-                    {% if plafond_restant is not None %}{{ plafond_restant|franc_cfa }}{% else %}Illimité{% endif %}
+                    {% if plafond_restant is not None %}{{ plafond_restant|franc_cfa }}{% elif plafond_annuel %}{{ plafond_annuel|franc_cfa }}{% else %}Disponible{% endif %}
                 </strong>
             </a>
             <span style="font-size: 12px; color: var(--muted);">sur {{ plafond_annuel|franc_cfa|default:"Plafond standard" }} de garantie</span>
@@ -377,7 +377,7 @@
                             {{ pourcentage_plafond }}% consommé
                         </span>
                         {% else %}
-                        <span class="badge validee" style="font-size: 10.5px;">Illimité</span>
+                        <span class="badge validee" style="font-size: 10.5px;">Couverture active</span>
                         {% endif %}
                     </div>
 
