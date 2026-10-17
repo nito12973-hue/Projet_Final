@@ -46,13 +46,13 @@
 .formule-carte:hover {
     border-color: var(--primary);
     transform: translateY(-2px);
-    box-shadow: 0 8px 18px rgba(14, 116, 144, 0.1);
+    box-shadow: 0 8px 18px rgba(14, 124, 134, 0.12);
 }
 
 .formule-carte.active {
     border-color: var(--primary);
-    background: linear-gradient(to bottom right, var(--bg-surface, #ffffff), rgba(14, 116, 144, 0.04));
-    box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.15), 0 8px 20px rgba(14, 116, 144, 0.08);
+    background: linear-gradient(to bottom right, var(--surface, #ffffff), var(--primary-soft));
+    box-shadow: 0 0 0 3px rgba(14, 124, 134, 0.15), var(--ombre-forte);
 }
 
 .formule-carte-radio {
@@ -87,7 +87,7 @@
     align-items: center;
     font-size: 24px;
     font-weight: 800;
-    color: var(--primary);
+    color: var(--primary-strong);
     line-height: 1;
     margin-bottom: 8px;
 }
@@ -95,7 +95,7 @@
 .formule-jauge-fond {
     width: 100%;
     height: 6px;
-    background: rgba(0, 0, 0, 0.06);
+    background: var(--border);
     border-radius: 999px;
     overflow: hidden;
     margin: 10px 0 14px 0;
@@ -103,7 +103,7 @@
 
 .formule-jauge-barre {
     height: 100%;
-    background: linear-gradient(90deg, var(--primary), #10b981);
+    background: linear-gradient(90deg, var(--primary), var(--primary-light));
     border-radius: 999px;
     transition: width 0.4s ease;
 }
@@ -112,7 +112,7 @@
     font-size: 16px;
     font-weight: 700;
     margin: 0 0 4px 0;
-    color: var(--texte);
+    color: var(--titre);
 }
 
 .formule-carte-plafond {
@@ -126,7 +126,7 @@
 
 .formule-avantages {
     font-size: 12.5px;
-    color: var(--texte-secondaire, #475569);
+    color: var(--muted);
     border-top: 1px dashed var(--border);
     padding-top: 12px;
     margin-top: 8px;
@@ -141,13 +141,13 @@
     gap: 6px;
 }
 
-/* Carte Santé Dématérialisée Stylisée */
+/* Carte Santé Dématérialisée Stylisée aux couleurs thématiques */
 .carte-sante-visuelle {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0e7490 100%);
+    background: linear-gradient(135deg, var(--primary-dark) 0%, #095059 55%, var(--primary) 100%);
     color: #ffffff;
     border-radius: 18px;
     padding: 24px;
-    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.25);
+    box-shadow: 0 16px 32px rgba(11, 32, 39, 0.28);
     position: relative;
     overflow: hidden;
     aspect-ratio: 1.58 / 1;
@@ -164,14 +164,14 @@
     width: 300px;
     height: 300px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+    background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 70%);
     pointer-events: none;
 }
 
 .carte-puce {
     width: 38px;
     height: 28px;
-    background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+    background: linear-gradient(135deg, var(--accent) 0%, #b85d2e 100%);
     border-radius: 5px;
     border: 1px solid rgba(0,0,0,0.15);
     position: relative;
@@ -318,7 +318,7 @@
                             </div>
                         </div>
                         <div class="formule-avantages">
-                            <div class="formule-avantage-item" style="color: var(--succes, #16a34a);">
+                            <div class="formule-avantage-item" style="color: var(--ok-fg); font-weight: 600;">
                                 {% icone "check" %} Prise en charge à {{ p.taux_couverture|floatformat:0 }}%
                             </div>
                             <div class="formule-avantage-item">
@@ -332,8 +332,8 @@
                     {% endfor %}
                 </div>
 
-                <div style="background: rgba(14, 116, 144, 0.05); border-left: 4px solid var(--primary); padding: 14px 16px; border-radius: 8px; font-size: 13.5px; margin-bottom: 24px; line-height: 1.5;">
-                    <strong style="color: var(--primary);">Application immédiate :</strong>
+                <div style="background: var(--primary-soft); border-left: 4px solid var(--primary); padding: 14px 16px; border-radius: 8px; font-size: 13.5px; margin-bottom: 24px; line-height: 1.5;">
+                    <strong style="color: var(--primary-strong);">Application immédiate :</strong>
                     Le taux de couverture s'appliquera dès l'enregistrement lors des vérifications de droits par les médecins conventionnés et les pharmacies partenaires.
                 </div>
 

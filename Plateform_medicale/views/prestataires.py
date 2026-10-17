@@ -12,7 +12,7 @@ import urllib.request
 from django.contrib import messages
 from django.core.cache import cache
 from django.db import transaction
-from django.db.models import ProtectedError, Q
+from django.db.models import Avg, Count, ProtectedError, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
@@ -291,8 +291,21 @@ from .utils import organisme_gestionnaire, role_required  # noqa: E402
 def liste_plans_couverture(request):
     if request.user.role == User.Role.GESTIONNAIRE:
         organisme_gestionnaire(request)
-    plans = _trier(request, PlanCouverture.objects.all(), ["nom", "taux_couverture", "plafond_annuel"], "nom")
-    return render(request, "liste_plans_couverture.html", {"plans": _paginer(request, plans)})
+    plans_base = PlanCouverture.objects.annotate(nb_beneficiaires=Count("beneficiaires"))
+    stats = plans_base.aggregate(
+        total_plans=Count("id"),
+        taux_moyen=Avg("taux_couverture"),
+        total_beneficiaires=Count("beneficiaires"),
+    )
+    plans = _trier(request, plans_base, ["nom", "taux_couverture", "plafond_annuel"], "nom")
+    return render(
+        request,
+        "liste_plans_couverture.html",
+        {
+            "plans": _paginer(request, plans),
+            "stats": stats,
+        },
+    )
 
 
 @role_required(User.Role.GESTIONNAIRE)
