@@ -148,12 +148,12 @@ def envoyer_activation_utilisateur(utilisateur, request=None):
 
     # 1. Tentative WhatsApp en premier (Format SMS simple + fallback template officiel)
     whatsapp_texte = (
-        f"SantéSN : Bonjour {prenom}, bienvenue sur votre plateforme santé !\n\n"
-        f"Option 1 : Se connecter à votre espace assuré\n"
-        f"Cliquez sur le bouton ci-dessous (ou sur ce lien sécurisé valable 24h) pour activer votre compte et obtenir votre carte d'assurance :\n"
+        f"SantéSN : Bonjour {prenom}, votre compte sur la plateforme médicale SantéSN a été configuré avec succès.\n\n"
+        f"Accès direct par messagerie WhatsApp (sans entrer sur la plateforme) :\n"
+        f"Vous pouvez consulter vos droits, votre solde de couverture, vos rendez-vous et vos médecins directement ici par message (écrivez simplement « Bonjour » ou « 1 »).\n\n"
+        f"Accès à votre espace web (optionnel) :\n"
+        f"Pour activer votre compte web et obtenir votre carte d'assuré, cliquez sur ce lien sécurisé (valable 24h) :\n"
         f"{lien_activation}\n\n"
-        f"Option 2 : Prendre rendez-vous directement par messagerie\n"
-        f"Vous pouvez également consulter vos droits et prendre rendez-vous directement ici sur WhatsApp en répondant à ce message (ex : écrivez « RDV » ou « 1 »).\n\n"
         f"L'équipe SantéSN"
     )
     # Utiliser le modèle officiel approuvé compte_santesn_notif avec bouton cliquable
@@ -195,12 +195,13 @@ def envoyer_activation_utilisateur(utilisateur, request=None):
             }
             corps_texte = (
                 f"Bonjour {prenom},\n\n"
-                f"Votre compte SantéSN a été créé.\n\n"
-                f"Pour commencer à utiliser la plateforme, veuillez activer votre compte et définir votre mot de passe :\n\n"
+                f"Votre compte sur la plateforme médicale SantéSN a été configuré avec succès.\n\n"
+                f"Accès rapide sans vous connecter :\n"
+                f"Vous pouvez également consulter votre couverture, vos droits et prendre rendez-vous directement par WhatsApp en écrivant simplement « Bonjour » ou « 1 » à notre numéro officiel.\n\n"
+                f"Pour activer votre compte web et définir votre mot de passe personnel :\n\n"
                 f"{lien_activation}\n\n"
                 f"Ce lien est valable 24 heures.\n\n"
-                f"Si vous n'êtes pas à l'origine de cette création de compte, veuillez contacter l'administration.\n\n"
-                f"SantéSN"
+                f"L'équipe SantéSN"
             )
             try:
                 corps_html = render_to_string("emails/activation_compte.html", ctx)
