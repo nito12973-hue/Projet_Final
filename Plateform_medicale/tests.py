@@ -10471,7 +10471,10 @@ class AuditCorrectionsTests(TestCase):
         resp = self.client.post(reverse('renvoyer_activation', args=[utilisateur_test.pk]), follow=True)
         self.assertRedirects(resp, reverse('liste_utilisateurs'))
         content = resp.content.decode('utf-8')
-        self.assertIn("Le lien d'activation a été envoyé", content)
+        self.assertTrue(
+            "Le lien d'activation a été envoyé" in content
+            or "Le lien d&#x27;activation a été envoyé" in content
+        )
 
     def test_transition_rdv_vers_statut_absent(self):
         """Vérifie qu'un médecin peut déclarer un patient absent (no-show)."""
@@ -11069,36 +11072,36 @@ class JaugePlafondAnnuelIPMTests(TestCase):
 
 
 class MediaFilesServingTests(TestCase):
-    """Vérifie que les pièces justificatives et fichiers médias sont correctement servis par l'URLconf."""
+    """Vérifie que les fichiers médias non sensibles sont correctement servis par l'URLconf."""
 
     def test_fichier_media_existant_accessible(self):
         from django.conf import settings
-        chemin_disque = pathlib.Path(settings.MEDIA_ROOT) / "justificatifs_ayants_droit" / "UPsn_CCNA_Section_1-Lesson_1.pdf"
+        chemin_disque = pathlib.Path(settings.MEDIA_ROOT) / "documents_publics" / "UPsn_CCNA_Section_1-Lesson_1.pdf"
         chemin_disque.parent.mkdir(parents=True, exist_ok=True)
         if not chemin_disque.exists():
             chemin_disque.write_bytes(b"%PDF-1.4 test document")
         client = Client()
-        # Le fichier justificatif déposé existe sur le disque
-        response = client.get("/media/justificatifs_ayants_droit/UPsn_CCNA_Section_1-Lesson_1.pdf")
+        # Le fichier média déposé existe sur le disque
+        response = client.get("/media/documents_publics/UPsn_CCNA_Section_1-Lesson_1.pdf")
         self.assertEqual(response.status_code, 200)
 
     def test_fichier_media_base_de_donnees_accessible(self):
         from .models import FichierMedia
         FichierMedia.objects.create(
-            chemin="justificatifs_ayants_droit/test_db_doc.pdf",
+            chemin="documents_publics/test_db_doc.pdf",
             contenu=b"%PDF-1.4 test data",
             type_mime="application/pdf",
             taille=18,
         )
         client = Client()
-        response = client.get("/media/justificatifs_ayants_droit/test_db_doc.pdf")
+        response = client.get("/media/documents_publics/test_db_doc.pdf")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "application/pdf")
         self.assertEqual(response.content, b"%PDF-1.4 test data")
 
     def test_fichier_media_inexistant_retourne_404(self):
         client = Client()
-        response = client.get("/media/justificatifs_ayants_droit/fichier_inexistant_xyz_123.pdf")
+        response = client.get("/media/documents_publics/fichier_inexistant_xyz_123.pdf")
         self.assertEqual(response.status_code, 404)
 
 
@@ -12221,21 +12224,44 @@ class SupervisionTechniqueTests(TestCase):
         import io
         from django.conf import settings
         from django.core.management import call_command
-        out = io.StringIO()
-        call_command("sauvegarder_base", stdout=out)
-        sortie = out.getvalue()
-        self.assertIn("Sauvegarde vérifiée avec succès", sortie)
-        self.assertIn("SHA-256", sortie)
-
-        # Vérifier la présence du fichier manifest.json
         manifest_path = settings.BASE_DIR / "backups" / "manifest.json"
-        self.assertTrue(manifest_path.exists())
-        with open(manifest_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            self.assertTrue(len(data.get("sauvegardes", [])) > 0)
-            derniere = data["sauvegardes"][-1]
-            self.assertEqual(derniere["statut"], "SUCCES_VERIFIE")
-            self.assertEqual(len(derniere["sha256"]), 64)  # Longueur d'un SHA-256 hex
+        contenu_initial = None
+        if manifest_path.exists():
+            with open(manifest_path, "r", encoding="utf-8") as f:
+                contenu_initial = f.read()
+
+        out = io.StringIO()
+        try:
+            call_command("sauvegarder_base", stdout=out)
+            sortie = out.getvalue()
+            self.assertIn("Sauvegarde vérifiée avec succès", sortie)
+            self.assertIn("SHA-256", sortie)
+
+            # Vérifier la présence du fichier manifest.json
+            self.assertTrue(manifest_path.exists())
+            with open(manifest_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                self.assertTrue(len(data.get("sauvegardes", [])) > 0)
+                derniere = data["sauvegardes"][-1]
+                self.assertEqual(derniere["statut"], "SUCCES_VERIFIE")
+                self.assertEqual(len(derniere["sha256"]), 64)  # Longueur d'un SHA-256 hex
+                fichier_genere = settings.BASE_DIR / "backups" / derniere["fichier"]
+                self.assertTrue(fichier_genere.exists())
+        finally:
+            # Nettoyage automatique du fichier de test pour éviter l'accumulation dans backups/
+            try:
+                with open(manifest_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    if data.get("sauvegardes"):
+                        derniere_test = data["sauvegardes"][-1]
+                        test_file = settings.BASE_DIR / "backups" / derniere_test.get("fichier", "")
+                        if test_file.exists() and "sqlite" in test_file.name:
+                            test_file.unlink(missing_ok=True)
+                if contenu_initial is not None:
+                    with open(manifest_path, "w", encoding="utf-8") as f:
+                        f.write(contenu_initial)
+            except Exception:
+                pass
 
 
 class RemboursementHorsReseauEtIsolationMultiTenantTests(TestCase):
@@ -13501,6 +13527,127 @@ class AuditSecuriteTests(TestCase):
         resp = self.client.get(reverse("telecharger_devis_prise_en_charge", args=[pec.pk]))
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.headers.get("X-Content-Type-Options"), "nosniff")
+
+    def test_media_sensible_justificatifs_ayants_droit_bloque_en_acces_direct(self):
+        # Accès direct non authentifié à une pièce d'identité d'ayant droit
+        resp = self.client.get("/media/justificatifs_ayants_droit/cni_enfant.pdf")
+        self.assertEqual(resp.status_code, 404)
+
+    def test_media_sensible_path_traversal_interdit(self):
+        # Tentative d'évasion d'arborescence via path traversal
+        resp = self.client.get("/media/logos/../justificatifs_ayants_droit/cni_enfant.pdf")
+        self.assertEqual(resp.status_code, 404)
+
+    def test_devis_pec_interdit_medecin_non_traitant(self):
+        pec = PriseEnCharge.objects.create(
+            patient=self.patient,
+            montant_estime=Decimal("45000"),
+            devis_fichier=SimpleUploadedFile("devis_confidential.pdf", b"%PDF-1.4 devis", content_type="application/pdf"),
+        )
+        medecin_autre = creer_medecin("dr.autre.praticien@santesn.sn")
+        self.client.force_login(medecin_autre.user)
+        resp = self.client.get(reverse("telecharger_devis_prise_en_charge", args=[pec.pk]))
+        self.assertEqual(resp.status_code, 404)
+
+    def test_devis_pec_autorise_medecin_traitant(self):
+        pec = PriseEnCharge.objects.create(
+            patient=self.patient,
+            montant_estime=Decimal("45000"),
+            devis_fichier=SimpleUploadedFile("devis_confidential.pdf", b"%PDF-1.4 devis", content_type="application/pdf"),
+        )
+        medecin_traitant = creer_medecin("dr.traitant.officiel@santesn.sn")
+        service = ServiceMedical.objects.create(nom="Médecine Générale", prix=Decimal("15000.00"))
+        Consultation.objects.create(
+            patient=self.patient,
+            medecin=medecin_traitant,
+            service=service,
+            prise_en_charge=pec,
+            date_consultation=timezone.now(),
+            diagnostic="Consultation préalable",
+        )
+        self.client.force_login(medecin_traitant.user)
+        resp = self.client.get(reverse("telecharger_devis_prise_en_charge", args=[pec.pk]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(JournalActivite.objects.filter(
+            action=JournalActivite.Action.ACCES_DPI,
+            auteur=medecin_traitant.user,
+        ).exists())
+
+    def test_webhook_whatsapp_verification_timing_safe(self):
+        from django.test import override_settings
+        with override_settings(WHATSAPP_WEBHOOK_VERIFY_TOKEN="secret_test_meta_123"):
+            # Échec avec mauvais token
+            resp_fail = self.client.get(reverse("whatsapp_webhook"), {
+                "hub.mode": "subscribe",
+                "hub.verify_token": "mauvais_token",
+                "hub.challenge": "123456",
+            })
+            self.assertEqual(resp_fail.status_code, 403)
+
+            # Succès avec token exact
+            resp_ok = self.client.get(reverse("whatsapp_webhook"), {
+                "hub.mode": "subscribe",
+                "hub.verify_token": "secret_test_meta_123",
+                "hub.challenge": "CHALLENGE_OK_789",
+            })
+            self.assertEqual(resp_ok.status_code, 200)
+            self.assertEqual(resp_ok.content, b"CHALLENGE_OK_789")
+
+    def test_webhook_whatsapp_signature_hmac(self):
+        import hashlib
+        import hmac
+        from django.test import override_settings
+
+        secret = "cle_secrete_meta_webhook_2026"
+        payload = b'{"object": "whatsapp_business_account", "entry": []}'
+
+        with override_settings(WHATSAPP_APP_SECRET=secret):
+            # Sans en-tête de signature : rejet 403
+            resp_sans_sig = self.client.post(
+                reverse("whatsapp_webhook"),
+                data=payload,
+                content_type="application/json",
+            )
+            self.assertEqual(resp_sans_sig.status_code, 403)
+
+            # Avec signature forgée incorrecte : rejet 403
+            resp_bad_sig = self.client.post(
+                reverse("whatsapp_webhook"),
+                data=payload,
+                content_type="application/json",
+                HTTP_X_HUB_SIGNATURE_256="sha256=fausse_signature_hacker_12345",
+            )
+            self.assertEqual(resp_bad_sig.status_code, 403)
+
+            # Avec signature HMAC-SHA256 valide calculée : acceptée 200
+            sig_valide = hmac.new(secret.encode("utf-8"), payload, hashlib.sha256).hexdigest()
+            resp_bonne_sig = self.client.post(
+                reverse("whatsapp_webhook"),
+                data=payload,
+                content_type="application/json",
+                HTTP_X_HUB_SIGNATURE_256=f"sha256={sig_valide}",
+            )
+            self.assertEqual(resp_bonne_sig.status_code, 200)
+
+    def test_attribuer_plan_page_apercu_carte_rendu(self):
+        plan = PlanCouverture.objects.create(
+            nom="Plan Confort Entreprise (80%)",
+            taux_couverture=Decimal("80.00"),
+            plafond_annuel=Decimal("1500000.00"),
+        )
+        self.patient.plan_couverture = plan
+        self.patient.save()
+
+        self.client.force_login(self.gestionnaire)
+        url = reverse("attribuer_plan_utilisateur", args=[self.assure.pk])
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        content = resp.content.decode("utf-8")
+        self.assertIn("carte-sante-visuelle", content)
+        self.assertIn(self.patient.numero_carte, content)
+        self.assertIn("Plan Confort Entreprise (80%)", content)
+        # Vérifier qu'il n'y a pas de double pourcentage "(80%) (80%)"
+        self.assertNotIn("(80%) (80%)", content)
 
 
 

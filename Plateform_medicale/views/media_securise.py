@@ -81,7 +81,10 @@ def telecharger_justificatif_remboursement(request, pk):
 
     # 3. Repli base de données FichierMedia (Architecture serverless Vercel)
     chemin_media = remboursement.justificatif.name
-    fichier_db = FichierMedia.objects.filter(chemin__icontains=nom_fichier).first()
+    fichier_db = (
+        FichierMedia.objects.filter(chemin=chemin_media).first()
+        or FichierMedia.objects.filter(chemin__endswith="/" + nom_fichier).first()
+    )
     if fichier_db and fichier_db.contenu:
         reponse = HttpResponse(fichier_db.contenu, content_type=fichier_db.type_mime or type_mime)
         return _finaliser_reponse_fichier(reponse, nom_fichier)
@@ -131,7 +134,11 @@ def telecharger_piece_identite_patient(request, pk):
     except (FileNotFoundError, OSError):
         pass
 
-    fichier_db = FichierMedia.objects.filter(chemin__icontains=nom_fichier).first()
+    chemin_media = patient.document_justificatif.name
+    fichier_db = (
+        FichierMedia.objects.filter(chemin=chemin_media).first()
+        or FichierMedia.objects.filter(chemin__endswith="/" + nom_fichier).first()
+    )
     if fichier_db and fichier_db.contenu:
         reponse = HttpResponse(fichier_db.contenu, content_type=fichier_db.type_mime or type_mime)
         return _finaliser_reponse_fichier(reponse, nom_fichier)
@@ -154,7 +161,8 @@ def telecharger_devis_prise_en_charge(request, pk):
     if request.user.role == User.Role.ADMIN:
         raise PermissionDenied("L'administrateur technique n'a pas accès aux devis médicaux confidentiels.")
 
-    from ..models import PriseEnCharge
+    from ..models import Consultation, JournalActivite, PriseEnCharge, RendezVous
+    from .utils import journaliser
 
     prise = get_object_or_404(
         PriseEnCharge.objects.select_related("patient", "patient__user", "patient__assure_principal", "patient__organisme"),
@@ -170,13 +178,30 @@ def telecharger_devis_prise_en_charge(request, pk):
         request.user.role == User.Role.GESTIONNAIRE
         and request.user.organisme_id == patient.organisme_id
     )
-    est_medecin = request.user.role == User.Role.MEDECIN
+    est_medecin = False
+    if request.user.role == User.Role.MEDECIN:
+        medecin = getattr(request.user, "medecin", None)
+        if medecin:
+            est_medecin = (
+                prise.consultation_set.filter(medecin=medecin).exists()
+                or Consultation.objects.filter(patient=patient, medecin=medecin).exists()
+                or RendezVous.objects.filter(patient=patient, medecin=medecin).exists()
+            )
 
     if not (est_proprietaire or est_gestionnaire_organisme or est_medecin):
         raise Http404("Document introuvable ou accès non autorisé.")
 
     if not prise.devis_fichier:
         raise Http404("Aucun devis n'est attaché à cette prise en charge.")
+
+    # Traçabilité légale d'accès aux pièces médicales (Loi 2008-12 CDP Sénégal)
+    if est_medecin:
+        journaliser(
+            request,
+            JournalActivite.Action.ACCES_DPI,
+            f"Devis PEC {prise.numero_pec or prise.pk}",
+            f"Consultation du devis médical par Dr {request.user.get_full_name()}",
+        )
 
     nom_fichier = os.path.basename(prise.devis_fichier.name)
     type_mime, _ = mimetypes.guess_type(nom_fichier)
@@ -194,7 +219,11 @@ def telecharger_devis_prise_en_charge(request, pk):
     except (FileNotFoundError, OSError):
         pass
 
-    fichier_db = FichierMedia.objects.filter(chemin__icontains=nom_fichier).first()
+    chemin_media = prise.devis_fichier.name
+    fichier_db = (
+        FichierMedia.objects.filter(chemin=chemin_media).first()
+        or FichierMedia.objects.filter(chemin__endswith="/" + nom_fichier).first()
+    )
     if fichier_db and fichier_db.contenu:
         reponse = HttpResponse(fichier_db.contenu, content_type=fichier_db.type_mime or type_mime)
         return _finaliser_reponse_fichier(reponse, nom_fichier)

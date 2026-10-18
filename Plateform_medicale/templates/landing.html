@@ -410,6 +410,13 @@
             box-shadow: var(--ombre-douce);
         }
 
+        .icone-nav {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+            vertical-align: middle;
+        }
+
         .badge-confiance .icone-nav { width: 15px; height: 15px; }
 
         .carte-demo .entete-carte {
@@ -1180,21 +1187,22 @@
         footer {
             background: #0b2027;
             color: #cbd5e1;
-            padding: 44px 0 28px;
+            padding: 48px 0 28px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
         }
 
         .pied-grille {
             display: grid;
-            grid-template-columns: 1.4fr 1fr 1fr;
-            gap: 32px;
-            margin-bottom: 30px;
+            grid-template-columns: 1.4fr 1fr 1.1fr;
+            gap: 36px;
+            margin-bottom: 32px;
         }
 
         .pied-tagline {
             margin-top: 14px;
             font-size: 13.5px;
             color: #9fb4bd;
-            max-width: 260px;
+            max-width: 280px;
             line-height: 1.6;
         }
 
@@ -1208,30 +1216,134 @@
             margin-bottom: 14px;
         }
 
-        footer .logo { color: #ffffff; }
-        footer nav { display: flex; flex-direction: column; gap: 10px; }
-        footer nav a { color: #cbd5e1; text-decoration: none; font-size: 14px; font-weight: 600; }
-        footer nav a:hover { color: #ffffff; }
+        footer .logo {
+            color: #ffffff;
+            transition: opacity 0.15s ease;
+        }
+
+        footer .logo:hover {
+            opacity: 0.92;
+        }
+
+        footer nav {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        footer nav a {
+            color: #cbd5e1;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.15s ease, transform 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        footer nav a:hover {
+            color: #ffffff;
+            transform: translateX(3px);
+        }
 
         .pied-contact-liste {
             list-style: none;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
             font-size: 14px;
             color: #cbd5e1;
         }
 
-        @media (max-width: 680px) {
-            .pied-grille { grid-template-columns: 1fr; }
+        .pied-contact-liste li a,
+        .pied-contact-liste .pied-contact-fixe {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: #cbd5e1;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.15s ease;
+        }
+
+        .pied-contact-liste li a:hover {
+            color: #ffffff;
+        }
+
+        .pied-contact-liste .icone-nav {
+            width: 16px;
+            height: 16px;
+            color: var(--primary-light);
+            flex-shrink: 0;
         }
 
         .copyright {
             border-top: 1px solid rgba(255, 255, 255, 0.12);
-            padding-top: 20px;
+            padding-top: 22px;
             font-size: 13px;
             color: #94a3b8;
-            text-align: center;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .copyright-liens {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .copyright-liens a {
+            color: inherit;
+            text-decoration: none;
+            opacity: 0.85;
+            transition: opacity 0.15s ease, color 0.15s ease;
+        }
+
+        .copyright-liens a:hover {
+            opacity: 1;
+            color: #ffffff;
+            text-decoration: underline;
+        }
+
+        .badge-conformite-cdp {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11.5px;
+            font-weight: 600;
+            color: var(--primary-light);
+            background: rgba(20, 184, 166, 0.12);
+            padding: 3px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(20, 184, 166, 0.25);
+        }
+
+        .badge-conformite-cdp .icone-nav {
+            width: 13px;
+            height: 13px;
+        }
+
+        @media (max-width: 680px) {
+            .pied-grille {
+                grid-template-columns: 1fr;
+                gap: 28px;
+            }
+            .copyright {
+                flex-direction: column;
+                text-align: center;
+                justify-content: center;
+                gap: 12px;
+            }
+            .copyright-liens {
+                justify-content: center;
+                gap: 12px;
+            }
         }
 
         /* Apparition au défilement */
@@ -1889,40 +2001,46 @@
         <div class="conteneur">
             <div class="pied-grille">
                 <div>
-                    <a class="logo" href="#accueil">
+                    <a class="logo" href="#accueil" aria-label="SantéSN — Retour en haut">
                         {% logo_marque taille=30 fond="sombre" %}
                         Santé<span style="color: var(--primary-light);">SN</span>
                     </a>
                     <p class="pied-tagline">La santé connectée, pensée pour l'écosystème sénégalais.</p>
+                    <div style="margin-top: 14px;">
+                        <span class="badge-conformite-cdp">{% icone "shield" %} Conforme CDP Sénégal (Loi 2008-12)</span>
+                    </div>
                 </div>
                 <div>
                     <span class="pied-titre-colonne">Navigation</span>
                     <nav aria-label="Liens du pied de page">
                         <a href="#accueil">Accueil</a>
                         <a href="#services">Services</a>
+                        <a href="#parcours">Comment ça marche</a>
                         <a href="#a-propos">À propos</a>
                         <a href="#dashboards">Aperçu</a>
+                        <a href="#acces">Accès</a>
                         <a href="#partenaires">Devenir partenaire</a>
                         <a href="#faq">FAQ</a>
-                        <a href="https://https-projet-final-bice-vercel-app.mintlify.site/introduction" target="_blank" rel="noopener">Documentation technique</a>
+                        <a href="#contact">Contact</a>
                         <a href="{% url 'login' %}">Se connecter</a>
                     </nav>
                 </div>
                 <div>
                     <span class="pied-titre-colonne">Contact Officiel</span>
                     <ul class="pied-contact-liste">
-                        <li><a href="mailto:contact@santesn.sn" style="color: inherit; text-decoration: none; font-weight: 500;">{% icone "mail" %} contact@santesn.sn</a></li>
-                        <li><a href="tel:+221789576145" style="color: inherit; text-decoration: none; font-weight: 500;">{% icone "phone" %} +221 78 957 61 45</a></li>
-                        <li>Dakar, Sénégal</li>
+                        <li><a href="mailto:contact@santesn.sn">{% icone "mail" %} contact@santesn.sn</a></li>
+                        <li><a href="tel:+221789576145">{% icone "phone" %} +221 78 957 61 45</a></li>
+                        <li><a href="https://wa.me/221789576145?text=Bonjour%20Sant%C3%A9SN" target="_blank" rel="noopener noreferrer">{% icone "message-circle" %} Assistance WhatsApp</a></li>
+                        <li><span class="pied-contact-fixe">{% icone "map-pin" %} Dakar, République du Sénégal</span></li>
                     </ul>
                 </div>
             </div>
-            <div class="copyright" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px;">
-                <span>© 2026 SantéSN — La santé connectée au service de tous.</span>
-                <div style="display: flex; gap: 16px;">
-                    <a href="https://https-projet-final-bice-vercel-app.mintlify.site/introduction" target="_blank" rel="noopener" style="color: inherit; text-decoration: none; opacity: 0.85;">Documentation technique</a>
-                    <a href="{% url 'cgu' %}" style="color: inherit; text-decoration: none; opacity: 0.85;">CGU</a>
-                    <a href="{% url 'politique_confidentialite' %}" style="color: inherit; text-decoration: none; opacity: 0.85;">Politique de Confidentialité</a>
+            <div class="copyright">
+                <span>© {% now "Y" %} SantéSN — La santé connectée au service de tous.</span>
+                <div class="copyright-liens">
+                    <a href="https://https-projet-final-bice-vercel-app.mintlify.site/introduction" target="_blank" rel="noopener noreferrer">Documentation technique</a>
+                    <a href="{% url 'cgu' %}">CGU</a>
+                    <a href="{% url 'politique_confidentialite' %}">Politique de Confidentialité</a>
                 </div>
             </div>
         </div>
@@ -1940,6 +2058,14 @@
         }, { threshold: 0.12 });
 
         document.querySelectorAll('.revele').forEach((el) => observateur.observe(el));
+
+        // Fermeture automatique du menu mobile au clic sur un lien d'ancrage
+        document.querySelectorAll('nav.menu a').forEach((lien) => {
+            lien.addEventListener('click', () => {
+                const toggle = document.getElementById('menu-mobile');
+                if (toggle && toggle.checked) toggle.checked = false;
+            });
+        });
     </script>
 </body>
 </html>

@@ -131,6 +131,7 @@ WHATSAPP_PHONE_NUMBER_ID = config('WHATSAPP_PHONE_NUMBER_ID', default='')
 WHATSAPP_TEMPLATE_NAME = config('WHATSAPP_TEMPLATE_NAME', default=None)
 WHATSAPP_SENDER_PHONE = config('WHATSAPP_SENDER_PHONE', default='221789576145')
 WHATSAPP_WEBHOOK_VERIFY_TOKEN = config('WHATSAPP_WEBHOOK_VERIFY_TOKEN', default='santesn_webhook_secret_2026')
+WHATSAPP_APP_SECRET = config('WHATSAPP_APP_SECRET', default='')
 
 if 'test' in sys.argv:
     EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
