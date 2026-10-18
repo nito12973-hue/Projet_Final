@@ -13649,6 +13649,61 @@ class AuditSecuriteTests(TestCase):
         # Vérifier qu'il n'y a pas de double pourcentage "(80%) (80%)"
         self.assertNotIn("(80%) (80%)", content)
 
+    def test_csrf_bloque_requete_sans_jeton(self):
+        from django.test import Client
+        csrf_client = Client(enforce_csrf_checks=True)
+        # Requête POST sans jeton CSRF sur une vue privée
+        resp = csrf_client.post(reverse("login"), {"email": "test@santesn.sn", "password": "pass"})
+        self.assertEqual(resp.status_code, 403)
+
+    def test_acces_anonyme_redirige_vers_connexion(self):
+        # Accès anonyme aux différentes routes privées
+        routes_privees = [
+            reverse("dashboard"),
+            reverse("liste_utilisateurs"),
+            reverse("journal_activite"),
+            reverse("supervision_systeme"),
+            reverse("dashboard_assure"),
+            reverse("dashboard_medecin"),
+            reverse("dashboard_pharmacien"),
+        ]
+        for url in routes_privees:
+            resp = self.client.get(url)
+            self.assertEqual(resp.status_code, 302)
+            self.assertIn(reverse("login"), resp.url)
+
+    def test_deconnexion_invalide_session(self):
+        self.client.force_login(self.assure)
+        session_id_avant = self.client.session.session_key
+        resp = self.client.post(reverse("logout"))
+        self.assertRedirects(resp, reverse("login"))
+        # Après déconnexion, la session est invalidée
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_isolation_gestionnaire_multi_organismes(self):
+        # Création d'un second organisme B et d'une demande de remboursement pour un patient de l'organisme B
+        organisme_b = Organisme.objects.create(nom="Autre Organisme B", code="ORG-B")
+        patient_b = Patient.objects.create(
+            nom="Diagne",
+            prenom="Fatou",
+            date_naissance=datetime.date(1992, 5, 10),
+            telephone="779998877",
+            organisme=organisme_b,
+        )
+        demande_b = DemandeRemboursement.objects.create(
+            patient=patient_b,
+            organisme=organisme_b,
+            type_soin=DemandeRemboursement.TypeSoin.CONSULTATION,
+            date_soins=datetime.date.today(),
+            montant_depense=Decimal("25000"),
+            prestataire_nom="Clinique B",
+        )
+        # Le gestionnaire de l'organisme A ne doit PAS pouvoir accéder à la demande de l'organisme B
+        self.client.force_login(self.gestionnaire)
+        resp = self.client.get(reverse("instruire_demande_remboursement", args=[demande_b.pk]))
+        self.assertEqual(resp.status_code, 404)
+
+
 
 
 
