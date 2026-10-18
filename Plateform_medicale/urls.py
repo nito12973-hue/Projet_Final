@@ -203,7 +203,8 @@ urlpatterns = [
     path('assure/support/nouvelle/', views.creer_demande_support, name='creer_demande_support'),
     path('assure/support/<int:pk>/', views.detail_demande_support, name='detail_demande_support'),
 
-    # Support Administrateur
+    # Support Administrateur & Assurés
+    path('support/', lambda r: __import__('django.shortcuts', fromlist=['redirect']).redirect('admin_liste_demandes_support' if getattr(r.user, 'role', None) in ('ADMIN', 'GESTIONNAIRE') else 'mes_demandes_support')),
     path('support/demandes/', views.admin_liste_demandes_support, name='admin_liste_demandes_support'),
     path('support/demandes/<int:pk>/', views.admin_detail_demande_support, name='admin_detail_demande_support'),
 
