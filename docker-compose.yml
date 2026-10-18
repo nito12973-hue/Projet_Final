@@ -20,8 +20,6 @@ services:
       - static_volume:/app/staticfiles
       - media_volume:/app/media
       - logs_volume:/app/logs
-    ports:
-      - "8000:8000"
     expose:
       - 8000
     healthcheck:

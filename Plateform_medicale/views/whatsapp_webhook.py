@@ -7,11 +7,14 @@ Fournit :
 3. Le traitement conversationnel via le bot SantéSN et la réponse automatique
 """
 
+import hashlib
+import hmac
 import json
 import logging
 
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
+from django.utils.crypto import constant_time_compare
 from django.views.decorators.csrf import csrf_exempt
 
 from Plateform_medicale.services.whatsapp import envoyer_message_whatsapp
@@ -32,16 +35,38 @@ def webhook_whatsapp(request):
         token = request.GET.get("hub.verify_token")
         challenge = request.GET.get("hub.challenge")
 
-        verify_token_attendu = getattr(settings, "WHATSAPP_WEBHOOK_VERIFY_TOKEN", "santesn_webhook_secret_2026")
+        verify_token_attendu = getattr(settings, "WHATSAPP_WEBHOOK_VERIFY_TOKEN", "")
 
-        if mode == "subscribe" and token == verify_token_attendu:
+        if (
+            mode == "subscribe"
+            and token
+            and verify_token_attendu
+            and constant_time_compare(token, verify_token_attendu)
+        ):
             logger.info("Validation du Webhook WhatsApp Meta réussie.")
             return HttpResponse(challenge, content_type="text/plain", status=200)
 
-        logger.warning("Échec de vérification du Webhook WhatsApp : token incorrect (%s).", token)
+        logger.warning("Échec de vérification du Webhook WhatsApp : token incorrect.")
         return HttpResponse("Vérification échouée", status=403)
 
     if request.method == "POST":
+        # Contrôle cryptographique officiel Meta (X-Hub-Signature-256)
+        app_secret = getattr(settings, "WHATSAPP_APP_SECRET", "")
+        if app_secret:
+            hub_sig = request.headers.get("X-Hub-Signature-256") or request.META.get("HTTP_X_HUB_SIGNATURE_256", "")
+            if not hub_sig or not hub_sig.startswith("sha256="):
+                logger.warning("Signature X-Hub-Signature-256 manquante ou malformée sur le Webhook WhatsApp.")
+                return HttpResponse("Signature invalide", status=403)
+            sig_attendue = hmac.new(
+                app_secret.encode("utf-8"),
+                request.body,
+                hashlib.sha256,
+            ).hexdigest()
+            sig_fournie = hub_sig.split("sha256=")[-1]
+            if not constant_time_compare(sig_fournie, sig_attendue):
+                logger.warning("Signature cryptographique Meta WhatsApp non concordante.")
+                return HttpResponse("Signature invalide", status=403)
+
         try:
             payload = json.loads(request.body.decode("utf-8"))
         except Exception as exc:

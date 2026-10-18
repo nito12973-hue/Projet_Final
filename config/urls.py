@@ -15,6 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 import os
+import posixpath
 from django.conf import settings
 from django.contrib import admin
 from django.http import Http404, HttpResponse
@@ -26,6 +27,7 @@ DOSSIERS_MEDIAS_SENSIBLES = (
     "justificatifs_remboursements",
     "documents_patients",
     "documents_ayants_droit",
+    "justificatifs_ayants_droit",
     "devis_prises_en_charge",
     "ordonnances",
 )
@@ -39,7 +41,11 @@ def servir_fichier_media(request, path):
     être servis par cette route générique non authentifiée. Ils doivent transiter par
     les contrôleurs sécurisés avec vérification multi-organismes.
     """
-    path_propre = path.replace("\\", "/").lstrip("/")
+    path_norm = posixpath.normpath(path.replace("\\", "/")).lstrip("/")
+    if path_norm.startswith("../") or "/../" in path_norm or path_norm == "..":
+        raise Http404("Chemin de fichier média non autorisé.")
+
+    path_propre = path_norm
 
     # Interdiction formelle d'accès direct aux pièces sensibles
     for dossier in DOSSIERS_MEDIAS_SENSIBLES:
