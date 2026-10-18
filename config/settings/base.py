@@ -145,7 +145,36 @@ MAX_CONJOINTS_PAR_ASSURE = config('MAX_CONJOINTS_PAR_ASSURE', default=4, cast=in
 MAX_ENFANTS_PAR_ASSURE = config('MAX_ENFANTS_PAR_ASSURE', default=6, cast=int)
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Outils DevOps : Télémétrie, Métriques Prometheus & Supervision
 SENTRY_DSN = config('SENTRY_DSN', default=None)
+PROMETHEUS_METRICS_TOKEN = config('PROMETHEUS_METRICS_TOKEN', default='santesn-prometheus-metrics-token-2026')
+
+if SENTRY_DSN and 'test' not in sys.argv:
+    try:
+        import sentry_sdk
+        from sentry_sdk.integrations.django import DjangoIntegration
+
+        def _filtrer_donnees_santesn(event, hint):
+            if 'request' in event and 'data' in event['request']:
+                data = event['request']['data']
+                if isinstance(data, dict):
+                    champs_sensibles = {'password', 'mot_de_passe', 'numero_securite_sociale', 'cle_secours', 'ordonnance'}
+                    for cle in champs_sensibles:
+                        if cle in data:
+                            data[cle] = '[MASQUÉ_SANTESN]'
+            return event
+
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            integrations=[DjangoIntegration()],
+            traces_sample_rate=0.2,
+            send_default_pii=False,
+            before_send=_filtrer_donnees_santesn,
+            environment=config('DJANGO_ENV', default='production'),
+        )
+    except Exception:
+        pass
 
 # Base de données et hashers pour les tests automatisés : isolation absolue
 if 'test' in sys.argv:
