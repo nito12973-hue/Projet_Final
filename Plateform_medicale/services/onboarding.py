@@ -211,6 +211,14 @@ def envoyer_activation_utilisateur(utilisateur, request=None):
             from_addr = getattr(settings, "DEFAULT_FROM_EMAIL", None) or getattr(settings, "EMAIL_HOST_USER", None) or "noreply@santesn.sn"
             from_header = f"SantéSN <{from_addr}>" if ("<" not in from_addr and "@" in from_addr) else from_addr
 
+            domaine_dest = email.split("@")[-1].lower() if "@" in email else ""
+            domaines_fictifs = {"santesn.sn", "example.com", "test.com", "localhost"}
+            backend_smtp = "smtp" in str(getattr(settings, "EMAIL_BACKEND", "")).lower()
+            if domaine_dest in domaines_fictifs and backend_smtp and not getattr(settings, "EMAIL_ALLOW_SANTESN_DOMAIN", False):
+                logger.info("Email d'activation vers domaine fictif (%s) simulé sans appel SMTP", email)
+                email_envoye = True
+                return {"email_envoye": True, "lien_activation": lien_activation}
+
             msg = EmailMultiAlternatives(
                 subject=sujet,
                 body=corps_texte,
