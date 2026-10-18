@@ -10140,6 +10140,35 @@ class AssistantEtSupportTests(TestCase):
             ).exists()
         )
 
+    def test_support_admin_acces_ticket_non_technique(self):
+        """L'administrateur peut accéder et traiter n'importe quel ticket (ex: COMPTE), sans erreur 404."""
+        ticket = DemandeSupport.objects.create(
+            auteur=self.user_assure,
+            patient=self.patient,
+            objet="Problème accès compte",
+            categorie=DemandeSupport.Categorie.COMPTE,
+            statut=DemandeSupport.Statut.EN_ATTENTE,
+        )
+        self.client.login(username='admin-support@santesn.sn', password=PASSWORD)
+        res = self.client.get(reverse('admin_detail_demande_support', kwargs={'pk': ticket.pk}))
+        self.assertEqual(res.status_code, 200)
+        self.assertIn("Problème accès compte", res.content.decode('utf-8'))
+
+    def test_support_assure_redirection_depuis_admin_url(self):
+        """Un assuré naviguant vers l'URL admin /support/demandes/<id>/ est redirigé vers sa vue dédiée."""
+        ticket = DemandeSupport.objects.create(
+            auteur=self.user_assure,
+            patient=self.patient,
+            objet="Question adhésion",
+            categorie=DemandeSupport.Categorie.AUTRE,
+            statut=DemandeSupport.Statut.EN_ATTENTE,
+        )
+        self.client.login(username='assure-support@santesn.sn', password=PASSWORD)
+        res = self.client.get(reverse('admin_detail_demande_support', kwargs={'pk': ticket.pk}))
+        self.assertEqual(res.status_code, 302)
+        self.assertEqual(res.url, reverse('detail_demande_support', kwargs={'pk': ticket.pk}))
+
+
 
 class PreLaunchAuditAndLegalPagesTests(TestCase):
     """Vérifications de conformité pré-lancement : pages légales, robots.txt, sitemap et uploads."""

@@ -7,6 +7,8 @@ et la gestion complète des tickets de support côté administrateur.
 """
 
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -250,18 +252,16 @@ def detail_demande_support(request, pk):
 @role_required(User.Role.ADMIN, User.Role.GESTIONNAIRE)
 def admin_liste_demandes_support(request):
     """
-    Gestion des tickets de support selon le principe de séparation stricte des rôles :
-    - L'Administrateur reçoit EXCLUSIVEMENT les demandes techniques et informatiques (TECHNIQUE).
-    - Le Gestionnaire reçoit et traite les demandes administratives et santé (PEC, RDV, Ordonnances, Ayants droit, Compte)
-      de son propre organisme.
+    Gestion des tickets de support :
+    - L'Administrateur accède à l'ensemble des tickets de la plateforme avec filtrage multi-critères.
+    - Le Gestionnaire reçoit et traite les demandes administratives et santé de son propre organisme.
     """
     est_admin = (request.user.role == User.Role.ADMIN)
     demandes = DemandeSupport.objects.select_related("patient", "auteur", "patient__organisme").order_by("-date_creation")
 
     if est_admin:
-        # L'administrateur système ne voit QUE les demandes techniques/informatiques
-        demandes = demandes.filter(categorie=DemandeSupport.Categorie.TECHNIQUE)
-        categories_disponibles = [(DemandeSupport.Categorie.TECHNIQUE, "Problème technique")]
+        # L'administrateur système a une vision globale et peut filtrer par catégorie
+        categories_disponibles = DemandeSupport.Categorie.choices
     else:
         # Le gestionnaire traite les demandes métier des assurés de sa structure
         if request.user.organisme_id:
@@ -311,19 +311,26 @@ def admin_liste_demandes_support(request):
     return render(request, "admin_liste_demandes_support.html", contexte)
 
 
-@role_required(User.Role.ADMIN, User.Role.GESTIONNAIRE)
+@login_required
 def admin_detail_demande_support(request, pk):
     """
     Traitement, réponse et clôture d'un ticket de support.
     Contrôle strict des accès :
-    - L'Admin ne peut accéder qu'aux tickets techniques (TECHNIQUE).
+    - L'Assuré est redirigé vers sa vue dédiée (detail_demande_support).
+    - L'Admin accède à l'ensemble des tickets de support.
     - Le Gestionnaire ne peut accéder qu'aux tickets métier des assurés de son organisme.
     """
+    if request.user.role == User.Role.ASSURE:
+        return redirect("detail_demande_support", pk=pk)
+
+    if request.user.role not in (User.Role.ADMIN, User.Role.GESTIONNAIRE):
+        raise PermissionDenied
+
     est_admin = (request.user.role == User.Role.ADMIN)
     qs = DemandeSupport.objects.select_related("patient", "auteur", "patient__organisme")
 
     if est_admin:
-        demande = get_object_or_404(qs, pk=pk, categorie=DemandeSupport.Categorie.TECHNIQUE)
+        demande = get_object_or_404(qs, pk=pk)
     else:
         filtre = Q(patient__organisme_id=request.user.organisme_id) if request.user.organisme_id else Q()
         demande = get_object_or_404(
