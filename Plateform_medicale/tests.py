@@ -2401,7 +2401,7 @@ class NotificationsTests(TestCase):
         medecin_user = creer_utilisateur(User.Role.MEDECIN, 'medecin-smtp@santesn.sn')
         with self.settings(EMAIL_BACKEND='django.core.mail.backends.smtp.EmailBackend'):
             from unittest.mock import patch
-            with patch('django.core.mail.send_mail', side_effect=Exception('SMTP Error')):
+            with patch('django.core.mail.EmailMultiAlternatives.send', side_effect=Exception('SMTP Error')):
                 response = self.client.post(reverse('envoyer_notification'), {
                     'destinataire': medecin_user.pk, 'message': 'Test resilience',
                 })

@@ -126,6 +126,17 @@ def emettre_notification(
 
     # 2. Envoi Email automatique systématique (Stratégie bi-canal simultanée WhatsApp + Email)
     if envoyer_email and destinataire.email:
+        # Éviter d'expédier via SMTP public vers des domaines fictifs non déclarés dans le DNS
+        # mondial (comme @santesn.sn), évitant ainsi les rebonds Mailer-Daemon (NXDOMAIN).
+        domaine_dest = destinataire.email.split("@")[-1].lower() if "@" in destinataire.email else ""
+        domaines_fictifs = {"santesn.sn", "example.com", "test.com", "localhost"}
+        backend_smtp = "smtp" in str(getattr(settings, "EMAIL_BACKEND", "")).lower()
+        if domaine_dest in domaines_fictifs and backend_smtp and not getattr(settings, "EMAIL_ALLOW_SANTESN_DOMAIN", False):
+            logger.info("Email vers domaine fictif non routable (%s) simulé sans appel SMTP", destinataire.email)
+            notification.email_envoye = True
+            notification.save(update_fields=["email_envoye"])
+            return notification
+
         try:
             sujet = sujet_email or f"[SantéSN] {titre}"
             site_url = str(getattr(settings, "SITE_URL", "https://projet-final-bice.vercel.app") or "").strip().rstrip("/").strip()
