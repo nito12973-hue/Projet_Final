@@ -15,6 +15,7 @@ from django.db import transaction
 from django.db.models import Avg, Count, ProtectedError, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 
 from ..forms import ConventionPrestataireForm, PlanCouvertureForm, PrestataireForm
 from ..models import ConventionPrestataire, JournalActivite, PlanCouverture, Prestataire, User
@@ -237,7 +238,7 @@ def ajouter_prestataire(request):
                             "cree_par": request.user,
                         },
                     )
-            messages.success(request, "Prestataire ajouté.")
+            messages.success(request, f"L'établissement {prestataire.nom} a été créé et intégré avec succès à votre réseau conventionné.")
             return redirect("liste_prestataires")
     else:
         form = PrestataireForm()
@@ -420,7 +421,62 @@ def ajouter_convention(request):
             return redirect("liste_conventions")
     else:
         form = ConventionPrestataireForm(organisme=organisme)
-    return render(request, "ajouter_convention.html", {"form": form, "organisme": organisme})
+
+    nb_prestataires_disponibles = form.fields["prestataire"].queryset.count()
+    return render(request, "ajouter_convention.html", {
+        "form": form,
+        "organisme": organisme,
+        "nb_prestataires_disponibles": nb_prestataires_disponibles,
+    })
+
+
+@role_required(User.Role.GESTIONNAIRE)
+def modifier_convention(request, pk):
+    """Modification d'une convention existante par son organisme."""
+    organisme = organisme_gestionnaire(request)
+    convention = get_object_or_404(ConventionPrestataire, pk=pk, organisme=organisme)
+    if request.method == "POST":
+        form = ConventionPrestataireForm(request.POST, instance=convention, organisme=organisme)
+        if form.is_valid():
+            form.save()
+            journaliser(
+                request,
+                JournalActivite.Action.MODIFICATION,
+                f"Convention : {convention.prestataire.nom}",
+                f"Convention mise à jour pour {organisme.nom}",
+            )
+            messages.success(request, f"La convention avec {convention.prestataire.nom} a été mise à jour avec succès.")
+            return redirect("liste_conventions")
+    else:
+        form = ConventionPrestataireForm(instance=convention, organisme=organisme)
+    return render(request, "modifier_convention.html", {
+        "form": form,
+        "convention": convention,
+        "organisme": organisme,
+    })
+
+
+@role_required(User.Role.GESTIONNAIRE)
+def supprimer_convention(request, pk):
+    """Supprime / retire un établissement du réseau conventionné."""
+    organisme = organisme_gestionnaire(request)
+    convention = get_object_or_404(ConventionPrestataire, pk=pk, organisme=organisme)
+    nom_prestataire = convention.prestataire.nom
+    if request.method == "POST":
+        convention.delete()
+        journaliser(
+            request,
+            JournalActivite.Action.SUPPRESSION,
+            f"Convention : {nom_prestataire}",
+            f"Retrait de {nom_prestataire} du réseau conventionné de {organisme.nom}",
+        )
+        messages.success(request, f"L'établissement {nom_prestataire} a été retiré de votre réseau conventionné.")
+        return redirect("liste_conventions")
+    return render(request, "confirmer_suppression.html", {
+        "titre": "Retirer l'établissement du réseau",
+        "message": f"Êtes-vous sûr de vouloir retirer {nom_prestataire} du réseau conventionné de {organisme.nom} ? Vos assurés ne pourront plus y bénéficier du tiers payant automatique.",
+        "url_retour": reverse("liste_conventions"),
+    })
 
 
 @role_required(User.Role.GESTIONNAIRE)
@@ -430,6 +486,12 @@ def changer_statut_convention(request, pk):
     convention = get_object_or_404(ConventionPrestataire, pk=pk, organisme=organisme)
     if request.method == "POST":
         nouveau_statut = request.POST.get("statut")
+        # Normalisation souple des alias masculin/féminin
+        if nouveau_statut in ("ACTIVE", "ACTIF"):
+            nouveau_statut = ConventionPrestataire.Statut.ACTIF
+        elif nouveau_statut in ("SUSPENDUE", "SUSPENDU"):
+            nouveau_statut = ConventionPrestataire.Statut.SUSPENDU
+
         if nouveau_statut in ConventionPrestataire.Statut.values:
             convention.statut = nouveau_statut
             convention.save(update_fields=["statut"])

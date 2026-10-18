@@ -12144,6 +12144,42 @@ class ConventionPrestataireTests(TestCase):
         })
         self.assertEqual(resp_b.status_code, 404)
 
+    def test_modifier_convention(self):
+        self.client.force_login(self.gest_a)
+        resp_get = self.client.get(reverse("modifier_convention", args=[self.conv_a.pk]))
+        self.assertEqual(resp_get.status_code, 200)
+        self.assertContains(resp_get, "CONV-ALPHA-001")
+
+        resp_post = self.client.post(reverse("modifier_convention", args=[self.conv_a.pk]), {
+            "prestataire": self.hopital.pk,
+            "numero_convention": "CONV-ALPHA-MODIF",
+            "statut": ConventionPrestataire.Statut.ACTIF,
+            "tiers_payant_actif": False,
+            "date_conventionnement": timezone.now().date().strftime("%Y-%m-%d"),
+            "remarques": "Tarifs renegocies",
+        })
+        self.assertEqual(resp_post.status_code, 302)
+        self.conv_a.refresh_from_db()
+        self.assertEqual(self.conv_a.numero_convention, "CONV-ALPHA-MODIF")
+        self.assertFalse(self.conv_a.tiers_payant_actif)
+
+    def test_supprimer_convention(self):
+        self.client.force_login(self.gest_a)
+        resp_post = self.client.post(reverse("supprimer_convention", args=[self.conv_a.pk]))
+        self.assertEqual(resp_post.status_code, 302)
+        self.assertFalse(ConventionPrestataire.objects.filter(pk=self.conv_a.pk).exists())
+
+    def test_changer_statut_convention_alias_active(self):
+        self.client.force_login(self.gest_a)
+        # Tester souplesse avec alias string "ACTIVE"
+        resp = self.client.post(reverse("changer_statut_convention", args=[self.conv_a.pk]), {
+            "statut": "ACTIVE",
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.conv_a.refresh_from_db()
+        self.assertEqual(self.conv_a.statut, ConventionPrestataire.Statut.ACTIF)
+
+
 
 class SupervisionTechniqueTests(TestCase):
     """Tests du module de supervision informatique, de l'observabilité et du healthcheck DevOps."""

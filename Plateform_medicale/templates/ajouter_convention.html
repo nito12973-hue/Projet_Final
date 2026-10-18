@@ -24,6 +24,25 @@
         </p>
     </div>
 
+    {% if nb_prestataires_disponibles == 0 %}
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;padding:18px 20px;border-radius:12px;margin-bottom:24px;">
+        <div style="font-weight:700;color:#166534;font-size:15px;display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+            {% icone "check-circle" %} Tous vos établissements enregistrés sont déjà conventionnés !
+        </div>
+        <p style="margin:0 0 14px 0;font-size:13.5px;color:#15803d;line-height:1.5;">
+            Tous les hôpitaux, cliniques et pharmacies actuellement créés dans l'annuaire font déjà partie de votre réseau de soins conventionné. Pour conventionner un autre établissement, commencez par l'enregistrer dans l'annuaire.
+        </p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <a href="{% url 'ajouter_prestataire' %}" class="button primary btn-sm">
+                {% icone "plus" %} Enregistrer un nouvel établissement
+            </a>
+            <a href="{% url 'liste_conventions' %}" class="button btn btn-sm">
+                {% icone "list" %} Voir mon réseau conventionné
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
     <form method="post" novalidate>
         {% csrf_token %}
 
@@ -47,7 +66,11 @@
             <div class="champ-erreur" style="color:var(--danger);font-size:0.85rem;margin-top:4px;">{{ form.prestataire.errors }}</div>
             {% endif %}
             <small style="color:var(--text-muted);display:block;margin-top:4px;">
+                {% if nb_prestataires_disponibles == 0 %}
+                <span style="color:#b45309;font-weight:600;">Aucun établissement restant : tous vos établissements sont déjà conventionnés. Cliquez sur « Nouvel établissement » ci-dessus pour en ajouter un nouveau.</span>
+                {% else %}
                 Sélectionnez un établissement existant ou cliquez sur « Nouvel établissement » s'il n'est pas encore enregistré.
+                {% endif %}
             </small>
         </div>
 

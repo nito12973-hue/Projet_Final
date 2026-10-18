@@ -71,37 +71,45 @@
                 </td>
                 <td class="col-optionnelle">
                     {% if conv.tiers_payant_actif %}
-                    <span class="badge validee">Actif ({{ conv.taux_couverture_defaut }}%)</span>
+                    <span class="badge validee">Actif</span>
                     {% else %}
                     <span class="badge refusee">Suspendu</span>
                     {% endif %}
                 </td>
                 <td>
-                    {% if conv.statut == "ACTIVE" %}
+                    {% if conv.statut == "ACTIF" %}
                     <span class="badge validee">Active</span>
-                    {% elif conv.statut == "SUSPENDUE" %}
+                    {% elif conv.statut == "SUSPENDU" %}
                     <span class="badge en_attente">Suspendue</span>
+                    {% elif conv.statut == "EN_ATTENTE" %}
+                    <span class="badge en_attente">En cours</span>
                     {% else %}
                     <span class="badge refusee">Résiliée</span>
                     {% endif %}
                 </td>
                 <td class="col-optionnelle">{{ conv.date_conventionnement|date:"d/m/Y" }}</td>
                 <td>
-                    <div class="actions">
-                        <form method="post" action="{% url 'changer_statut_convention' conv.pk %}" class="action-ligne">
+                    <div class="actions" style="display:flex;gap:6px;align-items:center;">
+                        <a href="{% url 'modifier_convention' conv.pk %}" class="button btn btn-sm" title="Modifier les termes de la convention">
+                            {% icone "edit-2" %} Modifier
+                        </a>
+                        <form method="post" action="{% url 'changer_statut_convention' conv.pk %}" class="action-ligne" style="margin:0;">
                             {% csrf_token %}
-                            {% if conv.statut == "ACTIVE" %}
-                            <input type="hidden" name="statut" value="SUSPENDUE">
+                            {% if conv.statut == "ACTIF" %}
+                            <input type="hidden" name="statut" value="SUSPENDU">
                             <button type="submit" class="button btn btn-danger btn-sm" title="Suspendre temporairement le conventionnement" onclick="return confirm('Suspendre la convention avec cet établissement ?');">
                                 {% icone "pause" %} Suspendre
                             </button>
                             {% else %}
-                            <input type="hidden" name="statut" value="ACTIVE">
+                            <input type="hidden" name="statut" value="ACTIF">
                             <button type="submit" class="button primary btn btn-sm" title="Réactiver la convention">
                                 {% icone "check" %} Activer
                             </button>
                             {% endif %}
                         </form>
+                        <a href="{% url 'supprimer_convention' conv.pk %}" class="button btn btn-sm" style="color:var(--danger);" title="Retirer cet établissement du réseau conventionné">
+                            {% icone "trash-2" %}
+                        </a>
                     </div>
                 </td>
             </tr>
