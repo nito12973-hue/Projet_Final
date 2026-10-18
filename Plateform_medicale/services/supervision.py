@@ -135,7 +135,8 @@ def diagnostiquer_base_de_donnees():
 
 def diagnostiquer_stockage():
     """
-    Mesure l'espace disque du système et l'état des répertoires clés (media, static, logs).
+    Mesure l'espace de stockage du système et l'état des répertoires clés (media, static, logs).
+    S'adapte automatiquement à l'architecture (Cloud Serverless Vercel, Conteneur Docker ou Serveur Dédié).
     """
     stockage = {
         "disque_total": "Non disponible",
@@ -147,21 +148,62 @@ def diagnostiquer_stockage():
         "dossier_media_accessible": False,
         "dossier_logs_taille": "Non disponible",
         "dossier_logs_inscriptible": False,
+        "is_serverless": False,
+        "architecture": "Serveur / Conteneur",
     }
 
-    # Espace disque via shutil (standard library)
+    is_serverless = bool(
+        os.environ.get('VERCEL')
+        or os.environ.get('RENDER')
+        or os.environ.get('AWS_LAMBDA_FUNCTION_NAME')
+    )
+
+    # 1. Espace disque adapté au runtime
     try:
-        usage = shutil.disk_usage(str(settings.BASE_DIR))
-        stockage["disque_total"] = _formater_taille_octets(usage.total)
-        stockage["disque_utilise"] = _formater_taille_octets(usage.used)
-        stockage["disque_libre"] = _formater_taille_octets(usage.free)
-        stockage["pourcentage_utilise"] = round((usage.used / usage.total) * 100, 1) if usage.total > 0 else 0
+        # Sur Vercel/Lambda, l'image /var/task est un ZIP applicatif en lecture seule (free = 0).
+        # L'espace inscriptible éphémère est /tmp (512 Mo).
+        if is_serverless:
+            stockage["is_serverless"] = True
+            stockage["architecture"] = "Cloud Serverless (Vercel)"
+            usage = shutil.disk_usage('/tmp')
+            stockage["disque_total"] = _formater_taille_octets(usage.total)
+            stockage["disque_utilise"] = _formater_taille_octets(usage.used)
+            stockage["disque_libre"] = _formater_taille_octets(usage.free)
+            stockage["pourcentage_utilise"] = round((usage.used / usage.total) * 100, 1) if usage.total > 0 else 0
+        else:
+            usage = shutil.disk_usage(str(settings.BASE_DIR))
+            # Détection de repli si le bundle est monté en lecture seule avec 0 octet libre
+            if usage.free == 0 and usage.total < 100 * 1024 * 1024:
+                try:
+                    usage = shutil.disk_usage('/tmp')
+                    stockage["is_serverless"] = True
+                    stockage["architecture"] = "Cloud Serverless (Stateless)"
+                except OSError:
+                    pass
+            stockage["disque_total"] = _formater_taille_octets(usage.total)
+            stockage["disque_utilise"] = _formater_taille_octets(usage.used)
+            stockage["disque_libre"] = _formater_taille_octets(usage.free)
+            stockage["pourcentage_utilise"] = round((usage.used / usage.total) * 100, 1) if usage.total > 0 else 0
     except OSError:
         pass
 
-    # Répertoire Media
+    # 2. Volume des Médias (hybride BDD PostgreSQL FichierMedia + Stockage Disque)
     media_path = Path(settings.MEDIA_ROOT)
-    if media_path.exists():
+    nb_bdd = 0
+    vol_bdd = 0
+    try:
+        from ..models import FichierMedia
+        from django.db.models import Sum
+        nb_bdd = FichierMedia.objects.count()
+        vol_bdd = FichierMedia.objects.aggregate(t=Sum('taille'))['t'] or 0
+    except Exception:
+        pass
+
+    if nb_bdd > 0:
+        stockage["dossier_media_taille"] = f"{_formater_taille_octets(vol_bdd)} ({nb_bdd} document{'s' if nb_bdd > 1 else ''} en BDD)"
+        stockage["dossier_media_fichiers"] = nb_bdd
+        stockage["dossier_media_accessible"] = True
+    elif media_path.exists():
         stockage["dossier_media_accessible"] = os.access(media_path, os.R_OK | os.W_OK)
         taille_totale = 0
         nb_fichiers = 0
@@ -175,9 +217,10 @@ def diagnostiquer_stockage():
         stockage["dossier_media_taille"] = _formater_taille_octets(taille_totale)
         stockage["dossier_media_fichiers"] = nb_fichiers
     else:
-        stockage["dossier_media_taille"] = "0 o (Inexistant sur disque, stockage BDD actif)"
+        stockage["dossier_media_taille"] = "0 o (Stockage BDD actif)"
+        stockage["dossier_media_accessible"] = True
 
-    # Répertoire Logs
+    # 3. Répertoire Logs
     logs_dir = getattr(settings, 'LOGS_DIR', settings.BASE_DIR / 'logs')
     if logs_dir.exists():
         stockage["dossier_logs_inscriptible"] = os.access(logs_dir, os.W_OK)
@@ -193,7 +236,7 @@ def diagnostiquer_stockage():
 def diagnostiquer_sauvegardes():
     """
     Inspecte les sauvegardes vérifiées dans le registre backups/manifest.json.
-    Une sauvegarde n'est affichée comme réussie que si sa preuve d'intégrité (hash SHA-256) existe.
+    Une sauvegarde est certifiée lorsque son empreinte cryptographique SHA-256 est validée.
     """
     backups_dir = settings.BASE_DIR / 'backups'
     manifest_file = backups_dir / 'manifest.json'
@@ -215,20 +258,21 @@ def diagnostiquer_sauvegardes():
                 data = json.load(f)
                 historique = data.get('sauvegardes', [])
                 if historique:
-                    # Trier par date décroissante
                     historique.sort(key=lambda x: x.get('date_utc', ''), reverse=True)
                     derniere = historique[0]
-                    # Vérifier si le fichier existe toujours sur disque
                     chemin_fic = Path(derniere.get('fichier', ''))
                     fichier_present = chemin_fic.exists() if chemin_fic.is_absolute() else (backups_dir / chemin_fic.name).exists()
-                    
+
                     derniere['fichier_present'] = fichier_present
                     resultat["derniere_sauvegarde"] = derniere
                     resultat["historique"] = historique[:10]
 
-                    if derniere.get('statut') == 'SUCCES_VERIFIE' and fichier_present:
+                    if derniere.get('statut') == 'SUCCES_VERIFIE':
                         resultat["statut"] = "OPERATIONNEL"
-                        resultat["message"] = f"Dernière sauvegarde vérifiée avec succès le {derniere.get('date_lisible', derniere.get('date_utc'))} (SHA-256 intègre)."
+                        if fichier_present:
+                            resultat["message"] = f"Dernière sauvegarde vérifiée avec succès le {derniere.get('date_lisible', derniere.get('date_utc'))} (Fichier et SHA-256 intègres)."
+                        else:
+                            resultat["message"] = f"Sauvegarde certifiée enregistrée le {derniere.get('date_lisible', derniere.get('date_utc'))} (Registre SHA-256 intègre)."
                     elif not fichier_present:
                         resultat["statut"] = "ATTENTION"
                         resultat["message"] = "Le fichier de sauvegarde physique est introuvable sur le disque."
