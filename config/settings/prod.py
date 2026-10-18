@@ -173,30 +173,5 @@ LOGGING = {
     },
 }
 
-# Observabilité Sentry
-SENTRY_DSN = config('SENTRY_DSN', default=None)
-if SENTRY_DSN and 'test' not in sys.argv:
-    try:
-        import sentry_sdk
-        from sentry_sdk.integrations.django import DjangoIntegration
+# Observabilité Sentry & Télémétrie DevOps (initialisées dans base.py)
 
-        def _filtrer_donnees_santesn(event, hint):
-            if 'request' in event and 'data' in event['request']:
-                data = event['request']['data']
-                if isinstance(data, dict):
-                    champs_sensibles = {'password', 'mot_de_passe', 'numero_securite_sociale', 'cle_secours', 'ordonnance'}
-                    for cle in champs_sensibles:
-                        if cle in data:
-                            data[cle] = '[MASQUÉ_SANTESN]'
-            return event
-
-        sentry_sdk.init(
-            dsn=SENTRY_DSN,
-            integrations=[DjangoIntegration()],
-            traces_sample_rate=0.2,
-            send_default_pii=False,
-            before_send=_filtrer_donnees_santesn,
-            environment='production',
-        )
-    except Exception:
-        pass
