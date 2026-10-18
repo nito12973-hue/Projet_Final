@@ -136,6 +136,8 @@ urlpatterns = [
     # Réseau conventionné propre à chaque organisme assureur (IPM)
     path('conventions/', views.liste_conventions, name='liste_conventions'),
     path('conventions/ajouter/', views.ajouter_convention, name='ajouter_convention'),
+    path('conventions/<int:pk>/modifier/', views.modifier_convention, name='modifier_convention'),
+    path('conventions/<int:pk>/supprimer/', views.supprimer_convention, name='supprimer_convention'),
     path('conventions/<int:pk>/statut/', views.changer_statut_convention, name='changer_statut_convention'),
 
     path('plans-de-couverture/', views.liste_plans_couverture, name='liste_plans_couverture'),

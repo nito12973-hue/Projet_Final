@@ -1,0 +1,123 @@
+﻿{% extends "base.html" %}
+{% load icones %}
+
+{% block title %}Modifier la convention — {{ convention.prestataire.nom }}{% endblock %}
+
+{% block content %}
+<section class="page-title">
+    <div>
+        <h1>Modifier la convention</h1>
+        <p class="subtitle">Mise à jour des termes contractuels pour <strong>{{ convention.prestataire.nom }}</strong>.</p>
+    </div>
+    <a class="button btn btn-retour-expand" href="{% url 'liste_conventions' %}" title="Retour" aria-label="Retour">
+        {% icone "chevron-left" %} <span class="expand-text">Retour au réseau</span>
+    </a>
+</section>
+
+<div class="panel" style="max-width:800px;margin:0 auto;padding:28px 32px;">
+    <div style="background:var(--champ-bg);border-left:4px solid var(--primary);padding:14px 18px;border-radius:6px;margin-bottom:24px;">
+        <div style="font-weight:600;color:var(--titre);margin-bottom:4px;">
+            {% icone "building" %} {{ convention.prestataire.nom }} ({{ convention.prestataire.get_type_prestataire_display }})
+        </div>
+        <p style="margin:0;font-size:0.875rem;color:var(--muted);line-height:1.5;">
+            Conventionné auprès de <strong>{{ organisme.nom }}</strong> depuis le {{ convention.date_conventionnement|date:"d/m/Y" }}.
+        </p>
+    </div>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="message error" style="margin-bottom:20px;">
+            {{ form.non_field_errors }}
+        </div>
+        {% endif %}
+
+        <div class="form-group" style="margin-bottom:20px;">
+            <label for="{{ form.prestataire.id_for_label }}" style="font-weight:600;margin-bottom:6px;display:block;">
+                {{ form.prestataire.label }} <span style="color:var(--danger, #dc2626);">*</span>
+            </label>
+            {{ form.prestataire }}
+            {% if form.prestataire.errors %}
+            <div class="champ-erreur" style="color:var(--danger);font-size:0.85rem;margin-top:4px;">{{ form.prestataire.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+            <div class="form-group">
+                <label for="{{ form.numero_convention.id_for_label }}" style="font-weight:600;display:block;margin-bottom:6px;">
+                    {{ form.numero_convention.label }}
+                </label>
+                {{ form.numero_convention }}
+                {% if form.numero_convention.errors %}
+                <div class="champ-erreur" style="color:var(--danger);font-size:0.85rem;margin-top:4px;">{{ form.numero_convention.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.statut.id_for_label }}" style="font-weight:600;display:block;margin-bottom:6px;">
+                    {{ form.statut.label }}
+                </label>
+                {{ form.statut }}
+                {% if form.statut.errors %}
+                <div class="champ-erreur" style="color:var(--danger);font-size:0.85rem;margin-top:4px;">{{ form.statut.errors }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+            <div class="form-group">
+                <label for="{{ form.date_conventionnement.id_for_label }}" style="font-weight:600;display:block;margin-bottom:6px;">
+                    {{ form.date_conventionnement.label }}
+                </label>
+                {{ form.date_conventionnement }}
+                {% if form.date_conventionnement.errors %}
+                <div class="champ-erreur" style="color:var(--danger);font-size:0.85rem;margin-top:4px;">{{ form.date_conventionnement.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.date_fin.id_for_label }}" style="font-weight:600;display:block;margin-bottom:6px;">
+                    {{ form.date_fin.label }}
+                </label>
+                {{ form.date_fin }}
+                {% if form.date_fin.errors %}
+                <div class="champ-erreur" style="color:var(--danger);font-size:0.85rem;margin-top:4px;">{{ form.date_fin.errors }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:20px;display:flex;align-items:center;gap:10px;">
+            {{ form.tiers_payant_actif }}
+            <label for="{{ form.tiers_payant_actif.id_for_label }}" style="font-weight:600;margin:0;cursor:pointer;">
+                {{ form.tiers_payant_actif.label }}
+            </label>
+            {% if form.tiers_payant_actif.errors %}
+            <div class="champ-erreur" style="color:var(--danger);font-size:0.85rem;">{{ form.tiers_payant_actif.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div class="form-group" style="margin-bottom:28px;">
+            <label for="{{ form.remarques.id_for_label }}" style="font-weight:600;display:block;margin-bottom:6px;">
+                {{ form.remarques.label }}
+            </label>
+            {{ form.remarques }}
+            {% if form.remarques.errors %}
+            <div class="champ-erreur" style="color:var(--danger);font-size:0.85rem;margin-top:4px;">{{ form.remarques.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border);padding-top:20px;">
+            <a href="{% url 'supprimer_convention' convention.pk %}" class="button btn btn-danger btn-sm">
+                {% icone "trash-2" %} Retirer du réseau
+            </a>
+            <div style="display:flex;gap:12px;">
+                <a href="{% url 'liste_conventions' %}" class="button btn">Annuler</a>
+                <button type="submit" class="button primary btn">
+                    {% icone "check" %} Enregistrer les modifications
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

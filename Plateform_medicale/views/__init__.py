@@ -175,6 +175,8 @@ from .prestataires import (  # noqa: F401
     supprimer_plan_couverture,
     liste_conventions,
     ajouter_convention,
+    modifier_convention,
+    supprimer_convention,
     changer_statut_convention,
 )
 
