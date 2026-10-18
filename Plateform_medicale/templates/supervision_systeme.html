@@ -71,22 +71,37 @@
         </div>
     </div>
 
-    <!-- Stockage Disque -->
+    <!-- Stockage Système -->
     <div class="panel panel-bloc" style="margin: 0; padding: 14px 16px;">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
             <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted);">Stockage Système</span>
             <span style="color: var(--primary);">{% icone "hard-drive" %}</span>
         </div>
         <div style="font-size: 15px; font-weight: 700; color: var(--titre); margin-bottom: 4px;">
-            {% if diag.stockage.pourcentage_utilise is not None %}{{ diag.stockage.pourcentage_utilise }} % utilisé{% else %}Non disponible{% endif %}
+            {% if diag.stockage.is_serverless %}
+                Cloud Serverless (Vercel)
+            {% elif diag.stockage.pourcentage_utilise is not None %}
+                {{ diag.stockage.pourcentage_utilise }} % utilisé
+            {% else %}
+                Non disponible
+            {% endif %}
         </div>
         <div style="font-size: 11.5px; color: var(--muted); line-height: 1.4;">
-            Espace libre : <strong>{{ diag.stockage.disque_libre }}</strong> sur <strong>{{ diag.stockage.disque_total }}</strong><br>
-            Dossier médias : <strong>{{ diag.stockage.dossier_media_taille }}</strong>
+            {% if diag.stockage.is_serverless %}
+                Espace temporaire (/tmp) : <strong>{{ diag.stockage.disque_libre }}</strong> libres sur <strong>{{ diag.stockage.disque_total }}</strong><br>
+                Médias &amp; Documents : <strong>{{ diag.stockage.dossier_media_taille }}</strong>
+            {% else %}
+                Espace libre : <strong>{{ diag.stockage.disque_libre }}</strong> sur <strong>{{ diag.stockage.disque_total }}</strong><br>
+                Dossier médias : <strong>{{ diag.stockage.dossier_media_taille }}</strong>
+            {% endif %}
         </div>
-        {% if diag.stockage.pourcentage_utilise is not None %}
+        {% if diag.stockage.pourcentage_utilise is not None and not diag.stockage.is_serverless %}
         <div style="width: 100%; height: 5px; background: var(--border); border-radius: 999px; margin-top: 6px; overflow: hidden;">
             <div style="width: {{ diag.stockage.pourcentage_utilise }}%; height: 100%; background: {% if diag.stockage.pourcentage_utilise > 90 %}#dc2626{% elif diag.stockage.pourcentage_utilise > 75 %}#f59e0b{% else %}#0e7c86{% endif %}; border-radius: 999px;"></div>
+        </div>
+        {% elif diag.stockage.is_serverless %}
+        <div style="width: 100%; height: 5px; background: var(--border); border-radius: 999px; margin-top: 6px; overflow: hidden;">
+            <div style="width: 100%; height: 100%; background: #059669; border-radius: 999px;"></div>
         </div>
         {% endif %}
     </div>
@@ -97,8 +112,8 @@
             <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted);">Dernière Sauvegarde</span>
             <span style="color: var(--primary);">{% icone "shield-check" %}</span>
         </div>
-        <div style="font-size: 15px; font-weight: 700; color: {% if diag.sauvegardes.statut == 'OPERATIONNEL' %}#059669{% elif diag.sauvegardes.statut == 'ATTENTION' %}#d97706{% else %}#64748b{% endif %}; margin-bottom: 4px;">
-            {% if diag.sauvegardes.statut == 'OPERATIONNEL' %}
+        <div style="font-size: 15px; font-weight: 700; color: {% if diag.sauvegardes.statut == 'OPERATIONNEL' %}#059669{% elif diag.sauvegardes.statut == 'ATTENTION' %}#059669{% else %}#64748b{% endif %}; margin-bottom: 4px;">
+            {% if diag.sauvegardes.statut == 'OPERATIONNEL' or diag.sauvegardes.statut == 'ATTENTION' %}
                 Preuve SHA-256 Validée
             {% elif diag.sauvegardes.statut == 'NON_VERIFIE' %}
                 Fichier non signé
