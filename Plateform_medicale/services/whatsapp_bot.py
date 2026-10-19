@@ -168,6 +168,89 @@ def trouver_utilisateur_par_telephone(telephone):
     return None
 
 
+def trouver_medecin_par_telephone(telephone):
+    """
+    Retrouve la fiche Medecin associée au numéro WhatsApp :
+    - Soit directement dans Medecin.telephone
+    - Soit via le compte User associé ayant le rôle MEDECIN
+    """
+    tel_norm = normaliser_numero_telephone(telephone)
+    if not tel_norm:
+        return None
+
+    variantes = {tel_norm}
+    if tel_norm.startswith("221") and len(tel_norm) == 12:
+        variantes.add(tel_norm[3:])
+        variantes.add(f"+{tel_norm}")
+        variantes.add(f"00{tel_norm}")
+
+    for v in variantes:
+        med = Medecin.objects.filter(telephone__icontains=v).first()
+        if med:
+            return med
+
+    user = trouver_utilisateur_par_telephone(telephone)
+    if user and hasattr(user, "medecin"):
+        return user.medecin
+
+    for m in Medecin.objects.exclude(telephone="").only("id", "telephone", "nom", "prenom"):
+        if normaliser_numero_telephone(m.telephone) == tel_norm:
+            return m
+
+    return None
+
+
+def formater_reponse_agenda_medecin(medecin):
+    """
+    Présente l'agenda des consultations et la liste des patients du médecin
+    directement sur WhatsApp.
+    """
+    if not medecin:
+        return "Compte praticien non reconnu."
+
+    debut_ajd = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    rdvs = (
+        RendezVous.objects.filter(
+            medecin=medecin,
+            date_heure__gte=debut_ajd,
+        )
+        .exclude(statut__in=[RendezVous.Statut.ANNULE, RendezVous.Statut.REFUSE])
+        .select_related("patient", "prestataire")
+        .order_by("date_heure")[:8]
+    )
+
+    nom_dr = f"Dr. {medecin.prenom} {medecin.nom}".strip()
+    if not rdvs.exists():
+        return (
+            f"*SantéSN — Espace Praticien ({nom_dr})*\n\n"
+            f"Bonjour Confrère,\n"
+            f"Vous n'avez aucune consultation programmée à venir pour le moment.\n\n"
+            f"Les nouvelles demandes de rendez-vous vous seront notifiées ici dès réservation."
+        )
+
+    lignes = [
+        f"*SantéSN — Vos Prochaines Consultations ({nom_dr}) :*\n"
+    ]
+    for r in rdvs:
+        p = r.patient
+        nom_patient = f"{p.prenom} {p.nom}".strip() if p else "Patient anonyme"
+        tel_patient = f" (Tél: {p.telephone})" if p and getattr(p, "telephone", "") else ""
+        date_str = r.date_heure.strftime("%d/%m/%Y à %H:%M")
+        statut_lbl = r.get_statut_display()
+        motif_str = f"\n  Motif : {r.motif}" if r.motif else ""
+        etab_str = f"\n  Lieu : {r.prestataire.nom}" if r.prestataire else ""
+
+        lignes.append(
+            f"• *{nom_patient}*{tel_patient}\n"
+            f"  Horaire : {date_str}\n"
+            f"  Statut : {statut_lbl}{motif_str}{etab_str}\n"
+        )
+
+    site_url = str(getattr(settings, "SITE_URL", "https://projet-final-bice.vercel.app") or "").strip().rstrip("/")
+    lignes.append(f"Gérer vos consultations en ligne : {site_url}/agenda/")
+    return "\n".join(lignes)
+
+
 def tenter_liaison_automatique(expediteur_telephone, texte):
     """
     Permet à un assuré d'associer instantanément son numéro WhatsApp à son dossier
@@ -342,15 +425,30 @@ def lister_medecins_disponibles(patient=None, ville=None, coords_gps=None, speci
     return list(qs[:limite])
 
 
-def formater_reponse_menu(patient=None, contact_user=None):
-    """Génère le menu d'accueil officiel SantéSN, sobre, chaleureux et institutionnel."""
+def formater_reponse_menu(patient=None, contact_user=None, medecin=None):
+    """Génère le menu d'accueil officiel SantéSN, adapté automatiquement au profil (Assuré ou Médecin)."""
+    site_url = str(getattr(settings, "SITE_URL", "https://projet-final-bice.vercel.app") or "").strip().rstrip("/")
+
+    # Cas où l'utilisateur WhatsApp est un médecin partenaire
+    if medecin or (contact_user and getattr(contact_user, "role", "") == User.Role.MEDECIN):
+        nom_dr = f"Dr. {medecin.prenom} {medecin.nom}".strip() if medecin else (contact_user.get_full_name() or "Confrère")
+        return (
+            f"Bonjour {nom_dr}, bienvenue sur l'assistance officielle SantéSN (Espace Praticien).\n\n"
+            f"*Services praticiens disponibles :*\n"
+            f"1. Consulter mon agenda et mes patients programmés\n"
+            f"2. Prendre un rendez-vous médical pour un patient\n"
+            f"3. Annuaire des pharmacies et établissements de santé\n"
+            f"4. Numéros d'urgence médicale (SAMU 1515, Pompiers 18)\n"
+            f"5. Accéder à mon agenda en ligne ({site_url}/agenda/)\n\n"
+            f"Répondez avec le chiffre de votre choix (1, 2, 3, 4 ou 5) ou écrivez simplement « Mes patients »."
+        )
+
     nom_affiche = f" {patient.prenom}" if patient else ""
     if not nom_affiche and contact_user:
         nom_u = f"{contact_user.get_full_name()}".strip() or f"{contact_user.first_name}".strip()
         if nom_u:
             nom_affiche = f" {nom_u}"
 
-    site_url = str(getattr(settings, "SITE_URL", "https://projet-final-bice.vercel.app") or "").strip().rstrip("/")
     return (
         f"Bonjour{nom_affiche}, bienvenue sur l'assistance officielle SantéSN.\n"
         f"Votre plateforme d'assurance santé, prévoyance et tiers-payant au Sénégal.\n\n"
@@ -792,18 +890,21 @@ def traiter_message_entrant_whatsapp(expediteur_telephone, texte_message):
     """
     texte = (texte_message or "").strip()
     patient = trouver_patient_par_telephone(expediteur_telephone)
+    medecin = trouver_medecin_par_telephone(expediteur_telephone)
     contact_user = None
-    if not patient:
+    if not patient and not medecin:
         contact_user = trouver_utilisateur_par_telephone(expediteur_telephone)
+    elif medecin and getattr(medecin, "user", None):
+        contact_user = medecin.user
 
     # 0. Si le patient n'est pas encore lié : tentative de liaison automatique immédiate
-    if not patient and texte:
+    if not patient and not medecin and texte:
         patient_lie, msg_liaison = tenter_liaison_automatique(expediteur_telephone, texte)
         if patient_lie:
             return msg_liaison
 
     if not texte:
-        return formater_reponse_menu(patient, contact_user)
+        return formater_reponse_menu(patient, contact_user, medecin=medecin)
 
     texte_lower = texte.lower().strip()
     tel_norm = normaliser_numero_telephone(expediteur_telephone) or expediteur_telephone
@@ -831,7 +932,7 @@ def traiter_message_entrant_whatsapp(expediteur_telephone, texte_message):
             conv.etape = ConversationWhatsApp.Etape.MENU
             conv.medecin_selectionne = None
             conv.save()
-        return formater_reponse_menu(patient, contact_user)
+        return formater_reponse_menu(patient, contact_user, medecin=medecin)
 
     # Réinitialisation volontaire vers le menu principal
     if texte_lower in ("0", "menu", "start", "aide", "help", "annuler", "quitter"):
@@ -839,7 +940,7 @@ def traiter_message_entrant_whatsapp(expediteur_telephone, texte_message):
             conv.etape = ConversationWhatsApp.Etape.MENU
             conv.medecin_selectionne = None
             conv.save()
-        return formater_reponse_menu(patient, contact_user)
+        return formater_reponse_menu(patient, contact_user, medecin=medecin)
 
     # Accès direct à la connexion / Espace assuré à tout moment
     if texte_lower in ("5", "connexion", "connecter", "se connecter", "login", "espace", "mon espace", "mot de passe", "activer", "lien"):
@@ -969,15 +1070,40 @@ def traiter_message_entrant_whatsapp(expediteur_telephone, texte_message):
             conv.save()
         return formater_reponse_menu(patient, contact_user)
 
-    # 6. Consultation de ses propres rendez-vous
+    # 5.bis Espace Praticien : Consultation des patients et rendez-vous du médecin
+    if any(k in texte_lower for k in (
+        "mes patients", "mon patient", "mes consultations", "ma consultation",
+        "mes rdv du jour", "mes rdv medecin", "planning medecin", "agenda medecin",
+        "mes rendez-vous medecin", "mes rendez vous medecin", "mes visites"
+    )):
+        medecin_trouve = trouver_medecin_par_telephone(expediteur_telephone)
+        if medecin_trouve:
+            return formater_reponse_agenda_medecin(medecin_trouve)
+        elif contact_user and getattr(contact_user, "role", "") == User.Role.MEDECIN and hasattr(contact_user, "medecin"):
+            return formater_reponse_agenda_medecin(contact_user.medecin)
+        else:
+            return (
+                "Accès Praticien réservé.\n\n"
+                "Votre numéro WhatsApp n'est pas encore associé à une fiche praticien (Médecin) dans le système SantéSN.\n"
+                "Veuillez vérifier le numéro renseigné sur votre compte praticien."
+            )
+
+    # 6. Consultation de ses propres rendez-vous (Assuré ou Praticien)
     if any(k in texte_lower for k in ("mes rdv", "mon rdv", "mes rendez-vous", "mes rendez vous", "mon rendez vous", "mon agenda")):
+        # Si c'est un médecin qui demande "mes rdv" sans être patient
+        if not patient:
+            medecin_trouve = trouver_medecin_par_telephone(expediteur_telephone)
+            if medecin_trouve:
+                return formater_reponse_agenda_medecin(medecin_trouve)
         return formater_reponse_mes_rdv(patient)
 
-    # 7. Choix 1 : Droits & Solde restant
+    # 7. Choix 1 : Droits & Solde restant (Assuré) ou Agenda / Patients (Médecin)
     if texte_lower in ("1", "solde", "droit", "droits", "couverture", "plafond", "mon solde", "combien me reste"):
         if conv:
             conv.etape = ConversationWhatsApp.Etape.MENU
             conv.save()
+        if not patient and medecin:
+            return formater_reponse_agenda_medecin(medecin)
         return formater_reponse_droits(patient)
 
     # 8. Pharmacies spécifiquement demandées
