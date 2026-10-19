@@ -23,6 +23,7 @@ urlpatterns = [
     path('rapports/exporter/pdf/', views.exporter_rapports_pdf, name='exporter_rapports_pdf'),
 
     path('connexion/', views.login_view, name='login'),
+    path('login/', RedirectView.as_view(url='/connexion/', permanent=False)),
     path('deconnexion/', views.logout_view, name='logout'),
     path('mot-de-passe-oublie/', views.mot_de_passe_oublie, name='mot_de_passe_oublie'),
     path('mot-de-passe-oublie/envoye/', views.mot_de_passe_oublie_envoye, name='mot_de_passe_oublie_envoye'),
