@@ -123,10 +123,11 @@ def metrics_prometheus(request):
     est_local = remote_addr in ('127.0.0.1', '::1')
     est_admin = request.user.is_authenticated and getattr(request.user, 'role', None) == User.Role.ADMIN
 
-    # Support d'un jeton d'authentification Bearer dédié pour collecteurs distants
+    # Support d'un jeton d'authentification Bearer dédié pour collecteurs distants (avec comparaison en temps constant)
+    from django.utils.crypto import constant_time_compare
     auth_header = request.headers.get('Authorization', '').strip()
     metrics_token = getattr(settings, 'PROMETHEUS_METRICS_TOKEN', '')
-    est_token_valide = bool(metrics_token) and auth_header == f"Bearer {metrics_token}"
+    est_token_valide = bool(metrics_token) and constant_time_compare(auth_header, f"Bearer {metrics_token}")
 
     user_agent = request.headers.get('User-Agent', '').lower()
     accept = request.headers.get('Accept', '').lower()
