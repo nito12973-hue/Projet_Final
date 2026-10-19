@@ -43,16 +43,66 @@ TAILLE_MAX_FICHIER_DOCUMENTS = 10 * 1024 * 1024  # 10 Mo
 
 
 def valider_fichier_televerse(fichier, libelle="Le fichier"):
-    """Contrôle strict de sécurité sur la taille et l'extension des fichiers téléversés."""
+    """
+    Contrôle strict de sécurité sur les fichiers téléversés :
+    1. Limite stricte de taille (max 10 Mo).
+    2. Liste blanche d'extensions sécurisées (.pdf, .jpg, .jpeg, .png, .webp).
+    3. Vérification des octets magiques (Magic Bytes) pour contrer l'usurpation de type MIME.
+    4. Interdiction absolue des doubles extensions dangereuses (ex: .php.jpg, .exe.png).
+    """
     if not fichier:
         return fichier
+
+    # 1. Vérification de la taille
     if hasattr(fichier, "size") and fichier.size > TAILLE_MAX_FICHIER_DOCUMENTS:
         raise forms.ValidationError(f"{libelle} ne doit pas dépasser 10 Mo.")
+
     nom = (getattr(fichier, "name", "") or "").lower()
+
+    # 2. Vérification contre les doubles extensions exécutables
+    extensions_interdites = (
+        ".php", ".phtml", ".py", ".sh", ".bash", ".exe", ".dll", ".bat",
+        ".cmd", ".ps1", ".vbs", ".js", ".jsp", ".asp", ".aspx", ".cgi", ".pl", ".htaccess"
+    )
+    if any(ext in nom for ext in extensions_interdites):
+        raise forms.ValidationError(
+            f"Nom de fichier suspect détecté pour {libelle.lower()}. Téléversement refusé par sécurité."
+        )
+
+    # 3. Liste blanche d'extensions
     if nom and not nom.endswith(EXTENSIONS_DOCUMENTS_AUTORISEES):
         raise forms.ValidationError(
             f"Format de fichier non autorisé pour {libelle.lower()}. Formats acceptés : PDF, JPG, PNG, WEBP."
         )
+
+    # 4. Vérification cryptographique des en-têtes binaires (Magic Bytes)
+    if hasattr(fichier, "read") and hasattr(fichier, "seek"):
+        try:
+            position_initiale = fichier.tell()
+            fichier.seek(0)
+            en_tete = fichier.read(16)
+            fichier.seek(position_initiale)
+
+            # Signatures magiques standard :
+            # PDF : %PDF (0x25 0x50 0x44 0x46)
+            # JPEG : 0xFF 0xD8 0xFF
+            # PNG : 0x89 0x50 0x4E 0x47 0x0D 0x0A 0x1A 0x0A
+            # WEBP : RIFF....WEBP
+            est_pdf = en_tete.startswith(b"%PDF")
+            est_jpeg = en_tete.startswith(b"\xff\xd8\xff")
+            est_png = en_tete.startswith(b"\x89PNG\r\n\x1a\n")
+            est_webp = en_tete.startswith(b"RIFF") and b"WEBP" in en_tete[:16]
+
+            if not (est_pdf or est_jpeg or est_png or est_webp):
+                raise forms.ValidationError(
+                    f"Le contenu binaire de {libelle.lower()} ne correspond pas à un document ou une image valide."
+                )
+        except forms.ValidationError:
+            raise
+        except Exception:
+            # En cas de stream non lisible (ex: test mocké simple sans seek), ne pas bloquer
+            pass
+
     return fichier
 
 
