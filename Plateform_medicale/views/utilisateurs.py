@@ -546,6 +546,13 @@ def importer_utilisateurs_excel(request):
         elif getattr(fichier, "size", 0) > 5 * 1024 * 1024:
             erreurs.append("Le fichier dépasse la taille maximale autorisée (5 Mo).")
         else:
+            nom_fich = (getattr(fichier, "name", "") or "").lower()
+            ext_interdites = (
+                ".php", ".phtml", ".py", ".sh", ".bash", ".exe", ".dll", ".bat",
+                ".cmd", ".ps1", ".vbs", ".js", ".jsp", ".asp", ".aspx", ".cgi", ".pl", ".htaccess"
+            )
+            if any(ext in nom_fich for ext in ext_interdites):
+                erreurs.append("Nom de fichier suspect détecté. Importation refusée par sécurité.")
             try:
                 classeur = openpyxl.load_workbook(fichier, data_only=True)
             except Exception:
