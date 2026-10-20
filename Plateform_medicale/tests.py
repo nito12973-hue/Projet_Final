@@ -4453,10 +4453,16 @@ class NavigationCoherenteTests(TestCase):
         self.assertNotContains(reponse, reverse('importer_utilisateurs_excel'))
 
     def test_import_utilisateurs_uniquement_sur_sa_page_metier(self):
-        # UNE fonctionnalite = UN emplacement principal. L'import vivait aussi
-        # dans Parametres -> Donnees : le meme bouton, a deux endroits.
-        self.assertContains(self.client.get(reverse('liste_utilisateurs')),
+        # Séparation stricte des rôles : L'administrateur supervise les entreprises et gestionnaires,
+        # il n'a donc PAS de bouton d'import d'utilisateurs sur sa page.
+        self.assertNotContains(self.client.get(reverse('liste_utilisateurs')),
+                               reverse('importer_utilisateurs_excel'))
+        # Pour le gestionnaire, les imports vivent sur ses pages métiers respectives (patients, praticiens)
+        creer_utilisateur(User.Role.GESTIONNAIRE, 'gest-import-nav@santesn.sn')
+        self.client.login(username='gest-import-nav@santesn.sn', password=PASSWORD)
+        self.assertContains(self.client.get(reverse('liste_patients')),
                             reverse('importer_utilisateurs_excel'))
+        # Et l'import ne doit pas être dupliqué dans les sections de paramètres
         for section in SECTIONS_TOUTES:
             self.assertNotContains(
                 self.client.get(reverse('parametres_section', args=[section])),
@@ -11216,7 +11222,7 @@ class BonPriseEnChargePDFTests(TestCase):
     def test_demande_pec_avec_fichier_sans_description_motif_reussit(self):
         self.client.force_login(self.user_assure)
         from django.core.files.uploadedfile import SimpleUploadedFile
-        fichier = SimpleUploadedFile("devis_scan.jpg", b"image data fake", content_type="image/jpeg")
+        fichier = SimpleUploadedFile("devis_scan.jpg", b"\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00`\x00`\x00\x00\xff\xdb\x00C\x00fake_jpeg_content", content_type="image/jpeg")
         url = reverse("demander_prise_en_charge_assure")
         resp = self.client.post(url, {
             "patient": self.patient.pk,
@@ -13768,11 +13774,44 @@ class AuditSecuriteTests(TestCase):
         resp = self.client.get(reverse("instruire_demande_remboursement", args=[demande_b.pk]))
         self.assertEqual(resp.status_code, 404)
 
+class SeparationRolesAdminGestionnaireTests(TestCase):
+    """Vérifie la stricte cohérence et séparation des rôles Admin vs Gestionnaire."""
 
+    def setUp(self):
+        self.organisme = Organisme.objects.create(nom="IPM SanteSN Test", code="IPM-TEST", actif=True)
+        self.admin = User.objects.create_superuser(
+            email="admin.central@santesn.sn",
+            password="Password123!",
+            role=User.Role.ADMIN,
+        )
+        self.gestionnaire = User.objects.create_user(
+            email="gestionnaire.ipm@santesn.sn",
+            password="Password123!",
+            role=User.Role.GESTIONNAIRE,
+            organisme=self.organisme,
+        )
+        self.assure = User.objects.create_user(
+            email="assure.ipm@santesn.sn",
+            password="Password123!",
+            role=User.Role.ASSURE,
+            organisme=self.organisme,
+        )
 
+    def test_admin_ne_voit_pas_de_bouton_importer_sur_liste_utilisateurs(self):
+        self.client.force_login(self.admin)
+        resp = self.client.get(reverse("liste_utilisateurs"))
+        self.assertEqual(resp.status_code, 200)
+        # L'admin ne doit PAS voir le lien d'importation d'utilisateurs
+        self.assertNotContains(resp, reverse("importer_utilisateurs_excel"))
+        # L'admin doit voir le bouton pour créer un nouveau gestionnaire
+        self.assertContains(resp, "Nouveau gestionnaire")
+        # L'admin doit voir le compte gestionnaire dans son tableau
+        self.assertContains(resp, self.gestionnaire.email)
+        # Mais ne doit pas voir les assurés nominativement dans le tableau sauf incident
+        self.assertNotContains(resp, f"<td>{self.assure.email}</td>")
 
-
-
-
-
+    def test_admin_acces_interdit_a_import_utilisateurs(self):
+        self.client.force_login(self.admin)
+        resp = self.client.get(reverse("importer_utilisateurs_excel"))
+        self.assertEqual(resp.status_code, 403)
 

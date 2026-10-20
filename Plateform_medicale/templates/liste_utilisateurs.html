@@ -198,12 +198,12 @@
 
 <section class="page-title">
     <div>
-        <h1>Comptes utilisateurs</h1>
-        <p class="subtitle">Gestion des comptes et sécurité des accès.</p>
+        <h1>{% if request.user.role == "ADMIN" %}Comptes gestionnaires & sécurité{% else %}Comptes utilisateurs{% endif %}</h1>
+        <p class="subtitle">{% if request.user.role == "ADMIN" %}Supervision des comptes gestionnaires d'organismes et sécurité des accès.{% else %}Gestion des comptes et sécurité des accès.{% endif %}</p>
     </div>
     <div class="actions">
         <a class="button btn btn-retour-expand" href="{% url 'dashboard' %}" title="Retour au tableau de bord" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
-        <a class="button primary" href="{% url 'ajouter_utilisateur' %}">{% icone "plus" %} Nouveau compte</a>
+        <a class="button primary" href="{% url 'ajouter_utilisateur' %}">{% icone "plus" %} {% if request.user.role == "ADMIN" %}Nouveau gestionnaire{% else %}Nouveau compte{% endif %}</a>
     </div>
 </section>
 
@@ -252,9 +252,18 @@
     </div>
 </div>
 
+{% if request.user.role == "ADMIN" %}
+<div class="panel-bloc" style="margin-bottom: 16px; background: var(--surface-muted); padding: 10px 14px; border-radius: 8px; font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 8px;">
+    {% icone "shield" %}
+    <span><strong>Gouvernance & Séparation des rôles :</strong> L'administration plateforme supervise uniquement les entreprises partenaires et leurs gestionnaires de compte. L'affiliation des assurés et le conventionnement des soignants sont gérés directement par chaque gestionnaire d'organisme.</span>
+</div>
+{% endif %}
+
 <div class="barre-export-import">
     <a class="button btn" data-chargement="Génération..." href="{% url 'exporter_utilisateurs_excel' %}?{{ request.GET.urlencode }}" title="Exporter en Excel">{% icone "download" %} Exporter</a>
+    {% if request.user.role != "ADMIN" %}
     <a class="button btn" href="{% url 'importer_utilisateurs_excel' %}" title="Importer depuis Excel">{% icone "upload" %} Importer</a>
+    {% endif %}
 </div>
 
 <form method="get" class="filtres filtres-utilisateurs">
@@ -404,7 +413,7 @@
                                 <button type="submit" class="button btn btn-sm" title="Débloquer l'accès immédiat">Débloquer</button>
                             </form>
                             {% endif %}
-                            {% if utilisateur.role == "ASSURE" or utilisateur.patient %}
+                            {% if request.user.role == "GESTIONNAIRE" and utilisateur.role == "ASSURE" or request.user.role == "GESTIONNAIRE" and utilisateur.patient %}
                             <a href="{% url 'attribuer_plan_utilisateur' utilisateur.pk %}" class="button btn btn-sm" title="Attribuer ou modifier le plan de couverture">{% icone "shield" %} Plan</a>
                             {% endif %}
                             <a href="{% url 'modifier_utilisateur' utilisateur.pk %}" class="button primary btn btn-sm" title="Modifier le compte">{% icone "edit-2" %} Modifier</a>
