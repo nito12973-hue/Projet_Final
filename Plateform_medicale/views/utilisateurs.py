@@ -108,7 +108,9 @@ def _filtrer_utilisateurs(request):
     recherche = request.GET.get("q", "").strip()
 
     if request.user.role == User.Role.ADMIN:
-        utilisateurs = utilisateurs.filter(email__in=emails_bloques)
+        utilisateurs = utilisateurs.filter(
+            Q(role__in=[User.Role.ADMIN, User.Role.GESTIONNAIRE]) | Q(email__in=emails_bloques)
+        )
     elif request.user.role == User.Role.GESTIONNAIRE:
         utilisateurs = utilisateurs.filter(organisme_id=request.user.organisme_id)
 
@@ -763,7 +765,7 @@ def modifier_utilisateur(request, pk):
     )
 
 
-@role_required(User.Role.ADMIN, User.Role.GESTIONNAIRE)
+@role_required(User.Role.GESTIONNAIRE)
 def attribuer_plan_utilisateur(request, pk):
     """Permet au gestionnaire ou administrateur d'attribuer un plan de couverture à un assuré."""
     utilisateur = get_object_or_404(User, pk=pk)
