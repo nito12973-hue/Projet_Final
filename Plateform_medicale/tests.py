@@ -10252,7 +10252,11 @@ class PreLaunchAuditAndLegalPagesTests(TestCase):
         self.assertNotIn("Rendez-vous du jour", contenu)
 
     def test_champ_recherche_css_icone_et_padding(self):
-        with open('Plateform_medicale/templates/base.html', 'r', encoding='utf-8') as f:
+        import os
+        base_path = os.path.join('Plateform_medicale', 'templates', 'gabarits', 'base.html')
+        if not os.path.exists(base_path):
+            base_path = os.path.join('Plateform_medicale', 'templates', 'base.html')
+        with open(base_path, 'r', encoding='utf-8') as f:
             base_html = f.read()
         self.assertIn("form.filtres .champ-recherche input", base_html)
         self.assertIn("padding-left: 44px !important;", base_html)
