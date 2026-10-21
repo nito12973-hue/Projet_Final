@@ -4,6 +4,22 @@ Ce document consigne de façon claire et sans jargon chaque décision d'architec
 
 ---
 
+## [2026-10-21] Organisation Modulaire des Gabarits (Templates) en Sous-Dossiers Métier 100% en Français
+- **Décision :** Découpage des 115 templates HTML de la racine Plateform_medicale/templates/ vers 10 répertoires thématiques métier exclusivement nommés en langue française :
+  - gabarits/ : Squelettes de base réutilisables (ase.html, ase_auth.html).
+  - composants/ : Éléments modulaires partagés (_pagination.html).
+  - erreurs/ : Pages de codes HTTP et mode hors-ligne (403.html, 404.html, 500.html, offline.html).
+  - uthentification/ : Connexion, activation de compte, réinitialisation de mot de passe.
+  - ssure/ : Espace patient (carte dématérialisée, ordonnances, remboursements, ayants droit, RDV WhatsApp).
+  - medecin/ : Espace praticien (agenda, consultations, prescriptions, dossiers médicaux).
+  - pharmacien/ : Espace officine (scanner d'ordonnances, délivrance atomique, historique).
+  - gestionnaire/ : Espace IPM (conventions, régimes, liquidations, prises en charge).
+  - dministrateur/ : Espace IT (supervision, gestion des accès, métriques Prometheus).
+  - commun/ : Fiches partagées, listes globales, CGU et politique de confidentialité CDP.
+- **Rétrocompatibilité & Continuité Opérationnelle :**
+  - Ajout des sous-dossiers dans TEMPLATES[0]['DIRS'] au niveau de config/settings/base.py afin de garantir une résolution transparente : les appels directs existants et les futurs chemins préfixés fonctionnent simultanément.
+  - Validation intégrale de la suite automatisée (936 tests exécutés avec 100% de succès).
+
 ## [2026-10-16] Refonte Split-Screen (50%/50%) de l'Authentification & Boutons Interactifs Extensibles
 - **Décision :** Abandon du centrage mono-bloc isolé de la page de connexion au profit d'un agencement moderne en deux volets (« Split-Screen » 50% / 50% sur écran large, comme sur les grandes plateformes SaaS telles que Stripe, Doctolib ou GitHub) et harmonisation des boutons de retour interactifs (« expand on hover »).
 - **Volet Gauche (Marque & Présentation Métier) :**
