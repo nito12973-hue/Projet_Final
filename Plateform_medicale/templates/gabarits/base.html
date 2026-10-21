@@ -35,6 +35,10 @@
                     var metaTC = document.getElementById('meta-theme-color') || document.querySelector('meta[name="theme-color"]');
                     if (metaTC) metaTC.setAttribute('content', '#08161b');
                 }
+                var menuReduit = localStorage.getItem('santesn-menu-reduit') === '1';
+                if (menuReduit && window.matchMedia('(min-width: 981px)').matches) {
+                    document.documentElement.classList.add('sidebar-reduite');
+                }
             } catch (e) { /* localStorage indisponible : on reste en clair */ }
         })();
     </script>
@@ -274,9 +278,13 @@
             grid-template-columns: 268px minmax(0, 1fr);
             gap: 0;
             min-height: 100vh;
+        }
+
+        body.sidebar-animable .shell {
             transition: grid-template-columns 0.28s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
+        html.sidebar-reduite .shell,
         body.sidebar-reduite .shell {
             grid-template-columns: 80px minmax(0, 1fr);
         }
@@ -318,9 +326,12 @@
             border-radius: 0;
             border-right: 1px solid var(--sb-border);
             box-shadow: none;
-            transition: width 0.25s ease, padding 0.25s ease;
             box-sizing: border-box;
             z-index: 90;
+        }
+
+        body.sidebar-animable #barre-laterale {
+            transition: width 0.25s ease, padding 0.25s ease;
         }
 
         .sidebar-head {
@@ -378,12 +389,17 @@
             height: 15px;
             transition: transform 0.22s ease;
         }
+        html.sidebar-reduite .btn-reduire svg,
+        html.sidebar-reduite .btn-reduire,
         body.sidebar-reduite .btn-reduire svg,
         body.sidebar-reduite .btn-reduire .icone-nav {
             transform: rotate(180deg);
         }
 
+        html.sidebar-reduite .brand-texte,
+        html.sidebar-reduite .brand,
         body.sidebar-reduite .brand-texte { display: none !important; }
+        html.sidebar-reduite .sidebar-head,
         body.sidebar-reduite .sidebar-head {
             justify-content: center;
             gap: 6px;
@@ -605,6 +621,7 @@
             display: inline-block;
         }
 
+        html.sidebar-reduite aside nav a,
         body.sidebar-reduite aside nav a {
             justify-content: center;
             padding: 8px 0;
@@ -612,11 +629,17 @@
             transform: none !important;
         }
 
+        html.sidebar-reduite .nav-texte,
         body.sidebar-reduite .nav-texte,
+        html.sidebar-reduite .badge-non-lues,
         body.sidebar-reduite .badge-non-lues,
         body.sidebar-reduite .brand-texte,
+        html.sidebar-reduite .user-card-info,
+        html.sidebar-reduite .user-card,
         body.sidebar-reduite .user-card-info,
+        html.sidebar-reduite .sidebar-systeme-status,
         body.sidebar-reduite .sidebar-systeme-status span:not(.status-pulse-dot),
+        html.sidebar-reduite .nav-section,
         body.sidebar-reduite .nav-section {
             display: none !important;
         }
@@ -7223,6 +7246,7 @@
             function appliquer(reduit) {
                 var actif = reduit && estBureau();
                 corps.classList.toggle('sidebar-reduite', actif);
+                document.documentElement.classList.toggle('sidebar-reduite', actif);
                 bouton.setAttribute('aria-pressed', actif ? 'true' : 'false');
                 bouton.setAttribute('aria-label', actif ? 'Déployer le menu' : 'Réduire le menu');
             }
@@ -7231,6 +7255,7 @@
             appliquer(etatEnregistre);
 
             bouton.addEventListener('click', function () {
+                corps.classList.add('sidebar-animable');
                 var prochain = !corps.classList.contains('sidebar-reduite');
                 window.localStorage.setItem(CLE_STOCKAGE, prochain ? '1' : '0');
                 appliquer(prochain);
@@ -7249,15 +7274,6 @@
                     var positionPrecedente = window.sessionStorage.getItem(CLE_SCROLL);
                     if (positionPrecedente !== null) {
                         nav.scrollTop = parseInt(positionPrecedente, 10) || 0;
-                    } else {
-                        // S'il n'y a pas de position enregistrée, aligner doucement vers le lien actif sans secouer la page
-                        var lienActif = nav.querySelector('a.active');
-                        if (lienActif) {
-                            var decalageHaut = lienActif.offsetTop - nav.offsetTop;
-                            if (decalageHaut < nav.scrollTop || decalageHaut + lienActif.offsetHeight > nav.scrollTop + nav.clientHeight) {
-                                nav.scrollTop = Math.max(0, decalageHaut - 24);
-                            }
-                        }
                     }
                 } catch (e) {}
 
