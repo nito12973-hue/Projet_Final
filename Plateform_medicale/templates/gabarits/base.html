@@ -390,30 +390,41 @@
             transition: transform 0.22s ease;
         }
         html.sidebar-reduite .btn-reduire svg,
-        html.sidebar-reduite .btn-reduire,
         body.sidebar-reduite .btn-reduire svg,
         body.sidebar-reduite .btn-reduire .icone-nav {
             transform: rotate(180deg);
         }
 
+        /* Seul le libellé texte disparait en mode réduit, le LOGO SVG reste 100% visible et centré */
         html.sidebar-reduite .brand-texte,
-        html.sidebar-reduite .brand,
-        body.sidebar-reduite .brand-texte { display: none !important; }
+        body.sidebar-reduite .brand-texte {
+            display: none !important;
+        }
+
         html.sidebar-reduite .sidebar-head,
         body.sidebar-reduite .sidebar-head {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             justify-content: center;
-            gap: 6px;
-            padding-left: 0;
-            padding-right: 0;
+            gap: 10px;
+            padding: 4px 0 10px 0;
         }
+
+        html.sidebar-reduite .brand,
         body.sidebar-reduite .brand {
+            display: inline-flex !important;
             flex: 0 0 auto;
             justify-content: center;
+            align-items: center;
+            width: 100%;
         }
+
+        html.sidebar-reduite .btn-reduire,
         body.sidebar-reduite .btn-reduire {
-            margin-left: 0;
-            width: 30px;
-            height: 30px;
+            margin: 0 auto;
+            width: 28px;
+            height: 28px;
         }
 
         @media (max-width: 980px) {
@@ -5822,6 +5833,18 @@
         }
 
         /* ===== Menu mobile (bouton + tiroir + fond) ===== */
+        .mobile-brand {
+            display: none;
+        }
+        @media (max-width: 980px) {
+            .mobile-brand {
+                display: inline-flex !important;
+                align-items: center;
+                gap: 8px;
+                text-decoration: none;
+            }
+        }
+
         .sidebar-toggle {
             display: none;
             align-items: center;
@@ -7032,10 +7055,16 @@
                 (un seul bouton dans le DOM, meme gestionnaire JS).
                 {% endcomment %}
                 <header class="topbar">
-                    <button type="button" id="bouton-menu-mobile" class="sidebar-toggle"
-                            aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="barre-laterale">
-                        {% icone "menu" %}
-                    </button>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <button type="button" id="bouton-menu-mobile" class="sidebar-toggle"
+                                aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="barre-laterale">
+                            {% icone "menu" %}
+                        </button>
+                        <a class="mobile-brand" href="{% url 'post_login_redirect' %}" title="SantéSN">
+                            {% logo_marque taille=28 fond="clair" %}
+                            <span style="font-weight: 800; font-size: 16px; color: var(--titre); font-family: var(--font-headings);">Santé<span style="color: var(--primary);">SN</span></span>
+                        </a>
+                    </div>
                     {% comment %}
                     Le role a ete retire d'ici : il etait affiche TROIS fois sur
                     le meme ecran (carte utilisateur du menu, fil d'ariane, bloc
