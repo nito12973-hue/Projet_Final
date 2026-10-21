@@ -4,6 +4,13 @@ Ce document consigne de façon claire et sans jargon chaque décision d'architec
 
 ---
 
+## [2026-10-21] Durcissement Sécurité (Fail-Closed Webhook, Rétention de Session & CSP) & Nettoyage du Dépôt
+- **Décision :** Résolution des vulnérabilités identifiées lors de l'audit de sécurité et allègement du dépôt Git :
+  1. *Fail-Closed sur le Webhook WhatsApp :* En production, le contrôleur rejette avec HTTP 403 toute tentative de requête POST entrante si `WHATSAPP_APP_SECRET` n'est pas configuré, interdisant le traitement de messages forgés sans signature cryptographique HMAC-SHA256 valide.
+  2. *Durcissement des sessions médicales (CDP Sénégal) :* Réduction de la durée de vie du cookie de session à 2 heures et activation de `SESSION_EXPIRE_AT_BROWSER_CLOSE = True` pour protéger les postes de travail partagés en clinique et pharmacie.
+  3. *En-tête Content-Security-Policy (CSP) :* Ajout de la directive stricte dans Nginx bloquant les injections de scripts non autorisés et l'exfiltration de données vers des domaines tiers.
+  4. *Hygiène et allègement du dépôt :* Suppression du dump de sauvegarde PostgreSQL obsolète de 6.5 Mo de l'historique Git et purge des répertoires orphelins.
+
 ## [2026-10-21] Organisation Modulaire des Gabarits (Templates) en Sous-Dossiers Métier 100% en Français
 - **Décision :** Découpage des 115 templates HTML de la racine Plateform_medicale/templates/ vers 10 répertoires thématiques métier exclusivement nommés en langue française :
   - gabarits/ : Squelettes de base réutilisables (ase.html, ase_auth.html).
