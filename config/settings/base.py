@@ -51,7 +51,19 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            BASE_DIR / 'Plateform_medicale' / 'templates',
+            BASE_DIR / 'Plateform_medicale' / 'templates' / 'gabarits',
+            BASE_DIR / 'Plateform_medicale' / 'templates' / 'composants',
+            BASE_DIR / 'Plateform_medicale' / 'templates' / 'erreurs',
+            BASE_DIR / 'Plateform_medicale' / 'templates' / 'authentification',
+            BASE_DIR / 'Plateform_medicale' / 'templates' / 'assure',
+            BASE_DIR / 'Plateform_medicale' / 'templates' / 'medecin',
+            BASE_DIR / 'Plateform_medicale' / 'templates' / 'pharmacien',
+            BASE_DIR / 'Plateform_medicale' / 'templates' / 'gestionnaire',
+            BASE_DIR / 'Plateform_medicale' / 'templates' / 'administrateur',
+            BASE_DIR / 'Plateform_medicale' / 'templates' / 'commun',
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
