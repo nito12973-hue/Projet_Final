@@ -10274,7 +10274,8 @@ class PreLaunchAuditAndLegalPagesTests(TestCase):
         # 1. Anti-débordement global sur html, body, shell, contenu
         self.assertIn("overflow-x: clip;", base_html)
         self.assertIn("max-width: 100%;", base_html)
-        self.assertIn("grid-template-columns: 280px minmax(0, 1fr);", base_html)
+        self.assertIn("padding-left: 280px;", base_html)
+        self.assertIn("position: fixed;", base_html)
 
         # 2. Dimensions strictes et scroll vertical de la sidebar
         self.assertIn("width: 280px;", base_html)
