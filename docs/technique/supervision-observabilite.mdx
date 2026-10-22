@@ -1,0 +1,117 @@
+# Supervision Système, Observabilité et Métriques Prometheus
+
+> Guide de la supervision technique de SantéSN : sondes matérielles psutil, monitoring PostgreSQL Neon, métriques Prometheus, sondes Sentry et registre d'intégrité SHA-256 des sauvegardes.
+
+Pour garantir un niveau de disponibilité élevé et satisfaire aux exigences de traçabilité des données de santé au Sénégal, SantéSN intègre une infrastructure d'observabilité complète combinant des sondes système en temps réel, un exportateur de métriques Prometheus, des bilans de santé automatisés (Health Checks) et une vérification cryptographique des archives de sauvegarde.
+
+## Tableau de bord de supervision (`/supervision/`)
+
+Accessible uniquement aux superutilisateurs et administrateurs techniques de la plateforme, l'interface `/supervision/` offre une vue synoptique instantanée de l'état de santé du serveur et de ses dépendances externes.
+
+<CardGroup cols={2}>
+  <Card title="Sondes Matérielles (psutil)" icon="microchip">
+    Mesure en direct de la charge CPU, de la consommation RAM (totale, allouée, disponible) et de l'espace disque résiduel du conteneur/runtime.
+  </Card>
+
+  <Card title="Sonde Base de données (PostgreSQL)" icon="database">
+    Ping actif `SELECT 1;` sur l'instance PostgreSQL Neon avec mesure de latence aller-retour en millisecondes et validation de l'état des migrations ORM.
+  </Card>
+
+  <Card title="Suivi des Erreurs (Sentry SDK)" icon="bug">
+    Vérification de l'initialisation du SDK Sentry et route de déclenchement test (`/supervision/tester-sentry/`) pour tester la chaîne d'alerte.
+  </Card>
+
+  <Card title="État du Cache et Sessions" icon="bolt">
+    Contrôle de la disponibilité du backend de cache, du volume de sessions actives et de l'intégrité du stockage éphémère.
+  </Card>
+</CardGroup>
+
+## Endpoints de Health Check
+
+SantéSN expose deux routes universelles de vérification d'intégrité destinées aux load-balancers, aux orchestrateurs conteneurisés et aux outils de surveillance externe (UptimeRobot, Pingdom, BetterStack) :
+
+- `GET /health/`
+- `GET /api/health/`
+
+### Format de réponse JSON
+
+Ces endpoints répondent immédiatement par un code HTTP 200 (ou 503 en cas de panne de base de données) avec le diagnostic synthétique :
+
+```json
+{
+  "status": "healthy",
+  "database": "connected",
+  "latency_ms": 12.4,
+  "timestamp": "2026-10-22T15:30:00Z",
+  "version": "1.0.0"
+}
+```
+
+## Exportateur de Métriques Prometheus (`/metrics/`)
+
+La route `/metrics/` expose les métriques d'exécution au format texte standard Prometheus pour permettre le scraping automatique par Prometheus ou VictoriaMetrics et l'affichage dans des dashboards Grafana.
+
+```
+                    ┌──────────────────────────────┐
+                    │    SantéSN (/metrics/)       │
+                    └──────────────┬───────────────┘
+                                   │  Scrape HTTP périodique (15s)
+                                   ▼
+                    ┌──────────────────────────────┐
+                    │      Serveur Prometheus      │
+                    └──────────────┬───────────────┘
+                                   │
+                                   ▼
+                    ┌──────────────────────────────┐
+                    │     Dashboards Grafana       │
+                    │  (Alertmanager Pager / Slack)│
+                    └──────────────────────────────┘
+```
+
+### Principales métriques exposées
+
+| Métrique Prometheus | Type | Description |
+| :--- | :--- | :--- |
+| `santesn_http_requests_total` | Counter | Nombre cumulé de requêtes HTTP, labellisées par méthode (`GET`, `POST`), endpoint et statut HTTP (`200`, `403`, `500`). |
+| `santesn_http_request_duration_seconds` | Histogram | Distribution du temps de réponse des requêtes pour détecter les ralentissements. |
+| `santesn_db_up` | Gauge | Indicateur binaire de disponibilité de la base PostgreSQL (`1` = opérationnel, `0` = indisponible). |
+| `santesn_db_query_duration_seconds` | Gauge | Temps de latence moyen des requêtes SQL. |
+| `santesn_active_sessions_count` | Gauge | Nombre total de sessions d'utilisateurs actuellement ouvertes. |
+| `santesn_prescriptions_total` | Counter | Nombre total d'ordonnances émises et sécurisées. |
+
+<Note>
+  L'accès à l'endpoint `/metrics/` peut être restreint par token d'authentification Bearer ou par filtrage IP dans les paramètres Django (`PROMETHEUS_METRICS_TOKEN`) pour empêcher toute divulgation publique de données d'usage.
+</Note>
+
+## Registre des sauvegardes et Intégrité SHA-256
+
+Pour prévenir tout risque de corruption silencieuse, d'altération accidentelle ou de cyberattaque lors de la manipulation des sauvegardes de données médicales, SantéSN met en œuvre un **registre cryptographique d'intégrité**.
+
+### Fichier manifeste `backups/manifest.json`
+
+Chaque archive générée (dump SQL ou archive média) est immédiatement hachée via l'algorithme cryptographique **SHA-256** et consignée dans le registre centralisé :
+
+```json
+{
+  "backups": [
+    {
+      "filename": "backup_santesn_20261022_020000.sql.gz",
+      "date": "2026-10-22T02:00:00Z",
+      "size_bytes": 14258932,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "verified"
+    }
+  ]
+}
+```
+
+### Vérification avant toute restauration
+
+Avant toute opération de restauration de base de données en environnement de secours ou de reprise après sinistre (PRA/PCA), un script vérifie que l'empreinte SHA-256 du fichier physique correspond rigoureusement à l'empreinte inscrite au registre :
+
+```bash
+# Exemple de vérification manuelle d'intégrité
+sha256sum backup_santesn_20261022_020000.sql.gz
+```
+
+Toute divergence d'un seul bit entraîne le refus immédiat de la restauration et lève une alerte de sécurité critique dans le journal d'audit.

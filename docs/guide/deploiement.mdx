@@ -1,0 +1,241 @@
+# Déployer SantéSN sur Vercel : guide de mise en production
+
+> Déployez SantéSN sur Vercel en production : dépôt GitHub, variables d'environnement, base PostgreSQL et migrations post-déploiement.
+
+Ce guide décrit la procédure complète pour mettre SantéSN en production sur Vercel, la plateforme sur laquelle l'application est actuellement hébergée à l'adresse [https://projet-final-bice.vercel.app](https://projet-final-bice.vercel.app). Suivez chaque étape dans l'ordre pour éviter les erreurs de configuration courantes, notamment les problèmes de migrations ou d'hôtes autorisés.
+
+## Prérequis
+
+Avant de commencer le déploiement, assurez-vous de disposer des éléments suivants :
+
+<CardGroup cols={2}>
+  <Card title="Compte GitHub" icon="github" href="https://github.com">
+    Le code source doit être hébergé dans un dépôt GitHub (public ou privé) accessible depuis votre compte Vercel.
+  </Card>
+
+  <Card title="Compte Vercel" icon="cloud" href="https://vercel.com">
+    Créez un compte gratuit sur [vercel.com](https://vercel.com). Le plan Hobby est suffisant pour un projet de démonstration.
+  </Card>
+
+  <Card title="Vercel CLI (optionnel)" icon="terminal" href="https://vercel.com/docs/cli">
+    Installez la CLI Vercel pour exécuter des commandes à distance : `npm install -g vercel`.
+  </Card>
+
+  <Card title="Variables d'environnement" icon="key" href="/technique/variables-environnement">
+    Préparez à l'avance toutes les valeurs : `SECRET_KEY`, `DATABASE_URL`, `ALLOWED_HOSTS`, etc.
+  </Card>
+</CardGroup>
+
+## Déploiement pas à pas
+
+<Steps>
+  ### Pousser le projet vers GitHub
+
+  Assurez-vous que votre code est à jour et poussez la branche principale vers votre dépôt GitHub :
+
+  ```bash theme={null}
+  git add .
+  git commit -m "feat: préparation pour le déploiement Vercel"
+  git push origin main
+  ```
+
+  Vérifiez que les fichiers suivants sont bien présents à la racine du dépôt, car Vercel en a besoin pour le déploiement :
+
+  ```
+  ├── vercel.json          # Configuration Vercel (routes, build)
+  ├── requirements.txt     # Dépendances Python
+  ├── manage.py            # Point d'entrée Django
+  └── build_files.sh       # Script de build (collectstatic + migrations)
+  ```
+
+  <Warning>
+    Vérifiez impérativement que votre fichier `.env` **n'est pas** committé dans le dépôt. Ajoutez `.env` à votre `.gitignore` si ce n'est pas déjà fait. Les secrets ne doivent jamais transiter par Git.
+  </Warning>
+
+  ### Se connecter à Vercel et créer un nouveau projet
+
+  Rendez-vous sur [vercel.com/dashboard](https://vercel.com/dashboard) et cliquez sur **Add New… > Project**.
+
+  Si c'est votre première connexion, autorisez Vercel à accéder à votre compte GitHub lorsque la fenêtre d'autorisation s'affiche.
+
+  ### Importer le dépôt GitHub
+
+  Dans la liste des dépôts proposés, sélectionnez celui qui contient SantéSN et cliquez sur **Import**.
+
+  Vercel analyse automatiquement la structure du projet. Puisque SantéSN est une application Django et non un projet Next.js, vous devez ajuster le preset détecté.
+
+  ### Configurer le Framework Preset sur "Other"
+
+  Dans l'écran de configuration du projet, déroulez le champ **Framework Preset** et sélectionnez **Other** (pas Next.js, pas Create React App).
+
+  Renseignez ensuite les commandes de build :
+
+  | Champ                | Valeur                            |
+  | -------------------- | --------------------------------- |
+  | **Build Command**    | `bash build_files.sh`             |
+  | **Output Directory** | `staticfiles`                     |
+  | **Install Command**  | `pip install -r requirements.txt` |
+
+  Exemple de contenu minimal pour `build_files.sh` :
+
+  ```bash theme={null}
+  #!/bin/bash
+  # build_files.sh
+  pip install -r requirements.txt
+  python manage.py collectstatic --noinput
+  ```
+
+  ### Définir les variables d'environnement
+
+  Dans **Settings > Environment Variables**, ajoutez chaque variable nécessaire au fonctionnement de l'application. Cliquez sur **Add** pour chaque entrée :
+
+  | Variable                 | Exemple de valeur                             | Environnement |
+  | ------------------------ | --------------------------------------------- | ------------- |
+  | `SECRET_KEY`             | `django-insecure-...` (générez une clé forte) | Production    |
+  | `DEBUG`                  | `False`                                       | Production    |
+  | `ALLOWED_HOSTS`          | `projet-final-bice.vercel.app,localhost`      | Production    |
+  | `DATABASE_URL`           | `postgresql://user:pass@host/db`              | Production    |
+  | `DJANGO_SETTINGS_MODULE` | `config.settings`                             | Production    |
+
+  <Note>
+    La variable `ALLOWED_HOSTS` doit impérativement inclure votre domaine `.vercel.app` (ex. `projet-final-bice.vercel.app`). Sans cela, Django refusera toutes les requêtes entrantes avec une erreur `400 Bad Request`. Si vous configurez un domaine personnalisé plus tard, ajoutez-le également à cette variable.
+  </Note>
+
+  ### Connecter une base de données PostgreSQL
+
+  SantéSN nécessite une base de données relationnelle en production. Deux options sont disponibles depuis le tableau de bord Vercel :
+
+  <Tabs>
+    <Tab title="Vercel Postgres (Neon)">
+      1. Dans votre projet Vercel, allez dans **Storage > Create Database**.
+      2. Sélectionnez **Postgres** (propulsé par Neon).
+      3. Choisissez la région la plus proche (ex. `eu-west-1` pour l'Afrique de l'Ouest).
+      4. Vercel ajoute automatiquement `DATABASE_URL` à vos variables d'environnement.
+    </Tab>
+
+    <Tab title="Neon (externe)">
+      1. Créez un projet sur [neon.tech](https://neon.tech).
+      2. Copiez la chaîne de connexion au format `postgresql://...`.
+      3. Collez-la manuellement dans Vercel **Settings > Environment Variables** sous le nom `DATABASE_URL`.
+    </Tab>
+
+    <Tab title="Supabase (externe)">
+      1. Créez un projet sur [supabase.com](https://supabase.com).
+      2. Récupérez l'URI de connexion dans **Settings > Database**.
+      3. Ajoutez-la comme `DATABASE_URL` dans Vercel.
+    </Tab>
+  </Tabs>
+
+  Assurez-vous que votre `settings.py` utilise `dj_database_url` pour lire `DATABASE_URL` :
+
+  ```python theme={null}
+  import dj_database_url
+  import os
+
+  DATABASES = {
+      'default': dj_database_url.config(
+          default=os.environ.get('DATABASE_URL'),
+          conn_max_age=600,
+      )
+  }
+  ```
+
+  ### Exécuter les migrations après le premier déploiement
+
+  Les migrations Django ne s'exécutent pas automatiquement à chaque déploiement Vercel. La méthode recommandée est d'inclure la commande de migration directement dans votre script de build.
+
+  <Warning>
+    **Exécutez les migrations avant d'ouvrir l'application à vos utilisateurs.** Une base de données sans migrations appliquées provoque des erreurs `OperationalError` dès la première connexion. Si vous constatez ces erreurs sur votre URL Vercel, c'est la cause la plus fréquente.
+  </Warning>
+
+  **Option A — Inclure `migrate` dans `build_files.sh`** (recommandée) :
+
+  Ajoutez la commande de migration directement dans votre script de build pour qu'elle s'exécute automatiquement à chaque déploiement :
+
+  ```bash theme={null}
+  #!/bin/bash
+  # build_files.sh
+  pip install -r requirements.txt
+  python manage.py migrate --noinput
+  python manage.py collectstatic --noinput
+  ```
+
+  **Option B — Via un Release Command** dans `vercel.json` :
+
+  ```json theme={null}
+  {
+    "version": 2,
+    "builds": [
+      {
+        "src": "config/wsgi.py",
+        "use": "@vercel/python",
+        "config": { "maxLambdaSize": "15mb" }
+      },
+      {
+        "src": "build_files.sh",
+        "use": "@vercel/static-build",
+        "config": { "distDir": "staticfiles" }
+      }
+    ],
+    "routes": [
+      {
+        "src": "/static/(.*)",
+        "dest": "/staticfiles/$1"
+      },
+      {
+        "src": "/(.*)",
+        "dest": "config/wsgi.py"
+      }
+    ]
+  }
+  ```
+
+  <Note>
+    Ce point est déduit du comportement de la plateforme et n'a pas été vérifié dans le code source. La Vercel CLI ne dispose pas d'une commande `vercel run` permettant d'exécuter des commandes arbitraires dans l'environnement de production. L'inclusion de `python manage.py migrate` dans `build_files.sh` est la méthode la plus fiable et la plus couramment documentée pour les projets Django sur Vercel.
+  </Note>
+
+  ### Vérifier le déploiement
+
+  Une fois le déploiement terminé (Vercel affiche **Ready**), ouvrez l'URL fournie et testez les points d'entrée principaux :
+
+  | URL                                          | Résultat attendu                   |
+  | -------------------------------------------- | ---------------------------------- |
+  | `https://votre-projet.vercel.app/`           | Page d'accueil SantéSN             |
+  | `https://votre-projet.vercel.app/connexion/` | Formulaire de connexion            |
+  | `https://votre-projet.vercel.app/admin/`     | Interface Django admin             |
+  | `https://votre-projet.vercel.app/cgu/`       | Conditions générales d'utilisation |
+
+  Si une page affiche une erreur `500`, consultez les **logs de déploiement** dans Vercel Dashboard > votre projet > **Deployments > Functions**.
+</Steps>
+
+## HTTPS et fichiers statiques
+
+<Tip>
+  Vercel active automatiquement **HTTPS avec TLS 1.3** sur toutes les URLs de déploiement, y compris les previews de branches. Vous n'avez rien à configurer pour le certificat SSL. De plus, les fichiers statiques servis depuis `staticfiles/` sont automatiquement mis en cache sur le **CDN mondial de Vercel** (edge network), ce qui améliore les temps de chargement pour les utilisateurs situés au Sénégal et dans la sous-région.
+</Tip>
+
+## Variables d'environnement de référence
+
+<AccordionGroup>
+  <Accordion title="Variables obligatoires en production">
+    | Variable        | Description                                                                                                                                          |
+    | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+    | `SECRET_KEY`    | Clé secrète Django. Générez-en une avec `python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"` |
+    | `DEBUG`         | Doit être `False` en production. `True` expose des informations sensibles.                                                                           |
+    | `ALLOWED_HOSTS` | Liste des domaines autorisés, séparés par des virgules.                                                                                              |
+    | `DATABASE_URL`  | URI de connexion PostgreSQL complète.                                                                                                                |
+  </Accordion>
+
+  <Accordion title="Variables optionnelles recommandées">
+    | Variable                 | Description                                             |
+    | ------------------------ | ------------------------------------------------------- |
+    | `DJANGO_SETTINGS_MODULE` | Module de settings à charger (`config.settings`).       |
+    | `SECURE_SSL_REDIRECT`    | Mettre à `True` pour forcer HTTPS (recommandé).         |
+    | `SESSION_COOKIE_SECURE`  | Mettre à `True` pour n'envoyer le cookie que sur HTTPS. |
+    | `CSRF_COOKIE_SECURE`     | Mettre à `True` pour sécuriser le token CSRF.           |
+  </Accordion>
+</AccordionGroup>
+
+## Déploiements ultérieurs
+
+Après la mise en production initiale, chaque `git push` vers la branche `main` déclenche automatiquement un nouveau déploiement sur Vercel. Si votre `build_files.sh` inclut `python manage.py migrate`, les nouvelles migrations s'appliquent automatiquement à chaque déploiement. Vérifiez les logs Vercel après chaque push pour confirmer que les migrations se sont exécutées sans erreur.

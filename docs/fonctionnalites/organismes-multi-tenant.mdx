@@ -1,0 +1,105 @@
+# Organismes, Multi-Tenancy et Réseaux Conventionnés
+
+> Fonctionnement du modèle multi-tenant de SantéSN : étanchéité stricte des données d'entreprises, gestionnaires IPM, conventions prestataires et plans de couverture personnalisés.
+
+SantéSN est conçu dès sa base comme une plateforme **multi-tenant** (multi-organismes). Elle permet d'héberger sur une même infrastructure plusieurs Institutions de Prévoyance Maladie (IPM), mutuelles de santé, compagnies d'assurances et entreprises souscriptrices tout en garantissant un cloisonnement cryptographique et logique absolu : **les données d'une entreprise A ne sont jamais visibles ni accessibles par une entreprise B**.
+
+## Architecture du cloisonnement multi-tenant
+
+Chaque entité souscriptrice ou gestionnaire de santé correspond à une instance du modèle `Organisme`.
+
+```
+                    ┌─────────────────────────┐
+                    │    Plateforme SantéSN   │
+                    └────────────┬────────────┘
+                                 │
+         ┌───────────────────────┴───────────────────────┐
+         ▼                                               ▼
+┌─────────────────────────────────┐   ┌─────────────────────────────────┐
+│     Organisme A (ex: IPM A)     │   │   Organisme B (ex: Entreprise B)│
+├─────────────────────────────────┤   ├─────────────────────────────────┤
+│ • Gestionnaires & RH dédiés     │   │ • Gestionnaires & RH dédiés     │
+│ • Assurés & Ayants droit A      │   │ • Assurés & Ayants droit B      │
+│ • Plans de couverture dédiés    │   │ • Plans de couverture dédiés    │
+│ • Conventions prestataires A    │   │ • Conventions prestataires B    │
+│ • Bordereaux de liquidation A   │   │ • Bordereaux de liquidation B   │
+└─────────────────────────────────┘   └─────────────────────────────────┘
+                 ▲                                     ▲
+                 └─────────── Barrière ORM ────────────┘
+                   (Isolation stricte au niveau QuerySet)
+```
+
+### Règle d'or de l'étanchéité
+
+Dans toutes les vues d'administration et de gestion de SantéSN, le filtrage par organisme est imposé automatiquement au niveau de la couche ORM Django :
+
+```python
+# Exemple de filtrage systématique appliqué dans les vues
+if not request.user.is_superuser:
+    queryset = queryset.filter(organisme=request.user.organisme)
+```
+
+Un gestionnaire d'IPM ou un responsable RH d'une entreprise partenaire ne peut donc à aucun moment :
+- Consulter la liste des salariés ou assurés d'une autre entité.
+- Visualiser les prises en charge ou les demandes de remboursement d'un autre organisme.
+- Télécharger des bordereaux de liquidation ou des justificatifs médicaux hors de son périmètre.
+- Modifier les plans de couverture ou les conventions d'un organisme tiers.
+
+## Types d'organismes pris en charge
+
+SantéSN gère nativement différentes typologies d'organismes sénégalais :
+
+| Type d'organisme | Rôle principal | Fonctionnalités clés |
+| :--- | :--- | :--- |
+| **IPM (Institution de Prévoyance Maladie)** | Gestionnaire d'assurance santé obligatoire | Conventions prestataires, liquidation des factures, émission des bons de prise en charge |
+| **Entreprise souscriptrice** | Entreprise ayant souscrit une mutuelle ou IPM | Gestion de la liste des salariés bénéficiaires, suivi de la sinistralité agrégée |
+| **Mutuelle de santé communautaire** | Mutuelle locale ou professionnelle | Cotisations, forfaits de soins primaires, suivi des ayants droit |
+| **Compagnie d'assurance privée** | Assureur santé complémentaire | Plans de couverture sur-mesure, plafonds annuels, tiers payant automatisé |
+
+## Plans de couverture personnalisés
+
+Chaque organisme peut définir un ou plusieurs **Plans de Couverture** (`PlanCouverture`) assignés à ses bénéficiaires (ex: *Plan Standard 80%*, *Plan Cadre 100%*, *Plan Famille Mutuelle*).
+
+Un plan de couverture configure de façon granulaire :
+- **Taux de prise en charge général** (ex: 80% IPM, 20% ticket modérateur assuré).
+- **Taux spécifiques par catégorie d'actes** :
+  - Consultations généralistes et spécialistes
+  - Médicaments et pharmacie de ville
+  - Hospitalisation et chirurgie
+  - Analyses de biologie médicale et radiologie
+  - Soins dentaires et prothèses
+  - Optique médicale et montures
+- **Plafonds périodiques** (plafond annuel global ou sous-plafonds par spécialité).
+
+Lorsqu'un médecin prescrit un acte ou qu'un pharmacien scanne une ordonnance, le moteur de calcul tiers payant applique automatiquement le taux exact du plan associé au patient.
+
+## Réseau de conventions prestataires
+
+Un organisme assureur négocie des accords de tiers payant avec un réseau d'établissements de santé. SantéSN modélise ces accords via `ConventionPrestataire` :
+
+<CardGroup cols={2}>
+  <Card title="Gestion des conventions" icon="handshake" href="/conventions/">
+    Association d'un prestataire (clinique, hôpital, pharmacie, cabinet médical) à un organisme avec numéro de convention, date d'effet et date d'échéance.
+  </Card>
+
+  <Card title="Conditions tarifaires" icon="file-invoice-dollar" href="/conventions/">
+    Définition de taux préférentiels, remises conventionnelles et acceptation du tiers payant sans avance de frais.
+  </Card>
+
+  <Card title="Recherche géolocalisée" icon="map-pin" href="/assure/prestataires-proches/">
+    L'assuré recherche facilement sur son tableau de bord les cliniques et pharmacies conventionnées avec son propre organisme à proximité.
+  </Card>
+
+  <Card title="Validation du statut" icon="circle-check" href="/conventions/">
+    Vérification en temps réel du statut actif de la convention lors de l'enregistrement de chaque acte ou prise en charge.
+  </Card>
+</CardGroup>
+
+## Bordereaux de télétransmission B2B
+
+Pour simplifier la facturation périodique entre prestataires et organismes payeurs, SantéSN intègre un module de **télétransmission B2B** (`/teletransmission/`) :
+
+1. **Agrégation automatique** de toutes les prises en charge et ordonnances honorées sur la période.
+2. **Génération de bordereaux de liquidation** détaillés par prestataire et par organisme.
+3. **Export en formats comptables** : téléchargement en **PDF certifié** et en classeur **Excel** pour intégration dans les logiciels ERP / comptabilité.
+4. **Pointage et rapprochement** : marquage des règlements bancaires (virement, chèque) avec horodatage immuable dans le `JournalActivite`.

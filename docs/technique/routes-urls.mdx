@@ -1,0 +1,103 @@
+# Routes et URLs de la plateforme SantéSN
+
+> Inventaire exhaustif des routes publiques, des espaces par rôle, des endpoints API, de la supervision système et des webhooks WhatsApp de SantéSN.
+
+SantéSN expose un ensemble structuré de routes HTTP organisées selon le niveau d'autorisation et le rôle métier de l'utilisateur. Toute tentative d'accès non authentifié à une ressource protégée entraîne une redirection automatique vers `/connexion/`, tout en mémorisant l'URL demandée pour une redirection ultérieure transparente.
+
+## Routes publiques & PWA
+
+Ces routes sont accessibles à tous les visiteurs sans authentification préalable.
+
+| Méthode | URL | Description |
+| :--- | :--- | :--- |
+| `GET` | `/` | Page d'accueil officielle et présentation institutionnelle |
+| `GET`, `POST` | `/connexion/` | Formulaire d'authentification et ouverture de session (8h) |
+| `GET`, `POST` | `/deconnexion/` | Révocation de session et suppression du cookie `sessionid` |
+| `GET`, `POST` | `/mot-de-passe-oublie/` | Demande de réinitialisation sécurisée de mot de passe |
+| `GET`, `POST` | `/mot-de-passe-reinitialisation/<uidb64>/<token>/` | Validation du jeton cryptographique et saisie du nouveau mot de passe |
+| `GET` | `/activer-compte/<uidb64>/<token>/` | Activation du compte assuré ou praticien provisionné par l'IPM |
+| `GET` | `/cgu/` | Conditions Générales d'Utilisation |
+| `GET` | `/politique-confidentialite/` | Politique de confidentialité et mentions légales CDP (Loi n°2008-12) |
+| `GET` | `/manifest.json` | Manifeste PWA pour installation mobile (Android / iOS) |
+| `GET` | `/sw.js` | Service Worker gérant la mise en cache statique |
+| `GET` | `/offline/` | Page de secours conviviale en cas de perte de connectivité réseau |
+| `GET` | `/robots.txt` | Directives d'indexation pour les moteurs de recherche |
+| `GET` | `/sitemap.xml` | Plan du site XML |
+
+## Espace Assuré (`/espace/assure/`)
+
+Accessible exclusivement aux utilisateurs disposant du rôle `ASSURE`.
+
+| Méthode | URL | Description |
+| :--- | :--- | :--- |
+| `GET` | `/espace/assure/` | Tableau de bord de l'assuré (synthèse des soins, alertes, droits) |
+| `GET` | `/assure/carte/` | Carte dématérialisée de tiers payant avec QR Code d'identification |
+| `GET` | `/assure/attestation-droits/` | Attestation officielle d'affiliation et de droits en cours de validité |
+| `GET` | `/assure/rendez-vous/` | Liste des rendez-vous passés et à venir |
+| `GET`, `POST` | `/assure/rendez-vous/ajouter/` | Prise de rendez-vous avec choix de spécialité et médecin |
+| `POST` | `/assure/rendez-vous/<pk>/annuler/` | Annulation d'un rendez-vous planifié |
+| `GET` | `/assure/ordonnances/` | Répertoire des ordonnances numériques de l'assuré |
+| `GET` | `/assure/ordonnances/<pk>/` | Fiche détaillée d'une ordonnance avec QR Code et posologies |
+| `GET` | `/assure/prises-en-charge/` | Historique des prises en charge et demandes d'accord préalable |
+| `GET`, `POST` | `/assure/prises-en-charge/demander/` | Soumission d'une demande de prise en charge avec devis |
+| `GET` | `/assure/remboursements/` | Suivi des demandes de remboursement hors réseau conventionné |
+| `GET`, `POST` | `/assure/remboursements/demander/` | Dépôt d'une demande de remboursement avec justificatif médical |
+| `GET` | `/assure/ayants-droit/` | Gestion des ayants droit affiliés (conjoint, enfants) |
+| `GET`, `POST` | `/assure/ayants-droit/ajouter/` | Déclaration d'un ayant droit avec téléversement d'état civil |
+| `GET` | `/assure/prestataires-proches/` | Annuaire géolocalisé des cliniques et pharmacies conventionnées |
+| `GET` | `/assure/assistant/` | Assistant virtuel et questions fréquentes |
+
+## Espace Médecin (`/espace/medecin/`)
+
+Accessible exclusivement aux professionnels de santé disposant du rôle `MEDECIN`.
+
+| Méthode | URL | Description |
+| :--- | :--- | :--- |
+| `GET` | `/espace/medecin/` | Tableau de bord praticien et indicateurs d'activité clinique |
+| `GET` | `/medecin/agenda/` | Agenda dynamique et gestion du planning de consultations |
+| `POST` | `/medecin/rendez-vous/<pk>/statut/` | Mise à jour du statut d'un rendez-vous (confirmé, honoré, absent) |
+| `GET` | `/medecin/patients/` | File active et liste des patients suivis par le praticien |
+| `GET` | `/medecin/patients/<pk>/` | Dossier patient et antécédents médicaux (secret médical) |
+| `GET`, `POST` | `/medecin/consultations/ajouter/` | Enregistrement d'une nouvelle consultation médicale |
+| `GET`, `POST` | `/medecin/consultations/<id>/ordonnance/ajouter/` | Rédaction et émission d'une ordonnance sécurisée `RX-XXXXXXXXXX` |
+| `GET` | `/medecin/scanner/` | Scanner optique pour vérifier la carte d'un assuré |
+
+## Espace Pharmacien (`/espace/pharmacien/`)
+
+Accessible exclusivement aux pharmaciens d'officine disposant du rôle `PHARMACIEN`.
+
+| Méthode | URL | Description |
+| :--- | :--- | :--- |
+| `GET` | `/espace/pharmacien/` | Tableau de bord officinal et statistiques de dispensation |
+| `GET` | `/pharmacien/scanner/` | Interface du scanner QR Code pour vérification d'ordonnances |
+| `POST` | `/pharmacien/ordonnances/<pk>/delivrer/` | Confirmation de délivrance et activation du verrou anti-fraude |
+| `GET` | `/pharmacien/historique/` | Registre des ordonnances délivrées pour liquidation du tiers payant |
+
+## Gestion IPM & Administration Multi-Tenant
+
+Accessible aux rôles `GESTIONNAIRE` et `ADMIN` dans la limite stricte de leur organisme.
+
+| Méthode | URL | Description |
+| :--- | :--- | :--- |
+| `GET` | `/tableau-de-bord/` | Tableau de bord de gestion et indicateurs médico-financiers |
+| `GET` | `/organismes/` | Répertoire des organismes souscripteurs et mutuelles |
+| `GET`, `POST` | `/plans-de-couverture/` | Définition des plans de prise en charge et barèmes de remboursement |
+| `GET`, `POST` | `/conventions/` | Gestion des conventions avec cliniques, hôpitaux et pharmacies |
+| `GET` | `/teletransmission/` | Bordereaux de liquidation tiers payant et exports comptables |
+| `GET` | `/teletransmission/exporter/pdf/` | Export PDF certifié du bordereau de liquidation |
+| `GET` | `/teletransmission/exporter/excel/` | Export Excel du bordereau de télétransmission B2B |
+| `GET` | `/remboursements/` | Instruction des demandes de remboursement et validation comptable |
+| `GET` | `/prises-en-charge/` | Traitement des accords préalables et émission des bons de PEC |
+| `GET` | `/journal/` | Consultation du journal d'activité immuable (`JournalActivite`) |
+| `GET` | `/rapports/` | Analyses statistiques et graphiques de sinistralité |
+
+## Supervision, DevOps & Intégrations Externes
+
+| Méthode | URL | Description | Accès requis |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/supervision/` | Tableau de bord de supervision (CPU, RAM, DB Neon, Sentry) | Superutilisateur / Admin |
+| `GET` | `/supervision/tester-sentry/` | Déclenchement d'une exception de test pour vérifier l'alerte Sentry | Superutilisateur |
+| `GET` | `/health/`, `/api/health/` | Diagnostic de santé système JSON pour load-balancers et Uptime | Public / Monitoring |
+| `GET` | `/metrics/` | Exportateur de métriques au format standard Prometheus | Restreint / Prometheus |
+| `GET`, `POST` | `/api/whatsapp/webhook/` | Webhook officiel Meta avec validation de signature HMAC SHA-256 | Meta Cloud API |
+| `GET` | `/documents/.../` | Téléchargement contrôlé des justificatifs médicaux et pièces d'identité | Droit d'accès validé |
