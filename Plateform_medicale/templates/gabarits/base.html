@@ -136,7 +136,7 @@
             --text-main: var(--text);
             --texte-principal: var(--text);
             --text-muted: var(--muted);
-            --texte-secondaire: #cbd5e1;
+            --texte-secondaire: var(--muted);
             --fond-general: var(--bg);
             --surface-alt: var(--champ-bg);
             --surface-carte: var(--surface);
@@ -211,7 +211,7 @@
             --text-main: var(--text);
             --texte-principal: var(--text);
             --text-muted: var(--muted);
-            --texte-secondaire: #cbd5e1;
+            --texte-secondaire: var(--muted);
             --fond-general: var(--bg);
             --surface-alt: var(--champ-bg);
             --surface-carte: var(--surface);
@@ -7414,11 +7414,93 @@
             color: rgba(255, 255, 255, 0.92) !important;
         }
 
+        /* Adaptation automatique de la croix du logo dans la topbar en mode sombre */
+        :root[data-theme="sombre"] .topbar .mobile-brand svg rect,
+        :root[data-theme="sombre"] .topbar .logo-marque-croix {
+          fill: #EFF4F3 !important;
+        }
+        /* Contraste renforcé de tous les éléments de la topbar (en haut de l'écran) */
+        .topbar {
+          background: var(--surface) !important;
+          border-bottom: 1px solid var(--border) !important;
+          color: var(--text) !important;
+        }
+        .topbar .fil-ariane,
+        .topbar .fil-ariane b,
+        .topbar .topbar-identite b,
+        .topbar .mobile-brand span {
+          color: var(--titre) !important;
+        }
+        .topbar .topbar-identite span {
+          color: var(--muted) !important;
+        }
+        .topbar .topbar-bouton,
+        .topbar .sidebar-toggle,
+        .topbar .topbar-compte {
+          color: var(--titre) !important;
+          background: var(--champ-bg) !important;
+          border: 1px solid var(--border) !important;
+        }
+        .menu-theme-panneau,
+        .menu-notifications-panneau,
+        .menu-compte-panneau {
+          background: var(--surface) !important;
+          color: var(--text) !important;
+          border: 1px solid var(--border) !important;
+        }
+        .theme-bouton-rapide {
+          color: var(--text) !important;
+        }
+        /* Contraste forcé de la section "À traiter maintenant" (.file-attente) en mode clair et sombre */
+        .file-attente {
+          background: var(--surface) !important;
+          border: 1px solid var(--border) !important;
+          color: var(--text) !important;
+        }
+        .file-attente .file-titre,
+        .file-attente h2.file-titre {
+          color: var(--titre) !important;
+          opacity: 1 !important;
+          visibility: visible !important;
+        }
+        .file-attente .file-tuile {
+          background: var(--champ-bg) !important;
+          border: 1px solid var(--border) !important;
+          color: var(--text) !important;
+        }
+        .file-attente .file-tuile .file-nombre {
+          color: var(--titre) !important;
+        }
+        .file-attente .file-tuile .file-libelle {
+          color: var(--text) !important;
+        }
+        .file-attente .file-tuile .file-entete,
+        .file-attente .file-tuile .file-note {
+          color: var(--muted) !important;
+        }
+
         @media (max-width: 768px) {
             .topbar {
-                padding-top: max(10px, env(safe-area-inset-top)) !important;
+                display: flex !important;
+                flex-wrap: wrap !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                gap: 8px !important;
+                padding: max(10px, env(safe-area-inset-top)) 12px 10px 12px !important;
                 height: auto !important;
                 min-height: 60px !important;
+            }
+            .topbar .fil-ariane {
+                display: none !important;
+            }
+            .topbar .topbar-identite {
+                display: none !important;
+            }
+            .topbar .topbar-recherche {
+                order: 3 !important;
+                width: 100% !important;
+                flex: 1 1 100% !important;
+                margin: 4px 0 0 0 !important;
             }
             main, .main-content, .content-wrapper {
                 padding-left: 12px !important;

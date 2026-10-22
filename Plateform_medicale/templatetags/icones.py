@@ -466,8 +466,8 @@ def logo_marque(taille=36, fond="clair", epaisseur_pouls=2.6):
     """Mark SVG du logo (croix medicale + pouls), fond clair ou sombre."""
     couleur_croix = "#EFF4F3" if fond == "sombre" else "#0B2027"
     corps = (
-        f'<{_CROIX_V} fill="{couleur_croix}"/>'
-        f'<{_CROIX_H} fill="{couleur_croix}"/>'
+        f'<{_CROIX_V} fill="{couleur_croix}" class="logo-marque-croix"/>'
+        f'<{_CROIX_H} fill="{couleur_croix}" class="logo-marque-croix"/>'
         f'<path d="{_POULS}" fill="none" stroke="#E0824F" stroke-width="{epaisseur_pouls}" '
         'stroke-linecap="round" stroke-linejoin="round"/>'
     )
