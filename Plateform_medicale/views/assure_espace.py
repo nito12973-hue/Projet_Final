@@ -57,6 +57,12 @@ def _beneficiaires(patient, uniquement_valides=False):
 @role_required(User.Role.ASSURE)
 def prestataires_proches(request):
     prestataires_partenaires = Prestataire.objects.filter(partenaire=True)
+    org = getattr(request.user, "organisme", None)
+    if org:
+        qs_org = prestataires_partenaires.filter(conventions_organismes__organisme=org)
+        if qs_org.exists():
+            prestataires_partenaires = qs_org
+
     avec_coordonnees = prestataires_partenaires.filter(
         latitude__isnull=False, longitude__isnull=False
     )
@@ -468,6 +474,7 @@ def ajouter_rendez_vous_assure(request):
             request.POST,
             beneficiaires=beneficiaires,
             prestataire=_prestataire_demande(request.POST),
+            organisme=patient.organisme,
         )
         if form.is_valid():
             rdv = form.save()
@@ -484,8 +491,22 @@ def ajouter_rendez_vous_assure(request):
         if medecin_id and medecin_id.isdigit():
             initial["medecin"] = medecin_id
         form = RendezVousAssureForm(
-            beneficiaires=beneficiaires, prestataire=prestataire, initial=initial
+            beneficiaires=beneficiaires,
+            prestataire=prestataire,
+            initial=initial,
+            organisme=patient.organisme,
         )
+    org_patient = getattr(patient, "organisme", None)
+    medecins_qs = Medecin.objects.filter(
+        Q(user__is_active=True) | Q(user__isnull=True)
+    ).select_related("prestataire")
+    if org_patient:
+        qs_m_org = medecins_qs.filter(
+            Q(user__organisme=org_patient)
+            | Q(prestataire__conventions_organismes__organisme=org_patient)
+        ).distinct()
+        if qs_m_org.exists():
+            medecins_qs = qs_m_org
     medecins_map = {
         str(m.pk): {
             "nom": str(m),
@@ -494,9 +515,7 @@ def ajouter_rendez_vous_assure(request):
             "specialite": m.specialite or "",
             "telephone": (m.telephone or (m.prestataire.telephone if m.prestataire else "")).replace(" ", "").replace("+", "").replace("-", "").replace(".", ""),
         }
-        for m in Medecin.objects.filter(
-            Q(user__is_active=True) | Q(user__isnull=True)
-        ).select_related("prestataire")
+        for m in medecins_qs
     }
     return render(
         request,

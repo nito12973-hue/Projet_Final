@@ -13956,4 +13956,38 @@ class SeparationRolesAdminGestionnaireTests(TestCase):
         self.assertIn("Centre Sante A", rep_partenaires)
         self.assertNotIn("Centre Sante B", rep_partenaires)
 
+    def test_ics_rendez_vous_etanche_entre_organismes(self):
+        """Un gestionnaire de l'organisme A ne peut pas télécharger le fichier ICS d'un RDV de l'organisme B."""
+        org_b = Organisme.objects.create(nom="Entreprise B ICS", code="ENT-ICS-B", actif=True)
+        user_assure_b = User.objects.create_user(email="assure.b.ics@santesn.sn", password="P!", role=User.Role.ASSURE, organisme=org_b)
+        patient_b = Patient.objects.create(
+            user=user_assure_b, nom="Patient", prenom="B", date_naissance=datetime.date(1990, 1, 1), organisme=org_b
+        )
+        user_dr_b = User.objects.create_user(email="dr.b.ics@santesn.sn", password="P!", role=User.Role.MEDECIN, organisme=org_b)
+        med_b = Medecin.objects.create(user=user_dr_b, nom="B", prenom="Dr", specialite="Généraliste", email="dr.b.ics@santesn.sn")
+        rdv_b = RendezVous.objects.create(
+            patient=patient_b,
+            medecin=med_b,
+            date_heure=timezone.now() + datetime.timedelta(days=2),
+            motif="Consultation B",
+        )
+        self.client.force_login(self.gestionnaire)
+        resp = self.client.get(reverse("telecharger_ics_rendez_vous", args=[rdv_b.pk]))
+        self.assertEqual(resp.status_code, 403)
+
+    def test_prestataires_proches_assure_filtre_par_organisme(self):
+        """L'assuré ne voit sur la carte des prestataires proches que les partenaires conventionnés avec son organisme."""
+        org_b = Organisme.objects.create(nom="Entreprise B Carte", code="ENT-CARTE-B", actif=True)
+        prest_a = Prestataire.objects.create(nom="Clinique Proche A", partenaire=True, latitude="14.6937", longitude="-17.4441")
+        ConventionPrestataire.objects.create(prestataire=prest_a, organisme=self.organisme)
+
+        prest_b = Prestataire.objects.create(nom="Clinique Exclusive B", partenaire=True, latitude="14.6937", longitude="-17.4441")
+        ConventionPrestataire.objects.create(prestataire=prest_b, organisme=org_b)
+
+        self.client.force_login(self.assure)
+        resp = self.client.get(reverse("prestataires_proches"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Clinique Proche A")
+        self.assertNotContains(resp, "Clinique Exclusive B")
+
 
