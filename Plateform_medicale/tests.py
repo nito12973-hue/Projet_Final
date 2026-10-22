@@ -10272,7 +10272,7 @@ class PreLaunchAuditAndLegalPagesTests(TestCase):
             base_html = f.read()
 
         # 1. Anti-débordement global sur html, body, shell, contenu
-        self.assertIn("overflow-x: hidden;", base_html)
+        self.assertIn("overflow-x: clip;", base_html)
         self.assertIn("max-width: 100%;", base_html)
         self.assertIn("grid-template-columns: 280px minmax(0, 1fr);", base_html)
 
