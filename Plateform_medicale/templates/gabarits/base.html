@@ -7410,7 +7410,6 @@
                 <a href="{% url 'admin_liste_demandes_support' %}" aria-label="Support informatique" data-tooltip="Support informatique" class="{% if url_name == 'admin_liste_demandes_support' or url_name == 'admin_detail_demande_support' %}active{% endif %}">{% icone "chat" %} <span class="nav-texte">Support informatique</span>{% if nb_demandes_support_attente %} <span class="badge-non-lues">{{ nb_demandes_support_attente }}</span>{% endif %}</a>
                 <a href="{% url 'envoyer_notification' %}" aria-label="Notifications système" data-tooltip="Notifications système" class="{% if url_name == 'envoyer_notification' or url_name == 'liste_notifications_envoyees' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications système</span></a>
                 <a href="{% url 'parametres' %}" aria-label="Paramètres" data-tooltip="Paramètres serveur" class="{% if url_name == 'parametres' or url_name == 'parametres_section' or url_name == 'mon_compte' or url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "settings" %} <span class="nav-texte">Paramètres serveur</span></a>
-                <a href="https://documentation-santesn.mintlify.app" target="_blank" rel="noopener noreferrer" aria-label="Documentation technique" data-tooltip="Documentation Mintlify">{% icone "file-text" %} <span class="nav-texte">Documentation Mintlify</span></a>
                 {% endwith %}
                 {% elif current_role == "GESTIONNAIRE" %}
                 {% with url_name=request.resolver_match.url_name %}
@@ -7440,7 +7439,6 @@
                 <a href="{% url 'liste_demandes_remboursement' %}" aria-label="Remboursements hors réseau" data-tooltip="Remboursements hors réseau" class="{% if url_name == 'liste_demandes_remboursement' or url_name == 'instruire_demande_remboursement' or url_name == 'marquer_remboursement_regle' %}active{% endif %}">{% icone "credit-card" %} <span class="nav-texte">Remboursements</span>{% if nb_remboursements_attente %} <span class="badge-non-lues">{{ nb_remboursements_attente }}</span>{% endif %}</a>
                 <a href="{% url 'bordereau_teletransmission' %}" aria-label="Bordereau Tiers-Payant" data-tooltip="Bordereau Tiers-Payant" class="{% if url_name == 'bordereau_teletransmission' %}active{% endif %}">{% icone "file-text" %} <span class="nav-texte">Bordereau Tiers-Payant</span></a>
                 <a href="{% url 'parametres' %}" aria-label="Paramètres" data-tooltip="Paramètres" class="{% if url_name == 'parametres' or url_name == 'parametres_section' or url_name == 'mon_compte' or url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "settings" %} <span class="nav-texte">Paramètres</span></a>
-                <a href="https://documentation-santesn.mintlify.app" target="_blank" rel="noopener noreferrer" aria-label="Documentation technique" data-tooltip="Documentation Mintlify">{% icone "file-text" %} <span class="nav-texte">Documentation</span></a>
                 {% endwith %}
                 {% elif current_role == "MEDECIN" %}
                 {% with url_name=request.resolver_match.url_name %}
@@ -7609,7 +7607,6 @@
                                 {% endif %}
                                 <a href="{% url 'mon_compte' %}">{% icone "user-circle" %} Mon compte</a>
                                 <a href="{% url 'changer_mot_de_passe' %}">{% icone "lock" %} Mot de passe</a>
-                                <a href="https://documentation-santesn.mintlify.app" target="_blank" rel="noopener noreferrer">{% icone "file-text" %} Documentation technique</a>
                                 <form method="post" action="{% url 'logout' %}">
                                     {% csrf_token %}
                                     <button type="submit">{% icone "log-out" %} Déconnexion</button>
@@ -7650,7 +7647,6 @@
                         <span style="display: inline-flex; align-items: center; gap: 5px; color: var(--primary-strong); font-weight: 600; font-size: 11.5px; background: rgba(14, 124, 134, 0.08); padding: 3px 8px; border-radius: 6px;">
                             {% icone "shield" %} Conforme CDP Sénégal (Loi 2008-12)
                         </span>
-                        <a href="https://documentation-santesn.mintlify.app" target="_blank" rel="noopener noreferrer" style="color: var(--muted); text-decoration: none;">Documentation</a>
                         <a href="{% url 'cgu' %}" style="color: var(--muted); text-decoration: none;">CGU</a>
                         <a href="{% url 'politique_confidentialite' %}" style="color: var(--muted); text-decoration: none;">Protection des données</a>
                     </div>
