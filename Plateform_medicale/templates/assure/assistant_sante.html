@@ -115,6 +115,19 @@
         justify-content: center;
     }
 }
+@media (max-width: 480px) {
+    #btn-envoyer-assistant span {
+        display: none;
+    }
+    #btn-envoyer-assistant {
+        padding: 0 14px !important;
+        width: 46px;
+        justify-content: center;
+    }
+    .message-bloc {
+        max-width: 92% !important;
+    }
+}
 </style>
 
 <section class="page-title">
@@ -229,7 +242,7 @@
     <!-- Formulaire de saisie interactif -->
     <form id="form-assistant" method="post" style="margin:0;max-width:none;border:none;border-top:1px solid var(--border);border-radius:0;padding:12px 16px;background:var(--surface);display:flex;gap:8px;align-items:center;box-shadow:none;">
         {% csrf_token %}
-        <input type="text" id="champ-question-assistant" name="message" placeholder="Écrivez ou dictez votre question à l'assistant..." required autocomplete="off" style="margin-bottom:0;flex:1;min-height:46px;font-size:14.5px;padding-left:16px;border-radius:12px;">
+        <input type="text" id="champ-question-assistant" name="message" placeholder="Écrivez ou dictez votre question à l'assistant..." required autocomplete="off" style="margin-bottom:0;flex:1;min-width:0;min-height:46px;font-size:14.5px;padding-left:16px;border-radius:12px;">
         
         <!-- Bouton Microphone / Saisie Vocale -->
         <button type="button" id="btn-vocal-assistant" class="button btn" title="Dicter vocalement" style="min-height:46px;width:46px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:12px;flex-shrink:0;">

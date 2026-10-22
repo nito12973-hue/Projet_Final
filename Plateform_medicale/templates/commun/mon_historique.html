@@ -13,7 +13,8 @@
 
 {% if consultations %}
 <section class="panel" style="border-radius: 16px; box-shadow: var(--ombre-douce); overflow: hidden; border: 1px solid var(--border);">
-    <table>
+    <div class="table-responsive">
+        <table>
         <thead>
             <tr>
                 <th>Date &amp; heure</th>
@@ -69,6 +70,7 @@
             {% endfor %}
         </tbody>
     </table>
+    </div>
 </section>
 {% if consultations.paginator.num_pages > 1 %}
 <nav class="pagination" aria-label="Pagination">

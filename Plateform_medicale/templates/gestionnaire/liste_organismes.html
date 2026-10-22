@@ -56,7 +56,8 @@
 
 {% if organismes %}
 <section class="panel">
-    <table>
+    <div class="table-responsive">
+        <table>
         <caption class="sr-only">Liste des entreprises partenaires</caption>
         <thead>
             <tr>
@@ -123,6 +124,7 @@
             {% endfor %}
         </tbody>
     </table>
+    </div>
 </section>
 {% if organismes.paginator.num_pages > 1 %}
 <nav class="pagination" aria-label="Pagination">

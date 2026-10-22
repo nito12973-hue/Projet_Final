@@ -382,11 +382,12 @@
         background: var(--surface);
         border: 1px solid var(--border);
         border-radius: 20px;
-        max-width: 480px;
+        max-width: min(480px, 100%);
         width: 100%;
-        padding: 26px 28px;
+        padding: clamp(16px, 4vw, 24px);
         box-shadow: 0 20px 45px rgba(0, 0, 0, 0.22);
         animation: animFadeUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+        box-sizing: border-box;
     }
     @keyframes animFadeUp {
         from { opacity: 0; transform: translateY(12px) scale(0.97); }
@@ -526,7 +527,7 @@
 <!-- 2. VUE LISTE ET FILTRES EXISTANTS -->
 <div id="section-liste" style="display:none;">
     <form method="get" class="filtres" style="background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px 18px; box-shadow: var(--ombre-douce); margin-bottom: 20px;">
-        <div style="min-width:180px;">
+        <div style="min-width:min(100%, 180px); flex: 1 1 160px;">
             <label for="periode" style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px;display:block;">Période</label>
             <select id="periode" name="periode" style="margin-bottom:0;">
                 <option value="">Tous</option>
@@ -534,7 +535,7 @@
                 <option value="passes" {% if periode_choisie == "passes" %}selected{% endif %}>Passés</option>
             </select>
         </div>
-        <div style="min-width:180px;">
+        <div style="min-width:min(100%, 180px); flex: 1 1 160px;">
             <label for="statut" style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px;display:block;">Statut</label>
             <select id="statut" name="statut" style="margin-bottom:0;">
                 <option value="">Tous</option>
@@ -652,27 +653,27 @@
         </div>
 
         <div style="display:flex;flex-direction:column;gap:12px;font-size:13.5px;margin-bottom:20px;">
-            <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:8px;flex-wrap:wrap;gap:4px;">
                 <span style="color:var(--muted);">Date &amp; heure</span>
                 <strong id="modal-date-heure" style="color:var(--titre);"></strong>
             </div>
-            <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:8px;flex-wrap:wrap;gap:4px;">
                 <span style="color:var(--muted);">Bénéficiaire</span>
                 <strong id="modal-beneficiaire"></strong>
             </div>
-            <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:8px;flex-wrap:wrap;gap:4px;">
                 <span style="color:var(--muted);">Médecin</span>
                 <strong id="modal-medecin" style="color:var(--primary-strong);"></strong>
             </div>
-            <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:8px;flex-wrap:wrap;gap:4px;">
                 <span style="color:var(--muted);">Établissement</span>
                 <strong id="modal-prestataire"></strong>
             </div>
-            <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:8px;flex-wrap:wrap;gap:4px;">
                 <span style="color:var(--muted);">Motif</span>
-                <span id="modal-motif" style="font-weight:600;"></span>
+                <span id="modal-motif" style="font-weight:600;word-break:break-word;"></span>
             </div>
-            <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:8px;flex-wrap:wrap;gap:4px;">
                 <span style="color:var(--muted);">Statut</span>
                 <span id="modal-statut-badge" class="badge"></span>
             </div>

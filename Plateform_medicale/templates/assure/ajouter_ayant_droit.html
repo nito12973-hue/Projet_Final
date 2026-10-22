@@ -9,10 +9,12 @@
         <h1>Ajouter un ayant droit</h1>
         <p class="subtitle">Une carte de prise en charge sera générée automatiquement · Place(s) restante(s) sur votre contrat : <strong>{{ places_restantes }}</strong> ({{ nb_ayants_droit }}/{{ quota_max }} inscrits).</p>
     </div>
-    <a class="button btn btn-retour-expand" href="{% url 'liste_ayants_droit' %}" title="Retour" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
+    <div class="actions">
+        <a class="button btn btn-retour-expand" href="{% url 'liste_ayants_droit' %}" title="Retour" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
+    </div>
 </section>
 
-<section class="panel panel-form" style="border-radius: 16px; box-shadow: var(--ombre-douce); padding: 24px;">
+<section class="panel panel-form" style="border-radius: 16px; box-shadow: var(--ombre-douce); padding: clamp(16px, 4vw, 24px);">
     <div style="background: var(--surface-alt); border-left: 4px solid var(--primary); padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; color: var(--texte); line-height: 1.5;">
         <strong>Procédure de vérification administrative :</strong> Conformément aux règles d'affiliation IPM et aux contrôles anti-fraude, toute nouvelle déclaration d'ayant droit est examinée par l'administration. Veuillez joindre une pièce justificative officielle (extrait de naissance pour un enfant, acte de mariage pour un conjoint). Les droits de tiers payant seront activés dès validation.
     </div>
@@ -29,7 +31,7 @@
         {% if field.help_text %}<p class="aide" style="font-size: 12px; color: var(--muted); margin-top: 4px;">{{ field.help_text }}</p>{% endif %}
         {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
         {% endfor %}
-        <div class="actions" style="margin-top: 18px; display: flex; gap: 10px; align-items: center;">
+        <div class="actions" style="margin-top: 18px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
             <button class="button primary" type="submit">Ajouter l'ayant droit</button>
             <a class="button btn" href="{% url 'liste_ayants_droit' %}">Annuler</a>
         </div>

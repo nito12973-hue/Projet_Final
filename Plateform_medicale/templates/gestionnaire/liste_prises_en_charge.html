@@ -44,7 +44,8 @@
 </form>
 
 <section class="panel">
-    <table>
+    <div class="table-responsive">
+        <table>
         <thead>
             <tr>
                 <th style="width:36px;"><input type="checkbox" onclick="document.querySelectorAll('input[name=selection]').forEach(cb => cb.checked = this.checked)"></th>
@@ -124,6 +125,7 @@
             {% endfor %}
         </tbody>
     </table>
+    </div>
 </section>
 
 <dialog id="modal-refus-pec" style="border:1px solid var(--border);border-radius:12px;padding:24px;box-shadow:var(--shadow-lg);max-width:480px;background:var(--surface);color:var(--titre);">

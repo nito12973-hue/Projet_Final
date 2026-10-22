@@ -339,7 +339,8 @@
 
 <!-- VUE 2 : TABLEAU CLASSIQUE STRUCTURÉ (Pour consultation rapide) -->
 <section id="conteneur-vue-tableau" class="panel" style="display: none;">
-    <table>
+    <div class="table-responsive">
+        <table>
         <caption class="sr-only">Liste des formules de prise en charge</caption>
         <thead>
             <tr>
@@ -395,6 +396,7 @@
             {% endfor %}
         </tbody>
     </table>
+    </div>
 </section>
 
 {% if plans.paginator.num_pages > 1 %}

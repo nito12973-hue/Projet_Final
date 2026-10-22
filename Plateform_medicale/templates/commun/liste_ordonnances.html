@@ -35,34 +35,36 @@
 
 {% if ordonnances %}
 <section class="panel">
-    <table>
-        <thead>
-            <tr>
-                {% entete_tri request.GET "date_creation" "Émise le" %}
-                {% entete_tri request.GET "consultation__patient__nom" "Patient" %}
-                <th scope="col" class="col-optionnelle">Médecin</th>
-                {% entete_tri request.GET "code_qr" "Code" "col-optionnelle" %}
-                <th scope="col">Délivrance</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for ordonnance in ordonnances %}
-            <tr>
-                <td>{{ ordonnance.date_creation|date:"d/m/Y" }}</td>
-                <td>{{ ordonnance.consultation.patient }}</td>
-                <td class="col-optionnelle">{{ ordonnance.consultation.medecin }}</td>
-                <td class="col-optionnelle"><span class="code">{{ ordonnance.code_qr }}</span></td>
-                <td>
-                    {% if ordonnance.delivrance %}
-                    <span class="badge validee">Délivrée le {{ ordonnance.delivrance.date_delivrance|date:"d/m/Y" }}</span>
-                    {% else %}
-                    <span class="badge en_attente">Non délivrée</span>
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    {% entete_tri request.GET "date_creation" "Émise le" %}
+                    {% entete_tri request.GET "consultation__patient__nom" "Patient" %}
+                    <th scope="col" class="col-optionnelle">Médecin</th>
+                    {% entete_tri request.GET "code_qr" "Code" "col-optionnelle" %}
+                    <th scope="col">Délivrance</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ordonnance in ordonnances %}
+                <tr>
+                    <td>{{ ordonnance.date_creation|date:"d/m/Y" }}</td>
+                    <td>{{ ordonnance.consultation.patient }}</td>
+                    <td class="col-optionnelle">{{ ordonnance.consultation.medecin }}</td>
+                    <td class="col-optionnelle"><span class="code">{{ ordonnance.code_qr }}</span></td>
+                    <td>
+                        {% if ordonnance.delivrance %}
+                        <span class="badge validee">Délivrée le {{ ordonnance.delivrance.date_delivrance|date:"d/m/Y" }}</span>
+                        {% else %}
+                        <span class="badge en_attente">Non délivrée</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </section>
 {% if ordonnances.paginator.num_pages > 1 %}
 <nav class="pagination" aria-label="Pagination">

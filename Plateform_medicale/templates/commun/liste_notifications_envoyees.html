@@ -36,32 +36,34 @@
 
 {% if notifications %}
 <section class="panel">
-    <table>
-        <thead>
-            <tr>
-                <th class="col-optionnelle">Date</th>
-                <th>Destinataire</th>
-                <th>Message</th>
-                <th>Lue</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for notification in notifications %}
-            <tr>
-                <td class="col-optionnelle">{{ notification.date_creation|date:"d/m/Y H:i" }}</td>
-                <td>{{ notification.destinataire }}</td>
-                <td>{{ notification.message }}</td>
-                <td>
-                    {% if notification.lue %}
-                    <span class="badge validee">Oui</span>
-                    {% else %}
-                    <span class="badge en_attente">Non</span>
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th class="col-optionnelle">Date</th>
+                    <th>Destinataire</th>
+                    <th>Message</th>
+                    <th>Lue</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for notification in notifications %}
+                <tr>
+                    <td class="col-optionnelle">{{ notification.date_creation|date:"d/m/Y H:i" }}</td>
+                    <td>{{ notification.destinataire }}</td>
+                    <td>{{ notification.message }}</td>
+                    <td>
+                        {% if notification.lue %}
+                        <span class="badge validee">Oui</span>
+                        {% else %}
+                        <span class="badge en_attente">Non</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </section>
 {% if notifications.paginator.num_pages > 1 %}
 <nav class="pagination" aria-label="Pagination">

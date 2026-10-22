@@ -15,10 +15,12 @@
             {% endif %}
         </p>
     </div>
-    <a class="button btn btn-retour-expand" href="{% url 'dashboard_assure' %}" title="Retour au tableau de bord" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
+    <div class="actions">
+        <a class="button btn btn-retour-expand" href="{% url 'dashboard_assure' %}" title="Retour au tableau de bord" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
+    </div>
 </section>
 
-<section class="panel panel-form" style="border-radius: 16px; box-shadow: var(--ombre-douce); padding: 24px;">
+<section class="panel panel-form" style="border-radius: 16px; box-shadow: var(--ombre-douce); padding: clamp(16px, 4vw, 24px);">
     {% if form.non_field_errors %}
     <div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
     {% endif %}
@@ -31,7 +33,7 @@
         {% if field.help_text %}<p class="aide" style="font-size: 12px; color: var(--muted); margin-top: 4px;">{{ field.help_text }}</p>{% endif %}
         {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
         {% endfor %}
-        <div style="margin-top: 16px; display: flex; gap: 10px;">
+        <div style="margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
             <button class="button primary" type="submit">Enregistrer</button>
             <a class="button btn" href="{% url 'dashboard_assure' %}">Annuler</a>
         </div>

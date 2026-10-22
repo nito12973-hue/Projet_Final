@@ -120,7 +120,8 @@
 
 {% if rendez_vous %}
 <section class="panel" style="margin-bottom:24px;">
-    <table>
+    <div class="table-responsive">
+        <table>
         <thead>
             <tr>
                 <th style="min-width:140px;">Date &amp; Heure</th>
@@ -216,6 +217,7 @@
             {% endfor %}
         </tbody>
     </table>
+    </div>
 </section>
 
 {% if rendez_vous.paginator.num_pages > 1 %}

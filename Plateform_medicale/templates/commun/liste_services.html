@@ -14,31 +14,33 @@
 
 {% if services %}
 <section class="panel">
-    <table>
-        <thead>
-            <tr>
-                {% entete_tri request.GET "nom" "Service" %}
-                <th>Description</th>
-                {% entete_tri request.GET "prix" "Prix" %}
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for service in services %}
-            <tr>
-                <td>{{ service.nom }}</td>
-                <td>{{ service.description|default:"-" }}</td>
-                <td>{{ service.prix|franc_cfa }}</td>
-                <td>
-                    <div class="actions">
-                        <a href="{% url 'modifier_service' service.pk %}" class="button primary btn btn-sm">{% icone "edit-2" %} Modifier</a>
-                        <a href="{% url 'supprimer_service' service.pk %}" class="button btn btn-danger btn-sm">{% icone "trash-2" %} Supprimer</a>
-                    </div>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    {% entete_tri request.GET "nom" "Service" %}
+                    <th>Description</th>
+                    {% entete_tri request.GET "prix" "Prix" %}
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for service in services %}
+                <tr>
+                    <td>{{ service.nom }}</td>
+                    <td>{{ service.description|default:"-" }}</td>
+                    <td>{{ service.prix|franc_cfa }}</td>
+                    <td>
+                        <div class="actions">
+                            <a href="{% url 'modifier_service' service.pk %}" class="button primary btn btn-sm">{% icone "edit-2" %} Modifier</a>
+                            <a href="{% url 'supprimer_service' service.pk %}" class="button btn btn-danger btn-sm">{% icone "trash-2" %} Supprimer</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </section>
 {% if services.paginator.num_pages > 1 %}
 <nav class="pagination" aria-label="Pagination">

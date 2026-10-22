@@ -62,7 +62,8 @@
 
 {% if patients %}
 <section class="panel">
-    <table>
+    <div class="table-responsive">
+        <table>
         <thead>
             <tr>
                 {% entete_tri request.GET "id" "N°" "col-optionnelle" %}
@@ -126,6 +127,7 @@
             {% endfor %}
         </tbody>
     </table>
+    </div>
 </section>
 {% if patients.paginator.num_pages > 1 %}
 <nav class="pagination" aria-label="Pagination">

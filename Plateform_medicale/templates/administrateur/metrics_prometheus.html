@@ -74,28 +74,30 @@
         <h2 style="font-size: 15px; margin-top: 0; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
             {% icone "users" %} Répartition des Utilisateurs par Rôle
         </h2>
-        <table style="width: 100%;">
-            <thead>
-                <tr>
-                    <th style="font-size: 12px;">Rôle système</th>
-                    <th style="text-align: right; font-size: 12px;">Compte(s)</th>
-                    <th style="text-align: right; font-size: 12px;">Métrique Prometheus</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for role, count in metriques.roles.items %}
-                <tr>
-                    <td style="font-weight: 600; font-size: 13px;">{{ role }}</td>
-                    <td style="text-align: right; font-weight: 700; font-size: 13px; font-family: var(--font-mono);">{{ count }}</td>
-                    <td style="text-align: right; font-size: 11.5px; font-family: var(--font-mono); color: var(--muted);">
-                        santesn_total_users{role="{{ role }}"}
-                    </td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="3" style="text-align: center; color: var(--muted);">Aucune donnée</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table style="width: 100%;">
+                <thead>
+                    <tr>
+                        <th style="font-size: 12px;">Rôle système</th>
+                        <th style="text-align: right; font-size: 12px;">Compte(s)</th>
+                        <th style="text-align: right; font-size: 12px;">Métrique Prometheus</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for role, count in metriques.roles.items %}
+                    <tr>
+                        <td style="font-weight: 600; font-size: 13px;">{{ role }}</td>
+                        <td style="text-align: right; font-weight: 700; font-size: 13px; font-family: var(--font-mono);">{{ count }}</td>
+                        <td style="text-align: right; font-size: 11.5px; font-family: var(--font-mono); color: var(--muted);">
+                            santesn_total_users{role="{{ role }}"}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" style="text-align: center; color: var(--muted);">Aucune donnée</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </article>
 
     <!-- Volumes Métier IPM -->
@@ -103,42 +105,44 @@
         <h2 style="font-size: 15px; margin-top: 0; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
             {% icone "clipboard-list" %} Volumes Opérationnels SantéSN
         </h2>
-        <table style="width: 100%;">
-            <thead>
-                <tr>
-                    <th style="font-size: 12px;">Indicateur IPM</th>
-                    <th style="text-align: right; font-size: 12px;">Valeur</th>
-                    <th style="text-align: right; font-size: 12px;">Clé OpenMetrics</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td style="font-size: 13px;">Patients assurés inscrits</td>
-                    <td style="text-align: right; font-weight: 700; font-size: 13px; font-family: var(--font-mono);">{{ metriques.patients }}</td>
-                    <td style="text-align: right; font-size: 11.5px; font-family: var(--font-mono); color: var(--muted);">santesn_patients_total</td>
-                </tr>
-                <tr>
-                    <td style="font-size: 13px;">Prises en charge en attente</td>
-                    <td style="text-align: right; font-weight: 700; font-size: 13px; font-family: var(--font-mono); color: #d97706;">{{ metriques.pec_attente }}</td>
-                    <td style="text-align: right; font-size: 11.5px; font-family: var(--font-mono); color: var(--muted);">santesn_prises_en_charge_total{statut="en_attente"}</td>
-                </tr>
-                <tr>
-                    <td style="font-size: 13px;">Prises en charge validées</td>
-                    <td style="text-align: right; font-weight: 700; font-size: 13px; font-family: var(--font-mono); color: #059669;">{{ metriques.pec_validees }}</td>
-                    <td style="text-align: right; font-size: 11.5px; font-family: var(--font-mono); color: var(--muted);">santesn_prises_en_charge_total{statut="validee"}</td>
-                </tr>
-                <tr>
-                    <td style="font-size: 13px;">Ordonnances électroniques</td>
-                    <td style="text-align: right; font-weight: 700; font-size: 13px; font-family: var(--font-mono);">{{ metriques.ordonnances }}</td>
-                    <td style="text-align: right; font-size: 11.5px; font-family: var(--font-mono); color: var(--muted);">santesn_ordonnances_total</td>
-                </tr>
-                <tr>
-                    <td style="font-size: 13px;">Consultations médicales</td>
-                    <td style="text-align: right; font-weight: 700; font-size: 13px; font-family: var(--font-mono);">{{ metriques.consultations }}</td>
-                    <td style="text-align: right; font-size: 11.5px; font-family: var(--font-mono); color: var(--muted);">santesn_consultations_total</td>
-                </tr>
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table style="width: 100%;">
+                <thead>
+                    <tr>
+                        <th style="font-size: 12px;">Indicateur IPM</th>
+                        <th style="text-align: right; font-size: 12px;">Valeur</th>
+                        <th style="text-align: right; font-size: 12px;">Clé OpenMetrics</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="font-size: 13px;">Patients assurés inscrits</td>
+                        <td style="text-align: right; font-weight: 700; font-size: 13px; font-family: var(--font-mono);">{{ metriques.patients }}</td>
+                        <td style="text-align: right; font-size: 11.5px; font-family: var(--font-mono); color: var(--muted);">santesn_patients_total</td>
+                    </tr>
+                    <tr>
+                        <td style="font-size: 13px;">Prises en charge en attente</td>
+                        <td style="text-align: right; font-weight: 700; font-size: 13px; font-family: var(--font-mono); color: #d97706;">{{ metriques.pec_attente }}</td>
+                        <td style="text-align: right; font-size: 11.5px; font-family: var(--font-mono); color: var(--muted);">santesn_prises_en_charge_total{statut="en_attente"}</td>
+                    </tr>
+                    <tr>
+                        <td style="font-size: 13px;">Prises en charge validées</td>
+                        <td style="text-align: right; font-weight: 700; font-size: 13px; font-family: var(--font-mono); color: #059669;">{{ metriques.pec_validees }}</td>
+                        <td style="text-align: right; font-size: 11.5px; font-family: var(--font-mono); color: var(--muted);">santesn_prises_en_charge_total{statut="validee"}</td>
+                    </tr>
+                    <tr>
+                        <td style="font-size: 13px;">Ordonnances électroniques</td>
+                        <td style="text-align: right; font-weight: 700; font-size: 13px; font-family: var(--font-mono);">{{ metriques.ordonnances }}</td>
+                        <td style="text-align: right; font-size: 11.5px; font-family: var(--font-mono); color: var(--muted);">santesn_ordonnances_total</td>
+                    </tr>
+                    <tr>
+                        <td style="font-size: 13px;">Consultations médicales</td>
+                        <td style="text-align: right; font-weight: 700; font-size: 13px; font-family: var(--font-mono);">{{ metriques.consultations }}</td>
+                        <td style="text-align: right; font-size: 11.5px; font-family: var(--font-mono); color: var(--muted);">santesn_consultations_total</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </article>
 </div>
 
