@@ -530,10 +530,11 @@
             user-select: none;
             line-height: 1.3;
             white-space: nowrap;
-            overflow: hidden;
+            overflow-x: hidden;
             text-overflow: ellipsis;
             max-width: 100%;
             box-sizing: border-box;
+            flex-shrink: 0;
         }
 
         aside nav .nav-section:first-child {
@@ -562,7 +563,7 @@
             min-width: 0;
             width: 100%;
             box-sizing: border-box;
-            overflow: hidden;
+            flex-shrink: 0;
         }
 
         .nav-texte {
@@ -7151,7 +7152,7 @@
         html, body {
             width: 100%;
             max-width: 100%;
-            overflow-x: hidden;
+            overflow-x: clip;
             box-sizing: border-box;
         }
 
