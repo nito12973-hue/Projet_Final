@@ -6,21 +6,33 @@ from django.db.models import ProtectedError, Q
 from django.shortcuts import get_object_or_404, redirect, render
 
 from ..forms import MedecinForm, generer_mot_de_passe
-from ..models import JournalActivite, Medecin, Ordonnance, Paiement, User
+from ..models import ConventionPrestataire, JournalActivite, Medecin, Organisme, Ordonnance, Paiement, User
 from ..services.onboarding import construire_bilan_onboarding, envoyer_activation_utilisateur
 from .utils import _avertissement_cascade, _paginer, _trier, admin_required, journaliser, organisme_gestionnaire, role_required
 
 
 def _medecins_organisme(organisme):
     """Retourne les médecins rattachés à l'organisme ou aux prestataires conventionnés de l'organisme."""
+    if not organisme:
+        return Medecin.objects.none()
+
+    filtres = (
+        Q(user__organisme=organisme)
+        | (
+            Q(prestataire__conventions_organismes__organisme=organisme)
+            & (Q(user__isnull=True) | Q(user__organisme=organisme) | Q(user__organisme__isnull=True))
+        )
+    )
+
+    if organisme.code == Organisme.CODE_DEFAUT:
+        filtres = filtres | (
+            (Q(user__isnull=True) | Q(user__organisme__isnull=True))
+            & Q(prestataire__isnull=True)
+        )
+
     return (
         Medecin.objects.select_related("prestataire", "user")
-        .filter(
-            Q(user__isnull=True)
-            | Q(user__organisme__isnull=True)
-            | Q(user__organisme=organisme)
-            | Q(prestataire__conventions_organismes__organisme=organisme)
-        )
+        .filter(filtres)
         .distinct()
     )
 
@@ -52,7 +64,7 @@ def liste_medecins(request):
 def ajouter_medecin(request):
     organisme = organisme_gestionnaire(request)
     if request.method == "POST":
-        form = MedecinForm(request.POST)
+        form = MedecinForm(request.POST, organisme=organisme)
         if form.is_valid():
             with transaction.atomic():
                 medecin = form.save(commit=False)
@@ -68,6 +80,16 @@ def ajouter_medecin(request):
                 )
                 medecin.user = utilisateur
                 medecin.save()
+                if medecin.prestataire_id:
+                    ConventionPrestataire.objects.get_or_create(
+                        organisme=organisme,
+                        prestataire=medecin.prestataire,
+                        defaults={
+                            "statut": ConventionPrestataire.Statut.ACTIF,
+                            "tiers_payant_actif": True,
+                            "cree_par": request.user,
+                        },
+                    )
                 statut_onboarding = envoyer_activation_utilisateur(utilisateur, request=request)
                 journaliser(request, JournalActivite.Action.CREATION, f"Médecin {utilisateur.email}", f"Dr {medecin.prenom} {medecin.nom}")
                 bilan = statut_onboarding.get("bilan") or construire_bilan_onboarding(statut_onboarding, utilisateur, action="creation")
@@ -77,7 +99,7 @@ def ajouter_medecin(request):
                     messages.warning(request, bilan["texte_flash"])
                 return redirect("liste_medecins")
     else:
-        form = MedecinForm()
+        form = MedecinForm(organisme=organisme)
     return render(request, "ajouter_medecin.html", {"form": form})
 
 
@@ -86,13 +108,13 @@ def modifier_medecin(request, pk):
     organisme = organisme_gestionnaire(request)
     medecin = get_object_or_404(_medecins_organisme(organisme), pk=pk)
     if request.method == "POST":
-        form = MedecinForm(request.POST, instance=medecin)
+        form = MedecinForm(request.POST, instance=medecin, organisme=organisme)
         if form.is_valid():
             form.save()
             messages.success(request, "Médecin modifié.")
             return redirect("liste_medecins")
     else:
-        form = MedecinForm(instance=medecin)
+        form = MedecinForm(instance=medecin, organisme=organisme)
     return render(request, "modifier_medecin.html", {"form": form, "medecin": medecin})
 
 

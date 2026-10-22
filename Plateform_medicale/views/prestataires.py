@@ -18,15 +18,24 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
 from ..forms import ConventionPrestataireForm, PlanCouvertureForm, PrestataireForm
-from ..models import ConventionPrestataire, JournalActivite, PlanCouverture, Prestataire, User
+from ..models import ConventionPrestataire, JournalActivite, Organisme, PlanCouverture, Prestataire, User
 from .utils import _avertissement_cascade, _paginer, _trier, journaliser, organisme_gestionnaire, role_required
+
+
+def _prestataires_organisme(organisme):
+    """Retourne les prestataires conventionnés avec l'organisme du gestionnaire."""
+    if not organisme:
+        return Prestataire.objects.none()
+    qs = Prestataire.objects.filter(conventions_organismes__organisme=organisme)
+    if organisme.code == Organisme.CODE_DEFAUT:
+        qs = qs | Prestataire.objects.filter(conventions_organismes__isnull=True)
+    return qs.distinct()
 
 
 @role_required(User.Role.GESTIONNAIRE)
 def liste_prestataires(request):
-    if request.user.role == User.Role.GESTIONNAIRE:
-        organisme_gestionnaire(request)
-    prestataires = Prestataire.objects.all()
+    organisme = organisme_gestionnaire(request)
+    prestataires = _prestataires_organisme(organisme)
 
     localisation = request.GET.get("localisation", "")
     if localisation == "sans":
@@ -42,10 +51,10 @@ def liste_prestataires(request):
         request, prestataires, ["id", "nom", "type_prestataire", "ville", "partenaire"], "nom",
     )
 
-    # Reseau de partenaires geolocalises, pour la carte (deplacee ici
-    # depuis le dashboard admin) : seuls les champs necessaires au rendu.
+    # Reseau de partenaires geolocalises de cet organisme uniquement, pour la carte
     prestataires_carte = list(
-        Prestataire.objects.filter(partenaire=True, latitude__isnull=False, longitude__isnull=False)
+        _prestataires_organisme(organisme)
+        .filter(partenaire=True, latitude__isnull=False, longitude__isnull=False)
         .values("id", "nom", "type_prestataire", "ville", "telephone", "latitude", "longitude")
     )
 
@@ -247,13 +256,25 @@ def ajouter_prestataire(request):
 
 @role_required(User.Role.GESTIONNAIRE)
 def modifier_prestataire(request, pk):
-    if request.user.role == User.Role.GESTIONNAIRE:
-        organisme_gestionnaire(request)
-    prestataire = get_object_or_404(Prestataire, pk=pk)
+    organisme = organisme_gestionnaire(request)
+    prestataire = get_object_or_404(_prestataires_organisme(organisme), pk=pk)
     if request.method == "POST":
         form = PrestataireForm(request.POST, instance=prestataire)
         if form.is_valid():
-            form.save()
+            with transaction.atomic():
+                prestataire = form.save()
+                conv, _ = ConventionPrestataire.objects.get_or_create(
+                    organisme=organisme,
+                    prestataire=prestataire,
+                    defaults={"cree_par": request.user},
+                )
+                if prestataire.partenaire:
+                    conv.statut = ConventionPrestataire.Statut.ACTIF
+                    conv.tiers_payant_actif = True
+                else:
+                    conv.statut = ConventionPrestataire.Statut.SUSPENDU
+                    conv.tiers_payant_actif = False
+                conv.save(update_fields=["statut", "tiers_payant_actif"])
             messages.success(request, "Prestataire modifié.")
             return redirect("liste_prestataires")
     else:
@@ -263,16 +284,21 @@ def modifier_prestataire(request, pk):
 
 @role_required(User.Role.GESTIONNAIRE)
 def supprimer_prestataire(request, pk):
-    if request.user.role == User.Role.GESTIONNAIRE:
-        organisme_gestionnaire(request)
-    prestataire = get_object_or_404(Prestataire, pk=pk)
+    organisme = organisme_gestionnaire(request)
+    prestataire = get_object_or_404(_prestataires_organisme(organisme), pk=pk)
     if request.method == "POST":
         try:
             with transaction.atomic():
                 nom_prestataire = str(prestataire)
-                prestataire.delete()
-                journaliser(request, JournalActivite.Action.SUPPRESSION, f"Prestataire : {nom_prestataire}")
-                messages.success(request, "Prestataire supprimé.")
+                autres_conventions = prestataire.conventions_organismes.exclude(organisme=organisme)
+                if autres_conventions.exists():
+                    prestataire.conventions_organismes.filter(organisme=organisme).delete()
+                    journaliser(request, JournalActivite.Action.SUPPRESSION, f"Retrait convention prestataire : {nom_prestataire}")
+                    messages.success(request, f"L'établissement {nom_prestataire} a été retiré de votre réseau conventionné.")
+                else:
+                    prestataire.delete()
+                    journaliser(request, JournalActivite.Action.SUPPRESSION, f"Prestataire : {nom_prestataire}")
+                    messages.success(request, "Prestataire supprimé.")
                 return redirect("liste_prestataires")
         except ProtectedError:
             messages.error(request, "Impossible de supprimer ce prestataire : des éléments protégés y sont rattachés.")

@@ -12939,6 +12939,40 @@ class MultiTenantSecurityAndPenetrationTests(TestCase):
         resp = self.client.get(reverse("metrics_prometheus"))
         self.assertEqual(resp.status_code, 403)
 
+    def test_gestionnaire_b_ne_voit_pas_prestataire_a(self):
+        """Un gestionnaire ne voit que les prestataires conventionnés avec son propre organisme."""
+        # Gest A voit la pharmacie conventionnée avec l'organisme A
+        self.client.force_login(self.gest_a)
+        resp_a = self.client.get(reverse("liste_prestataires"))
+        self.assertContains(resp_a, self.pharmacie.nom)
+
+        # Gest B ne voit pas la pharmacie conventionnée avec l'organisme A
+        self.client.force_login(self.gest_b)
+        resp_b = self.client.get(reverse("liste_prestataires"))
+        self.assertNotContains(resp_b, self.pharmacie.nom)
+
+        # Gest B reçoit un 404 s'il tente d'éditer ou supprimer l'établissement de A
+        resp_mod = self.client.get(reverse("modifier_prestataire", args=[self.pharmacie.pk]))
+        self.assertEqual(resp_mod.status_code, 404)
+        resp_suppr = self.client.post(reverse("supprimer_prestataire", args=[self.pharmacie.pk]))
+        self.assertEqual(resp_suppr.status_code, 404)
+
+    def test_formulaires_medecin_et_pharmacien_filtrent_prestataires_par_organisme(self):
+        """Le formulaire d'ajout de médecin ou pharmacien ne propose que les établissements de son organisme."""
+        from Plateform_medicale.forms import MedecinForm, PharmacienCreationForm
+
+        form_med_b = MedecinForm(organisme=self.org_b)
+        self.assertNotIn(self.pharmacie, form_med_b.fields["prestataire"].queryset)
+
+        form_med_a = MedecinForm(organisme=self.org_a)
+        self.assertIn(self.pharmacie, form_med_a.fields["prestataire"].queryset)
+
+        form_pharma_b = PharmacienCreationForm(organisme=self.org_b)
+        self.assertNotIn(self.pharmacie, form_pharma_b.fields["prestataire"].queryset)
+
+        form_pharma_a = PharmacienCreationForm(organisme=self.org_a)
+        self.assertIn(self.pharmacie, form_pharma_a.fields["prestataire"].queryset)
+
 
 class OrganismeScopedQuerySetTests(TestCase):
     """
