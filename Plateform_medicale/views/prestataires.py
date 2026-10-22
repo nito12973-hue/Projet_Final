@@ -316,13 +316,15 @@ from .utils import organisme_gestionnaire, role_required  # noqa: E402
 
 @role_required(User.Role.GESTIONNAIRE)
 def liste_plans_couverture(request):
-    if request.user.role == User.Role.GESTIONNAIRE:
-        organisme_gestionnaire(request)
-    plans_base = PlanCouverture.objects.annotate(nb_beneficiaires=Count("beneficiaires"))
+    organisme = organisme_gestionnaire(request)
+    filtre_beneficiaires = Q(beneficiaires__organisme=organisme)
+    plans_base = PlanCouverture.objects.annotate(
+        nb_beneficiaires=Count("beneficiaires", filter=filtre_beneficiaires)
+    )
     stats = plans_base.aggregate(
         total_plans=Count("id"),
         taux_moyen=Avg("taux_couverture"),
-        total_beneficiaires=Count("beneficiaires"),
+        total_beneficiaires=Count("beneficiaires", filter=filtre_beneficiaires),
     )
     plans = _trier(request, plans_base, ["nom", "taux_couverture", "plafond_annuel"], "nom")
     return render(

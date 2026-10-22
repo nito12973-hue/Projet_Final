@@ -355,6 +355,7 @@ def _consultations_par_annee(nombre_annees=5, queryset=None):
 
 def _donnees_rapports(organisme=None):
     """Comptages et agregats de synthese de l'activite de la plateforme (Phase 13)."""
+    qs_users = User.objects.filter(organisme=organisme) if organisme else User.objects.all()
     qs_patients = Patient.objects.filter(organisme=organisme) if organisme else Patient.objects.all()
     qs_rdv = RendezVous.objects.filter(patient__organisme=organisme) if organisme else RendezVous.objects.all()
     qs_pec = PriseEnCharge.objects.filter(patient__organisme=organisme) if organisme else PriseEnCharge.objects.all()
@@ -362,9 +363,19 @@ def _donnees_rapports(organisme=None):
     qs_ordonnances = Ordonnance.objects.filter(consultation__patient__organisme=organisme) if organisme else Ordonnance.objects.all()
     qs_delivrances = Delivrance.objects.filter(ordonnance__consultation__patient__organisme=organisme) if organisme else Delivrance.objects.all()
 
+    if organisme:
+        from ..models import ConventionPrestataire
+        total_prestataires = Prestataire.objects.filter(
+            conventions_organismes__organisme=organisme,
+            conventions_organismes__statut=ConventionPrestataire.Statut.ACTIF,
+            partenaire=True,
+        ).distinct().count()
+    else:
+        total_prestataires = Prestataire.objects.filter(partenaire=True).count()
+
     return {
         "utilisateurs_par_role": [
-            {"label": label, "total": User.objects.filter(role=value).count()}
+            {"label": label, "total": qs_users.filter(role=value).count()}
             for value, label in User.Role.choices
         ],
         "patients_par_type": [
@@ -386,7 +397,7 @@ def _donnees_rapports(organisme=None):
         "total_consultations": qs_consultations.count(),
         "total_ordonnances": qs_ordonnances.count(),
         "total_delivrances": qs_delivrances.count(),
-        "total_prestataires_partenaires": Prestataire.objects.filter(partenaire=True).count(),
+        "total_prestataires_partenaires": total_prestataires,
         "consultations_par_jour": _consultations_par_jour(queryset=qs_consultations),
         "consultations_par_mois": _consultations_par_mois(queryset=qs_consultations),
         "consultations_par_annee": _consultations_par_annee(queryset=qs_consultations),

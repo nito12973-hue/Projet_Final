@@ -266,6 +266,8 @@ def admin_liste_demandes_support(request):
         # Le gestionnaire traite les demandes métier des assurés de sa structure
         if request.user.organisme_id:
             demandes = demandes.filter(patient__organisme_id=request.user.organisme_id)
+        else:
+            demandes = demandes.none()
         # Exclut les pures demandes informatiques système réservées à l'admin
         demandes = demandes.exclude(categorie=DemandeSupport.Categorie.TECHNIQUE)
         categories_disponibles = [
@@ -332,7 +334,7 @@ def admin_detail_demande_support(request, pk):
     if est_admin:
         demande = get_object_or_404(qs, pk=pk)
     else:
-        filtre = Q(patient__organisme_id=request.user.organisme_id) if request.user.organisme_id else Q()
+        filtre = Q(patient__organisme_id=request.user.organisme_id) if request.user.organisme_id else Q(pk__isnull=True)
         demande = get_object_or_404(
             qs.exclude(categorie=DemandeSupport.Categorie.TECHNIQUE).filter(filtre),
             pk=pk
