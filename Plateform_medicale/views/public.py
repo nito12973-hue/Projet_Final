@@ -11,12 +11,12 @@ def landing(request):
 
 def politique_confidentialite(request):
     """Politique de protection des données et de confidentialité (Loi 2008-12 / CDP & RGPD)."""
-    return render(request, "politique_confidentialite.html")
+    return render(request, "politique_confidentialite.html", {"sans_sidebar": True})
 
 
 def cgu(request):
     """Conditions Générales d'Utilisation de la plateforme SantéSN."""
-    return render(request, "cgu.html")
+    return render(request, "cgu.html", {"sans_sidebar": True})
 
 
 def robots_txt(request):
@@ -272,6 +272,6 @@ self.addEventListener('fetch', (event) => {
 
 def offline_view(request):
     """Page affichée lors d'une perte totale de connectivité réseau."""
-    return render(request, "offline.html")
+    return render(request, "offline.html", {"sans_sidebar": True})
 
 

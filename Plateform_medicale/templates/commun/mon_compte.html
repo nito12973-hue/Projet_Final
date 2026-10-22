@@ -11,6 +11,8 @@
     </div>
     {% if current_role == "ADMIN" %}
     <a class="button btn" href="{% url 'parametres' %}">{% icone "chevron-left" %} Paramètres</a>
+    {% elif current_role == "GESTIONNAIRE" %}
+    <a class="button btn" href="{% url 'dashboard' %}">{% icone "chevron-left" %} Tableau de bord</a>
     {% elif current_role == "MEDECIN" %}
     <a class="button btn" href="{% url 'dashboard_medecin' %}">{% icone "chevron-left" %} Tableau de bord</a>
     {% elif current_role == "PHARMACIEN" %}
@@ -44,6 +46,8 @@
             <button class="button primary" type="submit">Enregistrer</button>
             {% if current_role == "ADMIN" %}
             <a class="button btn" href="{% url 'parametres' %}">Annuler</a>
+            {% elif current_role == "GESTIONNAIRE" %}
+            <a class="button btn" href="{% url 'dashboard' %}">Annuler</a>
             {% elif current_role == "MEDECIN" %}
             <a class="button btn" href="{% url 'dashboard_medecin' %}">Annuler</a>
             {% elif current_role == "PHARMACIEN" %}
