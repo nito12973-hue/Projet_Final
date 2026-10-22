@@ -1,171 +1,222 @@
-# Les quatre rôles et permissions utilisateurs SantéSN
+# Les cinq rôles et permissions utilisateurs SantéSN
 
-> Les quatre rôles SantéSN — Admin, Assuré, Médecin, Pharmacien — leurs permissions et l'isolation RBAC garante de la confidentialité médicale.
+> Les cinq rôles SantéSN — Assuré, Médecin, Pharmacien, Gestionnaire IPM, Administrateur Général — leurs permissions et l'isolation RBAC garante de la confidentialité médicale.
 
-SantéSN applique un contrôle d'accès basé sur les rôles (RBAC — Role-Based Access Control). Chaque utilisateur se voit attribuer un rôle unique à la création de son compte, et ce rôle détermine précisément les fonctionnalités auxquelles il a accès. La détection est automatique à la connexion : aucun écran de sélection de rôle n'est présenté à l'utilisateur.
+SantéSN applique un contrôle d'accès strict basé sur les rôles (**RBAC** — *Role-Based Access Control*). Chaque compte utilisateur est associé à un profil unique (`User.Role`), configuré lors de sa création.
+
+Ce rôle détermine de façon rigoureuse les fonctionnalités, modules et données accessibles. La détection et le routage sont automatiques dès l'authentification sur le portail `/connexion/`, sans qu'aucun écran intermédiaire de sélection de rôle ne soit présenté à l'utilisateur.
 
 <Note>
-  **Isolation des rôles et confidentialité médicale.** Le cloisonnement strict des rôles n'est pas uniquement une contrainte technique : il découle des obligations légales de confidentialité médicale et de la loi sénégalaise n° 2008-12 sur la protection des données personnelles. Un administrateur ne peut pas accéder aux diagnostics médicaux. Un pharmacien ne peut pas créer d'ordonnances. Ce design garantit que chaque acteur de la chaîne de soins n'accède qu'aux informations strictement nécessaires à sa mission.
+  **Isolation hermétique et secret médical.** Le cloisonnement des rôles découle des impératifs du Code de Déontologie Médicale et de la loi sénégalaise n° 2008-12 relative à la protection des données à caractère personnel (supervisée par la CDP). Un gestionnaire ou un administrateur ne peut en aucun cas consulter les diagnostics médicaux. Un pharmacien ne peut pas émettre d'ordonnance. Ce modèle garantit le respect absolu de la vie privée et de la déontologie médicale.
 </Note>
 
-## Les quatre rôles de la plateforme
+## Les cinq rôles de la plateforme
 
 <Tabs>
-  <Tab title="Administrateur">
-    L'administrateur gère la structure organisationnelle de la plateforme. Il ne participe pas à l'acte de soin et n'a délibérément accès à aucune donnée médicale (diagnostics, ordonnances, résultats).
-
-    **Ce que l'Administrateur peut faire :**
-
-    <CardGroup cols={2}>
-      <Card title="Gestion des utilisateurs" icon="users" href="/fonctionnalites/authentification">
-        Créer, modifier et désactiver les comptes de tous les utilisateurs (assurés, médecins, pharmaciens). Attribuer et modifier les rôles.
-      </Card>
-
-      <Card title="Gestion des prestataires" icon="hospital" href="https://projet-final-bice.vercel.app/tableau-de-bord/">
-        Enregistrer et administrer les établissements de soins (cliniques, cabinets, pharmacies) partenaires de l'IPM.
-      </Card>
-
-      <Card title="Plans de couverture" icon="shield" href="/fonctionnalites/prise-en-charge">
-        Configurer les plans d'assurance, les taux de prise en charge, et les règles de calcul du tiers payant pour chaque catégorie d'assurés.
-      </Card>
-
-      <Card title="Statistiques globales" icon="chart-bar" href="https://projet-final-bice.vercel.app/tableau-de-bord/">
-        Consulter les tableaux de bord agrégés : nombre de consultations, volume d'ordonnances, taux d'utilisation par prestataire.
-      </Card>
-
-      <Card title="Gestion des ayants droit" icon="family" href="/fonctionnalites/ayants-droit">
-        Rattacher les dépendants (conjoint, enfants) aux comptes des assurés principaux et gérer leurs droits de couverture.
-      </Card>
-
-      <Card title="Journal d'activité" icon="list" href="https://projet-final-bice.vercel.app/tableau-de-bord/">
-        Consulter le journal d'activité pour auditer les actions sensibles effectuées sur la plateforme et assurer la traçabilité complète des opérations.
-      </Card>
-    </CardGroup>
-
-    **Ce que l'Administrateur ne peut PAS faire :**
-
-    * Accéder aux diagnostics médicaux ou au contenu des consultations
-    * Lire ou modifier le contenu des ordonnances médicales
-    * Effectuer des actes médicaux ou valider des prescriptions
-  </Tab>
-
-  <Tab title="Assuré">
-    L'assuré est le patient couvert par une IPM ou une compagnie d'assurance. Il utilise SantéSN pour gérer sa relation avec les prestataires de soins et suivre ses dossiers médicaux numériques.
+  <Tab title="Assuré & Ayants Droit">
+    L'assuré est le bénéficiaire affilié à une Institution de Prévoyance Maladie (IPM), une mutuelle ou une assurance d'entreprise. Il utilise SantéSN pour accéder aux soins, suivre ses prescriptions et piloter ses remboursements.
 
     **Ce que l'Assuré peut faire :**
 
     <CardGroup cols={2}>
       <Card title="Prise de rendez-vous" icon="calendar" href="/fonctionnalites/rendez-vous">
-        Réserver un rendez-vous auprès d'un prestataire et d'un médecin de son choix, en sélectionnant la date et le créneau horaire disponible.
+        Réserver une consultation auprès d'un praticien ou d'un cabinet partenaire selon les créneaux disponibles.
       </Card>
 
-      <Card title="Consultation des ordonnances" icon="file-medical" href="/fonctionnalites/ordonnances">
-        Accéder à la liste de ses ordonnances numériques sécurisées, identifiées par leur code `RX-XXXXXXXXXX` et leur QR Code.
+      <Card title="Carte numérique d'assuré" icon="id-card" href="https://projet-final-bice.vercel.app/espace/assure/">
+        Présenter son QR Code d'identification sur smartphone lors des visites médicales et passages en pharmacie.
       </Card>
 
       <Card title="Gestion des ayants droit" icon="users" href="/fonctionnalites/ayants-droit">
-        Consulter les profils de ses dépendants (conjoint, enfants) rattachés à son compte principal.
+        Enregistrer et administrer les dossiers de ses dépendants légaux (conjoints, enfants) avec pièces justificatives d'état civil.
+      </Card>
+
+      <Card title="Suivi des ordonnances sécurisées" icon="file-prescription" href="/fonctionnalites/ordonnances">
+        Consulter l'historique de ses ordonnances électroniques identifiées par leur code cryptographique `RX-XXXXXXXXXX`.
+      </Card>
+
+      <Card title="Remboursements hors réseau" icon="money-bill-transfer" href="/fonctionnalites/espace-gestionnaire">
+        Soumettre des demandes de remboursement pour des soins reçus hors réseau conventionné avec téléversement de factures acquittées.
       </Card>
 
       <Card title="Suivi du tiers payant" icon="receipt" href="/fonctionnalites/prise-en-charge">
-        Visualiser la part prise en charge par l'assurance et la part restant à sa charge pour chaque acte médical.
-      </Card>
-
-      <Card title="Historique des consultations" icon="history" href="/fonctionnalites/consultations">
-        Consulter l'historique de ses consultations passées et les comptes rendus accessibles dans son tableau de bord.
+        Visualiser en temps réel la prise en charge assurance et le montant exact du ticket modérateur réglé.
       </Card>
     </CardGroup>
 
     **Ce que l'Assuré ne peut PAS faire :**
-
-    * Créer, modifier ou annuler une ordonnance
-    * Accéder aux dossiers d'autres patients
-    * Valider une ordonnance en pharmacie
-    * Modifier ses informations de couverture
+    * Créer, modifier ou altérer une ordonnance médicale.
+    * Accéder aux dossiers d'autres patients ou salariés tiers.
+    * Valider ou dispenser des ordonnances pharmaceutiques.
+    * Modifier son plan de couverture ou son taux de prise en charge contractuel.
   </Tab>
 
-  <Tab title="Médecin">
-    Le médecin est l'acteur central de l'acte de soin sur SantéSN. Il gère son agenda, réalise les consultations et génère les ordonnances numériques sécurisées.
+  <Tab title="Médecin & Praticien">
+    Le médecin (généraliste ou spécialiste en cabinet, polyclinique ou centre hospitalier) est l'acteur exclusif de l'acte diagnostique et de la prescription thérapeutique.
 
     **Ce que le Médecin peut faire :**
 
     <CardGroup cols={2}>
-      <Card title="Gestion de l'agenda" icon="calendar-days" href="/fonctionnalites/rendez-vous">
-        Consulter ses rendez-vous à venir, confirmer ou annuler des créneaux, et suivre l'état de son planning quotidien.
+      <Card title="Agenda des consultations" icon="calendar-check" href="/fonctionnalites/rendez-vous">
+        Gérer ses créneaux de disponibilité, confirmer ou replanifier les rendez-vous pris par les assurés.
       </Card>
 
       <Card title="Rédaction de consultations" icon="stethoscope" href="/fonctionnalites/consultations">
-        Saisir le diagnostic, le traitement et les prescriptions médicamenteuses lors d'une consultation patient.
+        Enregistrer le motif d'admission, les constantes vitales, les observations cliniques et le diagnostic dans le dossier patient.
       </Card>
 
-      <Card title="Génération d'ordonnances" icon="file-prescription" href="/fonctionnalites/ordonnances">
-        Créer des ordonnances numériques associées à un patient, identifiées par un code `RX-XXXXXXXXXX` unique et sécurisé par QR Code.
+      <Card title="Génération d'ordonnances scellées" icon="qrcode" href="/fonctionnalites/ordonnances">
+        Prescrire les molécules avec posologie détaillée et sceller l'ordonnance par un QR Code haute sécurité anti-falsification.
       </Card>
 
-      <Card title="Dossier patient" icon="folder-open" href="/fonctionnalites/consultations">
-        Accéder à l'historique des consultations de ses propres patients pour assurer la continuité des soins.
+      <Card title="Dossier médical patient" icon="folder-medical" href="/fonctionnalites/consultations">
+        Consulter l'historique clinique et les antécédents des patients suivis dans le cadre de la continuité des soins.
       </Card>
     </CardGroup>
 
     **Ce que le Médecin ne peut PAS faire :**
-
-    * Valider ou dispenser une ordonnance en pharmacie
-    * Modifier les informations de couverture d'assurance d'un patient
-    * Accéder aux dossiers de patients suivis par d'autres médecins (hors partage explicite)
-    * Créer ou supprimer des comptes utilisateurs
+    * Dispenser des médicaments ou valider une délivrance pharmaceutique.
+    * Modifier les conditions financières de prise en charge ou les contrats d'assurance.
+    * Accéder aux dossiers des patients d'autres confrères sans consentement médical explicite.
+    * Créer, administrer ou désactiver des comptes utilisateurs.
   </Tab>
 
-  <Tab title="Pharmacien">
-    Le pharmacien intervient en bout de chaîne pour vérifier, valider et dispenser les ordonnances numériques. Son rôle est conçu pour éliminer les risques de falsification et de double délivrance.
+  <Tab title="Pharmacien & Officine">
+    Le pharmacien intervient en bout de chaîne pour contrôler, valider et exécuter la dispensation des médicaments prescrits, en éliminant toute fraude.
 
     **Ce que le Pharmacien peut faire :**
 
     <CardGroup cols={2}>
-      <Card title="Scan d'ordonnances" icon="qrcode" href="/fonctionnalites/ordonnances">
-        Scanner le QR Code d'une ordonnance pour vérifier instantanément son authenticité, sa validité et l'identité du patient.
+      <Card title="Scan optique du QR Code" icon="camera" href="/fonctionnalites/ordonnances">
+        Scanner le QR Code d'une ordonnance sur smartphone, tablette ou douchette pour vérifier son authenticité en direct.
       </Card>
 
-      <Card title="Validation et délivrance" icon="check-circle" href="/fonctionnalites/ordonnances">
-        Confirmer la délivrance des médicaments prescrits et enregistrer l'acte dans le système pour activer le verrou anti-double délivrance.
+      <Card title="Contrôle de validité & Délais" icon="shield-check" href="/fonctionnalites/ordonnances">
+        Vérifier l'intégrité cryptographique HMAC, la date d'émission et le délai légal de prescription (90 jours).
       </Card>
 
-      <Card title="Calcul du tiers payant" icon="calculator" href="/fonctionnalites/prise-en-charge">
-        Consulter automatiquement la répartition entre la part assurance et la part patient pour chaque ordonnance validée.
+      <Card title="Validation de délivrance" icon="box-check" href="/fonctionnalites/ordonnances">
+        Confirmer la remise des médicaments prescrits et verrouiller définitivement l'ordonnance pour interdire toute double délivrance.
       </Card>
 
-      <Card title="File d'ordonnances" icon="list-check" href="/fonctionnalites/ordonnances">
-        Accéder à la liste des ordonnances en attente de validation dans son établissement.
+      <Card title="Calcul du tiers payant instantané" icon="calculator" href="/fonctionnalites/prise-en-charge">
+        Encaisser uniquement le ticket modérateur de l'assuré et générer la créance tiers payant due par l'organisme d'assurance.
       </Card>
     </CardGroup>
 
     **Ce que le Pharmacien ne peut PAS faire :**
+    * Créer ou modifier le contenu d'une ordonnance médicale.
+    * Accéder aux diagnostics confidentiels ou au dossier médical du patient.
+    * Délivrer une seconde fois une ordonnance déjà marquée comme `Délivrée`.
+    * Consulter les données contractuelles de l'assuré non requises pour la dispensation.
+  </Tab>
 
-    * Créer ou modifier une ordonnance
-    * Accéder au diagnostic ou au contenu médical de la consultation
-    * Délivrer une ordonnance déjà dispensée (verrou anti-double délivrance actif)
-    * Accéder aux données personnelles d'assurance au-delà de ce qui est nécessaire à la délivrance
+  <Tab title="Gestionnaire IPM / Mutuelle">
+    Le gestionnaire pilote l'organisme d'assurance santé (IPM, mutuelle d'entreprise ou assureur privé) et orchestre la liquidation du tiers payant ainsi que le réseau conventionné.
+
+    **Ce que le Gestionnaire peut faire :**
+
+    <CardGroup cols={2}>
+      <Card title="Gestion des effectifs d'assurés" icon="users-gear" href="/fonctionnalites/espace-gestionnaire">
+        Inscrire les salariés affiliés, valider leurs ayants droit et leur assigner les plans de couverture correspondants.
+      </Card>
+
+      <Card title="Conventions de prestataires" icon="handshake" href="/fonctionnalites/espace-gestionnaire">
+        Contractualiser avec les cliniques, cabinets et officines, administrer les statuts (Actif, Suspendu, Résilié) et taux négociés.
+      </Card>
+
+      <Card title="Plans de couverture modulaires" icon="shield" href="/fonctionnalites/espace-gestionnaire">
+        Configurer les barèmes de garanties (taux consultations, pharmacie, hospitalisation, plafonds annuels).
+      </Card>
+
+      <Card title="Validation des Prises en Charge (PEC)" icon="file-signature" href="/fonctionnalites/prise-en-charge">
+        Instruire les demandes d'accord préalable pour actes lourds et générer les bons de prise en charge certifiés.
+      </Card>
+
+      <Card title="Instruction des remboursements" icon="money-check-dollar" href="/fonctionnalites/espace-gestionnaire">
+        Examiner les factures hors réseau, calculer la part assurance et ordonner le règlement (Virement, Wave, Orange Money).
+      </Card>
+
+      <Card title="Télétransmission B2B & Bordereaux" icon="file-invoice-dollar" href="/fonctionnalites/espace-gestionnaire">
+        Consolider mensuellement les actes en tiers payant et exporter les bordereaux de liquidation certifiés en PDF et Excel.
+      </Card>
+    </CardGroup>
+
+    **Ce que le Gestionnaire ne peut PAS faire :**
+    * Accéder aux diagnostics médicaux, observations cliniques ou antécédents de santé (secret médical absolu).
+    * Créer, modifier ou dispenser des prescriptions médicamenteuses.
+    * Accéder aux données ou conventions des autres organismes hébergés sur la plateforme.
+    * Modifier les paramètres d'infrastructure globale du serveur.
+  </Tab>
+
+  <Tab title="Administrateur Général">
+    L'administrateur technique et système supervise le fonctionnement global de la plateforme SantéSN, assure la gouvernance des accès et veille à la conformité réglementaire.
+
+    **Ce que l'Administrateur peut faire :**
+
+    <CardGroup cols={2}>
+      <Card title="Gestion globale des utilisateurs" icon="user-gear" href="/fonctionnalites/authentification">
+        Créer et administrer les comptes de tous les rôles, gérer les affectations d'organismes et auditer les accès.
+      </Card>
+
+      <Card title="Gestion des organismes (Tenants)" icon="building" href="/fonctionnalites/organismes-multi-tenant">
+        Créer et superviser les entités partenaires (IPM, mutuelles, entreprises souscriptrices).
+      </Card>
+
+      <Card title="Supervision système & Métriques" icon="chart-line" href="/technique/devops-exploitation">
+        Accéder aux consoles d'infrastructure `/supervision/` et `/metrics/` (sondes psutil, latence base, Sentry).
+      </Card>
+
+      <Card title="Journal d'activité immuable" icon="clock-rotate-left" href="https://projet-final-bice.vercel.app/tableau-de-bord/">
+        Auditer l'intégralité des événements sensibles consignés pour la traçabilité réglementaire CDP.
+      </Card>
+
+      <Card title="Contrôle des sauvegardes SHA-256" icon="database" href="/technique/devops-exploitation">
+        Inspecter le registre cryptographique `backups/manifest.json` et certifier l'intégrité des données archivées.
+      </Card>
+
+      <Card title="Support et Assistance technique" icon="headset" href="https://projet-final-bice.vercel.app/tableau-de-bord/">
+        Traiter les demandes d'assistance technique formulées par les utilisateurs de la plateforme.
+      </Card>
+    </CardGroup>
+
+    **Ce que l'Administrateur ne peut PAS faire :**
+    * Consulter les diagnostics médicaux des patients ou le contenu clinique des consultations.
+    * Émettre ou modifier des ordonnances de soins.
+    * Interférer dans les actes médicaux ou pharmaceutiques.
   </Tab>
 </Tabs>
 
-## Tableau récapitulatif des permissions
+---
 
-| Action                              | Administrateur |     Assuré    | Médecin | Pharmacien |
-| ----------------------------------- | :------------: | :-----------: | :-----: | :--------: |
-| Créer des comptes utilisateurs      |        ✅       |       ❌       |    ❌    |      ❌     |
-| Gérer les prestataires              |        ✅       |       ❌       |    ❌    |      ❌     |
-| Prendre un rendez-vous              |        ❌       |       ✅       |    ❌    |      ❌     |
-| Rédiger une consultation            |        ❌       |       ❌       |    ✅    |      ❌     |
-| Créer une ordonnance                |        ❌       |       ❌       |    ✅    |      ❌     |
-| Scanner / valider une ordonnance    |        ❌       |       ❌       |    ❌    |      ✅     |
-| Consulter ses propres ordonnances   |        ❌       |       ✅       |    ❌    |      ❌     |
-| Accéder aux diagnostics médicaux    |        ❌       |       ❌       |    ✅    |      ❌     |
-| Consulter les statistiques globales |        ✅       |       ❌       |    ❌    |      ❌     |
-| Gérer les ayants droit              |        ✅       | ✅ (les siens) |    ❌    |      ❌     |
+## Tableau récapitulatif des permissions par rôle
 
-## Attribution et modification des rôles
+| Action / Fonctionnalité | Assuré | Médecin | Pharmacien | Gestionnaire | Administrateur |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **Prendre un rendez-vous médical** | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **Consulter son historique et ses ordonnances** | ✅ (les siens) | ❌ | ❌ | ❌ | ❌ |
+| **Gérer ses ayants droit (dépendants)** | ✅ (les siens) | ❌ | ❌ | ✅ (de son IPM) | ✅ (tous) |
+| **Déposer une demande de remboursement hors réseau**| ✅ | ❌ | ❌ | ❌ | ❌ |
+| **Rédiger une consultation médicale** | ❌ | ✅ | ❌ | ❌ | ❌ |
+| **Accéder aux diagnostics cliniques médicaux** | ❌ | ✅ | ❌ | ❌ | ❌ |
+| **Prescrire et sceller une ordonnance QR Code** | ❌ | ✅ | ❌ | ❌ | ❌ |
+| **Scanner et vérifier une ordonnance** | ❌ | ❌ | ✅ | ❌ | ❌ |
+| **Valider la délivrance de médicaments** | ❌ | ❌ | ✅ | ❌ | ❌ |
+| **Instruire les accords préalables (PEC)** | ❌ | ❌ | ❌ | ✅ | ✅ |
+| **Gérer les conventions de prestataires** | ❌ | ❌ | ❌ | ✅ (de son IPM) | ✅ (tous) |
+| **Paramétrer les plans de couverture** | ❌ | ❌ | ❌ | ✅ (de son IPM) | ✅ (tous) |
+| **Instruire et liquider les remboursements** | ❌ | ❌ | ❌ | ✅ | ❌ |
+| **Télétransmission B2B & Bordereaux tiers payant**| ❌ | ❌ | ❌ | ✅ | ✅ |
+| **Créer et modifier des comptes utilisateurs** | ❌ | ❌ | ❌ | ❌ | ✅ |
+| **Supervision technique (/supervision/, /metrics/)**| ❌ | ❌ | ❌ | ❌ | ✅ |
+| **Audit des sauvegardes SHA-256** | ❌ | ❌ | ❌ | ❌ | ✅ |
 
-Le rôle est attribué **une seule fois**, lors de la création du compte par un administrateur. Un utilisateur ne peut pas modifier son propre rôle. Si votre rôle doit être changé (par exemple, un médecin qui prend un rôle d'administration dans une nouvelle structure), contactez l'administrateur de votre organisation pour qu'il procède à la modification dans le système.
+---
 
-<Tip>
-  Si vous pensez avoir accès à des fonctionnalités que vous ne voyez pas dans votre tableau de bord, vérifiez d'abord votre rôle auprès de votre administrateur. Il est possible que votre compte ait été créé avec un rôle incorrect ou incomplet.
-</Tip>
+## Attribution et cycle de vie des rôles
+
+Le rôle applicatif est attribué lors de la création initiale du compte par l'administrateur ou par processus d'onboarding sécurisé.
+
+* **Immutabilité par l'utilisateur** : Un utilisateur ne peut en aucun cas modifier son propre rôle ou s'octroyer des privilèges supérieurs.
+* **Séparation stricte des identités** : Si un praticien de santé est également assuré à titre personnel, deux profils distincts ou une commutation contextuelle sécurisée sont appliqués pour ne jamais mêler les privilèges cliniques et les données de patient.
+* **Rattachement à l'organisme** : Tout compte de rôle `GESTIONNAIRE` exige obligatoirement un rattachement à un enregistrement `Organisme` valide pour être opérationnel.

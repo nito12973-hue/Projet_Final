@@ -56,6 +56,7 @@
             "pages": [
               "fonctionnalites/authentification",
               "fonctionnalites/roles-permissions",
+              "fonctionnalites/espace-gestionnaire",
               "fonctionnalites/organismes-multi-tenant",
               "fonctionnalites/rendez-vous",
               "fonctionnalites/consultations",
@@ -70,6 +71,7 @@
             "pages": [
               "technique/routes-urls",
               "technique/securite",
+              "technique/devops-exploitation",
               "technique/supervision-observabilite",
               "technique/fichiers-medias",
               "technique/variables-environnement"
