@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 {% load icones %}
 
 {% block title %}Modifier la prise en charge{% endblock %}
@@ -19,8 +19,8 @@
 
     {% if prise_en_charge.devis_fichier %}
     <div style="background: var(--surface-alt); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; font-size: 13px;">
-        <span>Pièce jointe du devis actuellement archivée :</span>
-        <a href="{% url 'telecharger_devis_prise_en_charge' prise_en_charge.pk %}" target="_blank" style="color: var(--primary); font-weight: 600; text-decoration: underline; display: inline-flex; align-items: center; gap: 4px;">
+        <span>PiÃ¨ce jointe du devis actuellement archivÃ©e :</span>
+        <a href="{% url 'telecharger_devis_prise_en_charge' prise_en_charge.pk %}" target="_blank" rel="noopener noreferrer" style="color: var(--primary); font-weight: 600; text-decoration: underline; display: inline-flex; align-items: center; gap: 4px;">
             {% icone "file-text" %} Consulter le devis &nearr;
         </a>
     </div>

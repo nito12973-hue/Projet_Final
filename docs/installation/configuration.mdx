@@ -1,18 +1,18 @@
-# Configurer l'environnement de développement SantéSN
+﻿# Configurer l'environnement de dÃ©veloppement SantÃ©SN
 
-> Clonez le dépôt, créez un environnement virtuel, définissez vos variables d'environnement et lancez SantéSN en local étape par étape.
+> Clonez le dÃ©pÃ´t, crÃ©ez un environnement virtuel, dÃ©finissez vos variables d'environnement et lancez SantÃ©SN en local Ã©tape par Ã©tape.
 
-Cette page vous guide à travers la configuration complète de votre environnement de développement local pour SantéSN. À l'issue de ces étapes, vous disposerez d'une instance fonctionnelle de l'application connectée à votre base de données PostgreSQL locale ou cloud.
+Cette page vous guide Ã  travers la configuration complÃ¨te de votre environnement de dÃ©veloppement local pour SantÃ©SN. Ã€ l'issue de ces Ã©tapes, vous disposerez d'une instance fonctionnelle de l'application connectÃ©e Ã  votre base de donnÃ©es PostgreSQL locale ou cloud.
 
 <Note>
-  Assurez-vous d'avoir suivi la page [Prérequis](/installation/prerequis) et de disposer de Python 3.10+, pip et PostgreSQL avant de commencer.
+  Assurez-vous d'avoir suivi la page [PrÃ©requis](/installation/prerequis) et de disposer de Python 3.10+, pip et PostgreSQL avant de commencer.
 </Note>
 
-## Mise en place complète
+## Mise en place complÃ¨te
 
 <Steps>
-  <Step title="Cloner le dépôt">
-    Récupérez le code source de SantéSN depuis le dépôt Git officiel :
+  <Step title="Cloner le dÃ©pÃ´t">
+    RÃ©cupÃ©rez le code source de SantÃ©SN depuis le dÃ©pÃ´t Git officiel :
 
     ```bash theme={null}
     git clone https://github.com/votre-organisation/santesn.git
@@ -20,10 +20,10 @@ Cette page vous guide à travers la configuration complète de votre environneme
     ```
 
     <Note>
-      Remplacez `votre-organisation/santesn` par le chemin exact du dépôt qui vous a été communiqué. Contactez votre administrateur si vous ne disposez pas de l'URL.
+      Remplacez `votre-organisation/santesn` par le chemin exact du dÃ©pÃ´t qui vous a Ã©tÃ© communiquÃ©. Contactez votre administrateur si vous ne disposez pas de l'URL.
     </Note>
 
-    Vérifiez que vous êtes bien sur la branche principale :
+    VÃ©rifiez que vous Ãªtes bien sur la branche principale :
 
     ```bash theme={null}
     git branch
@@ -31,14 +31,14 @@ Cette page vous guide à travers la configuration complète de votre environneme
     ```
   </Step>
 
-  <Step title="Créer un environnement virtuel">
-    Créez un environnement virtuel Python isolé pour le projet afin d'éviter tout conflit de dépendances avec d'autres projets sur votre machine.
+  <Step title="CrÃ©er un environnement virtuel">
+    CrÃ©ez un environnement virtuel Python isolÃ© pour le projet afin d'Ã©viter tout conflit de dÃ©pendances avec d'autres projets sur votre machine.
 
     ```bash theme={null}
     python -m venv venv
     ```
 
-    Activez-le ensuite selon votre système d'exploitation :
+    Activez-le ensuite selon votre systÃ¨me d'exploitation :
 
     <Tabs>
       <Tab title="macOS / Linux">
@@ -60,51 +60,51 @@ Cette page vous guide à travers la configuration complète de votre environneme
       </Tab>
     </Tabs>
 
-    Une fois activé, votre invite de commande affiche le préfixe `(venv)`.
+    Une fois activÃ©, votre invite de commande affiche le prÃ©fixe `(venv)`.
 
     <Tip>
-      Pensez à toujours activer votre environnement virtuel avant d'exécuter des commandes `python` ou `manage.py` dans ce projet.
+      Pensez Ã  toujours activer votre environnement virtuel avant d'exÃ©cuter des commandes `python` ou `manage.py` dans ce projet.
     </Tip>
   </Step>
 
-  <Step title="Installer les dépendances">
-    Installez toutes les dépendances Python du projet à partir du fichier `requirements.txt` :
+  <Step title="Installer les dÃ©pendances">
+    Installez toutes les dÃ©pendances Python du projet Ã  partir du fichier `requirements.txt` :
 
     ```bash theme={null}
     pip install -r requirements.txt
     ```
 
-    Cette commande installe notamment Django, psycopg2 (connecteur PostgreSQL), python-decouple et toutes les autres bibliothèques nécessaires au fonctionnement de SantéSN.
+    Cette commande installe notamment Django, psycopg2 (connecteur PostgreSQL), python-decouple et toutes les autres bibliothÃ¨ques nÃ©cessaires au fonctionnement de SantÃ©SN.
 
     <Note>
-      Si une dépendance échoue à s'installer (par exemple `psycopg2`), vous pouvez utiliser la version binaire : `pip install psycopg2-binary`.
+      Si une dÃ©pendance Ã©choue Ã  s'installer (par exemple `psycopg2`), vous pouvez utiliser la version binaire : `pip install psycopg2-binary`.
     </Note>
   </Step>
 
-  <Step title="Créer le fichier .env">
+  <Step title="CrÃ©er le fichier .env">
     Copiez le fichier d'exemple de configuration et personnalisez-le avec vos propres valeurs :
 
     ```bash theme={null}
     cp .env.example .env
     ```
 
-    Ouvrez le fichier `.env` dans votre éditeur et renseignez les variables. Voici un exemple complet de fichier `.env` pour un environnement local :
+    Ouvrez le fichier `.env` dans votre Ã©diteur et renseignez les variables. Voici un exemple complet de fichier `.env` pour un environnement local :
 
     ```ini theme={null}
-    # ─── Sécurité Django ───────────────────────────────────────────────────────
+    # â”€â”€â”€ SÃ©curitÃ© Django â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     SECRET_KEY=votre-cle-secrete-django-tres-longue-et-aleatoire
     DEBUG=True
 
-    # ─── Hôtes autorisés ────────────────────────────────────────────────────────
+    # â”€â”€â”€ HÃ´tes autorisÃ©s â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     # En local, laissez localhost et 127.0.0.1.
     # En production, indiquez votre domaine Vercel (ex. : projet-final-bice.vercel.app)
     ALLOWED_HOSTS=localhost,127.0.0.1
 
-    # ─── Base de données PostgreSQL ─────────────────────────────────────────────
-    # Option 1 : URL complète (recommandée pour Vercel et services cloud)
+    # â”€â”€â”€ Base de donnÃ©es PostgreSQL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # Option 1 : URL complÃ¨te (recommandÃ©e pour Vercel et services cloud)
     DATABASE_URL=postgres://santesn_user:motdepasse@localhost:5432/santesn_db
 
-    # Option 2 : Variables individuelles (alternative si DATABASE_URL n'est pas utilisé)
+    # Option 2 : Variables individuelles (alternative si DATABASE_URL n'est pas utilisÃ©)
     # DB_NAME=santesn_db
     # DB_USER=santesn_user
     # DB_PASSWORD=motdepasse
@@ -113,19 +113,19 @@ Cette page vous guide à travers la configuration complète de votre environneme
     ```
 
     <Warning>
-      Ne commitez jamais votre fichier `.env` dans Git. Vérifiez que `.env` figure bien dans votre `.gitignore` avant tout `git add`. Une fuite de `SECRET_KEY` ou des identifiants PostgreSQL expose la totalité des données de santé de la plateforme.
+      Ne commitez jamais votre fichier `.env` dans Git. VÃ©rifiez que `.env` figure bien dans votre `.gitignore` avant tout `git add`. Une fuite de `SECRET_KEY` ou des identifiants PostgreSQL expose la totalitÃ© des donnÃ©es de santÃ© de la plateforme.
     </Warning>
   </Step>
 
-  <Step title="Créer la base de données PostgreSQL">
-    Avant d'appliquer les migrations, créez la base de données et l'utilisateur PostgreSQL correspondants :
+  <Step title="CrÃ©er la base de donnÃ©es PostgreSQL">
+    Avant d'appliquer les migrations, crÃ©ez la base de donnÃ©es et l'utilisateur PostgreSQL correspondants :
 
     ```bash theme={null}
-    # Connectez-vous à PostgreSQL en tant que superutilisateur
+    # Connectez-vous Ã  PostgreSQL en tant que superutilisateur
     psql -U postgres
     ```
 
-    Puis exécutez les commandes SQL suivantes dans le shell `psql` :
+    Puis exÃ©cutez les commandes SQL suivantes dans le shell `psql` :
 
     ```sql theme={null}
     CREATE DATABASE santesn_db;
@@ -138,18 +138,18 @@ Cette page vous guide à travers la configuration complète de votre environneme
     ```
 
     <Info>
-      Si vous utilisez un service cloud (Supabase, Neon, ElephantSQL…), récupérez directement l'URL de connexion fournie par le service et collez-la dans `DATABASE_URL`.
+      Si vous utilisez un service cloud (Supabase, Neon, ElephantSQLâ€¦), rÃ©cupÃ©rez directement l'URL de connexion fournie par le service et collez-la dans `DATABASE_URL`.
     </Info>
   </Step>
 
   <Step title="Appliquer les migrations">
-    Appliquez les migrations Django pour créer toutes les tables dans votre base de données :
+    Appliquez les migrations Django pour crÃ©er toutes les tables dans votre base de donnÃ©es :
 
     ```bash theme={null}
     python manage.py migrate
     ```
 
-    Vous verrez une sortie similaire à :
+    Vous verrez une sortie similaire Ã  :
 
     ```
     Operations to perform:
@@ -162,33 +162,33 @@ Cette page vous guide à travers la configuration complète de votre environneme
     ```
 
     <Warning>
-      Si la commande échoue avec une erreur de connexion à la base de données, vérifiez que les valeurs `DATABASE_URL` (ou `DB_*`) dans votre `.env` sont correctes et que le service PostgreSQL est bien démarré.
+      Si la commande Ã©choue avec une erreur de connexion Ã  la base de donnÃ©es, vÃ©rifiez que les valeurs `DATABASE_URL` (ou `DB_*`) dans votre `.env` sont correctes et que le service PostgreSQL est bien dÃ©marrÃ©.
     </Warning>
   </Step>
 
-  <Step title="Créer un super-utilisateur">
-    Créez le premier compte administrateur Django qui vous donnera accès à l'interface `/admin/` :
+  <Step title="CrÃ©er un super-utilisateur">
+    CrÃ©ez le premier compte administrateur Django qui vous donnera accÃ¨s Ã  l'interface `/admin/` :
 
     ```bash theme={null}
     python manage.py createsuperuser
     ```
 
-    L'assistant vous invite à saisir :
+    L'assistant vous invite Ã  saisir :
 
     ```
     Email : admin@santesn.sn
-    Mot de passe : ••••••••
-    Confirmation du mot de passe : ••••••••
+    Mot de passe : â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢
+    Confirmation du mot de passe : â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢
     Superuser created successfully.
     ```
 
     <Note>
-      Sur SantéSN, le superutilisateur Django n'est pas automatiquement un *Administrateur métier* de la plateforme. Connectez-vous à `/admin/` pour attribuer les rôles appropriés aux comptes utilisateurs.
+      Sur SantÃ©SN, le superutilisateur Django n'est pas automatiquement un *Administrateur mÃ©tier* de la plateforme. Connectez-vous Ã  `/admin/` pour attribuer les rÃ´les appropriÃ©s aux comptes utilisateurs.
     </Note>
   </Step>
 
-  <Step title="Lancer le serveur de développement">
-    Démarrez le serveur de développement Django :
+  <Step title="Lancer le serveur de dÃ©veloppement">
+    DÃ©marrez le serveur de dÃ©veloppement Django :
 
     ```bash theme={null}
     python manage.py runserver
@@ -207,45 +207,45 @@ Cette page vous guide à travers la configuration complète de votre environneme
     ```
 
     <Info>
-      Ce point est déduit du comportement de la plateforme et n'a pas été vérifié dans le code source. Le nom du module de settings (`config.settings`) peut différer selon la structure du dépôt qui vous a été fourni.
+      Ce point est dÃ©duit du comportement de la plateforme et n'a pas Ã©tÃ© vÃ©rifiÃ© dans le code source. Le nom du module de settings (`config.settings`) peut diffÃ©rer selon la structure du dÃ©pÃ´t qui vous a Ã©tÃ© fourni.
     </Info>
 
-    Ouvrez votre navigateur et accédez à [http://127.0.0.1:8000/](http://127.0.0.1:8000/) pour voir la page d'accueil de SantéSN.
+    Ouvrez votre navigateur et accÃ©dez Ã  [http://127.0.0.1:8000/](http://127.0.0.1:8000/) pour voir la page d'accueil de SantÃ©SN.
 
     <Tip>
-      Pour lancer le serveur sur un port différent, utilisez `python manage.py runserver 8080`. Pour le rendre accessible sur votre réseau local, utilisez `python manage.py runserver 0.0.0.0:8000`.
+      Pour lancer le serveur sur un port diffÃ©rent, utilisez `python manage.py runserver 8080`. Pour le rendre accessible sur votre rÃ©seau local, utilisez `python manage.py runserver 0.0.0.0:8000`.
     </Tip>
   </Step>
 </Steps>
 
-## Référence des variables d'environnement
+## RÃ©fÃ©rence des variables d'environnement
 
 <AccordionGroup>
-  <Accordion title="Variables de sécurité Django">
+  <Accordion title="Variables de sÃ©curitÃ© Django">
     <ParamField path="SECRET_KEY" type="string" required>
-      Clé secrète utilisée par Django pour la signature cryptographique des sessions, tokens CSRF et autres opérations de sécurité. Doit être longue (50+ caractères), aléatoire et **unique par environnement**. Ne partagez jamais cette valeur.
+      ClÃ© secrÃ¨te utilisÃ©e par Django pour la signature cryptographique des sessions, tokens CSRF et autres opÃ©rations de sÃ©curitÃ©. Doit Ãªtre longue (50+ caractÃ¨res), alÃ©atoire et **unique par environnement**. Ne partagez jamais cette valeur.
     </ParamField>
 
     <ParamField path="DEBUG" type="boolean" required>
-      Mettre à `True` en développement local pour afficher les pages d'erreur détaillées. Mettre **impérativement** à `False` en production pour ne pas exposer d'informations sensibles.
+      Mettre Ã  `True` en dÃ©veloppement local pour afficher les pages d'erreur dÃ©taillÃ©es. Mettre **impÃ©rativement** Ã  `False` en production pour ne pas exposer d'informations sensibles.
     </ParamField>
 
     <ParamField path="ALLOWED_HOSTS" type="string" required>
-      Liste des noms de domaine ou adresses IP autorisés à servir l'application, séparés par des virgules. En local : `localhost,127.0.0.1`. En production sur Vercel : `projet-final-bice.vercel.app`.
+      Liste des noms de domaine ou adresses IP autorisÃ©s Ã  servir l'application, sÃ©parÃ©s par des virgules. En local : `localhost,127.0.0.1`. En production sur Vercel : `projet-final-bice.vercel.app`.
     </ParamField>
   </Accordion>
 
-  <Accordion title="Variables de base de données">
+  <Accordion title="Variables de base de donnÃ©es">
     <ParamField path="DATABASE_URL" type="string">
-      URL de connexion PostgreSQL au format `postgres://USER:PASSWORD@HOST:PORT/DBNAME`. Recommandée pour les déploiements Vercel et les services cloud. Si cette variable est définie, les variables `DB_*` individuelles peuvent être ignorées selon la configuration du projet.
+      URL de connexion PostgreSQL au format `postgres://USER:PASSWORD@HOST:PORT/DBNAME`. RecommandÃ©e pour les dÃ©ploiements Vercel et les services cloud. Si cette variable est dÃ©finie, les variables `DB_*` individuelles peuvent Ãªtre ignorÃ©es selon la configuration du projet.
     </ParamField>
 
     <ParamField path="DB_NAME" type="string">
-      Nom de la base de données PostgreSQL. Exemple : `santesn_db`.
+      Nom de la base de donnÃ©es PostgreSQL. Exemple : `santesn_db`.
     </ParamField>
 
     <ParamField path="DB_USER" type="string">
-      Nom de l'utilisateur PostgreSQL ayant accès à la base. Exemple : `santesn_user`.
+      Nom de l'utilisateur PostgreSQL ayant accÃ¨s Ã  la base. Exemple : `santesn_user`.
     </ParamField>
 
     <ParamField path="DB_PASSWORD" type="string">
@@ -257,14 +257,14 @@ Cette page vous guide à travers la configuration complète de votre environneme
     </ParamField>
 
     <ParamField path="DB_PORT" type="string">
-      Port d'écoute de PostgreSQL. La valeur par défaut est `5432`.
+      Port d'Ã©coute de PostgreSQL. La valeur par dÃ©faut est `5432`.
     </ParamField>
   </Accordion>
 </AccordionGroup>
 
 ## Pages disponibles en local
 
-Une fois le serveur démarré, les URL suivantes sont accessibles :
+Une fois le serveur dÃ©marrÃ©, les URL suivantes sont accessibles :
 
 | URL                                      | Description                                      |
 | ---------------------------------------- | ------------------------------------------------ |
@@ -274,4 +274,4 @@ Une fois le serveur démarré, les URL suivantes sont accessibles :
 | `http://127.0.0.1:8000/ordonnances/`     | Liste des ordonnances (authentification requise) |
 | `http://127.0.0.1:8000/admin/`           | Interface d'administration Django                |
 
-Vous êtes maintenant prêt à développer et tester SantéSN en local. Consultez la page [Base de données](/installation/base-de-donnees) pour en savoir plus sur la structure des données de l'application.
+Vous Ãªtes maintenant prÃªt Ã  dÃ©velopper et tester SantÃ©SN en local. Consultez la page [Base de donnÃ©es](/installation/base-de-donnees) pour en savoir plus sur la structure des donnÃ©es de l'application.
