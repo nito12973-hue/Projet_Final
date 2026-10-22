@@ -10262,6 +10262,36 @@ class PreLaunchAuditAndLegalPagesTests(TestCase):
         self.assertIn("padding-left: 44px !important;", base_html)
         self.assertNotIn("form.filtres input,\n        form.filtres select {\n            margin-bottom: 0 !important;\n            height: 44px !important;\n            min-height: 44px !important;\n            max-height: 44px !important;\n            padding: 0 14px !important;", base_html)
 
+    def test_sidebar_anti_debordement_css_et_structure(self):
+        """Vérifie les règles CSS strictes anti-débordement de la barre latérale et du layout."""
+        import os
+        base_path = os.path.join('Plateform_medicale', 'templates', 'gabarits', 'base.html')
+        if not os.path.exists(base_path):
+            base_path = os.path.join('Plateform_medicale', 'templates', 'base.html')
+        with open(base_path, 'r', encoding='utf-8') as f:
+            base_html = f.read()
+
+        # 1. Anti-débordement global sur html, body, shell, contenu
+        self.assertIn("overflow-x: hidden;", base_html)
+        self.assertIn("max-width: 100%;", base_html)
+        self.assertIn("grid-template-columns: 280px minmax(0, 1fr);", base_html)
+
+        # 2. Dimensions strictes et scroll vertical de la sidebar
+        self.assertIn("width: 280px;", base_html)
+        self.assertIn("max-width: 85vw;", base_html)
+        self.assertIn("overflow-y: auto;", base_html)
+
+        # 3. Troncature et protection textuelle des libellés
+        self.assertIn(".nav-texte {", base_html)
+        self.assertIn("text-overflow: ellipsis;", base_html)
+
+        # 4. Tiroir mobile étanche (visibility hidden & pointer-events none quand fermé)
+        self.assertIn("transform: translateX(-100%);", base_html)
+        self.assertIn("visibility: hidden;", base_html)
+        self.assertIn("pointer-events: none;", base_html)
+        self.assertIn("visibility: visible;", base_html)
+        self.assertIn("pointer-events: auto;", base_html)
+
 
 class TestAmeliorationsPlateformeSN(TestCase):
     """Tests unitaires et d'intégration pour les 4 composants majeurs ajoutés."""
