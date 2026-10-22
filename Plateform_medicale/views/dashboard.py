@@ -155,7 +155,7 @@ def dashboard(request):
         for value, label in User.Role.choices
     ]
 
-    tendance_paiements = _montants_regles_par_jour()
+    tendance_paiements = _montants_regles_par_jour(queryset=qs_paiements)
 
     repartition_patients = qs_patients.aggregate(
         total=Count("id"),
@@ -311,7 +311,7 @@ def _consultations_par_jour(nombre_jours=30, queryset=None):
     }
 
 
-def _montants_regles_par_jour(nombre_jours=30):
+def _montants_regles_par_jour(nombre_jours=30, queryset=None):
     """Montant total regle (Paiement.montant_part_patient) par jour, sur les
     `nombre_jours` derniers jours (jour courant inclus) -- meme forme que
     _consultations_par_jour, sur Paiement.date_reglement plutot que
@@ -319,8 +319,9 @@ def _montants_regles_par_jour(nombre_jours=30):
     aujourd_hui = timezone.now().date()
     jours_reference = [aujourd_hui - datetime.timedelta(days=delta) for delta in range(nombre_jours - 1, -1, -1)]
 
+    base_qs = queryset if queryset is not None else Paiement.objects.all()
     montants = (
-        Paiement.objects.filter(statut=Paiement.Statut.REGLE, date_reglement__date__gte=jours_reference[0])
+        base_qs.filter(statut=Paiement.Statut.REGLE, date_reglement__date__gte=jours_reference[0])
         .annotate(jour=TruncDate("date_reglement"))
         .values("jour")
         .annotate(total=Sum("montant_part_patient"))

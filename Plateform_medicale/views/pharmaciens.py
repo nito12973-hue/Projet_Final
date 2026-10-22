@@ -6,21 +6,33 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 
 from ..forms import PharmacienAffectationForm, PharmacienCreationForm
-from ..models import JournalActivite, Pharmacien, User
+from ..models import JournalActivite, Organisme, Pharmacien, User
 from ..services.onboarding import construire_bilan_onboarding, envoyer_activation_utilisateur
 from .utils import _paginer, _trier, journaliser, organisme_gestionnaire, role_required
 
 
 def _pharmaciens_organisme(organisme):
     """Retourne les pharmaciens rattachés à l'organisme ou aux officines conventionnées de l'organisme."""
+    if not organisme:
+        return Pharmacien.objects.none()
+
+    filtres = (
+        Q(user__organisme=organisme)
+        | (
+            Q(prestataire__conventions_organismes__organisme=organisme)
+            & (Q(user__isnull=True) | Q(user__organisme=organisme) | Q(user__organisme__isnull=True))
+        )
+    )
+
+    if organisme.code == Organisme.CODE_DEFAUT:
+        filtres = filtres | (
+            (Q(user__isnull=True) | Q(user__organisme__isnull=True))
+            & Q(prestataire__isnull=True)
+        )
+
     return (
         Pharmacien.objects.select_related("user", "prestataire")
-        .filter(
-            Q(user__isnull=True)
-            | Q(user__organisme__isnull=True)
-            | Q(user__organisme=organisme)
-            | Q(prestataire__conventions_organismes__organisme=organisme)
-        )
+        .filter(filtres)
         .distinct()
     )
 
@@ -40,7 +52,7 @@ def ajouter_pharmacien(request):
     """Creation d'un pharmacien par le gestionnaire (compte + fiche + lien d'activation)."""
     organisme = organisme_gestionnaire(request)
     if request.method == "POST":
-        form = PharmacienCreationForm(request.POST)
+        form = PharmacienCreationForm(request.POST, organisme=organisme)
         if form.is_valid():
             with transaction.atomic():
                 utilisateur = form.save()
@@ -63,7 +75,7 @@ def ajouter_pharmacien(request):
                 messages.warning(request, bilan["texte_flash"])
             return redirect("liste_pharmaciens")
     else:
-        form = PharmacienCreationForm()
+        form = PharmacienCreationForm(organisme=organisme)
     return render(request, "ajouter_pharmacien.html", {"form": form})
 
 
@@ -72,7 +84,7 @@ def modifier_pharmacien(request, pk):
     organisme = organisme_gestionnaire(request)
     pharmacien = get_object_or_404(_pharmaciens_organisme(organisme), pk=pk)
     if request.method == "POST":
-        form = PharmacienAffectationForm(request.POST, instance=pharmacien)
+        form = PharmacienAffectationForm(request.POST, instance=pharmacien, organisme=organisme)
         if form.is_valid():
             pharmacien = form.save()
             if pharmacien.prestataire:
@@ -81,5 +93,5 @@ def modifier_pharmacien(request, pk):
                 messages.success(request, "L'affectation du pharmacien a été enregistrée avec succès.")
             return redirect("liste_pharmaciens")
     else:
-        form = PharmacienAffectationForm(instance=pharmacien)
+        form = PharmacienAffectationForm(instance=pharmacien, organisme=organisme)
     return render(request, "modifier_pharmacien.html", {"form": form, "pharmacien": pharmacien})

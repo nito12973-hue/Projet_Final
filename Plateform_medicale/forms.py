@@ -1163,6 +1163,21 @@ class PharmacienAffectationForm(forms.ModelForm):
         model = Pharmacien
         fields = ['prestataire']
 
+    def __init__(self, *args, organisme=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if organisme is not None and 'prestataire' in self.fields:
+            from .models import Organisme
+            qs = Prestataire.objects.filter(
+                type_prestataire=Prestataire.Type.PHARMACIE,
+                conventions_organismes__organisme=organisme,
+            )
+            if organisme.code == Organisme.CODE_DEFAUT:
+                qs = qs | Prestataire.objects.filter(
+                    type_prestataire=Prestataire.Type.PHARMACIE,
+                    conventions_organismes__isnull=True,
+                )
+            self.fields['prestataire'].queryset = qs.distinct()
+
 
 class PharmacienCreationForm(forms.ModelForm):
     """Creation d'un pharmacien par le gestionnaire.
@@ -1181,6 +1196,21 @@ class PharmacienCreationForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ['first_name', 'last_name', 'email', 'phone_number']
+
+    def __init__(self, *args, organisme=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if organisme is not None and 'prestataire' in self.fields:
+            from .models import Organisme
+            qs = Prestataire.objects.filter(
+                type_prestataire=Prestataire.Type.PHARMACIE,
+                conventions_organismes__organisme=organisme,
+            )
+            if organisme.code == Organisme.CODE_DEFAUT:
+                qs = qs | Prestataire.objects.filter(
+                    type_prestataire=Prestataire.Type.PHARMACIE,
+                    conventions_organismes__isnull=True,
+                )
+            self.fields['prestataire'].queryset = qs.distinct()
 
     def save(self, commit=True):
         self.mot_de_passe_genere = generer_mot_de_passe()
@@ -1485,6 +1515,17 @@ class MedecinForm(forms.ModelForm):
             }),
         }
 
+    def __init__(self, *args, organisme=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if organisme is not None and 'prestataire' in self.fields:
+            from .models import Organisme
+            qs = Prestataire.objects.filter(
+                conventions_organismes__organisme=organisme,
+            )
+            if organisme.code == Organisme.CODE_DEFAUT:
+                qs = qs | Prestataire.objects.filter(conventions_organismes__isnull=True)
+            self.fields['prestataire'].queryset = qs.distinct()
+
     def clean_email(self):
         email = self.cleaned_data['email']
         comptes = User.objects.filter(email=email)
@@ -1519,6 +1560,17 @@ class ServiceMedicalForm(forms.ModelForm):
         widgets = {
             'description': forms.Textarea(attrs={'rows': 3}),
         }
+
+    def __init__(self, *args, organisme=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if organisme is not None and 'prestataire' in self.fields:
+            from .models import Organisme
+            qs = Prestataire.objects.filter(
+                conventions_organismes__organisme=organisme,
+            )
+            if organisme.code == Organisme.CODE_DEFAUT:
+                qs = qs | Prestataire.objects.filter(conventions_organismes__isnull=True)
+            self.fields['prestataire'].queryset = qs.distinct()
 
 
 class PriseEnChargeForm(forms.ModelForm):
