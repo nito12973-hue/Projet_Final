@@ -1,5 +1,7 @@
 """Pages publiques : vitrine, politique de confidentialité, CGU, robots.txt, sitemap.xml."""
 
+import functools
+import io
 from django.http import HttpResponse
 from django.shortcuts import render
 
@@ -142,6 +144,71 @@ def favicon_svg(request):
     return resp
 
 
+@functools.lru_cache(maxsize=8)
+def _generer_icone_png_santesn(taille: int) -> bytes:
+    """Génère une icône PNG (image/png) haute définition du logo officiel SantéSN (croix médicale + pouls)."""
+    from PIL import Image, ImageDraw
+
+    echelle = 4
+    dim = taille * echelle
+    img = Image.new("RGBA", (dim, dim), (11, 32, 39, 255))  # #0B2027 Navy Médical
+    draw = ImageDraw.Draw(img)
+
+    # Grille 48x48 centrée avec marge de sécurité pour Android maskable
+    marge = dim * 0.10
+    zone = dim - 2 * marge
+
+    def tr(v: float) -> int:
+        return int(round(marge + (v / 48.0) * zone))
+
+    r_coin = max(2, int(round((4.0 / 48.0) * zone)))
+    couleur_croix = (20, 152, 163, 255)  # #1498A3 / #0E7C86 Turquoise Médical
+    draw.rounded_rectangle([tr(18), tr(6), tr(30), tr(42)], radius=r_coin, fill=couleur_croix)
+    draw.rounded_rectangle([tr(6), tr(18), tr(42), tr(30)], radius=r_coin, fill=couleur_croix)
+
+    # Onde ECG du pouls (#E0824F Terracotta)
+    points_pouls = [
+        (tr(6), tr(24)),
+        (tr(14), tr(24)),
+        (tr(17), tr(16)),
+        (tr(21), tr(32)),
+        (tr(25), tr(19)),
+        (tr(27.5), tr(24)),
+        (tr(42), tr(24)),
+    ]
+    epaisseur = max(2, int(round((2.8 / 48.0) * zone)))
+    draw.line(points_pouls, fill=(224, 130, 79, 255), width=epaisseur, joint="curve")
+    r_joint = epaisseur // 2
+    for px, py in points_pouls:
+        draw.ellipse([px - r_joint, py - r_joint, px + r_joint, py + r_joint], fill=(224, 130, 79, 255))
+
+    img_finale = img.resize((taille, taille), Image.Resampling.LANCZOS)
+    tampon = io.BytesIO()
+    img_finale.save(tampon, format="PNG", optimize=True)
+    return tampon.getvalue()
+
+
+def icon_192_png(request):
+    """Icône PNG 192x192 officielle pour l'installation PWA Android/Chrome."""
+    resp = HttpResponse(_generer_icone_png_santesn(192), content_type="image/png")
+    resp["Cache-Control"] = "public, max-age=86400"
+    return resp
+
+
+def icon_512_png(request):
+    """Icône PNG 512x512 officielle pour l'installation PWA Android/Chrome."""
+    resp = HttpResponse(_generer_icone_png_santesn(512), content_type="image/png")
+    resp["Cache-Control"] = "public, max-age=86400"
+    return resp
+
+
+def apple_touch_icon_png(request):
+    """Icône PNG 180x180 officielle pour l'écran d'accueil iPhone/iPad (Safari)."""
+    resp = HttpResponse(_generer_icone_png_santesn(180), content_type="image/png")
+    resp["Cache-Control"] = "public, max-age=86400"
+    return resp
+
+
 # ---------------------------------------------------------------------------
 # Axe 3 : PWA (Progressive Web App) & Mode Carte Hors-Ligne
 # ---------------------------------------------------------------------------
@@ -161,16 +228,28 @@ def manifest_json(request):
         "lang": "fr-SN",
         "icons": [
             {
-                "src": "/favicon.svg",
-                "sizes": "48x48 72x72 96x96 128x128 192x192 256x256 512x512",
-                "type": "image/svg+xml",
+                "src": "/icon-192.png",
+                "sizes": "192x192",
+                "type": "image/png",
                 "purpose": "any",
             },
             {
-                "src": "/favicon.svg",
-                "sizes": "192x192 512x512",
-                "type": "image/svg+xml",
+                "src": "/icon-512.png",
+                "sizes": "512x512",
+                "type": "image/png",
+                "purpose": "any",
+            },
+            {
+                "src": "/icon-512.png",
+                "sizes": "512x512",
+                "type": "image/png",
                 "purpose": "maskable",
+            },
+            {
+                "src": "/favicon.svg",
+                "sizes": "any",
+                "type": "image/svg+xml",
+                "purpose": "any",
             },
         ],
     }
@@ -184,7 +263,7 @@ def manifest_json(request):
 def service_worker_js(request):
     """Service Worker PWA avec mise en cache locale et résilience hors-ligne pour la carte d'assuré."""
     js = """
-const CACHE_NAME = 'santesn-pwa-v7';
+const CACHE_NAME = 'santesn-pwa-v8';
 const RESSOURCES_ESSENTIELLES = [
     '/',
     '/offline/',
