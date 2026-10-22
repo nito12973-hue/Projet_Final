@@ -148,6 +148,12 @@
             --verre-fond: rgba(255, 255, 255, 0.85);
             --ombre-flottante: 0 12px 32px rgba(11, 32, 39, 0.12);
             --fond-doux: var(--primary-soft);
+            --teal-principal: var(--primary);
+            --shadow-lg: var(--ombre-forte);
+            --bg-subtle: var(--primary-soft);
+            --bg-surface: var(--surface);
+            --border-hover: var(--primary);
+            --bordure-active: var(--primary);
             --bg-hover: var(--table-hover);
             --masque-croix: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M12 3v18M3 12h18'/%3E%3C/svg%3E");
         }
@@ -217,6 +223,12 @@
             --verre-fond: rgba(16, 38, 45, 0.85);
             --ombre-flottante: 0 12px 32px rgba(0, 0, 0, 0.4);
             --fond-doux: var(--primary-soft);
+            --teal-principal: var(--primary);
+            --shadow-lg: var(--ombre-forte);
+            --bg-subtle: var(--primary-soft);
+            --bg-surface: var(--surface);
+            --border-hover: var(--primary);
+            --bordure-active: var(--primary);
             --bg-hover: var(--table-hover);
         }
 
@@ -6650,8 +6662,8 @@
             justify-content: center !important;
             border-radius: 8px !important;
             padding: 5px 12px !important;
-            min-height: 32px !important;
-            height: 32px !important;
+            min-height: 38px !important;
+            height: auto !important;
             box-sizing: border-box !important;
             transition: all 0.2s ease !important;
             white-space: nowrap !important;
@@ -6663,9 +6675,13 @@
             box-shadow: var(--ombre-douce);
             font-size: 13px !important;
             gap: 5px !important;
+            flex-shrink: 0;
         }
 
         .btn-retour-expand {
+            min-height: 38px !important;
+            height: auto !important;
+            padding: 6px 14px !important;
             border-radius: 999px !important;
         }
 
@@ -6722,8 +6738,8 @@
             color: var(--primary-strong) !important;
         }
 
-        .page-title .actions .button,
-        .page-title > .button {
+        .page-title .actions .button:not(.btn-retour-expand):not(.btn-expand),
+        .page-title > .button:not(.btn-retour-expand):not(.btn-expand) {
             min-height: 42px !important;
             padding: 0 18px !important;
             border-radius: 8px !important;
