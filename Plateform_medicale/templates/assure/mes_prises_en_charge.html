@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% load formats icones %}
 
 {% block title %}Mes prises en charge{% endblock %}
@@ -80,7 +80,7 @@
     </div>
     <button type="submit" class="button primary btn">Filtrer</button>
     {% if statut_choisi %}
-    <a href="{% url 'mes_prises_en_charge_assure' %}" class="button btn">RÃ©initialiser</a>
+    <a href="{% url 'mes_prises_en_charge_assure' %}" class="button btn">Réinitialiser</a>
     {% endif %}
 </form>
 
@@ -100,9 +100,9 @@ pas un oubli.
                 <strong style="font-size: 16px; color: var(--titre);">Devis : {{ ligne.prise.motif }}</strong>
             </div>
             <span style="font-size: 13px; color: var(--muted); display: block; margin-top: 2px;">
-                {{ ligne.prise.patient }} Â· DemandÃ©e le {{ ligne.prise.date_demande|date:"d/m/Y" }}
-                {% if ligne.prise.date_validation %} Â· {% if ligne.prise.statut == 'validee' %}ValidÃ©e{% else %}TraitÃ©e{% endif %} le {{ ligne.prise.date_validation|date:"d/m/Y Ã  H:i" }}{% endif %}
-                {% if ligne.prise.montant_estime %} Â· Montant devis : <strong style="color: var(--titre);">{{ ligne.prise.montant_estime|franc_cfa }}</strong>{% endif %}
+                {{ ligne.prise.patient }} · Demandée le {{ ligne.prise.date_demande|date:"d/m/Y" }}
+                {% if ligne.prise.date_validation %} · {% if ligne.prise.statut == 'validee' %}Validée{% else %}Traitée{% endif %} le {{ ligne.prise.date_validation|date:"d/m/Y à H:i" }}{% endif %}
+                {% if ligne.prise.montant_estime %} · Montant devis : <strong style="color: var(--titre);">{{ ligne.prise.montant_estime|franc_cfa }}</strong>{% endif %}
             </span>
         </span>
         <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
@@ -120,7 +120,7 @@ pas un oubli.
         <p class="pec-message" style="margin: 0 0 16px; padding: 12px 16px; border-radius: 10px; font-size: 13px;">
             {% icone "clock-history" %}
             Votre demande est en cours d'examen par l'administration. Tant qu'elle
-            n'est pas validÃ©e, les consultations liÃ©es restent Ã  votre charge.
+            n'est pas validée, les consultations liées restent à votre charge.
         </p>
         {% elif ligne.prise.statut == "validee" %}
         <div style="margin: 0 0 14px; padding: 14px 18px; border-radius: 12px; background: #ecfdf5; border: 1px solid #a7f3d0; border-left: 5px solid #10b981; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
@@ -130,7 +130,7 @@ pas un oubli.
                 </div>
                 <div style="min-width: 0;">
                     <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                        <strong style="color: #065f46; font-size: 14.5px;">Accord Tiers Payant ValidÃ©</strong>
+                        <strong style="color: #065f46; font-size: 14.5px;">Accord Tiers Payant Validé</strong>
                         <span style="font-family: monospace; font-size: 12px; font-weight: 700; background: #d1fae5; color: #065f46; padding: 2px 7px; border-radius: 5px;">#{{ ligne.prise.numero_pec }}</span>
                         {% if ligne.prise.montant_estime %}
                         <span style="font-size: 12.5px; font-weight: 700; color: #047857; background: white; padding: 2px 8px; border-radius: 6px; border: 1px solid #a7f3d0;">
@@ -139,7 +139,7 @@ pas un oubli.
                         {% endif %}
                     </div>
                     <span style="font-size: 12px; color: #047857; display: block; margin-top: 3px;">
-                        PrÃ©sentez votre carte QR au guichet pour la prise en charge immÃ©diate.
+                        Présentez votre carte QR au guichet pour la prise en charge immédiate.
                     </span>
                 </div>
             </div>
@@ -148,7 +148,7 @@ pas un oubli.
                     {% icone "file-text" %} Voir l'accord officiel
                 </a>
                 <a href="{% url 'carte_assure_detail' ligne.prise.patient.pk %}" class="button primary btn btn-sm" style="font-size: 12.5px; padding: 6px 14px; font-weight: 600;">
-                    {% icone "id-card" %} Ma carte d'assurÃ© QR &rarr;
+                    {% icone "id-card" %} Ma carte d'assuré QR &rarr;
                 </a>
             </div>
         </div>
@@ -156,9 +156,9 @@ pas un oubli.
         <div class="pec-message pec-message-refus" style="margin: 0 0 16px; padding: 12px 16px; border-radius: 10px; font-size: 13px; display: flex; align-items: flex-start; gap: 10px;">
             {% icone "alert-triangle" %}
             <div>
-                <strong>Cette prise en charge a Ã©tÃ© refusÃ©e.</strong> Les frais de consultation restent Ã  votre charge.
+                <strong>Cette prise en charge a été refusée.</strong> Les frais de consultation restent à votre charge.
                 {% if ligne.prise.motif_refus %}
-                <div style="margin-top: 4px;">Motif notifiÃ© : <em>{{ ligne.prise.motif_refus }}</em></div>
+                <div style="margin-top: 4px;">Motif notifié : <em>{{ ligne.prise.motif_refus }}</em></div>
                 {% endif %}
             </div>
         </div>
@@ -170,10 +170,10 @@ pas un oubli.
             <thead>
                 <tr>
                     <th scope="col">Consultation</th>
-                    <th scope="col">MÃ©decin</th>
+                    <th scope="col">Médecin</th>
                     <th scope="col">Pris en charge</th>
-                    <th scope="col">Ã€ votre charge</th>
-                    <th scope="col">RÃ¨glement</th>
+                    <th scope="col">À votre charge</th>
+                    <th scope="col">Règlement</th>
                 </tr>
             </thead>
             <tbody>
@@ -193,7 +193,7 @@ pas un oubli.
                         </span>
                     </td>
                     {% else %}
-                    <td colspan="3" class="pec-sans-paiement">Aucun montant enregistrÃ©</td>
+                    <td colspan="3" class="pec-sans-paiement">Aucun montant enregistré</td>
                     {% endif %}
                 </tr>
                 {% endfor %}
@@ -207,7 +207,7 @@ pas un oubli.
                 <strong class="code" style="color: var(--primary-strong); margin-left: 6px;">{{ ligne.montant_couvert|franc_cfa }}</strong>
             </div>
             <div style="background: var(--champ-bg); border: 1px solid var(--border); padding: 8px 14px; border-radius: 10px; font-size: 13px;">
-                <span style="color: var(--muted);">Reste Ã  votre charge :</span>
+                <span style="color: var(--muted);">Reste à votre charge :</span>
                 <strong class="code attente" style="margin-left: 6px;">{{ ligne.montant_a_charge|franc_cfa }}</strong>
             </div>
         </div>
@@ -215,10 +215,10 @@ pas un oubli.
         {% if ligne.prise.statut == 'validee' %}
         <div style="background: var(--champ-bg); border: 1px dashed var(--border); border-radius: 12px; padding: 14px 18px; color: var(--muted); font-size: 13px; display: flex; align-items: center; gap: 10px;">
             {% icone "info" %}
-            <span><strong>Dossier de soins actif :</strong> Les actes mÃ©dicaux, hospitalisations ou ordonnances rÃ©alisÃ©s par la structure conventionnÃ©e apparaÃ®tront automatiquement ci-dessus au fur et Ã  mesure.</span>
+            <span><strong>Dossier de soins actif :</strong> Les actes médicaux, hospitalisations ou ordonnances réalisés par la structure conventionnée apparaîtront automatiquement ci-dessus au fur et à mesure.</span>
         </div>
         {% else %}
-        <p class="pec-vide" style="margin: 0; color: var(--muted); font-size: 13.5px; padding: 12px 0;">Aucune consultation n'est encore rattachÃ©e Ã  cette demande.</p>
+        <p class="pec-vide" style="margin: 0; color: var(--muted); font-size: 13.5px; padding: 12px 0;">Aucune consultation n'est encore rattachée à cette demande.</p>
         {% endif %}
         {% endif %}
     </div>
@@ -228,7 +228,7 @@ pas un oubli.
 {% if page.paginator.num_pages > 1 %}
 <nav class="pagination" aria-label="Pagination">
     {% if page.has_previous %}
-    <a href="?{% prefixe_pagination request.GET %}page={{ page.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} PrÃ©cÃ©dent</a>
+    <a href="?{% prefixe_pagination request.GET %}page={{ page.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Précédent</a>
     {% endif %}
     <span class="pagination-info">Page {{ page.number }} sur {{ page.paginator.num_pages }}</span>
     {% if page.has_next %}
@@ -239,11 +239,11 @@ pas un oubli.
 {% else %}
 <div class="etat-vide">
     {% illustration_vide "shield-check" %}
-    <h3>Aucune prise en charge trouvÃ©e</h3>
-    <p>{% if statut_choisi %}Aucune prise en charge avec ce statut.{% else %}Aucune prise en charge enregistrÃ©e pour vous ou vos ayants droit.{% endif %}</p>
+    <h3>Aucune prise en charge trouvée</h3>
+    <p>{% if statut_choisi %}Aucune prise en charge avec ce statut.{% else %}Aucune prise en charge enregistrée pour vous ou vos ayants droit.{% endif %}</p>
     <div class="actions">
         {% if statut_choisi %}
-        <a href="{% url 'mes_prises_en_charge_assure' %}" class="button">{% icone "x" %} RÃ©initialiser le filtre</a>
+        <a href="{% url 'mes_prises_en_charge_assure' %}" class="button">{% icone "x" %} Réinitialiser le filtre</a>
         {% endif %}
         <a class="button primary" href="{% url 'demander_prise_en_charge_assure' %}">{% icone "plus-circle" %} Demander une prise en charge</a>
     </div>
