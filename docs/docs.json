@@ -9,11 +9,11 @@
     "dark": "#095059"
   },
   "logo": {
-    "light": "https://projet-final-bice.vercel.app/logo-light.svg",
-    "dark": "https://projet-final-bice.vercel.app/logo-dark.svg",
+    "light": "/logo-light.svg",
+    "dark": "/logo-dark.svg",
     "href": "https://projet-final-bice.vercel.app"
   },
-  "favicon": "https://projet-final-bice.vercel.app/favicon.svg",
+  "favicon": "/favicon.svg",
   "navbar": {
     "links": [
       {
