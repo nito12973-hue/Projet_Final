@@ -1,6 +1,6 @@
 # Guide utilisateur — SantéSN
 
-[![Documentation Technique Mintlify](https://img.shields.io/badge/Documentation%20Technique-Mintlify-0E7C86?style=for-the-badge&logo=gitbook&logoColor=white)](https://https-projet-final-bice-vercel-app.mintlify.site/introduction)
+[![Documentation Technique Mintlify](https://img.shields.io/badge/Documentation%20Technique-Mintlify-0E7C86?style=for-the-badge&logo=gitbook&logoColor=white)](https://documentation-santesn.mintlify.app/docs/introduction)
 [![Statut Tests](https://img.shields.io/badge/Tests-946%20valid%C3%A9s-success?style=for-the-badge&logo=checkmarx&logoColor=white)](Plateform_medicale/tests.py)
 
 Ce guide explique comment utiliser la plateforme SantéSN au quotidien, écran par
@@ -13,13 +13,13 @@ Ce guide explique comment utiliser la plateforme SantéSN au quotidien, écran p
 > ### 🌐 Documentation Technique Officielle en Ligne (Mintlify)
 > Pour consulter l'ensemble des spécifications d'ingénierie, diagrammes d'architecture, guides de déploiement et intégrations d'API (WhatsApp, Prometheus, Neon Postgres), reportez-vous au portail en ligne officiel :
 >
-> 👉 **[Ouvrir le portail de documentation technique SantéSN sur Mintlify](https://https-projet-final-bice-vercel-app.mintlify.site/introduction)**
+> 👉 **[Ouvrir le portail de documentation technique SantéSN sur Mintlify](https://documentation-santesn.mintlify.app/docs/introduction)**
 >
 > **Accès direct aux modules clés :**
-> - 🏗️ **[Architecture & Sécurité](https://https-projet-final-bice-vercel-app.mintlify.site/architecture)** : Architecture logicielle, modèle relationnel, multi-tenant et conformité CDP Sénégal.
-> - 🏢 **[Espace Gestionnaire IPM](https://https-projet-final-bice-vercel-app.mintlify.site/fonctionnalites/espace-gestionnaire)** : Pilotage des organismes, régimes, conventions prestataires et liquidations.
-> - 💬 **[Passerelle WhatsApp](https://https-projet-final-bice-vercel-app.mintlify.site/fonctionnalites/notifications-whatsapp)** : Notifications automatiques, webhook sécurisé HMAC-SHA256 et bot interactif.
-> - 🚀 **[DevOps & Exploitation](https://https-projet-final-bice-vercel-app.mintlify.site/technique/devops-exploitation)** : CI/CD GitHub Actions, conteneurisation Docker, métriques Prometheus et déploiement.
+> - 🏗️ **[Architecture & Sécurité](https://documentation-santesn.mintlify.app/docs/architecture)** : Architecture logicielle, modèle relationnel, multi-tenant et conformité CDP Sénégal.
+> - 🏢 **[Espace Gestionnaire IPM](https://documentation-santesn.mintlify.app/docs/fonctionnalites/espace-gestionnaire)** : Pilotage des organismes, régimes, conventions prestataires et liquidations.
+> - 💬 **[Passerelle WhatsApp](https://documentation-santesn.mintlify.app/docs/fonctionnalites/notifications-whatsapp)** : Notifications automatiques, webhook sécurisé HMAC-SHA256 et bot interactif.
+> - 🚀 **[DevOps & Exploitation](https://documentation-santesn.mintlify.app/docs/technique/devops-exploitation)** : CI/CD GitHub Actions, conteneurisation Docker, métriques Prometheus et déploiement.
 
 ---
 
@@ -45,10 +45,10 @@ La documentation technique de référence est centralisée et synchronisée en c
 
 | Module | Contenu & Objectif | Badge & Lien |
 | :--- | :--- | :--- |
-| 🏗️ **Architecture Système** | Modèle relationnel, multi-tenant hermétique par organisme, politique Zero-Trust, protection des données personnelles (CDP Sénégal - Loi 2008-12). | [![Architecture](https://img.shields.io/badge/Architecture-Mintlify-0E7C86?style=flat&logo=diagram-next&logoColor=white)](https://https-projet-final-bice-vercel-app.mintlify.site/architecture)<br />[Consulter l'architecture](https://https-projet-final-bice-vercel-app.mintlify.site/architecture) |
-| 🏢 **Espace Gestionnaire** | Conventions prestataires, barèmes de tiers payant, plafonds annuels, gestion des liquidations et instruction des remboursements. | [![Gestionnaire](https://img.shields.io/badge/Espace%20Gestionnaire-Mintlify-0E7C86?style=flat&logo=shield&logoColor=white)](https://https-projet-final-bice-vercel-app.mintlify.site/fonctionnalites/espace-gestionnaire)<br />[Consulter l'espace gestionnaire](https://https-projet-final-bice-vercel-app.mintlify.site/fonctionnalites/espace-gestionnaire) |
-| 💬 **WhatsApp & Webhook** | Meta Cloud API v21.0, validation cryptographique des signatures HMAC-SHA256, menus conversationnels et alertes temps réel. | [![WhatsApp](https://img.shields.io/badge/WhatsApp-Mintlify-25D366?style=flat&logo=whatsapp&logoColor=white)](https://https-projet-final-bice-vercel-app.mintlify.site/fonctionnalites/notifications-whatsapp)<br />[Consulter la section WhatsApp](https://https-projet-final-bice-vercel-app.mintlify.site/fonctionnalites/notifications-whatsapp) |
-| 🚀 **DevOps & Exploitation** | Pipeline GitHub Actions (946 tests automatisés), images Docker multi-stage, supervision Prometheus `/metrics/` et WhiteNoise. | [![DevOps](https://img.shields.io/badge/DevOps-Mintlify-095059?style=flat&logo=docker&logoColor=white)](https://https-projet-final-bice-vercel-app.mintlify.site/technique/devops-exploitation)<br />[Consulter le guide DevOps](https://https-projet-final-bice-vercel-app.mintlify.site/technique/devops-exploitation) |
+| 🏗️ **Architecture Système** | Modèle relationnel, multi-tenant hermétique par organisme, politique Zero-Trust, protection des données personnelles (CDP Sénégal - Loi 2008-12). | [![Architecture](https://img.shields.io/badge/Architecture-Mintlify-0E7C86?style=flat&logo=diagram-next&logoColor=white)](https://documentation-santesn.mintlify.app/docs/architecture)<br />[Consulter l'architecture](https://documentation-santesn.mintlify.app/docs/architecture) |
+| 🏢 **Espace Gestionnaire** | Conventions prestataires, barèmes de tiers payant, plafonds annuels, gestion des liquidations et instruction des remboursements. | [![Gestionnaire](https://img.shields.io/badge/Espace%20Gestionnaire-Mintlify-0E7C86?style=flat&logo=shield&logoColor=white)](https://documentation-santesn.mintlify.app/docs/fonctionnalites/espace-gestionnaire)<br />[Consulter l'espace gestionnaire](https://documentation-santesn.mintlify.app/docs/fonctionnalites/espace-gestionnaire) |
+| 💬 **WhatsApp & Webhook** | Meta Cloud API v21.0, validation cryptographique des signatures HMAC-SHA256, menus conversationnels et alertes temps réel. | [![WhatsApp](https://img.shields.io/badge/WhatsApp-Mintlify-25D366?style=flat&logo=whatsapp&logoColor=white)](https://documentation-santesn.mintlify.app/docs/fonctionnalites/notifications-whatsapp)<br />[Consulter la section WhatsApp](https://documentation-santesn.mintlify.app/docs/fonctionnalites/notifications-whatsapp) |
+| 🚀 **DevOps & Exploitation** | Pipeline GitHub Actions (946 tests automatisés), images Docker multi-stage, supervision Prometheus `/metrics/` et WhiteNoise. | [![DevOps](https://img.shields.io/badge/DevOps-Mintlify-095059?style=flat&logo=docker&logoColor=white)](https://documentation-santesn.mintlify.app/docs/technique/devops-exploitation)<br />[Consulter le guide DevOps](https://documentation-santesn.mintlify.app/docs/technique/devops-exploitation) |
 
 ---
 
@@ -110,7 +110,7 @@ votre rôle :
 
 ## Administrateur IT
 
-> 💡 **Documentation technique détaillée :** Retrouvez le guide complet de l'infrastructure et de la sécurité sur [Mintlify — Sécurité](https://https-projet-final-bice-vercel-app.mintlify.site/technique/securite).
+> 💡 **Documentation technique détaillée :** Retrouvez le guide complet de l'infrastructure et de la sécurité sur [Mintlify — Sécurité](https://documentation-santesn.mintlify.app/docs/technique/securite).
 
 ### Ce que vous voyez en arrivant
 
@@ -142,7 +142,7 @@ Le journal enregistre de manière immuable :
 
 ## Gestionnaire (IPM & Mutuelles)
 
-> 💡 **Documentation technique détaillée :** Retrouvez le guide complet de l'Espace Gestionnaire sur [Mintlify — Espace Gestionnaire](https://https-projet-final-bice-vercel-app.mintlify.site/fonctionnalites/espace-gestionnaire).
+> 💡 **Documentation technique détaillée :** Retrouvez le guide complet de l'Espace Gestionnaire sur [Mintlify — Espace Gestionnaire](https://documentation-santesn.mintlify.app/docs/fonctionnalites/espace-gestionnaire).
 
 Le Gestionnaire est le cœur opérationnel de l'Institution de Prévoyance Maladie (IPM) ou de la Mutuelle.
 
@@ -244,7 +244,7 @@ Sélectionnez le patient, renseignez les motifs, le diagnostic et le protocole t
 
 ## Passerelle WhatsApp & Notifications
 
-> 💡 **Documentation technique détaillée :** Retrouvez l'architecture complète de la passerelle WhatsApp sur [Mintlify — Notifications WhatsApp](https://https-projet-final-bice-vercel-app.mintlify.site/fonctionnalites/notifications-whatsapp).
+> 💡 **Documentation technique détaillée :** Retrouvez l'architecture complète de la passerelle WhatsApp sur [Mintlify — Notifications WhatsApp](https://documentation-santesn.mintlify.app/docs/fonctionnalites/notifications-whatsapp).
 
 La plateforme SantéSN intègre une passerelle bidirectionnelle avec l'API **Meta Cloud API (WhatsApp Business)** :
 

@@ -1,7 +1,7 @@
 # SantéSN — Plateforme Pour la prise en charge médicale dans une structure
 
 [![CI SantéSN - Tests & Validation](https://github.com/nito12973-hue/Projet_Final/actions/workflows/ci.yml/badge.svg)](https://github.com/nito12973-hue/Projet_Final/actions/workflows/ci.yml)
-[![Documentation Mintlify](https://img.shields.io/badge/Documentation%20Mintlify-En%20Ligne-0E7C86?style=flat&logo=gitbook&logoColor=white)](https://https-projet-final-bice-vercel-app.mintlify.site/introduction)
+[![Documentation Mintlify](https://img.shields.io/badge/Documentation%20Mintlify-En%20Ligne-0E7C86?style=flat&logo=gitbook&logoColor=white)](https://documentation-santesn.mintlify.app/docs/introduction)
 [![Tests Automatisés](https://img.shields.io/badge/Tests-946%20valid%C3%A9s%20%E2%9C%94-success.svg)](Plateform_medicale/tests.py)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%20%7C%203.14-blue.svg)](https://www.python.org/)
 [![Django 5.2](https://img.shields.io/badge/django-5.2-green.svg)](https://docs.djangoproject.com/)
@@ -15,18 +15,18 @@ SantéSN est une solution web médicale et assurantielle moderne conçue pour le
 
 La documentation technique exhaustive, interactive et vivante de la plateforme SantéSN est hébergée et déployée sur **Mintlify** :
 
-👉 **[Accéder à la Documentation Technique SantéSN sur Mintlify](https://https-projet-final-bice-vercel-app.mintlify.site/introduction)**
+👉 **[Accéder à la Documentation Technique SantéSN sur Mintlify](https://documentation-santesn.mintlify.app/docs/introduction)**
 
-[![Portail Documentation Mintlify](https://img.shields.io/badge/Portail%20Documentation-Mintlify%20Live-0E7C86?style=for-the-badge&logo=gitbook&logoColor=white)](https://https-projet-final-bice-vercel-app.mintlify.site/introduction)
+[![Portail Documentation Mintlify](https://img.shields.io/badge/Portail%20Documentation-Mintlify%20Live-0E7C86?style=for-the-badge&logo=gitbook&logoColor=white)](https://documentation-santesn.mintlify.app/docs/introduction)
 
 ### 🔗 Accès Direct aux Sections Clés
 
 | Section Clé | Thématiques & Contenu Technique | Accès Direct & Badge |
 | :--- | :--- | :--- |
-| 🏗️ **Architecture & Modèles** | Architecture applicative, modèle relationnel, isolation multi-tenant stricte, Zero-Trust et conformité CDP Sénégal. | [![Architecture](https://img.shields.io/badge/Architecture-Consulter-0E7C86?style=flat&logo=diagram-next&logoColor=white)](https://https-projet-final-bice-vercel-app.mintlify.site/architecture)<br />[Consulter la section Architecture](https://https-projet-final-bice-vercel-app.mintlify.site/architecture) |
-| 🏢 **Espace Gestionnaire** | Pilotage métier IPM, conventions prestataires, régimes de couverture, validation des prises en charge, remboursements et liquidations. | [![Espace Gestionnaire](https://img.shields.io/badge/Espace%20Gestionnaire-Consulter-0E7C86?style=flat&logo=shield&logoColor=white)](https://https-projet-final-bice-vercel-app.mintlify.site/fonctionnalites/espace-gestionnaire)<br />[Consulter l'Espace Gestionnaire](https://https-projet-final-bice-vercel-app.mintlify.site/fonctionnalites/espace-gestionnaire) |
-| 💬 **Passerelle WhatsApp** | Intégration Meta Cloud API v21.0, webhook cryptographique HMAC-SHA256 fail-closed, bot interactif patient et rappels de rendez-vous. | [![WhatsApp](https://img.shields.io/badge/WhatsApp-Consulter-25D366?style=flat&logo=whatsapp&logoColor=white)](https://https-projet-final-bice-vercel-app.mintlify.site/fonctionnalites/notifications-whatsapp)<br />[Consulter l'intégration WhatsApp](https://https-projet-final-bice-vercel-app.mintlify.site/fonctionnalites/notifications-whatsapp) |
-| 🚀 **DevOps & Exploitation** | Pipeline GitHub Actions CI/CD, conteneurs Docker multi-stage, supervision Prometheus, WhiteNoise et déploiements Vercel / Render. | [![DevOps](https://img.shields.io/badge/DevOps%20%26%20Ops-Consulter-095059?style=flat&logo=docker&logoColor=white)](https://https-projet-final-bice-vercel-app.mintlify.site/technique/devops-exploitation)<br />[Consulter la section DevOps](https://https-projet-final-bice-vercel-app.mintlify.site/technique/devops-exploitation) |
+| 🏗️ **Architecture & Modèles** | Architecture applicative, modèle relationnel, isolation multi-tenant stricte, Zero-Trust et conformité CDP Sénégal. | [![Architecture](https://img.shields.io/badge/Architecture-Consulter-0E7C86?style=flat&logo=diagram-next&logoColor=white)](https://documentation-santesn.mintlify.app/docs/architecture)<br />[Consulter la section Architecture](https://documentation-santesn.mintlify.app/docs/architecture) |
+| 🏢 **Espace Gestionnaire** | Pilotage métier IPM, conventions prestataires, régimes de couverture, validation des prises en charge, remboursements et liquidations. | [![Espace Gestionnaire](https://img.shields.io/badge/Espace%20Gestionnaire-Consulter-0E7C86?style=flat&logo=shield&logoColor=white)](https://documentation-santesn.mintlify.app/docs/fonctionnalites/espace-gestionnaire)<br />[Consulter l'Espace Gestionnaire](https://documentation-santesn.mintlify.app/docs/fonctionnalites/espace-gestionnaire) |
+| 💬 **Passerelle WhatsApp** | Intégration Meta Cloud API v21.0, webhook cryptographique HMAC-SHA256 fail-closed, bot interactif patient et rappels de rendez-vous. | [![WhatsApp](https://img.shields.io/badge/WhatsApp-Consulter-25D366?style=flat&logo=whatsapp&logoColor=white)](https://documentation-santesn.mintlify.app/docs/fonctionnalites/notifications-whatsapp)<br />[Consulter l'intégration WhatsApp](https://documentation-santesn.mintlify.app/docs/fonctionnalites/notifications-whatsapp) |
+| 🚀 **DevOps & Exploitation** | Pipeline GitHub Actions CI/CD, conteneurs Docker multi-stage, supervision Prometheus, WhiteNoise et déploiements Vercel / Render. | [![DevOps](https://img.shields.io/badge/DevOps%20%26%20Ops-Consulter-095059?style=flat&logo=docker&logoColor=white)](https://documentation-santesn.mintlify.app/docs/technique/devops-exploitation)<br />[Consulter la section DevOps](https://documentation-santesn.mintlify.app/docs/technique/devops-exploitation) |
 
 ---
 
@@ -103,7 +103,7 @@ python manage.py test Plateform_medicale
 
 ## 📖 Documentation & Références du Projet
 
-* 🌐 **[Documentation Technique Mintlify](https://https-projet-final-bice-vercel-app.mintlify.site/introduction)** : Guide technique exhaustif interactif hébergé sur Mintlify.
+* 🌐 **[Documentation Technique Mintlify](https://documentation-santesn.mintlify.app/docs/introduction)** : Guide technique exhaustif interactif hébergé sur Mintlify.
 * 📘 [`GUIDE_UTILISATEUR.md`](GUIDE_UTILISATEUR.md) : Manuel d'utilisation détaillé pas-à-pas pour chacun des rôles.
 * 📋 [`DECISIONS.md`](DECISIONS.md) : Registre des décisions architecturales et choix d'implémentation (ADR).
 * ⚙️ [`FONCTIONNEMENT.txt`](FONCTIONNEMENT.txt) : Spécifications détaillées de l'architecture, modèles de données et règles métier internes.
