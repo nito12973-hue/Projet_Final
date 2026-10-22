@@ -1014,19 +1014,13 @@ class RendezVousAssureForm(forms.ModelForm):
             'motif': "Décrivez ce que vous ressentez. Le médecin établira le diagnostic.",
         }
 
-    def __init__(self, *args, beneficiaires=None, prestataire=None, **kwargs):
+    def __init__(self, *args, beneficiaires=None, prestataire=None, organisme=None, **kwargs):
         super().__init__(*args, **kwargs)
         if beneficiaires is not None:
             self.fields['patient'].queryset = beneficiaires
 
-        # Le parcours passe par le prestataire : quand il est connu, on ne
-        # propose QUE ses medecins actifs (ou sans compte specifique).
         actif_ou_sans_compte = Q(user__is_active=True) | Q(user__isnull=True)
         if prestataire is not None:
-            # Les medecins SANS structure restent proposes : tant que
-            # l'administrateur ne leur en a pas attribue une, les exclure les
-            # rendrait introuvables et bloquerait toute demande de
-            # rendez-vous. C'est exactement ce qui se produisait.
             self.fields['medecin'].queryset = Medecin.objects.filter(
                 Q(prestataire=prestataire) | Q(prestataire__isnull=True)
             ).filter(
@@ -1034,11 +1028,25 @@ class RendezVousAssureForm(forms.ModelForm):
             ).order_by('nom', 'prenom')
             self.fields['prestataire'].initial = prestataire
         else:
-            self.fields['medecin'].queryset = Medecin.objects.filter(
+            qs_m = Medecin.objects.filter(
                 actif_ou_sans_compte
             ).select_related(
                 'prestataire'
-            ).order_by('nom', 'prenom')
+            )
+            if organisme is not None:
+                qs_m_org = qs_m.filter(
+                    Q(user__organisme=organisme)
+                    | Q(prestataire__conventions_organismes__organisme=organisme)
+                ).distinct()
+                if qs_m_org.exists():
+                    qs_m = qs_m_org
+            self.fields['medecin'].queryset = qs_m.order_by('nom', 'prenom')
+
+        if organisme is not None:
+            qs_p = Prestataire.objects.filter(partenaire=True).exclude(type_prestataire=Prestataire.Type.PHARMACIE)
+            qs_p_org = qs_p.filter(conventions_organismes__organisme=organisme)
+            if qs_p_org.exists():
+                self.fields['prestataire'].queryset = qs_p_org
 
     def clean_patient(self):
         patient = self.cleaned_data.get('patient')

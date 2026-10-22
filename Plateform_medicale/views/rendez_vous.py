@@ -54,14 +54,20 @@ def telecharger_ics_rendez_vous(request, pk):
 
     # Confidentialite : l'administrateur n'a pas acces aux rendez-vous des patients.
     est_admin = False
-    est_gestionnaire = (
-        request.user.role == User.Role.GESTIONNAIRE
-        and (
-            request.user.organisme_id is None
-            or rdv.patient.organisme_id is None
-            or rdv.patient.organisme_id == request.user.organisme_id
-        )
-    )
+    est_gestionnaire = False
+    if request.user.role == User.Role.GESTIONNAIRE:
+        u_org_id = request.user.organisme_id
+        p_org_id = rdv.patient.organisme_id
+        if u_org_id and p_org_id:
+            est_gestionnaire = (u_org_id == p_org_id)
+        elif not u_org_id and not p_org_id:
+            est_gestionnaire = True
+        else:
+            from ..models import Organisme
+            defaut = Organisme.objects.filter(code=Organisme.CODE_DEFAUT).first()
+            if defaut:
+                org_val = u_org_id or p_org_id
+                est_gestionnaire = (org_val == defaut.pk)
     est_medecin = (
         request.user.role == User.Role.MEDECIN
         and hasattr(request.user, "medecin")
