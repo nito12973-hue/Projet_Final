@@ -4,6 +4,17 @@ Ce document consigne de façon claire et sans jargon chaque décision d'architec
 
 ---
 
+## [2026-10-22] Migration vers le Domaine Officiel Mintlify (documentation-santesn.mintlify.app) & Intégration Applicative
+- **Décision :** Remplacement global de l'ancienne URL provisoire de documentation par l'adresse de production officielle Mintlify rattachée à l'organisation `nito` : `https://documentation-santesn.mintlify.app` (et son alias `https://documentation-santesn.mintlify.site`).
+- **Périmètre des mises à jour :**
+  1. *Documentation projet :* Harmonisation intégrale de `README.md` et de `GUIDE_UTILISATEUR.md` avec routage précis vers les pages modulaires (`/docs/introduction`, `/docs/architecture`, `/docs/fonctionnalites/espace-gestionnaire`, `/docs/fonctionnalites/notifications-whatsapp`, `/docs/technique/devops-exploitation`, `/docs/technique/securite`).
+  2. *Landing Page publique (`landing.html`) :* Liens directs dans la barre de navigation d'en-tête, le bloc de navigation du footer et la section de copyright.
+  3. *Application authentifiée (`base.html`) :* Raccourci vers la documentation technique dans la barre latérale pour l'Administrateur IT et le Gestionnaire IPM, dans le menu déroulant du compte utilisateur pour tous les rôles, et dans le pied de page public.
+  4. *Support & Paramètres (`parametres.html`, `admin_liste_demandes_support.html`, `mes_demandes_support.html`) :* Référencement de Mintlify au titre des services externes opérationnels et boutons d'accès rapide dans les consoles d'assistance.
+- **Validation :** Exécution avec 100% de succès de l'intégralité des 946 tests automatisés.
+
+---
+
 ## [2026-10-21] Durcissement Sécurité (Fail-Closed Webhook, Rétention de Session & CSP) & Nettoyage du Dépôt
 - **Décision :** Résolution des vulnérabilités identifiées lors de l'audit de sécurité et allègement du dépôt Git :
   1. *Fail-Closed sur le Webhook WhatsApp :* En production, le contrôleur rejette avec HTTP 403 toute tentative de requête POST entrante si `WHATSAPP_APP_SECRET` n'est pas configuré, interdisant le traitement de messages forgés sans signature cryptographique HMAC-SHA256 valide.
