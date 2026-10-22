@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "almond",
-  "name": "SantéSN",
+  "name": "SanteSN",
   "description": "Documentation technique de la plateforme SantéSN — Digitalisation du tiers payant et ordonnances sécurisées au Sénégal",
   "colors": {
     "primary": "#0E7C86",
