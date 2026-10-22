@@ -194,7 +194,7 @@ def manifest_json(request):
 def service_worker_js(request):
     """Service Worker PWA avec mise en cache locale et résilience hors-ligne pour la carte d'assuré."""
     js = """
-const CACHE_NAME = 'santesn-pwa-v3';
+const CACHE_NAME = 'santesn-pwa-v4';
 const RESSOURCES_ESSENTIELLES = [
     '/',
     '/offline/',
