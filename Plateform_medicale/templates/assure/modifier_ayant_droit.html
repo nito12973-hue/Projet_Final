@@ -9,10 +9,12 @@
         <h1>Modifier {{ ayant_droit }}</h1>
         <p class="subtitle">Carte de prise en charge : <span class="code">{{ ayant_droit.numero_carte }}</span></p>
     </div>
-    <a class="button btn btn-retour-expand" href="{% url 'liste_ayants_droit' %}" title="Retour" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
+    <div class="actions">
+        <a class="button btn btn-retour-expand" href="{% url 'liste_ayants_droit' %}" title="Retour" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
+    </div>
 </section>
 
-<section class="panel panel-form" style="border-radius: 16px; box-shadow: var(--ombre-douce); padding: 24px;">
+<section class="panel panel-form" style="border-radius: 16px; box-shadow: var(--ombre-douce); padding: clamp(16px, 4vw, 24px);">
     {% if ayant_droit.statut_validation == "REFUSE" %}
     <div style="background: rgba(239, 68, 68, 0.08); border-left: 4px solid var(--danger); padding: 14px 18px; border-radius: 8px; margin-bottom: 20px; font-size: 13.5px; color: var(--texte); line-height: 1.5;">
         <strong style="color: var(--danger);">Dossier refusé par l'IPM :</strong> {{ ayant_droit.motif_refus|default:"Informations ou pièces justificatives non conformes." }}
@@ -21,7 +23,7 @@
     {% endif %}
 
     {% if ayant_droit.document_justificatif %}
-    <div style="background: var(--surface-alt); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; font-size: 13px;">
+    <div style="background: var(--surface-alt); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; font-size: 13px; flex-wrap: wrap; gap: 8px;">
         <span>Pièce justificative actuelle :</span>
         <a href="{% url 'telecharger_piece_identite_patient' ayant_droit.pk %}" target="_blank" style="color: var(--primary); font-weight: 600; text-decoration: underline;">
             {% icone "file-text" %} Consulter le justificatif &nearr;
@@ -41,7 +43,7 @@
         {% if field.help_text %}<p class="aide" style="font-size: 12px; color: var(--muted); margin-top: 4px;">{{ field.help_text }}</p>{% endif %}
         {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
         {% endfor %}
-        <div class="actions" style="margin-top: 18px; display: flex; gap: 10px; align-items: center;">
+        <div class="actions" style="margin-top: 18px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
             <button class="button primary" type="submit">Enregistrer les modifications</button>
             <a class="button btn" href="{% url 'liste_ayants_droit' %}">Annuler</a>
         </div>

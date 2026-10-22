@@ -9,7 +9,9 @@
         <h1>Demande de prise en charge</h1>
         <p class="subtitle">Transmettez votre devis médical en 1 clic pour vous ou un ayant droit.</p>
     </div>
-    <a class="button btn btn-retour-expand" href="{% url 'mes_prises_en_charge_assure' %}" title="Retour" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
+    <div class="actions">
+        <a class="button btn btn-retour-expand" href="{% url 'mes_prises_en_charge_assure' %}" title="Retour" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
+    </div>
 </section>
 
 <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--primary-soft);border-radius:10px;font-size:12.5px;color:var(--primary-strong);margin-bottom:18px;">
@@ -17,7 +19,7 @@
     <span>Téléversez simplement votre devis médical (PDF ou photo) pour obtenir votre accord préalable.</span>
 </div>
 
-<section class="panel panel-form" style="max-width: 680px;">
+<section class="panel panel-form" style="max-width: 680px; width: 100%; padding: clamp(16px, 4vw, 24px);">
     {% if form.non_field_errors %}
     <div class="erreurs-formulaire" role="alert" style="margin-bottom: 16px; padding: 12px 16px; background: #fee2e2; border-left: 4px solid #ef4444; border-radius: 8px; color: #991b1b; font-size: 13px;">
         {{ form.non_field_errors }}
@@ -40,9 +42,9 @@
         </div>
 
         <!-- 2. Zone principale : Téléversement du devis (PDF ou photo) -->
-        <div style="margin-bottom: 20px; background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 12px; padding: 20px; text-align: left;">
+        <div style="margin-bottom: 20px; background: var(--surface-alt); border: 2px dashed var(--border); border-radius: 12px; padding: clamp(14px, 3.5vw, 20px); text-align: left;">
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                <div style="width: 36px; height: 36px; border-radius: 8px; background: var(--primary-soft); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 18px;">
+                <div style="width: 36px; height: 36px; border-radius: 8px; background: var(--primary-soft); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;">
                     {% icone "file-text" %}
                 </div>
                 <div>

@@ -44,47 +44,49 @@ voit l'acte et sa facturation, pas son contenu.
 
 {% if consultations %}
 <section class="panel">
-    <table>
-        <thead>
-            <tr>
-                {% entete_tri request.GET "date_consultation" "Date" %}
-                {% entete_tri request.GET "patient__nom" "Patient" %}
-                {% entete_tri request.GET "medecin__nom" "Médecin" "col-optionnelle" %}
-                <th scope="col" class="col-optionnelle">Service</th>
-                <th scope="col" class="col-optionnelle">Prise en charge</th>
-                <th scope="col">Part patient</th>
-                <th scope="col" class="col-optionnelle">Règlement</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for consultation in consultations %}
-            <tr>
-                <td>{{ consultation.date_consultation|date:"d/m/Y" }}</td>
-                <td>{{ consultation.patient }}</td>
-                <td class="col-optionnelle">{{ consultation.medecin }}</td>
-                <td class="col-optionnelle">{{ consultation.service.nom|default:"—" }}</td>
-                <td class="col-optionnelle">
-                    {% if consultation.prise_en_charge %}
-                    <span class="badge {{ consultation.prise_en_charge.statut }}">{{ consultation.prise_en_charge.get_statut_display }}</span>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    {% entete_tri request.GET "date_consultation" "Date" %}
+                    {% entete_tri request.GET "patient__nom" "Patient" %}
+                    {% entete_tri request.GET "medecin__nom" "Médecin" "col-optionnelle" %}
+                    <th scope="col" class="col-optionnelle">Service</th>
+                    <th scope="col" class="col-optionnelle">Prise en charge</th>
+                    <th scope="col">Part patient</th>
+                    <th scope="col" class="col-optionnelle">Règlement</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for consultation in consultations %}
+                <tr>
+                    <td>{{ consultation.date_consultation|date:"d/m/Y" }}</td>
+                    <td>{{ consultation.patient }}</td>
+                    <td class="col-optionnelle">{{ consultation.medecin }}</td>
+                    <td class="col-optionnelle">{{ consultation.service.nom|default:"—" }}</td>
+                    <td class="col-optionnelle">
+                        {% if consultation.prise_en_charge %}
+                        <span class="badge {{ consultation.prise_en_charge.statut }}">{{ consultation.prise_en_charge.get_statut_display }}</span>
+                        {% else %}
+                        <span class="subtitle">Aucune</span>
+                        {% endif %}
+                    </td>
+                    {% if consultation.paiement %}
+                    <td class="code">{{ consultation.paiement.montant_part_patient|franc_cfa }}</td>
+                    <td class="col-optionnelle">
+                        <span class="badge {% if consultation.paiement.statut == 'regle' %}validee{% else %}en_attente{% endif %}">
+                            {{ consultation.paiement.get_statut_display }}
+                        </span>
+                    </td>
                     {% else %}
-                    <span class="subtitle">Aucune</span>
+                    {# Consultations creees directement en base (fixtures, tests ORM) : pas de Paiement. #}
+                    <td colspan="2" class="subtitle">Aucun montant enregistré</td>
                     {% endif %}
-                </td>
-                {% if consultation.paiement %}
-                <td class="code">{{ consultation.paiement.montant_part_patient|franc_cfa }}</td>
-                <td class="col-optionnelle">
-                    <span class="badge {% if consultation.paiement.statut == 'regle' %}validee{% else %}en_attente{% endif %}">
-                        {{ consultation.paiement.get_statut_display }}
-                    </span>
-                </td>
-                {% else %}
-                {# Consultations creees directement en base (fixtures, tests ORM) : pas de Paiement. #}
-                <td colspan="2" class="subtitle">Aucun montant enregistré</td>
-                {% endif %}
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </section>
 {% if consultations.paginator.num_pages > 1 %}
 <nav class="pagination" aria-label="Pagination">

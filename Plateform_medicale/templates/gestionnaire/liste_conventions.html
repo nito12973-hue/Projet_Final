@@ -42,7 +42,8 @@
 
 {% if conventions %}
 <section class="panel">
-    <table>
+    <div class="table-responsive">
+        <table>
         <thead>
             <tr>
                 {% entete_tri request.GET "prestataire__nom" "Établissement" %}
@@ -116,6 +117,7 @@
             {% endfor %}
         </tbody>
     </table>
+    </div>
 </section>
 
 {% if conventions.paginator.num_pages > 1 %}

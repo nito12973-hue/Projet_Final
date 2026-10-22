@@ -11,7 +11,7 @@
        dependance invisible entre deux gabarits. */
     .fiche-lignes {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
         gap: 14px 24px;
         margin: 0 0 18px;
     }
@@ -35,11 +35,13 @@
         <h1>Dr {{ medecin.prenom }} {{ medecin.nom }}</h1>
         <p class="subtitle">{{ medecin.specialite }}</p>
     </div>
-    {% if medecin.prestataire and medecin.prestataire.partenaire %}
-    <a class="button btn btn-retour-expand" href="{% url 'fiche_prestataire_assure' medecin.prestataire.pk %}" title="Retour" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
-    {% else %}
-    <a class="button btn btn-retour-expand" href="{% url 'prestataires_proches' %}" title="Retour" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
-    {% endif %}
+    <div class="actions">
+        {% if medecin.prestataire and medecin.prestataire.partenaire %}
+        <a class="button btn btn-retour-expand" href="{% url 'fiche_prestataire_assure' medecin.prestataire.pk %}" title="Retour" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
+        {% else %}
+        <a class="button btn btn-retour-expand" href="{% url 'prestataires_proches' %}" title="Retour" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
+        {% endif %}
+    </div>
 </section>
 
 <section class="panel panel-bloc" style="border-radius: 16px; box-shadow: var(--ombre-douce);">

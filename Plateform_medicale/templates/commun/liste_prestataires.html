@@ -47,51 +47,53 @@
 
 {% if prestataires %}
 <section class="panel">
-    <table>
-        <thead>
-            <tr>
-                {% entete_tri request.GET "id" "N°" "col-optionnelle" %}
-                {% entete_tri request.GET "nom" "Nom" %}
-                {% entete_tri request.GET "type_prestataire" "Type" "col-optionnelle" %}
-                {% entete_tri request.GET "ville" "Ville" "col-optionnelle" %}
-                <th class="col-optionnelle">Téléphone</th>
-                {% entete_tri request.GET "partenaire" "Partenaire" %}
-                <th class="col-optionnelle">Localisation</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for prestataire in prestataires %}
-            <tr>
-                <td class="col-optionnelle">{{ prestataire.id }}</td>
-                <td>{{ prestataire.nom }}</td>
-                <td class="col-optionnelle">{{ prestataire.get_type_prestataire_display }}</td>
-                <td class="col-optionnelle">{{ prestataire.ville|default:"-" }}</td>
-                <td class="col-optionnelle">{{ prestataire.telephone|default:"-" }}</td>
-                <td>
-                    {% if prestataire.partenaire %}
-                    <span class="badge validee">Actif</span>
-                    {% else %}
-                    <span class="badge refusee">Inactif</span>
-                    {% endif %}
-                </td>
-                <td class="col-optionnelle">
-                    {% if prestataire.latitude and prestataire.longitude %}
-                    <span class="badge validee">Localisé</span>
-                    {% else %}
-                    <span class="badge en_attente">Sans localisation</span>
-                    {% endif %}
-                </td>
-                <td>
-                    <div class="actions">
-                        <a href="{% url 'modifier_prestataire' prestataire.pk %}" class="button primary btn btn-sm">{% icone "edit-2" %} Modifier</a>
-                        <a href="{% url 'supprimer_prestataire' prestataire.pk %}" class="button btn btn-danger btn-sm">{% icone "trash-2" %} Supprimer</a>
-                    </div>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    {% entete_tri request.GET "id" "N°" "col-optionnelle" %}
+                    {% entete_tri request.GET "nom" "Nom" %}
+                    {% entete_tri request.GET "type_prestataire" "Type" "col-optionnelle" %}
+                    {% entete_tri request.GET "ville" "Ville" "col-optionnelle" %}
+                    <th class="col-optionnelle">Téléphone</th>
+                    {% entete_tri request.GET "partenaire" "Partenaire" %}
+                    <th class="col-optionnelle">Localisation</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for prestataire in prestataires %}
+                <tr>
+                    <td class="col-optionnelle">{{ prestataire.id }}</td>
+                    <td>{{ prestataire.nom }}</td>
+                    <td class="col-optionnelle">{{ prestataire.get_type_prestataire_display }}</td>
+                    <td class="col-optionnelle">{{ prestataire.ville|default:"-" }}</td>
+                    <td class="col-optionnelle">{{ prestataire.telephone|default:"-" }}</td>
+                    <td>
+                        {% if prestataire.partenaire %}
+                        <span class="badge validee">Actif</span>
+                        {% else %}
+                        <span class="badge refusee">Inactif</span>
+                        {% endif %}
+                    </td>
+                    <td class="col-optionnelle">
+                        {% if prestataire.latitude and prestataire.longitude %}
+                        <span class="badge validee">Localisé</span>
+                        {% else %}
+                        <span class="badge en_attente">Sans localisation</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="actions">
+                            <a href="{% url 'modifier_prestataire' prestataire.pk %}" class="button primary btn btn-sm">{% icone "edit-2" %} Modifier</a>
+                            <a href="{% url 'supprimer_prestataire' prestataire.pk %}" class="button btn btn-danger btn-sm">{% icone "trash-2" %} Supprimer</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </section>
 {% if prestataires.paginator.num_pages > 1 %}
 <nav class="pagination" aria-label="Pagination">

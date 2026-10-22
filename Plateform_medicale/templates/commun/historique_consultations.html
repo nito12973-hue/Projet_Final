@@ -157,64 +157,66 @@
 
 {% if consultations %}
 <section class="panel">
-    <table class="table-consultations">
-        <thead>
-            <tr>
-                <th>Date &amp; Service</th>
-                <th>Patient</th>
-                <th>Diagnostic</th>
-                <th>Traitement</th>
-                <th>Ordonnance</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for consultation in consultations %}
-            <tr>
-                <td>
-                    <div class="cell-date-service">
-                        <div class="cell-date-main">
-                            <span class="medecin-horaire-pill">{{ consultation.date_consultation|date:"H:i" }}</span>
-                            <span class="cell-date-text">{{ consultation.date_consultation|date:"d/m/Y" }}</span>
+    <div class="table-responsive">
+        <table class="table-consultations">
+            <thead>
+                <tr>
+                    <th>Date &amp; Service</th>
+                    <th>Patient</th>
+                    <th>Diagnostic</th>
+                    <th>Traitement</th>
+                    <th>Ordonnance</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for consultation in consultations %}
+                <tr>
+                    <td>
+                        <div class="cell-date-service">
+                            <div class="cell-date-main">
+                                <span class="medecin-horaire-pill">{{ consultation.date_consultation|date:"H:i" }}</span>
+                                <span class="cell-date-text">{{ consultation.date_consultation|date:"d/m/Y" }}</span>
+                            </div>
+                            {% if consultation.service %}
+                            <span class="cell-service-tag">{% icone "activity" %} {{ consultation.service.nom }}</span>
+                            {% endif %}
                         </div>
-                        {% if consultation.service %}
-                        <span class="cell-service-tag">{% icone "activity" %} {{ consultation.service.nom }}</span>
+                    </td>
+                    <td>
+                        <div class="cell-patient">
+                            <a class="patient-link" href="{% url 'fiche_patient_medecin' consultation.patient.pk %}"><strong>{{ consultation.patient }}</strong></a>
+                            {% if consultation.patient.numero_carte %}
+                            <span class="code cell-patient-card">{{ consultation.patient.numero_carte }}</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="cell-diagnostic">{{ consultation.diagnostic }}</div>
+                    </td>
+                    <td>
+                        <div class="cell-traitement">{{ consultation.traitement|default:"—" }}</div>
+                    </td>
+                    <td>
+                        {% comment %}
+                        .all|first et non .first : la vue precharge ordonnance_set
+                        (prefetch_related), mais .first() emet une NOUVELLE requete
+                        LIMIT 1 et ignore le cache -- une par ligne affichee.
+                        Mesure : 11 requetes a 3 lignes, 28 a 30. Le filtre |first
+                        travaille sur la liste deja chargee.
+                        {% endcomment %}
+                        {% with ordonnance=consultation.ordonnances.all|first %}
+                        {% if ordonnance %}
+                        <a class="button primary btn btn-sm" href="{% url 'voir_ordonnance_medecin' ordonnance.pk %}">{% icone "qr-scan" %} Voir</a>
+                        {% else %}
+                        <a class="button btn btn-sm" href="{% url 'ajouter_ordonnance_medecin' consultation.pk %}">{% icone "plus-circle" %} Créer</a>
                         {% endif %}
-                    </div>
-                </td>
-                <td>
-                    <div class="cell-patient">
-                        <a class="patient-link" href="{% url 'fiche_patient_medecin' consultation.patient.pk %}"><strong>{{ consultation.patient }}</strong></a>
-                        {% if consultation.patient.numero_carte %}
-                        <span class="code cell-patient-card">{{ consultation.patient.numero_carte }}</span>
-                        {% endif %}
-                    </div>
-                </td>
-                <td>
-                    <div class="cell-diagnostic">{{ consultation.diagnostic }}</div>
-                </td>
-                <td>
-                    <div class="cell-traitement">{{ consultation.traitement|default:"—" }}</div>
-                </td>
-                <td>
-                    {% comment %}
-                    .all|first et non .first : la vue precharge ordonnance_set
-                    (prefetch_related), mais .first() emet une NOUVELLE requete
-                    LIMIT 1 et ignore le cache -- une par ligne affichee.
-                    Mesure : 11 requetes a 3 lignes, 28 a 30. Le filtre |first
-                    travaille sur la liste deja chargee.
-                    {% endcomment %}
-                    {% with ordonnance=consultation.ordonnances.all|first %}
-                    {% if ordonnance %}
-                    <a class="button primary btn btn-sm" href="{% url 'voir_ordonnance_medecin' ordonnance.pk %}">{% icone "qr-scan" %} Voir</a>
-                    {% else %}
-                    <a class="button btn btn-sm" href="{% url 'ajouter_ordonnance_medecin' consultation.pk %}">{% icone "plus-circle" %} Créer</a>
-                    {% endif %}
-                    {% endwith %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                        {% endwith %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </section>
 {% if consultations.paginator.num_pages > 1 %}
 <nav class="pagination" aria-label="Pagination">

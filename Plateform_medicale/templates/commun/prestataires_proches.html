@@ -80,9 +80,9 @@
             {% endif %}
         </p>
     </div>
-    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-        <a class="btn-proches-retour" href="{% url 'dashboard_assure' %}">
-            {% icone "chevron-left" %} Mon tableau de bord
+    <div class="actions" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <a class="btn-proches-retour button btn btn-retour-expand" href="{% url 'dashboard_assure' %}">
+            {% icone "chevron-left" %} <span class="expand-text">Mon tableau de bord</span>
         </a>
     </div>
 </div>

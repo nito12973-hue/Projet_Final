@@ -55,46 +55,48 @@
 
 {% if paiements %}
 <section class="panel">
-    <table>
-        <thead>
-            <tr>
-                {% entete_tri request.GET "consultation__patient__nom" "Patient" %}
-                <th class="col-optionnelle">Consultation</th>
-                {% entete_tri request.GET "montant_total" "Montant total" "col-optionnelle" %}
-                {% entete_tri request.GET "montant_part_assurance" "Part assurance" "col-optionnelle" %}
-                {% entete_tri request.GET "montant_part_patient" "Part patient" "col-optionnelle" %}
-                {% entete_tri request.GET "statut" "Statut" %}
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for paiement in paiements %}
-            <tr>
-                <td>{{ paiement.consultation.patient }}</td>
-                <td class="col-optionnelle">{{ paiement.consultation.date_consultation|date:"d/m/Y H:i" }}</td>
-                <td class="col-optionnelle">{{ paiement.montant_total|franc_cfa }}</td>
-                <td class="col-optionnelle">{{ paiement.montant_part_assurance|franc_cfa }}</td>
-                <td class="col-optionnelle">{{ paiement.montant_part_patient|franc_cfa }}</td>
-                <td><span class="badge {% if paiement.statut == 'regle' %}validee{% else %}en_attente{% endif %}">{{ paiement.get_statut_display }}</span></td>
-                <td>
-                    <div class="actions">
-                        {% if paiement.statut == 'non_regle' %}
-                        <a href="{% url 'marquer_paiement_regle' paiement.pk %}" class="button primary btn btn-sm">Marquer réglé</a>
-                        {% else %}
-                        <div style="display:flex;align-items:center;gap:8px;">
-                            <span>
-                                {{ paiement.get_mode_reglement_display }} - {{ paiement.date_reglement|date:"d/m/Y" }}
-                                {% if paiement.enregistre_par %}<br><small class="subtitle">par {{ paiement.enregistre_par.email }}</small>{% endif %}
-                            </span>
-                            <a href="{% url 'recu_paiement' paiement.pk %}" class="button btn btn-sm" title="Imprimer la quittance">{% icone "printer" %} Reçu</a>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    {% entete_tri request.GET "consultation__patient__nom" "Patient" %}
+                    <th class="col-optionnelle">Consultation</th>
+                    {% entete_tri request.GET "montant_total" "Montant total" "col-optionnelle" %}
+                    {% entete_tri request.GET "montant_part_assurance" "Part assurance" "col-optionnelle" %}
+                    {% entete_tri request.GET "montant_part_patient" "Part patient" "col-optionnelle" %}
+                    {% entete_tri request.GET "statut" "Statut" %}
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for paiement in paiements %}
+                <tr>
+                    <td>{{ paiement.consultation.patient }}</td>
+                    <td class="col-optionnelle">{{ paiement.consultation.date_consultation|date:"d/m/Y H:i" }}</td>
+                    <td class="col-optionnelle">{{ paiement.montant_total|franc_cfa }}</td>
+                    <td class="col-optionnelle">{{ paiement.montant_part_assurance|franc_cfa }}</td>
+                    <td class="col-optionnelle">{{ paiement.montant_part_patient|franc_cfa }}</td>
+                    <td><span class="badge {% if paiement.statut == 'regle' %}validee{% else %}en_attente{% endif %}">{{ paiement.get_statut_display }}</span></td>
+                    <td>
+                        <div class="actions">
+                            {% if paiement.statut == 'non_regle' %}
+                            <a href="{% url 'marquer_paiement_regle' paiement.pk %}" class="button primary btn btn-sm">Marquer réglé</a>
+                            {% else %}
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <span>
+                                    {{ paiement.get_mode_reglement_display }} - {{ paiement.date_reglement|date:"d/m/Y" }}
+                                    {% if paiement.enregistre_par %}<br><small class="subtitle">par {{ paiement.enregistre_par.email }}</small>{% endif %}
+                                </span>
+                                <a href="{% url 'recu_paiement' paiement.pk %}" class="button btn btn-sm" title="Imprimer la quittance">{% icone "printer" %} Reçu</a>
+                            </div>
+                            {% endif %}
                         </div>
-                        {% endif %}
-                    </div>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </section>
 {% if paiements.paginator.num_pages > 1 %}
 <nav class="pagination" aria-label="Pagination">

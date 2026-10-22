@@ -55,10 +55,12 @@
         <canvas id="graphe-consultations" style="max-height: 240px;"></canvas>
         <details class="details-tableau" id="repli-consultations" hidden style="margin-top: 10px;">
             <summary>Voir les données du graphique</summary>
-            <table>
-                <thead><tr><th id="entete-periode-consultations">Période</th><th>Total</th></tr></thead>
-                <tbody id="corps-tableau-consultations"></tbody>
-            </table>
+            <div class="table-responsive">
+                <table>
+                    <thead><tr><th id="entete-periode-consultations">Période</th><th>Total</th></tr></thead>
+                    <tbody id="corps-tableau-consultations"></tbody>
+                </table>
+            </div>
         </details>
     </section>
 
@@ -70,7 +72,7 @@
         <div style="max-height: 210px; display: flex; justify-content: center; align-items: center; position: relative;">
             <canvas id="graphe-pec" style="max-height: 200px; max-width: 260px;"></canvas>
         </div>
-        <div style="margin-top: 14px;">
+        <div class="table-responsive" style="margin-top: 14px;">
             <table style="font-size: 13px;">
                 <tbody>
                     {% for ligne in prises_en_charge_par_statut %}
@@ -91,28 +93,32 @@
         <div class="panel-header">
             <div><h2>Utilisateurs par rôle</h2></div>
         </div>
-        <table>
-            <thead><tr><th scope="col">Rôle</th><th scope="col" style="text-align:right;">Nombre</th></tr></thead>
-            <tbody>
-                {% for ligne in utilisateurs_par_role %}
-                <tr><td>{{ ligne.label }}</td><td class="code" style="text-align:right; font-weight:700;">{{ ligne.total }}</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table>
+                <thead><tr><th scope="col">Rôle</th><th scope="col" style="text-align:right;">Nombre</th></tr></thead>
+                <tbody>
+                    {% for ligne in utilisateurs_par_role %}
+                    <tr><td>{{ ligne.label }}</td><td class="code" style="text-align:right; font-weight:700;">{{ ligne.total }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </article>
 
     <article class="panel">
         <div class="panel-header">
             <div><h2>Assurés par type de bénéficiaire</h2></div>
         </div>
-        <table>
-            <thead><tr><th scope="col">Type</th><th scope="col" style="text-align:right;">Nombre</th></tr></thead>
-            <tbody>
-                {% for ligne in patients_par_type %}
-                <tr><td>{{ ligne.label }}</td><td class="code" style="text-align:right; font-weight:700;">{{ ligne.total }}</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table>
+                <thead><tr><th scope="col">Type</th><th scope="col" style="text-align:right;">Nombre</th></tr></thead>
+                <tbody>
+                    {% for ligne in patients_par_type %}
+                    <tr><td>{{ ligne.label }}</td><td class="code" style="text-align:right; font-weight:700;">{{ ligne.total }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </article>
 </section>
 
@@ -120,14 +126,16 @@
     <div class="panel-header">
         <div><h2>Rendez-vous par statut</h2></div>
     </div>
-    <table>
-        <thead><tr><th scope="col">Statut</th><th scope="col" style="text-align:right;">Total</th></tr></thead>
-        <tbody>
-            {% for ligne in rendez_vous_par_statut %}
-            <tr><td>{{ ligne.label }}</td><td class="code" style="text-align:right; font-weight:700;">{{ ligne.total }}</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-responsive">
+        <table>
+            <thead><tr><th scope="col">Statut</th><th scope="col" style="text-align:right;">Total</th></tr></thead>
+            <tbody>
+                {% for ligne in rendez_vous_par_statut %}
+                <tr><td>{{ ligne.label }}</td><td class="code" style="text-align:right; font-weight:700;">{{ ligne.total }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </section>
 
 <template id="modele-graphique-indisponible">

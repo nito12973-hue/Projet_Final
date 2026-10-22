@@ -11,7 +11,7 @@
        le mode sombre suit sans regle supplementaire. */
     .fiche-lignes {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
         gap: 14px 24px;
         margin: 0;
     }
@@ -31,7 +31,7 @@
 
     .grille-medecins {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
         gap: 14px;
         margin-bottom: 20px;
     }
@@ -80,7 +80,9 @@
             {% if prestataire.ville %} · {{ prestataire.ville }}{% endif %}
         </p>
     </div>
-    <a class="button btn btn-retour-expand" href="{% url 'prestataires_proches' %}" title="Retour" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
+    <div class="actions">
+        <a class="button btn btn-retour-expand" href="{% url 'prestataires_proches' %}" title="Retour" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
+    </div>
 </section>
 
 <section class="panel panel-bloc" style="border-radius: 16px; box-shadow: var(--ombre-douce);">
@@ -112,8 +114,8 @@
 
 {% if prestataire.type_prestataire == "PHARMACIE" %}
 <section class="panel panel-bloc" style="border-radius: 16px; border-left: 4px solid var(--primary); padding: 22px; margin-bottom: 24px;">
-    <div style="display: flex; align-items: flex-start; gap: 14px;">
-        <span class="dash-stat-icon" style="font-size: 26px; padding: 10px; background: rgba(14, 124, 134, 0.1); border-radius: 12px; color: var(--primary);">{% icone "pill" %}</span>
+    <div style="display: flex; align-items: flex-start; gap: 14px; flex-wrap: wrap;">
+        <span class="dash-stat-icon" style="font-size: 26px; padding: 10px; background: rgba(14, 124, 134, 0.1); border-radius: 12px; color: var(--primary); flex-shrink: 0;">{% icone "pill" %}</span>
         <div>
             <h2 style="margin: 0 0 6px 0; font-size: 1.18rem;">Officine pharmaceutique conventionnée</h2>
             <p class="subtitle" style="margin: 0 0 12px 0;">Cette officine partenaire assure la délivrance de vos médicaments prescrits avec dispense d'avance de frais (tiers payant SantéSN).</p>
@@ -149,7 +151,7 @@
         {% if medecin.presentation %}
         <p class="carte-medecin-texte">{{ medecin.presentation|truncatewords:28 }}</p>
         {% endif %}
-        <div class="actions">
+        <div class="actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
             <a class="button btn btn-sm" href="{% url 'fiche_medecin_assure' medecin.pk %}">Voir le profil</a>
             <a class="button primary btn btn-sm" href="{% url 'ajouter_rendez_vous_assure' %}?medecin={{ medecin.pk }}">{% icone "calendar" %} Rendez-vous</a>
         </div>
@@ -167,6 +169,7 @@
 <section class="panel panel-bloc">
     <h2>Actes proposés et tarifs</h2>
     <p class="subtitle">À titre indicatif. Le montant réellement dû dépend de votre prise en charge.</p>
+    <div class="table-responsive">
     <table>
         <thead>
             <tr>
@@ -183,6 +186,7 @@
             {% endfor %}
         </tbody>
     </table>
+    </div>
 </section>
 {% endif %}
 {% endblock %}

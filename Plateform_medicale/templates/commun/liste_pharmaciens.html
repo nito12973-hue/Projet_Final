@@ -17,28 +17,30 @@
 
 {% if pharmaciens %}
 <section class="panel">
-    <table>
-        <thead>
-            <tr>
-                {% entete_tri request.GET "user__last_name" "Nom complet" %}
-                {% entete_tri request.GET "user__email" "Email" "col-optionnelle" %}
-                {% entete_tri request.GET "prestataire__nom" "Pharmacie affectee" %}
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for pharmacien in pharmaciens %}
-            <tr>
-                <td>{% if pharmacien.user %}{{ pharmacien.user.get_full_name|default:pharmacien.user.email }}{% elif pharmacien.prestataire %}Pharmacien ({{ pharmacien.prestataire.nom }}){% else %}Pharmacien (non assigné){% endif %}</td>
-                <td class="col-optionnelle">{% if pharmacien.user %}{{ pharmacien.user.email }}{% else %}Compte non assigné{% endif %}</td>
-                <td>{{ pharmacien.prestataire|default:"Non affecté" }}</td>
-                <td>
-                    <a href="{% url 'modifier_pharmacien' pharmacien.pk %}" class="button primary btn btn-sm">{% icone "edit-2" %} Affecter une pharmacie &rarr;</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    {% entete_tri request.GET "user__last_name" "Nom complet" %}
+                    {% entete_tri request.GET "user__email" "Email" "col-optionnelle" %}
+                    {% entete_tri request.GET "prestataire__nom" "Pharmacie affectee" %}
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pharmacien in pharmaciens %}
+                <tr>
+                    <td>{% if pharmacien.user %}{{ pharmacien.user.get_full_name|default:pharmacien.user.email }}{% elif pharmacien.prestataire %}Pharmacien ({{ pharmacien.prestataire.nom }}){% else %}Pharmacien (non assigné){% endif %}</td>
+                    <td class="col-optionnelle">{% if pharmacien.user %}{{ pharmacien.user.email }}{% else %}Compte non assigné{% endif %}</td>
+                    <td>{{ pharmacien.prestataire|default:"Non affecté" }}</td>
+                    <td>
+                        <a href="{% url 'modifier_pharmacien' pharmacien.pk %}" class="button primary btn btn-sm">{% icone "edit-2" %} Affecter une pharmacie &rarr;</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </section>
 {% if pharmaciens.paginator.num_pages > 1 %}
 <nav class="pagination" aria-label="Pagination">

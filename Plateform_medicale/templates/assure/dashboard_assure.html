@@ -73,7 +73,7 @@
 </section>
 
 <!-- Résumé Clé Immédiat (3 Métriques Essentielles en Couleurs Apaisantes) -->
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 22px;">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 16px; margin-bottom: 22px;">
     <!-- 1. Solde Annuel Restant -->
     <div class="panel" style="margin: 0; padding: 18px 20px; border-radius: 16px; box-shadow: var(--ombre-douce); border: 1px solid var(--border); display: flex; flex-direction: column; justify-content: space-between;">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
@@ -451,14 +451,14 @@
             <div style="display: flex; flex-direction: column; gap: 10px;">
                 {% for pec in dernieres_prises_en_charge %}
                 <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-radius: 12px; background: var(--champ-bg); border: 1px solid var(--border); flex-wrap: wrap; gap: 10px;">
-                    <div>
+                    <div style="min-width: 0; flex: 1 1 200px;">
                         <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 2px; flex-wrap: wrap;">
                             {% if pec.numero_pec %}<span style="font-size: 11px; font-weight: 700; color: var(--primary-strong); font-family: monospace; background: var(--primary-soft); padding: 1px 6px; border-radius: 4px;">#{{ pec.numero_pec }}</span>{% endif %}
-                            <strong style="font-size: 13.5px; color: var(--titre);">
+                            <strong style="font-size: 13.5px; color: var(--titre); word-break: break-word;">
                                 {{ pec.motif|default:"Prestation médicale conventionnée"|truncatechars:40 }}
                             </strong>
                         </div>
-                        <span style="font-size: 12px; color: var(--muted);">
+                        <span style="font-size: 12px; color: var(--muted); word-break: break-word;">
                             {{ pec.patient }} · Demandée le {{ pec.date_demande|date:"d/m/Y" }}
                             {% if pec.montant_estime %} · <strong style="color:var(--titre);">{{ pec.montant_estime|franc_cfa }}</strong>{% endif %}
                         </span>

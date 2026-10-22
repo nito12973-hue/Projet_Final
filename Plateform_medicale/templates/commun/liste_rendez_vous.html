@@ -36,30 +36,32 @@
 
 {% if rendez_vous %}
 <section class="panel">
-    <table>
-        <thead>
-            <tr>
-                {% entete_tri request.GET "date_heure" "Date et heure" %}
-                {% entete_tri request.GET "patient__nom" "Patient" %}
-                {% entete_tri request.GET "medecin__nom" "Médecin" "col-optionnelle" %}
-                <th scope="col" class="col-optionnelle">Prestataire</th>
-                <th scope="col" class="col-optionnelle">Motif</th>
-                {% entete_tri request.GET "statut" "Statut" %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for rdv in rendez_vous %}
-            <tr>
-                <td>{{ rdv.date_heure|date:"d/m/Y H:i" }}</td>
-                <td>{{ rdv.patient }}</td>
-                <td class="col-optionnelle">{{ rdv.medecin }}</td>
-                <td class="col-optionnelle">{{ rdv.prestataire|default:"—" }}</td>
-                <td class="col-optionnelle">{{ rdv.motif|default:"—" }}</td>
-                <td><span class="badge {% if rdv.statut == 'CONFIRME' %}validee{% elif rdv.statut == 'ANNULE' or rdv.statut == 'REFUSE' %}refusee{% elif rdv.statut == 'DEMANDE' %}en_attente{% elif rdv.statut == 'TERMINE' %}terminee{% endif %}">{{ rdv.get_statut_display }}</span></td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    {% entete_tri request.GET "date_heure" "Date et heure" %}
+                    {% entete_tri request.GET "patient__nom" "Patient" %}
+                    {% entete_tri request.GET "medecin__nom" "Médecin" "col-optionnelle" %}
+                    <th scope="col" class="col-optionnelle">Prestataire</th>
+                    <th scope="col" class="col-optionnelle">Motif</th>
+                    {% entete_tri request.GET "statut" "Statut" %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for rdv in rendez_vous %}
+                <tr>
+                    <td>{{ rdv.date_heure|date:"d/m/Y H:i" }}</td>
+                    <td>{{ rdv.patient }}</td>
+                    <td class="col-optionnelle">{{ rdv.medecin }}</td>
+                    <td class="col-optionnelle">{{ rdv.prestataire|default:"—" }}</td>
+                    <td class="col-optionnelle">{{ rdv.motif|default:"—" }}</td>
+                    <td><span class="badge {% if rdv.statut == 'CONFIRME' %}validee{% elif rdv.statut == 'ANNULE' or rdv.statut == 'REFUSE' %}refusee{% elif rdv.statut == 'DEMANDE' %}en_attente{% elif rdv.statut == 'TERMINE' %}terminee{% endif %}">{{ rdv.get_statut_display }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </section>
 {% if rendez_vous.paginator.num_pages > 1 %}
 <nav class="pagination" aria-label="Pagination">

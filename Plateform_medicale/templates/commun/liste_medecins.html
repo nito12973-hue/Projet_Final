@@ -31,33 +31,35 @@
 
 {% if medecins %}
 <section class="panel">
-    <table>
-        <thead>
-            <tr>
-                {% entete_tri request.GET "nom" "Nom complet" %}
-                {% entete_tri request.GET "specialite" "Specialite" %}
-                <th class="col-optionnelle">Téléphone</th>
-                {% entete_tri request.GET "email" "Email" "col-optionnelle" %}
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for medecin in medecins %}
-            <tr>
-                <td>Dr {{ medecin.prenom }} {{ medecin.nom }}</td>
-                <td>{{ medecin.specialite }}</td>
-                <td class="col-optionnelle">{{ medecin.telephone }}</td>
-                <td class="col-optionnelle">{{ medecin.email }}</td>
-                <td>
-                    <div class="actions">
-                        <a href="{% url 'modifier_medecin' medecin.pk %}" class="button primary btn btn-sm">{% icone "edit-2" %} Modifier</a>
-                        <a href="{% url 'supprimer_medecin' medecin.pk %}" class="button btn btn-danger btn-sm">{% icone "trash-2" %} Supprimer</a>
-                    </div>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    {% entete_tri request.GET "nom" "Nom complet" %}
+                    {% entete_tri request.GET "specialite" "Specialite" %}
+                    <th class="col-optionnelle">Téléphone</th>
+                    {% entete_tri request.GET "email" "Email" "col-optionnelle" %}
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for medecin in medecins %}
+                <tr>
+                    <td>Dr {{ medecin.prenom }} {{ medecin.nom }}</td>
+                    <td>{{ medecin.specialite }}</td>
+                    <td class="col-optionnelle">{{ medecin.telephone }}</td>
+                    <td class="col-optionnelle">{{ medecin.email }}</td>
+                    <td>
+                        <div class="actions">
+                            <a href="{% url 'modifier_medecin' medecin.pk %}" class="button primary btn btn-sm">{% icone "edit-2" %} Modifier</a>
+                            <a href="{% url 'supprimer_medecin' medecin.pk %}" class="button btn btn-danger btn-sm">{% icone "trash-2" %} Supprimer</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </section>
 {% if medecins.paginator.num_pages > 1 %}
 <nav class="pagination" aria-label="Pagination">

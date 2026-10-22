@@ -15,6 +15,9 @@
         .grille-remb-form {
             grid-template-columns: 1fr;
         }
+        .carte-simulateur-remb {
+            position: static !important;
+        }
     }
     .carte-simulateur-remb {
         background: var(--surface);
@@ -97,7 +100,7 @@
             </div>
             {% endfor %}
 
-            <div style="display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border);">
+            <div style="display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border); flex-wrap: wrap;">
                 <a href="{% url 'mes_remboursements_assure' %}" class="button btn">Annuler</a>
                 <button type="submit" class="button primary btn">
                     {% icone "check" %} Transmettre ma demande de remboursement

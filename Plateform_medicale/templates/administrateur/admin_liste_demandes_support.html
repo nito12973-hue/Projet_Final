@@ -63,9 +63,10 @@
     </div>
 </form>
 
-<div class="panel" style="border-radius:16px;box-shadow:var(--ombre-douce);">
+<div class="panel" style="border-radius:16px;box-shadow:var(--ombre-douce);overflow:hidden;">
     {% if demandes %}
-    <table class="table-responsive">
+    <div class="table-responsive">
+    <table>
         <thead>
             <tr>
                 <th>Dossier</th>
@@ -115,6 +116,7 @@
             {% endfor %}
         </tbody>
     </table>
+    </div>
 
     {% if demandes.has_other_pages %}
     <div style="padding:16px;display:flex;justify-content:center;gap:8px;">

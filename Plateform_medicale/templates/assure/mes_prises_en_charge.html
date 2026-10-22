@@ -5,7 +5,6 @@
 
 {% block content %}
 <style>
-<style>
     .entete-pec-pro {
         display: flex;
         align-items: center;
@@ -70,7 +69,7 @@
 </div>
 
 <form method="get" class="filtres">
-    <div style="min-width:220px;">
+    <div style="min-width:min(100%, 200px); flex: 1 1 180px;">
         <label for="statut">Statut</label>
         <select id="statut" name="statut" style="margin-bottom:0;">
             <option value="">Tous</option>
@@ -125,11 +124,11 @@ pas un oubli.
         </p>
         {% elif ligne.prise.statut == "validee" %}
         <div style="margin: 0 0 14px; padding: 14px 18px; border-radius: 12px; background: #ecfdf5; border: 1px solid #a7f3d0; border-left: 5px solid #10b981; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <div style="width: 36px; height: 36px; border-radius: 8px; background: #10b981; color: white; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+            <div style="display: flex; align-items: center; gap: 12px; flex: 1 1 240px; min-width: 0;">
+                <div style="width: 36px; height: 36px; border-radius: 8px; background: #10b981; color: white; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;">
                     {% icone "check" %}
                 </div>
-                <div>
+                <div style="min-width: 0;">
                     <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                         <strong style="color: #065f46; font-size: 14.5px;">Accord Tiers Payant Validé</strong>
                         <span style="font-family: monospace; font-size: 12px; font-weight: 700; background: #d1fae5; color: #065f46; padding: 2px 7px; border-radius: 5px;">#{{ ligne.prise.numero_pec }}</span>
