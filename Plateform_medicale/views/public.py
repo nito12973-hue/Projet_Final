@@ -149,30 +149,40 @@ def favicon_svg(request):
 def manifest_json(request):
     """Manifest officiel PWA permettant l'installation de SantéSN sur mobile."""
     manifest = {
-        "name": "SantéSN — Tiers-Payant & Carte Numérique",
+        "name": "SantéSN — Plateforme Médicale & Tiers Payant",
         "short_name": "SantéSN",
         "description": "Système national de tiers-payant, carte d'assuré dématérialisée et ordonnance médicale sécurisée.",
         "start_url": "/",
         "scope": "/",
         "display": "standalone",
         "orientation": "portrait-primary",
-        "theme_color": "#0E7C86",
-        "background_color": "#0B2027",
+        "theme_color": "#0284c7",
+        "background_color": "#0c4a6e",
         "lang": "fr-SN",
         "icons": [
             {
                 "src": "/favicon.svg",
-                "sizes": "48x48 72x72 96x96 128x128 192x192 256x256 512x512",
-                "type": "image/svg+xml",
-                "purpose": "any",
-            },
-            {
-                "src": "/favicon.svg",
                 "sizes": "192x192 512x512",
                 "type": "image/svg+xml",
-                "purpose": "maskable",
-            },
+                "purpose": "any maskable"
+            }
         ],
+        "shortcuts": [
+            {
+                "name": "Ma Carte Assuré",
+                "short_name": "Carte",
+                "description": "Accéder à votre carte d'assuré numérique",
+                "url": "/assure/carte/",
+                "icons": [{"src": "/favicon.svg", "sizes": "192x192"}]
+            },
+            {
+                "name": "Prestataires Proches",
+                "short_name": "Prestataires",
+                "description": "Trouver les cliniques et pharmacies conventionnées",
+                "url": "/prestataires-proches/",
+                "icons": [{"src": "/favicon.svg", "sizes": "192x192"}]
+            }
+        ]
     }
     import json
     corps = json.dumps(manifest, ensure_ascii=False, indent=2)
