@@ -74,7 +74,7 @@
             --border: #d9e2ea;
             --champ-bg: #ffffff;
             --text: #1f2933;
-            --muted: #5f6f7d;
+            --muted: #475569;
             --danger: #b3261e;
             --danger-surface: #b3261e;
             --danger-strong: #8f1e18;
@@ -136,7 +136,7 @@
             --text-main: var(--text);
             --texte-principal: var(--text);
             --text-muted: var(--muted);
-            --texte-secondaire: var(--muted);
+            --texte-secondaire: #cbd5e1;
             --fond-general: var(--bg);
             --surface-alt: var(--champ-bg);
             --surface-carte: var(--surface);
@@ -182,7 +182,7 @@
             --border: #21404a;
             --champ-bg: #0d2027;
             --text: #e2e8f0;
-            --muted: #94a3b8;
+            --muted: #cbd5e1;
             --danger: #e5675e;
             --danger-strong: #f08a82;
             --danger-surface: #b5453c;
@@ -211,7 +211,7 @@
             --text-main: var(--text);
             --texte-principal: var(--text);
             --text-muted: var(--muted);
-            --texte-secondaire: var(--muted);
+            --texte-secondaire: #cbd5e1;
             --fond-general: var(--bg);
             --surface-alt: var(--champ-bg);
             --surface-carte: var(--surface);
@@ -7363,6 +7363,150 @@
                 max-height: 80vh !important;
             }
         }
+
+        /* === CORRECTIFS GLOBAUX DE LISIBILITÉ & CONTRASTE (MODE CLAIR & SOMBRE) === */
+        input, select, textarea {
+            color: var(--text) !important;
+            background-color: var(--champ-bg) !important;
+        }
+        select option {
+            background-color: var(--surface) !important;
+            color: var(--text) !important;
+        }
+        input::placeholder, textarea::placeholder {
+            color: var(--muted) !important;
+            opacity: 0.85 !important;
+        }
+
+        :root[data-theme="sombre"] [style*="color: #0f172a"],
+        :root[data-theme="sombre"] [style*="color:#0f172a"],
+        :root[data-theme="sombre"] [style*="color: #1e293b"],
+        :root[data-theme="sombre"] [style*="color:#1e293b"],
+        :root[data-theme="sombre"] [style*="color: #111827"],
+        :root[data-theme="sombre"] [style*="color:#111827"],
+        :root[data-theme="sombre"] [style*="color: #334155"],
+        :root[data-theme="sombre"] [style*="color:#334155"],
+        :root[data-theme="sombre"] [style*="color: #374151"],
+        :root[data-theme="sombre"] [style*="color:#374151"] {
+            color: #f8fafc !important;
+        }
+        :root[data-theme="sombre"] [style*="color: #475569"],
+        :root[data-theme="sombre"] [style*="color:#475569"],
+        :root[data-theme="sombre"] [style*="color: #64748b"],
+        :root[data-theme="sombre"] [style*="color:#64748b"],
+        :root[data-theme="sombre"] [style*="color: #6b7280"],
+        :root[data-theme="sombre"] [style*="color:#6b7280"] {
+            color: #cbd5e1 !important;
+        }
+        :root[data-theme="sombre"] [style*="background: #fff"]:not(.carte-recto-qr):not(.qr-box),
+        :root[data-theme="sombre"] [style*="background:#fff"]:not(.carte-recto-qr):not(.qr-box),
+        :root[data-theme="sombre"] [style*="background: white"]:not(.carte-recto-qr):not(.qr-box),
+        :root[data-theme="sombre"] [style*="background-color: #fff"]:not(.carte-recto-qr):not(.qr-box),
+        :root[data-theme="sombre"] [style*="background: #f8fafc"],
+        :root[data-theme="sombre"] [style*="background:#f8fafc"],
+        :root[data-theme="sombre"] [style*="background-color: #f8fafc"],
+        :root[data-theme="sombre"] [style*="background: #f1f5f9"],
+        :root[data-theme="sombre"] [style*="background:#f1f5f9"],
+        :root[data-theme="sombre"] [style*="background-color: #f1f5f9"] {
+            background: var(--surface) !important;
+            color: var(--text) !important;
+            border-color: var(--border) !important;
+        }
+
+        .carte-recto, .carte-assure {
+            color: #ffffff !important;
+        }
+        .carte-recto .carte-recto-nom,
+        .carte-recto .carte-recto-matricule,
+        .carte-recto .carte-recto-organisme,
+        .carte-recto .carte-recto-qualite,
+        .carte-recto .carte-recto-regime {
+            color: #ffffff !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+        }
+        .carte-recto .carte-recto-label,
+        .carte-recto .carte-recto-meta,
+        .carte-recto .carte-recto-meta span {
+            color: rgba(255, 255, 255, 0.92) !important;
+        }
+
+        @media (max-width: 768px) {
+            .topbar {
+                padding-top: max(10px, env(safe-area-inset-top)) !important;
+                height: auto !important;
+                min-height: 60px !important;
+            }
+            main, .main-content, .content-wrapper {
+                padding-left: 12px !important;
+                padding-right: 12px !important;
+                padding-bottom: max(24px, env(safe-area-inset-bottom)) !important;
+            }
+            .page-title {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 12px !important;
+            }
+            .page-title .actions {
+                width: 100% !important;
+                display: flex !important;
+                flex-wrap: wrap !important;
+                gap: 8px !important;
+            }
+            .page-title .actions .button,
+            .page-title .actions .btn {
+                flex: 1 1 auto !important;
+                justify-content: center !important;
+            }
+            main [style*="grid-template-columns"] {
+                grid-template-columns: 1fr !important;
+            }
+            main form[style*="display: flex"],
+            main form[style*="display:flex"],
+            .filter-bar,
+            .search-bar {
+                flex-direction: column !important;
+                align-items: stretch !important;
+            }
+            main form[style*="display: flex"] > *,
+            main form[style*="display:flex"] > * {
+                width: 100% !important;
+                min-width: 0 !important;
+            }
+            .table-wrap, .table-responsive, .card:has(> table) {
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+            }
+            .carte-3d-scene {
+                max-width: 100% !important;
+                width: 100% !important;
+            }
+            .carte-3d-card {
+                min-height: 235px !important;
+            }
+            .carte-recto, .carte-verso {
+                padding: 16px !important;
+            }
+            .carte-recto-nom {
+                font-size: 1.05rem !important;
+            }
+            .carte-recto-matricule {
+                font-size: 0.92rem !important;
+                letter-spacing: 1px !important;
+            }
+            .carte-recto-qr {
+                width: 64px !important;
+                height: 64px !important;
+                padding: 4px !important;
+            }
+            .carte-recto-details {
+                flex-wrap: wrap !important;
+                gap: 8px !important;
+            }
+            .carte-recto-details > div:last-child {
+                max-width: 100% !important;
+                text-align: left !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -7513,12 +7657,7 @@
                         <span>{{ current_role_label }}{% if current_organisme %} · {{ current_organisme.code }}{% endif %}</span>
                     </div>
                 </div>
-                <!-- Bouton d'installation PWA Mobile -->
-                <div id="pwa-install-container" style="margin-top: 10px; display: none;">
-                    <button type="button" id="btn-installer-pwa" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 12px; background: rgba(14, 124, 134, 0.25); border: 1px solid var(--primary-light); color: #fff; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.2s;">
-                        {% icone "download" %} Installer l'appli mobile
-                    </button>
-                </div>
+
                 <div class="sidebar-systeme-status">
                     <span class="status-pulse-dot" aria-hidden="true"></span>
                     <span>SantéSN Cloud · Opérationnel</span>
@@ -8656,91 +8795,6 @@
     }
     </script>
 
-    <!-- Modale d'aide installation iOS / Navigateur -->
-    <div id="modal-pwa-ios" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9999; align-items: center; justify-content: center; padding: 20px;">
-        <div style="background: var(--surface); color: var(--text); max-width: 380px; width: 100%; border-radius: 16px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); position: relative;">
-            <button type="button" id="btn-fermer-modal-pwa" style="position: absolute; top: 14px; right: 14px; background: none; border: none; font-size: 20px; cursor: pointer; color: var(--muted);">&times;</button>
-            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-                <div style="width: 44px; height: 44px; border-radius: 12px; background: var(--primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 18px;">SN</div>
-                <div>
-                    <h3 style="margin: 0; font-size: 16px; font-weight: 700;">Installer SantéSN</h3>
-                    <p style="margin: 0; font-size: 12px; color: var(--muted);">Accès rapide & mode hors-ligne</p>
-                </div>
-            </div>
-            <p id="pwa-modal-desc" style="font-size: 14px; line-height: 1.5; margin-bottom: 20px;">
-                Installez l'application SantéSN sur votre écran d'accueil pour profiter d'un accès instantané à votre carte d'assuré, même sans connexion internet.
-            </p>
-            <div id="pwa-ios-instructions" style="background: var(--bg); padding: 12px 14px; border-radius: 10px; font-size: 13px; margin-bottom: 20px; line-height: 1.6;">
-                <strong>Sur iPhone / iPad (Safari) :</strong><br>
-                1. Touchez l'icône <strong>Partager</strong> <span style="font-size: 16px;">⎋</span> en bas de l'écran.<br>
-                2. Faites défiler et touchez <strong>Sur l'écran d'accueil</strong>.
-            </div>
-            <button type="button" id="btn-compris-pwa" style="width: 100%; padding: 10px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">J'ai compris</button>
-        </div>
-    </div>
-
-    <script>
-    (function() {
-        if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
-            return;
-        }
-
-        let deferredPrompt = null;
-        const container = document.getElementById('pwa-install-container');
-        const btnInstall = document.getElementById('btn-installer-pwa');
-        const modalIos = document.getElementById('modal-pwa-ios');
-        const btnFermerModal = document.getElementById('btn-fermer-modal-pwa');
-        const btnCompris = document.getElementById('btn-compris-pwa');
-        const iosInstructions = document.getElementById('pwa-ios-instructions');
-        const modalDesc = document.getElementById('pwa-modal-desc');
-
-        const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
-
-        if (container) {
-            container.style.display = 'block';
-        }
-
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            if (container) container.style.display = 'block';
-        });
-
-        if (btnInstall) {
-            btnInstall.addEventListener('click', async () => {
-                if (deferredPrompt) {
-                    deferredPrompt.prompt();
-                    const { outcome } = await deferredPrompt.userChoice;
-                    if (outcome === 'accepted') {
-                        if (container) container.style.display = 'none';
-                    }
-                    deferredPrompt = null;
-                } else if (isIos) {
-                    if (iosInstructions) iosInstructions.style.display = 'block';
-                    if (modalDesc) modalDesc.textContent = "Suivez ces étapes pour installer SantéSN sur votre appareil iOS :";
-                    if (modalIos) modalIos.style.display = 'flex';
-                } else {
-                    if (iosInstructions) iosInstructions.style.display = 'none';
-                    if (modalDesc) modalDesc.textContent = "Pour installer SantéSN, utilisez le menu de votre navigateur (⋮ ou options) et sélectionnez « Installer l'application » ou « Ajouter à l'écran d'accueil ».";
-                    if (modalIos) modalIos.style.display = 'flex';
-                }
-            });
-        }
-
-        if (btnFermerModal) btnFermerModal.addEventListener('click', () => { if (modalIos) modalIos.style.display = 'none'; });
-        if (btnCompris) btnCompris.addEventListener('click', () => { if (modalIos) modalIos.style.display = 'none'; });
-        if (modalIos) {
-            modalIos.addEventListener('click', (e) => {
-                if (e.target === modalIos) modalIos.style.display = 'none';
-            });
-        }
-
-        window.addEventListener('appinstalled', () => {
-            if (container) container.style.display = 'none';
-            deferredPrompt = null;
-        });
-    })();
-    </script>
 </body>
 </html>
 
