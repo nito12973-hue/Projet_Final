@@ -7513,6 +7513,12 @@
                         <span>{{ current_role_label }}{% if current_organisme %} · {{ current_organisme.code }}{% endif %}</span>
                     </div>
                 </div>
+                <!-- Bouton d'installation PWA Mobile -->
+                <div id="pwa-install-container" style="margin-top: 10px; display: none;">
+                    <button type="button" id="btn-installer-pwa" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 12px; background: rgba(14, 124, 134, 0.25); border: 1px solid var(--primary-light); color: #fff; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.2s;">
+                        {% icone "download" %} Installer l'appli mobile
+                    </button>
+                </div>
                 <div class="sidebar-systeme-status">
                     <span class="status-pulse-dot" aria-hidden="true"></span>
                     <span>SantéSN Cloud · Opérationnel</span>
@@ -8648,6 +8654,92 @@
             navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(function() {});
         });
     }
+    </script>
+
+    <!-- Modale d'aide installation iOS / Navigateur -->
+    <div id="modal-pwa-ios" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9999; align-items: center; justify-content: center; padding: 20px;">
+        <div style="background: var(--surface); color: var(--text); max-width: 380px; width: 100%; border-radius: 16px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); position: relative;">
+            <button type="button" id="btn-fermer-modal-pwa" style="position: absolute; top: 14px; right: 14px; background: none; border: none; font-size: 20px; cursor: pointer; color: var(--muted);">&times;</button>
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: var(--primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 18px;">SN</div>
+                <div>
+                    <h3 style="margin: 0; font-size: 16px; font-weight: 700;">Installer SantéSN</h3>
+                    <p style="margin: 0; font-size: 12px; color: var(--muted);">Accès rapide & mode hors-ligne</p>
+                </div>
+            </div>
+            <p id="pwa-modal-desc" style="font-size: 14px; line-height: 1.5; margin-bottom: 20px;">
+                Installez l'application SantéSN sur votre écran d'accueil pour profiter d'un accès instantané à votre carte d'assuré, même sans connexion internet.
+            </p>
+            <div id="pwa-ios-instructions" style="background: var(--bg); padding: 12px 14px; border-radius: 10px; font-size: 13px; margin-bottom: 20px; line-height: 1.6;">
+                <strong>Sur iPhone / iPad (Safari) :</strong><br>
+                1. Touchez l'icône <strong>Partager</strong> <span style="font-size: 16px;">⎋</span> en bas de l'écran.<br>
+                2. Faites défiler et touchez <strong>Sur l'écran d'accueil</strong>.
+            </div>
+            <button type="button" id="btn-compris-pwa" style="width: 100%; padding: 10px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">J'ai compris</button>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+            return;
+        }
+
+        let deferredPrompt = null;
+        const container = document.getElementById('pwa-install-container');
+        const btnInstall = document.getElementById('btn-installer-pwa');
+        const modalIos = document.getElementById('modal-pwa-ios');
+        const btnFermerModal = document.getElementById('btn-fermer-modal-pwa');
+        const btnCompris = document.getElementById('btn-compris-pwa');
+        const iosInstructions = document.getElementById('pwa-ios-instructions');
+        const modalDesc = document.getElementById('pwa-modal-desc');
+
+        const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+
+        if (container) {
+            container.style.display = 'block';
+        }
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (container) container.style.display = 'block';
+        });
+
+        if (btnInstall) {
+            btnInstall.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    if (outcome === 'accepted') {
+                        if (container) container.style.display = 'none';
+                    }
+                    deferredPrompt = null;
+                } else if (isIos) {
+                    if (iosInstructions) iosInstructions.style.display = 'block';
+                    if (modalDesc) modalDesc.textContent = "Suivez ces étapes pour installer SantéSN sur votre appareil iOS :";
+                    if (modalIos) modalIos.style.display = 'flex';
+                } else {
+                    if (iosInstructions) iosInstructions.style.display = 'none';
+                    if (modalDesc) modalDesc.textContent = "Pour installer SantéSN, utilisez le menu de votre navigateur (⋮ ou options) et sélectionnez « Installer l'application » ou « Ajouter à l'écran d'accueil ».";
+                    if (modalIos) modalIos.style.display = 'flex';
+                }
+            });
+        }
+
+        if (btnFermerModal) btnFermerModal.addEventListener('click', () => { if (modalIos) modalIos.style.display = 'none'; });
+        if (btnCompris) btnCompris.addEventListener('click', () => { if (modalIos) modalIos.style.display = 'none'; });
+        if (modalIos) {
+            modalIos.addEventListener('click', (e) => {
+                if (e.target === modalIos) modalIos.style.display = 'none';
+            });
+        }
+
+        window.addEventListener('appinstalled', () => {
+            if (container) container.style.display = 'none';
+            deferredPrompt = null;
+        });
+    })();
     </script>
 </body>
 </html>
