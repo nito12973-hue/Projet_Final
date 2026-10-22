@@ -279,9 +279,8 @@
 
         /* ===== Structure generale : sidebar + contenu ===== */
         .shell {
-            display: grid;
-            grid-template-columns: 280px minmax(0, 1fr);
-            gap: 0;
+            display: block;
+            padding-left: 280px;
             min-height: 100vh;
             width: 100%;
             max-width: 100%;
@@ -290,12 +289,12 @@
         }
 
         body.sidebar-animable .shell {
-            transition: grid-template-columns 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: padding-left 0.25s ease;
         }
 
         html.sidebar-reduite .shell,
         body.sidebar-reduite .shell {
-            grid-template-columns: 80px minmax(0, 1fr);
+            padding-left: 80px;
         }
 
         /* Mode sans barre laterale (pages publiques sans menu, utilisateur non connecte) */
@@ -339,9 +338,10 @@
 
         /* Selecteur d'ID (#barre-laterale) : colonne architecturale verticale continue */
         #barre-laterale {
-            position: sticky;
+            position: fixed;
             top: 0;
-            align-self: start;
+            left: 0;
+            bottom: 0;
             width: 280px;
             min-width: 280px;
             max-width: 85vw;
@@ -5981,8 +5981,11 @@
 
         /* ===== Responsive ===== */
         @media (max-width: 980px) {
-            .shell {
+            .shell,
+            html.sidebar-reduite .shell,
+            body.sidebar-reduite .shell {
                 display: block;
+                padding-left: 0 !important;
                 width: 100%;
                 max-width: 100%;
                 overflow-x: hidden;
