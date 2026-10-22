@@ -13853,3 +13853,107 @@ class SeparationRolesAdminGestionnaireTests(TestCase):
         resp = self.client.get(reverse("importer_utilisateurs_excel"))
         self.assertEqual(resp.status_code, 403)
 
+    def test_gestionnaire_modification_utilisateur_verrouille_organisme_et_empeche_admin(self):
+        """Un gestionnaire modifiant un utilisateur ne peut pas changer son organisme ni le promouvoir ADMIN."""
+        from django.test import RequestFactory
+        from Plateform_medicale.forms import UtilisateurModificationForm
+        autre_organisme = Organisme.objects.create(nom="Entreprise B", code="ENT-B", actif=True)
+        rf = RequestFactory()
+        req = rf.post("/")
+        req.user = self.gestionnaire
+
+        # 1. Tentative d'élévation au rôle ADMIN : rejetée
+        form_admin = UtilisateurModificationForm(
+            data={
+                "first_name": "Assure",
+                "last_name": "Modifie",
+                "email": "assure.modifie@santesn.sn",
+                "role": User.Role.ADMIN,
+            },
+            instance=self.assure,
+            request=req,
+        )
+        self.assertFalse(form_admin.is_valid())
+        self.assertIn("role", form_admin.errors)
+
+        # 2. Tentative de transférer l'utilisateur vers un autre organisme : rejetée par validation du choix
+        form_autre_org = UtilisateurModificationForm(
+            data={
+                "first_name": "Assure",
+                "last_name": "Modifie",
+                "email": "assure.modifie@santesn.sn",
+                "role": User.Role.MEDECIN,
+                "organisme": autre_organisme.pk,
+            },
+            instance=self.assure,
+            request=req,
+        )
+        self.assertFalse(form_autre_org.is_valid())
+        self.assertIn("organisme", form_autre_org.errors)
+
+        # 3. Modification normale au sein de son organisme : acceptée et organisme verrouillé
+        form_ok = UtilisateurModificationForm(
+            data={
+                "first_name": "Assure",
+                "last_name": "Modifie",
+                "email": "assure.modifie@santesn.sn",
+                "role": User.Role.MEDECIN,
+            },
+            instance=self.assure,
+            request=req,
+        )
+        self.assertTrue(form_ok.is_valid())
+        self.assertEqual(form_ok.cleaned_data["organisme"], self.organisme)
+
+    def test_analyse_ligne_import_refuse_prestataire_non_conventionne_avec_organisme(self):
+        """L'analyse d'une ligne d'import refuse un prestataire conventionné avec une autre entreprise."""
+        from Plateform_medicale.views.utilisateurs import _analyser_ligne_import_utilisateurs
+        autre_organisme = Organisme.objects.create(nom="Entreprise B", code="ENT-B-IMP", actif=True)
+        prestataire_autre = Prestataire.objects.create(nom="Clinique Exclusif B", partenaire=True)
+        ConventionPrestataire.objects.create(prestataire=prestataire_autre, organisme=autre_organisme)
+
+        valeurs = [
+            "nouveau.dr@santesn.sn", "Docteur", "Test", "771234567",
+            "Médecin", "01/01/1980", "Généraliste", "Clinique Exclusif B", ""
+        ]
+        donnees, erreur = _analyser_ligne_import_utilisateurs(
+            1, valeurs, mapping=None, role_par_defaut=None, organisme=self.organisme
+        )
+        self.assertIsNone(donnees)
+        self.assertIn("non conventionné avec votre organisme", erreur)
+
+    def test_whatsapp_bot_filtre_par_organisme_patient(self):
+        """Le bot WhatsApp filtre les praticiens et prestataires selon l'organisme de l'assuré."""
+        from Plateform_medicale.services.whatsapp_bot import lister_medecins_disponibles, formater_reponse_partenaires
+        org_a = self.organisme
+        org_b = Organisme.objects.create(nom="Entreprise B", code="ENT-WA-B", actif=True)
+
+        prest_a = Prestataire.objects.create(nom="Centre Sante A", partenaire=True)
+        ConventionPrestataire.objects.create(prestataire=prest_a, organisme=org_a)
+
+        prest_b = Prestataire.objects.create(nom="Centre Sante B", partenaire=True)
+        ConventionPrestataire.objects.create(prestataire=prest_b, organisme=org_b)
+
+        user_dr_a = User.objects.create_user(email="dr.a@santesn.sn", password="P!", role=User.Role.MEDECIN, organisme=org_a)
+        med_a = Medecin.objects.create(user=user_dr_a, nom="A", prenom="Dr", specialite="Cardiologie", email="dr.a@santesn.sn", prestataire=prest_a)
+
+        user_dr_b = User.objects.create_user(email="dr.b@santesn.sn", password="P!", role=User.Role.MEDECIN, organisme=org_b)
+        med_b = Medecin.objects.create(user=user_dr_b, nom="B", prenom="Dr", specialite="Cardiologie", email="dr.b@santesn.sn", prestataire=prest_b)
+
+        patient_a = Patient.objects.create(
+            user=self.assure,
+            nom="Assure",
+            prenom="A",
+            date_naissance=datetime.date(1995, 5, 10),
+            organisme=org_a,
+        )
+
+        medecins_proposes = lister_medecins_disponibles(patient=patient_a, specialite="Cardiologie")
+        self.assertIn(med_a, medecins_proposes)
+        self.assertNotIn(med_b, medecins_proposes)
+
+        rep_partenaires = formater_reponse_partenaires(patient=patient_a)
+        self.assertIn("Centre Sante A", rep_partenaires)
+        self.assertNotIn("Centre Sante B", rep_partenaires)
+
+
