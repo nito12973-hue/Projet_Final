@@ -14004,7 +14004,7 @@ class PagesJuridiquesTests(TestCase):
         self.assertContains(resp, "Loi sénégalaise n° 2008-12")
         self.assertContains(resp, "Ordre National des Médecins du Sénégal")
         self.assertContains(resp, "Commission de Protection des Données Personnelles")
-        self.assertContains(resp, "Secret Médical")
+        self.assertContains(resp, "Secret médical")
         self.assertContains(resp, "Cour d'Appel de Dakar")
         # Lien croisé vers la politique de confidentialité
         self.assertContains(resp, reverse("politique_confidentialite"))
