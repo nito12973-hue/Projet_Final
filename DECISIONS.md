@@ -202,7 +202,7 @@ Ce document consigne de façon claire et sans jargon chaque décision d'architec
      - **Protection anti-double clic :** À la soumission, le bouton principal passe en état `chargement` (opacité, curseur d'attente, spinner SVG doux et libellé d'état « Connexion en cours... »).
   2. **Harmonisation globale des formulaires de l'application (`base.html`) :**
      - **Centrage et dimensions équilibrées :** `.panel-form` calibré avec padding aéré (`24px 28px`), bordures subtiles et ombre douce, évitant les formulaires flottants ou asymétriques.
-     - **Mobile-first ergonomique :** Sur écran <= 640px, les conteneurs passent en pleine largeur confortable, les boutons d'action s'empilent verticalement à 46px de hauteur pour un clic tactile sans erreur ni débordement horizontal.
+     - **Mobile-first ergonomique :** Sur écran ≤ 640px, les conteneurs passent en pleine largeur confortable, les boutons d'action s'empilent verticalement à 46px de hauteur pour un clic tactile sans erreur ni débordement horizontal.
      - **Messages d'erreurs contextuels :** Messages d'erreur stylisés sous le champ concerné avec icône d'alerte, vocabulaire clair et suppression de tout traceback ou détail technique.
 - **Vérifications :** Suite complète de tests validée avec succès (**893 tests OK à 100%**).
 

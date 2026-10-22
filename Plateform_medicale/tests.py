@@ -11115,13 +11115,13 @@ class MediaFilesServingTests(TestCase):
 
     def test_fichier_media_existant_accessible(self):
         from django.conf import settings
-        chemin_disque = pathlib.Path(settings.MEDIA_ROOT) / "documents_publics" / "UPsn_CCNA_Section_1-Lesson_1.pdf"
+        chemin_disque = pathlib.Path(settings.MEDIA_ROOT) / "documents_publics" / "guide_accueil_patient.pdf"
         chemin_disque.parent.mkdir(parents=True, exist_ok=True)
         if not chemin_disque.exists():
             chemin_disque.write_bytes(b"%PDF-1.4 test document")
         client = Client()
         # Le fichier média déposé existe sur le disque
-        response = client.get("/media/documents_publics/UPsn_CCNA_Section_1-Lesson_1.pdf")
+        response = client.get("/media/documents_publics/guide_accueil_patient.pdf")
         self.assertEqual(response.status_code, 200)
 
     def test_fichier_media_base_de_donnees_accessible(self):

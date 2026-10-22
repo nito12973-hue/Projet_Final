@@ -1,29 +1,64 @@
 # Guide utilisateur — SantéSN
 
+[![Documentation Technique Mintlify](https://img.shields.io/badge/Documentation%20Technique-Mintlify-0E7C86?style=for-the-badge&logo=gitbook&logoColor=white)](https://https-projet-final-bice-vercel-app.mintlify.site/introduction)
+[![Statut Tests](https://img.shields.io/badge/Tests-946%20valid%C3%A9s-success?style=for-the-badge&logo=checkmarx&logoColor=white)](Plateform_medicale/tests.py)
+
 Ce guide explique comment utiliser la plateforme SantéSN au quotidien, écran par
-écran, pour chacun des quatre rôles : **Administrateur**, **Assuré**, **Médecin**,
-**Pharmacien**. Il complète `FONCTIONNEMENT.txt` (référence technique) et
-`CLAUDE.md` (suivi du projet) sans les remplacer.
+écran, pour l'ensemble des 5 rôles : **Administrateur IT**, **Gestionnaire IPM**,
+**Assuré**, **Médecin** et **Pharmacien**. Il complète `FONCTIONNEMENT.txt` (spécifications techniques) et
+`DECISIONS.md` (registre d'architecture) sans les remplacer.
+
+---
+
+> ### 🌐 Documentation Technique Officielle en Ligne (Mintlify)
+> Pour consulter l'ensemble des spécifications d'ingénierie, diagrammes d'architecture, guides de déploiement et intégrations d'API (WhatsApp, Prometheus, Neon Postgres), reportez-vous au portail en ligne officiel :
+>
+> 👉 **[Ouvrir le portail de documentation technique SantéSN sur Mintlify](https://https-projet-final-bice-vercel-app.mintlify.site/introduction)**
+>
+> **Accès direct aux modules clés :**
+> - 🏗️ **[Architecture & Sécurité](https://https-projet-final-bice-vercel-app.mintlify.site/architecture)** : Architecture logicielle, modèle relationnel, multi-tenant et conformité CDP Sénégal.
+> - 🏢 **[Espace Gestionnaire IPM](https://https-projet-final-bice-vercel-app.mintlify.site/fonctionnalites/espace-gestionnaire)** : Pilotage des organismes, régimes, conventions prestataires et liquidations.
+> - 💬 **[Passerelle WhatsApp](https://https-projet-final-bice-vercel-app.mintlify.site/fonctionnalites/notifications-whatsapp)** : Notifications automatiques, webhook sécurisé HMAC-SHA256 et bot interactif.
+> - 🚀 **[DevOps & Exploitation](https://https-projet-final-bice-vercel-app.mintlify.site/technique/devops-exploitation)** : CI/CD GitHub Actions, conteneurisation Docker, métriques Prometheus et déploiement.
+
+---
 
 ## Sommaire
 
+- [Documentation technique Mintlify](#documentation-technique-mintlify)
 - [Se connecter](#se-connecter)
 - [Comptes de démonstration & tests locaux](#comptes-de-démonstration--tests-locaux)
 - [Fonctions communes à tous les rôles](#fonctions-communes-à-tous-les-rôles)
-- [Administrateur](#administrateur)
-- [Assuré](#assuré)
-- [Médecin](#médecin)
-- [Pharmacien](#pharmacien)
+- [Administrateur IT](#administrateur-it)
+- [Gestionnaire (IPM & Mutuelles)](#gestionnaire-ipm--mutuelles)
+- [Assuré (Patient)](#assuré-patient)
+- [Médecin Traitant](#médecin-traitant)
+- [Pharmacien d'Officine](#pharmacien-dofficine)
+- [Passerelle WhatsApp & Notifications](#passerelle-whatsapp--notifications)
 - [Questions fréquentes](#questions-fréquentes)
----
-## Se connecter
 
+---
+
+## Documentation technique Mintlify
+
+La documentation technique de référence est centralisée et synchronisée en continu sur Mintlify. Elle permet aux équipes de développement, aux auditeurs de sécurité et aux administrateurs systèmes de retrouver les schémas d'architecture et les règles métier détaillées :
+
+| Module | Contenu & Objectif | Badge & Lien |
+| :--- | :--- | :--- |
+| 🏗️ **Architecture Système** | Modèle relationnel, multi-tenant hermétique par organisme, politique Zero-Trust, protection des données personnelles (CDP Sénégal - Loi 2008-12). | [![Architecture](https://img.shields.io/badge/Architecture-Mintlify-0E7C86?style=flat&logo=diagram-next&logoColor=white)](https://https-projet-final-bice-vercel-app.mintlify.site/architecture)<br />[Consulter l'architecture](https://https-projet-final-bice-vercel-app.mintlify.site/architecture) |
+| 🏢 **Espace Gestionnaire** | Conventions prestataires, barèmes de tiers payant, plafonds annuels, gestion des liquidations et instruction des remboursements. | [![Gestionnaire](https://img.shields.io/badge/Espace%20Gestionnaire-Mintlify-0E7C86?style=flat&logo=shield&logoColor=white)](https://https-projet-final-bice-vercel-app.mintlify.site/fonctionnalites/espace-gestionnaire)<br />[Consulter l'espace gestionnaire](https://https-projet-final-bice-vercel-app.mintlify.site/fonctionnalites/espace-gestionnaire) |
+| 💬 **WhatsApp & Webhook** | Meta Cloud API v21.0, validation cryptographique des signatures HMAC-SHA256, menus conversationnels et alertes temps réel. | [![WhatsApp](https://img.shields.io/badge/WhatsApp-Mintlify-25D366?style=flat&logo=whatsapp&logoColor=white)](https://https-projet-final-bice-vercel-app.mintlify.site/fonctionnalites/notifications-whatsapp)<br />[Consulter la section WhatsApp](https://https-projet-final-bice-vercel-app.mintlify.site/fonctionnalites/notifications-whatsapp) |
+| 🚀 **DevOps & Exploitation** | Pipeline GitHub Actions (946 tests automatisés), images Docker multi-stage, supervision Prometheus `/metrics/` et WhiteNoise. | [![DevOps](https://img.shields.io/badge/DevOps-Mintlify-095059?style=flat&logo=docker&logoColor=white)](https://https-projet-final-bice-vercel-app.mintlify.site/technique/devops-exploitation)<br />[Consulter le guide DevOps](https://https-projet-final-bice-vercel-app.mintlify.site/technique/devops-exploitation) |
+
+---
+
+## Se connecter
 
 SantéSN n'a pas d'inscription libre : **seul un administrateur peut créer un
 compte**. Si vous n'avez pas encore d'identifiants, contactez votre
 administrateur.
 
-1. Ouvrez la page de connexion.
+1. Ouvrez la page de connexion (`/connexion/`).
 2. Saisissez votre **email** et votre **mot de passe** (pas de nom
    d'utilisateur séparé — l'email sert d'identifiant).
 3. Vous êtes automatiquement redirigé vers le tableau de bord correspondant à
@@ -34,29 +69,34 @@ Si l'application vient d'être installée et qu'aucun administrateur n'existe
 encore, un assistant de configuration guide la création du tout premier
 compte admin — cet écran ne réapparaît plus une fois un admin créé.
 
+---
+
 ## Comptes de démonstration & tests locaux
 
-Pour tester immédiatement les 4 espaces ou préparer une soutenance, une commande dédiée initialise les comptes et jeux d'essai :
+Pour tester immédiatement les espaces ou préparer une soutenance, une commande dédiée initialise les comptes et jeux d'essai :
 
 ```bash
 python manage.py seed_demo
 ```
 
-Tous les comptes de démonstration utilisent le mot de passe unifié : `Passer123!`
+Tous les comptes de démonstration utilisent le mot de passe unifié : `Passer123!` (ou `Password123`)
 
 | Rôle | Email | Mot de passe | Description de l'espace & données incluses |
 | :--- | :--- | :--- | :--- |
-| **Administrateur** | `admin@santesn.sn` | `Passer123!` | Superuser complet : KPIs financiers, validation IPM, gestion utilisateurs, journal d'activité. |
+| **Administrateur IT** | `admin@santesn.sn` | `Passer123!` | Superuser complet : IAM, métriques Prometheus, journal d'audit de sécurité, passerelles. |
+| **Gestionnaire IPM** | `gestionnaire@santesn.sn` | `Passer123!` | Direction IPM : conventions prestataires, plans de couverture, liquidations, remboursements. |
 | **Médecin** | `medecin@santesn.sn` | `Passer123!` | Dr. Ibrahima Ndiaye (Cardiologue, Hôpital Principal) : agenda, DPI, prescriptions QR Code. |
-| **Pharmacien** | `pharmacien@santesn.sn` | `Passer123!` | Awa Sow (Grande Pharmacie Dakaroise) : scanner QR Code ordonnance, délivrance. |
+| **Pharmacien** | `pharmacien@santesn.sn` | `Passer123!` | Awa Sow (Grande Pharmacie Dakaroise) : scanner QR Code ordonnance, délivrance atomique. |
 | **Assuré** | `assure@santesn.sn` | `Passer123!` | Moussa Diop (Plan IPM 80%) : carte numérique QR SVG, ayants droit, RDV, géolocalisation. |
+
+---
 
 ## Fonctions communes à tous les rôles
 
 Ces trois éléments sont accessibles depuis le menu latéral, quel que soit
 votre rôle :
 
-- **Notifications** (icône cloche) : messages envoyés par l'administrateur,
+- **Notifications** (icône cloche) : messages envoyés par la plateforme ou un gestionnaire,
   individuellement ou à tout un rôle. Un badge indique le nombre de
   notifications non lues ; ouvrez-en une pour la marquer comme lue.
 - **Mot de passe** : changez votre mot de passe à tout moment sans perdre
@@ -66,395 +106,170 @@ votre rôle :
   votre préférence est mémorisée d'une visite à l'autre. Sur mobile, le menu
   s'ouvre en tiroir via l'icône de menu (hamburger).
 
-## Administrateur
+---
+
+## Administrateur IT
+
+> 💡 **Documentation technique détaillée :** Retrouvez le guide complet de l'infrastructure et de la sécurité sur [Mintlify — Sécurité](https://https-projet-final-bice-vercel-app.mintlify.site/technique/securite).
 
 ### Ce que vous voyez en arrivant
 
-Le tableau de bord Admin ouvre sur **ce qui attend une action**, pas sur des
-statistiques. Le bandeau sombre *À traiter maintenant* affiche quatre files :
-prises en charge à décider, rendez-vous à confirmer, ordonnances non
-délivrées, règlements en attente. Chaque tuile est cliquable et mène à la
-liste déjà filtrée. La tuile des prises en charge passe en orange dès que la
-plus ancienne demande dépasse sept jours. Quand plus rien n'attend, le
-bandeau affiche simplement *Rien en attente*.
+Le tableau de bord Admin ouvre sur **la supervision informatique et l'infrastructure**. Il permet de piloter la sécurité globale de la plateforme :
+- **Supervision Système** : statut de la base de données (PostgreSQL Neon / SQLite), utilisation disque, métriques de performance et passerelles externes.
+- **Métriques Prometheus** : exposition `/metrics/` protégée pour la surveillance industrielle (temps de réponse, requêtes par minute, taux d'erreurs).
+- **Journal d'audit** : traçabilité infalsifiable des accès et des actions sensibles.
+- **Comptes bloqués & anti-bruteforce** : déblocage immédiat après échecs répétés.
 
-En dessous : les montants réglés et en attente avec leur tendance sur 30
-jours, la répartition entre assurés principaux et ayants droit, cinq
-indicateurs d'activité, les dernières prises en charge (celles en attente
-remontent en premier) et les derniers comptes créés. Le panneau *Fiches à
-compléter* signale les données manquantes qui gênent l'exploitation
-(prestataire sans coordonnées sur la carte, assuré sans plan de couverture,
-médecin ou pharmacien non rattaché) ; il disparaît quand tout est complet.
+Rappel du principe de moindre privilège : l'administrateur technique gère l'infrastructure et les accès IAM, mais **ne consulte jamais les dossiers médicaux détaillés**, ne saisit pas de diagnostic et n'émet pas d'ordonnance afin de respecter le secret médical garanti par la loi 2008-12 (CDP Sénégal).
 
-En haut de chaque écran, une barre vous donne la recherche d'utilisateur, vos
-notifications et votre compte.
+### Gestion des utilisateurs (IAM)
 
-Rappel du principe de moindre privilège : l'administrateur gère
-comptes/prestataires/suivi, mais ne saisit jamais de diagnostic, ne crée pas
-d'ordonnance et ne valide pas de délivrance — ce sont les rôles Médecin et
-Pharmacien qui s'en chargent.
-
-### Gestion des utilisateurs
-
-- **Créer un utilisateur** : renseignez nom, email, rôle (Admin, Assuré,
-  Médecin ou Pharmacien). Le mot de passe est généré automatiquement et
-  affiché **une seule fois** à l'écran — notez-le ou communiquez-le
-  immédiatement, il ne sera plus jamais visible ensuite.
-- **Importer en masse depuis Excel** : téléchargez le modèle, remplissez une
-  ligne par compte à créer (colonnes Email, Prénom, Nom, Téléphone, Rôle, et
-  selon le rôle : Date de naissance pour un Assuré, Spécialité pour un
-  Médecin). L'import est *tout ou rien* : s'il y a une seule ligne en erreur,
-  aucun compte n'est créé — corrigez le fichier et réimportez-le.
-- **Modifier / activer / désactiver / supprimer** un compte, ou
-  **réinitialiser son mot de passe** (nouveau mot de passe généré et affiché
-  une seule fois, comme à la création).
+- **Créer un utilisateur** : renseignez nom, email, rôle (Admin, Gestionnaire, Assuré, Médecin ou Pharmacien). Le mot de passe est généré automatiquement et affiché **une seule fois** à l'écran — notez-le ou transmettez-le de façon sécurisée.
+- **Importer en masse depuis Excel** : téléchargez le modèle, remplissez une ligne par compte à créer. L'import est atomique (*tout ou rien*).
+- **Modifier / activer / désactiver / supprimer** un compte, ou **réinitialiser son mot de passe**.
 - **Export Excel** de la liste filtrée des utilisateurs.
-- Par sécurité, un administrateur **ne peut pas** changer son propre rôle, se
-  désactiver ou se supprimer lui-même.
+- Par sécurité, un administrateur **ne peut pas** changer son propre rôle, se désactiver ou se supprimer lui-même.
 
-### Gestion métier
+### Journal d'activité & Sécurité
 
-- **Assurés** : créer un assuré **principal** (cela crée aussi son compte de
-  connexion, avec le même écran de mot de passe généré) ; la liste affiche
-  aussi les ayants droit de chaque assuré, mais leur création/modification au
-  quotidien se fait plutôt depuis l'espace Assuré lui-même. Supprimer un
-  assuré principal désactive aussi son compte de connexion.
-- **Médecins** : créer (crée aussi le compte de connexion), modifier,
-  supprimer (désactive aussi le compte lié). Un avertissement liste tout ce
-  qui sera supprimé en cascade (consultations, rendez-vous, paiements,
-  ordonnances) avant confirmation.
-- **Pharmaciens** : pas d'écran de création dédié — créez le compte depuis
-  *Gestion des utilisateurs* avec le rôle Pharmacien, la fiche métier est
-  créée automatiquement.
-- **Prestataires** : hôpitaux, cliniques, pharmacies et cabinets partenaires
-  (nom, type, adresse, ville, téléphone, statut partenaire). Cliquez sur la
-  carte du formulaire pour positionner le prestataire (facultatif) : cette
-  position est ensuite utilisée pour le trier par proximité dans l'écran
-  *Prestataires proches* de l'Assuré.
-- **Services médicaux** : actes facturables avec leur prix, rattachés
-  éventuellement à un prestataire.
-- **Plans de couverture** : taux de remboursement et plafond annuel,
-  attribués à un assuré principal (ses ayants droit héritent du même plan).
-- **Prises en charge** : demandes de couverture d'un assuré, avec statut *en
-  attente / validée / refusée / terminée*. Seule une prise en charge
-  **validée** permet une couverture partielle par l'assurance lors d'une
-  consultation ; sinon le patient règle 100 % du montant.
-- **Rendez-vous** : suivi de tous les rendez-vous de la plateforme, en
-  **lecture seule**, filtrable par statut et par nom (patient ou médecin).
-  Confirmer ou annuler un rendez-vous reste l'affaire du médecin et de
-  l'assuré : l'administrateur observe le flux sans y intervenir.
-- **Ordonnances** : suivi des ordonnances émises et de leur délivrance en
-  pharmacie, en **lecture seule**. Le filtre *Non délivrées* isole les
-  ordonnances qu'aucun patient n'est venu retirer — c'est le seul écran qui
-  le montre. La validation d'une délivrance reste l'affaire du pharmacien, et
-  le QR n'est pas affiché ici : il n'a de sens qu'au comptoir.
-- **Consultations** : suivi des actes réalisés, en **lecture seule**. Pour
-  chacun : la date, le patient, le médecin, le service, la prise en charge
-  rattachée et la part restant au patient.
+Le journal enregistre de manière immuable :
+- Création, modification, activation, désactivation et suppression de comptes.
+- Tentatives d'authentification suspectes et blocages temporaires.
+- Événements système critiques et exports en masse.
+- Le journal n'est modifiable par personne, pas même par un administrateur.
 
-  **Le diagnostic et le traitement n'y figurent pas.** Ce sont des données
-  médicales, réservées au médecin qui les a saisies. Vous voyez l'acte et sa
-  facturation, pas son contenu.
+---
 
-  Le filtre *Couverture* est le plus utile : *À la charge du patient* isole
-  les consultations sans prise en charge validée — donc réglées à 100 % par
-  le patient. C'est le seul écran qui montre ce cas, souvent le signe qu'une
-  demande de prise en charge n'a jamais été déposée ou validée à temps.
+## Gestionnaire (IPM & Mutuelles)
 
-- **Paiements** : liste de tous les paiements générés automatiquement à
-  chaque consultation, filtrable par statut. *Marquer réglé* exige de
-  préciser un mode de règlement.
+> 💡 **Documentation technique détaillée :** Retrouvez le guide complet de l'Espace Gestionnaire sur [Mintlify — Espace Gestionnaire](https://https-projet-final-bice-vercel-app.mintlify.site/fonctionnalites/espace-gestionnaire).
 
-  Pour enregistrer plusieurs règlements d une traite (rapprochement de fin de
-  mois) : exportez les paiements en CSV, complétez les colonnes *Mode de
-  règlement* et *Date de règlement* d après votre relevé, puis utilisez
-  **Importer des règlements**. Ne modifiez pas la colonne *Référence*, c est
-  elle qui identifie chaque paiement.
+Le Gestionnaire est le cœur opérationnel de l'Institution de Prévoyance Maladie (IPM) ou de la Mutuelle.
 
-  Cet import n ajoute jamais de paiement : les montants restent calculés par
-  l application à partir du service et du plan de couverture. Comme pour les
-  comptes, l import est *tout ou rien* — une seule ligne en erreur annule
-  l ensemble, et les erreurs sont listées ligne par ligne.
+### Tableau de bord financier & opérationnel
 
-### Journal d'activité
+Le tableau de bord Gestionnaire ouvre sur les actions prioritaires :
+- **Prises en charge à instruire** : dossiers en attente avec calcul automatique du reste à charge et vérification du plafond annuel familial.
+- **Demandes de remboursement** : factures directes déposées par les assurés pour des soins hors conventionnement direct.
+- **Paiements en attente de liquidation** : validation des règlements aux prestataires de santé partenaires.
+- **Indicateurs financiers** : montants engagés, consommations par plan de couverture et solde global de l'organisme.
 
-Qui a fait quoi, et quand. Le journal enregistre les **décisions
-administratives** et les **suppressions** : création, modification,
-activation, désactivation et suppression de comptes, réinitialisation de mot
-de passe, déblocage manuel, suppressions métier (assuré, médecin, service,
-prestataire, plan, prise en charge), décision sur une prise en charge,
-règlement d'un paiement et imports en masse.
+### Organismes & Multi-tenant
 
-Trois filtres : recherche (auteur, objet concerné ou détail), type d'action et
-date.
+- Création et gestion des structures d'assurance (IPM d'entreprises, mutuelles professionnelles).
+- Rattachement des assurés principaux à leur organisme de tutelle.
+- Isolation stricte des données financières entre chaque organisme.
 
-**Le journal n'est modifiable par personne**, pas même par un administrateur —
-un journal qu'on peut retoucher ne prouve plus rien. Les entrées survivent à
-la suppression de ce qu'elles décrivent : c'est justement l'intérêt. Si le
-compte de l'auteur est supprimé, son nom reste affiché, avec la mention
-*compte supprimé*.
+### Conventions Prestataires
 
-**Ce que le journal n'enregistre pas**, et pourquoi : les connexions et la
-navigation (ce serait du bruit, et les blocages ont déjà leur écran), les
-consultations, ordonnances et délivrances (chacune garde déjà son médecin ou
-son pharmacien et sa date), les changements de statut de rendez-vous (le
-travail quotidien du médecin noierait le reste), et la création de fiches
-métier ordinaires (la fiche créée est elle-même la trace). Créer un **compte**
-fait exception : cela accorde un accès, donc c'est enregistré.
+- Conventionnement des établissements de santé (hôpitaux, cliniques, pharmacies, cabinets).
+- Négociation des taux de prise en charge et des remises applicables par prestataire.
+- Suivi des dates de validité et des coordonnées GPS pour la cartographie des soins.
 
-### Rapports
+### Plans de couverture & Gestion des Plafonds
 
-Graphiques (consultations — bascule jour / mois / année, répartitions par
-rôle/type/statut) et tableaux de données détaillés (repliables sous chaque
-graphique). Deux exports disponibles : Excel (un onglet par tableau) et PDF
-(mise en forme imprimable, toujours sur la vue "par mois").
+- Paramétrage des taux de couverture (ex: 80%, 100%) et des plafonds annuels en FCFA.
+- Le système calcule en temps réel le reliquat budgétaire annuel disponible pour chaque famille : en cas de dépassement, la part assurance est automatiquement écrêtée pour préserver l'équilibre financier de l'IPM.
 
-### Notifications
+### Liquidations & Télétransmission
 
-Envoyer un message à un utilisateur précis ou à tout un rôle d'un coup ;
-consulter l'historique des notifications envoyées.
+- Génération des bordereaux officiels de télétransmission en PDF paysage certifié.
+- Export des états de paiement pour rapprochement bancaire (CSV / Excel).
+- Marquage sécurisé des paiements acquittés avec numéro de virement ou chèque.
 
-### Paramètres
+---
 
-L'entrée **Paramètres** du menu ouvre une page organisée en catégories. Chaque
-catégorie de la colonne de gauche est une **page à part entière** : cliquez
-dessus et elle s'ouvre directement (vous pouvez l'ajouter à vos favoris, et le
-bouton Retour du navigateur fonctionne normalement).
-
-Paramètres contient **uniquement des réglages**. Ce que vous *faites* au
-quotidien — importer, exporter, envoyer une notification — vit sur la page
-métier concernée, jamais ici. Quatre catégories :
-
-- **Général** : la configuration de la plateforme (langue, fuseau horaire,
-  format de date), en lecture seule. Vos informations personnelles ne sont pas
-  ici : elles sont dans le **menu de votre compte**, en haut à droite.
-- **Apparence** : choisir le thème **clair**, **sombre**, ou **Système** pour
-  suivre le réglage de votre appareil, et réduire le menu latéral. Ces choix ne
-  concernent que l'appareil sur lequel vous les faites — ils ne sont pas
-  enregistrés sur votre compte.
-- **Sécurité** : changer votre mot de passe, voir la durée de session et la
-  protection contre les tentatives de connexion, gérer les comptes
-  temporairement bloqués (voir ci-dessous), et vous déconnecter de tous vos
-  appareils.
-- **Avancé** : les services externes réellement utilisés par l'application
-  (fond de carte, graphiques) et l'état de l'envoi d'e-mails.
-
-**Où trouver les imports et les exports ?** Sur leur page :
-
-| Ce que vous cherchez | Où c'est |
-|---|---|
-| Importer / exporter des utilisateurs | **Utilisateurs** |
-| Importer des règlements, exporter les paiements | **Paiements** |
-| Exporter les rapports | **Rapports** |
-
-Les exports proposés sur ces pages **respectent les filtres que vous venez
-d'appliquer** : vous exportez ce que vous avez sous les yeux.
-- **Sécurité → Comptes temporairement bloqués** : après 5 échecs de connexion
-  consécutifs, un compte est bloqué 5 minutes, puis débloqué automatiquement.
-  Cette section liste les comptes actuellement bloqués avec le temps restant.
-  Vous pouvez filtrer par rôle, rechercher par nom ou e-mail, et débloquer un
-  compte immédiatement si la personne vous contacte — une confirmation vous est
-  alors demandée. Le déblocage se fait compte par compte, volontairement : un
-  grand nombre de blocages simultanés peut signaler une tentative d'intrusion,
-  et tout débloquer d'un coup annulerait la protection au pire moment. Quand
-  personne n'est bloqué, la section le dit simplement.
-- **Avancé** : section repliée qui ne règle rien. Elle indique quels services
-  externes la plateforme utilise et signale que l'envoi d'e-mails n'est pas
-  configuré — c'est la raison pour laquelle les mots de passe générés
-  s'affichent à l'écran au lieu d'être envoyés.
-
-Dans la section Sécurité, le bouton **Déconnecter partout** ferme toutes vos
-sessions, y compris celle en cours : vous devrez vous reconnecter. Utilisez-le
-si vous pensez que votre compte est compromis, ou si vous avez oublié de vous
-déconnecter sur un poste partagé. Il n'affecte que **votre** compte.
-
-## Assuré
+## Assuré (Patient)
 
 ### Premier accès
 
-À la première connexion, complétez votre profil (nom, prénom, date de
-naissance, téléphone, adresse) : cela crée votre fiche d'assuré **principal**
-et votre numéro de carte de prise en charge (généré automatiquement).
+À la première connexion, complétez votre profil (nom, prénom, date de naissance, téléphone, adresse) : cela crée votre fiche d'assuré **principal** et votre numéro de carte de prise en charge (généré automatiquement).
 
-Une fois votre profil complété, le tableau de bord affiche votre numéro de
-carte, des compteurs cliquables (ayants droit, rendez-vous à venir,
-ordonnances disponibles) et vos prochains rendez-vous, avec un bouton
-*Nouveau rendez-vous* toujours accessible en haut de la page.
+Le tableau de bord affiche votre carte dématérialisée, votre reliquat budgétaire annuel, vos ayants droit, vos ordonnances et vos prochains rendez-vous.
+
+### Carte de prise en charge dématérialisée
+
+- Format physique standard ISO 7810 ID-1 avec micro-puce dorée et QR Code dynamique vectoriel SVG.
+- Présentez votre carte directement sur votre smartphone lors de vos consultations et passages en pharmacie.
 
 ### Mes ayants droit
 
-Ajoutez votre conjoint et vos enfants comme bénéficiaires de votre
-couverture : chacun reçoit son propre numéro de carte et hérite
-automatiquement de votre plan de couverture. **Un ayant droit n'a jamais de
-compte de connexion propre** — vous gérez tout pour lui depuis votre espace.
+Ajoutez votre conjoint et vos enfants comme bénéficiaires de votre couverture : chacun reçoit son propre numéro de carte et hérite automatiquement de votre plan de couverture. **Un ayant droit n'a jamais de compte de connexion propre** — vous gérez tout pour lui depuis votre espace.
 
-### Prestataires proches
+### Prestataires proches & Géolocalisation
 
-Autorisez la géolocalisation de votre navigateur pour voir, sur une carte,
-les prestataires partenaires les plus proches de vous, triés du plus proche
-au plus loin — la liste et votre position sur la carte se mettent à jour
-**en continu** pendant que vous vous déplacez, sans avoir à recharger la
-page. Sans localisation, la liste complète du réseau reste disponible,
-triée par ville.
+Autorisez la géolocalisation de votre navigateur pour voir sur une carte interactive les structures partenaires les plus proches (Hôpitaux, Pharmacies, Cliniques), avec calcul d'itinéraire et temps de trajet estimé.
 
-Une barre de filtres (recherche par nom, ville, type de prestataire,
-distance maximale) affine la liste et la carte instantanément, sans
-rechargement. Chaque prestataire est présenté avec son type, sa distance
-et un temps de trajet estimé, ainsi que le nombre de médecins qui y sont
-rattachés. Le bouton *Voir le profil* centre la carte sur le prestataire
-et ouvre sa fiche (nom, ville, téléphone, itinéraire) directement sur la
-carte, sans changer de page. *Prendre rendez-vous* ouvre le formulaire de
-rendez-vous avec ce prestataire déjà sélectionné. Si aucun prestataire ne
-correspond (réseau vide ou filtres trop restrictifs), un message
-explicite propose d'actualiser ou de réinitialiser les filtres.
+### Mes prises en charge & Demandes de remboursement
 
-### Mes rendez-vous
+- Suivez l'état de vos demandes de prise en charge (*En attente*, *Validée*, *Refusée*, *Terminée*).
+- Déposez vos demandes de remboursement direct avec justificatifs et devis numérisés.
+- Suivez en temps réel la part prise en charge et la part patient restant à votre charge.
 
-Deux filtres en haut de page : la **période** (*À venir* / *Passés*) et le
-**statut**. *À venir* affiche le rendez-vous le plus **proche en premier**,
-c'est celui que vous venez vérifier.
+---
 
-Prenez rendez-vous pour vous-même ou pour un de vos ayants droit : choisissez
-le médecin, éventuellement un prestataire (pré-rempli si vous arrivez depuis
-*Prestataires proches*), la date/heure et le motif. Vous pouvez annuler un
-rendez-vous à venir depuis la même page.
+## Médecin Traitant
 
-### Mes ordonnances
+### Agenda & Dossiers Patients
 
-Consultez les ordonnances délivrées par vos médecins, chacune avec son QR
-code (et son code textuel affiché en dessous) à présenter en pharmacie.
+- Visualisation claire des consultations prévues de la journée, avec filtres par statut (*À venir*, *Terminé*, *Annulé*).
+- Fiches dossiers patients (DPI) reprenant l'historique complet des consultations et ordonnances émises.
 
-Le filtre *À retirer en pharmacie* ne garde que celles que vous n'avez pas
-encore récupérées.
+### Enregistrer une consultation
 
-### Mes prises en charge
+Sélectionnez le patient, renseignez les motifs, le diagnostic et le protocole thérapeutique. Si une prise en charge validée est rattachée, la part assurance et le reste à charge patient sont calculés automatiquement sans saisie manuelle de calcul.
 
-Suivez l'état de vos demandes de couverture et de celles de vos ayants
-droit : *En attente*, *Validée*, *Refusée* ou *Terminée*. **C'est ce statut
-qui détermine ce que vous payez** : tant qu'une demande n'est pas validée,
-les soins concernés restent intégralement à votre charge — le taux de votre
-plan de couverture ne s'applique qu'aux demandes validées.
+### Ordonnances sécurisées infalsifiables
 
-Chaque demande affiche les consultations qui s'y rattachent, avec la part
-prise en charge par l'assurance, la part restant à votre charge et son
-statut de règlement, puis les totaux. Une demande à laquelle aucune
-consultation n'est encore rattachée n'affiche aucun montant : il n'y a rien
-à facturer pour l'instant.
+- Génération automatique de l'ordonnance médicale au format A4 certifié.
+- Tampon officiel SantéSN avec **sceau d'intégrité cryptographique HMAC** et **QR Code de délivrance**.
+- Le patient retrouve instantanément son ordonnance dans son espace personnel ou via son compte WhatsApp.
 
-Le filtre en haut de page limite l'affichage à un statut. Si une demande a
-été refusée, contactez l'administration : le motif du refus n'est pas
-enregistré dans l'application.
+---
 
-### Mon historique
+## Pharmacien d'Officine
 
-Retrouvez toutes vos consultations passées (et celles de vos ayants droit),
-avec pour chacune la part restant à votre charge et si elle a déjà été
-réglée ou non.
+### Scanner d'ordonnance par caméra
 
-## Médecin
+- Reconnaissance optique ultra-rapide par webcam ou caméra mobile (`jsQR@1.4.0`).
+- Mode de saisie manuelle sécurisée en cas d'écran endommagé ou d'impression altérée.
 
-### Ce que vous voyez en arrivant
+### Validation atomique anti-double délivrance
 
-Le tableau de bord affiche des compteurs cliquables (rendez-vous à venir,
-patients suivis, consultations enregistrées) et la liste de vos prochains
-rendez-vous avec leur statut. De là, vous accédez à l'agenda, à vos
-patients ou à l'historique des consultations d'un clic.
+- Contrôle transactionnel en base de données : une ordonnance délivrée est verrouillée immédiatement.
+- Toute tentative de seconde présentation est instantanément bloquée avec alerte d'antériorité.
+- Historique complet et exportable des médicaments remis au comptoir.
 
-### Agenda
+---
 
-Vue de vos rendez-vous ; changez leur statut (confirmé, terminé, annulé) au
-fil de la journée. Vous pouvez aussi ajouter un rendez-vous vous-même pour un
-patient.
+## Passerelle WhatsApp & Notifications
 
-Deux filtres : la **période** (*À venir* / *Passés*) et le **statut**.
-*À venir* affiche le rendez-vous le plus **proche en premier** — c'est celui
-que vous préparez.
+> 💡 **Documentation technique détaillée :** Retrouvez l'architecture complète de la passerelle WhatsApp sur [Mintlify — Notifications WhatsApp](https://https-projet-final-bice-vercel-app.mintlify.site/fonctionnalites/notifications-whatsapp).
 
-### Patients
+La plateforme SantéSN intègre une passerelle bidirectionnelle avec l'API **Meta Cloud API (WhatsApp Business)** :
 
-Liste des patients que vous avez déjà consultés.
+1. **Alertes automatiques :**
+   - Notification instantanée de l'assuré dès qu'une prise en charge est validée par l'IPM.
+   - Envoi du lien sécurisé de consultation d'ordonnance après une visite chez le médecin.
+   - Rappels de rendez-vous médicaux pour limiter le taux de non-présentation (*no-show*).
+2. **Assistant conversationnel WhatsApp :**
+   - Les assurés peuvent envoyer un message au numéro officiel pour consulter leur numéro de carte, le solde de leur plafond annuel restant ou trouver la pharmacie de garde conventionnée la plus proche.
+3. **Sécurité & Webhook :**
+   - Webhook d'écoute sécurisé avec vérification cryptographique de la signature `X-Hub-Signature-256`.
+   - Politique *Fail-Closed* : rejet automatique des requêtes non signées ou non authentifiées.
 
-### Consultations
-
-**Enregistrer une consultation** : sélectionnez le patient, renseignez
-diagnostic et traitement, et éventuellement un service médical facturable et
-la prise en charge du patient concernée. Un paiement est calculé et créé
-**automatiquement** à l'enregistrement (part assurance / part patient selon
-que la prise en charge est validée ou non) — vous n'avez rien à saisir
-vous-même pour la facturation.
-
-### Ordonnances
-
-Depuis une consultation, générez une ordonnance : saisissez les médicaments
-en texte libre, un QR code unique est généré automatiquement (rien à
-dessiner ni à imprimer à part le QR affiché). Le patient le retrouve dans son
-espace, et la pharmacie s'en sert pour délivrer les médicaments.
-
-### Mon profil
-
-Modifiez vos informations (spécialité, téléphone, prestataire de
-rattachement).
-
-## Pharmacien
-
-### Ce que vous voyez en arrivant
-
-Le tableau de bord met en avant un bouton *Scanner un QR Code* directement
-dans l'en-tête (l'action la plus fréquente), un compteur de délivrances déjà
-validées, et la liste de vos dernières délivrances (date, patient, code
-d'ordonnance).
-
-### Scanner un QR Code
-
-Saisissez (ou faites saisir par un lecteur de code) le code affiché sous le
-QR code de l'ordonnance du patient (format `RX-XXXXXXXXXX`). L'écran affiche
-alors le patient, le médecin, la date et la liste des médicaments prescrits.
-
-**Si le code est illisible.** Ordonnance froissée, impression pâle, code mal
-recopié : utilisez le bloc *Code illisible ?* pour rechercher par **nom du
-patient** ou par **fragment du code** (trois caractères minimum).
-
-L'application vous présente alors la liste des ordonnances correspondantes —
-patient, médecin, date, code et état — et **ne choisit jamais à votre place**,
-même s'il n'y a qu'un seul résultat. C'est volontaire : deux patients peuvent
-porter le même nom de famille. Vérifiez le patient et la date, puis cliquez sur
-*Sélectionner* ; vous retombez sur l'écran de vérification habituel.
-
-Si plus de vingt ordonnances correspondent, l'application vous le signale :
-précisez le nom pour réduire la liste.
-
-### Valider la délivrance
-
-Une fois les médicaments remis au patient, confirmez la délivrance depuis le
-même écran. Une ordonnance déjà délivrée ne peut pas l'être une seconde fois
-— l'écran l'indique clairement si quelqu'un essaie de la scanner à nouveau.
-
-### Historique
-
-Retrouvez toutes les délivrances que vous avez validées, les plus récentes
-en premier. Deux filtres pour retrouver une remise précise : une **recherche**
-(nom du patient ou code d'ordonnance) et une **date** — utile quand un patient
-conteste une délivrance ou qu'il faut retrouver le jour d'une remise.
+---
 
 ## Questions fréquentes
 
-**J'ai oublié mon mot de passe, comment le récupérer ?**
-Il n'y a pas de récupération en libre-service (aucun envoi d'email n'est
-configuré). Demandez à votre administrateur de le réinitialiser depuis
-*Gestion des utilisateurs* — un nouveau mot de passe temporaire vous sera
-communiqué, à changer ensuite depuis le menu *Mot de passe*.
+**J'ai oublié mon mot de passe, comment le récupérer ?**  
+Contactez votre administrateur ou gestionnaire d'organisme depuis *Gestion des utilisateurs* — un mot de passe temporaire vous sera attribué, à changer ensuite depuis le menu *Mot de passe*.
 
-**Je suis assuré, puis-je créer un compte pour mon conjoint ou mon enfant ?**
-Non, et ce n'est pas nécessaire : ajoutez-les comme *ayants droit* depuis
-votre espace, ils sont couverts sans avoir besoin de se connecter
-eux-mêmes.
+**Je suis assuré, puis-je créer un compte pour mon conjoint ou mon enfant ?**  
+Non, et ce n'est pas nécessaire : ajoutez-les comme *ayants droit* depuis votre espace, ils sont automatiquement couverts sous votre plan de couverture.
 
-**Une prise en charge en attente couvre-t-elle déjà mes consultations ?**
-Non. Tant qu'elle n'est pas au statut *validée*, vous réglez 100 % du montant
-de la consultation ; c'est une règle métier volontaire, pas un bug.
+**Une prise en charge en attente couvre-t-elle déjà mes consultations ?**  
+Non. Tant qu'elle n'est pas au statut *validée*, vous réglez 100 % du montant de la consultation ; le tiers payant ne s'applique qu'après validation formelle de l'IPM.
 
-**Je suis médecin/pharmacien mais je ne vois pas mon tableau de bord après
-connexion.**
-Votre compte existe mais n'a peut-être pas (ou plus) de fiche métier
-associée (par exemple après une suppression par l'administrateur) —
-contactez-le pour vérifier votre situation.
+**Comment les données médicales sont-elles protégées ?**  
+Conformément à la Loi 2008-12 sur la protection des données personnelles (CDP Sénégal), les dossiers médicaux ne sont accessibles qu'au médecin traitant et au patient. Ni l'administrateur technique ni le gestionnaire financier n'ont accès aux diagnostics confidentiels.

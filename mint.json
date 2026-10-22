@@ -1,0 +1,67 @@
+{
+  "name": "SantéSN",
+  "theme": "quill",
+  "colors": {
+    "primary": "#0E7C86",
+    "light": "#4FB8AE",
+    "dark": "#095059"
+  },
+  "logo": {
+    "light": "/docs/logo-light.svg",
+    "dark": "/docs/logo-dark.svg",
+    "href": "https://projet-final-bice.vercel.app"
+  },
+  "favicon": "/docs/favicon.svg",
+  "navigation": [
+    {
+      "group": "Présentation",
+      "pages": [
+        "docs/introduction",
+        "docs/architecture",
+        "docs/technologies"
+      ]
+    },
+    {
+      "group": "Installation",
+      "pages": [
+        "docs/installation/prerequis",
+        "docs/installation/configuration",
+        "docs/installation/base-de-donnees"
+      ]
+    },
+    {
+      "group": "Fonctionnalités",
+      "pages": [
+        "docs/fonctionnalites/authentification",
+        "docs/fonctionnalites/roles-permissions",
+        "docs/fonctionnalites/espace-gestionnaire",
+        "docs/fonctionnalites/organismes-multi-tenant",
+        "docs/fonctionnalites/rendez-vous",
+        "docs/fonctionnalites/consultations",
+        "docs/fonctionnalites/ordonnances",
+        "docs/fonctionnalites/prise-en-charge",
+        "docs/fonctionnalites/ayants-droit",
+        "docs/fonctionnalites/notifications-whatsapp"
+      ]
+    },
+    {
+      "group": "Technique",
+      "pages": [
+        "docs/technique/routes-urls",
+        "docs/technique/securite",
+        "docs/technique/devops-exploitation",
+        "docs/technique/supervision-observabilite",
+        "docs/technique/fichiers-medias",
+        "docs/technique/variables-environnement"
+      ]
+    },
+    {
+      "group": "Guide Développeur",
+      "pages": [
+        "docs/guide/quickstart-dev",
+        "docs/guide/deploiement",
+        "docs/guide/evolutions"
+      ]
+    }
+  ]
+}
