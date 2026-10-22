@@ -7265,7 +7265,11 @@
                     </a>
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <a href="{% url 'landing' %}" class="button btn btn-sm btn-outline" style="text-decoration: none;">Accueil</a>
+                        {% if user.is_authenticated %}
+                        <a href="{% url 'post_login_redirect' %}" class="button btn btn-sm btn-primary" style="text-decoration: none;">Mon espace</a>
+                        {% else %}
                         <a href="{% url 'login' %}" class="button btn btn-sm btn-primary" style="text-decoration: none;">Connexion</a>
+                        {% endif %}
                     </div>
                 </header>
                 {% endif %}

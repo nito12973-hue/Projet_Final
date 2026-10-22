@@ -4,692 +4,262 @@
 {% block title %}Politique de Confidentialité & Protection des Données — SantéSN{% endblock %}
 
 {% block content %}
-<div class="page-juridique-conteneur">
-    <!-- En-tête uniquement visible à l'impression / export PDF -->
-    <div class="entete-impression-officielle">
-        <div class="logo-impression">SantéSN — Plateforme Médicale Nationale & Tiers-Payant Dématérialisé</div>
-        <h2>Politique de Confidentialité & Protection des Données Personnelles</h2>
-        <p class="meta-impression">Conforme à la Loi sénégalaise n° 2008-12 & Homologation officielle de la Commission de Protection des Données Personnelles (CDP)</p>
+<section class="page-title">
+    <div>
+        <h1>Politique de Confidentialité &amp; Protection des Données</h1>
+        <p class="subtitle">Garanties de protection de la vie privée, secret médical et droits des assurés (Loi n° 2008-12 / CDP).</p>
+    </div>
+</section>
+
+<div class="panel legal-document-card">
+    <div class="legal-badge-bar">
+        <span class="legal-badge official">{% icone "shield-check" %} Certifié CDP Sénégal</span>
+        <span class="legal-badge date">Dernière mise à jour : 2026</span>
+        <span class="legal-badge cdp">Loi n° 2008-12 · Privacy by Design</span>
     </div>
 
-    <!-- Fil d'ariane -->
-    <nav class="fil-ariane-legal sans-impression" aria-label="Fil d'Ariane">
-        <a href="{% url 'landing' %}">Accueil</a>
-        <span class="separateur-chevron" aria-hidden="true">›</span>
-        <span class="courant">Politique de Confidentialité</span>
-    </nav>
+    <div class="legal-preambule">
+        <p><strong>Engagement Institutionnel de Confidentialité :</strong> La santé est le domaine le plus intime et précieux de la vie humaine. SantéSN applique le principe de confidentialité dès la conception (Privacy by Design). Chaque dossier médical, prescription ou relevé de prestation fait l'objet d'un chiffrement robuste et d'un contrôle d'accès strict sous l'autorité conjointe du praticien soignant et de l'assuré, sous le contrôle régulateur de la <strong>Commission de Protection des Données Personnelles du Sénégal (CDP)</strong>.</p>
+    </div>
 
-    <!-- En-tête du document légal -->
-    <header class="entete-document-legal sans-impression">
-        <div class="badges-legal">
-            <span class="badge-statut-legal">{% icone "shield-check" %} Certifié CDP Sénégal</span>
-            <span class="badge-date-legal">Dernière révision : 2026</span>
-            <span class="badge-cdp-legal">Loi n° 2008-12 · Privacy by Design</span>
+    <!-- Section 1 -->
+    <article class="legal-section" id="sec-1">
+        <h2>Section 1 — Responsable du traitement &amp; Délégué à la Protection des Données (DPO)</h2>
+        <p>Les traitements de données à caractère personnel et de données médicales sensibles opérés via la plateforme SantéSN sont placés sous la responsabilité conjointe de l'opérateur technique <strong>SantéSN</strong> et des Institutions de Prévoyance Maladie (IPM) ou mutuelles conventionnées de la République du Sénégal.</p>
+        <p><strong>Référent Protection des Données (DPO) :</strong> Équipe SantéSN · Dakar, République du Sénégal · Ligne d'assistance WhatsApp : <code>+221 78 957 61 45</code> · Email officiel : <code>contact@santesn.sn</code></p>
+        <p style="margin-top: 10px;">
+            Pour les règles déontologiques et les modalités générales d'utilisation, veuillez vous référer à nos <a href="{% url 'cgu' %}" style="color: var(--primary); font-weight: 600; text-decoration: underline;">Conditions Générales d'Utilisation (CGU)</a>.
+        </p>
+    </article>
+
+    <!-- Section 2 -->
+    <article class="legal-section" id="sec-2">
+        <h2>Section 2 — Données collectées &amp; Catégories de traitement</h2>
+        <p>En vertu du principe de minimisation des données, SantéSN ne collecte aucune information superflue :</p>
+        <ul>
+            <li><strong>Identité civile &amp; état civil :</strong> Nom de famille, prénoms, sexe, date de naissance, numéro d'identification nationale (NIN), matricule IPM / entreprise.</li>
+            <li><strong>Coordonnées vérifiées :</strong> Adresse de messagerie électronique, numéro de téléphone portable sénégalais (utilisé pour les alertes sécurisées et l'authentification multicanale).</li>
+            <li><strong>Couverture maladie &amp; droits sociaux :</strong> Statut de la carte de tiers-payant, formule de couverture souscrite (taux de prise en charge ex. 80%), solde annuel restant du foyer, liste des ayants droit légitimes rattachés.</li>
+            <li><strong>Données médicales confidentielles :</strong> Comptes-rendus de consultation, diagnostics médicaux renseignés par les praticiens, prescriptions médicamenteuses sécurisées par code unique <code>RX-XXXXXXXXXX</code>, historique des délivrances en officine et lettres de prise en charge.</li>
+            <li><strong>Traces de sécurité &amp; audit technique :</strong> Adresses IP de connexion, horodatage certifié des opérations, journal immuable des transactions scellé dans <code>JournalActivite</code>.</li>
+        </ul>
+    </article>
+
+    <!-- Section 3 -->
+    <article class="legal-section" id="sec-3">
+        <h2>Section 3 — Finalités du traitement &amp; Bases légales</h2>
+        <p>Toute collecte d'information répond à une finalité médicale et administrative légitime et encadrée :</p>
+        <ul>
+            <li><strong>Délivrance instantanée du Tiers-Payant :</strong> Contrôle en temps réel de l'ouverture des droits pour dispenser le patient de faire l'avance des frais en pharmacie et clinique.</li>
+            <li><strong>Authentification et intégrité de l'ordonnance :</strong> Génération d'un QR Code vectoriel infalsifiable garantissant que l'ordonnance émane bien d'un praticien habilité et n'a pas été modifiée.</li>
+            <li><strong>Prévention des fraudes et délivrances multiples :</strong> Verrouillage immédiat de la prescription dès dispensation en officine pour empêcher les renouvellements illicites.</li>
+            <li><strong>Règlement automatisé des prestataires de santé :</strong> Liquidation des factures et établissement des bordereaux de virement vers les cliniques et pharmacies conventionnées.</li>
+        </ul>
+        <p style="margin-top: 10px;">
+            <strong>Bases légales :</strong> Respect des obligations issues du Code de la Santé Publique du Sénégal, exécution du contrat d'assurance maladie de l'IPM, et consentement libre et éclairé de l'usager conformément à la <strong>Loi sénégalaise n° 2008-12</strong>.
+        </p>
+    </article>
+
+    <!-- Section 4 -->
+    <article class="legal-section" id="sec-4">
+        <h2>Section 4 — Sécurité de haut niveau &amp; Mesures techniques de chiffrement</h2>
+        <p>Conformément aux standards recommandés par l'Agence de l'Informatique de l'État (Sénégal Numérique) et la Commission de Protection des Données Personnelles (CDP) :</p>
+        <ul>
+            <li><strong>Chiffrement en transit &amp; au repos :</strong> Toutes les communications sont chiffrées sous protocole TLS 1.3 avec forçage HSTS strict. Les données sensibles stockées bénéficient du chiffrement AES-256.</li>
+            <li><strong>Cloisonnement strict des rôles (RBAC) :</strong> Étanchéité absolue entre profils. L'administrateur technique et les gestionnaires de paie n'ont aucun accès aux dossiers médicaux ou aux diagnostics posés par les médecins.</li>
+            <li><strong>Défense active contre les cyberattaques :</strong> Protection native contre les injections SQL, failles XSS et CSRF, couplée à un mécanisme de blocage automatique des attaques par force brute (5 tentatives consécutives).</li>
+            <li><strong>Sauvegardes chiffrées &amp; redondance :</strong> Sauvegardes automatisées quotidiennes chiffrées et vérifiées par empreinte cryptographique SHA-256 stockées sur site souverain.</li>
+        </ul>
+    </article>
+
+    <!-- Section 5 -->
+    <article class="legal-section" id="sec-5">
+        <h2>Section 5 — Politique relative aux cookies &amp; Vie privée</h2>
+        <p>SantéSN refuse l'espionnage publicitaire et applique une politique exemplaire d'hygiène numérique :</p>
+        <ul>
+            <li><strong>Cookies techniques indispensables uniquement :</strong> Deux cookies de session essentiels sont utilisés : <code>sessionid</code> (maintien de session authentifiée avec drapeaux de sécurité <code>HttpOnly</code>, <code>Secure</code> et <code>SameSite=Lax</code>) et <code>csrftoken</code> (jeton anti-falsification de requête intersites).</li>
+            <li><strong>Absence totale de régies publicitaires :</strong> Aucun script tiers, régie publicitaire ou tracker n'est installé sur la plateforme.</li>
+            <li><strong>Pas de bandeau intrusif inutile :</strong> Les cookies exclusivement techniques étant indispensables à la fourniture du service expressément demandé par l'utilisateur, ils sont dispensés d'accord préalable selon les règles de la CDP.</li>
+        </ul>
+    </article>
+
+    <!-- Section 6 -->
+    <article class="legal-section" id="sec-6">
+        <h2>Section 6 — Durées légales de conservation des données de santé</h2>
+        <p>Les données sont conservées pour les durées strictement requises par la législation :</p>
+        <ul>
+            <li><strong>Dossiers médicaux et ordonnances électroniques :</strong> 10 années révolues à compter du dernier contact médical, conformément aux recommandations de conservation des dossiers de santé au Sénégal.</li>
+            <li><strong>Feuilles de soins et justificatifs financiers de tiers-payant :</strong> 5 ans à compter de la liquidation du paiement, conformément aux prescriptions comptables et fiscales.</li>
+            <li><strong>Journaux d'audit et traces techniques d'accès :</strong> 12 mois glissants pour des impératifs de détection d'incidents et de sécurité informatique.</li>
+        </ul>
+    </article>
+
+    <!-- Section 7 -->
+    <article class="legal-section" id="sec-7">
+        <h2>Section 7 — Vos droits &amp; Voies de recours auprès de la CDP Sénégal</h2>
+        <p>En application des articles 58 et suivants de la <strong>Loi sénégalaise n° 2008-12</strong>, chaque assuré et professionnel dispose de droits fondamentaux :</p>
+        <ul>
+            <li><strong>Droit d'accès et de communication :</strong> Vous pouvez consulter l'ensemble des données vous concernant directement depuis votre espace personnel ou solliciter un export complet.</li>
+            <li><strong>Droit de rectification :</strong> Possibilité de mettre à jour des coordonnées erronées ou incomplètes auprès de votre organisme gestionnaire.</li>
+            <li><strong>Droit à la limitation du traitement :</strong> Possibilité de geler un traitement en cas de contestation de l'exactitude des données.</li>
+            <li><strong>Droit de réclamation auprès de l'autorité de contrôle :</strong> Si vous estimez que le traitement de vos données de santé n'est pas conforme aux lois en vigueur, vous disposez du droit d'introduire une plainte auprès de la :
+                <div style="margin-top: 8px; padding: 10px 14px; background: var(--fond-doux, rgba(0,0,0,0.03)); border-left: 3px solid var(--primary); border-radius: 6px; font-size: 13px;">
+                    <strong>Commission de Protection des Données Personnelles (CDP)</strong><br>
+                    34, Sicap Mermoz, VDN, Dakar · Tél : +221 33 859 29 29 · Site web : <em>www.cdp.sn</em>
+                </div>
+            </li>
+        </ul>
+    </article>
+
+    <div class="legal-cdp-footer">
+        <div class="legal-cdp-icon">{% icone "shield-check" %}</div>
+        <div>
+            <strong>Engagement Certifié CDP Sénégal</strong>
+            <p>Plateforme hébergée et opérée en conformité stricte avec les exigences de la Commission de Protection des Données Personnelles du Sénégal (CDP - Loi n° 2008-12).</p>
         </div>
-        <div class="titre-et-actions-legal">
-            <div>
-                <h1>Politique de Confidentialité & Protection des Données</h1>
-                <p class="sous-titre-legal">Garanties de protection de la vie privée, secret médical, chiffrement des données et droits des assurés conformément aux directives de la Commission de Protection des Données Personnelles du Sénégal (CDP) et à la Loi sénégalaise n° 2008-12.</p>
-            </div>
-            <div class="actions-document-legal">
-                <a href="{% url 'landing' %}" class="button btn btn-retour-expand" title="Retour à l'accueil" aria-label="Retour à l'accueil">
-                    {% icone "chevron-left" %} <span class="expand-text">Retour</span>
-                </a>
-                <button type="button" class="button btn btn-expand" onclick="window.print()" title="Imprimer ou enregistrer en PDF" aria-label="Imprimer la politique">
-                    {% icone "printer" %} <span class="expand-text">Imprimer / PDF</span>
-                </button>
-            </div>
-        </div>
-    </header>
-
-    <!-- Corps du document en 2 colonnes (Sommaire Sticky + Contenu) -->
-    <div class="grille-juridique">
-        <!-- Sommaire latéral sticky -->
-        <aside class="sommaire-lateral sans-impression">
-            <div class="sommaire-carte">
-                <h3 class="sommaire-titre">{% icone "list" %} Table des Matières</h3>
-                <nav class="sommaire-liens" aria-label="Navigation des sections de confidentialité">
-                    <a href="#sec-1" class="lien-sommaire">1. Responsable du Traitement & DPO</a>
-                    <a href="#sec-2" class="lien-sommaire">2. Données Traitées & Origine</a>
-                    <a href="#sec-3" class="lien-sommaire">3. Finalités & Bases Légales</a>
-                    <a href="#sec-4" class="lien-sommaire">4. Sécurité & Chiffrement Technique</a>
-                    <a href="#sec-5" class="lien-sommaire">5. Politique Zéro Traceur (Cookies)</a>
-                    <a href="#sec-6" class="lien-sommaire">6. Durées Légales de Conservation</a>
-                    <a href="#sec-7" class="lien-sommaire">7. Vos Droits & Recours CDP Sénégal</a>
-                    <a href="{% url 'cgu' %}" class="lien-sommaire" style="margin-top: 8px; border-top: 1px dashed var(--border); padding-top: 8px; color: var(--primary); font-weight: 600;">{% icone "file-text" %} Conditions Générales (CGU)</a>
-                </nav>
-
-                <div class="sommaire-assistance">
-                    <strong>Délégué à la Protection des Données</strong>
-                    <p>Pour faire valoir vos droits d'accès ou signaler une préoccupation :</p>
-                    <a href="mailto:contact@santesn.sn" class="lien-contact-sommaire email">{% icone "mail" %} Support Email : contact@santesn.sn</a><br>
-                    <a href="https://wa.me/221789576145" target="_blank" rel="noopener" class="lien-contact-sommaire whatsapp">{% icone "phone" %} Support WhatsApp : +221 78 957 61 45</a>
-                </div>
-            </div>
-        </aside>
-
-        <!-- Contenu des sections -->
-        <main class="contenu-juridique">
-            <div class="encadre-preambule">
-                <div class="preambule-titre">
-                    {% icone "shield-check" %}
-                    <span>Engagement Institutionnel de Confidentialité</span>
-                </div>
-                <p>
-                    La santé est le domaine le plus intime et précieux de la vie humaine. SantéSN applique le principe de confidentialité dès la conception (Privacy by Design). Chaque dossier médical, prescription ou relevé de prestation fait l'objet d'un chiffrement robuste et d'un contrôle d'accès strict sous l'autorité conjointe du praticien soignant et de l'assuré, sous le contrôle régulateur de la <strong>Commission de Protection des Données Personnelles du Sénégal (CDP)</strong>.
-                </p>
-            </div>
-
-            <!-- Section 1 -->
-            <article class="article-legal" id="sec-1">
-                <div class="article-entete">
-                    <span class="article-numero">Section 1</span>
-                    <h2>{% icone "building" %} Responsable du Traitement & Délégué à la Protection des Données (DPO)</h2>
-                </div>
-                <div class="en-bref-pill">En résumé : SantéSN pilote les traitements de données sous la supervision d'un DPO certifié à Dakar.</div>
-                <p>
-                    Les traitements de données à caractère personnel et de données médicales sensibles opérés via la plateforme SantéSN sont placés sous la responsabilité conjointe de l'opérateur technique <strong>SantéSN</strong> et des Institutions de Prévoyance Maladie (IPM) ou mutuelles conventionnées de la République du Sénégal.
-                </p>
-                <div class="encadre-contact-dpo">
-                    <strong>Référent Protection des Données :</strong>
-                    <p>Équipe SantéSN · Dakar, République du Sénégal · Ligne directe WhatsApp : <code>+221 78 957 61 45</code></p>
-                </div>
-                <p style="margin-top: 12px; font-size: 13.5px;">
-                    Pour le cadre déontologique complet, les règles d'attribution des accès et les modalités du tiers-payant, veuillez vous référer à nos <a href="{% url 'cgu' %}" style="color: var(--primary); font-weight: 600; text-decoration: underline;">Conditions Générales d'Utilisation (CGU)</a>.
-                </p>
-            </article>
-
-            <!-- Section 2 -->
-            <article class="article-legal" id="sec-2">
-                <div class="article-entete">
-                    <span class="article-numero">Section 2</span>
-                    <h2>{% icone "database" %} Données Collectées & Catégories de Traitement</h2>
-                </div>
-                <div class="en-bref-pill">En résumé : Seules les données strictement indispensables aux soins et au tiers-payant sont collectées.</div>
-                <p>En vertu du principe de minimisation des données, SantéSN ne collecte aucune information superflue :</p>
-                <ul class="liste-points-legal">
-                    <li><strong>Identité civile & état civil :</strong> Nom de famille, prénoms, sexe, date de naissance, numéro d'identification nationale (NIN), matricule IPM / entreprise.</li>
-                    <li><strong>Coordonnées vérifiées :</strong> Adresse de messagerie électronique, numéro de téléphone portable sénégalais (utilisé pour les alertes sécurisées et l'authentification multicanale).</li>
-                    <li><strong>Couverture maladie & droits sociaux :</strong> Statut de la carte de tiers-payant, formule de couverture souscrite (taux de prise en charge ex. 80%), solde annuel restant du foyer, liste des ayants droit légitimes rattachés.</li>
-                    <li><strong>Données médicales confidentielles :</strong> Comptes-rendus de consultation, diagnostics médicaux renseignés par les praticiens, prescriptions médicamenteuses sécurisées par code unique <code>RX-XXXXXXXXXX</code>, historique des délivrances en officine et lettres de prise en charge.</li>
-                    <li><strong>Traces de sécurité & audit technique :</strong> Adresses IP de connexion, horodatage certifié des opérations, journal immuable des transactions scellé dans <code>JournalActivite</code>.</li>
-                </ul>
-            </article>
-
-            <!-- Section 3 -->
-            <article class="article-legal" id="sec-3">
-                <div class="article-entete">
-                    <span class="article-numero">Section 3</span>
-                    <h2>{% icone "check" %} Finalités du Traitement & Bases Légales</h2>
-                </div>
-                <div class="en-bref-pill">En résumé : Vos données ne servent qu'à vous soigner, vérifier vos droits et régler vos prestataires sans avance de frais.</div>
-                <p>Toute collecte d'information répond à une finalité médicale et administrative légitime et encadrée :</p>
-                <ul class="liste-points-legal">
-                    <li><strong>Délivrance instantanée du Tiers-Payant :</strong> Contrôle en temps réel de l'ouverture des droits pour dispenser le patient de faire l'avance des frais en pharmacie et clinique.</li>
-                    <li><strong>Authentification et intégrité de l'ordonnance :</strong> Génération d'un QR Code vectoriel infalsifiable garantissant que l'ordonnance émane bien d'un praticien habilité et n'a pas été modifiée.</li>
-                    <li><strong>Prévention des fraudes et délivrances multiples :</strong> Verrouillage immédiat de la prescription dès dispensation en officine pour empêcher les renouvellements illicites.</li>
-                    <li><strong>Règlement automatisé des prestataires de santé :</strong> Liquidation des factures et établissement des bordereaux de virement vers les cliniques et pharmacies conventionnées.</li>
-                </ul>
-                <p style="margin-top: 10px;">
-                    <strong>Bases légales :</strong> Respect des obligations issues du Code de la Santé Publique du Sénégal, exécution du contrat d'assurance maladie de l'IPM, et consentement libre et éclairé de l'usager conformément à la <strong>Loi sénégalaise n° 2008-12</strong>.
-                </p>
-            </article>
-
-            <!-- Section 4 -->
-            <article class="article-legal" id="sec-4">
-                <div class="article-entete">
-                    <span class="article-numero">Section 4</span>
-                    <h2>{% icone "lock" %} Sécurité de Haut Niveau & Mesures Techniques de Chiffrement</h2>
-                </div>
-                <div class="en-bref-pill">En résumé : Chiffrement TLS 1.3 forcé, isolation RBAC stricte et aucun accès des administrateurs aux diagnostics.</div>
-                <p>
-                    Conformément aux standards recommandés par l'Agence de l'Informatique de l'État (Sénégal Numérique) et la Commission de Protection des Données Personnelles (CDP) :
-                </p>
-                <ul class="liste-points-legal">
-                    <li><strong>Chiffrement en transit & au repos :</strong> Toutes les communications sont chiffrées sous protocole TLS 1.3 avec forçage HSTS strict. Les données sensibles stockées bénéficient du chiffrement AES-256.</li>
-                    <li><strong>Cloisonnement strict des rôles (RBAC) :</strong> Étanchéité absolue entre profils. L'administrateur technique et les gestionnaires de paie n'ont aucun accès aux dossiers médicaux ou aux diagnostics posés par les médecins.</li>
-                    <li><strong>Défense active contre les cyberattaques :</strong> Protection native contre les injections SQL, failles XSS et CSRF, couplée à un mécanisme de blocage automatique des attaques par force brute (5 tentatives consécutives).</li>
-                    <li><strong>Sauvegardes chiffrées & redondance :</strong> Sauvegardes automatisées quotidiennes chiffrées et vérifiées par empreinte cryptographique SHA-256 stockées sur site souverain.</li>
-                </ul>
-            </article>
-
-            <!-- Section 5 -->
-            <article class="article-legal" id="sec-5">
-                <div class="article-entete">
-                    <span class="article-numero">Section 5</span>
-                    <h2>{% icone "shield-check" %} Politique Relative aux Cookies & Vie Privée</h2>
-                </div>
-                <div class="en-bref-pill">En résumé : Zéro traceur publicitaire. Uniquement les deux cookies techniques strictement nécessaires au fonctionnement.</div>
-                <p>
-                    SantéSN refuse l'espionnage publicitaire et applique une politique exemplaire d'hygiène numérique :
-                </p>
-                <ul class="liste-points-legal">
-                    <li><strong>Cookies techniques indispensables uniquement :</strong> Deux cookies de session essentiels sont utilisés : <code>sessionid</code> (maintien de session authentifiée avec drapeaux de sécurité <code>HttpOnly</code>, <code>Secure</code> et <code>SameSite=Lax</code>) et <code>csrftoken</code> (jeton anti-falsification de requête intersites).</li>
-                    <li><strong>Absence totale de régies publicitaires :</strong> Aucun script Google Analytics, Facebook Pixel, régie publicitaire ou tracker tiers n'est installé sur la plateforme.</li>
-                    <li><strong>Pas de bandeau de consentement intrusif :</strong> Les cookies exclusivement techniques étant indispensables à la fourniture du service expressément demandé par l'utilisateur, ils sont dispensés d'accord préalable selon les règles de la CDP.</li>
-                </ul>
-            </article>
-
-            <!-- Section 6 -->
-            <article class="article-legal" id="sec-6">
-                <div class="article-entete">
-                    <span class="article-numero">Section 6</span>
-                    <h2>{% icone "calendar" %} Durées Légales de Conservation des Données de Santé</h2>
-                </div>
-                <div class="en-bref-pill">En résumé : Conservation conforme aux obligations hospitalières et de santé publique sénégalaises (10 ans).</div>
-                <p>Les données sont conservées pour les durées strictement requises par la législation :</p>
-                <ul class="liste-points-legal">
-                    <li><strong>Dossiers médicaux et ordonnances électroniques :</strong> 10 années révolues à compter du dernier contact médical, conformément aux recommandations de conservation des dossiers de santé au Sénégal.</li>
-                    <li><strong>Feuilles de soins et justificatifs financiers de tiers-payant :</strong> 5 ans à compter de la liquidation du paiement, conformément aux prescriptions comptables et fiscales.</li>
-                    <li><strong>Journaux d'audit et traces techniques d'accès :</strong> 12 mois glissants pour des impératifs de détection d'incidents et de sécurité informatique.</li>
-                </ul>
-            </article>
-
-            <!-- Section 7 -->
-            <article class="article-legal" id="sec-7">
-                <div class="article-entete">
-                    <span class="article-numero">Section 7</span>
-                    <h2>{% icone "users" %} Vos Droits & Voies de Recours auprès de la CDP Sénégal</h2>
-                </div>
-                <div class="en-bref-pill">En résumé : Vous pouvez consulter, rectifier ou exporter vos données à tout moment sur simple demande.</div>
-                <p>
-                    En application des articles 58 et suivants de la <strong>Loi sénégalaise n° 2008-12</strong>, chaque assuré et professionnel dispose de droits fondamentaux :
-                </p>
-                <ul class="liste-points-legal">
-                    <li><strong>Droit d'accès et de communication :</strong> Vous pouvez consulter l'ensemble des données vous concernant directement depuis votre espace personnel ou solliciter un export complet.</li>
-                    <li><strong>Droit de rectification :</strong> Possibilité de mettre à jour des coordonnées erronées ou incomplètes auprès de votre organisme gestionnaire.</li>
-                    <li><strong>Droit à la limitation du traitement :</strong> Possibilité de geler un traitement en cas de contestation de l'exactitude des données.</li>
-                    <li><strong>Droit de réclamation auprès de l'autorité de contrôle :</strong> Si vous estimez que le traitement de vos données de santé n'est pas conforme aux lois en vigueur, vous disposez du droit d'introduire une plainte auprès de la :
-                        <div style="margin-top: 6px; padding: 10px 14px; background: #f8fafc; border-left: 3px solid #0e7c86; border-radius: 6px; font-size: 13px;">
-                            <strong>Commission de Protection des Données Personnelles (CDP)</strong><br>
-                            34, Sicap Mermoz, VDN, Dakar · Tél : +221 33 859 29 29 · Site web : <em>www.cdp.sn</em>
-                        </div>
-                    </li>
-                </ul>
-            </article>
-
-            <div class="carte-validation-cdp">
-                <div class="badge-sceau-cdp">{% icone "shield-check" %}</div>
-                <div>
-                    <strong>Engagement Certifié CDP Sénégal</strong>
-                    <p>Plateforme hébergée et opérée en conformité stricte avec les exigences de la Commission de Protection des Données Personnelles du Sénégal (CDP - Loi n° 2008-12).</p>
-                </div>
-            </div>
-        </main>
     </div>
 </div>
 
 <style>
-/* Réutilisation harmonieuse des styles juridiques */
-.page-juridique-conteneur {
-    max-width: 1140px;
-    margin: 0 auto;
-    padding: 16px 20px 80px;
-}
-
-.fil-ariane-legal {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    color: var(--muted);
-    margin-bottom: 14px;
-}
-.fil-ariane-legal a {
-    color: var(--muted);
-    text-decoration: none;
-    transition: color 0.15s ease;
-}
-.fil-ariane-legal a:hover {
-    color: var(--primary);
-    text-decoration: underline;
-}
-.separateur-chevron {
-    color: #cbd5e1;
-    font-size: 12px;
-}
-.fil-ariane-legal .courant {
-    color: var(--primary-strong);
-    font-weight: 600;
-}
-
-.entete-document-legal {
-    margin-bottom: 32px;
-    padding-bottom: 24px;
-    border-bottom: 1px solid var(--border);
-}
-
-.titre-et-actions-legal {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 24px;
-    flex-wrap: wrap;
-}
-
-.badges-legal {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-bottom: 10px;
-}
-
-.badge-statut-legal {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 4px 10px;
-    background: #ecfdf5;
-    border: 1px solid #a7f3d0;
-    border-radius: 999px;
-    font-size: 11.5px;
-    font-weight: 700;
-    color: #065f46;
-}
-.badge-statut-legal svg, .badge-statut-legal .icone-nav { width: 14px; height: 14px; }
-
-.badge-date-legal {
-    padding: 4px 10px;
-    background: #f1f5f9;
-    border: 1px solid #e2e8f0;
-    border-radius: 999px;
-    font-size: 11.5px;
-    font-weight: 600;
-    color: #475569;
-}
-
-.badge-cdp-legal {
-    padding: 4px 10px;
-    background: var(--primary-soft);
-    border: 1px solid rgba(14, 124, 134, 0.2);
-    border-radius: 999px;
-    font-size: 11.5px;
-    font-weight: 600;
-    color: var(--primary-strong);
-}
-
-.entete-document-legal h1 {
-    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-    font-size: 28px;
-    font-weight: 800;
-    color: var(--primary-dark);
-    margin: 0 0 8px;
-    letter-spacing: -0.02em;
-}
-
-.sous-titre-legal {
-    font-size: 15px;
-    color: var(--muted);
-    max-width: 740px;
-    line-height: 1.55;
-    margin: 0;
-}
-
-.actions-document-legal {
-    display: flex;
-    gap: 10px;
-    flex-shrink: 0;
-}
-
-.btn-action-legal {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 10px 16px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
-    color: #ffffff !important;
-    font-weight: 600;
-    font-size: 13.5px;
-    border: none;
-    cursor: pointer;
-    text-decoration: none;
-    transition: transform 0.16s ease, box-shadow 0.16s ease;
-    box-shadow: 0 2px 8px rgba(14, 124, 134, 0.2);
-}
-.btn-action-legal:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 14px rgba(14, 124, 134, 0.3);
-}
-.btn-action-legal svg, .btn-action-legal .icone-nav { width: 15px; height: 15px; }
-
-.btn-action-legal.secondaire {
-    background: #ffffff;
-    color: var(--texte) !important;
-    border: 1.5px solid var(--border);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-}
-.btn-action-legal.secondaire:hover {
-    background: #f8fafc;
-    border-color: #cbd5e1;
-}
-
-.grille-juridique {
-    display: grid;
-    grid-template-columns: 280px 1fr;
-    gap: 36px;
-    align-items: flex-start;
-}
-
-.sommaire-lateral {
-    position: sticky;
-    top: 90px;
-}
-
-.sommaire-carte {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 20px;
-    box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.05);
-}
-
-.sommaire-titre {
-    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-    font-size: 14px;
-    font-weight: 800;
-    color: var(--primary-dark);
-    margin: 0 0 14px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-}
-.sommaire-titre svg, .sommaire-titre .icone-nav { width: 16px; height: 16px; color: var(--primary); }
-
-.sommaire-liens {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.lien-sommaire {
-    padding: 8px 10px;
-    border-radius: 8px;
-    font-size: 12.5px;
-    color: var(--muted);
-    text-decoration: none;
-    font-weight: 500;
-    line-height: 1.4;
-    transition: background 0.15s ease, color 0.15s ease;
-}
-.lien-sommaire:hover {
-    background: var(--primary-soft);
-    color: var(--primary-strong);
-    font-weight: 600;
-}
-
-.sommaire-assistance {
-    margin-top: 20px;
-    padding-top: 16px;
-    border-top: 1px solid var(--border);
-    font-size: 12px;
-    color: var(--muted);
-}
-.sommaire-assistance strong {
-    display: block;
-    color: var(--texte);
-    margin-bottom: 4px;
-}
-.sommaire-assistance p {
-    margin: 0 0 10px;
-    line-height: 1.4;
-}
-
-.lien-contact-sommaire {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    color: var(--primary);
-    text-decoration: none;
-    font-weight: 600;
-    margin-bottom: 6px;
-}
-.lien-contact-sommaire:hover { text-decoration: underline; }
-.lien-contact-sommaire svg, .lien-contact-sommaire .icone-nav { width: 13px; height: 13px; }
-.lien-contact-sommaire.whatsapp { color: #059669; }
-
-.contenu-juridique {
-    display: flex;
-    flex-direction: column;
-    gap: 28px;
-}
-
-.encadre-preambule {
-    background: var(--primary-soft);
-    border: 1px solid rgba(14, 124, 134, 0.22);
-    border-left: 4px solid var(--primary);
-    border-radius: 12px;
-    padding: 18px 22px;
-}
-.preambule-titre {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: var(--primary-strong);
-    font-weight: 700;
-    font-size: 14.5px;
-    margin-bottom: 8px;
-}
-.preambule-titre svg, .preambule-titre .icone-nav { width: 16px; height: 16px; }
-.encadre-preambule p {
-    margin: 0;
-    font-size: 13.5px;
-    color: #334155;
-    line-height: 1.6;
-}
-
-.encadre-contact-dpo {
-    margin-top: 14px;
-    padding: 12px 16px;
-    background: #f8fafc;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    font-size: 13px;
-    color: var(--texte);
-}
-.encadre-contact-dpo strong { display: block; margin-bottom: 4px; color: var(--primary-dark); }
-.encadre-contact-dpo p { margin: 0; color: var(--muted); }
-
-.article-legal {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 28px;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
-    scroll-margin-top: 100px;
-}
-
-.article-entete {
-    margin-bottom: 12px;
-}
-
-.article-numero {
-    display: inline-block;
-    font-size: 11px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--primary);
-    margin-bottom: 4px;
-}
-
-.article-entete h2 {
-    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-    font-size: 20px;
-    font-weight: 800;
-    color: var(--primary-dark);
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    letter-spacing: -0.015em;
-}
-.article-entete h2 svg, .article-entete h2 .icone-nav { width: 20px; height: 20px; color: var(--primary); flex-shrink: 0; }
-
-.en-bref-pill {
-    display: inline-block;
-    padding: 4px 10px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 600;
-    color: #475569;
-    margin-bottom: 16px;
-}
-
-.article-legal p {
-    margin: 0 0 12px;
-    font-size: 14.5px;
-    color: #334155;
+.legal-document-card {
+    max-width: 900px;
+    margin: 0 auto 40px;
+    padding: 36px 40px;
     line-height: 1.65;
 }
 
-.liste-points-legal {
-    padding-left: 20px;
-    margin: 12px 0;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    font-size: 14px;
-    color: #334155;
-    line-height: 1.55;
-}
-.liste-points-legal strong { color: var(--texte); }
-
-.carte-validation-cdp {
-    background: #ffffff;
-    border: 1.5px solid #a7f3d0;
-    border-radius: 14px;
-    padding: 20px;
+.legal-badge-bar {
     display: flex;
     align-items: center;
-    gap: 16px;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.08);
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
 }
-.badge-sceau-cdp {
-    width: 48px;
-    height: 48px;
+
+.legal-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.legal-badge.official {
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    color: #065f46;
+}
+.legal-badge.date {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+}
+.legal-badge.cdp {
+    background: var(--primary-soft);
+    border: 1px solid rgba(14, 124, 134, 0.25);
+    color: var(--primary-strong);
+}
+
+:root[data-theme="sombre"] .legal-badge.official {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.35);
+    color: #34d399;
+}
+:root[data-theme="sombre"] .legal-badge.cdp {
+    background: rgba(14, 124, 134, 0.2);
+    border-color: rgba(14, 124, 134, 0.4);
+    color: #5eead4;
+}
+
+.legal-preambule {
+    background: var(--primary-soft);
+    border-left: 4px solid var(--primary);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 28px;
+    font-size: 13.5px;
+    color: var(--texte);
+}
+.legal-preambule p { margin: 0; }
+
+.legal-section {
+    margin-bottom: 28px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+}
+.legal-section:last-of-type {
+    border-bottom: none;
+    margin-bottom: 20px;
+    padding-bottom: 0;
+}
+.legal-section h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--titre);
+    margin: 0 0 12px;
+}
+.legal-section p {
+    margin: 0 0 10px;
+    color: var(--texte);
+    font-size: 14px;
+}
+.legal-section ul {
+    margin: 8px 0 14px 20px;
+    padding: 0;
+    color: var(--texte);
+    font-size: 14px;
+}
+.legal-section li {
+    margin-bottom: 6px;
+    line-height: 1.55;
+}
+
+.legal-cdp-footer {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--primary-soft);
+    border: 1px solid rgba(14, 124, 134, 0.25);
     border-radius: 12px;
+    padding: 16px 20px;
+    margin-top: 28px;
+}
+.legal-cdp-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
     background: #ecfdf5;
     color: #059669;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 20px;
     flex-shrink: 0;
 }
-.badge-sceau-cdp svg, .badge-sceau-cdp .icone-nav { width: 24px; height: 24px; }
-.carte-validation-cdp strong {
+.legal-cdp-footer strong {
     display: block;
-    color: #065f46;
-    font-size: 14px;
-    margin-bottom: 2px;
+    color: var(--titre);
+    font-size: 13.5px;
+    margin-bottom: 3px;
 }
-.carte-validation-cdp p {
+.legal-cdp-footer p {
     margin: 0;
-    font-size: 13px;
-    color: #047857;
+    font-size: 12.5px;
+    color: var(--muted);
     line-height: 1.45;
 }
 
-/* En-tête uniquement visible à l'impression */
-.entete-impression-officielle {
-    display: none;
-}
-
-@media (max-width: 960px) {
-    .grille-juridique { grid-template-columns: 1fr; }
-    .sommaire-lateral { display: none; }
-}
-
 @media (max-width: 640px) {
-    .page-juridique-conteneur { padding: 12px 14px 60px; }
-    .article-legal { padding: 18px 16px; border-radius: 12px; }
-    .entete-document-legal h1 { font-size: 22px; }
-    .carte-validation-cdp { flex-direction: column; align-items: flex-start; gap: 12px; }
-}
-
-/* Thème sombre */
-:root[data-theme="sombre"] .article-legal p,
-:root[data-theme="sombre"] .liste-points-legal,
-:root[data-theme="sombre"] .encadre-preambule p {
-    color: var(--texte, #e2e8f0);
-}
-:root[data-theme="sombre"] .en-bref-pill,
-:root[data-theme="sombre"] .sommaire-carte {
-    background: var(--surface, #10262d);
-    color: var(--texte, #e2e8f0);
-    border-color: var(--border, #21404a);
-}
-:root[data-theme="sombre"] .carte-validation-cdp {
-    background: rgba(5, 150, 105, 0.12);
-    border-color: rgba(5, 150, 105, 0.35);
-}
-:root[data-theme="sombre"] .badge-date-legal {
-    background: var(--surface, #10262d);
-    color: var(--muted, #94a3b8);
-    border-color: var(--border, #21404a);
-}
-:root[data-theme="sombre"] .badge-statut-legal {
-    background: rgba(16, 185, 129, 0.15);
-    border-color: rgba(16, 185, 129, 0.3);
-    color: #34d399;
-}
-:root[data-theme="sombre"] .encadre-contact-dpo {
-    background: var(--surface, #10262d);
-    border-color: var(--border, #21404a);
-    color: var(--texte, #e2e8f0);
-}
-
-@media print {
-    .sans-impression, header, nav, aside, footer, #barre-laterale, .topbar, .public-topbar, .topbar-droite, .menu-theme, #menu-theme-topbar, .menu-notifications, .menu-compte, .fil-ariane, .actions, .sommaire-lateral {
-        display: none !important;
-        visibility: hidden !important;
-        height: 0 !important;
+    .legal-document-card {
+        padding: 20px 16px;
     }
-    .entete-impression-officielle {
-        display: block !important;
-        margin-bottom: 20mm !important;
-        border-bottom: 2px solid #0e7c86 !important;
-        padding-bottom: 6mm !important;
-    }
-    .logo-impression {
-        font-size: 14pt !important;
-        color: #0e7c86 !important;
-    }
-    .entete-impression-officielle h2 {
-        font-size: 16pt !important;
-        margin: 4mm 0 2mm !important;
-    }
-    .meta-impression {
-        font-size: 9pt !important;
-        color: #64748b !important;
-        margin: 0 !important;
-    }
-    .page-juridique-conteneur {
-        padding: 0 !important;
-        max-width: 100% !important;
-    }
-    .article-legal {
-        box-shadow: none !important;
-        border: 1px solid #e2e8f0 !important;
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-        margin-bottom: 8mm !important;
-        padding: 6mm !important;
-    }
-    body {
-        background: #ffffff !important;
-        margin: 0 !important;
-    }
-    @page {
-        size: A4 portrait;
-        margin: 15mm 12mm;
+    .legal-cdp-footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
     }
 }
 </style>
