@@ -14,7 +14,7 @@
     <a class="button btn btn-retour-expand" href="{{ url_retour|default:'/tableau-de-bord/' }}" title="Retour" aria-label="Retour">{% icone "chevron-left" %} <span class="expand-text">Retour</span></a>
 </section>
 
-<div class="kpi-grille" style="grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 20px;" aria-label="Statistiques d'importation">
+<div class="kpi-grille kpi-grille-3" style="margin-bottom: 20px;" aria-label="Statistiques d'importation">
     <div class="kpi">
         <span class="kpi-entete">{% icone "check" %} Comptes créés</span>
         <strong class="code">{{ total_crees }}</strong>

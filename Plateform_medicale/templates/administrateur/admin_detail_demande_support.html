@@ -21,7 +21,22 @@
 </section>
 
 <!-- Fiche récapitulative du demandeur -->
-<div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;margin-bottom:24px;">
+<style>
+    .support-detail-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 20px;
+        margin-bottom: 24px;
+        align-items: start;
+    }
+    @media (max-width: 900px) {
+        .support-detail-grid {
+            grid-template-columns: 1fr !important;
+            gap: 16px !important;
+        }
+    }
+</style>
+<div class="support-detail-grid">
     <!-- Fil des échanges -->
     <div class="panel" style="border-radius:16px;box-shadow:var(--ombre-douce);padding:24px;margin:0;">
         <h3 style="margin:0 0 16px;font-size:16px;color:var(--titre);display:flex;align-items:center;gap:8px;">

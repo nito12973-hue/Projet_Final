@@ -39,6 +39,12 @@
     position: sticky;
     top: 20px;
 }
+
+@media (max-width: 900px) {
+    .plan-form-layout {
+        grid-template-columns: 1fr !important;
+    }
+}
 </style>
 
 <section class="page-title">
@@ -51,7 +57,7 @@
     </a>
 </section>
 
-<div style="display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start; max-width: 1040px;">
+<div class="plan-form-layout" style="display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start; max-width: 1040px;">
     <!-- Formulaire -->
     <section class="panel panel-form" style="margin-bottom: 0;">
         <h2 style="font-size: 16px; margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px; color: var(--titre);">

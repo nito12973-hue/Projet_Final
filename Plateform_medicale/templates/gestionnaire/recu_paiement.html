@@ -264,6 +264,28 @@
     color: var(--muted, #5f6f7d);
 }
 
+@media (max-width: 640px) {
+    .recu-feuille {
+        padding: 16px !important;
+    }
+    .recu-entete {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    .recu-reference-bloc {
+        text-align: left;
+    }
+    .recu-grille-infos {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+    .recu-pied {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+}
+
 @media print {
     .sans-impression, header.topbar, header.public-topbar, nav, aside, footer, #barre-laterale, .topbar, .public-topbar, .topbar-droite, .menu-theme, #menu-theme-topbar, .menu-notifications, .menu-compte, .fil-ariane, .page-title, .actions, .button, button {
         display: none !important;
