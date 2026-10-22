@@ -1,0 +1,123 @@
+# Notifications et Webhook WhatsApp Cloud API (Meta)
+
+> Automatisation des alertes médicales, activation de compte par WhatsApp, webhook bi-directionnel avec vérification cryptographique HMAC SHA-256.
+
+Au Sénégal et en Afrique de l'Ouest, WhatsApp est le canal de communication privilégié des assurés et des professionnels de santé. SantéSN intègre nativement l'**API WhatsApp Cloud de Meta** pour notifier en temps réel les patients et praticiens des événements médicaux et administratifs critiques, tout en fournissant un assistant conversationnel automatisé via un webhook sécurisé.
+
+## Canaux et types d'alertes automatisées
+
+SantéSN déclenche automatiquement des messages WhatsApp formatés selon les modèles officiels pré-approuvés par Meta :
+
+<CardGroup cols={2}>
+  <Card title="Activation de compte" icon="user-plus">
+    Envoi sécurisé du lien d'activation de compte et des instructions de première connexion lors de la création d'un profil assuré par l'IPM.
+  </Card>
+
+  <Card title="Rappels de rendez-vous" icon="calendar-check">
+    Confirmation immédiate lors de la prise de rendez-vous avec un médecin, et rappel automatique 24h avant la consultation avec lien de gestion.
+  </Card>
+
+  <Card title="Émission et retrait d'ordonnance" icon="prescription-bottle-medical">
+    Notification instantanée au patient dès qu'un médecin génère son ordonnance `RX-XXXXXXXXXX`, puis confirmation dès sa délivrance en pharmacie.
+  </Card>
+
+  <Card title="Suivi des prises en charge" icon="file-circle-check">
+    Alerte en direct lorsque l'IPM valide un accord préalable de prise en charge ou instruit une demande de remboursement hors réseau.
+  </Card>
+</CardGroup>
+
+## Architecture du Webhook bi-directionnel
+
+Le webhook SantéSN permet de recevoir les messages entrants des patients, les accusés de réception (distribué, lu) et les réponses interactives aux boutons.
+
+```
+                    ┌──────────────────────────────┐
+                    │    Utilisateur WhatsApp      │
+                    └──────────────┬───────────────┘
+                                   │
+                                   ▼
+                    ┌──────────────────────────────┐
+                    │       Serveurs Meta          │
+                    │   (WhatsApp Cloud API)       │
+                    └──────────────┬───────────────┘
+                                   │  POST /api/whatsapp/webhook/
+                                   │  Header: X-Hub-Signature-256
+                                   ▼
+                    ┌──────────────────────────────┐
+                    │    SantéSN Webhook Engine    │
+                    │                              │
+                    │ 1. Vérification HMAC SHA-256 │
+                    │ 2. Parsing du payload JSON   │
+                    │ 3. Traitement conversationnel│
+                    │ 4. Réponse ou dispatch       │
+                    └──────────────────────────────┘
+```
+
+### Endpoints d'écoute
+
+Le webhook est accessible sur deux routes synchronisées :
+- `POST /api/whatsapp/webhook/` (Route API principale)
+- `POST /whatsapp/webhook/` (Alias de compatibilité)
+
+## Vérification cryptographique des requêtes Meta
+
+Pour empêcher toute tentative d'injection de messages forgés, d'attaques par rejeu ou d'usurpation d'identité, SantéSN applique un double mécanisme de sécurité :
+
+### 1. Challenge d'abonnement Meta (`GET`)
+
+Lors de la configuration initiale de l'URL de rappel dans le tableau de bord Meta for Developers, Meta soumet une requête `GET` :
+
+```python
+hub_mode = request.GET.get('hub.mode')
+hub_token = request.GET.get('hub.verify_token')
+hub_challenge = request.GET.get('hub.challenge')
+
+if hub_mode == 'subscribe' and hub_token == settings.WHATSAPP_VERIFY_TOKEN:
+    return HttpResponse(hub_challenge, content_type='text/plain')
+return HttpResponseForbidden('Token de vérification invalide')
+```
+
+### 2. Signature HMAC-SHA256 sur les messages reçus (`POST`)
+
+Chaque notification transmise par Meta contient l'en-tête `X-Hub-Signature-256`. SantéSN recalcule le digest cryptographique de la charge brute (`request.body`) avec le secret d'application Meta (`WHATSAPP_APP_SECRET`) :
+
+```python
+import hmac
+import hashlib
+
+signature_header = request.headers.get('X-Hub-Signature-256', '')
+expected_signature = 'sha256=' + hmac.new(
+    settings.WHATSAPP_APP_SECRET.encode('utf-8'),
+    request.body,
+    hashlib.sha256
+).hexdigest()
+
+if not hmac.compare_digest(signature_header, expected_signature):
+    logger.warning("Rejet de webhook WhatsApp : signature invalide.")
+    return HttpResponseForbidden("Signature invalide")
+```
+
+<Note>
+  L'utilisation de `hmac.compare_digest` garantit une comparaison en temps constant, éliminant tout risque d'attaque par canal auxiliaire (timing attacks).
+</Note>
+
+## Assistant conversationnel automatisé
+
+Lorsque le patient envoie un message texte ou interagit avec les boutons de réponse rapide sur WhatsApp, le moteur SantéSN :
+
+1. Identifie le patient à partir de son numéro de téléphone international normalisé (format E.164, ex: `+22177XXXXXXX`).
+2. Répond automatiquement aux questions fréquentes (horaires de pharmacie, état d'une ordonnance, solde de couverture).
+3. Permet de déclencher une demande d'assistance transmise directement à l'espace support de l'IPM ou de l'administrateur.
+4. Enregistre l'interaction de manière chiffrée et conforme aux recommandations de la CDP.
+
+## Variables d'environnement requises
+
+Pour activer l'intégration WhatsApp en environnement de recette ou production :
+
+```bash
+# Configuration WhatsApp Cloud API Meta
+WHATSAPP_API_TOKEN="EAAxxxxxxx..."
+WHATSAPP_PHONE_NUMBER_ID="10xxxxxxxxxx"
+WHATSAPP_APP_SECRET="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+WHATSAPP_VERIFY_TOKEN="votre_token_secret_de_verification_custom"
+```

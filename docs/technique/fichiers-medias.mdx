@@ -1,0 +1,75 @@
+# Gestion des fichiers statiques et médias dans SantéSN
+
+> Fonctionnement des QR Codes d'ordonnances, des fichiers statiques et de la gestion des médias dans la plateforme SantéSN déployée sur Vercel.
+
+SantéSN adopte une approche minimaliste de la gestion des fichiers : les données médicales sont stockées sous forme d'enregistrements structurés en base de données, et non comme des pièces jointes ou des fichiers uploadés. Les seuls éléments visuels générés dynamiquement sont les QR Codes associés aux ordonnances.
+
+## QR Codes d'ordonnances
+
+Chaque ordonnance numérique est associée à un QR Code unique, généré automatiquement par le serveur au moment de la création de l'ordonnance.
+
+<Note>
+  Les QR Codes ne sont **pas stockés** sous forme de fichiers image sur le serveur. Ils sont générés dynamiquement à chaque affichage de la page d'ordonnance, à partir de l'identifiant unique `RX-XXXXXXXXXX` de l'ordonnance. Aucun fichier `.png` ou `.svg` n'est donc écrit sur le disque ni dans un bucket de stockage.
+</Note>
+
+### Fonctionnement
+
+<Steps>
+  <Step title="Création de l'ordonnance">
+    Lorsqu'un médecin valide une ordonnance, le serveur génère un identifiant cryptographiquement unique au format `RX-XXXXXXXXXX` et l'enregistre en base de données avec les données médicales associées.
+  </Step>
+
+  <Step title="Génération du QR Code">
+    À chaque consultation de la page de l'ordonnance, le serveur produit le QR Code en mémoire à partir de l'identifiant unique. Ce QR Code encode l'URL de vérification de l'ordonnance.
+  </Step>
+
+  <Step title="Affichage et impression">
+    Le QR Code est intégré directement dans la page HTML de l'ordonnance. Le médecin ou le patient peut imprimer l'ordonnance avec son QR Code pour la présenter en pharmacie.
+  </Step>
+
+  <Step title="Vérification en pharmacie">
+    Le pharmacien scanne le QR Code, ce qui déclenche la vérification de l'ordonnance côté serveur : validité, statut de dispensation, et cohérence des données.
+  </Step>
+</Steps>
+
+## Fichiers statiques
+
+Les fichiers statiques de SantéSN (feuilles de style CSS, scripts JavaScript, images de l'interface, polices) sont servis selon la configuration de déploiement Vercel.
+
+<Tip>
+  Vercel dispose d'un réseau de distribution de contenu (CDN) mondial intégré. Les fichiers statiques collectés via `python manage.py collectstatic` sont automatiquement mis en cache en périphérie (edge caching), ce qui garantit des temps de chargement rapides depuis le Sénégal et les pays voisins sans configuration supplémentaire.
+</Tip>
+
+<CardGroup cols={2}>
+  <Card title="Fichiers CSS & JS" icon="code" href="https://projet-final-bice.vercel.app/">
+    Compilés et collectés lors du déploiement. Servis avec des en-têtes de cache longue durée via le CDN Vercel.
+  </Card>
+
+  <Card title="Images de l'interface" icon="image" href="https://projet-final-bice.vercel.app/">
+    Logos, icônes et illustrations statiques inclus dans le dossier `static/`. Servis directement par Vercel sans passer par Django.
+  </Card>
+</CardGroup>
+
+<Note>
+  Ce point est déduit du comportement de la plateforme et n'a pas été vérifié dans le code source. La configuration exacte du service des fichiers statiques (WhiteNoise, Vercel CDN natif, ou autre) n'est pas confirmée. Le comportement décrit correspond à l'approche standard d'un projet Django déployé sur Vercel avec `collectstatic`.
+</Note>
+
+## Documents médicaux
+
+SantéSN ne propose pas de fonctionnalité d'upload de fichiers pour les documents médicaux. Toutes les informations cliniques — consultations, diagnostics, prescriptions — sont enregistrées sous forme d'enregistrements structurés en base de données PostgreSQL.
+
+| Type de donnée             | Mode de stockage                                              |
+| -------------------------- | ------------------------------------------------------------- |
+| Ordonnances                | Enregistrement base de données + QR Code généré dynamiquement |
+| Consultations              | Enregistrement base de données (texte structuré)              |
+| Informations d'assurance   | Enregistrement base de données                                |
+| Historique des rendez-vous | Enregistrement base de données                                |
+| Photos de profil           | À confirmer — non documenté dans la version actuelle          |
+
+<Info>
+  La gestion des photos de profil des patients n'est pas confirmée dans la version actuelle de la plateforme. Si cette fonctionnalité est activée ultérieurement, une documentation dédiée sera publiée précisant les formats acceptés, la taille maximale, et les règles de conservation.
+</Info>
+
+## Uploads par les utilisateurs
+
+Dans la version actuelle de SantéSN, **aucun rôle utilisateur ne dispose de fonctionnalité d'upload de fichiers** (ni patient, ni médecin, ni pharmacien). Les pièces justificatives d'assurance et les documents administratifs sont gérés directement par les administrateurs institutionnels via l'interface d'administration.

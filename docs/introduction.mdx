@@ -1,0 +1,65 @@
+# SantéSN — Documentation technique de la plateforme de santé
+
+> Référence complète de SantéSN : architecture multi-tenant, fonctionnalités métier, installation, supervision et guides développeur pour la plateforme de santé numérique sénégalaise.
+
+Bienvenue dans la documentation technique de **SantéSN**, la plateforme SaaS sénégalaise de digitalisation du tiers payant et des ordonnances médicales sécurisées. SantéSN connecte les assurés, les médecins, les pharmaciens et les gestionnaires d'organismes de prévoyance (IPM, mutuelles, compagnies d'assurance, entreprises) autour d'un dossier de soins sécurisé, traçable et hautement disponible.
+
+Cette documentation couvre l'ensemble du cycle de vie de la plateforme : de l'installation locale jusqu'aux détails techniques des routes, de la sécurité, des webhooks WhatsApp Meta, de la supervision système et de la conformité réglementaire CDP (Loi n°2008-12).
+
+## Explorer la documentation
+
+<CardGroup cols={2}>
+  <Card title="Présentation & Architecture" icon="sitemap" href="/architecture">
+    Vue d'ensemble de l'architecture technique : Django 5, isolation multi-tenant stricte, RBAC, ordonnances QR Code et 946 tests automatisés.
+  </Card>
+
+  <Card title="Multi-Tenancy & Organismes" icon="building-shield" href="/fonctionnalites/organismes-multi-tenant">
+    Étanchéité totale des données entre entreprises clientes, conventions prestataires et plans de couverture personnalisés.
+  </Card>
+
+  <Card title="WhatsApp Cloud API (Meta)" icon="whatsapp" href="/fonctionnalites/notifications-whatsapp">
+    Alertes médicales instantanées, validation de webhook HMAC SHA-256 et assistant conversationnel automatisé pour les assurés.
+  </Card>
+
+  <Card title="Supervision & Observabilité" icon="chart-line" href="/technique/supervision-observabilite">
+    Monitoring temps réel `/supervision/`, métriques Prometheus `/metrics/`, sondes matérielles psutil et intégrité SHA-256 des sauvegardes.
+  </Card>
+
+  <Card title="Fonctionnalités Métier" icon="gears" href="/fonctionnalites/authentification">
+    Détail de chaque flux : authentification, rendez-vous, consultations médicales, ordonnances sécurisées et tiers payant automatisé.
+  </Card>
+
+  <Card title="Référence Technique & Sécurité" icon="shield-halved" href="/technique/securite">
+    Inventaire complet des routes URL, conformité CDP Sénégal, chiffrement en transit et au repos, et sessions sécurisées.
+  </Card>
+</CardGroup>
+
+## Démarrer en tant que nouveau développeur
+
+Suivez ces étapes pour prendre en main SantéSN le plus rapidement possible.
+
+<Steps>
+  <Step title="Lire la présentation et l'architecture">
+    Commencez par les pages **Présentation** et **Architecture** pour comprendre les acteurs du système, les flux métier, le cloisonnement multi-tenant et les choix techniques structurants avant d'écrire une seule ligne de code.
+  </Step>
+
+  <Step title="Installer l'environnement local">
+    Suivez le guide **Installation → Prérequis** pour configurer Python, les dépendances Django, la base de données PostgreSQL Neon ou SQLite locale et les variables d'environnement nécessaires à l'exécution de la plateforme.
+  </Step>
+
+  <Step title="Exécuter la suite de tests automatisés">
+    Validez la conformité de votre environnement en exécutant la suite complète de 946 tests automatisés via `python manage.py test Plateform_medicale`.
+  </Step>
+
+  <Step title="Explorer les fonctionnalités par rôle">
+    Parcourez la section **Fonctionnalités** en vous plaçant dans la perspective de chaque acteur (assuré, médecin, pharmacien, gestionnaire IPM, administrateur) afin de comprendre les règles métier que le code implémente.
+  </Step>
+
+  <Step title="Consulter la référence technique">
+    Utilisez la section **Référence Technique** comme référence au quotidien : inventaire des routes URL, webhooks WhatsApp, sondes de supervision Prometheus et journal d'activité immuable.
+  </Step>
+</Steps>
+
+<Note>
+  Les comptes utilisateurs ne sont pas créés par auto-inscription publique. Ils sont provisionnés par les administrateurs institutionnels (IPM, mutuelles ou entreprises souscriptrices). Si vous avez besoin d'un compte de test en développement, utilisez le script de peuplement ou l'assistant d'installation `/installation/`.
+</Note>
