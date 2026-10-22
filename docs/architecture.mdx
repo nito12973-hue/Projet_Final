@@ -1,115 +1,115 @@
-﻿# Architecture technique de SantÃ©SN â€” Django, Multi-Tenancy et ObservabilitÃ©
+# Architecture technique de SantéSN — Django, Multi-Tenancy et Observabilité
 
-> PrÃ©sentation complÃ¨te de l'architecture de SantÃ©SN : backend Django, isolation multi-tenant stricte, RBAC Ã  5 rÃ´les, ordonnances sÃ©curisÃ©es par QR Code, intÃ©gration WhatsApp Meta, observabilitÃ© Prometheus et 946 tests automatisÃ©s.
+> Présentation complète de l'architecture de SantéSN : backend Django, isolation multi-tenant stricte, RBAC à 5 rôles, ordonnances sécurisées par QR Code, intégration WhatsApp Meta, observabilité Prometheus et 946 tests automatisés.
 
-SantÃ©SN est une plateforme web SaaS construite avec le framework Django (Python) et conÃ§ue pour rÃ©pondre aux exigences strictes de fiabilitÃ©, de sÃ©curitÃ© et d'interopÃ©rabilitÃ© du secteur de la santÃ© au SÃ©nÃ©gal. Elle repose sur une architecture multi-tenant Ã©tanche, une authentification centralisÃ©e Ã  point d'entrÃ©e unique, un contrÃ´le d'accÃ¨s granulaire basÃ© sur les rÃ´les (RBAC), une intÃ©gration WhatsApp Cloud API (Meta) pour la notification instantanÃ©e, et une suite de **946 tests automatisÃ©s** garantissant une non-rÃ©gression continue.
+SantéSN est une plateforme web SaaS construite avec le framework Django (Python) et conçue pour répondre aux exigences strictes de fiabilité, de sécurité et d'interopérabilité du secteur de la santé au Sénégal. Elle repose sur une architecture multi-tenant étanche, une authentification centralisée à point d'entrée unique, un contrôle d'accès granulaire basé sur les rôles (RBAC), une intégration WhatsApp Cloud API (Meta) pour la notification instantanée, et une suite de **946 tests automatisés** garantissant une non-régression continue.
 
-L'ensemble des opÃ©rations sensibles est horodatÃ© et consignÃ© dans un journal d'activitÃ© immuable conforme Ã  la Loi sÃ©nÃ©galaise nÂ°2008-12 sur la protection des donnÃ©es Ã  caractÃ¨re personnel (supervisÃ©e par la CDP).
+L'ensemble des opérations sensibles est horodaté et consigné dans un journal d'activité immuable conforme à la Loi sénégalaise n°2008-12 sur la protection des données à caractère personnel (supervisée par la CDP).
 
 ## Vue d'ensemble des composants
 
-| Composant | Technologie / ImplÃ©mentation | RÃ´le & CaractÃ©ristiques |
+| Composant | Technologie / Implémentation | Rôle & Caractéristiques |
 | :--- | :--- | :--- |
-| **Backend applicatif** | Django (Python 3.12) | Logique mÃ©tier, ORM sÃ©curisÃ© contre les injections SQL, moteur de templates, validation CSRF |
-| **HÃ©bergement & DÃ©ploiement** | Vercel / WSGI / Gunicorn | Runtime Python avec terminaison HTTPS automatique (TLS 1.3, HSTS) |
-| **Base de donnÃ©es relationnelle**| PostgreSQL (Neon Serverless) | Transactions ACID, pool de connexions optimisÃ©, migrations dÃ©claratives |
-| **ModÃ¨le Multi-Tenant** | ModÃ¨le `Organisme` & filtres ORM | Isolation Ã©tanche des donnÃ©es : aucune fuite possible entre deux entreprises ou mutuelles |
-| **ContrÃ´le d'accÃ¨s (RBAC)** | 5 rÃ´les mÃ©tiers stricts | `ASSURE`, `MEDECIN`, `PHARMACIEN`, `GESTIONNAIRE`, `ADMIN` |
-| **SÃ©curitÃ© des ordonnances** | Identifiant cryptographique `RX-XXXXXXXXXX` | QR Code unique, verrou d'atomicitÃ© anti-double-dÃ©livrance |
-| **Notifications & Bot** | WhatsApp Cloud API (Graph API Meta) | Alertes temps rÃ©el et webhook bi-directionnel avec vÃ©rification de signature HMAC SHA-256 |
-| **ObservabilitÃ© & Monitoring** | `/supervision/`, `/metrics/`, Sentry | Sondes matÃ©rielles `psutil`, latence PostgreSQL, scraping Prometheus et traÃ§age d'erreurs |
-| **IntÃ©gritÃ© des sauvegardes** | Registre `backups/manifest.json` | Hachage cryptographique SHA-256 de chaque dump SQL pour prÃ©venir toute altÃ©ration |
-| **Mode DÃ©connectÃ© (PWA)** | Service Worker (`sw.js`) & `manifest.json` | Cache des assets statiques et Ã©cran de secours gracieux `/offline/` en cas de coupure rÃ©seau |
-| **Couverture de tests** | Django Test Runner / TestCase | **946 tests automatisÃ©s** couvrant tous les flux critiques, la sÃ©curitÃ© et les permissions |
+| **Backend applicatif** | Django (Python 3.12) | Logique métier, ORM sécurisé contre les injections SQL, moteur de templates, validation CSRF |
+| **Hébergement & Déploiement** | Vercel / WSGI / Gunicorn | Runtime Python avec terminaison HTTPS automatique (TLS 1.3, HSTS) |
+| **Base de données relationnelle**| PostgreSQL (Neon Serverless) | Transactions ACID, pool de connexions optimisé, migrations déclaratives |
+| **Modèle Multi-Tenant** | Modèle `Organisme` & filtres ORM | Isolation étanche des données : aucune fuite possible entre deux entreprises ou mutuelles |
+| **Contrôle d'accès (RBAC)** | 5 rôles métiers stricts | `ASSURE`, `MEDECIN`, `PHARMACIEN`, `GESTIONNAIRE`, `ADMIN` |
+| **Sécurité des ordonnances** | Identifiant cryptographique `RX-XXXXXXXXXX` | QR Code unique, verrou d'atomicité anti-double-délivrance |
+| **Notifications & Bot** | WhatsApp Cloud API (Graph API Meta) | Alertes temps réel et webhook bi-directionnel avec vérification de signature HMAC SHA-256 |
+| **Observabilité & Monitoring** | `/supervision/`, `/metrics/`, Sentry | Sondes matérielles `psutil`, latence PostgreSQL, scraping Prometheus et traçage d'erreurs |
+| **Intégrité des sauvegardes** | Registre `backups/manifest.json` | Hachage cryptographique SHA-256 de chaque dump SQL pour prévenir toute altération |
+| **Mode Déconnecté (PWA)** | Service Worker (`sw.js`) & `manifest.json` | Cache des assets statiques et écran de secours gracieux `/offline/` en cas de coupure réseau |
+| **Couverture de tests** | Django Test Runner / TestCase | **946 tests automatisés** couvrant tous les flux critiques, la sécurité et les permissions |
 
 ## Principes directeurs d'architecture
 
-### 1. Point d'entrÃ©e unique et redirection dynamique
+### 1. Point d'entrée unique et redirection dynamique
 
-Tous les utilisateurs, quel que soit leur profil mÃ©tier, se connectent via une URL unique : `/connexion/`. Ã€ l'issue de la validation des identifiants (email + mot de passe hachÃ© en PBKDF2), le contrÃ´leur d'authentification inspecte le rÃ´le de l'utilisateur et l'oriente immÃ©diatement vers son espace de travail :
+Tous les utilisateurs, quel que soit leur profil métier, se connectent via une URL unique : `/connexion/`. À l'issue de la validation des identifiants (email + mot de passe haché en PBKDF2), le contrôleur d'authentification inspecte le rôle de l'utilisateur et l'oriente immédiatement vers son espace de travail :
 
-- AssurÃ© : `/espace/assure/`
-- MÃ©decin : `/espace/medecin/`
+- Assuré : `/espace/assure/`
+- Médecin : `/espace/medecin/`
 - Pharmacien : `/espace/pharmacien/`
 - Gestionnaire IPM : `/tableau-de-bord/`
 - Administrateur : `/tableau-de-bord/` ou `/supervision/`
 
 ### 2. Isolation Multi-Tenant absolue
 
-La plateforme hÃ©berge plusieurs organismes partenaires (IPM, mutuelles de branches, entreprises privÃ©es, compagnies d'assurances). Chaque utilisateur (`Utilisateur`) et chaque bÃ©nÃ©ficiaire (`Patient`) est rattachÃ© Ã  son `Organisme`.
+La plateforme héberge plusieurs organismes partenaires (IPM, mutuelles de branches, entreprises privées, compagnies d'assurances). Chaque utilisateur (`Utilisateur`) et chaque bénéficiaire (`Patient`) est rattaché à son `Organisme`.
 
-Au niveau de l'ORM Django, toutes les requÃªtes de consultation, d'exportation (Excel/CSV/PDF) et de modification sont conditionnÃ©es par le pÃ©rimÃ¨tre de l'organisme de l'utilisateur connectÃ© :
+Au niveau de l'ORM Django, toutes les requêtes de consultation, d'exportation (Excel/CSV/PDF) et de modification sont conditionnées par le périmètre de l'organisme de l'utilisateur connecté :
 
 ```python
-# RÃ¨gle d'Ã©tanchÃ©itÃ© stricte dans les requÃªtes
+# Règle d'étanchéité stricte dans les requêtes
 if not request.user.is_superuser:
     queryset = queryset.filter(organisme=request.user.organisme)
 ```
 
-Il est mathÃ©matiquement impossible pour un gestionnaire de l'Entreprise A d'accÃ©der aux effectifs, prises en charge, factures ou diagnostics de l'Entreprise B.
+Il est mathématiquement impossible pour un gestionnaire de l'Entreprise A d'accéder aux effectifs, prises en charge, factures ou diagnostics de l'Entreprise B.
 
-### 3. ContrÃ´le d'accÃ¨s basÃ© sur les rÃ´les (RBAC)
+### 3. Contrôle d'accès basé sur les rôles (RBAC)
 
-L'accÃ¨s Ã  chaque vue est vÃ©rifiÃ© cÃ´tÃ© serveur par des dÃ©corateurs dÃ©diÃ©s (`@role_required(...)`). Les frontiÃ¨res mÃ©dicales et financiÃ¨res sont hermÃ©tiques :
+L'accès à chaque vue est vérifié côté serveur par des décorateurs dédiés (`@role_required(...)`). Les frontières médicales et financières sont hermétiques :
 
-- **Secret mÃ©dical prÃ©servÃ©** : Ni l'administrateur systÃ¨me ni le gestionnaire IPM ne peuvent consulter les diagnostics confidentiels, comptes-rendus cliniques ou antÃ©cÃ©dents mÃ©dicaux rÃ©digÃ©s par un mÃ©decin.
-- **SÃ©paration des flux financiers** : Seuls les gestionnaires IPM et administrateurs autorisÃ©s ont accÃ¨s aux modules de tÃ©lÃ©transmission B2B et de liquidation comptable.
+- **Secret médical préservé** : Ni l'administrateur système ni le gestionnaire IPM ne peuvent consulter les diagnostics confidentiels, comptes-rendus cliniques ou antécédents médicaux rédigés par un médecin.
+- **Séparation des flux financiers** : Seuls les gestionnaires IPM et administrateurs autorisés ont accès aux modules de télétransmission B2B et de liquidation comptable.
 
-### 4. Ordonnances numÃ©riques infalsifiables
+### 4. Ordonnances numériques infalsifiables
 
-Lorsqu'un praticien valide une consultation, SantÃ©SN gÃ©nÃ¨re :
+Lorsqu'un praticien valide une consultation, SantéSN génère :
 1. Un identifiant unique de prescription au format `RX-XXXXXXXXXX`.
-2. Un QR Code vectoriel haute rÃ©solution encodant l'URL sÃ©curisÃ©e de vÃ©rification.
-3. Un verrou transactionnel au niveau de la base de donnÃ©es : dÃ¨s confirmation de la dispensation par un pharmacien agrÃ©Ã©, le statut bascule irrÃ©versiblement en `DÃ©livrÃ©e`. Tout scan ultÃ©rieur affiche une alerte explicite de rejet.
+2. Un QR Code vectoriel haute résolution encodant l'URL sécurisée de vérification.
+3. Un verrou transactionnel au niveau de la base de données : dès confirmation de la dispensation par un pharmacien agréé, le statut bascule irréversiblement en `Délivrée`. Tout scan ultérieur affiche une alerte explicite de rejet.
 
 ### 5. Mode Progressif (PWA & Offline)
 
-Pour pallier les alÃ©as de connectivitÃ© Internet frÃ©quents en zone pÃ©riphÃ©rique ou rurale, SantÃ©SN intÃ¨gre :
+Pour pallier les aléas de connectivité Internet fréquents en zone périphérique ou rurale, SantéSN intègre :
 - Un fichier manifeste PWA (`/manifest.json`) permettant l'installation de l'application sur smartphone Android et iOS.
-- Un Service Worker (`/sw.js`) mettant en cache les ressources critiques (CSS, icÃ´nes, police Marianne, scripts).
-- Une page de bascule `/offline/` informant l'utilisateur en cas d'interruption de rÃ©seau tout en conservant les donnÃ©es locales consultables.
+- Un Service Worker (`/sw.js`) mettant en cache les ressources critiques (CSS, icônes, police Marianne, scripts).
+- Une page de bascule `/offline/` informant l'utilisateur en cas d'interruption de réseau tout en conservant les données locales consultables.
 
 ## Perspective par acteur
 
 <Tabs>
-  <Tab title="AssurÃ© & Ayants Droit">
-    * Prise et suivi des rendez-vous mÃ©dicaux avec praticiens et spÃ©cialistes.
-    * Carte dÃ©matÃ©rialisÃ©e d'assurÃ© avec QR Code d'identification immÃ©diate.
-    * Gestion de ses ayants droit (conjoints, enfants) avec transmission des piÃ¨ces d'Ã©tat civil.
-    * Visualisation en temps rÃ©el de ses ordonnances, du taux de prise en charge et du ticket modÃ©rateur.
-    * Demande de remboursement hors rÃ©seau avec tÃ©lÃ©versement sÃ©curisÃ© des factures acquittÃ©es.
+  <Tab title="Assuré & Ayants Droit">
+    * Prise et suivi des rendez-vous médicaux avec praticiens et spécialistes.
+    * Carte dématérialisée d'assuré avec QR Code d'identification immédiate.
+    * Gestion de ses ayants droit (conjoints, enfants) avec transmission des pièces d'état civil.
+    * Visualisation en temps réel de ses ordonnances, du taux de prise en charge et du ticket modérateur.
+    * Demande de remboursement hors réseau avec téléversement sécurisé des factures acquittées.
     * Assistant conversationnel et notifications WhatsApp d'activation et de suivi.
   </Tab>
 
-  <Tab title="MÃ©decin & Praticien">
-    * Agenda dynamique des consultations synchronisÃ© avec les crÃ©neaux pris par les assurÃ©s.
-    * VÃ©rification instantanÃ©e des droits d'un patient par scan de sa carte dÃ©matÃ©rialisÃ©e.
-    * RÃ©daction assistÃ©e d'ordonnances avec posologie claire et sÃ©curisation cryptographique par QR Code.
-    * Historique d'activitÃ© clinique et respect absolu du secret mÃ©dical.
+  <Tab title="Médecin & Praticien">
+    * Agenda dynamique des consultations synchronisé avec les créneaux pris par les assurés.
+    * Vérification instantanée des droits d'un patient par scan de sa carte dématérialisée.
+    * Rédaction assistée d'ordonnances avec posologie claire et sécurisation cryptographique par QR Code.
+    * Historique d'activité clinique et respect absolu du secret médical.
   </Tab>
 
   <Tab title="Pharmacien">
     * Scanner QR Code haute performance utilisable sur smartphone, tablette ou douchette optique.
-    * ContrÃ´le d'authenticitÃ© et de validitÃ© de l'ordonnance en temps rÃ©el.
-    * Validation de dÃ©livrance avec verrouillage instantanÃ© anti-double-dÃ©livrance.
-    * Historique complet des dispensations effectuÃ©es pour rapprochement comptable.
+    * Contrôle d'authenticité et de validité de l'ordonnance en temps réel.
+    * Validation de délivrance avec verrouillage instantané anti-double-délivrance.
+    * Historique complet des dispensations effectuées pour rapprochement comptable.
   </Tab>
 
   <Tab title="Gestionnaire IPM / Mutuelle">
-    * **Gestion des effectifs & BÃ©nÃ©ficiaires** : Affiliation des assurÃ©s principaux et ayants droit, gestion du registre d'entreprise et attribution des plans de couverture modulaires.
-    * **Validation des Prises en Charge (PEC)** : Instruction des demandes d'accord prÃ©alable pour actes spÃ©cialisÃ©s, hospitalisations ou examens d'imagerie.
-    * **Liquidation du Tiers Payant** : ContrÃ´le automatisÃ© des prestations exÃ©cutÃ©es, validation des tickets modÃ©rateurs et application rigoureuse des barÃ¨mes conventionnels.
-    * **Instruction des Remboursements Hors RÃ©seau** : VÃ©rification des factures acquittÃ©es dÃ©posÃ©es par les assurÃ©s, calcul d'estimation du taux et du plafond annuel restant, arbitrage et validation du rÃ¨glement (Virement, Wave, Orange Money).
-    * **TÃ©lÃ©transmission B2B & Bordereaux Mensuels** : Consolidation pÃ©riodique des actes mÃ©dicaux et pharmaceutiques, gÃ©nÃ©ration des bordereaux de liquidation pour les prestataires de santÃ© avec exports PDF et Excel.
-    * **Pilotage des Conventions Prestataires** : Gestion du rÃ©seau de soins partenaire (cliniques, officines, cabinets), suivi des statuts conventionnels (actif, suspendu, rÃ©siliÃ©) et taux nÃ©gociÃ©s.
-    * Pour explorer toutes les fonctionnalitÃ©s, consultez la page dÃ©diÃ©e [Espace Gestionnaire IPM / Mutuelle](/fonctionnalites/espace-gestionnaire).
+    * **Gestion des effectifs & Bénéficiaires** : Affiliation des assurés principaux et ayants droit, gestion du registre d'entreprise et attribution des plans de couverture modulaires.
+    * **Validation des Prises en Charge (PEC)** : Instruction des demandes d'accord préalable pour actes spécialisés, hospitalisations ou examens d'imagerie.
+    * **Liquidation du Tiers Payant** : Contrôle automatisé des prestations exécutées, validation des tickets modérateurs et application rigoureuse des barèmes conventionnels.
+    * **Instruction des Remboursements Hors Réseau** : Vérification des factures acquittées déposées par les assurés, calcul d'estimation du taux et du plafond annuel restant, arbitrage et validation du règlement (Virement, Wave, Orange Money).
+    * **Télétransmission B2B & Bordereaux Mensuels** : Consolidation périodique des actes médicaux et pharmaceutiques, génération des bordereaux de liquidation pour les prestataires de santé avec exports PDF et Excel.
+    * **Pilotage des Conventions Prestataires** : Gestion du réseau de soins partenaire (cliniques, officines, cabinets), suivi des statuts conventionnels (actif, suspendu, résilié) et taux négociés.
+    * Pour explorer toutes les fonctionnalités, consultez la page dédiée [Espace Gestionnaire IPM / Mutuelle](/docs/fonctionnalites/espace-gestionnaire).
   </Tab>
 
   <Tab title="Administrateur Technique">
-    * Gestion globale des organismes partenaires, des comptes et des droits d'accÃ¨s.
-    * Supervision systÃ¨me en direct (`/supervision/`) : sondes CPU/RAM, latence PostgreSQL Neon, Sentry.
-    * MÃ©triques Prometheus (`/metrics/`) pour supervision d'infrastructure Grafana.
-    * Consultation du `JournalActivite` immuable et audit de conformitÃ© rÃ©glementaire CDP.
-    * ContrÃ´le d'intÃ©gritÃ© cryptographique SHA-256 des sauvegardes de donnÃ©es (`backups/manifest.json`).
+    * Gestion globale des organismes partenaires, des comptes et des droits d'accès.
+    * Supervision système en direct (`/supervision/`) : sondes CPU/RAM, latence PostgreSQL Neon, Sentry.
+    * Métriques Prometheus (`/metrics/`) pour supervision d'infrastructure Grafana.
+    * Consultation du `JournalActivite` immuable et audit de conformité réglementaire CDP.
+    * Contrôle d'intégrité cryptographique SHA-256 des sauvegardes de données (`backups/manifest.json`).
   </Tab>
 </Tabs>

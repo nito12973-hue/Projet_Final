@@ -1,23 +1,23 @@
-﻿{% load formats icones %}<!DOCTYPE html>
+{% load formats icones %}<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>{% block title %}SantÃ©SN â€” Plateforme Pour la prise en charge mÃ©dicale d un assurer dans une structure {% endblock %}</title>
-    <meta name="description" content="SantÃ©SN : plateforme digitale de dÃ©matÃ©rialisation du tiers payant et de l'ordonnance mÃ©dicale au SÃ©nÃ©gal.">
-    <meta property="og:site_name" content="SantÃ©SN">
+    <title>{% block title %}SantéSN — Plateforme Pour la prise en charge médicale d un assurer dans une structure {% endblock %}</title>
+    <meta name="description" content="SantéSN : plateforme digitale de dématérialisation du tiers payant et de l'ordonnance médicale au Sénégal.">
+    <meta property="og:site_name" content="SantéSN">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="SantÃ©SN â€” Plateforme MÃ©dicale & Tiers Payant">
-    <meta property="og:description" content="Rendez-vous, consultations, ordonnances QR, pharmacies et assurance santÃ© au SÃ©nÃ©gal.">
+    <meta property="og:title" content="SantéSN — Plateforme Médicale & Tiers Payant">
+    <meta property="og:description" content="Rendez-vous, consultations, ordonnances QR, pharmacies et assurance santé au Sénégal.">
     <meta property="og:locale" content="fr_SN">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="SantÃ©SN â€” Plateforme MÃ©dicale">
-    <meta name="twitter:description" content="Plateforme digitale de prise en charge mÃ©dicale au SÃ©nÃ©gal.">
+    <meta name="twitter:title" content="SantéSN — Plateforme Médicale">
+    <meta name="twitter:description" content="Plateforme digitale de prise en charge médicale au Sénégal.">
     <meta name="theme-color" content="#0e7c86" id="meta-theme-color">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="SantÃ©SN">
+    <meta name="apple-mobile-web-app-title" content="SantéSN">
     <link rel="manifest" href="{% url 'manifest_json' %}">
     <meta name="color-scheme" content="light dark">
     <script>
@@ -56,16 +56,16 @@
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap"></noscript>
     <style>
         :root {
-            /* Palette MaÃ®tre SantÃ©SN : MÃ©dicale Sobre, Reposante & Ultra-Lisible (WCAG AAA) */
+            /* Palette Maître SantéSN : Médicale Sobre, Reposante & Ultra-Lisible (WCAG AAA) */
             --bg: #eff4f3;
             --surface: #ffffff;
-            /* Turquoise mÃ©dical : signature identitaire, bordures, accents */
+            /* Turquoise médical : signature identitaire, bordures, accents */
             --primary: #0e7c86;
-            /* Teal profond : variante haute lisibilitÃ© garantie pour texte/icÃ´nes (contraste 9:1 sur blanc) */
+            /* Teal profond : variante haute lisibilité garantie pour texte/icônes (contraste 9:1 sur blanc) */
             --primary-strong: #095059;
-            /* Navy sombre : titres, repÃ¨res architecturaux et fond de menu */
+            /* Navy sombre : titres, repères architecturaux et fond de menu */
             --primary-dark: #0b2027;
-            /* Nuance claire pour Ã©lÃ©ments sur fonds sombres */
+            /* Nuance claire pour éléments sur fonds sombres */
             --primary-light: #4fb8ae;
             --primary-accent: #0e7c86;
             --primary-soft: #dcece9;
@@ -81,7 +81,7 @@
             --success: #1e7a4c;
             --warning: #8a5a00;
 
-            /* Menu latÃ©ral : Teinte signature d'origine Navy MÃ©dical (#0B2027) */
+            /* Menu latéral : Teinte signature d'origine Navy Médical (#0B2027) */
             --sb-bg: #0B2027;
             --sb-hover: rgba(255, 255, 255, 0.08);
             --sb-border: rgba(255, 255, 255, 0.10);
@@ -93,7 +93,7 @@
             --accent-turquoise: #4fb8ae;
             --accent-turquoise-wash: rgba(14, 124, 134, 0.16);
 
-            /* Jetons sÃ©mantiques des pastilles et alertes haute lisibilitÃ© */
+            /* Jetons sémantiques des pastilles et alertes haute lisibilité */
             --ok-bg: #dcfce7;
             --ok-fg: #15683f;
             --attente-bg: #fff1d6;
@@ -108,7 +108,7 @@
             --btn-a: #0b2027;
             --btn-b: #095059;
 
-            /* Jetons d'espacement & d'Ã©lÃ©vation doux et nets */
+            /* Jetons d'espacement & d'élévation doux et nets */
             --space-xs: 4px;
             --space-sm: 8px;
             --space-md: 16px;
@@ -123,13 +123,13 @@
             --font-body: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-            /* Encoches et barres systÃ¨me des smartphones (Safe Area Insets) */
+            /* Encoches et barres système des smartphones (Safe Area Insets) */
             --sat: env(safe-area-inset-top, 0px);
             --sar: env(safe-area-inset-right, 0px);
             --sab: env(safe-area-inset-bottom, 0px);
             --sal: env(safe-area-inset-left, 0px);
 
-            /* Alias et compatibilitÃ© des jetons transversaux */
+            /* Alias et compatibilité des jetons transversaux */
             --bordure: var(--border);
             --texte: var(--text);
             --ink: var(--text);
@@ -446,7 +446,7 @@
             transform: rotate(180deg);
         }
 
-        /* Seul le libellÃ© texte disparait en mode rÃ©duit, le LOGO SVG reste 100% visible et centrÃ© */
+        /* Seul le libellé texte disparait en mode réduit, le LOGO SVG reste 100% visible et centré */
         html.sidebar-reduite .brand-texte,
         body.sidebar-reduite .brand-texte {
             display: none !important;
@@ -1087,8 +1087,8 @@
             color: var(--muted);
         }
 
-        /* Ã‰tat vide illustrÃ© (liste sans rÃ©sultat, recherche infructueuse) :
-           affichage net, structurÃ© avec icÃ´ne, titre explicatif et bouton d'action. */
+        /* État vide illustré (liste sans résultat, recherche infructueuse) :
+           affichage net, structuré avec icône, titre explicatif et bouton d'action. */
         .etat-vide {
             text-align: center;
             padding: 44px 24px;
@@ -1152,7 +1152,7 @@
         .details-tableau summary::-webkit-details-marker { display: none; }
 
         .details-tableau summary::before {
-            content: "â–¸";
+            content: "▸";
             display: inline-block;
             margin-right: 6px;
             transition: transform 0.15s ease;
@@ -1389,7 +1389,7 @@
             box-shadow: 0 0 0 3px rgba(14, 124, 134, 0.14);
         }
 
-        /* Cases Ã  cocher et boutons radio : ne doivent JAMAIS hÃ©riter du
+        /* Cases à cocher et boutons radio : ne doivent JAMAIS hériter du
            width: 100% / min-height: 44px des champs texte (qui faisait flotter
            la coche "signe valide" seule au milieu de la page). */
         input[type="checkbox"],
@@ -1551,7 +1551,7 @@
             box-shadow: 0 4px 10px rgba(179, 38, 30, 0.3);
         }
 
-        /* En-tÃªte de page : boutons d'action alignÃ©s */
+        /* En-tête de page : boutons d'action alignés */
         .page-title .actions {
             display: flex;
             align-items: center;
@@ -1570,7 +1570,7 @@
             box-sizing: border-box;
         }
 
-        /* wrap plutÃ´t que nowrap : gestion responsive des boutons */
+        /* wrap plutôt que nowrap : gestion responsive des boutons */
         .actions {
             display: flex;
             flex-wrap: wrap;
@@ -1712,7 +1712,7 @@
             font-size: 12px;
         }
 
-        /* Conteneur QR fluide et scannable dans les dialogues (Carte AssurÃ©) */
+        /* Conteneur QR fluide et scannable dans les dialogues (Carte Assuré) */
         .qr-container-dialog {
             display: inline-flex;
             align-items: center;
@@ -1776,9 +1776,9 @@
 
         /* Barre de filtres (formulaire GET en ligne, au-dessus d'une liste) et
            formulaire POST "invisible" habillant un seul bouton d'action dans
-           une ligne de tableau â€” classes manquantes, dupliquees en inline. */
+           une ligne de tableau — classes manquantes, dupliquees en inline. */
         /* Barre de filtres (formulaire GET en ligne, au-dessus d'une liste) :
-           Alignement gÃ©omÃ©trique strict Ã  44px (la norme standard) pour tous les inputs, selects et boutons. */
+           Alignement géométrique strict à 44px (la norme standard) pour tous les inputs, selects et boutons. */
         form.filtres {
             max-width: none;
             padding: 18px 22px;
@@ -1833,7 +1833,7 @@
             box-shadow: 0 0 0 3px rgba(14, 124, 134, 0.14) !important;
         }
 
-        /* Tous les boutons dans les filtres ont STRICTEMENT la mÃªme hauteur que la barre de recherche (44px) */
+        /* Tous les boutons dans les filtres ont STRICTEMENT la même hauteur que la barre de recherche (44px) */
         form.filtres .button,
         form.filtres button,
         form.filtres a.button {
@@ -2064,9 +2064,9 @@
             gap: 10px;
         }
 
-        /* Toasts pour les messages Django et temps rÃ©el : design unifiÃ© SaaS
+        /* Toasts pour les messages Django et temps réel : design unifié SaaS
            institutionnel, flottants, empilables, avec trait d'accentuation
-           latÃ©ral (border-left), badge icÃ´ne vectoriel et barre de progression. */
+           latéral (border-left), badge icône vectoriel et barre de progression. */
         .toasts {
             position: fixed;
             top: 20px;
@@ -2184,7 +2184,7 @@
             height: 16px;
         }
 
-        /* Trait indicateur latÃ©ral selon le niveau de criticitÃ© */
+        /* Trait indicateur latéral selon le niveau de criticité */
         .toast.toast-success {
             border-left-color: var(--success, #059669);
         }
@@ -2198,7 +2198,7 @@
             border-left-color: var(--primary, #0e7c86);
         }
 
-        /* Badge d'icÃ´ne vectoriel Ã©lÃ©gant */
+        /* Badge d'icône vectoriel élégant */
         .toast-icone-badge {
             display: inline-flex;
             align-items: center;
@@ -2262,7 +2262,7 @@
             filter: brightness(1.1);
         }
 
-        /* Trait de progression de durÃ©e (auto-dismiss indicator) */
+        /* Trait de progression de durée (auto-dismiss indicator) */
         .toast-barre-progression {
             position: absolute;
             bottom: 0;
@@ -2283,7 +2283,7 @@
             background: rgba(217, 119, 6, 0.4);
         }
 
-        /* Pause du compte Ã  rebours au survol souris */
+        /* Pause du compte à rebours au survol souris */
         .toast:hover .toast-barre-progression {
             animation-play-state: paused;
         }
@@ -2308,7 +2308,7 @@
         }
 
         /* ===== Cartes de stats "accueil" (turquoise), utilisees uniquement sur
-           les 4 pages d'accueil par role (dashboard*.html) â€” n'affecte pas
+           les 4 pages d'accueil par role (dashboard*.html) — n'affecte pas
            .stat/.grid utilises ailleurs dans l'application. ===== */
         .dash-grid {
             display: grid;
@@ -2375,7 +2375,7 @@
         }
 
         /* Statuts en pastille a point colore, utilises uniquement sur les 4
-           pages d'accueil â€” n'affecte pas .badge utilise ailleurs. */
+           pages d'accueil — n'affecte pas .badge utilise ailleurs. */
         .dash-pill {
             display: inline-flex;
             align-items: center;
@@ -2503,7 +2503,7 @@
         
         
         
-        /* LiserÃ© de couleur en tete de chaque tuile KPI, un des signaux de
+        /* Liseré de couleur en tete de chaque tuile KPI, un des signaux de
            mouvement les moins visibles de la premiere passe A+ (retour
            utilisateur du 07/08 : le rendu ne "ressemblait pas a A+", cf. le
            mockup Direction A d'origine ou chaque tuile porte deja ce liensere
@@ -2527,7 +2527,7 @@
            radial-gradient .dash-command donne --primary-accent 3.82-7.04:1
            et --accent 3.25-5.98:1 (ok partout), mais --primary 1.84:1 et
            --primary-strong jusqu'a 1:1 dans le coin haut-droit (ou le
-           degrade vaut litteralement --primary-strong) -- liserÃ©s
+           degrade vaut litteralement --primary-strong) -- liserés
            invisibles sur les tuiles 2/4/6, pas juste "discrets". */
         
                                                 
@@ -2580,7 +2580,7 @@
            illisible comme CTA). --primary-accent en aplat + texte
            --primary-dark : 7.04:1 (texte) et 3.82-7.04:1 (bouton contre le
            fond, WCAG 1.4.11) sur toute la largeur du degrade -- meme
-           combinaison que la mesure qui a guide le choix du liserÃ© KPI
+           combinaison que la mesure qui a guide le choix du liseré KPI
            juste au-dessus. Ne change pas .button.primary de base (utilise
            tel quel par les 3 autres dashboards et les pages claires). */
         
@@ -2688,7 +2688,7 @@
 
         /* Largeur FIXE, pas "100% dans un flex" : sans elle le recto se
            contractait a 227 px, l'aspect-ratio imposait 143 px de haut et le
-           pied de carte ("AssurÃ© principal", le taux) sortait sous
+           pied de carte ("Assuré principal", le taux) sortait sous
            overflow:hidden -- tronque a l'ecran comme a l'impression. Le verso,
            dont le texte force la hauteur, ne se contractait pas de la meme
            facon : les deux faces n'avaient donc meme pas la meme taille.
@@ -3162,7 +3162,7 @@
         }
 
         @media print {
-            /* 1. Masquage strict du dÃ©cor applicatif, de la navigation et des Ã©lÃ©ments interactifs */
+            /* 1. Masquage strict du décor applicatif, de la navigation et des éléments interactifs */
             header.topbar,
             header.public-topbar,
             nav:not(.feuille-nav),
@@ -3211,7 +3211,7 @@
                 padding: 0 !important;
             }
 
-            /* PrÃ©servation obligatoire des en-tÃªtes officiels, logos et identitÃ©s mÃ©dicales imprimables */
+            /* Préservation obligatoire des en-têtes officiels, logos et identités médicales imprimables */
             .feuille-entete,
             .recu-entete,
             .feuille header,
@@ -3249,9 +3249,9 @@
             }
 
             /* =========================================================
-               CARTE D'ASSURÃ‰ : PLANCHE D'IMPRESSION SUR UNE SEULE PAGE A4
+               CARTE D'ASSURÉ : PLANCHE D'IMPRESSION SUR UNE SEULE PAGE A4
                Dimensions officielles ISO 7810 ID-1 : 85.6mm x 54mm
-               Recto et Verso cÃ´te-Ã -cÃ´te avec repÃ¨res de dÃ©coupe
+               Recto et Verso côte-à-côte avec repères de découpe
                ========================================================= */
             .planche-guide-impression {
                 display: block !important;
@@ -3311,7 +3311,7 @@
                 box-sizing: border-box !important;
             }
 
-            /* Typographie et espacements du Recto Ã  l'Ã©chelle d'impression */
+            /* Typographie et espacements du Recto à l'échelle d'impression */
             .carte-assure .carte-assure-entete {
                 margin: 0 !important;
             }
@@ -3344,9 +3344,13 @@
                 line-height: 1.15 !important;
             }
 
-            .carte-assure-nom { white-space: normal; overflow-wrap: anywhere; word-break: break-word; line-height: 1.25;
+            .carte-assure-nom {
                 font-size: 10px !important;
                 font-weight: 700 !important;
+                white-space: normal;
+                overflow-wrap: anywhere;
+                word-break: break-word;
+                line-height: 1.25;
             }
 
             .carte-assure-type {
@@ -3393,7 +3397,7 @@
             }
 
             /* =========================================================
-               ORDONNANCE MÃ‰DICALE : FORMAT A4 PORTRAIT GARANTI 1 PAGE
+               ORDONNANCE MÉDICALE : FORMAT A4 PORTRAIT GARANTI 1 PAGE
                ========================================================= */
             .feuille {
                 display: block !important;
@@ -3682,7 +3686,7 @@
             gap: 12px;
         }
 
-        .carte-assure-nom { white-space: normal; overflow-wrap: anywhere; word-break: break-word; line-height: 1.25;
+        .carte-assure-nom {
             display: block;
             font-weight: 700;
             font-size: 15px;
@@ -3725,7 +3729,7 @@
             opacity: 1;
         }
 
-        /* ===== Composants Dashboards MÃ©tiers (AssurÃ©, MÃ©decin, Pharmacien) ===== */
+        /* ===== Composants Dashboards Métiers (Assuré, Médecin, Pharmacien) ===== */
         .dash-assure-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -3957,7 +3961,7 @@
             background: var(--border);
         }
 
-        /* --- Bandeau "A traiter" : Surface lumineuse, lisible et Ã©purÃ©e --- */
+        /* --- Bandeau "A traiter" : Surface lumineuse, lisible et épurée --- */
         .file-attente {
             position: relative;
             overflow: hidden;
@@ -4202,7 +4206,7 @@
             font-variant-numeric: tabular-nums;
         }
 
-        /* DÃ©gradÃ© signature Deep Navy vers Turquoise sur le montant principal */
+        /* Dégradé signature Deep Navy vers Turquoise sur le montant principal */
         @supports ((-webkit-background-clip: text) or (background-clip: text)) {
             .finances-principal .montant {
                 background: linear-gradient(135deg, var(--titre) 15%, var(--primary) 85%);
@@ -4379,7 +4383,7 @@
             flex: 0 0 15px;
         }
 
-        /* --- Cartes KPI Modernes & Ã‰purÃ©es --- */
+        /* --- Cartes KPI Modernes & Épurées --- */
         .kpi-grille {
             display: grid;
             grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -4539,7 +4543,7 @@
             border: 1px solid rgba(0, 0, 0, 0.05);
         }
 
-        /* --- Fiches Ã  complÃ©ter + actions rapides --- */
+        /* --- Fiches à compléter + actions rapides --- */
         .fiches-grille {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -6250,10 +6254,10 @@
         }
 
         /* ==========================================================================
-           RESPONSIVE MOBILE & TABLETTE â€” NOTIFICATIONS, TOPBAR & DIALOGUES FLOTTANTS
+           RESPONSIVE MOBILE & TABLETTE — NOTIFICATIONS, TOPBAR & DIALOGUES FLOTTANTS
            ========================================================================== */
         @media (max-width: 768px) {
-            /* 1. Barre supÃ©rieure (Topbar) */
+            /* 1. Barre supérieure (Topbar) */
             .topbar {
                 display: flex !important;
                 align-items: center !important;
@@ -6290,7 +6294,7 @@
                 border: 1px solid var(--border) !important;
             }
 
-            /* Menu ThÃ¨me Mobile */
+            /* Menu Thème Mobile */
             .menu-theme-panneau {
                 position: fixed !important;
                 top: calc(62px + var(--sat, 0px)) !important;
@@ -6304,7 +6308,7 @@
                 z-index: 99999 !important;
             }
 
-            /* 2. Panneau DÃ©roulant de Notifications */
+            /* 2. Panneau Déroulant de Notifications */
             .menu-notifications {
                 position: static !important;
             }
@@ -6372,7 +6376,7 @@
                 font-size: 13.5px !important;
             }
 
-            /* 3. Menu DÃ©roulant Profil Compte */
+            /* 3. Menu Déroulant Profil Compte */
             .menu-compte {
                 position: static !important;
             }
@@ -6421,7 +6425,7 @@
                 box-shadow: 0 10px 30px rgba(11, 32, 39, 0.25) !important;
             }
 
-            /* 5. Anti-dÃ©bordement horizontal universel */
+            /* 5. Anti-débordement horizontal universel */
             html, body {
                 max-width: 100% !important;
                 overflow-x: hidden !important;
@@ -6444,14 +6448,14 @@
                 box-sizing: border-box !important;
             }
 
-            /* 6. PrÃ©vention auto-zoom iOS Safari sur les champs de formulaire */
+            /* 6. Prévention auto-zoom iOS Safari sur les champs de formulaire */
             input:not([type="checkbox"]):not([type="radio"]),
             select,
             textarea {
                 font-size: 16px !important;
             }
 
-            /* 7. Tableaux responsifs et dÃ©filement tactile fluide */
+            /* 7. Tableaux responsifs et défilement tactile fluide */
             .table-responsive {
                 width: 100% !important;
                 overflow-x: auto !important;
@@ -6588,7 +6592,7 @@
         }
 
         /* ==========================================================================
-           RESPONSIVE MOBILE AVANCÃ‰ â€” SMARTPHONES TRÃˆS Ã‰TROITS (< 480px)
+           RESPONSIVE MOBILE AVANCÉ — SMARTPHONES TRÈS ÉTROITS (< 480px)
            ========================================================================== */
         @media (max-width: 480px) {
             .contenu main {
@@ -6635,7 +6639,7 @@
         }
 
         /* ==========================================================================
-           CHIPS ET BOUTONS D'ACTION Ã‰LÃ‰GANTS ET BIEN PROPORTIONNÃ‰S
+           CHIPS ET BOUTONS D'ACTION ÉLÉGANTS ET BIEN PROPORTIONNÉS
            ========================================================================== */
         .btn-expand,
         .btn-retour-expand,
@@ -6774,7 +6778,7 @@
             color: var(--danger) !important;
         }
 
-        /* Sur mobile / Ã©cran tactile sans pointeur prÃ©cis : le texte reste dÃ©ployÃ© pour prÃ©server l'accessibilitÃ© */
+        /* Sur mobile / écran tactile sans pointeur précis : le texte reste déployé pour préserver l'accessibilité */
         @media (hover: none), (max-width: 640px) {
             .btn-expand,
             .btn-retour-expand,
@@ -6793,8 +6797,8 @@
         }
 
         /* ==========================================================================
-           CARTE D'ASSURÃ‰ DÃ‰MATÃ‰RIALISÃ‰E 3D FLIP (SANTÃ‰SN TIERS-PAYANT)
-           Design sobre, Ã©lÃ©gant, attractif et typographie haute lisibilitÃ©
+           CARTE D'ASSURÉ DÉMATÉRIALISÉE 3D FLIP (SANTÉSN TIERS-PAYANT)
+           Design sobre, élégant, attractif et typographie haute lisibilité
            ========================================================================== */
         .carte-3d-wrap {
             perspective: 1200px;
@@ -6848,7 +6852,7 @@
             box-sizing: border-box;
         }
 
-        /* RECTO : Ã‰LÃ‰GANT DÃ‰GRADÃ‰ Ã‰MERAUDE / TEAL & TYPOGRAPHIE HAUTE LISIBILITÃ‰ */
+        /* RECTO : ÉLÉGANT DÉGRADÉ ÉMERAUDE / TEAL & TYPOGRAPHIE HAUTE LISIBILITÉ */
         .carte-face-recto {
             background: linear-gradient(135deg, #071f24 0%, #095059 55%, #0e7c86 100%);
             color: #ffffff;
@@ -6929,6 +6933,7 @@
         .carte-recto-details > div:last-child {
             flex: 0 0 auto;
             max-width: 42%;
+            min-width: 0;
         }
 
         .carte-recto-nom {
@@ -6948,7 +6953,7 @@
             font-size: 11.5px;
             color: #ccfbf1;
             font-weight: 600;
-                display: block;
+            display: block;
             margin-top: 1px;
             white-space: normal;
             line-height: 1.25;
@@ -6989,7 +6994,7 @@
             border-radius: 999px;
         }
 
-        /* VERSO : FOND BLANC Ã‰PURÃ‰, BANDE MAGNÃ‰TIQUE, QR CODE & TEXTE CLAIR ET LISIBLE */
+        /* VERSO : FOND BLANC ÉPURÉ, BANDE MAGNÉTIQUE, QR CODE & TEXTE CLAIR ET LISIBLE */
         .carte-face-verso {
             background: #ffffff;
             color: #0f172a;
@@ -7150,11 +7155,11 @@
         }
 
         /* ==========================================================================
-           MODULE UNIFIÃ‰ D'ADAPTABILITÃ‰ MULTI-Ã‰CRANS ET RESPONSIVE GLOBALE (SantÃ©SN)
-           Assure 100% de fluiditÃ© du format mobile (320px/Fold) au desktop 4K
+           MODULE UNIFIÉ D'ADAPTABILITÉ MULTI-ÉCRANS ET RESPONSIVE GLOBALE (SantéSN)
+           Assure 100% de fluidité du format mobile (320px/Fold) au desktop 4K
            ========================================================================== */
 
-        /* 1. Neutralisation stricte du dÃ©filement horizontal parasite */
+        /* 1. Neutralisation stricte du défilement horizontal parasite */
         html, body {
             width: 100%;
             max-width: 100%;
@@ -7162,7 +7167,7 @@
             box-sizing: border-box;
         }
 
-        /* 2. Topbar publique et logo officiel garanti sans dÃ©formation */
+        /* 2. Topbar publique et logo officiel garanti sans déformation */
         .public-topbar {
             display: flex;
             align-items: center;
@@ -7217,7 +7222,7 @@
             flex-shrink: 0;
         }
 
-        /* Conteneur fluide des pages sans barre latÃ©rale */
+        /* Conteneur fluide des pages sans barre latérale */
         .shell.shell--sans-sidebar {
             width: 100% !important;
             max-width: 1000px !important;
@@ -7265,7 +7270,7 @@
             }
         }
 
-        /* 2. Adaptation des tables et conteneurs dÃ©filants sur mobile */
+        /* 2. Adaptation des tables et conteneurs défilants sur mobile */
         .table-responsive,
         .table-container,
         div[style*="overflow-x: auto"],
@@ -7275,9 +7280,9 @@
             max-width: 100%;
         }
 
-        /* 3. AmÃ©lioration des zones de saisie et de toucher sur mobile */
+        /* 3. Amélioration des zones de saisie et de toucher sur mobile */
         @media (max-width: 640px) {
-            /* Ã‰vite le zoom automatique invasif sur iOS Safari */
+            /* Évite le zoom automatique invasif sur iOS Safari */
             input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
             select,
             textarea {
@@ -7332,7 +7337,7 @@
             }
         }
 
-        /* 6. Assistant IA flottant : dimensions fluides sur Ã©cran Ã©troit */
+        /* 6. Assistant IA flottant : dimensions fluides sur écran étroit */
         @media (max-width: 480px) {
             #panneau-flottant-assistant {
                 width: calc(100vw - 20px) !important;
@@ -7366,7 +7371,7 @@
                     {% elif "warning" in message.tags %}
                         Attention
                     {% elif "success" in message.tags %}
-                        SuccÃ¨s
+                        Succès
                     {% else %}
                         Information
                     {% endif %}
@@ -7393,9 +7398,9 @@
             <div class="sidebar-head">
                 <a class="brand" href="{% url 'post_login_redirect' %}">
                     {% logo_marque taille=36 fond="sombre" %}
-                    <span class="brand-texte">SantÃ©<span style="color: var(--primary-light);">SN</span></span>
+                    <span class="brand-texte">Santé<span style="color: var(--primary-light);">SN</span></span>
                 </a>
-                <button type="button" id="btn-reduire-menu" class="btn-reduire" aria-pressed="false" aria-label="RÃ©duire le menu" aria-controls="barre-laterale">
+                <button type="button" id="btn-reduire-menu" class="btn-reduire" aria-pressed="false" aria-label="Réduire le menu" aria-controls="barre-laterale">
                     {% icone "chevron-left" %}
                 </button>
             </div>
@@ -7404,19 +7409,19 @@
                 {% if current_role == "ADMIN" %}
                 {% with url_name=request.resolver_match.url_name %}
                 <span class="nav-section">Supervision Plateforme</span>
-                <a href="{% url 'dashboard' %}" aria-label="Tableau de bord systÃ¨me" data-tooltip="Tableau de bord systÃ¨me" class="{% if url_name == 'dashboard' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord systÃ¨me</span></a>
+                <a href="{% url 'dashboard' %}" aria-label="Tableau de bord système" data-tooltip="Tableau de bord système" class="{% if url_name == 'dashboard' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord système</span></a>
                 <a href="{% url 'liste_organismes' %}" aria-label="Entreprises" data-tooltip="Entreprises" class="{% if url_name == 'liste_organismes' or url_name == 'ajouter_organisme' or url_name == 'modifier_organisme' %}active{% endif %}">{% icone "building" %} <span class="nav-texte">Entreprises</span></a>
 
-                <span class="nav-section">Comptes & SÃ©curitÃ©</span>
+                <span class="nav-section">Comptes & Sécurité</span>
                 <a href="{% url 'liste_utilisateurs' %}" aria-label="Comptes gestionnaires" data-tooltip="Comptes gestionnaires" class="{% if url_name == 'liste_utilisateurs' or url_name == 'ajouter_utilisateur' or url_name == 'modifier_utilisateur' or url_name == 'reinitialiser_mot_de_passe' or url_name == 'supprimer_utilisateur' %}active{% endif %}">{% icone "users" %} <span class="nav-texte">Comptes gestionnaires</span></a>
-                <a href="{% url 'journal_activite' %}" aria-label="Journal de sÃ©curitÃ©" data-tooltip="Journal de sÃ©curitÃ©" class="{% if url_name == 'journal_activite' or url_name == 'admin_logs' %}active{% endif %}">{% icone "shield" %} <span class="nav-texte">Journal de sÃ©curitÃ©</span></a>
+                <a href="{% url 'journal_activite' %}" aria-label="Journal de sécurité" data-tooltip="Journal de sécurité" class="{% if url_name == 'journal_activite' or url_name == 'admin_logs' %}active{% endif %}">{% icone "shield" %} <span class="nav-texte">Journal de sécurité</span></a>
 
                 <span class="nav-section">Infrastructure & Support</span>
-                <a href="{% url 'supervision_systeme' %}" aria-label="Supervision SystÃ¨me" data-tooltip="Supervision SystÃ¨me" class="{% if url_name == 'supervision_systeme' %}active{% endif %}">{% icone "cpu" %} <span class="nav-texte">Supervision SystÃ¨me</span></a>
-                <a href="{% url 'metrics_prometheus' %}" aria-label="MÃ©triques & Performance" data-tooltip="MÃ©triques & Performance" class="{% if url_name == 'metrics_prometheus' %}active{% endif %}">{% icone "bar-chart" %} <span class="nav-texte">MÃ©triques & Performance</span></a>
+                <a href="{% url 'supervision_systeme' %}" aria-label="Supervision Système" data-tooltip="Supervision Système" class="{% if url_name == 'supervision_systeme' %}active{% endif %}">{% icone "cpu" %} <span class="nav-texte">Supervision Système</span></a>
+                <a href="{% url 'metrics_prometheus' %}" aria-label="Métriques & Performance" data-tooltip="Métriques & Performance" class="{% if url_name == 'metrics_prometheus' %}active{% endif %}">{% icone "bar-chart" %} <span class="nav-texte">Métriques & Performance</span></a>
                 <a href="{% url 'admin_liste_demandes_support' %}" aria-label="Support informatique" data-tooltip="Support informatique" class="{% if url_name == 'admin_liste_demandes_support' or url_name == 'admin_detail_demande_support' %}active{% endif %}">{% icone "chat" %} <span class="nav-texte">Support informatique</span>{% if nb_demandes_support_attente %} <span class="badge-non-lues">{{ nb_demandes_support_attente }}</span>{% endif %}</a>
-                <a href="{% url 'envoyer_notification' %}" aria-label="Notifications systÃ¨me" data-tooltip="Notifications systÃ¨me" class="{% if url_name == 'envoyer_notification' or url_name == 'liste_notifications_envoyees' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications systÃ¨me</span></a>
-                <a href="{% url 'parametres' %}" aria-label="ParamÃ¨tres" data-tooltip="ParamÃ¨tres serveur" class="{% if url_name == 'parametres' or url_name == 'parametres_section' or url_name == 'mon_compte' or url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "settings" %} <span class="nav-texte">ParamÃ¨tres serveur</span></a>
+                <a href="{% url 'envoyer_notification' %}" aria-label="Notifications système" data-tooltip="Notifications système" class="{% if url_name == 'envoyer_notification' or url_name == 'liste_notifications_envoyees' %}active{% endif %}">{% icone "bell" %} <span class="nav-texte">Notifications système</span></a>
+                <a href="{% url 'parametres' %}" aria-label="Paramètres" data-tooltip="Paramètres serveur" class="{% if url_name == 'parametres' or url_name == 'parametres_section' or url_name == 'mon_compte' or url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "settings" %} <span class="nav-texte">Paramètres serveur</span></a>
                 {% endwith %}
                 {% elif current_role == "GESTIONNAIRE" %}
                 {% with url_name=request.resolver_match.url_name %}
@@ -7424,59 +7429,59 @@
                 <a href="{% url 'dashboard' %}" aria-label="Tableau de bord" data-tooltip="Tableau de bord" class="{% if url_name == 'dashboard' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord</span></a>
                 <a href="{% url 'rapports' %}" aria-label="Rapports & Statistiques" data-tooltip="Rapports & Statistiques" class="{% if url_name == 'rapports' %}active{% endif %}">{% icone "bar-chart" %} <span class="nav-texte">Rapports & Statistiques</span></a>
 
-                <span class="nav-section">AdhÃ©rents & Contrats</span>
-                <a href="{% url 'liste_patients' %}" aria-label="AssurÃ©s & Ayants droit" data-tooltip="AssurÃ©s & Ayants droit" class="{% if url_name == 'liste_patients' or url_name == 'ajouter_patient' or url_name == 'modifier_patient' or url_name == 'supprimer_patient' or url_name == 'carte_patient' %}active{% endif %}">{% icone "id-card" %} <span class="nav-texte">AssurÃ©s & Ayants droit</span>{% if nb_ayants_droit_en_attente %} <span class="badge-non-lues">{{ nb_ayants_droit_en_attente }}</span>{% endif %}</a>
+                <span class="nav-section">Adhérents & Contrats</span>
+                <a href="{% url 'liste_patients' %}" aria-label="Assurés & Ayants droit" data-tooltip="Assurés & Ayants droit" class="{% if url_name == 'liste_patients' or url_name == 'ajouter_patient' or url_name == 'modifier_patient' or url_name == 'supprimer_patient' or url_name == 'carte_patient' %}active{% endif %}">{% icone "id-card" %} <span class="nav-texte">Assurés & Ayants droit</span>{% if nb_ayants_droit_en_attente %} <span class="badge-non-lues">{{ nb_ayants_droit_en_attente }}</span>{% endif %}</a>
                 <a href="{% url 'liste_plans_couverture' %}" aria-label="Plans de couverture" data-tooltip="Plans de couverture" class="{% if url_name == 'liste_plans_couverture' or url_name == 'ajouter_plan_couverture' or url_name == 'modifier_plan_couverture' or url_name == 'supprimer_plan_couverture' %}active{% endif %}">{% icone "clipboard-list" %} <span class="nav-texte">Plans de couverture</span></a>
-                <a href="{% url 'admin_liste_demandes_support' %}" aria-label="Assistance assurÃ©s" data-tooltip="Assistance assurÃ©s" class="{% if url_name == 'admin_liste_demandes_support' or url_name == 'admin_detail_demande_support' %}active{% endif %}">{% icone "chat" %} <span class="nav-texte">Assistance assurÃ©s</span>{% if nb_demandes_support_attente %} <span class="badge-non-lues">{{ nb_demandes_support_attente }}</span>{% endif %}</a>
+                <a href="{% url 'admin_liste_demandes_support' %}" aria-label="Assistance assurés" data-tooltip="Assistance assurés" class="{% if url_name == 'admin_liste_demandes_support' or url_name == 'admin_detail_demande_support' %}active{% endif %}">{% icone "chat" %} <span class="nav-texte">Assistance assurés</span>{% if nb_demandes_support_attente %} <span class="badge-non-lues">{{ nb_demandes_support_attente }}</span>{% endif %}</a>
 
-                <span class="nav-section">Prises en charge & ActivitÃ©</span>
+                <span class="nav-section">Prises en charge & Activité</span>
                 <a href="{% url 'liste_prises_en_charge' %}" aria-label="Prises en charge" data-tooltip="Prises en charge" class="{% if url_name == 'liste_prises_en_charge' or url_name == 'ajouter_prise_en_charge' or url_name == 'modifier_prise_en_charge' or url_name == 'supprimer_prise_en_charge' %}active{% endif %}">{% icone "shield-check" %} <span class="nav-texte">Prises en charge</span>{% if nb_prises_en_charge_attente %} <span class="badge-non-lues">{{ nb_prises_en_charge_attente }}</span>{% endif %}</a>
                 <a href="{% url 'liste_rendez_vous' %}" aria-label="Rendez-vous" data-tooltip="Rendez-vous" class="{% if url_name == 'liste_rendez_vous' %}active{% endif %}">{% icone "calendar" %} <span class="nav-texte">Rendez-vous</span></a>
                 <a href="{% url 'liste_consultations' %}" aria-label="Consultations" data-tooltip="Consultations" class="{% if url_name == 'liste_consultations' %}active{% endif %}">{% icone "clock-history" %} <span class="nav-texte">Consultations</span></a>
                 <a href="{% url 'liste_ordonnances' %}" aria-label="Ordonnances" data-tooltip="Ordonnances" class="{% if url_name == 'liste_ordonnances' %}active{% endif %}">{% icone "qr-scan" %} <span class="nav-texte">Ordonnances</span></a>
 
-                <span class="nav-section">RÃ©seau de Soins ConventionnÃ©</span>
-                <a href="{% url 'liste_conventions' %}" aria-label="Ã‰tablissements partenaires" data-tooltip="Ã‰tablissements partenaires" class="{% if url_name == 'liste_conventions' or url_name == 'ajouter_convention' or url_name == 'liste_prestataires' or url_name == 'ajouter_prestataire' or url_name == 'modifier_prestataire' or url_name == 'supprimer_prestataire' %}active{% endif %}">{% icone "building" %} <span class="nav-texte">Ã‰tablissements partenaires</span></a>
-                <a href="{% url 'liste_medecins' %}" aria-label="MÃ©decins partenaires" data-tooltip="MÃ©decins partenaires" class="{% if url_name == 'liste_medecins' or url_name == 'ajouter_medecin' or url_name == 'modifier_medecin' or url_name == 'supprimer_medecin' %}active{% endif %}">{% icone "stethoscope" %} <span class="nav-texte">MÃ©decins conventionnÃ©s</span></a>
-                <a href="{% url 'liste_pharmaciens' %}" aria-label="Pharmacies conventionnÃ©es" data-tooltip="Pharmacies conventionnÃ©es" class="{% if url_name == 'liste_pharmaciens' or url_name == 'ajouter_pharmacien' or url_name == 'modifier_pharmacien' %}active{% endif %}">{% icone "pill" %} <span class="nav-texte">Pharmacies conventionnÃ©es</span></a>
-                <a href="{% url 'liste_services' %}" aria-label="Actes & Tarifs mÃ©dicaux" data-tooltip="Actes & Tarifs mÃ©dicaux" class="{% if url_name == 'liste_services' or url_name == 'ajouter_service' or url_name == 'modifier_service' or url_name == 'supprimer_service' %}active{% endif %}">{% icone "credit-card" %} <span class="nav-texte">Actes & Tarifs mÃ©dicaux</span></a>
+                <span class="nav-section">Réseau de Soins Conventionné</span>
+                <a href="{% url 'liste_conventions' %}" aria-label="Établissements partenaires" data-tooltip="Établissements partenaires" class="{% if url_name == 'liste_conventions' or url_name == 'ajouter_convention' or url_name == 'liste_prestataires' or url_name == 'ajouter_prestataire' or url_name == 'modifier_prestataire' or url_name == 'supprimer_prestataire' %}active{% endif %}">{% icone "building" %} <span class="nav-texte">Établissements partenaires</span></a>
+                <a href="{% url 'liste_medecins' %}" aria-label="Médecins partenaires" data-tooltip="Médecins partenaires" class="{% if url_name == 'liste_medecins' or url_name == 'ajouter_medecin' or url_name == 'modifier_medecin' or url_name == 'supprimer_medecin' %}active{% endif %}">{% icone "stethoscope" %} <span class="nav-texte">Médecins conventionnés</span></a>
+                <a href="{% url 'liste_pharmaciens' %}" aria-label="Pharmacies conventionnées" data-tooltip="Pharmacies conventionnées" class="{% if url_name == 'liste_pharmaciens' or url_name == 'ajouter_pharmacien' or url_name == 'modifier_pharmacien' %}active{% endif %}">{% icone "pill" %} <span class="nav-texte">Pharmacies conventionnées</span></a>
+                <a href="{% url 'liste_services' %}" aria-label="Actes & Tarifs médicaux" data-tooltip="Actes & Tarifs médicaux" class="{% if url_name == 'liste_services' or url_name == 'ajouter_service' or url_name == 'modifier_service' or url_name == 'supprimer_service' %}active{% endif %}">{% icone "credit-card" %} <span class="nav-texte">Actes & Tarifs médicaux</span></a>
 
-                <span class="nav-section">Finances & RÃ¨glements</span>
+                <span class="nav-section">Finances & Règlements</span>
                 <a href="{% url 'liste_paiements' %}" aria-label="Paiements & Factures" data-tooltip="Paiements & Factures" class="{% if url_name == 'liste_paiements' or url_name == 'marquer_paiement_regle' %}active{% endif %}">{% icone "receipt" %} <span class="nav-texte">Paiements & Factures</span>{% if nb_paiements_non_regles %} <span class="badge-non-lues">{{ nb_paiements_non_regles }}</span>{% endif %}</a>
-                <a href="{% url 'liste_demandes_remboursement' %}" aria-label="Remboursements hors rÃ©seau" data-tooltip="Remboursements hors rÃ©seau" class="{% if url_name == 'liste_demandes_remboursement' or url_name == 'instruire_demande_remboursement' or url_name == 'marquer_remboursement_regle' %}active{% endif %}">{% icone "credit-card" %} <span class="nav-texte">Remboursements</span>{% if nb_remboursements_attente %} <span class="badge-non-lues">{{ nb_remboursements_attente }}</span>{% endif %}</a>
+                <a href="{% url 'liste_demandes_remboursement' %}" aria-label="Remboursements hors réseau" data-tooltip="Remboursements hors réseau" class="{% if url_name == 'liste_demandes_remboursement' or url_name == 'instruire_demande_remboursement' or url_name == 'marquer_remboursement_regle' %}active{% endif %}">{% icone "credit-card" %} <span class="nav-texte">Remboursements</span>{% if nb_remboursements_attente %} <span class="badge-non-lues">{{ nb_remboursements_attente }}</span>{% endif %}</a>
                 <a href="{% url 'bordereau_teletransmission' %}" aria-label="Bordereau Tiers-Payant" data-tooltip="Bordereau Tiers-Payant" class="{% if url_name == 'bordereau_teletransmission' %}active{% endif %}">{% icone "file-text" %} <span class="nav-texte">Bordereau Tiers-Payant</span></a>
-                <a href="{% url 'parametres' %}" aria-label="ParamÃ¨tres" data-tooltip="ParamÃ¨tres" class="{% if url_name == 'parametres' or url_name == 'parametres_section' or url_name == 'mon_compte' or url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "settings" %} <span class="nav-texte">ParamÃ¨tres</span></a>
+                <a href="{% url 'parametres' %}" aria-label="Paramètres" data-tooltip="Paramètres" class="{% if url_name == 'parametres' or url_name == 'parametres_section' or url_name == 'mon_compte' or url_name == 'changer_mot_de_passe' %}active{% endif %}">{% icone "settings" %} <span class="nav-texte">Paramètres</span></a>
                 {% endwith %}
                 {% elif current_role == "MEDECIN" %}
                 {% with url_name=request.resolver_match.url_name %}
-                <span class="nav-section">ActivitÃ© mÃ©dicale</span>
+                <span class="nav-section">Activité médicale</span>
                 <a href="{% url 'dashboard_medecin' %}" aria-label="Tableau de bord" data-tooltip="Tableau de bord" class="{% if url_name == 'dashboard_medecin' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord</span></a>
                 <a href="{% url 'agenda_medecin' %}" aria-label="Agenda & RDV" data-tooltip="Agenda & RDV" class="{% if url_name == 'agenda_medecin' %}active{% endif %}">{% icone "calendar" %} <span class="nav-texte">Agenda & RDV</span></a>
                 <a href="{% url 'mes_patients' %}" aria-label="Patients" data-tooltip="Patients" class="{% if url_name == 'mes_patients' or url_name == 'fiche_patient_medecin' %}active{% endif %}">{% icone "users" %} <span class="nav-texte">Patients</span></a>
                 <a href="{% url 'historique_consultations' %}" aria-label="Consultations" data-tooltip="Consultations" class="{% if url_name == 'historique_consultations' or url_name == 'ajouter_consultation_medecin' or url_name == 'ajouter_ordonnance_medecin' or url_name == 'voir_ordonnance_medecin' %}active{% endif %}">{% icone "clipboard-list" %} <span class="nav-texte">Consultations</span></a>
                 <a href="{% url 'bordereau_teletransmission' %}" aria-label="Bordereau Tiers-Payant" data-tooltip="Bordereau Tiers-Payant" class="{% if url_name == 'bordereau_teletransmission' %}active{% endif %}">{% icone "file-text" %} <span class="nav-texte">Bordereau Tiers-Payant</span></a>
-                <a href="{% url 'verifier_carte_medecin' %}" aria-label="Scanner / VÃ©rifier" data-tooltip="Scanner / VÃ©rifier" class="{% if url_name == 'verifier_carte_medecin' %}active{% endif %}">{% icone "qr-scan" %} <span class="nav-texte">Scanner / VÃ©rifier</span></a>
+                <a href="{% url 'verifier_carte_medecin' %}" aria-label="Scanner / Vérifier" data-tooltip="Scanner / Vérifier" class="{% if url_name == 'verifier_carte_medecin' %}active{% endif %}">{% icone "qr-scan" %} <span class="nav-texte">Scanner / Vérifier</span></a>
                 {% endwith %}
                 {% elif current_role == "PHARMACIEN" %}
                 {% with url_name=request.resolver_match.url_name %}
-                <span class="nav-section">Comptoir & dÃ©livrances</span>
+                <span class="nav-section">Comptoir & délivrances</span>
                 <a href="{% url 'dashboard_pharmacien' %}" aria-label="Tableau de bord" data-tooltip="Tableau de bord" class="{% if url_name == 'dashboard_pharmacien' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord</span></a>
-                <a href="{% url 'scanner_ordonnance' %}" aria-label="Scanner / VÃ©rifier" data-tooltip="Scanner / VÃ©rifier" class="{% if url_name == 'scanner_ordonnance' %}active{% endif %}">{% icone "qr-scan" %} <span class="nav-texte">Scanner / VÃ©rifier</span></a>
+                <a href="{% url 'scanner_ordonnance' %}" aria-label="Scanner / Vérifier" data-tooltip="Scanner / Vérifier" class="{% if url_name == 'scanner_ordonnance' %}active{% endif %}">{% icone "qr-scan" %} <span class="nav-texte">Scanner / Vérifier</span></a>
                 <a href="{% url 'historique_delivrances' %}" aria-label="Historique" data-tooltip="Historique" class="{% if url_name == 'historique_delivrances' %}active{% endif %}">{% icone "clock-history" %} <span class="nav-texte">Historique</span></a>
                 <a href="{% url 'bordereau_teletransmission' %}" aria-label="Bordereau Tiers-Payant" data-tooltip="Bordereau Tiers-Payant" class="{% if url_name == 'bordereau_teletransmission' %}active{% endif %}">{% icone "file-text" %} <span class="nav-texte">Bordereau Tiers-Payant</span></a>
                 {% endwith %}
                 {% elif current_role == "ASSURE" %}
                 {% with url_name=request.resolver_match.url_name %}
-                <span class="nav-section">Espace santÃ©</span>
+                <span class="nav-section">Espace santé</span>
                 <a href="{% url 'dashboard_assure' %}" aria-label="Tableau de bord" data-tooltip="Tableau de bord" class="{% if url_name == 'dashboard_assure' %}active{% endif %}">{% icone "grid" %} <span class="nav-texte">Tableau de bord</span></a>
-                <a href="{% url 'carte_assure' %}" aria-label="Ma carte d'assurÃ©" data-tooltip="Ma carte d'assurÃ©" class="{% if url_name == 'carte_assure' or url_name == 'carte_assure_detail' %}active{% endif %}">{% icone "id-card" %} <span class="nav-texte">Ma carte d'assurÃ©</span></a>
+                <a href="{% url 'carte_assure' %}" aria-label="Ma carte d'assuré" data-tooltip="Ma carte d'assuré" class="{% if url_name == 'carte_assure' or url_name == 'carte_assure_detail' %}active{% endif %}">{% icone "id-card" %} <span class="nav-texte">Ma carte d'assuré</span></a>
                 <a href="{% url 'mes_rendez_vous_assure' %}" aria-label="Mes rendez-vous" data-tooltip="Mes rendez-vous" class="{% if url_name == 'mes_rendez_vous_assure' or url_name == 'ajouter_rendez_vous_assure' %}active{% endif %}">{% icone "calendar" %} <span class="nav-texte">Mes rendez-vous</span></a>
                 <a href="{% url 'mes_ordonnances_assure' %}" aria-label="Mes ordonnances" data-tooltip="Mes ordonnances" class="{% if url_name == 'mes_ordonnances_assure' or url_name == 'voir_ordonnance_assure' %}active{% endif %}">{% icone "pill" %} <span class="nav-texte">Mes ordonnances</span></a>
                 <a href="{% url 'mes_prises_en_charge_assure' %}" aria-label="Mes prises en charge" data-tooltip="Mes prises en charge" class="{% if url_name == 'mes_prises_en_charge_assure' or url_name == 'demander_prise_en_charge_assure' %}active{% endif %}">{% icone "shield-check" %} <span class="nav-texte">Mes prises en charge</span></a>
                 <a href="{% url 'mes_remboursements_assure' %}" aria-label="Mes remboursements" data-tooltip="Mes remboursements" class="{% if url_name == 'mes_remboursements_assure' or url_name == 'demander_remboursement_assure' %}active{% endif %}">{% icone "receipt" %} <span class="nav-texte">Mes remboursements</span></a>
                 
-                <span class="nav-section">RÃ©seau & Foyer</span>
-                <a href="{% url 'prestataires_proches' %}" aria-label="Prestataires conventionnÃ©s" data-tooltip="Prestataires conventionnÃ©s" class="{% if url_name == 'prestataires_proches' %}active{% endif %}">{% icone "map-pin" %} <span class="nav-texte">Prestataires conventionnÃ©s</span></a>
+                <span class="nav-section">Réseau & Foyer</span>
+                <a href="{% url 'prestataires_proches' %}" aria-label="Prestataires conventionnés" data-tooltip="Prestataires conventionnés" class="{% if url_name == 'prestataires_proches' %}active{% endif %}">{% icone "map-pin" %} <span class="nav-texte">Prestataires conventionnés</span></a>
                 <a href="{% url 'liste_ayants_droit' %}" aria-label="Mes ayants droit" data-tooltip="Mes ayants droit" class="{% if url_name == 'liste_ayants_droit' or url_name == 'ajouter_ayant_droit' or url_name == 'modifier_ayant_droit' %}active{% endif %}">{% icone "users" %} <span class="nav-texte">Mes ayants droit</span></a>
                 <a href="{% url 'mon_profil_assure' %}" aria-label="Mon profil" data-tooltip="Mon profil" class="{% if url_name == 'mon_profil_assure' %}active{% endif %}">{% icone "user" %} <span class="nav-texte">Mon profil</span></a>
                 {% endwith %}
@@ -7488,12 +7493,12 @@
                     <span class="user-card-avatar">{{ user.first_name|slice:":1"|default:user.email|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}</span>
                     <div class="user-card-info">
                         <strong>{{ user.get_full_name|default:user.email }}</strong>
-                        <span>{{ current_role_label }}{% if current_organisme %} Â· {{ current_organisme.code }}{% endif %}</span>
+                        <span>{{ current_role_label }}{% if current_organisme %} · {{ current_organisme.code }}{% endif %}</span>
                     </div>
                 </div>
                 <div class="sidebar-systeme-status">
                     <span class="status-pulse-dot" aria-hidden="true"></span>
-                    <span>SantÃ©SN Cloud Â· OpÃ©rationnel</span>
+                    <span>SantéSN Cloud · Opérationnel</span>
                 </div>
             </div>
         </aside>
@@ -7512,9 +7517,9 @@
                                 aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="barre-laterale">
                             {% icone "menu" %}
                         </button>
-                        <a class="mobile-brand" href="{% url 'post_login_redirect' %}" title="SantÃ©SN">
+                        <a class="mobile-brand" href="{% url 'post_login_redirect' %}" title="SantéSN">
                             {% logo_marque taille=28 fond="clair" %}
-                            <span style="font-weight: 800; font-size: 16px; color: var(--titre); font-family: var(--font-headings);">SantÃ©<span style="color: var(--primary);">SN</span></span>
+                            <span style="font-weight: 800; font-size: 16px; color: var(--titre); font-family: var(--font-headings);">Santé<span style="color: var(--primary);">SN</span></span>
                         </a>
                     </div>
                     {% comment %}
@@ -7529,21 +7534,21 @@
                     </nav>
                     {% if current_role == "GESTIONNAIRE" %}
                     <form class="topbar-recherche" method="get" action="{% url 'liste_patients' %}" role="search">
-                        <label class="sr-only" for="recherche-globale">Rechercher un assurÃ©</label>
+                        <label class="sr-only" for="recherche-globale">Rechercher un assuré</label>
                         {% icone "search" %}
-                        <input id="recherche-globale" type="search" name="q" placeholder="Rechercher un assurÃ©">
+                        <input id="recherche-globale" type="search" name="q" placeholder="Rechercher un assuré">
                     </form>
                     {% endif %}
                     <div class="topbar-droite">
                         <details class="menu-theme" id="menu-theme-topbar">
-                            <summary class="topbar-bouton" aria-label="Changer le thÃ¨me d'affichage" title="ThÃ¨me d'affichage">
+                            <summary class="topbar-bouton" aria-label="Changer le thème d'affichage" title="Thème d'affichage">
                                 <span class="icone-theme-actuel" id="icone-theme-actuel">{% icone "sun" %}</span>
                             </summary>
-                            <div class="menu-theme-panneau" role="dialog" aria-label="Choix du thÃ¨me">
+                            <div class="menu-theme-panneau" role="dialog" aria-label="Choix du thème">
                                 <div class="menu-theme-entete">
-                                    <strong>ThÃ¨me</strong>
+                                    <strong>Thème</strong>
                                 </div>
-                                <div class="menu-theme-options" role="radiogroup" aria-label="ThÃ¨me d'affichage">
+                                <div class="menu-theme-options" role="radiogroup" aria-label="Thème d'affichage">
                                     <button type="button" class="theme-bouton-rapide" data-theme-choix="clair" role="radio" aria-checked="false">
                                         {% icone "sun" %}
                                         <span>Clair</span>
@@ -7554,7 +7559,7 @@
                                     </button>
                                     <button type="button" class="theme-bouton-rapide" data-theme-choix="systeme" role="radio" aria-checked="false">
                                         {% icone "monitor" %}
-                                        <span>SystÃ¨me</span>
+                                        <span>Système</span>
                                     </button>
                                 </div>
                             </div>
@@ -7594,7 +7599,7 @@
                                 <span class="topbar-avatar" aria-hidden="true">{{ user.get_full_name|default:user.email|slice:":2"|upper }}</span>
                                 <span class="topbar-identite">
                                     <b>{{ user.get_full_name|default:user.email }}</b>
-                                    <span>{{ current_role_label }}{% if current_organisme %} Â· {{ current_organisme.nom }}{% endif %}</span>
+                                    <span>{{ current_role_label }}{% if current_organisme %} · {{ current_organisme.nom }}{% endif %}</span>
                                 </span>
                                 {% icone "chevron-down" %}
                             </summary>
@@ -7616,7 +7621,7 @@
                                 <a href="{% url 'changer_mot_de_passe' %}">{% icone "lock" %} Mot de passe</a>
                                 <form method="post" action="{% url 'logout' %}">
                                     {% csrf_token %}
-                                    <button type="submit">{% icone "log-out" %} DÃ©connexion</button>
+                                    <button type="submit">{% icone "log-out" %} Déconnexion</button>
                                 </form>
                             </div>
                         </details>
@@ -7624,7 +7629,7 @@
                 </header>
                 {% else %}
                 <header class="public-topbar">
-                    <a class="public-brand" href="{% url 'landing' %}" title="SantÃ©SN - Accueil">
+                    <a class="public-brand" href="{% url 'landing' %}" title="SantéSN - Accueil">
                         <span class="public-brand-icon">
                             <svg width="28" height="28" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="flex-shrink:0;">
                                 <rect x="18" y="6" width="12" height="36" rx="4" fill="#0E7C86"/>
@@ -7632,7 +7637,7 @@
                                 <path d="M6 24H14L17 16L21 32L25 19L27.5 24H42" fill="none" stroke="#E0824F" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
                         </span>
-                        <span class="public-brand-text">SantÃ©<span class="public-brand-accent">SN</span></span>
+                        <span class="public-brand-text">Santé<span class="public-brand-accent">SN</span></span>
                     </a>
                     <div class="public-topbar-actions">
                         <a href="{% url 'landing' %}" class="button btn btn-sm btn-outline">Accueil</a>
@@ -7649,13 +7654,13 @@
 
                 {% if not user.is_authenticated %}
                 <footer class="pied-de-page-app" style="margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px;">
-                    <div>Â© 2026 SantÃ©SN â€” Tiers payant & ordonnance mÃ©dicale numÃ©rique au SÃ©nÃ©gal.</div>
+                    <div>© 2026 SantéSN — Tiers payant & ordonnance médicale numérique au Sénégal.</div>
                     <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
                         <span style="display: inline-flex; align-items: center; gap: 5px; color: var(--primary-strong); font-weight: 600; font-size: 11.5px; background: rgba(14, 124, 134, 0.08); padding: 3px 8px; border-radius: 6px;">
-                            {% icone "shield" %} Conforme CDP SÃ©nÃ©gal (Loi 2008-12)
+                            {% icone "shield" %} Conforme CDP Sénégal (Loi 2008-12)
                         </span>
                         <a href="{% url 'cgu' %}" style="color: var(--muted); text-decoration: none;">CGU</a>
-                        <a href="{% url 'politique_confidentialite' %}" style="color: var(--muted); text-decoration: none;">Protection des donnÃ©es</a>
+                        <a href="{% url 'politique_confidentialite' %}" style="color: var(--muted); text-decoration: none;">Protection des données</a>
                     </div>
                 </footer>
                 {% endif %}
@@ -7745,7 +7750,7 @@
                 corps.classList.toggle('sidebar-reduite', actif);
                 document.documentElement.classList.toggle('sidebar-reduite', actif);
                 bouton.setAttribute('aria-pressed', actif ? 'true' : 'false');
-                bouton.setAttribute('aria-label', actif ? 'DÃ©ployer le menu' : 'RÃ©duire le menu');
+                bouton.setAttribute('aria-label', actif ? 'Déployer le menu' : 'Réduire le menu');
             }
 
             var etatEnregistre = window.localStorage.getItem(CLE_STOCKAGE) === '1';
@@ -7762,8 +7767,8 @@
                 appliquer(window.localStorage.getItem(CLE_STOCKAGE) === '1');
             });
 
-            // MÃ©morisation et prÃ©servation du dÃ©filement de la barre latÃ©rale
-            // EmpÃªche la sidebar de remonter tout en haut lors d'un clic sur un Ã©lÃ©ment ou rechargement
+            // Mémorisation et préservation du défilement de la barre latérale
+            // Empêche la sidebar de remonter tout en haut lors d'un clic sur un élément ou rechargement
             var nav = barreLaterale.querySelector('nav');
             if (nav) {
                 var CLE_SCROLL = 'santesn-sidebar-scroll';
@@ -7774,7 +7779,7 @@
                     }
                 } catch (e) {}
 
-                // MÃ©moriser la position lors du clic sur un lien
+                // Mémoriser la position lors du clic sur un lien
                 nav.addEventListener('click', function (e) {
                     var lien = e.target.closest('a');
                     if (lien) {
@@ -7794,7 +7799,7 @@
         })();
 
         (function () {
-            // Initialisation ciblÃ©e du bouton Retour extensible
+            // Initialisation ciblée du bouton Retour extensible
             function initialiserBoutonRetour() {
                 var boutons = document.querySelectorAll('.btn-retour-expand');
                 boutons.forEach(function (btn) {
@@ -7928,7 +7933,7 @@
         }
 
         (function () {
-            // Initialisation des toasts Django prÃ©sents au chargement
+            // Initialisation des toasts Django présents au chargement
             document.querySelectorAll('#toasts .toast').forEach(function (toast) {
                 configurerGestionToast(toast, 6000);
             });
@@ -7944,7 +7949,7 @@
 
                 function marquerSucces() {
                     var libelleOriginal = bouton.innerHTML;
-                    bouton.innerHTML = '<span style="color:var(--success,#10b981);font-weight:700;">CopiÃ© !</span>';
+                    bouton.innerHTML = '<span style="color:var(--success,#10b981);font-weight:700;">Copié !</span>';
                     window.setTimeout(function () { bouton.innerHTML = libelleOriginal; }, 1800);
                 }
 
@@ -7975,14 +7980,14 @@
             });
         })();
 
-        // Gestion des liens de tÃ©lÃ©chargement directs et fluides sans blocage d'interface
+        // Gestion des liens de téléchargement directs et fluides sans blocage d'interface
 
         (function () {
-            // Fermeture ergonomique des menus dÃ©roulants (clic extÃ©rieur & sortie du curseur / mouseleave)
+            // Fermeture ergonomique des menus déroulants (clic extérieur & sortie du curseur / mouseleave)
             var selecteurMenus = 'details.menu-theme, details.menu-notifications, details.menu-compte';
             var delaisFermeture = new Map();
 
-            // 1. Clic Ã  l'extÃ©rieur : ferme immÃ©diatement les menus ouverts
+            // 1. Clic à l'extérieur : ferme immédiatement les menus ouverts
             document.addEventListener('click', function (evenement) {
                 var ouverts = document.querySelectorAll(selecteurMenus + '[open]');
                 ouverts.forEach(function (details) {
@@ -7992,7 +7997,7 @@
                 });
             });
 
-            // 2. Touche Ã‰chap : ferme tous les menus et tiroirs ouverts
+            // 2. Touche Échap : ferme tous les menus et tiroirs ouverts
             document.addEventListener('keydown', function (evenement) {
                 if (evenement.key === 'Escape') {
                     document.querySelectorAll(selecteurMenus + '[open]').forEach(function (details) {
@@ -8001,7 +8006,7 @@
                 }
             });
 
-            // 3. Quand le curseur quitte le menu dÃ©roulant (mouseleave), le fermer en douceur aprÃ¨s un court dÃ©lai
+            // 3. Quand le curseur quitte le menu déroulant (mouseleave), le fermer en douceur après un court délai
             document.querySelectorAll(selecteurMenus).forEach(function (menu) {
                 menu.addEventListener('mouseleave', function () {
                     if (!menu.hasAttribute('open')) { return; }
@@ -8019,7 +8024,7 @@
                 });
             });
 
-            // 4. Fermeture automatique des dialogues <dialog> et modales au clic sur leur arriÃ¨re-plan (backdrop)
+            // 4. Fermeture automatique des dialogues <dialog> et modales au clic sur leur arrière-plan (backdrop)
             document.addEventListener('click', function (evenement) {
                 if (evenement.target && evenement.target.tagName === 'DIALOG' && evenement.target.open) {
                     var rect = evenement.target.getBoundingClientRect();
@@ -8104,7 +8109,7 @@
             try { actuel = localStorage.getItem('theme-santesn') || 'systeme'; } catch (e) {}
             appliquer(actuel);
 
-            // Ã‰coute dynamique du changement de mode sombre/clair de l'appareil (tÃ©lÃ©phone, tablette, OS)
+            // Écoute dynamique du changement de mode sombre/clair de l'appareil (téléphone, tablette, OS)
             var mqSombre = window.matchMedia('(prefers-color-scheme: dark)');
             if (mqSombre && mqSombre.addEventListener) {
                 mqSombre.addEventListener('change', function () {
@@ -8163,7 +8168,7 @@
         })();
 
         (function () {
-            // Actualisation automatique et synchronisation multi-rÃ´les en temps rÃ©el
+            // Actualisation automatique et synchronisation multi-rôles en temps réel
             {% if user.is_authenticated %}
             var DELAI_POLLING_MS = 8000;
             var notifsConnues = null;
@@ -8242,7 +8247,7 @@
                         }
                     });
 
-                    // Synchronisation de la liste dÃ©roulante des notifications
+                    // Synchronisation de la liste déroulante des notifications
                     var listeNotif = document.querySelector('.menu-notifications-liste');
                     var nouvelleListe = doc.querySelector('.menu-notifications-liste');
                     if (listeNotif && nouvelleListe) {
@@ -8261,7 +8266,7 @@
                     var boutonNotif = document.querySelector('.menu-notifications summary');
                     var count = data.non_lues_count || 0;
 
-                    // 1. Mise Ã  jour de la pastille sur la cloche
+                    // 1. Mise à jour de la pastille sur la cloche
                     if (boutonNotif) {
                         var anciennePastille = boutonNotif.querySelector('.topbar-pastille');
                         if (count > 0) {
@@ -8278,7 +8283,7 @@
                         }
                     }
 
-                    // 2. Gestion des alertes Toasts en temps rÃ©el
+                    // 2. Gestion des alertes Toasts en temps réel
                     var notifications = data.notifications || [];
                     if (notifsConnues === null) {
                         // Initialisation silencieuse sur la session en cours
@@ -8308,25 +8313,25 @@
             }
 
             setInterval(verifierNotifications, DELAI_POLLING_MS);
-            // VÃ©rification initiale rapide
+            // Vérification initiale rapide
             setTimeout(verifierNotifications, 2000);
             {% endif %}
         })();
     </script>
 
     {% if current_role == "ASSURE" %}
-    {# Widget Flottant Assistant SantÃ©SN - Design Institutionnel #}
+    {# Widget Flottant Assistant SantéSN - Design Institutionnel #}
     <div id="widget-assistant-sn" style="position: fixed; bottom: calc(20px + var(--sab, 0px)); right: max(16px, env(safe-area-inset-right)); z-index: 9999; font-family: inherit;">
         {# Panneau de discussion flottant #}
         <div id="panneau-flottant-assistant" style="display: none; flex-direction: column; width: 390px; max-width: calc(100vw - 32px); height: 540px; max-height: calc(100vh - 120px); background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 16px 48px rgba(15, 23, 42, 0.18); margin-bottom: 12px; overflow: hidden; animation: popInAssistant 0.22s cubic-bezier(0.16, 1, 0.3, 1);">
-            {# En-tÃªte du widget #}
+            {# En-tête du widget #}
             <div style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-strong, #0b6169) 100%); color: #ffffff; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1);">
                 <div style="display: flex; align-items: center; gap: 12px;">
                     <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
                         {% icone "chat" %}
                     </div>
                     <div>
-                        <strong style="font-size: 14px; font-weight: 600; display: block; line-height: 1.2; letter-spacing: -0.01em;">Assistant SantÃ©SN</strong>
+                        <strong style="font-size: 14px; font-weight: 600; display: block; line-height: 1.2; letter-spacing: -0.01em;">Assistant SantéSN</strong>
                         <span style="font-size: 11px; opacity: 0.88; display: flex; align-items: center; gap: 5px; margin-top: 2px;">
                             <span style="width: 6px; height: 6px; border-radius: 50%; background: #34d399; display: inline-block;"></span>
                             Conseiller virtuel institutionnel
@@ -8338,22 +8343,22 @@
                 </button>
             </div>
 
-            {# Corps des messages dÃ©filable #}
+            {# Corps des messages défilable #}
             <div id="corps-messages-assistant" style="flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; background: var(--champ-bg, #f8fafc);">
-                {# Message d'accueil par dÃ©faut #}
+                {# Message d'accueil par défaut #}
                 <div class="bulle-assistant" style="align-self: flex-start; max-width: 88%; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; border-top-left-radius: 3px; padding: 12px 14px; font-size: 13px; line-height: 1.5; color: var(--titre); box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
                     <div style="font-weight: 600; margin-bottom: 4px; color: var(--primary);">Assistance en ligne</div>
-                    <div>Bonjour. Je suis l'Assistant SantÃ©SN, votre conseiller virtuel pour vos dÃ©marches de prise en charge et de santÃ©.</div>
+                    <div>Bonjour. Je suis l'Assistant SantéSN, votre conseiller virtuel pour vos démarches de prise en charge et de santé.</div>
                     <div style="margin-top: 6px; font-size: 12px; color: var(--muted);">Comment puis-je vous renseigner aujourd'hui ?</div>
                 </div>
             </div>
 
             {# Suggestions sans aucun emoji #}
             <div id="chips-suggestions-assistant" style="padding: 8px 12px; background: var(--surface); border-top: 1px solid var(--border); display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
-                <button type="button" class="btn-chip-assistant" data-query="Quels sont mes rendez-vous prÃ©vus ?">Mes rendez-vous</button>
+                <button type="button" class="btn-chip-assistant" data-query="Quels sont mes rendez-vous prévus ?">Mes rendez-vous</button>
                 <button type="button" class="btn-chip-assistant" data-query="Quel est mon taux de prise en charge ?">Taux de couverture</button>
-                <button type="button" class="btn-chip-assistant" data-query="OÃ¹ sont mes ordonnances ?">Mes ordonnances</button>
-                <button type="button" class="btn-chip-assistant" data-query="Je souhaite dÃ©poser une rÃ©clamation">DÃ©poser une rÃ©clamation</button>
+                <button type="button" class="btn-chip-assistant" data-query="Où sont mes ordonnances ?">Mes ordonnances</button>
+                <button type="button" class="btn-chip-assistant" data-query="Je souhaite déposer une réclamation">Déposer une réclamation</button>
             </div>
 
             {# Formulaire de saisie #}
@@ -8369,9 +8374,9 @@
             </form>
         </div>
 
-        {# Bouton DÃ©clencheur Flottant #}
+        {# Bouton Déclencheur Flottant #}
         <div style="display: flex; justify-content: flex-end;">
-            <button type="button" id="btn-declencheur-assistant" aria-label="Assistant SantÃ©SN" title="Assistant SantÃ©SN" style="width: 50px; height: 50px; border-radius: 50%; background: var(--primary); color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 18px rgba(14, 124, 134, 0.35); transition: transform 0.18s ease, box-shadow 0.18s ease;">
+            <button type="button" id="btn-declencheur-assistant" aria-label="Assistant SantéSN" title="Assistant SantéSN" style="width: 50px; height: 50px; border-radius: 50%; background: var(--primary); color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 18px rgba(14, 124, 134, 0.35); transition: transform 0.18s ease, box-shadow 0.18s ease;">
                 <span id="icone-ouvre-assistant" style="display: flex;">{% icone "chat" %}</span>
                 <span id="icone-ferme-assistant" style="display: none;">{% icone "x" %}</span>
             </button>
@@ -8479,7 +8484,7 @@
                         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                         .replace(/\*(.*?)\*/g, '<em>$1</em>')
                         .replace(/`([^`]+)`/g, '<code style="background: rgba(0,0,0,0.06); padding: 1px 4px; border-radius: 4px; font-size: 11.5px;">$1</code>');
-                    out.push('<div style="margin-left: 6px; padding-left: 10px; position: relative; line-height: 1.4; margin-bottom: 3px;"><span style="position: absolute; left: 0; color: var(--primary);">â€¢</span>' + item + '</div>');
+                    out.push('<div style="margin-left: 6px; padding-left: 10px; position: relative; line-height: 1.4; margin-bottom: 3px;"><span style="position: absolute; left: 0; color: var(--primary);">•</span>' + item + '</div>');
                 } else if (l.trim() === '') {
                     out.push('<div style="height: 6px;"></div>');
                 } else {
@@ -8527,7 +8532,7 @@
                         var a = document.createElement('a');
                         a.href = act.url;
                         a.className = 'action-link-assistant';
-                        a.innerHTML = '<span>' + act.libelle + '</span> <span style="font-size: 11px;">â†’</span>';
+                        a.innerHTML = '<span>' + act.libelle + '</span> <span style="font-size: 11px;">→</span>';
                         actionsDiv.appendChild(a);
                     });
                     bulle.appendChild(actionsDiv);
@@ -8607,7 +8612,7 @@
             .catch(function () {
                 var l = document.getElementById('assistant-loader');
                 if (l) l.remove();
-                ajouterMessage("Une erreur temporaire de connexion est survenue. Veuillez rÃ©essayer.", 'assistant');
+                ajouterMessage("Une erreur temporaire de connexion est survenue. Veuillez réessayer.", 'assistant');
             });
         }
 
