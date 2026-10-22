@@ -5,8 +5,27 @@
 
 {% block content %}
 <div class="page-juridique-conteneur">
+    <!-- En-tête uniquement visible à l'impression / export PDF -->
+    <div class="entete-impression-officielle">
+        <div class="logo-impression">SantéSN — Plateforme Médicale Nationale & Tiers-Payant Dématérialisé</div>
+        <h2>Politique de Confidentialité & Protection des Données Personnelles</h2>
+        <p class="meta-impression">Conforme à la Loi sénégalaise n° 2008-12 & Homologation officielle de la Commission de Protection des Données Personnelles (CDP)</p>
+    </div>
+
+    <!-- Fil d'ariane -->
+    <nav class="fil-ariane-legal sans-impression" aria-label="Fil d'Ariane">
+        <a href="{% url 'landing' %}">Accueil</a>
+        <span class="separateur-chevron" aria-hidden="true">›</span>
+        <span class="courant">Politique de Confidentialité</span>
+    </nav>
+
     <!-- En-tête du document légal -->
     <header class="entete-document-legal sans-impression">
+        <div class="badges-legal">
+            <span class="badge-statut-legal">{% icone "shield-check" %} Certifié CDP Sénégal</span>
+            <span class="badge-date-legal">Dernière révision : 2026</span>
+            <span class="badge-cdp-legal">Loi n° 2008-12 · Privacy by Design</span>
+        </div>
         <div class="titre-et-actions-legal">
             <div>
                 <h1>Politique de Confidentialité & Protection des Données</h1>
@@ -16,6 +35,9 @@
                 <a href="{% url 'landing' %}" class="button btn btn-retour-expand" title="Retour à l'accueil" aria-label="Retour à l'accueil">
                     {% icone "chevron-left" %} <span class="expand-text">Retour</span>
                 </a>
+                <button type="button" class="button btn btn-expand" onclick="window.print()" title="Imprimer ou enregistrer en PDF" aria-label="Imprimer la politique">
+                    {% icone "printer" %} <span class="expand-text">Imprimer / PDF</span>
+                </button>
             </div>
         </div>
     </header>
@@ -34,6 +56,7 @@
                     <a href="#sec-5" class="lien-sommaire">5. Politique Zéro Traceur (Cookies)</a>
                     <a href="#sec-6" class="lien-sommaire">6. Durées Légales de Conservation</a>
                     <a href="#sec-7" class="lien-sommaire">7. Vos Droits & Recours CDP Sénégal</a>
+                    <a href="{% url 'cgu' %}" class="lien-sommaire" style="margin-top: 8px; border-top: 1px dashed var(--border); padding-top: 8px; color: var(--primary); font-weight: 600;">{% icone "file-text" %} Conditions Générales (CGU)</a>
                 </nav>
 
                 <div class="sommaire-assistance">
@@ -71,6 +94,9 @@
                     <strong>Référent Protection des Données :</strong>
                     <p>Équipe SantéSN · Dakar, République du Sénégal · Ligne directe WhatsApp : <code>+221 78 957 61 45</code></p>
                 </div>
+                <p style="margin-top: 12px; font-size: 13.5px;">
+                    Pour le cadre déontologique complet, les règles d'attribution des accès et les modalités du tiers-payant, veuillez vous référer à nos <a href="{% url 'cgu' %}" style="color: var(--primary); font-weight: 600; text-decoration: underline;">Conditions Générales d'Utilisation (CGU)</a>.
+                </p>
             </article>
 
             <!-- Section 2 -->
@@ -579,6 +605,45 @@
 @media (max-width: 960px) {
     .grille-juridique { grid-template-columns: 1fr; }
     .sommaire-lateral { display: none; }
+}
+
+@media (max-width: 640px) {
+    .page-juridique-conteneur { padding: 12px 14px 60px; }
+    .article-legal { padding: 18px 16px; border-radius: 12px; }
+    .entete-document-legal h1 { font-size: 22px; }
+    .carte-validation-cdp { flex-direction: column; align-items: flex-start; gap: 12px; }
+}
+
+/* Thème sombre */
+:root[data-theme="sombre"] .article-legal p,
+:root[data-theme="sombre"] .liste-points-legal,
+:root[data-theme="sombre"] .encadre-preambule p {
+    color: var(--texte, #e2e8f0);
+}
+:root[data-theme="sombre"] .en-bref-pill,
+:root[data-theme="sombre"] .sommaire-carte {
+    background: var(--surface, #10262d);
+    color: var(--texte, #e2e8f0);
+    border-color: var(--border, #21404a);
+}
+:root[data-theme="sombre"] .carte-validation-cdp {
+    background: rgba(5, 150, 105, 0.12);
+    border-color: rgba(5, 150, 105, 0.35);
+}
+:root[data-theme="sombre"] .badge-date-legal {
+    background: var(--surface, #10262d);
+    color: var(--muted, #94a3b8);
+    border-color: var(--border, #21404a);
+}
+:root[data-theme="sombre"] .badge-statut-legal {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.3);
+    color: #34d399;
+}
+:root[data-theme="sombre"] .encadre-contact-dpo {
+    background: var(--surface, #10262d);
+    border-color: var(--border, #21404a);
+    color: var(--texte, #e2e8f0);
 }
 
 @media print {

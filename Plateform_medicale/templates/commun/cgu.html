@@ -5,8 +5,27 @@
 
 {% block content %}
 <div class="page-juridique-conteneur">
+    <!-- En-tête uniquement visible à l'impression / export PDF -->
+    <div class="entete-impression-officielle">
+        <div class="logo-impression">SantéSN — Plateforme Médicale Nationale & Tiers-Payant Dématérialisé</div>
+        <h2>Conditions Générales d'Utilisation (CGU)</h2>
+        <p class="meta-impression">Document contractuel officiel · République du Sénégal · Conforme CDP (Loi n° 2008-12) & Ordres Professionnels</p>
+    </div>
+
+    <!-- Fil d'ariane -->
+    <nav class="fil-ariane-legal sans-impression" aria-label="Fil d'Ariane">
+        <a href="{% url 'landing' %}">Accueil</a>
+        <span class="separateur-chevron" aria-hidden="true">›</span>
+        <span class="courant">Conditions Générales d'Utilisation</span>
+    </nav>
+
     <!-- En-tête du document légal -->
     <header class="entete-document-legal sans-impression">
+        <div class="badges-legal">
+            <span class="badge-statut-legal">{% icone "shield-check" %} Version Officielle Active</span>
+            <span class="badge-date-legal">Dernière révision : 2026</span>
+            <span class="badge-cdp-legal">Homologation CDP Sénégal · Loi 2008-12</span>
+        </div>
         <div class="titre-et-actions-legal">
             <div>
                 <h1>Conditions Générales d'Utilisation (CGU)</h1>
@@ -16,6 +35,9 @@
                 <a href="{% url 'landing' %}" class="button btn btn-retour-expand" title="Retour à l'accueil" aria-label="Retour à l'accueil">
                     {% icone "chevron-left" %} <span class="expand-text">Retour</span>
                 </a>
+                <button type="button" class="button btn btn-expand" onclick="window.print()" title="Imprimer ou enregistrer en PDF" aria-label="Imprimer les CGU">
+                    {% icone "printer" %} <span class="expand-text">Imprimer / PDF</span>
+                </button>
             </div>
         </div>
     </header>
@@ -35,6 +57,7 @@
                     <a href="#art-6" class="lien-sommaire">6. Secret Médical & Données Personnelles</a>
                     <a href="#art-7" class="lien-sommaire">7. Disponibilité & Responsabilité</a>
                     <a href="#art-8" class="lien-sommaire">8. Loi Applicable & Juridiction</a>
+                    <a href="{% url 'politique_confidentialite' %}" class="lien-sommaire" style="margin-top: 8px; border-top: 1px dashed var(--border); padding-top: 8px; color: var(--primary); font-weight: 600;">{% icone "shield-check" %} Politique de Confidentialité</a>
                 </nav>
 
                 <div class="sommaire-assistance">
@@ -191,6 +214,11 @@
                     <li><strong>Hébergement souverain & sécurisé :</strong> Les bases de données sont hébergées selon des standards stricts garantissant leur souveraineté, protégées par un chiffrement TLS 1.3 en transit et AES-256 au repos.</li>
                     <li><strong>Interdiction absolue de revente :</strong> SantéSN ne commercialise, ne loue et ne cède aucune donnée à des tiers, régies publicitaires ou courtiers d'informations.</li>
                 </ul>
+                <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border);">
+                    <a href="{% url 'politique_confidentialite' %}" class="button btn" style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px;">
+                        {% icone "shield-check" %} Consulter la Politique de Confidentialité & Protection des Données complète
+                    </a>
+                </div>
             </article>
 
             <!-- Article 7 -->
@@ -635,6 +663,41 @@
     .grille-juridique { grid-template-columns: 1fr; }
     .sommaire-lateral { display: none; }
     .grille-roles-legal { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+    .page-juridique-conteneur { padding: 12px 14px 60px; }
+    .article-legal { padding: 18px 16px; border-radius: 12px; }
+    .entete-document-legal h1 { font-size: 22px; }
+    .carte-validation-cdp { flex-direction: column; align-items: flex-start; gap: 12px; }
+}
+
+/* Thème sombre */
+:root[data-theme="sombre"] .article-legal p,
+:root[data-theme="sombre"] .liste-points-legal,
+:root[data-theme="sombre"] .encadre-preambule p {
+    color: var(--texte, #e2e8f0);
+}
+:root[data-theme="sombre"] .carte-role-legal,
+:root[data-theme="sombre"] .en-bref-pill,
+:root[data-theme="sombre"] .sommaire-carte {
+    background: var(--surface, #10262d);
+    color: var(--texte, #e2e8f0);
+    border-color: var(--border, #21404a);
+}
+:root[data-theme="sombre"] .carte-validation-cdp {
+    background: rgba(5, 150, 105, 0.12);
+    border-color: rgba(5, 150, 105, 0.35);
+}
+:root[data-theme="sombre"] .badge-date-legal {
+    background: var(--surface, #10262d);
+    color: var(--muted, #94a3b8);
+    border-color: var(--border, #21404a);
+}
+:root[data-theme="sombre"] .badge-statut-legal {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.3);
+    color: #34d399;
 }
 
 /* Impression A4 propre sans fuite de topbar ou menus */

@@ -13991,3 +13991,46 @@ class SeparationRolesAdminGestionnaireTests(TestCase):
         self.assertNotContains(resp, "Clinique Exclusive B")
 
 
+class PagesJuridiquesTests(TestCase):
+    """Tests des pages d'information juridique, déontologique et de protection des données (CGU & Confidentialité)."""
+
+    def test_page_cgu_accessible_et_conforme(self):
+        """La page CGU est publiquement accessible, renvoie 200 et comporte les mentions légales sénégalaises clés."""
+        resp = self.client.get(reverse("cgu"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertTemplateUsed(resp, "cgu.html")
+        # Mentions légales clés sénégalaises et déontologiques
+        self.assertContains(resp, "Conditions Générales d'Utilisation")
+        self.assertContains(resp, "Loi sénégalaise n° 2008-12")
+        self.assertContains(resp, "Ordre National des Médecins du Sénégal")
+        self.assertContains(resp, "Commission de Protection des Données Personnelles")
+        self.assertContains(resp, "Secret Médical")
+        self.assertContains(resp, "Cour d'Appel de Dakar")
+        # Lien croisé vers la politique de confidentialité
+        self.assertContains(resp, reverse("politique_confidentialite"))
+
+    def test_page_politique_confidentialite_accessible_et_conforme(self):
+        """La politique de confidentialité est accessible, renvoie 200 et détaille la conformité CDP et sécurité."""
+        resp = self.client.get(reverse("politique_confidentialite"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertTemplateUsed(resp, "politique_confidentialite.html")
+        self.assertContains(resp, "Politique de Confidentialité")
+        self.assertContains(resp, "Loi sénégalaise n° 2008-12")
+        self.assertContains(resp, "Commission de Protection des Données Personnelles")
+        self.assertContains(resp, "sessionid")
+        self.assertContains(resp, "csrftoken")
+        self.assertContains(resp, "TLS 1.3")
+        self.assertContains(resp, "Dakar")
+        # Lien croisé vers les CGU
+        self.assertContains(resp, reverse("cgu"))
+
+    def test_robots_txt_autorise_pages_juridiques_et_bloque_espaces_prives(self):
+        """Le robots.txt autorise l'indexation des CGU et Confidentialité mais interdit les dossiers privés."""
+        resp = self.client.get("/robots.txt")
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("Allow: /cgu/$", resp.content.decode())
+        self.assertIn("Allow: /politique-confidentialite/$", resp.content.decode())
+        self.assertIn("Disallow: /admin/", resp.content.decode())
+
+
+
