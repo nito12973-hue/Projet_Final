@@ -343,6 +343,13 @@ _ICONES = {
         '<polyline points="1 20 1 14 7 14"/>'
         '<path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>'
     ),
+    "geo-alt": (
+        '<path d="M12 21s7-6.4 7-11.5A7 7 0 0 0 5 9.5C5 14.6 12 21 12 21z"/>'
+        '<circle cx="12" cy="9.5" r="2.4"/>'
+    ),
+    "chat-dots": (
+        '<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>'
+    ),
 }
 
 
@@ -396,12 +403,6 @@ def logo_marque(taille=36, fond="clair", epaisseur_pouls=2.6):
     return mark_safe(
         f'<svg width="{taille}" height="{taille}" viewBox="0 0 48 48" fill="none" '
         'xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="flex-shrink:0;">'
-        f"{corps    "geo-alt": (
-        '<path d="M12 21s7-6.4 7-11.5A7 7 0 0 0 5 9.5C5 14.6 12 21 12 21z"/>'
-        '<circle cx="12" cy="9.5" r="2.4"/>'
-    ),
-    "chat-dots": (
-        '<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>'
-    ),
-}</svg>"
+        f"{corps}"
+        "</svg>"
     )
