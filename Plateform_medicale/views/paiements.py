@@ -451,6 +451,12 @@ def bordereau_teletransmission(request):
             prestataire_id = int(prestataire_id_raw) if prestataire_id_raw else None
         except (TypeError, ValueError):
             prestataire_id = None
+        if prestataire_id and request.user.role == User.Role.GESTIONNAIRE and request.user.organisme_id:
+            if not Prestataire.objects.filter(pk=prestataire_id, conventions_organismes__organisme_id=request.user.organisme_id).exists():
+                prestataire_id = None
+        if prestataire_id and request.user.role == User.Role.GESTIONNAIRE and request.user.organisme_id:
+            if not Prestataire.objects.filter(pk=prestataire_id, conventions_organismes__organisme_id=request.user.organisme_id).exists():
+                prestataire_id = None
 
     actes, totaux = _recuperer_actes_teletransmission(
         annee=annee,
@@ -462,7 +468,15 @@ def bordereau_teletransmission(request):
     )
 
     liste_annees = list(range(maintenant.year - 2, maintenant.year + 2))
-    prestataires = Prestataire.objects.filter(partenaire=True).order_by("nom") if est_admin else []
+    if request.user.role == User.Role.GESTIONNAIRE and request.user.organisme_id:
+        prestataires = Prestataire.objects.filter(
+            conventions_organismes__organisme_id=request.user.organisme_id,
+            partenaire=True,
+        ).order_by("nom").distinct()
+    elif est_admin:
+        prestataires = Prestataire.objects.filter(partenaire=True).order_by("nom")
+    else:
+        prestataires = []
 
     # Nom du prestataire sélectionné
     nom_prestataire = "Tous les prestataires conventionnés"
@@ -522,6 +536,9 @@ def exporter_bordereau_teletransmission_pdf(request):
             prestataire_id = int(prestataire_id_raw) if prestataire_id_raw else None
         except (TypeError, ValueError):
             prestataire_id = None
+        if prestataire_id and request.user.role == User.Role.GESTIONNAIRE and request.user.organisme_id:
+            if not Prestataire.objects.filter(pk=prestataire_id, conventions_organismes__organisme_id=request.user.organisme_id).exists():
+                prestataire_id = None
 
     actes, totaux = _recuperer_actes_teletransmission(
         annee=annee,
@@ -785,6 +802,9 @@ def exporter_bordereau_teletransmission_excel(request):
             prestataire_id = int(prestataire_id_raw) if prestataire_id_raw else None
         except (TypeError, ValueError):
             prestataire_id = None
+        if prestataire_id and request.user.role == User.Role.GESTIONNAIRE and request.user.organisme_id:
+            if not Prestataire.objects.filter(pk=prestataire_id, conventions_organismes__organisme_id=request.user.organisme_id).exists():
+                prestataire_id = None
 
     actes, totaux = _recuperer_actes_teletransmission(
         annee=annee,
