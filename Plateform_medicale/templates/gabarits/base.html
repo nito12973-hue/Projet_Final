@@ -687,9 +687,9 @@
             font-size: 13px;
             font-weight: 600;
             color: #f8fafc;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            white-space: normal;
+            overflow-wrap: anywhere;
+            word-break: break-word;
             line-height: 1.25;
             max-width: 100%;
         }
@@ -6806,7 +6806,7 @@
 
         .carte-3d-card {
             width: 100%;
-            min-height: 236px;
+            min-height: 250px;
             position: relative;
             transform-style: preserve-3d;
             transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
@@ -6922,8 +6922,13 @@
             min-width: 0;
         }
 
-        .carte-recto-details > div {
+        .carte-recto-details > div:first-child {
+            flex: 1 1 auto;
             min-width: 0;
+        }
+        .carte-recto-details > div:last-child {
+            flex: 0 0 auto;
+            max-width: 42%;
         }
 
         .carte-recto-nom {
@@ -6933,9 +6938,10 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             font-weight: 700;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            white-space: normal;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+            line-height: 1.25;
         }
 
         .carte-recto-qualite {
@@ -6944,9 +6950,8 @@
             font-weight: 600;
             display: block;
             margin-top: 1px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            white-space: normal;
+            line-height: 1.25;
         }
 
         .carte-recto-taux {
@@ -6962,7 +6967,8 @@
             color: #ccfbf1;
             font-weight: 600;
             display: block;
-            white-space: nowrap;
+            white-space: normal;
+            line-height: 1.2;
         }
 
         .carte-recto-flip-btn {

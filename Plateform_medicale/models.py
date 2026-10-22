@@ -213,6 +213,15 @@ class User(AbstractBaseUser, PermissionsMixin):
             )
 
     def get_full_name(self):
+        if self.first_name and self.last_name:
+            return f'{self.first_name} {self.last_name}'.strip()
+        for attr in ('patient_profile', 'medecin_profile', 'pharmacien_profile'):
+            try:
+                profil = getattr(self, attr, None)
+                if profil and getattr(profil, 'prenom', None) and getattr(profil, 'nom', None):
+                    return f'{profil.prenom} {profil.nom}'.strip()
+            except Exception:
+                pass
         return f'{self.first_name} {self.last_name}'.strip()
 
     def get_short_name(self):
