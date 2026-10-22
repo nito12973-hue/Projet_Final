@@ -561,44 +561,65 @@ class UtilisateurCreationForm(forms.ModelForm):
 
 
 class UtilisateurModificationForm(forms.ModelForm):
-    """Modification du profil et du role d'un utilisateur existant (par l'administrateur)."""
+    """Modification du profil et du rôle d'un utilisateur existant (par l'administrateur ou le gestionnaire)."""
 
     class Meta:
         model = User
         fields = ['first_name', 'last_name', 'email', 'phone_number', 'role', 'organisme']
 
     def __init__(self, *args, **kwargs):
+        self._request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
-        # Un seul administrateur, comme dans un veritable SaaS : personne ne
-        # peut etre promu ADMIN depuis cette interface. Exception : editer la
-        # fiche de l'administrateur actuel doit continuer a afficher/accepter
-        # son propre role (ADMIN), sinon le formulaire casse pour lui -- le
-        # garde-fou qui l'empeche de changer SON role reste dans la vue
-        # modifier_utilisateur (deja en place, non modifie ici).
-        if self.instance.role != User.Role.ADMIN:
+        user = getattr(self._request, 'user', None) if self._request else None
+        is_gestionnaire = user is not None and user.role == User.Role.GESTIONNAIRE
+
+        if is_gestionnaire:
+            # Un gestionnaire ne peut attribuer que des rôles opérationnels au sein de son organisme, et jamais ADMIN
             self.fields['role'].choices = [
-                choix for choix in User.Role.choices if choix[0] != User.Role.ADMIN
+                choix for choix in User.Role.choices
+                if choix[0] in (User.Role.GESTIONNAIRE, User.Role.MEDECIN, User.Role.PHARMACIEN, User.Role.ASSURE)
             ]
-        if self.instance.pk and self.instance.organisme_id:
-            self.fields['organisme'].queryset = Organisme.objects.filter(
-                Q(actif=True) | Q(pk=self.instance.organisme_id)
-            )
+            self.fields['organisme'].queryset = Organisme.objects.filter(pk=user.organisme_id)
+            self.fields['organisme'].initial = user.organisme
+            self.fields['organisme'].required = False
+            self.fields['organisme'].widget = forms.HiddenInput()
         else:
-            self.fields['organisme'].queryset = Organisme.objects.filter(actif=True)
-        self.fields['organisme'].required = False
-        self.fields['organisme'].empty_label = "— Aucun organisme —"
+            # Un seul administrateur, comme dans un véritable SaaS : personne ne
+            # peut être promu ADMIN depuis cette interface. Exception : éditer la
+            # fiche de l'administrateur actuel doit continuer à afficher/accepter
+            # son propre rôle (ADMIN).
+            if self.instance.role != User.Role.ADMIN:
+                self.fields['role'].choices = [
+                    choix for choix in User.Role.choices if choix[0] != User.Role.ADMIN
+                ]
+            if self.instance.pk and self.instance.organisme_id:
+                self.fields['organisme'].queryset = Organisme.objects.filter(
+                    Q(actif=True) | Q(pk=self.instance.organisme_id)
+                )
+            else:
+                self.fields['organisme'].queryset = Organisme.objects.filter(actif=True)
+            self.fields['organisme'].required = False
+            self.fields['organisme'].empty_label = "— Aucun organisme —"
 
     def clean(self):
         cleaned_data = super().clean()
         role = cleaned_data.get('role')
         organisme = cleaned_data.get('organisme')
-        if role == User.Role.GESTIONNAIRE and not organisme:
-            self.add_error(
-                'organisme',
-                "Un gestionnaire doit obligatoirement être rattaché à un organisme.",
-            )
-        elif role == User.Role.ADMIN:
-            cleaned_data['organisme'] = None
+        user = getattr(self._request, 'user', None) if self._request else None
+        is_gestionnaire = user is not None and user.role == User.Role.GESTIONNAIRE
+
+        if is_gestionnaire:
+            cleaned_data['organisme'] = user.organisme
+            if role == User.Role.ADMIN:
+                self.add_error('role', "Un gestionnaire ne peut pas attribuer le rôle Administrateur.")
+        else:
+            if role == User.Role.GESTIONNAIRE and not organisme:
+                self.add_error(
+                    'organisme',
+                    "Un gestionnaire doit obligatoirement être rattaché à un organisme.",
+                )
+            elif role == User.Role.ADMIN:
+                cleaned_data['organisme'] = None
         return cleaned_data
 
 

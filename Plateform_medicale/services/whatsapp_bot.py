@@ -363,6 +363,14 @@ def lister_medecins_disponibles(patient=None, ville=None, coords_gps=None, speci
     qs = Medecin.objects.select_related("prestataire")
     qs = qs.filter(Q(user__is_active=True) | Q(user__isnull=True))
 
+    if patient and getattr(patient, "organisme_id", None):
+        qs_org = qs.filter(
+            Q(user__organisme_id=patient.organisme_id)
+            | Q(prestataire__conventions_organismes__organisme_id=patient.organisme_id)
+        ).distinct()
+        if qs_org.exists():
+            qs = qs_org
+
     if specialite:
         qs_spe = qs.filter(specialite__icontains=specialite)
         if qs_spe.exists():
@@ -595,9 +603,14 @@ def formater_reponse_medecins(patient=None, ville=None, coords_gps=None, special
     return "\n".join(lignes)
 
 
-def formater_reponse_partenaires(type_filtre=None, ville=None):
+def formater_reponse_partenaires(type_filtre=None, ville=None, patient=None):
     """Liste les établissements de soins et pharmacies partenaires sobrement."""
     qs = Prestataire.objects.filter(partenaire=True)
+    if patient and getattr(patient, "organisme_id", None):
+        qs_org = qs.filter(conventions_organismes__organisme_id=patient.organisme_id).distinct()
+        if qs_org.exists():
+            qs = qs_org
+
     if type_filtre:
         if isinstance(type_filtre, (list, tuple)):
             qs = qs.filter(type_prestataire__in=type_filtre)
@@ -1109,7 +1122,7 @@ def traiter_message_entrant_whatsapp(expediteur_telephone, texte_message):
     # 8. Pharmacies spécifiquement demandées
     if any(k in texte_lower for k in ("pharmacie", "pharmacies", "medicament", "médicament", "ordonnance")):
         ville = detecter_ville(texte)
-        return formater_reponse_partenaires(type_filtre=Prestataire.Type.PHARMACIE, ville=ville)
+        return formater_reponse_partenaires(type_filtre=Prestataire.Type.PHARMACIE, ville=ville, patient=patient)
 
     # 9. Hôpitaux & Cliniques spécifiquement demandés
     if any(k in texte_lower for k in ("hopital", "hôpital", "clinique", "centre de sante", "centre de santé")):
@@ -1117,11 +1130,12 @@ def traiter_message_entrant_whatsapp(expediteur_telephone, texte_message):
         return formater_reponse_partenaires(
             type_filtre=[Prestataire.Type.HOPITAL, Prestataire.Type.CLINIQUE],
             ville=ville,
+            patient=patient,
         )
 
     # 10. Choix 3 général : Établissements & Réseau conventionné
     if texte_lower in ("3", "partenaire", "partenaires", "prestataire", "prestataires", "reseau", "réseau"):
-        return formater_reponse_partenaires()
+        return formater_reponse_partenaires(patient=patient)
 
     # 11. Choix 4 : Urgences nationales
     if texte_lower in ("4", "urgence", "urgences", "samu", "pompier", "pompiers", "secours", "ambulance", "police"):

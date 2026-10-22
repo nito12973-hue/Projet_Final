@@ -342,7 +342,9 @@ def _detecter_mapping_colonnes(entetes_brutes, role_par_defaut=None):
     return mapping, colonnes_manquantes
 
 
-def _analyser_ligne_import_utilisateurs(numero_ligne, valeurs, mapping=None, role_par_defaut=None):
+def _analyser_ligne_import_utilisateurs(
+    numero_ligne, valeurs, mapping=None, role_par_defaut=None, organisme=None
+):
     """
     Valide une ligne du fichier d'import (voir COLONNES_IMPORT_UTILISATEURS).
 
@@ -402,7 +404,17 @@ def _analyser_ligne_import_utilisateurs(numero_ligne, valeurs, mapping=None, rol
     prestataire = None
     prestataire_nom = (prestataire_brut or "").strip() if prestataire_brut else ""
     if prestataire_nom:
-        prestataire = Prestataire.objects.filter(nom__iexact=prestataire_nom).first()
+        qs_p = Prestataire.objects.filter(nom__iexact=prestataire_nom)
+        if organisme:
+            qs_p_org = qs_p.filter(conventions_organismes__organisme=organisme)
+            if qs_p_org.exists():
+                prestataire = qs_p_org.first()
+            else:
+                prestataire = qs_p.filter(conventions_organismes__isnull=True).first()
+                if not prestataire:
+                    return None, f"Ligne {numero_ligne} : prestataire '{prestataire_nom}' non conventionné avec votre organisme."
+        else:
+            prestataire = qs_p.first()
         if not prestataire:
             return None, f"Ligne {numero_ligne} : prestataire '{prestataire_nom}' introuvable."
 
@@ -485,6 +497,7 @@ def _creer_comptes_import_utilisateurs(lignes_validees, request=None):
                     telephone=donnees["telephone"],
                     type_beneficiaire=Patient.TypeBeneficiaire.PRINCIPAL,
                     plan_couverture=donnees["plan_couverture"],
+                    organisme=organisme_connecte,
                 )
             comptes_crees.append((utilisateur, donnees))
 
@@ -582,9 +595,10 @@ def importer_utilisateurs_excel(request):
                     else:
                         donnees_valides = []
                         emails_vus = set()
+                        org_import = request.user.organisme if request.user.role == User.Role.GESTIONNAIRE else None
                         for numero_ligne, valeurs in lignes_brutes:
                             donnees, erreur = _analyser_ligne_import_utilisateurs(
-                                numero_ligne, valeurs, mapping=mapping, role_par_defaut=role_par_defaut
+                                numero_ligne, valeurs, mapping=mapping, role_par_defaut=role_par_defaut, organisme=org_import
                             )
                             if erreur:
                                 erreurs.append(erreur)
@@ -738,7 +752,7 @@ def ajouter_utilisateur(request):
 def modifier_utilisateur(request, pk):
     utilisateur = _compte_accessible_ou_403(request, pk)
     if request.method == "POST":
-        form = UtilisateurModificationForm(request.POST, instance=utilisateur)
+        form = UtilisateurModificationForm(request.POST, instance=utilisateur, request=request)
         if form.is_valid():
             nouveau_role = form.cleaned_data["role"]
             if utilisateur.pk == request.user.pk and nouveau_role != request.user.role:
@@ -764,7 +778,7 @@ def modifier_utilisateur(request, pk):
                 messages.success(request, "Utilisateur modifié.")
                 return redirect("liste_utilisateurs")
     else:
-        form = UtilisateurModificationForm(instance=utilisateur)
+        form = UtilisateurModificationForm(instance=utilisateur, request=request)
     return render(
         request,
         "modifier_utilisateur.html",
