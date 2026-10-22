@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 {% load formats icones %}
 
 {% block title %}Prises en charge{% endblock %}
@@ -17,7 +17,7 @@
         <label for="q">Recherche</label>
         <div class="champ-recherche">
             {% icone "search" %}
-            <input id="q" type="text" name="q" placeholder="Nom ou prénom du patient" value="{{ recherche }}" style="margin-bottom:0;">
+            <input id="q" type="text" name="q" placeholder="Nom ou prÃ©nom du patient" value="{{ recherche }}" style="margin-bottom:0;">
         </div>
     </div>
     <div style="min-width:220px;">
@@ -31,7 +31,7 @@
     </div>
     <button type="submit" class="button primary btn">Filtrer</button>
     {% if recherche or statut_choisi %}
-    <a href="{% url 'liste_prises_en_charge' %}" class="button btn">Réinitialiser</a>
+    <a href="{% url 'liste_prises_en_charge' %}" class="button btn">RÃ©initialiser</a>
     {% endif %}
 </form>
 
@@ -39,8 +39,8 @@
 <form method="post" id="form-selection-masse" class="actions-masse" style="margin-bottom: 12px; display: flex; gap: 10px; align-items: center;">
     {% csrf_token %}
     <input type="hidden" name="action" id="action-masse" value="">
-    <button type="submit" onclick="document.getElementById('action-masse').value='valider_selection'" class="button primary btn btn-sm">{% icone "check-circle" %} Valider la sélection</button>
-    <button type="submit" onclick="document.getElementById('action-masse').value='refuser_selection'" class="button btn btn-danger btn-sm">{% icone "x-circle" %} Refuser la sélection</button>
+    <button type="submit" onclick="document.getElementById('action-masse').value='valider_selection'" class="button primary btn btn-sm">{% icone "check-circle" %} Valider la sÃ©lection</button>
+    <button type="submit" onclick="document.getElementById('action-masse').value='refuser_selection'" class="button btn btn-danger btn-sm">{% icone "x-circle" %} Refuser la sÃ©lection</button>
 </form>
 
 <section class="panel">
@@ -81,7 +81,7 @@
                         </div>
                         {% endif %}
                         {% if prise.devis_fichier %}
-                        <a href="{% url 'telecharger_devis_prise_en_charge' prise.pk %}" target="_blank" style="font-size:11px;color:var(--primary);text-decoration:underline;display:inline-flex;align-items:center;gap:4px;margin-top:3px;">
+                        <a href="{% url 'telecharger_devis_prise_en_charge' prise.pk %}" target="_blank" rel="noopener noreferrer" style="font-size:11px;color:var(--primary);text-decoration:underline;display:inline-flex;align-items:center;gap:4px;margin-top:3px;">
                             {% icone "file-text" %} Devis joint &nearr;
                         </a>
                         {% endif %}
@@ -110,11 +110,11 @@
                         <button type="button" class="button btn btn-danger btn-sm" title="Refuser cette prise en charge" style="padding:4px 10px;font-size:12px;" onclick="ouvrirRefus('{{ prise.pk }}', '{{ prise.patient|escapejs }}')">{% icone "x" %} Refuser</button>
                         {% endif %}
                         {% if prise.statut == 'validee' %}
-                        <a href="{% url 'voir_bon_prise_en_charge' prise.pk %}" class="button btn btn-sm" title="Voir l'accord officiel à l'écran" style="padding:4px 9px;font-size:12px;">
+                        <a href="{% url 'voir_bon_prise_en_charge' prise.pk %}" class="button btn btn-sm" title="Voir l'accord officiel Ã  l'Ã©cran" style="padding:4px 9px;font-size:12px;">
                             {% icone "file-text" %} Accord
                         </a>
-                        <a href="{% url 'telecharger_bon_prise_en_charge_pdf' prise.pk %}" class="button btn btn-expand" target="_blank" title="Télécharger le bon officiel de prise en charge (PDF)" aria-label="Télécharger PDF">
-                            {% icone "download" %} <span class="expand-text">Télécharger PDF</span>
+                        <a href="{% url 'telecharger_bon_prise_en_charge_pdf' prise.pk %}" class="button btn btn-expand" target="_blank" rel="noopener noreferrer" title="TÃ©lÃ©charger le bon officiel de prise en charge (PDF)" aria-label="TÃ©lÃ©charger PDF">
+                            {% icone "download" %} <span class="expand-text">TÃ©lÃ©charger PDF</span>
                         </a>
                         {% endif %}
                         <a href="{% url 'modifier_prise_en_charge' prise.pk %}" class="button btn btn-sm">{% icone "edit-2" %} Modifier</a>
@@ -133,7 +133,7 @@
         {% csrf_token %}
         <h3 style="margin-top:0;font-size:17px;">Refuser la prise en charge</h3>
         <p id="refus-pec-patient" style="font-size:13px;color:var(--muted);margin-bottom:14px;"></p>
-        <label for="id-motif-refus" style="font-size:13px;font-weight:700;display:block;margin-bottom:6px;">Motif notifié à l'assuré *</label>
+        <label for="id-motif-refus" style="font-size:13px;font-weight:700;display:block;margin-bottom:6px;">Motif notifiÃ© Ã  l'assurÃ© *</label>
         <input type="text" id="id-motif-refus" name="motif_refus" required placeholder="Ex. : Soins hors convention, plafond annuel atteint..." style="margin-bottom:16px;">
         <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;">
             <button type="button" class="button btn" onclick="document.getElementById('modal-refus-pec').close()">Annuler</button>
@@ -148,7 +148,7 @@ function ouvrirRefus(pk, patient) {
     var txt = document.getElementById('refus-pec-patient');
     if (modal && form) {
         form.action = '/prises-en-charge/' + pk + '/refuser/';
-        if (txt) { txt.textContent = 'Bénéficiaire : ' + patient; }
+        if (txt) { txt.textContent = 'BÃ©nÃ©ficiaire : ' + patient; }
         modal.showModal();
     }
 }
@@ -157,7 +157,7 @@ function ouvrirRefus(pk, patient) {
 {% if prises_en_charge.paginator.num_pages > 1 %}
 <nav class="pagination" aria-label="Pagination">
     {% if prises_en_charge.has_previous %}
-    <a href="?{% prefixe_pagination request.GET %}page={{ prises_en_charge.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Précédent</a>
+    <a href="?{% prefixe_pagination request.GET %}page={{ prises_en_charge.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} PrÃ©cÃ©dent</a>
     {% endif %}
     <span class="pagination-info">Page {{ prises_en_charge.number }} sur {{ prises_en_charge.paginator.num_pages }}</span>
     {% if prises_en_charge.has_next %}
@@ -168,11 +168,11 @@ function ouvrirRefus(pk, patient) {
 {% else %}
 <div class="etat-vide">
     {% illustration_vide "shield-check" %}
-    <h3>Aucune prise en charge trouvée</h3>
-    <p>{% if recherche or statut_choisi %}Aucune prise en charge ne correspond à vos critères de recherche.{% else %}Aucune demande de prise en charge n'est enregistrée sur la plateforme.{% endif %}</p>
+    <h3>Aucune prise en charge trouvÃ©e</h3>
+    <p>{% if recherche or statut_choisi %}Aucune prise en charge ne correspond Ã  vos critÃ¨res de recherche.{% else %}Aucune demande de prise en charge n'est enregistrÃ©e sur la plateforme.{% endif %}</p>
     {% if recherche or statut_choisi %}
     <div class="actions">
-        <a href="{% url 'liste_prises_en_charge' %}" class="button">{% icone "x" %} Réinitialiser les filtres</a>
+        <a href="{% url 'liste_prises_en_charge' %}" class="button">{% icone "x" %} RÃ©initialiser les filtres</a>
     </div>
     {% endif %}
 </div>

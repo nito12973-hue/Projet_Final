@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Activation de votre compte SantéSN</title>
+    <title>Activation de votre compte SantÃ©SN</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 20px; line-height: 1.5; }
         .container { max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 32px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
@@ -19,31 +19,31 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1 class="title">SantéSN</h1>
+            <h1 class="title">SantÃ©SN</h1>
         </div>
         <div class="content">
             <p>Bonjour <strong>{{ prenom }}</strong>,</p>
-            <p>Votre compte d'accès à la plateforme médicale SantéSN vient d'être créé.</p>
+            <p>Votre compte d'accÃ¨s Ã  la plateforme mÃ©dicale SantÃ©SN vient d'Ãªtre crÃ©Ã©.</p>
             
             <div class="info-box">
                 <p style="margin: 0 0 6px 0;"><strong>Identifiant :</strong> {{ email }}</p>
                 <p style="margin: 0; font-size: 13px; color: #475569;">
-                    <strong>Accès rapide sans vous connecter :</strong> Vous pouvez également consulter votre couverture, vos droits et prendre rendez-vous directement par WhatsApp en écrivant simplement « Bonjour » ou « 1 » à notre numéro officiel.
+                    <strong>AccÃ¨s rapide sans vous connecter :</strong> Vous pouvez Ã©galement consulter votre couverture, vos droits et prendre rendez-vous directement par WhatsApp en Ã©crivant simplement Â« Bonjour Â» ou Â« 1 Â» Ã  notre numÃ©ro officiel.
                 </p>
             </div>
 
-            <p>Pour activer votre compte web et définir votre mot de passe personnel sécurisé, cliquez sur le bouton ci-dessous :</p>
+            <p>Pour activer votre compte web et dÃ©finir votre mot de passe personnel sÃ©curisÃ©, cliquez sur le bouton ci-dessous :</p>
             
             <div class="btn-wrapper">
-                <a href="{{ lien_activation }}" class="btn" target="_blank">Activer mon compte</a>
+                <a href="{{ lien_activation }}" class="btn" target="_blank" rel="noopener noreferrer">Activer mon compte</a>
             </div>
 
             <p style="font-size: 13px; color: #64748b;">
-                Ce lien est à usage unique et reste valable pendant <strong>{{ duree_heures }} heures</strong>. Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet email en toute sécurité.
+                Ce lien est Ã  usage unique et reste valable pendant <strong>{{ duree_heures }} heures</strong>. Si vous n'Ãªtes pas Ã  l'origine de cette demande, vous pouvez ignorer cet email en toute sÃ©curitÃ©.
             </p>
         </div>
         <div class="footer">
-            <p>© SantéSN — Plateforme Médicale & Tiers-Payant du Sénégal.</p>
+            <p>Â© SantÃ©SN â€” Plateforme MÃ©dicale & Tiers-Payant du SÃ©nÃ©gal.</p>
         </div>
     </div>
 </body>

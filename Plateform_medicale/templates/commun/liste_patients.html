@@ -1,29 +1,29 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 {% load formats icones %}
 
-{% block title %}Assurés{% endblock %}
+{% block title %}AssurÃ©s{% endblock %}
 
 {% block content %}
 <section class="page-title">
     <div>
-        <h1>Assurés et ayants droit</h1>
-        <p class="subtitle">Liste des assurés principaux et de leurs ayants droit.</p>
+        <h1>AssurÃ©s et ayants droit</h1>
+        <p class="subtitle">Liste des assurÃ©s principaux et de leurs ayants droit.</p>
     </div>
     <div class="actions">
-        <a class="button btn btn-expand" href="{% url 'importer_utilisateurs_excel' %}?role=ASSURE" title="Importer des assurés depuis Excel" aria-label="Importer des assurés">{% icone "upload" %} <span class="expand-text">Importer des assurés</span></a>
+        <a class="button btn btn-expand" href="{% url 'importer_utilisateurs_excel' %}?role=ASSURE" title="Importer des assurÃ©s depuis Excel" aria-label="Importer des assurÃ©s">{% icone "upload" %} <span class="expand-text">Importer des assurÃ©s</span></a>
         <a class="button btn btn-expand" href="{% url 'liste_plans_couverture' %}" title="Consulter les plans de couverture" aria-label="Plans de couverture">{% icone "clipboard-list" %} <span class="expand-text">Plans de couverture</span></a>
-        <a class="button primary btn-expand primary" href="{% url 'ajouter_patient' %}" title="Ajouter un nouvel assuré" aria-label="Nouvel assuré">{% icone "plus" %} <span class="expand-text">Nouvel assuré</span></a>
+        <a class="button primary btn-expand primary" href="{% url 'ajouter_patient' %}" title="Ajouter un nouvel assurÃ©" aria-label="Nouvel assurÃ©">{% icone "plus" %} <span class="expand-text">Nouvel assurÃ©</span></a>
     </div>
 </section>
 
 {% if nb_en_attente > 0 %}
 <div class="message-banner warning" style="margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 14px 18px; border-radius: 10px;">
     <div>
-        <strong>Contrôle anti-fraude · {{ nb_en_attente }} demande{{ nb_en_attente|pluralize }} d'ayant{{ nb_en_attente|pluralize:"s" }} droit en attente d'instruction</strong>
-        <p style="margin: 3px 0 0; font-size: 13px; color: var(--muted);">Des déclarations d'ayants droit nécessitent la vérification des pièces justificatives d'état civil avant activation de leurs cartes.</p>
+        <strong>ContrÃ´le anti-fraude Â· {{ nb_en_attente }} demande{{ nb_en_attente|pluralize }} d'ayant{{ nb_en_attente|pluralize:"s" }} droit en attente d'instruction</strong>
+        <p style="margin: 3px 0 0; font-size: 13px; color: var(--muted);">Des dÃ©clarations d'ayants droit nÃ©cessitent la vÃ©rification des piÃ¨ces justificatives d'Ã©tat civil avant activation de leurs cartes.</p>
     </div>
     <a href="?type=AYANT_DROIT&statut=EN_ATTENTE" class="button btn btn-sm" style="background: #d97706; color: #ffffff; border: none; font-weight: 600;">
-        Voir les demandes à instruire ({{ nb_en_attente }}) &rarr;
+        Voir les demandes Ã  instruire ({{ nb_en_attente }}) &rarr;
     </a>
 </div>
 {% endif %}
@@ -33,11 +33,11 @@
         <label for="q">Recherche</label>
         <div class="champ-recherche">
             {% icone "search" %}
-            <input id="q" type="text" name="q" placeholder="Nom, prénom, numéro de carte ou téléphone..." value="{{ recherche }}" style="margin-bottom:0;">
+            <input id="q" type="text" name="q" placeholder="Nom, prÃ©nom, numÃ©ro de carte ou tÃ©lÃ©phone..." value="{{ recherche }}" style="margin-bottom:0;">
         </div>
     </div>
     <div style="min-width:180px;">
-        <label for="type">Type de bénéficiaire</label>
+        <label for="type">Type de bÃ©nÃ©ficiaire</label>
         <select id="type" name="type" style="margin-bottom:0;">
             <option value="">Tous les types</option>
             {% for value, label in types_beneficiaire %}
@@ -46,7 +46,7 @@
         </select>
     </div>
     <div style="min-width:180px;">
-        <label for="statut">Statut d'adhésion</label>
+        <label for="statut">Statut d'adhÃ©sion</label>
         <select id="statut" name="statut" style="margin-bottom:0;">
             <option value="">Tous les statuts</option>
             {% for value, label in statuts_validation %}
@@ -56,7 +56,7 @@
     </div>
     <button type="submit" class="button primary btn">{% icone "search" %} Filtrer</button>
     {% if type_selectionne or statut_selectionne or recherche %}
-    <a href="{% url 'liste_patients' %}" class="button btn">Réinitialiser</a>
+    <a href="{% url 'liste_patients' %}" class="button btn">RÃ©initialiser</a>
     {% endif %}
 </form>
 
@@ -66,12 +66,12 @@
         <table>
         <thead>
             <tr>
-                {% entete_tri request.GET "id" "N°" "col-optionnelle" %}
+                {% entete_tri request.GET "id" "NÂ°" "col-optionnelle" %}
                 {% entete_tri request.GET "nom" "Nom complet" %}
                 {% entete_tri request.GET "type_beneficiaire" "Type" %}
-                <th>Statut &amp; Pièce</th>
-                {% entete_tri request.GET "assure_principal__nom" "Assuré principal" "col-optionnelle" %}
-                {% entete_tri request.GET "numero_carte" "Numéro de carte" "col-optionnelle" %}
+                <th>Statut &amp; PiÃ¨ce</th>
+                {% entete_tri request.GET "assure_principal__nom" "AssurÃ© principal" "col-optionnelle" %}
+                {% entete_tri request.GET "numero_carte" "NumÃ©ro de carte" "col-optionnelle" %}
                 {% entete_tri request.GET "plan_couverture__nom" "Plan de couverture" "col-optionnelle" %}
                 <th>Actions</th>
             </tr>
@@ -88,22 +88,22 @@
                 <td>{{ patient.get_type_beneficiaire_display }}</td>
                 <td>
                     {% if patient.statut_validation == "VALIDE" %}
-                    <span class="badge validee">Validé</span>
+                    <span class="badge validee">ValidÃ©</span>
                     {% elif patient.statut_validation == "EN_ATTENTE" %}
                     <span class="badge en_attente">En attente</span>
                     {% elif patient.statut_validation == "REFUSE" %}
-                    <span class="badge refusee" title="{{ patient.motif_refus }}">Refusé</span>
+                    <span class="badge refusee" title="{{ patient.motif_refus }}">RefusÃ©</span>
                     {% endif %}
 
                     {% if patient.document_justificatif %}
-                    <a href="{% url 'telecharger_piece_identite_patient' patient.pk %}" target="_blank" style="display: block; font-size: 11px; color: var(--primary); text-decoration: underline; margin-top: 4px;">
-                        {% icone "file-text" %} Pièce jointe &nearr;
+                    <a href="{% url 'telecharger_piece_identite_patient' patient.pk %}" target="_blank" rel="noopener noreferrer" style="display: block; font-size: 11px; color: var(--primary); text-decoration: underline; margin-top: 4px;">
+                        {% icone "file-text" %} PiÃ¨ce jointe &nearr;
                     </a>
                     {% endif %}
                 </td>
                 <td class="col-optionnelle">{{ patient.assure_principal|default:"-" }}</td>
                 <td class="code col-optionnelle">{{ patient.numero_carte }}</td>
-                <td class="col-optionnelle">{{ patient.plan_couverture|default:"Non attribué" }}</td>
+                <td class="col-optionnelle">{{ patient.plan_couverture|default:"Non attribuÃ©" }}</td>
                 <td>
                     <div class="actions" style="gap: 4px; flex-wrap: wrap;">
                         {% if patient.type_beneficiaire == "AYANT_DROIT" and patient.statut_validation == "EN_ATTENTE" %}
@@ -132,7 +132,7 @@
 {% if patients.paginator.num_pages > 1 %}
 <nav class="pagination" aria-label="Pagination">
     {% if patients.has_previous %}
-    <a href="?{% prefixe_pagination request.GET %}page={{ patients.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} Précédent</a>
+    <a href="?{% prefixe_pagination request.GET %}page={{ patients.previous_page_number }}" class="button btn btn-sm">{% icone "chevron-left" %} PrÃ©cÃ©dent</a>
     {% endif %}
     <span class="pagination-info">Page {{ patients.number }} sur {{ patients.paginator.num_pages }}</span>
     {% if patients.has_next %}
@@ -143,11 +143,11 @@
 {% else %}
 <div class="etat-vide">
     {% illustration_vide "id-card" %}
-    <h3>Aucun assuré trouvé</h3>
-    <p>{% if type_selectionne or recherche %}Aucun assuré ne correspond à votre recherche ou filtre.{% else %}Aucun assuré n'est encore enregistré sur la plateforme.{% endif %}</p>
+    <h3>Aucun assurÃ© trouvÃ©</h3>
+    <p>{% if type_selectionne or recherche %}Aucun assurÃ© ne correspond Ã  votre recherche ou filtre.{% else %}Aucun assurÃ© n'est encore enregistrÃ© sur la plateforme.{% endif %}</p>
     {% if type_selectionne or recherche %}
     <div class="actions">
-        <a href="{% url 'liste_patients' %}" class="button">{% icone "x" %} Réinitialiser les filtres</a>
+        <a href="{% url 'liste_patients' %}" class="button">{% icone "x" %} RÃ©initialiser les filtres</a>
     </div>
     {% endif %}
 </div>
@@ -157,8 +157,8 @@
         {% csrf_token %}
         <h3 style="margin-top: 0; font-size: 17px; color: var(--titre);">Refuser l'ayant droit</h3>
         <p id="refus-ad-nom" style="font-size: 13px; color: var(--muted); margin-bottom: 14px;"></p>
-        <label for="id-motif-ad" style="font-size: 13px; font-weight: 700; display: block; margin-bottom: 6px;">Motif de refus notifié à l'assuré *</label>
-        <input type="text" id="id-motif-ad" name="motif_refus" required placeholder="Ex. : Pièce justificative non conforme ou illisible" value="Pièce justificative non conforme ou illisible" style="margin-bottom: 16px;">
+        <label for="id-motif-ad" style="font-size: 13px; font-weight: 700; display: block; margin-bottom: 6px;">Motif de refus notifiÃ© Ã  l'assurÃ© *</label>
+        <input type="text" id="id-motif-ad" name="motif_refus" required placeholder="Ex. : PiÃ¨ce justificative non conforme ou illisible" value="PiÃ¨ce justificative non conforme ou illisible" style="margin-bottom: 16px;">
         <div style="display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
             <button type="button" class="button btn" onclick="document.getElementById('modal-refus-ayant-droit').close()">Annuler</button>
             <button type="submit" class="button btn btn-danger">Confirmer le refus</button>
@@ -172,7 +172,7 @@ function ouvrirRefusAyantDroit(pk, nom) {
     var txt = document.getElementById('refus-ad-nom');
     if (modal && form) {
         form.action = '/patients/' + pk + '/refuser/';
-        if (txt) { txt.textContent = 'Bénéficiaire : ' + nom; }
+        if (txt) { txt.textContent = 'BÃ©nÃ©ficiaire : ' + nom; }
         modal.showModal();
     }
 }
