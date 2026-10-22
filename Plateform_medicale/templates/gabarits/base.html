@@ -346,8 +346,10 @@
             min-width: 280px;
             max-width: 85vw;
             height: 100vh;
+            height: 100dvh;
             max-height: 100vh;
-            overflow-y: auto;
+            max-height: 100dvh;
+            overflow: hidden;
             overflow-x: hidden;
             display: flex;
             flex-direction: column;
@@ -480,14 +482,17 @@
             .btn-reduire { display: none; }
         }
 
-        aside nav {
-            flex: 1;
+        aside nav,
+        .sidebar-nav {
+            flex: 1 1 0%;
             min-height: 0;
             min-width: 0;
             width: 100%;
             box-sizing: border-box;
             overflow-y: auto;
             overflow-x: hidden;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
             padding: 12px 0;
             display: flex;
             flex-direction: column;
@@ -496,17 +501,21 @@
             scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
         }
 
-        aside nav::-webkit-scrollbar {
+        aside nav::-webkit-scrollbar,
+        .sidebar-nav::-webkit-scrollbar {
             width: 4px;
         }
-        aside nav::-webkit-scrollbar-track {
+        aside nav::-webkit-scrollbar-track,
+        .sidebar-nav::-webkit-scrollbar-track {
             background: transparent;
         }
-        aside nav::-webkit-scrollbar-thumb {
+        aside nav::-webkit-scrollbar-thumb,
+        .sidebar-nav::-webkit-scrollbar-thumb {
             background: rgba(255, 255, 255, 0.12);
             border-radius: 4px;
         }
-        aside nav::-webkit-scrollbar-thumb:hover {
+        aside nav::-webkit-scrollbar-thumb:hover,
+        .sidebar-nav::-webkit-scrollbar-thumb:hover {
             background: rgba(255, 255, 255, 0.25);
         }
 
@@ -741,15 +750,15 @@
         body.sidebar-reduite .badge-non-lues,
         body.sidebar-reduite .brand-texte,
         html.sidebar-reduite .user-card-info,
-        html.sidebar-reduite .user-card,
         body.sidebar-reduite .user-card-info,
-        html.sidebar-reduite .sidebar-systeme-status,
+        html.sidebar-reduite .sidebar-systeme-status span:not(.status-pulse-dot),
         body.sidebar-reduite .sidebar-systeme-status span:not(.status-pulse-dot),
         html.sidebar-reduite .nav-section,
         body.sidebar-reduite .nav-section {
             display: none !important;
         }
 
+        html.sidebar-reduite .user-card,
         body.sidebar-reduite .user-card {
             justify-content: center;
             padding: 4px;
@@ -757,6 +766,7 @@
             background: transparent;
         }
 
+        html.sidebar-reduite .sidebar-systeme-status,
         body.sidebar-reduite .sidebar-systeme-status {
             justify-content: center;
             padding: 4px 0;
@@ -5991,9 +6001,11 @@
                 height: 100dvh;
                 max-height: 100vh;
                 max-height: 100dvh;
-                overflow-y: auto;
+                overflow: hidden;
                 overflow-x: hidden;
                 overscroll-behavior: contain;
+                display: flex;
+                flex-direction: column;
                 transform: translateX(-100%);
                 visibility: hidden;
                 pointer-events: none;
@@ -6015,7 +6027,24 @@
             }
 
             .sidebar-head {
+                flex-shrink: 0;
                 padding-right: 44px;
+            }
+
+            aside nav,
+            .sidebar-nav {
+                flex: 1 1 0%;
+                min-height: 0;
+                overflow-y: auto;
+                overflow-x: hidden;
+                -webkit-overflow-scrolling: touch;
+                overscroll-behavior: contain;
+            }
+
+            .sidebar-footer {
+                flex-shrink: 0;
+                margin-top: auto;
+                padding-bottom: max(16px, env(safe-area-inset-bottom));
             }
 
             .sidebar-toggle {
@@ -7361,7 +7390,7 @@
                 </button>
             </div>
 
-            <nav aria-label="Navigation principale">
+            <nav class="sidebar-nav" aria-label="Navigation principale">
                 {% if current_role == "ADMIN" %}
                 {% with url_name=request.resolver_match.url_name %}
                 <span class="nav-section">Supervision Plateforme</span>
