@@ -4,6 +4,8 @@ from docx import Document
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
+from docx.oxml import parse_xml
+from docx.oxml.ns import nsdecls
 
 OUTPUT_DIR = r"c:\Users\nito1\Desktop\Projet_Final\rapport_pfe"
 ILLUST_DIR = os.path.join(OUTPUT_DIR, "illustrations_isep")
@@ -19,14 +21,21 @@ def build_full_isep_thesis():
         section.left_margin = Inches(0.98)
         section.right_margin = Inches(0.98)
         
-        # En-tête sobre identique au modèle PDF
+        # En-tête sobre avec filet marron identique au modèle PDF
         header = section.header
         p_head = header.paragraphs[0]
         p_head.alignment = WD_ALIGN_PARAGRAPH.RIGHT
         r_head = p_head.add_run("Plateforme web et mobile de tiers payant médical : SantéSN")
         r_head.font.name = "Calibri"
-        r_head.font.size = Pt(8.5)
-        r_head.font.color.rgb = RGBColor(0x64, 0x74, 0x8B)
+        r_head.font.size = Pt(9.0)
+        r_head.font.color.rgb = RGBColor(0x33, 0x41, 0x55)
+        
+        pBdr = parse_xml(
+            f'<w:pBdr {nsdecls("w")}>\n'
+            f'  <w:bottom w:val="single" w:sz="16" w:space="4" w:color="6A3E1E"/>\n'
+            f'</w:pBdr>'
+        )
+        p_head._p.get_or_add_pPr().append(pBdr)
         
         # Pied de page sobre identique au modèle PDF
         footer = section.footer
@@ -117,40 +126,69 @@ def build_full_isep_thesis():
     # =========================================================================
     # PAGE 1 : PAGE DE GARDE OFFICIELLE ISEP
     # =========================================================================
-    p("REPUBLIQUE DU SENEGAL", before=10, after=2, align=WD_ALIGN_PARAGRAPH.CENTER, bold=True, size=11)
-    p("Ministère de l’Enseignement Supérieur, de la Recherche et de l’Innovation", after=14, align=WD_ALIGN_PARAGRAPH.CENTER, bold=True, size=11)
-    p("Institut Supérieur d’Enseignement Professionnel Amadou Trawaré de Diamniadio", after=20, align=WD_ALIGN_PARAGRAPH.CENTER, bold=True, size=12)
+    p("REPUBLIQUE DU SENEGAL", before=0, after=2, align=WD_ALIGN_PARAGRAPH.CENTER, bold=True, size=11)
+    p("Ministère de l’Enseignement Supérieur, de la Recherche et de l’Innovation", after=8, align=WD_ALIGN_PARAGRAPH.CENTER, bold=True, size=10.5)
+    
+    # Drapeau du Sénégal au centre
+    p_flag = doc.add_paragraph()
+    p_flag.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_flag.paragraph_format.space_before = Pt(2)
+    p_flag.paragraph_format.space_after = Pt(4)
+    flag_path = os.path.join(ILLUST_DIR, "drapeau_senegal.png")
+    if os.path.exists(flag_path):
+        p_flag.add_run().add_picture(flag_path, width=Inches(0.95))
 
-    p("N° : DISEP_ TIC _P5 _ Groupe : ...", after=24, align=WD_ALIGN_PARAGRAPH.LEFT, bold=True, size=11)
+    p("Institut Supérieur d’Enseignement Professionnel Amadou Trawaré de Diamniadio", before=4, after=6, align=WD_ALIGN_PARAGRAPH.CENTER, bold=True, size=11.5)
+    
+    # Logo officiel ISEP Diamniadio
+    p_logo = doc.add_paragraph()
+    p_logo.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_logo.paragraph_format.space_before = Pt(2)
+    p_logo.paragraph_format.space_after = Pt(8)
+    logo_path = os.path.join(ILLUST_DIR, "logo_isep.png")
+    if os.path.exists(logo_path):
+        p_logo.add_run().add_picture(logo_path, width=Inches(1.25))
 
-    p("PROJET DE FIN DE FORMATION POUR L’OBTENTION DU DISEP", before=10, after=4, align=WD_ALIGN_PARAGRAPH.CENTER, bold=True, size=13)
-    p("DIPLOME DES INSTITUTS SUPERIEURS D’ENSEIGNEMENT", after=40, align=WD_ALIGN_PARAGRAPH.CENTER, bold=True, size=11)
+    p("N° : DISEP_ TIC _P5 _ Groupe : ...", before=6, after=14, align=WD_ALIGN_PARAGRAPH.LEFT, bold=True, size=10.5)
 
-    # Cadre Thème sobre
+    p("PROJET DE FIN DE FORMATION POUR L’OBTENTION DU DISEP", before=4, after=2, align=WD_ALIGN_PARAGRAPH.CENTER, bold=True, size=12.5)
+    p("DIPLOME DES INSTITUTS SUPERIEURS D’ENSEIGNEMENT", after=20, align=WD_ALIGN_PARAGRAPH.CENTER, bold=True, size=10.5)
+
+    # Cadre Thème sobre avec bordure marron officiel 6A3E1E
     tbl_theme = doc.add_table(rows=1, cols=1)
     tbl_theme.alignment = WD_TABLE_ALIGNMENT.CENTER
+    borders = parse_xml(
+        f'<w:tblBorders {nsdecls("w")}>\n'
+        f'  <w:top w:val="single" w:sz="18" w:space="0" w:color="6A3E1E"/>\n'
+        f'  <w:left w:val="single" w:sz="18" w:space="0" w:color="6A3E1E"/>\n'
+        f'  <w:bottom w:val="single" w:sz="18" w:space="0" w:color="6A3E1E"/>\n'
+        f'  <w:right w:val="single" w:sz="18" w:space="0" w:color="6A3E1E"/>\n'
+        f'</w:tblBorders>'
+    )
+    tbl_theme._tbl.tblPr.append(borders)
+    
     c = tbl_theme.rows[0].cells[0]
     c.width = Inches(6.0)
     p_t = c.paragraphs[0]
     p_t.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    p_t.paragraph_format.space_before = Pt(14)
-    p_t.paragraph_format.space_after = Pt(14)
+    p_t.paragraph_format.space_before = Pt(12)
+    p_t.paragraph_format.space_after = Pt(12)
     r1 = p_t.add_run("Thème :\n\n")
     r1.font.bold = True
-    r1.font.size = Pt(13)
+    r1.font.size = Pt(12.5)
     r2 = p_t.add_run("Conception et Réalisation d'une Plateforme Web et Mobile\nde Prise en Charge Médicale et de Tiers Payant au Sénégal :\nCas de SantéSN")
     r2.font.bold = True
-    r2.font.size = Pt(14)
+    r2.font.size = Pt(13.5)
 
-    p("Soutenu le : __ / 11 / 2025", before=40, after=20, align=WD_ALIGN_PARAGRAPH.CENTER, bold=True, size=11)
+    p("Soutenu le : __ / 11 / 2025", before=25, after=12, align=WD_ALIGN_PARAGRAPH.CENTER, bold=True, size=11)
 
-    p("Présenté par :", before=10, after=4, align=WD_ALIGN_PARAGRAPH.LEFT, bold=True, size=11)
+    p("Présenté par :", before=6, after=4, align=WD_ALIGN_PARAGRAPH.LEFT, bold=True, size=10.5)
     p("M. Mamadou Lamarana Diallo", after=2, align=WD_ALIGN_PARAGRAPH.LEFT, bold=True, size=10.5)
     p("M. Mamadou Coulibaly", after=2, align=WD_ALIGN_PARAGRAPH.LEFT, bold=True, size=10.5)
     p("M. ... (Membre du groupe)", after=2, align=WD_ALIGN_PARAGRAPH.LEFT, bold=False, size=10.5)
-    p("Mme / M. ... (Membre du groupe)", after=20, align=WD_ALIGN_PARAGRAPH.LEFT, bold=False, size=10.5)
+    p("Mme / M. ... (Membre du groupe)", after=14, align=WD_ALIGN_PARAGRAPH.LEFT, bold=False, size=10.5)
 
-    p("Encadré par : M. Siriman Konaré / M. Papa Ibrahima Niang", align=WD_ALIGN_PARAGRAPH.RIGHT, bold=True, size=11)
+    p("Encadré par : M. Siriman Konaré / M. Papa Ibrahima Niang", align=WD_ALIGN_PARAGRAPH.RIGHT, bold=True, size=10.5)
 
     # =========================================================================
     # PAGES 2 À 5 : DÉDICACES INDIVIDUELLES
@@ -811,7 +849,9 @@ def build_full_isep_thesis():
     doc.add_page_break()
     h3("e. Espace Gestionnaire et cartographie Leaflet :")
     p("Système d'Information Géographique interactive répertoriant les 48 prestataires conventionnés avec sélecteur de calques et suivi des bordereaux.")
-    img("fig_38_capture_espace_gestionnaire.png", "Figure 38 : Capture d'écran – Espace Gestionnaire : Cartographie Leaflet SIG", width=5.5)
+    img("fig_38_capture_espace_gestionnaire.png", "Figure 38 : Capture d'écran – Tableau de bord de gestion et suivi des sinistres", width=5.5)
+    p("La cartographie interactive Leaflet intégrée permet aux gestionnaires et aux assurés de localiser en temps réel les structures médicales conventionnées sur fond urbain et satellite :")
+    img("fig_38b_cartographie_leaflet_reelle.png", "Figure 38b : Capture d'écran – Cartographie SIG Leaflet réelle du réseau sanitaire au Sénégal", width=5.5)
 
     h3("f. Supervision Administrateur et journal d'audit CDP :")
     p("Tableau de bord de gouvernance technique consignant les 1 482 événements horodatés et confirmant le succès des **196 tests automatisés (100% de réussite)**.")
@@ -917,15 +957,18 @@ def build_full_isep_thesis():
         r_p.font.size = Pt(10.5)
         r_p.font.bold = is_main
 
-    # Sauvegarde finale
-    target_path = os.path.join(OUTPUT_DIR, "RAPPORT_PFE_ISEP_DIAMNIADIO_68PAGES.docx")
-    doc.save(target_path)
-    print("Mémoire officiel ISEP complet de 68 pages généré avec succès dans :", target_path)
-    try:
-        doc.save(OUTPUT_DOCX)
-        print("Également synchronisé dans :", OUTPUT_DOCX)
-    except PermissionError:
-        print("Note :", OUTPUT_DOCX, "est actuellement ouvert dans Word. Le nouveau document officiel est disponible dans :", target_path)
+    # Sauvegarde finale avec gestion des fichiers ouverts
+    main_target = os.path.join(OUTPUT_DIR, "RAPPORT_PFE_ISEP_DIAMNIADIO_FINAL.docx")
+    doc.save(main_target)
+    print("Mémoire officiel ISEP complet généré avec succès dans :", main_target)
+    
+    for alt_name in ["RAPPORT_PFE_ISEP_DIAMNIADIO_68PAGES.docx", "RAPPORT_PFE_OFFICIEL_ISEP_DIAMNIADIO.docx"]:
+        alt_path = os.path.join(OUTPUT_DIR, alt_name)
+        try:
+            doc.save(alt_path)
+            print("Également synchronisé dans :", alt_path)
+        except PermissionError:
+            print("Note :", alt_name, "est actuellement ouvert dans Word.")
 
 if __name__ == "__main__":
     build_full_isep_thesis()
