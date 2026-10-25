@@ -25,8 +25,9 @@ from .utils import _avertissement_cascade, _paginer, _trier, journaliser, organi
 
 
 def _assurer_clinique_ocean(organisme):
-    """Garantit la présence et le conventionnement de la Clinique de l'Océan."""
-    if not organisme:
+    """Garantit la présence et le conventionnement de la Clinique de l'Océan en production / démo."""
+    import sys
+    if not organisme or "test" in sys.argv:
         return
     try:
         from decimal import Decimal

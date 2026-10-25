@@ -14076,6 +14076,23 @@ class RecherchePrestatairesToleranteTests(TestCase):
             role=User.Role.GESTIONNAIRE,
             organisme=self.organisme,
         )
+        self.clinique = Prestataire.objects.create(
+            nom="Clinique de l'Océan",
+            type_prestataire=Prestataire.Type.CLINIQUE,
+            ville="Dakar",
+            adresse="Boulevard de la Corniche Ouest – Avenue Cheikh Anta Diop, Fann Hock",
+            telephone="338258585",
+            partenaire=True,
+            latitude=Decimal("14.6865"),
+            longitude=Decimal("-17.4642"),
+        )
+        ConventionPrestataire.objects.create(
+            organisme=self.organisme,
+            prestataire=self.clinique,
+            statut=ConventionPrestataire.Statut.ACTIF,
+            tiers_payant_actif=True,
+            numero_convention=f"CONV-{self.organisme.code}-{self.clinique.pk}",
+        )
 
     def test_recherche_clinique_ocean_multi_mots_et_sans_accent(self):
         """Une recherche comme 'CLINIQUE DE L'OCEAN DAKAR' trouve bien la Clinique de l'Océan."""
