@@ -49,3 +49,5 @@ logs/*.log
 db.sqlite3.sauvegarde-*
 maquette_*.html
 
+
+!rapport_pfe/*.docx
