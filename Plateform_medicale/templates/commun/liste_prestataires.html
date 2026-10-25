@@ -169,6 +169,89 @@
 {{ prestataires_carte|json_script:"donnees-prestataires-carte" }}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
       integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<style>
+    .leaflet-control-layers {
+        background: var(--surface) !important;
+        color: var(--text) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 10px !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18) !important;
+    }
+    .leaflet-control-layers-expanded {
+        padding: 10px 14px !important;
+        background: var(--surface) !important;
+        color: var(--text) !important;
+        min-width: 190px !important;
+    }
+    .leaflet-control-layers-base label,
+    .leaflet-control-layers label {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        margin: 0 !important;
+        padding: 5px 8px !important;
+        border-radius: 6px !important;
+        cursor: pointer !important;
+        color: var(--text) !important;
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        line-height: 1.3 !important;
+    }
+    .leaflet-control-layers-base label:hover,
+    .leaflet-control-layers label:hover {
+        background: var(--table-hover, rgba(255, 255, 255, 0.08)) !important;
+        color: var(--primary) !important;
+    }
+    .leaflet-control-layers-base label > div,
+    .leaflet-control-layers label > div {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        width: 100% !important;
+        color: inherit !important;
+    }
+    .leaflet-control-layers-base label span,
+    .leaflet-control-layers label span {
+        color: var(--text) !important;
+        font-weight: 500 !important;
+    }
+    .leaflet-control-layers-base label:hover span,
+    .leaflet-control-layers label:hover span {
+        color: var(--primary) !important;
+    }
+    .leaflet-control-layers input[type="radio"] {
+        width: 16px !important;
+        height: 16px !important;
+        margin: 0 !important;
+        accent-color: var(--primary) !important;
+        cursor: pointer !important;
+        flex-shrink: 0 !important;
+    }
+    .leaflet-control-layers-toggle {
+        background-color: var(--surface) !important;
+        border-radius: 8px !important;
+    }
+    :root[data-theme="sombre"] .leaflet-control-layers-toggle {
+        filter: invert(0.9) hue-rotate(180deg);
+    }
+    .leaflet-bar a {
+        background-color: var(--surface) !important;
+        color: var(--text) !important;
+        border-bottom: 1px solid var(--border) !important;
+    }
+    .leaflet-bar a:hover {
+        background-color: var(--primary) !important;
+        color: #fff !important;
+    }
+    .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+        background: var(--surface) !important;
+        color: var(--text) !important;
+        border: 1px solid var(--border) !important;
+    }
+    .leaflet-popup-content strong {
+        color: var(--primary) !important;
+    }
+</style>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
