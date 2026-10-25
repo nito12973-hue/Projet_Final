@@ -12,8 +12,14 @@
     <a class="button primary btn-expand primary" href="{% url 'ajouter_prestataire' %}" title="Ajouter un établissement ou prestataire" aria-label="Ajouter un prestataire">{% icone "plus" %} <span class="expand-text">Ajouter un prestataire</span></a>
 </section>
 
-<form method="get" class="filtres">
-    <div style="min-width:220px;">
+<form method="get" class="filtres" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+    <div style="flex:1 1 280px;min-width:240px;">
+        <label for="q">Rechercher un établissement</label>
+        <div class="champ-recherche" style="display:flex;align-items:center;position:relative;">
+            <input type="search" id="q" name="q" value="{{ recherche_q }}" placeholder="Ex. : Clinique de l'Océan Dakar, Suma, Hôpital Fann..." style="margin-bottom:0;width:100%;">
+        </div>
+    </div>
+    <div style="min-width:180px;">
         <label for="localisation">Localisation</label>
         <select id="localisation" name="localisation" style="margin-bottom:0;">
             <option value="">Toutes</option>
@@ -21,11 +27,52 @@
             <option value="avec" {% if localisation_choisie == "avec" %}selected{% endif %}>Avec localisation</option>
         </select>
     </div>
-    <button type="submit" class="button primary btn">Filtrer</button>
-    {% if localisation_choisie %}
-    <a href="{% url 'liste_prestataires' %}" class="button btn">Réinitialiser</a>
-    {% endif %}
+    <div style="display:flex;gap:8px;">
+        <button type="submit" class="button primary btn">{% icone "search" %} Filtrer</button>
+        {% if localisation_choisie or recherche_q %}
+        <a href="{% url 'liste_prestataires' %}" class="button btn">Réinitialiser</a>
+        {% endif %}
+    </div>
 </form>
+
+{% if suggestions_decouverte %}
+<section class="panel" style="margin-bottom:20px;border-left:4px solid var(--accent);background:var(--fiche-bg);padding:18px 20px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+        <div>
+            <span class="badge" style="background:rgba(224,130,79,0.12);color:var(--accent);border:1px solid rgba(224,130,79,0.3);font-weight:700;font-size:11.5px;padding:3px 8px;border-radius:999px;">
+                {% icone "building" %} Répertoire national de santé du Sénégal
+            </span>
+            <h3 style="margin:6px 0 2px;font-size:16px;color:var(--titre);">Établissements trouvés non encore conventionnés avec votre organisme</h3>
+            <p class="subtitle" style="margin:0;font-size:12.5px;">
+                Ces structures existent au Sénégal. Vous pouvez les ajouter et les conventionner en 1 clic pour activer le tiers payant SantéSN.
+            </p>
+        </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));gap:12px;margin-top:12px;">
+        {% for etab in suggestions_decouverte %}
+        <div style="border:1px solid var(--border);border-radius:10px;padding:12px 14px;background:var(--surface);display:flex;flex-direction:column;justify-content:space-between;gap:8px;">
+            <div>
+                <strong style="display:block;font-size:14px;color:var(--primary-dark);margin-bottom:3px;">{{ etab.nom }}</strong>
+                <p style="margin:0 0 4px;font-size:12px;color:var(--muted);">
+                    {{ etab.type }} · {{ etab.ville }}
+                </p>
+                <p style="margin:0;font-size:11.5px;color:var(--text-secondary,#64748b);">
+                    📍 {{ etab.adresse }}
+                </p>
+            </div>
+            <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                <a href="{% url 'ajouter_prestataire' %}?nom={{ etab.nom|urlencode }}&type_prestataire={{ etab.type|urlencode }}&ville={{ etab.ville|urlencode }}&adresse={{ etab.adresse|urlencode }}&telephone={{ etab.telephone|urlencode }}&latitude={{ etab.lat|urlencode }}&longitude={{ etab.lon|urlencode }}" class="button primary btn-sm">
+                    {% icone "plus" %} Ajouter &amp; Conventionner
+                </a>
+                <a href="https://www.google.com/maps/search/?api=1&query={{ etab.nom|urlencode }}+{{ etab.ville|urlencode }}+Senegal" target="_blank" rel="noopener noreferrer" class="button btn-sm">
+                    {% icone "external-link" %} Voir sur Google Maps
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
 
 {% if prestataires_carte %}
 <section class="panel" style="margin-bottom:18px;padding:22px 24px;">
@@ -153,7 +200,19 @@
         };
 
         var premiere = prestatairesCarte[0];
-        // 1. Fond Satellite Réaliste HD (Esri World Imagery)
+        // 1. Google Maps Plan en direct
+        var googlePlan = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=fr', {
+            attribution: '&copy; Google Maps',
+            maxZoom: 20
+        });
+
+        // 2. Google Maps Satellite Hybride (avec noms de rues et quartiers)
+        var googleSatellite = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}&hl=fr', {
+            attribution: '&copy; Google Maps Satellite',
+            maxZoom: 20
+        });
+
+        // 3. Fond Satellite Réaliste HD (Esri World Imagery)
         var esriSatellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
             attribution: '&copy; Esri World Imagery',
             maxZoom: 19
@@ -164,15 +223,9 @@
         });
         var vueSatellite = L.layerGroup([esriSatellite, esriLabels]);
 
-        // 2. Plan Moderne Urbain (Esri World Street Map - Zéro 403)
+        // 4. Plan Moderne Urbain (Esri World Street Map)
         var vuePlan = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
             attribution: '&copy; Esri &mdash; Plan Urbain',
-            maxZoom: 19
-        });
-
-        // 3. Carte Topographique & Relief (Esri Topo Map)
-        var vueOSM = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
-            attribution: '&copy; Esri &mdash; Topo & Relief',
             maxZoom: 19
         });
 
@@ -180,14 +233,15 @@
             scrollWheelZoom: false,
             center: [parseFloat(premiere.latitude), parseFloat(premiere.longitude)],
             zoom: 7,
-            layers: [vueSatellite]
+            layers: [googlePlan]
         });
 
         // Sélecteur de calques en haut à droite
         var baseMaps = {
-            "Vue Satellite": vueSatellite,
-            "Plan Urbain": vuePlan,
-            "Relief Topographique": vueOSM
+            "Google Maps Plan": googlePlan,
+            "Google Satellite Hybride": googleSatellite,
+            "Satellite HD (Esri)": vueSatellite,
+            "Plan Urbain (Esri)": vuePlan
         };
         L.control.layers(baseMaps, null, { position: 'topright' }).addTo(carte);
 

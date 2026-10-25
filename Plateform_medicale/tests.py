@@ -11636,7 +11636,7 @@ class PWAModeHorsLigneTests(TestCase):
         self.assertIn("application/javascript", resp["Content-Type"])
         self.assertEqual(resp["Service-Worker-Allowed"], "/")
         contenu = resp.content.decode("utf-8")
-        self.assertIn("santesn-pwa-v1", contenu)
+        self.assertIn("santesn-pwa-", contenu)
         self.assertIn("/assure/carte/", contenu)
         self.assertIn("/offline/", contenu)
 

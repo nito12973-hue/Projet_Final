@@ -67,7 +67,19 @@
         var champLatitude = document.getElementById('id_latitude');
         var champLongitude = document.getElementById('id_longitude');
 
-        // 1. Fond Satellite Réaliste HD (Esri World Imagery)
+        // 1. Google Maps Plan en direct
+        var googlePlan = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=fr', {
+            attribution: '&copy; Google Maps',
+            maxZoom: 20
+        });
+
+        // 2. Google Maps Satellite Hybride
+        var googleSatellite = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}&hl=fr', {
+            attribution: '&copy; Google Maps Satellite',
+            maxZoom: 20
+        });
+
+        // 3. Fond Satellite Réaliste HD (Esri World Imagery)
         var esriSatellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
             attribution: '&copy; Esri World Imagery',
             maxZoom: 19
@@ -78,29 +90,23 @@
         });
         var vueSatellite = L.layerGroup([esriSatellite, esriLabels]);
 
-        // 2. Plan Moderne Urbain (Esri World Street Map - Zéro 403)
+        // 4. Plan Urbain (Esri World Street Map)
         var vuePlan = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
             attribution: '&copy; Esri &mdash; Plan Urbain',
-            maxZoom: 19
-        });
-
-        // 3. OpenStreetMap Standard (Fallback)
-        // 3. Carte Topographique & Relief (Esri Topo Map)
-        var vueOSM = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
-            attribution: '&copy; Esri &mdash; Topo & Relief',
             maxZoom: 19
         });
 
         var carte = L.map('carte-prestataire', {
             center: (lat && lng) ? [lat, lng] : DAKAR,
             zoom: 12,
-            layers: [vueSatellite]
+            layers: [googlePlan]
         });
 
         var baseMaps = {
-            "Vue Satellite": vueSatellite,
-            "Plan Urbain": vuePlan,
-            "Relief Topographique": vueOSM
+            "Google Maps Plan": googlePlan,
+            "Google Satellite Hybride": googleSatellite,
+            "Satellite HD (Esri)": vueSatellite,
+            "Plan Urbain (Esri)": vuePlan
         };
         L.control.layers(baseMaps, null, { position: 'topright' }).addTo(carte);
 

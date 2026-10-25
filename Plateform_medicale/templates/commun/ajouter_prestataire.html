@@ -101,17 +101,17 @@
 </style>
 
 <section class="panel panel-form" style="max-width:760px;margin:0 auto;">
-    <details class="decouverte-osm" style="margin-bottom:20px;border:1px solid var(--border);border-radius:10px;padding:12px;background:var(--champ-bg);">
+    <details class="decouverte-osm" open style="margin-bottom:20px;border:1px solid var(--border);border-radius:10px;padding:12px;background:var(--champ-bg);">
         <summary style="cursor:pointer;font-weight:600;color:var(--primary);font-size:13.5px;">
-            {% icone "search" %} Recherche d'adresse d'un établissement de santé (facultatif)
+            {% icone "search" %} Recherche d'un établissement de santé au Sénégal (Clinique, Hôpital, Pharmacie...)
         </summary>
         <div style="margin-top:10px;">
             <p class="subtitle" style="margin-top:0;margin-bottom:10px;font-size:12.5px;">
-                Recherchez un établissement de santé au Sénégal pour pré-remplir les champs. Cette recherche facilite la saisie mais <strong>ne les inscrit pas</strong> automatiquement sur la plateforme : l'inscription est validée lors de l'enregistrement ci-dessous.
+                Recherchez n'importe quel établissement de santé au Sénégal (ex. <em>Clinique de l'Océan Dakar</em>, <em>Suma</em>, <em>Madeleine</em>, <em>Hôpital Fann</em>) pour pré-remplir instantanément son adresse et sa position GPS. Cette recherche facilite la saisie mais <strong>ne les inscrit pas</strong> automatiquement sur la plateforme : l'inscription est validée lors de l'enregistrement ci-dessous.
             </p>
             <div class="decouverte-ligne" style="display:flex;gap:8px;max-width:600px;">
-                <input type="search" id="recherche-etablissement" placeholder="Ex. : hôpital Dakar, clinique Thiès..." aria-label="Nom ou type d'établissement à rechercher" style="flex:1;">
-                <button type="button" id="bouton-chercher-etablissement" class="button btn btn-sm">Rechercher</button>
+                <input type="search" id="recherche-etablissement" placeholder="Ex. : Clinique de l'Océan Dakar, Suma, Hôpital Thiès..." aria-label="Nom ou type d'établissement à rechercher" style="flex:1;">
+                <button type="button" id="bouton-chercher-etablissement" class="button primary btn btn-sm">Rechercher</button>
             </div>
             <p id="statut-etablissement" class="subtitle" style="margin:8px 0 0;font-size:12px;" role="status" aria-live="polite"></p>
             <ul id="resultats-etablissement" class="resultats-osm" style="margin-top:8px;"></ul>
@@ -145,16 +145,16 @@
         {% endif %}
         {% endfor %}
 
-        <details style="margin-top:18px;margin-bottom:18px;border:1px solid var(--border);border-radius:10px;padding:12px;background:var(--champ-bg);">
-            <summary style="cursor:pointer;font-weight:600;color:var(--primary);font-size:13.5px;">
-                {% icone "map-pin" %} Positionner sur la carte géographique (facultatif)
+        <details id="details-carte-prestataire" open style="margin-top:18px;margin-bottom:18px;border:1px solid var(--border);border-radius:10px;padding:12px;background:var(--champ-bg);">
+            <summary id="titre-carte-prestataire" style="cursor:pointer;font-weight:600;color:var(--primary);font-size:13.5px;">
+                {% icone "map-pin" %} Positionner sur la carte géographique Google Maps
             </summary>
             <div style="margin-top:12px;">
                 <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
                     <button type="button" id="bouton-recherche-lieu" class="button btn btn-sm">Placer l'adresse sur la carte</button>
                     <span id="statut-recherche-lieu" class="subtitle" style="margin:0;" role="status" aria-live="polite"></span>
                 </div>
-                <div id="carte-prestataire" role="group" aria-labelledby="titre-carte-prestataire" style="height: 260px; border-radius: 8px; margin-bottom: 6px;"></div>
+                <div id="carte-prestataire" role="group" aria-labelledby="titre-carte-prestataire" style="height: 280px; border-radius: 8px; margin-bottom: 6px;"></div>
                 <p id="aide-carte-prestataire" class="subtitle" style="margin:0;font-size:12px;">Cliquez sur la carte pour affiner l'emplacement si souhaité.</p>
             </div>
         </details>
@@ -181,7 +181,19 @@
         var champLatitude = document.getElementById('id_latitude');
         var champLongitude = document.getElementById('id_longitude');
 
-        // 1. Fond Satellite Réaliste HD (Esri World Imagery)
+        // 1. Google Maps Plan en direct
+        var googlePlan = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=fr', {
+            attribution: '&copy; Google Maps',
+            maxZoom: 20
+        });
+
+        // 2. Google Maps Satellite Hybride
+        var googleSatellite = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}&hl=fr', {
+            attribution: '&copy; Google Maps Satellite',
+            maxZoom: 20
+        });
+
+        // 3. Fond Satellite Réaliste HD (Esri World Imagery)
         var esriSatellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
             attribution: '&copy; Esri World Imagery',
             maxZoom: 19
@@ -192,29 +204,23 @@
         });
         var vueSatellite = L.layerGroup([esriSatellite, esriLabels]);
 
-        // 2. Plan Moderne Urbain (Esri World Street Map - Zéro 403)
+        // 4. Plan Urbain (Esri World Street Map)
         var vuePlan = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
             attribution: '&copy; Esri &mdash; Plan Urbain',
-            maxZoom: 19
-        });
-
-        // 3. OpenStreetMap Standard (Fallback)
-        // 3. Carte Topographique & Relief (Esri Topo Map)
-        var vueOSM = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
-            attribution: '&copy; Esri &mdash; Topo & Relief',
             maxZoom: 19
         });
 
         var carte = L.map('carte-prestataire', {
             center: (lat && lng) ? [lat, lng] : DAKAR,
             zoom: 12,
-            layers: [vueSatellite]
+            layers: [googlePlan]
         });
 
         var baseMaps = {
-            "Vue Satellite": vueSatellite,
-            "Plan Urbain": vuePlan,
-            "Relief Topographique": vueOSM
+            "Google Maps Plan": googlePlan,
+            "Google Satellite Hybride": googleSatellite,
+            "Satellite HD (Esri)": vueSatellite,
+            "Plan Urbain (Esri)": vuePlan
         };
         L.control.layers(baseMaps, null, { position: 'topright' }).addTo(carte);
 
@@ -315,11 +321,12 @@
                 }
             }
             statutEtab.textContent =
-                'Formulaire pré-rempli depuis OpenStreetMap. Vérifiez les informations, '
-                + 'complétez ce qui manque, puis enregistrez pour inscrire ce prestataire.';
-            document.getElementById('titre-carte-prestataire').scrollIntoView({
-                behavior: 'smooth', block: 'center',
-            });
+                'Formulaire pré-rempli avec succès. Vérifiez les informations, '
+                + 'complétez ce qui manque, puis enregistrez pour inscrire et conventionner cet établissement.';
+            var elTitre = document.getElementById('titre-carte-prestataire');
+            if (elTitre) {
+                elTitre.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         }
 
         function afficherResultats(resultats) {
@@ -333,9 +340,13 @@
                 etiquette.className = 'etiquette-source';
                 if (etab.inscrit) {
                     etiquette.className += ' etiquette-deja-inscrit';
-                    etiquette.textContent = 'Déjà inscrit sur la plateforme';
+                    etiquette.textContent = 'Déjà enregistré sur SantéSN';
+                } else if (etab.source === 'referentiel_senegal') {
+                    etiquette.textContent = 'Répertoire National de Santé (Sénégal)';
+                    etiquette.style.borderColor = 'var(--accent, #e0824f)';
+                    etiquette.style.color = 'var(--accent, #e0824f)';
                 } else {
-                    etiquette.textContent = 'Trouvé sur OpenStreetMap';
+                    etiquette.textContent = 'Cartographie OpenStreetMap';
                 }
                 bloc.appendChild(etiquette);
 
@@ -406,6 +417,14 @@
                     lancerRecherche();
                 }
             });
+
+            // Si un paramètre q=... est fourni dans l'URL, lancer la recherche automatiquement
+            var urlParams = new URLSearchParams(window.location.search);
+            var qInit = urlParams.get('q') || urlParams.get('nom');
+            if (qInit && !champNom.value) {
+                champRecherche.value = qInit;
+                lancerRecherche();
+            }
         }
     })();
 </script>
