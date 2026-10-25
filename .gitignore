@@ -51,3 +51,6 @@ maquette_*.html
 
 
 !rapport_pfe/*.docx
+
+# Rapport PFE
+rapport_pfe/
