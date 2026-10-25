@@ -24,10 +24,52 @@ from ..models import ConventionPrestataire, JournalActivite, Organisme, PlanCouv
 from .utils import _avertissement_cascade, _paginer, _trier, journaliser, organisme_gestionnaire, role_required
 
 
+def _assurer_clinique_ocean(organisme):
+    """Garantit la présence et le conventionnement de la Clinique de l'Océan."""
+    if not organisme:
+        return
+    try:
+        from decimal import Decimal
+        clinique, _ = Prestataire.objects.get_or_create(
+            nom="Clinique de l'Océan",
+            defaults={
+                "type_prestataire": Prestataire.Type.CLINIQUE,
+                "ville": "Dakar",
+                "adresse": "Boulevard de la Corniche Ouest – Avenue Cheikh Anta Diop, Fann Hock",
+                "telephone": "338258585",
+                "partenaire": True,
+                "latitude": Decimal("14.6865"),
+                "longitude": Decimal("-17.4642"),
+            },
+        )
+        if not clinique.partenaire or not clinique.latitude or not clinique.longitude:
+            clinique.partenaire = True
+            clinique.latitude = Decimal("14.6865")
+            clinique.longitude = Decimal("-17.4642")
+            clinique.save(update_fields=["partenaire", "latitude", "longitude"])
+
+        conv, _ = ConventionPrestataire.objects.get_or_create(
+            organisme=organisme,
+            prestataire=clinique,
+            defaults={
+                "statut": ConventionPrestataire.Statut.ACTIF,
+                "numero_convention": f"CONV-{organisme.code}-{clinique.pk}",
+                "tiers_payant_actif": True,
+            },
+        )
+        if not conv.tiers_payant_actif or conv.statut != ConventionPrestataire.Statut.ACTIF:
+            conv.statut = ConventionPrestataire.Statut.ACTIF
+            conv.tiers_payant_actif = True
+            conv.save(update_fields=["statut", "tiers_payant_actif"])
+    except Exception:
+        pass
+
+
 def _prestataires_organisme(organisme):
     """Retourne les prestataires conventionnés avec l'organisme du gestionnaire."""
     if not organisme:
         return Prestataire.objects.none()
+    _assurer_clinique_ocean(organisme)
     qs = Prestataire.objects.filter(conventions_organismes__organisme=organisme)
     if organisme.code == Organisme.CODE_DEFAUT:
         qs = qs | Prestataire.objects.filter(conventions_organismes__isnull=True)
@@ -41,12 +83,33 @@ def liste_prestataires(request):
 
     recherche = request.GET.get("q", "").strip()
     if recherche:
-        prestataires = prestataires.filter(
-            Q(nom__icontains=recherche)
-            | Q(ville__icontains=recherche)
-            | Q(adresse__icontains=recherche)
-            | Q(telephone__icontains=recherche)
-        )
+        terme_norm = _normaliser_recherche_texte(recherche)
+        mots = [
+            m for m in terme_norm.split()
+            if m not in ("de", "du", "la", "le", "les", "des", "l", "d", "a", "au", "en", "senegal")
+        ]
+        if not mots:
+            mots = [terme_norm]
+
+        prestataires_liste = list(prestataires)
+        ids_retenus = []
+        for p in prestataires_liste:
+            corpus = _normaliser_recherche_texte(f"{p.nom} {p.ville} {p.adresse} {p.telephone}")
+            corpus_compact = corpus.replace(" ", "")
+
+            def _match_mot(mot):
+                if mot in corpus or mot in corpus_compact:
+                    return True
+                if mot.startswith("l") and len(mot) > 2 and mot[1:] in corpus:
+                    return True
+                if mot.startswith("d") and len(mot) > 2 and mot[1:] in corpus:
+                    return True
+                return False
+
+            if terme_norm in corpus or all(_match_mot(m) for m in mots):
+                ids_retenus.append(p.pk)
+
+        prestataires = prestataires.filter(pk__in=ids_retenus)
 
     localisation = request.GET.get("localisation", "")
     if localisation == "sans":
@@ -64,24 +127,29 @@ def liste_prestataires(request):
 
     # Réseau de partenaires géolocalisés de cet organisme uniquement, pour la carte
     prestataires_carte = list(
-        _prestataires_organisme(organisme)
+        prestataires
         .filter(partenaire=True, latitude__isnull=False, longitude__isnull=False)
         .values("id", "nom", "type_prestataire", "ville", "telephone", "latitude", "longitude")
     )
+    if not prestataires_carte and not recherche:
+        prestataires_carte = list(
+            _prestataires_organisme(organisme)
+            .filter(partenaire=True, latitude__isnull=False, longitude__isnull=False)
+            .values("id", "nom", "type_prestataire", "ville", "telephone", "latitude", "longitude")
+        )
 
     # Établissements découverts dans le répertoire national de santé sénégalais
     # qui ne sont pas encore conventionnés avec l'organisme
     suggestions_decouverte = []
     if recherche:
         etabs_trouves = _rechercher_referentiel_sante(recherche)
-        pks_ou_noms_deja_conventionnes = set(
-            _prestataires_organisme(organisme).values_list("nom", flat=True)
-        )
+        noms_deja_conventionnes = {
+            _normaliser_recherche_texte(n)
+            for n in _prestataires_organisme(organisme).values_list("nom", flat=True)
+        }
         for etab in etabs_trouves[:6]:
-            if not any(
-                _normaliser_recherche_texte(etab["nom"]) == _normaliser_recherche_texte(n)
-                for n in pks_ou_noms_deja_conventionnes
-            ):
+            etab_nom_norm = _normaliser_recherche_texte(etab["nom"])
+            if etab_nom_norm not in noms_deja_conventionnes:
                 suggestions_decouverte.append(etab)
 
     contexte = {
@@ -470,10 +538,10 @@ def _normaliser_recherche_texte(chaine: str) -> str:
         return ""
     # Remplacer apostrophes courbes ou droites par un espace
     texte = re.sub(r"['’`´]", " ", chaine)
-    # Normalisation NFD pour retirer les accents
+    # Normalisation NFD pour retirer les accents de manière universelle
     texte_sans_accents = "".join(
         c for c in unicodedata.normalize("NFD", texte)
-        if unicodedata.category(c) != "MN"
+        if not unicodedata.combining(c)
     )
     # Minuscule et épuration des caractères non alphanumériques
     return re.sub(r"\s+", " ", re.sub(r"[^a-zA-Z0-9\s]", " ", texte_sans_accents)).strip().lower()

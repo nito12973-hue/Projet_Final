@@ -163,6 +163,22 @@ class Command(BaseCommand):
         )
 
         # 3. Prestataires partenaires
+        clinique_ocean, _ = Prestataire.objects.get_or_create(
+            nom="Clinique de l'Océan",
+            defaults={
+                "type_prestataire": Prestataire.Type.CLINIQUE,
+                "ville": "Dakar",
+                "adresse": "Boulevard de la Corniche Ouest × Avenue Cheikh Anta Diop, Fann Hock",
+                "telephone": "338258585",
+                "partenaire": True,
+                "latitude": Decimal("14.6865"),
+                "longitude": Decimal("-17.4642"),
+            },
+        )
+        if not clinique_ocean.partenaire:
+            clinique_ocean.partenaire = True
+            clinique_ocean.save(update_fields=["partenaire"])
+
         hopital, _ = Prestataire.objects.get_or_create(
             nom="Hôpital Principal de Dakar",
             defaults={
@@ -589,7 +605,7 @@ class Command(BaseCommand):
 
         # 8. Conventions entre organismes et prestataires
         for org_conv in (org_defaut, org_sonatel):
-            for prest_conv in (hopital, pharmacie):
+            for prest_conv in (clinique_ocean, hopital, pharmacie):
                 ConventionPrestataire.objects.get_or_create(
                     organisme=org_conv,
                     prestataire=prest_conv,

@@ -14064,4 +14064,34 @@ class PagesJuridiquesTests(TestCase):
         self.assertIn("Disallow: /admin/", resp.content.decode())
 
 
+class RecherchePrestatairesToleranteTests(TestCase):
+    """Vérifie la robustesse de la recherche de prestataires (accents, apostrophes, multi-mots)."""
+
+    def setUp(self):
+        self.client = Client()
+        self.organisme = Organisme.obtenir_defaut()
+        self.gestionnaire = User.objects.create_user(
+            email="gestionnaire-test-search@santesn.sn",
+            password="TestPassword123!",
+            role=User.Role.GESTIONNAIRE,
+            organisme=self.organisme,
+        )
+
+    def test_recherche_clinique_ocean_multi_mots_et_sans_accent(self):
+        """Une recherche comme 'CLINIQUE DE L'OCEAN DAKAR' trouve bien la Clinique de l'Océan."""
+        self.client.force_login(self.gestionnaire)
+        requetes = [
+            "CLINIQUE DE L'OCEAN DAKAR",
+            "CLINIQUE DE L'OCEAN",
+            "ocean",
+            "océan",
+            "clinique dakar",
+        ]
+        for q in requetes:
+            resp = self.client.get(reverse("liste_prestataires"), {"q": q})
+            self.assertEqual(resp.status_code, 200)
+            self.assertContains(resp, "Clinique de l&#x27;Océan")
+
+
+
 
