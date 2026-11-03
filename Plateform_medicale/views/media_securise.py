@@ -65,8 +65,9 @@ def telecharger_justificatif_remboursement(request, pk):
     type_mime, _ = mimetypes.guess_type(nom_fichier)
     type_mime = type_mime or "application/octet-stream"
 
-    # 1. Mode Production Nginx (X-Accel-Redirect)
-    if getattr(settings, "USE_X_ACCEL_REDIRECT", False):
+    # 1. Mode Production Nginx (X-Accel-Redirect) — uniquement si le fichier existe physiquement sur disque
+    chemin_disque = os.path.join(settings.MEDIA_ROOT, remboursement.justificatif.name)
+    if getattr(settings, "USE_X_ACCEL_REDIRECT", False) and os.path.exists(chemin_disque):
         reponse = HttpResponse(content_type=type_mime)
         reponse["X-Accel-Redirect"] = f"/protected_media/{remboursement.justificatif.name}"
         return _finaliser_reponse_fichier(reponse, nom_fichier)
@@ -122,7 +123,8 @@ def telecharger_piece_identite_patient(request, pk):
     type_mime, _ = mimetypes.guess_type(nom_fichier)
     type_mime = type_mime or "application/octet-stream"
 
-    if getattr(settings, "USE_X_ACCEL_REDIRECT", False):
+    chemin_disque = os.path.join(settings.MEDIA_ROOT, patient.document_justificatif.name)
+    if getattr(settings, "USE_X_ACCEL_REDIRECT", False) and os.path.exists(chemin_disque):
         reponse = HttpResponse(content_type=type_mime)
         reponse["X-Accel-Redirect"] = f"/protected_media/{patient.document_justificatif.name}"
         return _finaliser_reponse_fichier(reponse, nom_fichier)
@@ -207,7 +209,8 @@ def telecharger_devis_prise_en_charge(request, pk):
     type_mime, _ = mimetypes.guess_type(nom_fichier)
     type_mime = type_mime or "application/octet-stream"
 
-    if getattr(settings, "USE_X_ACCEL_REDIRECT", False):
+    chemin_disque = os.path.join(settings.MEDIA_ROOT, prise.devis_fichier.name)
+    if getattr(settings, "USE_X_ACCEL_REDIRECT", False) and os.path.exists(chemin_disque):
         reponse = HttpResponse(content_type=type_mime)
         reponse["X-Accel-Redirect"] = f"/protected_media/{prise.devis_fichier.name}"
         return _finaliser_reponse_fichier(reponse, nom_fichier)

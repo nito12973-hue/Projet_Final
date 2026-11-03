@@ -454,9 +454,6 @@ def bordereau_teletransmission(request):
         if prestataire_id and request.user.role == User.Role.GESTIONNAIRE and request.user.organisme_id:
             if not Prestataire.objects.filter(pk=prestataire_id, conventions_organismes__organisme_id=request.user.organisme_id).exists():
                 prestataire_id = None
-        if prestataire_id and request.user.role == User.Role.GESTIONNAIRE and request.user.organisme_id:
-            if not Prestataire.objects.filter(pk=prestataire_id, conventions_organismes__organisme_id=request.user.organisme_id).exists():
-                prestataire_id = None
 
     actes, totaux = _recuperer_actes_teletransmission(
         annee=annee,

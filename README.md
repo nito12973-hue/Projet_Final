@@ -2,7 +2,7 @@
 
 [![CI SantéSN - Tests & Validation](https://github.com/nito12973-hue/Projet_Final/actions/workflows/ci.yml/badge.svg)](https://github.com/nito12973-hue/Projet_Final/actions/workflows/ci.yml)
 [![Documentation Mintlify](https://img.shields.io/badge/Documentation%20Mintlify-En%20Ligne-0E7C86?style=flat&logo=gitbook&logoColor=white)](https://documentation-santesn.mintlify.app/docs/introduction)
-[![Tests Automatisés](https://img.shields.io/badge/Tests-946%20valid%C3%A9s%20%E2%9C%94-success.svg)](Plateform_medicale/tests.py)
+[![Tests Automatisés](https://img.shields.io/badge/Tests-948%20valid%C3%A9s%20%E2%9C%94-success.svg)](Plateform_medicale/tests.py)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%20%7C%203.14-blue.svg)](https://www.python.org/)
 [![Django 5.2](https://img.shields.io/badge/django-5.2-green.svg)](https://docs.djangoproject.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -93,7 +93,7 @@ python manage.py runserver
 
 ## 🧪 Tests Automatisés
 
-Le projet inclut une suite robuste de **946 tests unitaires, d'intégration et de sécurité** exécutés automatiquement via GitHub Actions (100% de succès) :
+Le projet inclut une suite robuste de **948 tests unitaires, d'intégration et de sécurité** exécutés automatiquement via GitHub Actions (100% de succès) :
 
 ```bash
 python manage.py test Plateform_medicale

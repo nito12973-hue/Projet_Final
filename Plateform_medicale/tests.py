@@ -10253,9 +10253,9 @@ class PreLaunchAuditAndLegalPagesTests(TestCase):
 
     def test_champ_recherche_css_icone_et_padding(self):
         import os
-        base_path = os.path.join('Plateform_medicale', 'templates', 'gabarits', 'base.html')
+        base_path = os.path.join(os.path.dirname(__file__), 'templates', 'gabarits', 'base.html')
         if not os.path.exists(base_path):
-            base_path = os.path.join('Plateform_medicale', 'templates', 'base.html')
+            base_path = os.path.join(os.path.dirname(__file__), 'templates', 'base.html')
         with open(base_path, 'r', encoding='utf-8') as f:
             base_html = f.read()
         self.assertIn("form.filtres .champ-recherche input", base_html)
@@ -10265,9 +10265,9 @@ class PreLaunchAuditAndLegalPagesTests(TestCase):
     def test_sidebar_anti_debordement_css_et_structure(self):
         """Vérifie les règles CSS strictes anti-débordement de la barre latérale et du layout."""
         import os
-        base_path = os.path.join('Plateform_medicale', 'templates', 'gabarits', 'base.html')
+        base_path = os.path.join(os.path.dirname(__file__), 'templates', 'gabarits', 'base.html')
         if not os.path.exists(base_path):
-            base_path = os.path.join('Plateform_medicale', 'templates', 'base.html')
+            base_path = os.path.join(os.path.dirname(__file__), 'templates', 'base.html')
         with open(base_path, 'r', encoding='utf-8') as f:
             base_html = f.read()
 
@@ -14108,6 +14108,79 @@ class RecherchePrestatairesToleranteTests(TestCase):
             resp = self.client.get(reverse("liste_prestataires"), {"q": q})
             self.assertEqual(resp.status_code, 200)
             self.assertContains(resp, "Clinique de l&#x27;Océan")
+
+    def test_plafond_annuel_applique_en_pharmacie_et_cumule_avec_consultation(self):
+        """Vérifie que Delivrance.calculer_partages() et Paiement.calculer_pour() respectent le plafond annuel familial."""
+        plan = PlanCouverture.objects.create(
+            nom="Plan Plafond Strict",
+            taux_couverture=Decimal("80.00"),
+            plafond_annuel=Decimal("20000.00"),
+        )
+        patient = Patient.objects.create(
+            nom="Sylla",
+            prenom="Ibrahima",
+            date_naissance=datetime.date(1988, 4, 10),
+            telephone="771110099",
+            organisme=self.organisme,
+            plan_couverture=plan,
+        )
+        medecin = creer_medecin("dr.plafond@santesn.sn")
+        pharmacien = creer_pharmacien("pharma.plafond@santesn.sn")
+        service = ServiceMedical.objects.create(nom="Consultation Spécialisée", prix=Decimal("20000.00"))
+        pec = PriseEnCharge.objects.create(patient=patient, motif="Soins", montant_estime=Decimal("20000.00"), statut="validee")
+        cons1 = Consultation.objects.create(
+            patient=patient, medecin=medecin, service=service, prise_en_charge=pec,
+            date_consultation=timezone.now(), diagnostic="Suivi",
+        )
+        ord1 = Ordonnance.objects.create(consultation=cons1, medicaments="Traitement A")
+        # 1) Délivrance pharmacie de 20 000 FCFA à 80% = 16 000 FCFA part assurance (reste 4 000 FCFA sur le plafond de 20 000 FCFA)
+        deliv1 = Delivrance(ordonnance=ord1, pharmacien=pharmacien, montant_total=Decimal("20000.00"), taux_couverture=Decimal("80.00"))
+        deliv1.calculer_partages()
+        deliv1.save()
+        self.assertEqual(deliv1.montant_part_assurance, Decimal("16000"))
+
+        # 2) Paiement de la consultation : 80% de 20 000 = 16 000 FCFA, mais écrêté au reliquat de 4 000 FCFA !
+        paiement1 = Paiement.calculer_pour(cons1)
+        self.assertEqual(paiement1.montant_part_assurance, Decimal("4000.00"))
+        self.assertEqual(paiement1.montant_part_patient, Decimal("16000.00"))
+        paiement1.save()
+
+        # 3) Seconde ordonnance en pharmacie : plafond épuisé (reliquat = 0) -> part assurance = 0 FCFA
+        ord2 = Ordonnance.objects.create(consultation=cons1, medicaments="Traitement B")
+        deliv2 = Delivrance(ordonnance=ord2, pharmacien=pharmacien, montant_total=Decimal("10000.00"), taux_couverture=Decimal("80.00"))
+        deliv2.calculer_partages()
+        self.assertEqual(deliv2.montant_part_assurance, Decimal("0"))
+        self.assertEqual(deliv2.montant_part_patient, Decimal("10000.00"))
+
+    def test_isolation_plan_couverture_partage_entre_organismes(self):
+        """Un gestionnaire ne peut pas modifier ou supprimer un PlanCouverture utilisé par les assurés d'un autre organisme."""
+        org_autre = Organisme.objects.create(nom="Autre IPM", code="IPM-AUTRE-PLAN", actif=True)
+        plan_partage = PlanCouverture.objects.create(
+            nom="Plan Partagé Inter-IPM",
+            taux_couverture=Decimal("80.00"),
+            plafond_annuel=Decimal("500000.00"),
+        )
+        Patient.objects.create(
+            nom="Gueye",
+            prenom="Mamadou",
+            date_naissance=datetime.date(1991, 2, 2),
+            telephone="778889900",
+            organisme=org_autre,
+            plan_couverture=plan_partage,
+        )
+        self.client.force_login(self.gestionnaire)
+        resp_mod = self.client.post(
+            reverse("modifier_plan_couverture", args=[plan_partage.pk]),
+            {"nom": "Plan Piraté", "taux_couverture": "10.00", "plafond_annuel": "1000.00"},
+        )
+        self.assertEqual(resp_mod.status_code, 302)
+        plan_partage.refresh_from_db()
+        self.assertEqual(plan_partage.taux_couverture, Decimal("80.00"))
+
+        resp_del = self.client.post(reverse("supprimer_plan_couverture", args=[plan_partage.pk]))
+        self.assertEqual(resp_del.status_code, 302)
+        self.assertTrue(PlanCouverture.objects.filter(pk=plan_partage.pk).exists())
+
 
 
 

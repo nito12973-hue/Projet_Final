@@ -304,7 +304,7 @@ def parametres(request, section="general"):
             if pref_form.is_valid():
                 pref_form.save()
                 messages.success(request, "Préférences de notifications mises à jour.", extra_tags="succes-critique")
-                return redirect("parametres_section", section="notifications")
+                return redirect(reverse("parametres_section", args=["notifications"]))
             else:
                 contexte["pref_form"] = pref_form
         else:

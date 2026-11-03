@@ -262,9 +262,7 @@ class LoginForm(forms.Form):
         password = cleaned_data.get('password')
         if email:
             email = email.strip().lower()
-            if email == 'lamarananitodiallo2908@gmail.com' and not User.objects.filter(email=email).exists():
-                email = 'lamaranitodiallo2908@gmail.com'
-                cleaned_data['email'] = email
+            cleaned_data['email'] = email
 
         if email and password:
             # Etat de blocage lu en base (TentativeConnexion) et non plus

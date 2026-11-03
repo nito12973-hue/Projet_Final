@@ -549,21 +549,6 @@ def modifier_profil_medecin(request):
 
 
 @role_required(User.Role.MEDECIN)
-def liste_ordonnances(request):
-    """Liste des ordonnances du medecin connecte."""
-    medecin = _medecin_courant(request)
-    if medecin is None:
-        return render(request, "medecin_fiche_manquante.html")
-    from django.db.models import Q
-    ordonnances = Ordonnance.objects.filter(consultation__medecin=medecin).select_related(
-        "consultation__patient", "delivrance"
-    ).order_by("-date_creation")
-    return render(request, "liste_ordonnances_medecin.html", {
-        "ordonnances": _paginer(request, ordonnances),
-    })
-
-
-@role_required(User.Role.MEDECIN)
 @require_POST
 def annuler_ordonnance_medecin(request, pk):
     """Annule une ordonnance émise par le médecin connecté si elle n'est pas encore délivrée."""

@@ -1000,10 +1000,20 @@ class Paiement(models.Model):
             annee = (consultation.date_consultation or timezone.now()).year
             titulaire = consultation.patient.titulaire
             membres_foyer = [titulaire.pk] + list(titulaire.ayants_droit.values_list("pk", flat=True))
-            consomme_deja = Paiement.objects.filter(
+            consomme_consult = Paiement.objects.filter(
                 consultation__patient_id__in=membres_foyer,
                 consultation__date_consultation__year=annee,
             ).exclude(consultation=consultation).aggregate(total=Sum("montant_part_assurance"))["total"] or Decimal("0")
+            consomme_pharma = Delivrance.objects.filter(
+                ordonnance__consultation__patient_id__in=membres_foyer,
+                date_delivrance__year=annee,
+            ).aggregate(total=Sum("montant_part_assurance"))["total"] or Decimal("0")
+            consomme_remb = DemandeRemboursement.objects.filter(
+                patient_id__in=membres_foyer,
+                date_soins__year=annee,
+                statut__in=["validee", "remboursee"],
+            ).aggregate(total=Sum("montant_rembourse_accorde"))["total"] or Decimal("0")
+            consomme_deja = consomme_consult + consomme_pharma + consomme_remb
 
             reliquat_disponible = max(Decimal("0"), Decimal(str(plan.plafond_annuel)) - Decimal(str(consomme_deja)))
             if montant_part_assurance > reliquat_disponible:
@@ -1359,11 +1369,41 @@ class Delivrance(models.Model):
         return f"Delivrance de {self.ordonnance} par {self.pharmacien}"
 
     def calculer_partages(self):
-        """Calcule la part assurance et le ticket modérateur selon le montant total et le taux de couverture."""
+        """Calcule la part assurance et le ticket modérateur selon le montant total, le taux de couverture et le plafond annuel restant."""
         total = self.montant_total or Decimal("0.00")
         taux = self.taux_couverture or Decimal("0.00")
         if total > Decimal("0.00") and taux > Decimal("0.00"):
-            self.montant_part_assurance = (total * taux / Decimal("100")).quantize(Decimal("1"))
+            part_assurance = (total * taux / Decimal("100")).quantize(Decimal("1"))
+            # Application du plafond annuel familial si l'ordonnance est rattachée à un patient
+            if self.ordonnance_id and getattr(self.ordonnance, "consultation_id", None):
+                patient = getattr(self.ordonnance.consultation, "patient", None)
+                plan = patient.titulaire.plan_couverture if (patient and patient.titulaire) else None
+                if plan and plan.plafond_annuel is not None and plan.plafond_annuel > 0:
+                    from django.db.models import Sum
+                    annee = (self.date_delivrance or timezone.now()).year
+                    titulaire = patient.titulaire
+                    membres_foyer = [titulaire.pk] + list(titulaire.ayants_droit.values_list("pk", flat=True))
+                    consomme_consult = Paiement.objects.filter(
+                        consultation__patient_id__in=membres_foyer,
+                        consultation__date_consultation__year=annee,
+                    ).aggregate(total=Sum("montant_part_assurance"))["total"] or Decimal("0")
+                    qs_pharma = Delivrance.objects.filter(
+                        ordonnance__consultation__patient_id__in=membres_foyer,
+                        date_delivrance__year=annee,
+                    )
+                    if self.pk:
+                        qs_pharma = qs_pharma.exclude(pk=self.pk)
+                    consomme_pharma = qs_pharma.aggregate(total=Sum("montant_part_assurance"))["total"] or Decimal("0")
+                    consomme_remb = DemandeRemboursement.objects.filter(
+                        patient_id__in=membres_foyer,
+                        date_soins__year=annee,
+                        statut__in=["validee", "remboursee"],
+                    ).aggregate(total=Sum("montant_rembourse_accorde"))["total"] or Decimal("0")
+                    deja_consomme = consomme_consult + consomme_pharma + consomme_remb
+                    reliquat = max(Decimal("0"), Decimal(str(plan.plafond_annuel)) - Decimal(str(deja_consomme)))
+                    if part_assurance > reliquat:
+                        part_assurance = reliquat.quantize(Decimal("1"))
+            self.montant_part_assurance = part_assurance
             self.montant_part_patient = total - self.montant_part_assurance
         else:
             self.montant_part_assurance = Decimal("0.00")

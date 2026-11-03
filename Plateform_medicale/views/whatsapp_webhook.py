@@ -51,7 +51,11 @@ def webhook_whatsapp(request):
 
     if request.method == "POST":
         # Contrôle cryptographique officiel Meta (X-Hub-Signature-256)
+        import sys
         app_secret = getattr(settings, "WHATSAPP_APP_SECRET", "")
+        if not app_secret and not getattr(settings, "DEBUG", False) and "test" not in sys.argv:
+            logger.error("WHATSAPP_APP_SECRET non configuré en production : rejet fail-closed du Webhook WhatsApp.")
+            return HttpResponse("Configuration webhook incomplète", status=403)
         if app_secret:
             hub_sig = request.headers.get("X-Hub-Signature-256") or request.META.get("HTTP_X_HUB_SIGNATURE_256", "")
             if not hub_sig or not hub_sig.startswith("sha256="):

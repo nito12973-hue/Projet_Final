@@ -25,13 +25,13 @@ from .utils import _avertissement_cascade, _paginer, _trier, journaliser, organi
 
 
 def _assurer_clinique_ocean(organisme):
-    """Garantit la présence et le conventionnement de la Clinique de l'Océan en production / démo."""
+    """Garantit la présence initiale de la Clinique de l'Océan en démo si elle n'existe pas encore."""
     import sys
     if not organisme or "test" in sys.argv:
         return
     try:
         from decimal import Decimal
-        clinique, _ = Prestataire.objects.get_or_create(
+        clinique, created = Prestataire.objects.get_or_create(
             nom="Clinique de l'Océan",
             defaults={
                 "type_prestataire": Prestataire.Type.CLINIQUE,
@@ -43,25 +43,16 @@ def _assurer_clinique_ocean(organisme):
                 "longitude": Decimal("-17.4642"),
             },
         )
-        if not clinique.partenaire or not clinique.latitude or not clinique.longitude:
-            clinique.partenaire = True
-            clinique.latitude = Decimal("14.6865")
-            clinique.longitude = Decimal("-17.4642")
-            clinique.save(update_fields=["partenaire", "latitude", "longitude"])
-
-        conv, _ = ConventionPrestataire.objects.get_or_create(
-            organisme=organisme,
-            prestataire=clinique,
-            defaults={
-                "statut": ConventionPrestataire.Statut.ACTIF,
-                "numero_convention": f"CONV-{organisme.code}-{clinique.pk}",
-                "tiers_payant_actif": True,
-            },
-        )
-        if not conv.tiers_payant_actif or conv.statut != ConventionPrestataire.Statut.ACTIF:
-            conv.statut = ConventionPrestataire.Statut.ACTIF
-            conv.tiers_payant_actif = True
-            conv.save(update_fields=["statut", "tiers_payant_actif"])
+        if created:
+            ConventionPrestataire.objects.get_or_create(
+                organisme=organisme,
+                prestataire=clinique,
+                defaults={
+                    "statut": ConventionPrestataire.Statut.ACTIF,
+                    "numero_convention": f"CONV-{organisme.code}-{clinique.pk}",
+                    "tiers_payant_actif": True,
+                },
+            )
     except Exception:
         pass
 
@@ -834,13 +825,22 @@ def modifier_prestataire(request, pk):
         form = PrestataireForm(request.POST, instance=prestataire)
         if form.is_valid():
             with transaction.atomic():
-                prestataire = form.save()
+                souhaite_partenaire = form.cleaned_data.get("partenaire", True)
+                autres_actives = prestataire.conventions_organismes.exclude(organisme=organisme).filter(
+                    statut=ConventionPrestataire.Statut.ACTIF,
+                    tiers_payant_actif=True,
+                ).exists()
+                prestataire = form.save(commit=False)
+                if not souhaite_partenaire and autres_actives:
+                    # Ne pas désactiver globalement l'établissement s'il est encore partenaire actif d'une autre IPM
+                    prestataire.partenaire = True
+                prestataire.save()
                 conv, _ = ConventionPrestataire.objects.get_or_create(
                     organisme=organisme,
                     prestataire=prestataire,
                     defaults={"cree_par": request.user},
                 )
-                if prestataire.partenaire:
+                if souhaite_partenaire:
                     conv.statut = ConventionPrestataire.Statut.ACTIF
                     conv.tiers_payant_actif = True
                 else:
@@ -926,9 +926,16 @@ def ajouter_plan_couverture(request):
 
 @role_required(User.Role.GESTIONNAIRE)
 def modifier_plan_couverture(request, pk):
+    organisme = None
     if request.user.role == User.Role.GESTIONNAIRE:
-        organisme_gestionnaire(request)
+        organisme = organisme_gestionnaire(request)
     plan = get_object_or_404(PlanCouverture, pk=pk)
+    if organisme and plan.beneficiaires.exclude(organisme=organisme).exists():
+        messages.error(
+            request,
+            "Ce plan de couverture est partagé avec des bénéficiaires d'un autre organisme et ne peut pas être modifié globalement.",
+        )
+        return redirect("liste_plans_couverture")
     if request.method == "POST":
         form = PlanCouvertureForm(request.POST, instance=plan)
         if form.is_valid():
@@ -942,9 +949,16 @@ def modifier_plan_couverture(request, pk):
 
 @role_required(User.Role.GESTIONNAIRE)
 def supprimer_plan_couverture(request, pk):
+    organisme = None
     if request.user.role == User.Role.GESTIONNAIRE:
-        organisme_gestionnaire(request)
+        organisme = organisme_gestionnaire(request)
     plan = get_object_or_404(PlanCouverture, pk=pk)
+    if organisme and plan.beneficiaires.exclude(organisme=organisme).exists():
+        messages.error(
+            request,
+            "Impossible de supprimer ce plan de couverture : il est rattaché à des assurés d'un autre organisme.",
+        )
+        return redirect("liste_plans_couverture")
     if request.method == "POST":
         try:
             with transaction.atomic():
