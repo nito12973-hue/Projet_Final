@@ -7671,6 +7671,7 @@ class OnboardingEtActivationTests(TestCase):
     """Tests du système d'onboarding sécurisé et d'activation par jeton unique."""
 
     def setUp(self):
+        self.organisme = Organisme.objects.create(nom="Organisme Test", code="ORGA_TEST_ACT")
         self.admin = creer_utilisateur(User.Role.ADMIN, 'admin-onboarding@santesn.sn')
         self.user = User.objects.create_user(
             email='nouvel-assure@santesn.sn',
@@ -7678,6 +7679,7 @@ class OnboardingEtActivationTests(TestCase):
             first_name='Moussa',
             last_name='Ndiaye',
             phone_number='771234567',
+            organisme=self.organisme,
         )
 
     def test_generation_et_activation_compte_succes(self):
@@ -7739,6 +7741,32 @@ class OnboardingEtActivationTests(TestCase):
         reponse = self.client.post(reverse('renvoyer_activation', args=[self.user.pk]), follow=True)
         self.assertEqual(reponse.status_code, 200)
         self.assertContains(reponse, "activation")
+
+    def test_renvoyer_activation_par_gestionnaire_meme_organisme(self):
+        """Un gestionnaire peut renvoyer le lien d'activation à un utilisateur de son organisme."""
+        gestionnaire = creer_utilisateur(User.Role.GESTIONNAIRE, 'gest.orga1@santesn.sn', organisme=self.organisme)
+        cible = creer_utilisateur(User.Role.ASSURE, 'assure.orga1@santesn.sn', organisme=self.organisme)
+        self.client.login(username='gest.orga1@santesn.sn', password=PASSWORD)
+        reponse = self.client.post(reverse('renvoyer_activation', args=[cible.pk]), follow=True)
+        self.assertEqual(reponse.status_code, 200)
+        self.assertContains(reponse, "activation")
+
+    def test_renvoyer_activation_par_gestionnaire_autre_organisme_interdit(self):
+        """Un gestionnaire ne peut pas renvoyer le lien d'un utilisateur d'un autre organisme (403)."""
+        orga_autre = Organisme.objects.create(nom="Autre Organisme", code="AUTRE_TEST_01")
+        gestionnaire = creer_utilisateur(User.Role.GESTIONNAIRE, 'gest.orga2@santesn.sn', organisme=self.organisme)
+        cible_autre = creer_utilisateur(User.Role.ASSURE, 'assure.autre@santesn.sn', organisme=orga_autre)
+        self.client.login(username='gest.orga2@santesn.sn', password=PASSWORD)
+        reponse = self.client.post(reverse('renvoyer_activation', args=[cible_autre.pk]))
+        self.assertEqual(reponse.status_code, 403)
+
+    def test_renvoyer_activation_par_gestionnaire_sur_admin_interdit(self):
+        """Un gestionnaire ne peut jamais renvoyer ou toucher à un compte administrateur (403)."""
+        gestionnaire = creer_utilisateur(User.Role.GESTIONNAIRE, 'gest.orga3@santesn.sn', organisme=self.organisme)
+        admin_user = User.objects.filter(role=User.Role.ADMIN).first()
+        self.client.login(username='gest.orga3@santesn.sn', password=PASSWORD)
+        reponse = self.client.post(reverse('renvoyer_activation', args=[admin_user.pk]))
+        self.assertEqual(reponse.status_code, 403)
 
 
 class WhatsAppServiceTests(TestCase):

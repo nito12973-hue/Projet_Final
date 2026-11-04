@@ -420,6 +420,7 @@
                             <a href="{% url 'journal_activite' %}?q={{ utilisateur.email }}" class="button btn btn-sm" title="Consulter l'historique d'activité de cet utilisateur">{% icone "file-text" %} Historique</a>
                             <form method="post" action="{% url 'renvoyer_activation' utilisateur.pk %}" class="action-ligne">
                                 {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
                                 <button type="submit" class="button btn btn-sm" title="Transmettre le lien d'activation sur WhatsApp ou par email">{% icone "share-2" %} Lien d'accès</button>
                             </form>
                             {% if utilisateur.pk != request.user.pk %}

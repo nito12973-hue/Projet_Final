@@ -74,7 +74,7 @@ def _compte_accessible_ou_403(request, pk):
     Autorise : son propre compte, un gestionnaire (créé et supervisé par l'admin),
     ou un compte signalé (bloqué). Tout refus est tracé dans le logger de sécurité.
 
-    Un GESTIONNAIRE ne peut accéder qu'aux utilisateurs de SON organisme.
+    Un GESTIONNAIRE ne peut accéder qu'aux utilisateurs de SON organisme (et jamais à un ADMIN).
     L'ADMIN peut accéder aux gestionnaires et aux comptes malveillants/bloqués (ou au sien).
     """
     utilisateur = get_object_or_404(User, pk=pk)
@@ -86,7 +86,7 @@ def _compte_accessible_ou_403(request, pk):
         ):
             raise PermissionDenied
     elif request.user.role == User.Role.GESTIONNAIRE:
-        if utilisateur.organisme_id != request.user.organisme_id:
+        if utilisateur.role == User.Role.ADMIN or utilisateur.organisme_id != request.user.organisme_id:
             raise PermissionDenied
     return utilisateur
 
@@ -906,7 +906,7 @@ def renvoyer_activation(request, pk):
     )
     bilan = statut.get("bilan") or construire_bilan_onboarding(statut, utilisateur, action="renvoi")
     messages.success(request, bilan["texte_flash"])
-    return redirect("liste_utilisateurs")
+    return redirect_securise(request, "liste_utilisateurs")
 
 
 @role_required(User.Role.ADMIN, User.Role.GESTIONNAIRE)
