@@ -18,6 +18,7 @@ from django.utils import timezone
 from ..forms import DemandeSupportForm, ReponseSupportForm
 from ..models import DemandeSupport, JournalActivite, MessageSupport, Notification, User
 from ..services.assistant import traiter_message_assistant
+from ..services.notifications import emettre_notification
 from .utils import _paginer, admin_required, journaliser, role_required
 
 
@@ -142,16 +143,14 @@ def creer_demande_support(request):
                 titre_notif = "Nouvelle demande d'assistance assuré"
 
             if destinataires:
-                Notification.objects.bulk_create([
-                    Notification(
+                for u in destinataires:
+                    emettre_notification(
                         destinataire=u,
                         titre=titre_notif,
                         message=f"L'assuré {nom_patient} a ouvert une demande ({demande.get_categorie_display()} - {demande.numero_dossier}) : {demande.objet}.",
                         type_evenement=Notification.TypeEvenement.SUPPORT_DEMANDE,
                         url_action=reverse("admin_detail_demande_support", args=[demande.pk]),
                     )
-                    for u in destinataires
-                ])
 
             messages.success(
                 request,
@@ -226,16 +225,14 @@ def detail_demande_support(request, pk):
                     destinataires = list(User.objects.filter(role=User.Role.GESTIONNAIRE, is_active=True))
 
             if destinataires:
-                Notification.objects.bulk_create([
-                    Notification(
+                for u in destinataires:
+                    emettre_notification(
                         destinataire=u,
                         titre="Nouveau message sur demande d'assistance",
                         message=f"{nom_patient} a répondu sur la demande (dossier {demande.numero_dossier}).",
                         type_evenement=Notification.TypeEvenement.SUPPORT_DEMANDE,
                         url_action=reverse("admin_detail_demande_support", args=[demande.pk]),
                     )
-                    for u in destinataires
-                ])
 
             messages.success(request, "Votre message a été envoyé.")
             return redirect("detail_demande_support", pk=demande.pk)
@@ -356,7 +353,7 @@ def admin_detail_demande_support(request, pk):
 
                 # Notifier l'assuré auteur de la demande
                 expediteur = "Support Technique Informatique" if est_admin else "Gestionnaire Santé / IPM"
-                Notification.objects.create(
+                emettre_notification(
                     destinataire=demande.auteur,
                     titre=f"Réponse de l'{expediteur}",
                     message=f"Une réponse a été apportée à votre demande (dossier {demande.numero_dossier} : {demande.objet}).",
