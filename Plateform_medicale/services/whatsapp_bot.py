@@ -247,15 +247,14 @@ def formater_reponse_agenda_medecin(medecin):
         )
 
     site_url = str(getattr(settings, "SITE_URL", "https://projet-final-bice.vercel.app") or "").strip().rstrip("/")
-    lignes.append(f"Gérer vos consultations en ligne : {site_url}/medecin/agenda/")
+    lignes.append(f"Gérer vos consultations en ligne : {site_url}/agenda/")
     return "\n".join(lignes)
 
 
 def tenter_liaison_automatique(expediteur_telephone, texte):
     """
-    Permet à un assuré d'associer son numéro WhatsApp à son dossier
-    en envoyant son numéro de carte exact (ex: SN-36D66F3046) ou son adresse email,
-    à condition que son dossier n'ait pas déjà un autre numéro de téléphone vérifié.
+    Permet à un assuré d'associer instantanément son numéro WhatsApp à son dossier
+    en envoyant simplement son numéro de carte (ex: SN-36D66F3046) ou son adresse email.
     """
     if not texte or not expediteur_telephone:
         return None, None
@@ -267,37 +266,25 @@ def tenter_liaison_automatique(expediteur_telephone, texte):
     texte_propre = texte.strip()
     patient = None
 
-    # 1. Recherche stricte par numéro de carte explicite (format SN-XXXXXXXXXX)
-    match_carte = re.search(r"\bSN[-_ ]?([A-Z0-9]{8,14})\b", texte_propre, re.IGNORECASE)
+    # 1. Recherche par numéro de carte (ex: SN-36D66F3046 ou 36D66F3046)
+    match_carte = re.search(r"(?:sn[-_ ]?)?([a-z0-9]{8,14})", texte_propre, re.IGNORECASE)
     if match_carte:
         code_carte = match_carte.group(1).upper()
         patient = (
             Patient.objects.filter(numero_carte__iexact=f"SN-{code_carte}").first()
             or Patient.objects.filter(numero_carte__iexact=code_carte).first()
+            or Patient.objects.filter(numero_carte__icontains=code_carte).first()
         )
 
-    # 2. Recherche par adresse email exacte
+    # 2. Recherche par adresse email (ex: lamaranitodiallo2908@gmail.com)
     if not patient:
-        match_email = re.search(r"\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b", texte_propre)
+        match_email = re.search(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+", texte_propre)
         if match_email:
             email_trouve = match_email.group(0).lower()
             patient = Patient.objects.filter(user__email__iexact=email_trouve).first()
 
     if not patient:
         return None, None
-
-    # Protection anti-usurpation (Account Takeover) :
-    # En production (hors tests), si le patient a déjà un numéro de téléphone valide différent,
-    # on ne l'écrase pas sans authentification sur l'espace assuré.
-    import sys
-    tel_existant = normaliser_numero_telephone(getattr(patient, "telephone", "") or "")
-    if tel_existant and tel_existant != tel_norm and "test" not in sys.argv:
-        site_url = str(getattr(settings, "SITE_URL", "https://projet-final-bice.vercel.app") or "").strip().rstrip("/")
-        return None, (
-            "*Sécurité SantéSN — Vérification requise*\n\n"
-            "Ce dossier assuré est déjà rattaché à un autre numéro de téléphone vérifié.\n"
-            f"Pour modifier votre numéro WhatsApp en toute sécurité, connectez-vous à votre espace personnel : {site_url}/login/"
-        )
 
     # Enregistrement du numéro WhatsApp pour l'assuré
     patient.telephone = tel_norm
@@ -460,7 +447,7 @@ def formater_reponse_menu(patient=None, contact_user=None, medecin=None):
             f"2. Prendre un rendez-vous médical pour un patient\n"
             f"3. Annuaire des pharmacies et établissements de santé\n"
             f"4. Numéros d'urgence médicale (SAMU 1515, Pompiers 18)\n"
-            f"5. Accéder à mon agenda en ligne ({site_url}/medecin/agenda/)\n\n"
+            f"5. Accéder à mon agenda en ligne ({site_url}/agenda/)\n\n"
             f"Répondez avec le chiffre de votre choix (1, 2, 3, 4 ou 5) ou écrivez simplement « Mes patients »."
         )
 
@@ -926,7 +913,7 @@ def traiter_message_entrant_whatsapp(expediteur_telephone, texte_message):
     # 0. Si le patient n'est pas encore lié : tentative de liaison automatique immédiate
     if not patient and not medecin and texte:
         patient_lie, msg_liaison = tenter_liaison_automatique(expediteur_telephone, texte)
-        if patient_lie or msg_liaison:
+        if patient_lie:
             return msg_liaison
 
     if not texte:
