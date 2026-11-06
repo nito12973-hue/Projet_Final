@@ -93,16 +93,16 @@
     {% endif %}
 </section>
 
-{% if prises_en_charge %}
 <section class="panel panel-bloc" style="margin-bottom:22px;">
     <div class="panel-header" style="border-bottom: 1px solid var(--border); padding-bottom: 14px; margin-bottom: 16px;">
         <div>
             <h2 style="margin:0;font-size:16px;color:var(--titre);display:flex;align-items:center;gap:8px;">
                 {% icone "shield-check" %} Prises en charge &amp; Accords IPM
             </h2>
-            <p class="subtitle" style="margin:2px 0 0;">Devis validés et accords de tiers-payant émis par l'assurance pour cet assuré</p>
+            <p class="subtitle" style="margin:2px 0 0;">Accords de prise en charge et tiers-payant sur devis émis par l'IPM pour cet assuré</p>
         </div>
     </div>
+    {% if prises_en_charge %}
     <div class="table-responsive">
         <table>
             <thead>
@@ -155,8 +155,13 @@
             </tbody>
         </table>
     </div>
+    {% else %}
+    <div style="padding:18px 20px;background:var(--surface);border-radius:12px;border:1px dashed var(--border);color:var(--muted);font-size:13px;display:flex;align-items:center;gap:10px;">
+        <span style="color:var(--primary);font-size:18px;">{% icone "info" %}</span>
+        <span>Aucun accord préalable de prise en charge sur devis n'est enregistré pour ce patient. Pour une consultation standard, la couverture s'applique directement via sa carte d'assuré.</span>
+    </div>
+    {% endif %}
 </section>
-{% endif %}
 
 {% if prochains_rendez_vous %}
 <section class="panel" style="margin-bottom:22px;">

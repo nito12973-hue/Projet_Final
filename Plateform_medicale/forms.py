@@ -645,6 +645,16 @@ class ConsultationForm(forms.ModelForm):
     class Meta:
         model = Consultation
         fields = ['patient', 'service', 'prise_en_charge', 'date_consultation', 'diagnostic', 'traitement']
+        labels = {
+            'prise_en_charge': "Accord préalable / Prise en charge (Optionnel)",
+            'service': "Service ou acte médical",
+            'date_consultation': "Date de consultation",
+            'diagnostic': "Diagnostic médical",
+            'traitement': "Prescription & Traitement",
+        }
+        help_texts = {
+            'prise_en_charge': "Facultatif. À sélectionner uniquement si le patient bénéficie d'un accord préalable de prise en charge pour cet acte avec devis validé.",
+        }
 
     def __init__(self, *args, medecin=None, rdv=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -676,16 +686,21 @@ class ConsultationForm(forms.ModelForm):
             if str(p_id).isdigit():
                 patient_cible = Patient.objects.filter(pk=p_id).first()
 
-        if 'prise_en_charge' in self.fields and patient_cible:
-            qs = PriseEnCharge.objects.filter(
-                patient=patient_cible,
-                statut__in=["validee", "en_attente"],
-            ).order_by("-date_demande")
-            self.fields['prise_en_charge'].queryset = qs
-            if not self.is_bound and not self.initial.get('prise_en_charge'):
-                pec_validee = qs.filter(statut="validee").first()
-                if pec_validee:
-                    self.fields['prise_en_charge'].initial = pec_validee.pk
+        if 'prise_en_charge' in self.fields:
+            self.fields['prise_en_charge'].required = False
+            self.fields['prise_en_charge'].empty_label = "--- Aucune prise en charge préalable (consultation standard) ---"
+            if patient_cible:
+                qs = PriseEnCharge.objects.filter(
+                    patient=patient_cible,
+                    statut__in=["validee", "en_attente"],
+                ).order_by("-date_demande")
+                self.fields['prise_en_charge'].queryset = qs
+                if not self.is_bound and not self.initial.get('prise_en_charge'):
+                    pec_validee = qs.filter(statut="validee").first()
+                    if pec_validee:
+                        self.fields['prise_en_charge'].initial = pec_validee.pk
+            else:
+                self.fields['prise_en_charge'].queryset = PriseEnCharge.objects.none()
 
     def clean_service(self):
         service = self.cleaned_data.get('service')
