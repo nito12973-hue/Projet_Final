@@ -9674,7 +9674,7 @@ class VisibiliteComptesBloquesP1ATests(TestCase):
         self.assertIn("securite", rep.url)
 
 
-class TraçabiliteBlocagesP1BTests(TestCase):
+class TracabiliteBlocagesP1BTests(TestCase):
     """Tests P1-B : Traçabilité des blocages temporaires et déblocages manuels."""
 
     def setUp(self):
@@ -13441,7 +13441,7 @@ class WhatsAppBotAndWebhookTests(TestCase):
         self.assertIn("Orientation Médicale", reponse)
         self.assertIn("1515", reponse)
 
-    def test_bot_parcours_enchaîne_comme_vraie_plateforme(self):
+    def test_bot_parcours_enchaine_comme_vraie_plateforme(self):
         """Valide l'enchaînement conversationnel fluide : 1 (droits) -> 2 (médecins) -> 1 (choix) -> demain 10h30 (confirmation)."""
         from Plateform_medicale.services.whatsapp_bot import traiter_message_entrant_whatsapp
         tel = "221771112233"
