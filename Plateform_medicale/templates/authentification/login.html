@@ -27,7 +27,14 @@
 
 {% if form.non_field_errors %}
 <div class="erreurs" role="alert">
-    {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+    {% for error in form.non_field_errors %}
+        <p>{{ error }}</p>
+        {% if "tentatives" in error|lower %}
+        <p style="margin-top:6px;font-size:12.5px;opacity:0.95;">
+            Si votre compte est bloqué, vous pouvez contacter directement votre <strong>administrateur IPM</strong> pour un déblocage immédiat ou réinitialiser votre mot de passe ci-dessous.
+        </p>
+        {% endif %}
+    {% endfor %}
 </div>
 {% endif %}
 

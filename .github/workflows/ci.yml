@@ -7,6 +7,11 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      SECRET_KEY: 'ci-test-secret-key-santesn-django-security-token'
+      DEBUG: 'True'
+      ALLOWED_HOSTS: 'localhost,127.0.0.1,testserver'
+      DB_ENGINE: 'sqlite'
     steps:
     - name: Checkout du code
       uses: actions/checkout@v4
@@ -23,25 +28,15 @@ jobs:
         pip install -r requirements.txt
 
     - name: Vérification du projet Django
-      env:
-        SECRET_KEY: 'ci-test-secret-key-santesn-django-security-token'
-        DEBUG: 'True'
-        ALLOWED_HOSTS: 'localhost,127.0.0.1,testserver'
       run: |
         python manage.py check
 
-    - name: Exécution des 948 tests unitaires et d'intégration
-      env:
-        SECRET_KEY: 'ci-test-secret-key-santesn-django-security-token'
-        DEBUG: 'True'
-        ALLOWED_HOSTS: 'localhost,127.0.0.1,testserver'
+    - name: Exécution de la suite de tests automatisés
       run: |
-        python manage.py test
+        python manage.py test Plateform_medicale --verbosity=1
 
     - name: Test de compilation des fichiers statiques (WhiteNoise)
       env:
-        SECRET_KEY: 'ci-test-secret-key-santesn-django-security-token'
         DEBUG: 'False'
-        ALLOWED_HOSTS: 'localhost,127.0.0.1,testserver'
       run: |
         python manage.py collectstatic --no-input

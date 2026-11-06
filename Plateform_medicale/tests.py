@@ -309,7 +309,7 @@ class LimitationTentativesConnexionTests(TestCase):
         })
 
     def test_blocage_apres_cinq_echecs(self):
-        for _ in range(5):
+        for _ in range(TentativeConnexion.MAX_TENTATIVES):
             response = self._mauvais_mot_de_passe()
             self.assertContains(response, 'Email ou mot de passe incorrect.')
 
@@ -317,7 +317,7 @@ class LimitationTentativesConnexionTests(TestCase):
         self.assertContains(response, 'Trop de tentatives de connexion')
 
     def test_connexion_reussie_reinitialise_le_compteur(self):
-        for _ in range(3):
+        for _ in range(TentativeConnexion.MAX_TENTATIVES - 1):
             self._mauvais_mot_de_passe()
 
         response = self.client.post(reverse('login'), {
@@ -9707,7 +9707,7 @@ class TraçabiliteBlocagesP1BTests(TestCase):
         entree = JournalActivite.objects.filter(objet=f"Utilisateur {self.assure.email}").latest("date")
         self.assertEqual(entree.action, JournalActivite.Action.MODIFICATION)
         self.assertIn("temporairement bloqué", entree.details)
-        self.assertIn("5 échecs", entree.details)
+        self.assertIn(f"{TentativeConnexion.MAX_TENTATIVES} échecs", entree.details)
 
     def test_b_echecs_1_a_4_ne_generent_aucun_evenement(self):
         """B. Les échecs 1 à 4 ne génèrent aucun événement de blocage."""
@@ -9782,7 +9782,7 @@ class TraçabiliteBlocagesP1BTests(TestCase):
             objet=f"Utilisateur {self.assure.email}",
             action=JournalActivite.Action.DEBLOCAGE,
         ).latest("date")
-        self.assertIn("5 échecs réinitialisés", entree.details)
+        self.assertIn("3 échecs réinitialisés", entree.details)
 
     def test_j_lien_historique_present_et_fonctionnel(self):
         """J. Le lien Historique est présent dans /utilisateurs/ et filtre le journal sur l'utilisateur."""

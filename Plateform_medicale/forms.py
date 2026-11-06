@@ -284,7 +284,7 @@ class LoginForm(forms.Form):
                             auteur_libelle="Système (sécurité)",
                             action=JournalActivite.Action.MODIFICATION,
                             objet=f"Utilisateur {utilisateur_existant.email}",
-                            details="Compte temporairement bloqué (5 échecs consécutifs)",
+                            details="Compte temporairement bloqué (3 échecs consécutifs)",
                         )
                 raise forms.ValidationError(
                     'Email ou mot de passe incorrect.'

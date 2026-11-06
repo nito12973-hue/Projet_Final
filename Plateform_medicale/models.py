@@ -1488,7 +1488,7 @@ class TentativeConnexion(models.Model):
     ne montre que les lignes correspondant a un compte reel.
     """
 
-    MAX_TENTATIVES = 5
+    MAX_TENTATIVES = 3
     DUREE_BLOCAGE = datetime.timedelta(minutes=5)
 
     email = models.EmailField("adresse saisie", unique=True, db_index=True)
