@@ -5,6 +5,7 @@ Contient : login, logout, redirection post-connexion, assistant d'installation,
 mon compte, changement de mot de passe, déconnexion partout, paramètres,
 comptes bloqués et déblocage.
 """
+import datetime
 import logging
 
 from django.contrib import messages
@@ -471,11 +472,22 @@ class MotDePasseOublieView(auth_views.PasswordResetView):
     def form_valid(self, form):
         email = (form.cleaned_data.get("email") or "").strip().lower()
         cle_rate_limit = f"reset_{email}"
-        if TentativeConnexion.bloque(cle_rate_limit):
-            logger.warning("Demande de réinitialisation de mot de passe freinée pour : %s", email)
-            return redirect(self.success_url)
+        maintenant = timezone.now()
+        # Protection anti-spam distincte du blocage de compte : max 5 demandes par heure
+        tentative = TentativeConnexion.objects.filter(email=cle_rate_limit).first()
+        if tentative:
+            if maintenant - tentative.dernier_echec < datetime.timedelta(hours=1):
+                if tentative.tentatives >= 5:
+                    logger.warning("Demande de réinitialisation de mot de passe freinée pour : %s", email)
+                    return redirect(self.success_url)
+                tentative.tentatives += 1
+                tentative.save()
+            else:
+                tentative.tentatives = 1
+                tentative.save()
+        else:
+            TentativeConnexion.objects.create(email=cle_rate_limit, tentatives=1)
 
-        TentativeConnexion.enregistrer_echec(cle_rate_limit)
         try:
             return super().form_valid(form)
         except Exception as exc:
