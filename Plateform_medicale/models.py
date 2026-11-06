@@ -989,7 +989,12 @@ class Paiement(models.Model):
             montant_total = consultation.service.prix if consultation.service_id else Decimal("0")
         taux = Decimal("0")
         prise_en_charge = consultation.prise_en_charge
-        if prise_en_charge is not None and prise_en_charge.statut == "validee":
+        # Si une prise en charge formelle existe (demande préalable/devis), son statut fait foi (validée = couvert, refusée/en attente = non couvert).
+        # Si aucune prise en charge spécifique n'est exigée (consultation standard directe sous convention), le taux conventionné du plan s'applique automatiquement.
+        if prise_en_charge is not None:
+            if prise_en_charge.statut == "validee":
+                taux = Decimal(str(consultation.patient.taux_couverture or 0))
+        else:
             taux = Decimal(str(consultation.patient.taux_couverture or 0))
 
         montant_part_assurance = (Decimal(str(montant_total)) * taux / Decimal("100")).quantize(Decimal("0.01"))
