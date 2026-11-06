@@ -4621,41 +4621,33 @@ class BlocageMecanismeTests(TestCase):
         self.assertContains(reponse, 'Trop de tentatives')
         self.assertFalse(reponse.wsgi_request.user.is_authenticated)
 
-    def test_expiration_automatique(self):
+    def test_blocage_persiste_sans_deblocage_manuel(self):
+        """Le compte reste bloqué jusqu'à intervention manuelle de l'administration."""
         self._echouer(TentativeConnexion.MAX_TENTATIVES)
         ligne = TentativeConnexion.objects.get(email='bloc-meca@santesn.sn')
-        # On recule le dernier echec au-dela de la duree de blocage.
+        # Même si du temps s'écoule, le compte reste bloqué
         TentativeConnexion.objects.filter(pk=ligne.pk).update(
             dernier_echec=timezone.now() - TentativeConnexion.DUREE_BLOCAGE
-            - datetime.timedelta(seconds=1))
-        self.assertFalse(TentativeConnexion.bloque('bloc-meca@santesn.sn'))
-        self.assertEqual(TentativeConnexion.comptes_bloques(), [])
+            - datetime.timedelta(seconds=3600))
+        self.assertTrue(TentativeConnexion.bloque('bloc-meca@santesn.sn'))
+        self.assertEqual(len(TentativeConnexion.comptes_bloques()), 1)
 
-    def test_reconnexion_possible_apres_expiration(self):
+    def test_deblocage_manuel_retablit_connexion(self):
+        """L'administrateur débloque le compte manuellement."""
         self._echouer(TentativeConnexion.MAX_TENTATIVES)
-        TentativeConnexion.objects.filter(email='bloc-meca@santesn.sn').update(
-            dernier_echec=timezone.now() - TentativeConnexion.DUREE_BLOCAGE
-            - datetime.timedelta(seconds=1))
+        self.assertTrue(TentativeConnexion.bloque('bloc-meca@santesn.sn'))
+        TentativeConnexion.objects.filter(email='bloc-meca@santesn.sn').delete()
+        self.assertFalse(TentativeConnexion.bloque('bloc-meca@santesn.sn'))
         reponse = self.client.post(reverse('login'),
                                    {'email': 'bloc-meca@santesn.sn', 'password': PASSWORD})
         self.assertEqual(reponse.status_code, 302)
 
     def test_connexion_reussie_efface_le_compteur(self):
-        self._echouer(2)
+        self._echouer(TentativeConnexion.MAX_TENTATIVES - 1)
         self.client.post(reverse('login'),
                          {'email': 'bloc-meca@santesn.sn', 'password': PASSWORD})
         self.assertFalse(
             TentativeConnexion.objects.filter(email='bloc-meca@santesn.sn').exists())
-
-    def test_compteur_repart_de_un_apres_expiration(self):
-        """Sans cela, 5 echecs espaces dans le temps bloqueraient a vie."""
-        self._echouer(TentativeConnexion.MAX_TENTATIVES - 1)
-        TentativeConnexion.objects.filter(email='bloc-meca@santesn.sn').update(
-            dernier_echec=timezone.now() - TentativeConnexion.DUREE_BLOCAGE
-            - datetime.timedelta(seconds=1))
-        self._echouer(1)
-        ligne = TentativeConnexion.objects.get(email='bloc-meca@santesn.sn')
-        self.assertEqual(ligne.tentatives, 1)
 
     def test_adresse_inexistante_freinee_mais_absente_de_la_liste(self):
         """Ne pas freiner les adresses inconnues offrirait un oracle

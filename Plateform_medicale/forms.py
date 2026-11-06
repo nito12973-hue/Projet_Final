@@ -270,7 +270,7 @@ class LoginForm(forms.Form):
             # l'administrateur et coherent entre processus.
             if TentativeConnexion.bloque(email):
                 raise forms.ValidationError(
-                    'Trop de tentatives de connexion. Réessayez dans quelques minutes.'
+                    "Trop de tentatives de connexion : ce compte est bloqué suite à plusieurs échecs consécutifs. Veuillez contacter votre administrateur pour le débloquer."
                 )
 
             self.user = authenticate(self.request, username=email, password=password)

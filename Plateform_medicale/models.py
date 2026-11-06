@@ -1510,13 +1510,12 @@ class TentativeConnexion(models.Model):
         return self.dernier_echec + self.DUREE_BLOCAGE
 
     def est_bloque(self, maintenant=None):
-        """Bloque tant que le quota est atteint ET que le delai court encore.
+        """Bloque tant que le quota d'échecs (MAX_TENTATIVES) est atteint.
 
-        Le delai repart a chaque nouvel echec (auto_now sur dernier_echec) :
-        c'est le comportement de l'ancien cache.set(), conserve tel quel.
+        Une fois le seuil atteint, le compte reste définitivement bloqué
+        jusqu'à ce qu'un administrateur ou gestionnaire le débloque manuellement.
         """
-        maintenant = maintenant or timezone.now()
-        return self.tentatives >= self.MAX_TENTATIVES and maintenant < self.fin_blocage
+        return self.tentatives >= self.MAX_TENTATIVES
 
     def secondes_restantes(self, maintenant=None):
         maintenant = maintenant or timezone.now()
@@ -1539,8 +1538,7 @@ class TentativeConnexion(models.Model):
                         return ligne
                 except IntegrityError:
                     ligne = cls.objects.select_for_update().get(email=email_norm)
-            expire = timezone.now() >= ligne.fin_blocage
-            ligne.tentatives = 1 if expire else ligne.tentatives + 1
+            ligne.tentatives += 1
             ligne.save()
             return ligne
 
@@ -1556,15 +1554,13 @@ class TentativeConnexion(models.Model):
 
     @classmethod
     def comptes_bloques(cls):
-        """Lignes actuellement bloquees, appariees a un compte REEL.
+        """Lignes actuellement bloquées (seuil atteint), appariées à un compte REEL.
 
-        Les adresses inexistantes (fautes de frappe, sondages) sont comptees
-        pour le freinage mais n'ont pas a apparaitre dans une liste de comptes.
+        Les adresses inexistantes (fautes de frappe, sondages) sont comptées
+        pour le freinage mais n'ont pas à apparaître dans une liste de comptes.
         """
-        maintenant = timezone.now()
         lignes = cls.objects.filter(
             tentatives__gte=cls.MAX_TENTATIVES,
-            dernier_echec__gt=maintenant - cls.DUREE_BLOCAGE,
         )
         par_email = {ligne.email: ligne for ligne in lignes}
         if not par_email:
