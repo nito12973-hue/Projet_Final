@@ -93,6 +93,13 @@ if 'test' not in sys.argv:
                 'CONN_HEALTH_CHECKS': True,
             }
         }
+    elif any(cmd in sys.argv for cmd in ('collectstatic', 'check')):
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': ':memory:',
+            }
+        }
     else:
         raise ImproperlyConfigured("Une base de données PostgreSQL est requise pour la production SantéSN.")
 
