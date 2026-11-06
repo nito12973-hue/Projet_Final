@@ -86,7 +86,7 @@ jobs:
 
       - name: Execution du lot de tests ${{ matrix.batch }} (${{ matrix.label }})
         run: |
-          python manage.py test ${{ matrix.targets }} --verbosity=1
+          python manage.py test ${{ matrix.targets }} --verbosity=2
 
   bilan-qualite:
     name: Bilan d Integrite CI/CD
