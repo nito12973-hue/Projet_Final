@@ -14,7 +14,8 @@
 
 <style>
     .page-edit-container {
-        max-width: 860px;
+        width: 100%;
+        max-width: 100%;
         margin: 0 auto 40px;
     }
 
@@ -523,9 +524,9 @@
 
         var iconeHopital = L.divIcon({
             className: 'custom-map-pin',
-            html: '<div style="background:#0e7c86;color:#fff;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 8px rgba(0,0,0,0.3);border:2px solid #fff;font-size:16px;">🏥</div>',
-            iconSize: [34, 34],
-            iconAnchor: [17, 17]
+            html: '<div style="background:#0e7c86;color:#fff;width:22px;height:22px;border-radius:50%;box-shadow:0 3px 8px rgba(0,0,0,0.3);border:3px solid #fff;"></div>',
+            iconSize: [22, 22],
+            iconAnchor: [11, 11]
         });
 
         var marqueur = (lat && lng) ? L.marker([lat, lng], {icon: iconeHopital, draggable: true}).addTo(carte) : null;
@@ -566,13 +567,7 @@
         var listeEtab = document.getElementById('liste-resultats-etab');
 
         function getEmojiType(type) {
-            switch(type) {
-                case 'PHARMACIE': return '💊';
-                case 'CLINIQUE': return '🩺';
-                case 'CABINET': return '🏢';
-                case 'HOPITAL':
-                default: return '🏥';
-            }
+            return '';
         }
 
         function afficherResultats(resultats) {
@@ -583,10 +578,6 @@
 
                 var infoDiv = document.createElement('div');
                 infoDiv.className = 'resultat-smart-info';
-
-                var iconDiv = document.createElement('div');
-                iconDiv.className = 'resultat-type-icon';
-                iconDiv.textContent = getEmojiType(item.type_prestataire || item.type);
 
                 var detailsDiv = document.createElement('div');
                 detailsDiv.className = 'resultat-details';
@@ -612,7 +603,6 @@
                 if (item.adresse || item.ville) detailsDiv.appendChild(adresseP);
                 detailsDiv.appendChild(coordsP);
 
-                infoDiv.appendChild(iconDiv);
                 infoDiv.appendChild(detailsDiv);
 
                 var btnUtiliser = document.createElement('button');

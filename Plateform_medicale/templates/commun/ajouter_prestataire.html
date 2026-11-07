@@ -14,7 +14,8 @@
 
 <style>
     .page-ajout-container {
-        max-width: 860px;
+        width: 100%;
+        max-width: 100%;
         margin: 0 auto 40px;
     }
 
@@ -552,10 +553,7 @@
         }
 
         function getIconType(type) {
-            if (type === 'PHARMACIE' || type === 'pharmacy') return '💊';
-            if (type === 'CLINIQUE' || type === 'clinic') return '🩺';
-            if (type === 'CABINET' || type === 'doctors') return '🏢';
-            return '🏥';
+            return '';
         }
 
         function afficherResultats(resultats) {
@@ -566,11 +564,6 @@
 
                 var divInfo = document.createElement('div');
                 divInfo.className = 'resultat-smart-info';
-
-                var divIcon = document.createElement('div');
-                divIcon.className = 'resultat-smart-icon';
-                divIcon.textContent = getIconType(etab.type_suggere || etab.type_osm);
-                divInfo.appendChild(divIcon);
 
                 var divText = document.createElement('div');
                 divText.className = 'resultat-smart-text';
