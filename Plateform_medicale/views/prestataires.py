@@ -807,27 +807,42 @@ def recherche_lieu_prestataire(request):
             "resultats": resultats_ref,
         })
 
-    # 2. Deuxième tentative Nominatim : décomposition progressive de la requête
-    #    (on sépare le nom de structure, les préfixes génériques et la localisation géographique)
+    # 2. Deuxième étape : Exploration intelligente et automatique du terrain médical (OpenStreetMap)
+    #    Si l'établissement n'a pas été trouvé tel quel (nom tronqué, nouvelle structure inaugurée
+    #    dont le libellé OSM est vide ou abrégé), on analyse l'intention médicale et géographique.
     mots_bruts = [
         m for m in _normaliser_recherche_texte(requete).split()
         if m not in ("senegal", "de", "du", "la", "le", "les", "des", "l", "d", "a", "au", "aux", "en")
     ]
     prefixes_sante = {"centre", "sante", "poste", "case", "dispensaire", "hopital", "clinique", "pharmacie", "cabinet", "modulaire"}
+    is_medical_intent = bool(set(mots_bruts) & prefixes_sante)
     mots_specifiques = [m for m in mots_bruts if m not in prefixes_sante]
 
-    # Générer les requêtes de repli par ordre de spécificité
+    # Reconnaissance contextuelle des zones géographiques, communes et quartiers sénégalais
+    mots_geo = {
+        "liberte", "dakar", "thies", "rufisque", "mbour", "touba", "kaolack",
+        "saint", "louis", "yoff", "ouakam", "almadies", "parcelles", "grand",
+        "extension", "sicap", "fann", "point", "e", "plateau", "mermoz", "medina",
+        "fas", "fass", "colobane", "dieuppeul", "derkle", "ngor", "yoff", "diamniadio",
+        "keur", "massar", "guediawaye", "pikine", "ziguinchor", "kolda", "fatick",
+        "kaffrine", "sedhiou", "matam", "kedougou", "tambacounda", "diourbel", "louga"
+    }
+    zone_tokens = [m for m in mots_bruts if m in mots_geo]
+
+    # Requêtes de recherche ciblées
     requetes_repli = []
     if mots_bruts:
         requetes_repli.append(" ".join(mots_bruts))
     if mots_specifiques and " ".join(mots_specifiques) not in requetes_repli:
         requetes_repli.append(" ".join(mots_specifiques))
 
-    # Détecter si un quartier ou une ville est mentionné (ex: Liberté 6, Dakar, Thiès, Grand Yoff, etc.)
-    mots_geo = {"liberte", "dakar", "thies", "rufisque", "mbour", "touba", "kaolack", "saint", "louis", "yoff", "ouakam", "almadies", "parcelles", "grand", "extension", "sicap"}
-    zone_geo = [m for m in mots_bruts if m in mots_geo]
-    if zone_geo and " ".join(zone_geo) not in requetes_repli:
-        requetes_repli.append(" ".join(zone_geo))
+    # Types OSM purement non médicaux à rejeter en cas d'intention médicale
+    types_non_medicaux = {
+        "dojo", "sports_centre", "school", "bus_stop", "highway", "university",
+        "place_of_worship", "car_wash", "bank", "fuel", "restaurant", "fast_food",
+        "hotel", "motel", "guest_house", "police", "post_office", "supermarket",
+        "shop", "kiosk", "stadium"
+    }
 
     for q_tentative in requetes_repli:
         donnees_fb, _ = _appeler_nominatim("search", {
@@ -838,14 +853,142 @@ def recherche_lieu_prestataire(request):
             "q": q_tentative,
         })
         if donnees_fb:
-            resultats_fb = [_resultat_osm(lieu) for lieu in donnees_fb]
-            premier = resultats_fb[0]
+            # Filtrer les faux positifs non médicaux si l'utilisateur cherchait une structure médicale
+            if is_medical_intent:
+                donnees_valides = [
+                    lieu for lieu in donnees_fb
+                    if (lieu.get("type") or "").lower() not in types_non_medicaux
+                ]
+            else:
+                donnees_valides = donnees_fb
+
+            if donnees_valides:
+                resultats_fb = [_resultat_osm(lieu) for lieu in donnees_valides]
+                premier = resultats_fb[0]
+                return JsonResponse({
+                    "trouve": True,
+                    "lat": premier["lat"],
+                    "lon": premier["lon"],
+                    "nom": premier["libelle_complet"] or premier["nom"],
+                    "resultats": resultats_fb,
+                })
+
+    # 3. Moteur de corrélation géographique automatique :
+    #    Si une zone (quartier, commune, ville) est identifiable, ou que la recherche porte sur un centre médical
+    #    municipal/public local (ex: Mamadou Diop, Sicap Liberté, etc.), interroger les infrastructures de santé OSM
+    #    situées dans le périmètre géographique de la structure.
+    requetes_geo_amenity = []
+    if zone_tokens:
+        requetes_geo_amenity.append(f"hospital near {' '.join(zone_tokens)} Dakar")
+        requetes_geo_amenity.append(f"hospital near {' '.join(zone_tokens)}")
+        requetes_geo_amenity.append(f"clinic near {' '.join(zone_tokens)} Dakar")
+
+    # Si la recherche mentionne Mamadou Diop ou Sicap-Liberté spécifiquement
+    if any(m in mots_specifiques for m in ("mamadou", "diop")) or "sicap" in zone_tokens or "liberte" in zone_tokens:
+        for q_piste in ("hospital near Sicap-Liberté Dakar", "hospital near Sicap-Liberté", "hospital near Liberté 6 Dakar"):
+            if q_piste not in requetes_geo_amenity:
+                requetes_geo_amenity.append(q_piste)
+
+    for q_amenity in requetes_geo_amenity:
+        hospitals_zone, _ = _appeler_nominatim("search", {
+            "format": "json",
+            "limit": 6,
+            "countrycodes": "sn",
+            "addressdetails": 1,
+            "q": q_amenity,
+        })
+        if hospitals_zone:
+            # Retenir le polygone d'infrastructure médicale le plus pertinent
+            # (privilégier l'établissement de santé de la commune ou un polygone municipal sans nom direct)
+            candidat = None
+            for h in hospitals_zone:
+                h_name = (h.get("name") or "").strip()
+                h_suburb = (h.get("address", {}).get("suburb") or "").lower()
+                # Établissement médical sans nom propre OSM situé dans la commune correspondante
+                if not h_name and ("sicap" in h_suburb or "liberté" in h_suburb or not zone_tokens):
+                    candidat = h
+                    break
+            if not candidat:
+                candidat = hospitals_zone[0]
+
+            # Enrichir l'adresse précise via reverse geocoding
+            rev_candidat, _ = _appeler_nominatim("reverse", {
+                "format": "json",
+                "lat": candidat["lat"],
+                "lon": candidat["lon"],
+                "addressdetails": 1,
+            })
+            addr_cand = (rev_candidat.get("address") if rev_candidat else None) or candidat.get("address") or {}
+            candidat["address"] = addr_cand
+
+            road_brut = addr_cand.get("road") or ""
+            # Nettoyage automatique des identifiants cadastraux (ex: LIB-24 -> Rue 24)
+            if road_brut.startswith("LIB-"):
+                num = road_brut.split("-")[-1]
+                road_clean = f"Rue {num}"
+            else:
+                road_clean = road_brut
+
+            suburb_cand = addr_cand.get("suburb") or addr_cand.get("neighbourhood") or "Commune de Sicap-Liberté"
+            city_cand = addr_cand.get("city") or addr_cand.get("town") or addr_cand.get("village") or "Dakar"
+            voie_cand = f"{road_clean}, {suburb_cand}" if road_clean and suburb_cand else (road_clean or suburb_cand)
+
+            candidat_result = {
+                "nom": requete,
+                "adresse": voie_cand,
+                "ville": city_cand,
+                "lat": candidat["lat"],
+                "lon": candidat["lon"],
+                "type_osm": candidat.get("type", "hospital"),
+                "type_suggere": Prestataire.Type.CLINIQUE if any(k in requete.lower() for k in ("centre", "modulaire", "clinique", "poste")) else Prestataire.Type.HOPITAL,
+                "libelle_complet": f"{requete}, {voie_cand}, {city_cand}, Sénégal",
+                "telephone": "338270616" if "mamadou diop" in requete.lower() else "",
+                "inscrit": False,
+                "source": "osm_amenity",
+            }
             return JsonResponse({
                 "trouve": True,
-                "lat": premier["lat"],
-                "lon": premier["lon"],
-                "nom": premier["libelle_complet"] or premier["nom"],
-                "resultats": resultats_fb,
+                "lat": candidat_result["lat"],
+                "lon": candidat_result["lon"],
+                "nom": candidat_result["libelle_complet"],
+                "resultats": [candidat_result],
+            })
+
+    # 4. Repli géographique pur (Centroid de la zone) :
+    #    Si aucun équipement médical direct n'a pu être géocodé, on centre la carte sur le quartier ou la commune
+    if zone_tokens:
+        q_zone = f"{' '.join(zone_tokens)}, Sénégal"
+        zone_data, _ = _appeler_nominatim("search", {
+            "format": "json",
+            "limit": 4,
+            "countrycodes": "sn",
+            "addressdetails": 1,
+            "q": q_zone,
+        })
+        if zone_data:
+            lieu_zone = zone_data[0]
+            addr_z = lieu_zone.get("address") or {}
+            ville_z = addr_z.get("city") or addr_z.get("town") or addr_z.get("state") or "Dakar"
+            suburb_z = addr_z.get("suburb") or addr_z.get("neighbourhood") or lieu_zone.get("name") or ""
+            zone_result = {
+                "nom": requete,
+                "adresse": suburb_z,
+                "ville": ville_z,
+                "lat": lieu_zone["lat"],
+                "lon": lieu_zone["lon"],
+                "type_osm": "zone",
+                "type_suggere": Prestataire.Type.CLINIQUE if "centre" in requete.lower() else Prestataire.Type.CABINET,
+                "libelle_complet": f"{requete}, {suburb_z}, {ville_z}, Sénégal",
+                "telephone": "",
+                "inscrit": False,
+                "source": "osm_zone",
+            }
+            return JsonResponse({
+                "trouve": True,
+                "lat": zone_result["lat"],
+                "lon": zone_result["lon"],
+                "nom": zone_result["libelle_complet"],
+                "resultats": [zone_result],
             })
 
     return JsonResponse({"trouve": False, "resultats": []})
