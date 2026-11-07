@@ -727,6 +727,60 @@ def _resultat_osm(lieu):
     }
 
 
+_TYPES_OSM_NON_SANTE = {
+    "bakery", "supermarket", "convenience", "clothes", "hairdresser", "car_repair",
+    "car_wash", "kiosk", "butcher", "dry_cleaning", "department_store", "mall",
+    "restaurant", "fast_food", "cafe", "bar", "pub", "nightclub",
+    "hotel", "motel", "guest_house", "hostel",
+    "school", "kindergarten", "university", "college",
+    "dojo", "sports_centre", "stadium", "fitness_centre", "park",
+    "bus_stop", "fuel", "bank", "atm", "police", "post_office",
+    "place_of_worship", "marketplace", "cinema", "veterinary",
+}
+
+_CLASSES_OSM_NON_SANTE = {"shop", "leisure", "tourism", "craft", "sport"}
+
+_MOTS_RECHERCHE_NON_SANTE = {
+    "boulangerie", "patisserie", "restaurant", "hotel", "auberge",
+    "station", "essence", "garage", "mecanique", "lavage", "pressing",
+    "boutique", "magasin", "supermarche", "marche", "boucherie",
+    "mosquee", "eglise", "paroisse", "cathedrale",
+    "ecole", "lycee", "college", "universite", "stade", "terrain",
+}
+
+_MOTS_CLEFS_SANTE = (
+    "hopital", "clinique", "pharmacie", "cabinet medical", "cabinet dentaire",
+    "centre de sante", "poste de sante", "dispensaire", "maternite",
+    "polyclinique", "laboratoire", "dentiste", "infirmerie", "samu", "sante", "medical",
+)
+
+
+def _est_lieu_sante_admissible(lieu, requete_texte=""):
+    """Vérifie qu'un lieu trouvé correspond rigoureusement au domaine de la santé."""
+    type_osm = (lieu.get("type") or "").lower()
+    classe_osm = (lieu.get("class") or "").lower()
+    nom = _normaliser_recherche_texte(lieu.get("name") or lieu.get("display_name") or "")
+    q_norm = _normaliser_recherche_texte(requete_texte)
+    q_tokens = set(q_norm.split())
+
+    # 1. Si la requête textuelle cible explicitement un commerce, culte ou loisir non médical
+    if q_tokens & _MOTS_RECHERCHE_NON_SANTE:
+        if not any(k in q_norm for k in ("hopital", "clinique", "pharmacie", "sante", "medical", "docteur", "cabinet")):
+            return False
+
+    # 2. Si le type ou la classe OpenStreetMap est manifestement non médical
+    if type_osm in _TYPES_OSM_NON_SANTE or classe_osm in _CLASSES_OSM_NON_SANTE:
+        if not any(k in nom for k in _MOTS_CLEFS_SANTE):
+            return False
+
+    # 3. Éviter les faux positifs mal étiquetés comme hospital (ex: mosquées, marchés ou stades)
+    if any(m in nom for m in ("mosquee", "eglise", "marche", "boulangerie", "restaurant", "hotel", "stade")):
+        if not any(k in nom for k in ("hopital", "clinique", "pharmacie", "centre de sante", "dispensaire")):
+            return False
+
+    return True
+
+
 @role_required(User.Role.GESTIONNAIRE)
 def recherche_lieu_prestataire(request):
     """
@@ -747,6 +801,11 @@ def recherche_lieu_prestataire(request):
     if not requete:
         return JsonResponse({"trouve": False, "resultats": []})
 
+    # Si la requête cible explicitement un commerce ou équipement hors santé sans aucun mot médical
+    q_tokens = set(_normaliser_recherche_texte(requete).split())
+    if (q_tokens & _MOTS_RECHERCHE_NON_SANTE) and not any(k in _normaliser_recherche_texte(requete) for k in ("hopital", "clinique", "pharmacie", "sante", "medical", "docteur", "cabinet")):
+        return JsonResponse({"trouve": False, "resultats": []})
+
     donnees, erreur = _appeler_nominatim("search", {
         "format": "json",
         "limit": 8,
@@ -758,17 +817,19 @@ def recherche_lieu_prestataire(request):
         return JsonResponse({"trouve": False, "resultats": [], "erreur": erreur})
 
     # Si Nominatim a trouvé des résultats (cas standard ou tests mockés),
-    # on renvoie strictement ces résultats pour respecter le contrat et les tests existants.
+    # on filtre strictement pour ne conserver que les structures de santé admissibles.
     if donnees:
-        resultats = [_resultat_osm(lieu) for lieu in donnees]
-        premier = resultats[0]
-        return JsonResponse({
-            "trouve": True,
-            "lat": premier["lat"],
-            "lon": premier["lon"],
-            "nom": premier["libelle_complet"] or premier["nom"],
-            "resultats": resultats,
-        })
+        donnees_sante = [lieu for lieu in donnees if _est_lieu_sante_admissible(lieu, requete)]
+        if donnees_sante:
+            resultats = [_resultat_osm(lieu) for lieu in donnees_sante]
+            premier = resultats[0]
+            return JsonResponse({
+                "trouve": True,
+                "lat": premier["lat"],
+                "lon": premier["lon"],
+                "nom": premier["libelle_complet"] or premier["nom"],
+                "resultats": resultats,
+            })
 
     # Fallback si Nominatim n'a RIEN trouvé (ex: "CLINIQUE DE L'OCEAN DAKAR") :
     # 1. Vérifier dans notre référentiel de santé national du Sénégal
