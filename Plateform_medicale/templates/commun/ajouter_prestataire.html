@@ -286,22 +286,23 @@
                 {% if form.adresse.errors %}<div class="erreurs" role="alert">{{ form.adresse.errors }}</div>{% endif %}
             </div>
 
-            <div class="form-grid-2">
+            <div class="form-grid-2" style="align-items: flex-start;">
                 <div class="champ-form-groupe">
                     <label for="{{ form.date_conventionnement.id_for_label }}">{{ form.date_conventionnement.label }}</label>
                     {{ form.date_conventionnement }}
                     {% if form.date_conventionnement.errors %}<div class="erreurs" role="alert">{{ form.date_conventionnement.errors }}</div>{% endif %}
                 </div>
 
-                <div class="champ-form-groupe" style="display:flex;align-items:center;padding-top:24px;">
-                    <div class="champ-case">
+                <div class="champ-form-groupe">
+                    <label style="visibility: hidden; margin-bottom: 6px;">{{ form.partenaire.label }}</label>
+                    <div class="champ-case" style="margin-top: 0; margin-bottom: 0; min-height: 42px; padding: 10px 14px; border-radius: 8px;">
                         {{ form.partenaire }}
                         <div class="champ-case-texte">
-                            <label for="{{ form.partenaire.id_for_label }}" style="cursor:pointer;font-weight:600;margin:0;">
+                            <label for="{{ form.partenaire.id_for_label }}" style="cursor:pointer;font-weight:600;margin:0;font-size:13.5px;">
                                 {{ form.partenaire.label }}
                             </label>
                             {% if form.partenaire.help_text %}
-                            <p class="subtitle" style="margin:2px 0 0;font-size:12.5px;">{{ form.partenaire.help_text }}</p>
+                            <p class="subtitle" style="margin:2px 0 0;font-size:12px;color:var(--muted);">{{ form.partenaire.help_text }}</p>
                             {% endif %}
                         </div>
                     </div>
