@@ -57,6 +57,17 @@ def envoyer_message_whatsapp(
             "message": "WhatsApp n'est pas configuré sur ce serveur",
         }
 
+    # Sécurité anti-spam / test : ignorer systématiquement les numéros factices ou de test
+    # (ex: 221000000000, 221770000000, 221999999999, numéros de test ou contenant '000000')
+    numero_brut = str(numero_telephone).strip()
+    if any(fake in numero_brut for fake in ["000000", "111111", "999999", "12345678", "example", "test"]):
+        logger.info("Envoi WhatsApp ignoré pour numéro de test/factice (%s).", numero_brut)
+        return {
+            "succes": False,
+            "statut": "NUMERO_TEST_IGNORE",
+            "message": f"Numéro factice ou de test détecté ({numero_brut}). Aucun message WhatsApp envoyé.",
+        }
+
     # Normalisation du numéro de téléphone (international)
     numero_nettoye = "".join(filter(str.isdigit, str(numero_telephone)))
     if numero_nettoye.startswith("00"):
