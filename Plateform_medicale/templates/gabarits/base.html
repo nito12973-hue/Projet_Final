@@ -672,21 +672,26 @@
         }
 
         .user-card-avatar {
-            display: flex;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 32px;
-            height: 32px;
-            min-width: 32px;
+            width: 34px;
+            height: 34px;
+            min-width: 34px;
             border-radius: 8px;
-            background: var(--primary);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-strong) 100%);
             color: #ffffff;
-            font-family: var(--font-headings);
-            font-size: 12px;
+            font-family: inherit;
+            font-size: 11.5px;
             font-weight: 700;
-            letter-spacing: 0.02em;
+            letter-spacing: 0.5px;
+            line-height: 1;
+            text-align: center;
             flex-shrink: 0;
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-sizing: border-box;
+            overflow: hidden;
+            user-select: none;
         }
 
         .user-card-info {
@@ -6045,17 +6050,25 @@
         }
 
         .topbar-avatar {
-            display: grid;
-            place-items: center;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             flex: 0 0 36px;
             width: 36px;
             height: 36px;
             border-radius: 10px;
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-strong) 100%);
             color: #ffffff;
-            font-size: 13px;
-            font-weight: 800;
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            line-height: 1;
+            text-align: center;
             box-shadow: 0 2px 8px rgba(14, 124, 134, 0.25);
+            box-sizing: border-box;
+            overflow: hidden;
+            user-select: none;
         }
 
         .topbar-identite {
@@ -8023,7 +8036,7 @@
                         </details>
                         <details class="menu-compte">
                             <summary class="topbar-compte" aria-label="Menu du compte">
-                                <span class="topbar-avatar" aria-hidden="true">{{ user.get_full_name|default:user.email|slice:":2"|upper }}</span>
+                                <span class="topbar-avatar" aria-hidden="true">{% if user.first_name and user.last_name %}{{ user.first_name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}{% else %}{{ user.email|slice:":2"|upper }}{% endif %}</span>
                                 <span class="topbar-identite">
                                     <b>{{ user.get_full_name|default:user.email }}</b>
                                     <span>{{ current_role_label }}{% if current_organisme %} · {{ current_organisme.nom }}{% endif %}</span>
