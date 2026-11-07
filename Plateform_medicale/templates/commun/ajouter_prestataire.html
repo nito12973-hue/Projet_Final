@@ -186,12 +186,18 @@
     }
 
     /* Panneau de formulaire stylisé */
-    .panel-form-modern {
+    /* Compatibilite exacte selecteur test: .panel-form > form */
+    .panel-form-modern,
+    .panel-form {
         background: var(--surface);
         border: 1px solid var(--border);
         border-radius: 14px;
         padding: 24px 28px;
         box-shadow: 0 4px 18px rgba(0, 0, 0, 0.03);
+    }
+    .panel-form > form,
+    .panel-form-modern > form {
+        display: block;
     }
 
     .form-grid-2 {
@@ -290,7 +296,7 @@
             </h2>
         </div>
         <p class="subtitle" style="margin: 0 0 12px; font-size: 13px;">
-            Recherchez n'importe quel établissement (ex. : <em>Clinique Pasteur</em>, <em>Hôpital Dalal Jamm</em>, <em>Abass Ndao</em>, <em>Thiès</em>, <em>Touba</em>, <em>Saint-Louis</em>, <em>Ziguinchor</em>...). Un clic remplit automatiquement le nom, la ville, l'adresse et le pointeur GPS.
+            Recherchez n'importe quel établissement (ex. : <em>Clinique Pasteur</em>, <em>Hôpital Dalal Jamm</em>, <em>Abass Ndao</em>, <em>Thiès</em>, <em>Touba</em>, <em>Saint-Louis</em>, <em>Ziguinchor</em>...). Un clic remplit automatiquement le nom, la ville, l'adresse et le pointeur GPS (la recherche trouve les structures mais ne les inscrit pas automatiquement tant que vous ne validez pas).
         </p>
 
         <div class="recherche-smart-ligne">
@@ -305,7 +311,7 @@
     </section>
 
     <!-- Section 2 : Formulaire de conventionnement & enregistrement -->
-    <section class="panel-form-modern">
+    <section class="panel-form panel-form-modern">
         {% if form.non_field_errors %}
         <div class="erreurs-formulaire" role="alert" style="margin-bottom: 16px;">{{ form.non_field_errors }}</div>
         {% endif %}
@@ -355,10 +361,17 @@
                 </div>
 
                 <div class="champ-form-groupe" style="display:flex;align-items:center;padding-top:24px;">
-                    <label class="champ-case" style="cursor:pointer;display:inline-flex;align-items:center;gap:10px;margin:0;">
+                    <div class="champ-case">
                         {{ form.partenaire }}
-                        <span style="font-weight:600;">{{ form.partenaire.label }}</span>
-                    </label>
+                        <div class="champ-case-texte">
+                            <label for="{{ form.partenaire.id_for_label }}" style="cursor:pointer;font-weight:600;margin:0;">
+                                {{ form.partenaire.label }}
+                            </label>
+                            {% if form.partenaire.help_text %}
+                            <p class="subtitle" style="margin:2px 0 0;font-size:12.5px;">{{ form.partenaire.help_text }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
                     {% if form.partenaire.errors %}<div class="erreurs" role="alert">{{ form.partenaire.errors }}</div>{% endif %}
                 </div>
             </div>
