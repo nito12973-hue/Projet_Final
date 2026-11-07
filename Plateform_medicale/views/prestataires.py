@@ -569,45 +569,62 @@ def _rechercher_referentiel_sante(terme_recherche: str):
         _ETABLISSEMENTS_SANTE_SENEGAL = _charger_etablissements_senegal()
 
     terme_norm = _normaliser_recherche_texte(terme_recherche)
-    mots_cles_cherche = [m for m in terme_norm.split() if m not in ("de", "du", "la", "le", "les", "des", "l", "d", "a", "au", "aux", "en", "senegal")]
+    stopwords = {"de", "du", "la", "le", "les", "des", "l", "d", "a", "au", "aux", "en", "senegal"}
+    mots_cles_cherche = [m for m in terme_norm.split() if m not in stopwords]
     if not mots_cles_cherche:
         return []
+
+    generic_terms = {"centre", "sante", "poste", "case", "dispensaire", "hopital", "clinique", "pharmacie", "cabinet", "modulaire"}
+    mots_specifiques = [m for m in mots_cles_cherche if m not in generic_terms]
 
     resultats = []
     for etab in _ETABLISSEMENTS_SANTE_SENEGAL:
         nom_norm = _normaliser_recherche_texte(etab.get("nom", ""))
+        nom_tokens = set(nom_norm.split())
         ville_norm = _normaliser_recherche_texte(etab.get("ville", ""))
         adresse_norm = _normaliser_recherche_texte(etab.get("adresse", ""))
         contexte_norm = f"{nom_norm} {adresse_norm} {ville_norm}"
+        contexte_tokens = set(contexte_norm.split())
 
         score = 0
         # 1. Correspondance exacte ou début de chaîne sur le nom
-        if terme_norm in nom_norm:
-            score += 35
-        elif nom_norm in terme_norm:
-            score += 25
+        if terme_norm == nom_norm:
+            score += 100
+        elif terme_norm in nom_norm:
+            score += 50
+        elif nom_norm in terme_norm and nom_norm not in {"centre de sante", "poste de sante", "case de sante", "hopital", "clinique", "pharmacie", "cabinet"}:
+            score += 30
 
-        # 2. Correspondance par mots clés dédiés
+        # 2. Filtrage et score par mots-clés spécifiques (ex: nom propre de la structure)
+        if mots_specifiques:
+            spec_nom_match = sum(1 for m in mots_specifiques if m in nom_tokens)
+            spec_ctx_match = sum(1 for m in mots_specifiques if m in contexte_tokens)
+
+            # Si la requête contient des mots spécifiques distincts (ex: Mamadou, Diop),
+            # on exige qu'au moins un seuil significatif soit présent (pas de faux positif)
+            seuil = len(mots_specifiques) if len(mots_specifiques) <= 2 else max(2, len(mots_specifiques) - 1)
+            if spec_nom_match >= seuil:
+                score += spec_nom_match * 35
+            elif spec_ctx_match >= seuil:
+                score += spec_ctx_match * 20
+            else:
+                continue
+        else:
+            # Requête purement générique (ex: "centre de santé", "pharmacie")
+            gen_match = sum(1 for m in mots_cles_cherche if m in nom_tokens)
+            if gen_match == len(mots_cles_cherche):
+                score += 30
+            elif gen_match > 0:
+                score += gen_match * 10
+
+        # 3. Correspondance par mots clés dédiés dans la fiche
         for mc in etab.get("mots_cles", []):
             mc_norm = _normaliser_recherche_texte(mc)
             if mc_norm in terme_norm or terme_norm in mc_norm:
-                score += 25
+                score += 15
                 break
 
-        # 3. Présence de tous les mots clés cherchés dans le nom
-        mots_dans_nom = sum(1 for m in mots_cles_cherche if m in nom_norm)
-        mots_dans_contexte = sum(1 for m in mots_cles_cherche if m in contexte_norm)
-
-        if mots_dans_nom == len(mots_cles_cherche):
-            score += 30
-        elif mots_dans_nom > 0:
-            score += mots_dans_nom * 10
-        elif mots_dans_contexte == len(mots_cles_cherche):
-            score += 18
-        elif mots_dans_contexte > 0 and len(mots_cles_cherche) > 1:
-            score += mots_dans_contexte * 5
-
-        if score >= 15:
+        if score >= 20:
             resultats.append((score, etab))
 
     resultats.sort(key=lambda x: x[0], reverse=True)
@@ -790,22 +807,38 @@ def recherche_lieu_prestataire(request):
             "resultats": resultats_ref,
         })
 
-    # 2. Deuxième tentative Nominatim : requête épurée (sans ", Senegal" qui bride la recherche, et en racine)
-    mots = [
+    # 2. Deuxième tentative Nominatim : décomposition progressive de la requête
+    #    (on sépare le nom de structure, les préfixes génériques et la localisation géographique)
+    mots_bruts = [
         m for m in _normaliser_recherche_texte(requete).split()
-        if m not in ("senegal", "dakar", "thies")
+        if m not in ("senegal", "de", "du", "la", "le", "les", "des", "l", "d", "a", "au", "aux", "en")
     ]
-    if mots:
-        racine = " ".join(mots)
-        donnees_fallback, _ = _appeler_nominatim("search", {
+    prefixes_sante = {"centre", "sante", "poste", "case", "dispensaire", "hopital", "clinique", "pharmacie", "cabinet", "modulaire"}
+    mots_specifiques = [m for m in mots_bruts if m not in prefixes_sante]
+
+    # Générer les requêtes de repli par ordre de spécificité
+    requetes_repli = []
+    if mots_bruts:
+        requetes_repli.append(" ".join(mots_bruts))
+    if mots_specifiques and " ".join(mots_specifiques) not in requetes_repli:
+        requetes_repli.append(" ".join(mots_specifiques))
+
+    # Détecter si un quartier ou une ville est mentionné (ex: Liberté 6, Dakar, Thiès, Grand Yoff, etc.)
+    mots_geo = {"liberte", "dakar", "thies", "rufisque", "mbour", "touba", "kaolack", "saint", "louis", "yoff", "ouakam", "almadies", "parcelles", "grand", "extension", "sicap"}
+    zone_geo = [m for m in mots_bruts if m in mots_geo]
+    if zone_geo and " ".join(zone_geo) not in requetes_repli:
+        requetes_repli.append(" ".join(zone_geo))
+
+    for q_tentative in requetes_repli:
+        donnees_fb, _ = _appeler_nominatim("search", {
             "format": "json",
             "limit": 6,
             "countrycodes": "sn",
             "addressdetails": 1,
-            "q": racine,
+            "q": q_tentative,
         })
-        if donnees_fallback:
-            resultats_fb = [_resultat_osm(lieu) for lieu in donnees_fallback]
+        if donnees_fb:
+            resultats_fb = [_resultat_osm(lieu) for lieu in donnees_fb]
             premier = resultats_fb[0]
             return JsonResponse({
                 "trouve": True,
