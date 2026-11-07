@@ -1,37 +1,5 @@
 [
   {
-    "nom": "Centre de Santé Mamadou Diop",
-    "type": "HOPITAL",
-    "ville": "Dakar",
-    "adresse": "Rue 24, Liberté 6 Extension",
-    "lat": "14.7258",
-    "lon": "-17.4645",
-    "telephone": "338270616",
-    "mots_cles": [
-      "mamadou diop",
-      "modulaire mamadou diop",
-      "liberte 6 extension"
-    ]
-  },
-  {
-    "nom": "Centre de Santé Modulaire Mamadou Diop",
-    "type": "HOPITAL",
-    "ville": "Dakar",
-    "adresse": "Rue 24, Liberté 6 Extension (Grand Dakar / Grand Yoff)",
-    "lat": "14.7258",
-    "lon": "-17.4645",
-    "telephone": "338270616",
-    "mots_cles": [
-      "centre de sante modulaire mamadou diop",
-      "centre de sante mamadou diop",
-      "hopital mamadou diop",
-      "mamadou diop",
-      "liberte 6",
-      "liberte 6 extension",
-      "dispensaire mamadou diop"
-    ]
-  },
-  {
     "nom": "Grande Pharmacie Dakaroise",
     "type": "PHARMACIE",
     "ville": "Dakar",
