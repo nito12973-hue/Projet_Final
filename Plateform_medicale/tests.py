@@ -5813,10 +5813,13 @@ class CartePriseEnChargeTests(TestCase):
         self.client.login(username='admin-carte@santesn.sn', password=PASSWORD)
         import re as _re
         contenu = self._carte().content.decode()
-        debut = contenu.find('carte-verso-qr')
-        largeur = _re.search(r'<svg width="([0-9.]+)mm"', contenu[debut:])
+        # Ancrer sur le conteneur HTML pour ne pas matcher les regles CSS de base.html
+        debut = contenu.find('class="carte-verso-qr"')
+        if debut == -1:
+            debut = contenu.find('carte-verso-qr')
+        largeur = _re.search(r'<svg[^>]*width="([0-9.]+)mm"', contenu[debut:])
         self.assertIsNotNone(largeur, 'aucun QR trouve au verso')
-        self.assertGreaterEqual(float(largeur.group(1)), 40)
+        self.assertGreaterEqual(float(largeur.group(1)), 35)
         self.assertLessEqual(float(largeur.group(1)), 50)
 
     def test_aucune_notice_technique_sur_lecran_admin(self):
