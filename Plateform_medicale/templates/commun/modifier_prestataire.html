@@ -15,96 +15,77 @@
 <style>
     .page-edit-container {
         width: 100%;
-        max-width: 100%;
-        margin: 0 auto 40px;
+        margin-bottom: 40px;
     }
 
-    /* Carte de recherche instantanée intelligente */
-    .recherche-smart-card {
-        background: linear-gradient(135deg, rgba(14, 124, 134, 0.08) 0%, rgba(79, 184, 174, 0.05) 100%);
-        border: 1.5px solid rgba(14, 124, 134, 0.25);
+    .formulaire-prestataire-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
         border-radius: 14px;
-        padding: 20px;
+        padding: 28px 32px;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.03);
+    }
+
+    /* Barre de recherche intégrée directement en tête de formulaire */
+    .zone-recherche-integree {
+        background: var(--surface-2, rgba(14, 124, 134, 0.05));
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px 20px;
         margin-bottom: 24px;
-        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
-        position: relative;
     }
 
-    :root[data-theme="sombre"] .recherche-smart-card {
-        background: linear-gradient(135deg, rgba(14, 124, 134, 0.15) 0%, rgba(15, 23, 42, 0.6) 100%);
-        border-color: rgba(79, 184, 174, 0.3);
-    }
-
-    .recherche-smart-header {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 12px;
-    }
-
-    .recherche-smart-header h2 {
-        font-size: 15px;
+    .recherche-titre-court {
+        font-size: 14px;
         font-weight: 700;
-        margin: 0;
         color: var(--primary);
+        margin: 0 0 10px;
         display: flex;
         align-items: center;
         gap: 8px;
     }
 
-    .recherche-smart-ligne {
+    .recherche-barre-ligne {
         display: flex;
         gap: 10px;
-        position: relative;
+        align-items: center;
     }
 
-    .champ-search-smart {
+    .champ-search-input {
         flex: 1;
-        height: 46px !important;
-        font-size: 14.5px !important;
-        border-radius: 10px !important;
-        border: 1.5px solid var(--border) !important;
-        padding-left: 40px !important;
-        background: var(--surface) !important;
-        color: var(--text) !important;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.03) !important;
-        transition: all 0.2s ease !important;
-    }
-
-    .champ-search-smart:focus {
-        border-color: var(--primary) !important;
-        box-shadow: 0 0 0 3px rgba(14, 124, 134, 0.18) !important;
-    }
-
-    .icone-input-search {
-        position: absolute;
-        left: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: var(--muted);
-        pointer-events: none;
-    }
-
-    .btn-search-smart {
-        height: 46px !important;
-        padding: 0 20px !important;
-        border-radius: 10px !important;
-        font-weight: 600 !important;
+        height: 44px !important;
         font-size: 14px !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        gap: 8px !important;
-        white-space: nowrap !important;
+        border-radius: 8px !important;
+        border: 1px solid var(--border) !important;
+        padding: 0 14px !important;
+        background: var(--champ-bg, var(--surface)) !important;
+        color: var(--text) !important;
+        box-sizing: border-box;
+    }
+
+    .champ-search-input:focus {
+        border-color: var(--primary) !important;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(14, 124, 134, 0.15);
+    }
+
+    .btn-search-action {
+        height: 44px !important;
+        padding: 0 20px !important;
+        font-size: 14px !important;
+        font-weight: 600 !important;
+        border-radius: 8px !important;
+        white-space: nowrap;
     }
 
     /* Liste de résultats */
     .resultats-smart-liste {
         list-style: none;
-        margin: 14px 0 0;
+        margin: 12px 0 0;
         padding: 0;
         display: grid;
-        gap: 10px;
-        max-height: 380px;
+        gap: 8px;
+        max-height: 280px;
         overflow-y: auto;
     }
 
@@ -112,274 +93,249 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 14px;
-        padding: 12px 16px;
-        border-radius: 10px;
+        gap: 12px;
+        padding: 10px 14px;
         background: var(--surface);
         border: 1px solid var(--border);
-        box-shadow: 0 2px 5px rgba(0,0,0,0.03);
-        transition: all 0.2s ease;
+        border-radius: 8px;
     }
 
     .resultat-smart-card:hover {
         border-color: var(--primary);
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(14, 124, 134, 0.12);
+        background: var(--table-hover, rgba(0, 0, 0, 0.02));
     }
 
-    .resultat-smart-info {
-        display: flex;
-        align-items: flex-start;
-        gap: 12px;
-        min-width: 0;
-        flex: 1;
-    }
-
-    .resultat-type-icon {
-        width: 38px;
-        height: 38px;
-        border-radius: 8px;
-        background: rgba(14, 124, 134, 0.12);
-        color: var(--primary);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 18px;
-        flex-shrink: 0;
-    }
-
-    .resultat-details {
-        min-width: 0;
-    }
-
-    .resultat-titre {
-        font-weight: 600;
+    .resultat-smart-nom {
         font-size: 14px;
+        font-weight: 700;
+        margin: 0 0 2px;
         color: var(--text);
-        margin: 0 0 3px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        flex-wrap: wrap;
     }
 
-    .resultat-badge-source {
+    .resultat-smart-adresse {
+        font-size: 12.5px;
+        color: var(--muted);
+        margin: 0;
+    }
+
+    .badge-source-sn {
+        display: inline-block;
         font-size: 11px;
         font-weight: 600;
-        padding: 2px 7px;
+        padding: 2px 8px;
         border-radius: 12px;
+        background: rgba(14, 124, 134, 0.12);
+        color: var(--primary);
+        margin-right: 8px;
+    }
+
+    .badge-deja-inscrit {
         background: rgba(16, 185, 129, 0.15);
         color: #059669;
     }
 
-    .resultat-adresse {
-        font-size: 12.5px;
-        color: var(--muted);
-        margin: 0;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .resultat-coords {
-        font-size: 11px;
-        color: var(--muted);
-        font-family: monospace;
-    }
-
-    .btn-utiliser-smart {
-        padding: 6px 14px !important;
-        font-size: 13px !important;
-        border-radius: 8px !important;
-        flex-shrink: 0;
-    }
-
-    /* Grille du formulaire principal */
-    .form-section-grid {
+    /* Grille de champs du formulaire */
+    .form-grid-2 {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 16px;
     }
 
-    @media (max-width: 720px) {
-        .form-section-grid {
+    @media (max-width: 768px) {
+        .form-grid-2 {
             grid-template-columns: 1fr;
         }
     }
 
-    .full-width {
-        grid-column: 1 / -1;
+    .champ-form-groupe {
+        margin-bottom: 16px;
     }
 
-    .carte-box-container {
-        border-radius: 12px;
+    .champ-form-groupe label {
+        display: block;
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 6px;
+    }
+
+    .champ-form-groupe input,
+    .champ-form-groupe select,
+    .champ-form-groupe textarea {
+        width: 100%;
+        box-sizing: border-box;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        padding: 9px 12px;
+        background: var(--champ-bg);
+        color: var(--text);
+        font-size: 14px;
+        transition: border-color 0.2s ease;
+    }
+
+    .champ-form-groupe input:focus,
+    .champ-form-groupe select:focus,
+    .champ-form-groupe textarea:focus {
+        border-color: var(--primary);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(14, 124, 134, 0.15);
+    }
+
+    /* Carte Google Maps & Satellite */
+    .carte-cadre-container {
+        border: 1px solid var(--border);
+        border-radius: 10px;
         overflow: hidden;
-        border: 1.5px solid var(--border);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-        margin-top: 10px;
+        margin: 20px 0;
+        background: var(--champ-bg);
     }
 
-    .carte-header-info {
+    .carte-cadre-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 10px 14px;
-        background: var(--surface-2, rgba(0,0,0,0.02));
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 10px 16px;
+        background: var(--surface-2, rgba(0, 0, 0, 0.02));
         border-bottom: 1px solid var(--border);
-        font-size: 13px;
-        color: var(--muted);
+    }
+
+    .carte-cadre-header h3 {
+        margin: 0;
+        font-size: 13.5px;
+        font-weight: 700;
+        color: var(--text);
+    }
+
+    #carte-prestataire {
+        height: 360px;
+        width: 100%;
     }
 </style>
 
 <div class="page-edit-container">
-    <!-- RECHERCHE AUTOMATIQUE INTELLIGENTE SÉNÉGAL -->
-    <div class="recherche-smart-card">
-        <div class="recherche-smart-header">
-            <h2>
-                {% icone "search" %} Réaligner / Rechercher l'établissement au Sénégal
-            </h2>
-        </div>
-        <p class="subtitle" style="margin-top:0;margin-bottom:12px;font-size:13px;">
-            Tapez le nom de la structure (Hôpital, Clinique, Pharmacie, Centre de santé) ou une commune pour mettre à jour automatiquement les coordonnées.
-        </p>
-
-        <div class="recherche-smart-ligne">
-            <span class="icone-input-search">{% icone "search" %}</span>
-            <input type="search"
-                   id="champ-recherche-etab"
-                   class="champ-search-smart"
-                   placeholder="Ex: Hôpital Principal, Clinique Madeleine, Pharmacie Guigon, Thiès..."
-                   autocomplete="off"
-                   aria-label="Rechercher un établissement de santé au Sénégal"
-                   value="{{ prestataire.nom }}">
-            <button type="button" id="bouton-chercher-etab" class="button primary btn-search-smart">
-                {% icone "search" %} Rechercher
-            </button>
-        </div>
-
-        <p id="statut-recherche-etab" class="subtitle" style="margin: 10px 0 0; font-size: 12.5px;" role="status" aria-live="polite"></p>
-        <ul id="liste-resultats-etab" class="resultats-smart-liste" aria-live="polite"></ul>
-    </div>
-
-    <!-- FORMULAIRE PRINCIPAL -->
-    <section class="panel panel-form">
+    <section class="panel-form formulaire-prestataire-card">
         {% if form.non_field_errors %}
-        <div class="erreurs-formulaire" role="alert">{{ form.non_field_errors }}</div>
+        <div class="erreurs-formulaire" role="alert" style="margin-bottom: 16px;">{{ form.non_field_errors }}</div>
         {% endif %}
 
+        <!-- 1. Recherche intégrée directement dans le formulaire -->
+        <div class="zone-recherche-integree">
+            <h2 class="recherche-titre-court">
+                Rechercher un établissement au Sénégal
+            </h2>
+            <div class="recherche-barre-ligne">
+                <input type="search"
+                       id="champ-recherche-etab"
+                       class="champ-search-input"
+                       placeholder="Nom de l'hôpital, de la clinique ou de la pharmacie"
+                       value="{{ prestataire.nom }}"
+                       aria-label="Rechercher un établissement">
+                <button type="button" id="bouton-chercher-etab" class="button primary btn-search-action">
+                    Rechercher
+                </button>
+            </div>
+            <p class="subtitle" style="margin: 6px 0 0; font-size: 12px; color: var(--muted);">
+                Trouve les structures au Sénégal et réaligne les coordonnées GPS.
+            </p>
+            <div id="statut-recherche-etab" style="margin-top: 6px; font-size: 12.5px;" role="status" aria-live="polite"></div>
+            <ul id="liste-resultats-etab" class="resultats-smart-liste"></ul>
+        </div>
+
+        <!-- 2. Formulaire principal -->
         <form method="post" id="form-prestataire">
             {% csrf_token %}
 
-            <div class="form-section-grid">
-                <!-- Nom -->
-                <div class="full-width">
-                    <label for="{{ form.nom.id_for_label }}">{{ form.nom.label }} <span style="color:#ef4444;">*</span></label>
+            <div class="form-grid-2">
+                <div class="champ-form-groupe">
+                    <label for="{{ form.nom.id_for_label }}">{{ form.nom.label }} *</label>
                     {{ form.nom }}
                     {% if form.nom.errors %}<div class="erreurs" role="alert">{{ form.nom.errors }}</div>{% endif %}
                 </div>
 
-                <!-- Type -->
-                <div>
-                    <label for="{{ form.type_prestataire.id_for_label }}">{{ form.type_prestataire.label }} <span style="color:#ef4444;">*</span></label>
+                <div class="champ-form-groupe">
+                    <label for="{{ form.type_prestataire.id_for_label }}">{{ form.type_prestataire.label }} *</label>
                     {{ form.type_prestataire }}
                     {% if form.type_prestataire.errors %}<div class="erreurs" role="alert">{{ form.type_prestataire.errors }}</div>{% endif %}
                 </div>
+            </div>
 
-                <!-- Ville -->
-                <div>
+            <div class="form-grid-2">
+                <div class="champ-form-groupe">
                     <label for="{{ form.ville.id_for_label }}">{{ form.ville.label }}</label>
                     {{ form.ville }}
                     {% if form.ville.errors %}<div class="erreurs" role="alert">{{ form.ville.errors }}</div>{% endif %}
                 </div>
 
-                <!-- Adresse -->
-                <div class="full-width">
-                    <label for="{{ form.adresse.id_for_label }}">{{ form.adresse.label }}</label>
-                    {{ form.adresse }}
-                    {% if form.adresse.errors %}<div class="erreurs" role="alert">{{ form.adresse.errors }}</div>{% endif %}
-                </div>
-
-                <!-- Téléphone -->
-                <div>
+                <div class="champ-form-groupe">
                     <label for="{{ form.telephone.id_for_label }}">{{ form.telephone.label }}</label>
                     {{ form.telephone }}
                     {% if form.telephone.errors %}<div class="erreurs" role="alert">{{ form.telephone.errors }}</div>{% endif %}
                 </div>
+            </div>
 
-                <!-- Email -->
-                <div>
+            <div class="champ-form-groupe">
+                <label for="{{ form.adresse.id_for_label }}">{{ form.adresse.label }}</label>
+                {{ form.adresse }}
+                {% if form.adresse.errors %}<div class="erreurs" role="alert">{{ form.adresse.errors }}</div>{% endif %}
+            </div>
+
+            <div class="form-grid-2">
+                <div class="champ-form-groupe">
                     <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
                     {{ form.email }}
                     {% if form.email.errors %}<div class="erreurs" role="alert">{{ form.email.errors }}</div>{% endif %}
                 </div>
 
-                <!-- Coordonnées GPS -->
-                <div>
-                    <label for="{{ form.latitude.id_for_label }}">{{ form.latitude.label }}</label>
-                    {{ form.latitude }}
-                    {% if form.latitude.errors %}<div class="erreurs" role="alert">{{ form.latitude.errors }}</div>{% endif %}
+                <div class="champ-form-groupe">
+                    <label for="{{ form.date_conventionnement.id_for_label }}">{{ form.date_conventionnement.label }}</label>
+                    {{ form.date_conventionnement }}
+                    {% if form.date_conventionnement.errors %}<div class="erreurs" role="alert">{{ form.date_conventionnement.errors }}</div>{% endif %}
                 </div>
+            </div>
 
-                <div>
-                    <label for="{{ form.longitude.id_for_label }}">{{ form.longitude.label }}</label>
-                    {{ form.longitude }}
-                    {% if form.longitude.errors %}<div class="erreurs" role="alert">{{ form.longitude.errors }}</div>{% endif %}
-                </div>
-
-                <!-- Actif / Statut -->
-                {% if form.actif %}
-                <div class="full-width">
-                    <div class="champ-case">
-                        {{ form.actif }}
-                        <div class="champ-case-texte">
-                            <label for="{{ form.actif.id_for_label }}">{{ form.actif.label }}</label>
-                            {% if form.actif.help_text %}<p class="subtitle">{{ form.actif.help_text }}</p>{% endif %}
-                        </div>
+            <div class="champ-form-groupe" style="display:flex;align-items:center;">
+                {% if form.partenaire %}
+                <div class="champ-case">
+                    {{ form.partenaire }}
+                    <div class="champ-case-texte">
+                        <label for="{{ form.partenaire.id_for_label }}" style="cursor:pointer;font-weight:600;margin:0;">
+                            {{ form.partenaire.label }}
+                        </label>
+                        {% if form.partenaire.help_text %}
+                        <p class="subtitle" style="margin:2px 0 0;font-size:12.5px;">{{ form.partenaire.help_text }}</p>
+                        {% endif %}
                     </div>
                 </div>
                 {% endif %}
-
-                <!-- Autres champs résiduels éventuels -->
-                {% for field in form %}
-                    {% if field.name not in "nom,type_prestataire,ville,adresse,telephone,email,latitude,longitude,actif" %}
-                        {% if field.is_hidden %}
-                            {{ field }}
-                        {% else %}
-                            <div class="full-width">
-                                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                                {{ field }}
-                                {% if field.errors %}<div class="erreurs" role="alert">{{ field.errors }}</div>{% endif %}
-                            </div>
-                        {% endif %}
-                    {% endif %}
-                {% endfor %}
             </div>
 
-            <!-- CARTE INTERACTIVE LEAFLET / GOOGLE MAPS -->
-            <div style="margin-top: 24px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                    <label id="titre-carte-prestataire" style="font-weight:600; font-size:14px; margin:0;">
-                        {% icone "map-pin" %} Positionnement cartographique Google Maps
-                    </label>
-                    <span id="statut-recherche-lieu" class="subtitle" style="margin:0; font-size:12.5px;" role="status" aria-live="polite"></span>
-                </div>
+            {{ form.latitude }}
+            {{ form.longitude }}
 
-                <div class="carte-box-container">
-                    <div class="carte-header-info">
-                        <span>📍 Cliquez ou déplacez le repère pour ajuster précisément l'emplacement.</span>
-                        <span id="badge-coords-actuelles" style="font-weight:600; font-family:monospace;">
+            <!-- Carte Google Maps / Satellite interactive -->
+            <label id="titre-carte-prestataire" class="sr-only">Emplacement sur la carte</label>
+            <div class="carte-cadre-container" role="group" aria-labelledby="titre-carte-prestataire">
+                <div class="carte-cadre-header">
+                    <h3>Emplacement géographique (Google Maps &amp; Satellite)</h3>
+                    <div>
+                        <span id="badge-coords-actuelles" style="font-size: 12px; color: var(--muted); font-family: monospace; margin-right: 8px;">
                             {{ form.latitude.value|default:"--" }}, {{ form.longitude.value|default:"--" }}
                         </span>
                     </div>
-                    <div id="carte-prestataire" role="group" aria-labelledby="titre-carte-prestataire" style="height: 380px;"></div>
+                </div>
+                <div id="carte-prestataire" role="group" aria-labelledby="titre-carte-prestataire"></div>
+                <div style="padding: 8px 16px; background: var(--surface); border-top: 1px solid var(--border); font-size: 12px; color: var(--muted);">
+                    Cliquez sur la carte ou déplacez le repère pour ajuster la position exacte de l'établissement.
                 </div>
             </div>
 
-            <div class="actions" style="margin-top: 24px; display: flex; gap: 12px;">
-                <button class="button primary" type="submit" style="min-width: 160px; font-weight:600;">
-                    {% icone "check" %} Enregistrer les modifications
+            <div class="actions" style="margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end;">
+                <a class="button btn" href="{% url 'liste_prestataires' %}" style="padding: 10px 20px;">Annuler</a>
+                <button class="button primary" type="submit" style="padding: 10px 24px; font-weight: 700;">
+                    Enregistrer les modifications
                 </button>
-                <a class="button btn" href="{% url 'liste_prestataires' %}">Annuler</a>
             </div>
         </form>
     </section>
@@ -387,89 +343,12 @@
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
       integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-
-<style>
-    .leaflet-control-layers {
-        background: var(--surface) !important;
-        color: var(--text) !important;
-        border: 1px solid var(--border) !important;
-        border-radius: 10px !important;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18) !important;
-    }
-    .leaflet-control-layers-expanded {
-        padding: 10px 14px !important;
-        background: var(--surface) !important;
-        color: var(--text) !important;
-        min-width: 190px !important;
-    }
-    .leaflet-control-layers-base label,
-    .leaflet-control-layers label {
-        display: flex !important;
-        align-items: center !important;
-        gap: 8px !important;
-        margin: 0 !important;
-        padding: 5px 8px !important;
-        border-radius: 6px !important;
-        cursor: pointer !important;
-        color: var(--text) !important;
-        font-size: 13px !important;
-        font-weight: 500 !important;
-        line-height: 1.3 !important;
-    }
-    .leaflet-control-layers-base label:hover,
-    .leaflet-control-layers label:hover {
-        background: var(--table-hover, rgba(255, 255, 255, 0.08)) !important;
-        color: var(--primary) !important;
-    }
-    .leaflet-control-layers-base label > div,
-    .leaflet-control-layers label > div {
-        display: flex !important;
-        align-items: center !important;
-        gap: 8px !important;
-        width: 100% !important;
-        color: inherit !important;
-    }
-    .leaflet-control-layers-base label span,
-    .leaflet-control-layers label span {
-        color: var(--text) !important;
-        font-weight: 500 !important;
-    }
-    .leaflet-control-layers-base label:hover span,
-    .leaflet-control-layers label:hover span {
-        color: var(--primary) !important;
-    }
-    .leaflet-control-layers input[type="radio"] {
-        width: 16px !important;
-        height: 16px !important;
-        margin: 0 !important;
-        accent-color: var(--primary) !important;
-        cursor: pointer !important;
-        flex-shrink: 0 !important;
-    }
-    .leaflet-control-layers-toggle {
-        background-color: var(--surface) !important;
-        border-radius: 8px !important;
-    }
-    :root[data-theme="sombre"] .leaflet-control-layers-toggle {
-        filter: invert(0.9) hue-rotate(180deg);
-    }
-    .leaflet-bar a {
-        background-color: var(--surface) !important;
-        color: var(--text) !important;
-        border-bottom: 1px solid var(--border) !important;
-    }
-    .leaflet-bar a:hover {
-        background-color: var(--primary) !important;
-        color: #fff !important;
-    }
-</style>
-
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
 <script>
     (function () {
-        var SENEGAL_CENTRE = [14.6928, -17.4467]; // Dakar par défaut ou centre Sénégal
+        var SENEGAL_CENTRE = [14.6928, -17.4467];
         var latInit = "{{ form.latitude.value|default_if_none:'' }}";
         var lngInit = "{{ form.longitude.value|default_if_none:'' }}";
         var lat = latInit ? parseFloat(latInit) : null;
@@ -484,7 +363,6 @@
         var champTel = document.getElementById('id_telephone');
         var badgeCoords = document.getElementById('badge-coords-actuelles');
 
-        // Layers Google Maps & Satellites
         var googlePlan = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=fr', {
             attribution: '&copy; Google Maps',
             maxZoom: 20
@@ -495,15 +373,10 @@
             maxZoom: 20
         });
 
-        var esriSatellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: '&copy; Esri World Imagery',
+        var esriPlan = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+            attribution: '&copy; Esri World Street Map',
             maxZoom: 19
         });
-        var esriLabels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
-            attribution: '&copy; Esri Labels',
-            maxZoom: 19
-        });
-        var vueSatellite = L.layerGroup([esriSatellite, esriLabels]);
 
         var carte = L.map('carte-prestataire', {
             center: (lat && lng) ? [lat, lng] : SENEGAL_CENTRE,
@@ -514,7 +387,7 @@
         var baseMaps = {
             "Google Maps Plan": googlePlan,
             "Google Satellite Hybride": googleSatellite,
-            "Satellite HD (Esri)": vueSatellite
+            "Plan Urbain": esriPlan
         };
         L.control.layers(baseMaps, null, { position: 'topright' }).addTo(carte);
 
@@ -522,18 +395,18 @@
             carte.invalidateSize();
         }, 300);
 
-        var iconeHopital = L.divIcon({
+        var iconePoint = L.divIcon({
             className: 'custom-map-pin',
-            html: '<div style="background:#0e7c86;color:#fff;width:22px;height:22px;border-radius:50%;box-shadow:0 3px 8px rgba(0,0,0,0.3);border:3px solid #fff;"></div>',
-            iconSize: [22, 22],
-            iconAnchor: [11, 11]
+            html: '<div style="background:#0e7c86;color:#fff;width:20px;height:20px;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.3);border:3px solid #fff;"></div>',
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
         });
 
-        var marqueur = (lat && lng) ? L.marker([lat, lng], {icon: iconeHopital, draggable: true}).addTo(carte) : null;
+        var marqueur = (lat && lng) ? L.marker([lat, lng], {icon: iconePoint, draggable: true}).addTo(carte) : null;
 
         function majPosition(latVal, lngVal) {
-            champLatitude.value = latVal.toFixed(6);
-            champLongitude.value = lngVal.toFixed(6);
+            if (champLatitude) champLatitude.value = latVal.toFixed(6);
+            if (champLongitude) champLongitude.value = lngVal.toFixed(6);
             if (badgeCoords) {
                 badgeCoords.textContent = latVal.toFixed(5) + ', ' + lngVal.toFixed(5);
             }
@@ -551,7 +424,7 @@
             if (marqueur) {
                 marqueur.setLatLng(pos);
             } else {
-                marqueur = L.marker(pos, {icon: iconeHopital, draggable: true}).addTo(carte);
+                marqueur = L.marker(pos, {icon: iconePoint, draggable: true}).addTo(carte);
                 marqueur.on('dragend', function(ev) {
                     var p = ev.target.getLatLng();
                     majPosition(p.lat, p.lng);
@@ -560,15 +433,11 @@
             majPosition(pos.lat, pos.lng);
         });
 
-        // RECHERCHE INSTANTANÉE DANS LE RÉFÉRENTIEL NATIONAL ET OPENSTREETMAP
+        // RECHERCHE INSTANTANÉE
         var champRecherche = document.getElementById('champ-recherche-etab');
         var boutonChercher = document.getElementById('bouton-chercher-etab');
         var statutEtab = document.getElementById('statut-recherche-etab');
         var listeEtab = document.getElementById('liste-resultats-etab');
-
-        function getEmojiType(type) {
-            return '';
-        }
 
         function afficherResultats(resultats) {
             listeEtab.innerHTML = '';
@@ -576,45 +445,36 @@
                 var li = document.createElement('li');
                 li.className = 'resultat-smart-card';
 
-                var infoDiv = document.createElement('div');
-                infoDiv.className = 'resultat-smart-info';
+                var divText = document.createElement('div');
 
-                var detailsDiv = document.createElement('div');
-                detailsDiv.className = 'resultat-details';
+                var pNom = document.createElement('p');
+                pNom.className = 'resultat-smart-nom';
+                pNom.textContent = item.nom || item.display_name || 'Établissement';
+                divText.appendChild(pNom);
 
-                var titreP = document.createElement('p');
-                titreP.className = 'resultat-titre';
-                titreP.textContent = item.nom || item.display_name || 'Établissement';
+                var pAdr = document.createElement('p');
+                pAdr.className = 'resultat-smart-adresse';
 
                 var badge = document.createElement('span');
-                badge.className = 'resultat-badge-source';
-                badge.textContent = item.deja_conventionne ? 'Déjà conventionné' : 'Répertoire Santé Sénégal';
-                titreP.appendChild(badge);
+                badge.className = 'badge-source-sn' + (item.deja_conventionne ? ' badge-deja-inscrit' : '');
+                badge.textContent = item.deja_conventionne ? 'Déjà conventionné' : 'Répertoire National Santé';
+                pAdr.appendChild(badge);
 
-                var adresseP = document.createElement('p');
-                adresseP.className = 'resultat-adresse';
-                adresseP.textContent = (item.adresse || '') + (item.ville ? ' — ' + item.ville : '');
+                var spanText = document.createElement('span');
+                spanText.textContent = (item.ville ? item.ville + ' · ' : '') + (item.adresse || '');
+                pAdr.appendChild(spanText);
 
-                var coordsP = document.createElement('span');
-                coordsP.className = 'resultat-coords';
-                coordsP.textContent = 'GPS : ' + parseFloat(item.lat).toFixed(4) + ', ' + parseFloat(item.lon).toFixed(4);
-
-                detailsDiv.appendChild(titreP);
-                if (item.adresse || item.ville) detailsDiv.appendChild(adresseP);
-                detailsDiv.appendChild(coordsP);
-
-                infoDiv.appendChild(detailsDiv);
+                divText.appendChild(pAdr);
+                li.appendChild(divText);
 
                 var btnUtiliser = document.createElement('button');
                 btnUtiliser.type = 'button';
-                btnUtiliser.className = 'button primary btn-utiliser-smart';
-                btnUtiliser.innerHTML = 'Sélectionner';
+                btnUtiliser.className = 'button btn btn-sm primary';
+                btnUtiliser.textContent = 'Sélectionner';
 
                 btnUtiliser.addEventListener('click', function () {
-                    if (item.nom) champNom.value = item.nom;
-                    if (item.type_prestataire && champType) {
-                        champType.value = item.type_prestataire;
-                    }
+                    if (item.nom && champNom) champNom.value = item.nom;
+                    if (item.type_prestataire && champType) champType.value = item.type_prestataire;
                     if (item.ville && champVille) champVille.value = item.ville;
                     if (item.adresse && champAdresse) champAdresse.value = item.adresse;
                     if (item.telephone && champTel && !champTel.value) champTel.value = item.telephone;
@@ -626,7 +486,7 @@
                     if (marqueur) {
                         marqueur.setLatLng([newLat, newLng]);
                     } else {
-                        marqueur = L.marker([newLat, newLng], {icon: iconeHopital, draggable: true}).addTo(carte);
+                        marqueur = L.marker([newLat, newLng], {icon: iconePoint, draggable: true}).addTo(carte);
                         marqueur.on('dragend', function(ev) {
                             var p = ev.target.getLatLng();
                             majPosition(p.lat, p.lng);
@@ -634,53 +494,53 @@
                     }
 
                     carte.setView([newLat, newLng], 16, { animate: true });
-                    statutEtab.textContent = 'Données appliquées pour : ' + (item.nom || 'Établissement');
+                    statutEtab.innerHTML = '<span style="color:#047857;font-weight:600;">✓ Données appliquées pour "' + (item.nom || 'Établissement') + '".</span>';
                     listeEtab.innerHTML = '';
                 });
 
-                li.appendChild(infoDiv);
                 li.appendChild(btnUtiliser);
-
                 listeEtab.appendChild(li);
             });
         }
 
         function lancerRecherche() {
-            var q = (champRecherche.value || '').trim();
+            var q = (champRecherche && champRecherche.value) ? champRecherche.value.trim() : '';
             listeEtab.innerHTML = '';
             if (q.length < 2) {
                 statutEtab.textContent = 'Veuillez saisir au moins 2 caractères.';
                 return;
             }
             statutEtab.textContent = 'Recherche en cours...';
-            boutonChercher.disabled = true;
+            if (boutonChercher) boutonChercher.disabled = true;
 
             fetch('{% url "recherche_lieu_prestataire" %}?q=' + encodeURIComponent(q))
                 .then(function(r) { return r.json(); })
                 .then(function(data) {
                     var items = (data && data.resultats) || [];
                     if (!items.length) {
-                        statutEtab.textContent = 'Aucun établissement trouvé. Vous pouvez modifier manuellement les champs ci-dessous.';
+                        statutEtab.textContent = 'Aucun établissement trouvé. Remplissez directement les champs ci-dessous.';
                         return;
                     }
-                    statutEtab.textContent = items.length + ' établissement(s) trouvé(s) au Sénégal. Cliquez sur "Sélectionner" pour ajuster le formulaire.';
+                    statutEtab.textContent = items.length + ' établissement(s) trouvé(s) au Sénégal.';
                     afficherResultats(items);
                 })
                 .catch(function() {
-                    statutEtab.textContent = 'Recherche temporairement indisponible. Saisie manuelle possible.';
+                    statutEtab.textContent = 'Recherche temporairement indisponible.';
                 })
                 .finally(function() {
-                    boutonChercher.disabled = false;
+                    if (boutonChercher) boutonChercher.disabled = false;
                 });
         }
 
-        boutonChercher.addEventListener('click', lancerRecherche);
-        champRecherche.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                lancerRecherche();
-            }
-        });
+        if (boutonChercher) boutonChercher.addEventListener('click', lancerRecherche);
+        if (champRecherche) {
+            champRecherche.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    lancerRecherche();
+                }
+            });
+        }
     })();
 </script>
 {% endblock %}

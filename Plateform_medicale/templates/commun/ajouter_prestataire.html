@@ -13,98 +13,80 @@
 </section>
 
 <style>
+    /* Disposition générale plein écran propre */
     .page-ajout-container {
         width: 100%;
-        max-width: 100%;
-        margin: 0 auto 40px;
+        margin-bottom: 40px;
     }
 
-    /* Carte de recherche instantanée intelligente */
-    .recherche-smart-card {
-        background: linear-gradient(135deg, rgba(14, 124, 134, 0.08) 0%, rgba(79, 184, 174, 0.05) 100%);
-        border: 1.5px solid rgba(14, 124, 134, 0.25);
+    .formulaire-prestataire-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
         border-radius: 14px;
-        padding: 20px;
+        padding: 28px 32px;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.03);
+    }
+
+    /* Barre de recherche intégrée directement en tête de formulaire */
+    .zone-recherche-integree {
+        background: var(--surface-2, rgba(14, 124, 134, 0.05));
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px 20px;
         margin-bottom: 24px;
-        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
-        position: relative;
     }
 
-    :root[data-theme="sombre"] .recherche-smart-card {
-        background: linear-gradient(135deg, rgba(14, 124, 134, 0.15) 0%, rgba(15, 23, 42, 0.6) 100%);
-        border-color: rgba(79, 184, 174, 0.3);
-    }
-
-    .recherche-smart-header {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 12px;
-    }
-
-    .recherche-smart-header h2 {
-        font-size: 15px;
+    .recherche-titre-court {
+        font-size: 14px;
         font-weight: 700;
-        margin: 0;
         color: var(--primary);
+        margin: 0 0 10px;
         display: flex;
         align-items: center;
         gap: 8px;
     }
 
-    .recherche-smart-ligne {
+    .recherche-barre-ligne {
         display: flex;
         gap: 10px;
-        position: relative;
+        align-items: center;
     }
 
-    .champ-search-smart {
+    .champ-search-input {
         flex: 1;
-        height: 46px !important;
-        font-size: 14.5px !important;
-        border-radius: 10px !important;
-        border: 1.5px solid var(--border) !important;
-        padding-left: 40px !important;
-        background: var(--surface) !important;
-        color: var(--text) !important;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.03) !important;
-        transition: all 0.2s ease !important;
-    }
-
-    .champ-search-smart:focus {
-        border-color: var(--primary) !important;
-        box-shadow: 0 0 0 3px rgba(14, 124, 134, 0.18) !important;
-    }
-
-    .icone-input-search {
-        position: absolute;
-        left: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: var(--muted);
-        pointer-events: none;
-    }
-
-    .btn-search-smart {
-        height: 46px !important;
-        padding: 0 20px !important;
-        border-radius: 10px !important;
-        font-weight: 600 !important;
+        height: 44px !important;
         font-size: 14px !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        gap: 8px !important;
-        white-space: nowrap !important;
+        border-radius: 8px !important;
+        border: 1px solid var(--border) !important;
+        padding: 0 14px !important;
+        background: var(--champ-bg, var(--surface)) !important;
+        color: var(--text) !important;
+        box-sizing: border-box;
     }
 
-    /* Liste de résultats épurée façon Google Maps */
+    .champ-search-input:focus {
+        border-color: var(--primary) !important;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(14, 124, 134, 0.15);
+    }
+
+    .btn-search-action {
+        height: 44px !important;
+        padding: 0 20px !important;
+        font-size: 14px !important;
+        font-weight: 600 !important;
+        border-radius: 8px !important;
+        white-space: nowrap;
+    }
+
+    /* Liste de résultats */
     .resultats-smart-liste {
         list-style: none;
-        margin: 14px 0 0;
+        margin: 12px 0 0;
         padding: 0;
         display: grid;
-        gap: 10px;
-        max-height: 380px;
+        gap: 8px;
+        max-height: 280px;
         overflow-y: auto;
     }
 
@@ -112,43 +94,16 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 14px;
-        padding: 12px 16px;
+        gap: 12px;
+        padding: 10px 14px;
         background: var(--surface);
         border: 1px solid var(--border);
-        border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-        transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+        border-radius: 8px;
     }
 
     .resultat-smart-card:hover {
-        transform: translateY(-1px);
         border-color: var(--primary);
-        box-shadow: 0 4px 14px rgba(14, 124, 134, 0.1);
-    }
-
-    .resultat-smart-info {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        min-width: 0;
-    }
-
-    .resultat-smart-icon {
-        width: 38px;
-        height: 38px;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        font-size: 18px;
-        background: rgba(14, 124, 134, 0.1);
-        color: var(--primary);
-    }
-
-    .resultat-smart-text {
-        min-width: 0;
+        background: var(--table-hover, rgba(0, 0, 0, 0.02));
     }
 
     .resultat-smart-nom {
@@ -156,58 +111,38 @@
         font-weight: 700;
         margin: 0 0 2px;
         color: var(--text);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
     }
 
     .resultat-smart-adresse {
-        font-size: 12px;
-        margin: 0;
+        font-size: 12.5px;
         color: var(--muted);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        margin: 0;
     }
 
     .badge-source-sn {
         display: inline-block;
-        font-size: 10.5px;
-        font-weight: 700;
-        padding: 2px 7px;
-        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 12px;
         background: rgba(14, 124, 134, 0.12);
         color: var(--primary);
-        margin-right: 6px;
+        margin-right: 8px;
     }
 
     .badge-deja-inscrit {
-        background: rgba(4, 120, 87, 0.12);
-        color: #047857;
+        background: rgba(16, 185, 129, 0.15);
+        color: #059669;
     }
 
-    /* Panneau de formulaire stylisé */
-    /* Compatibilite exacte selecteur test: .panel-form > form */
-    .panel-form-modern,
-    .panel-form {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 14px;
-        padding: 24px 28px;
-        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.03);
-    }
-    .panel-form > form,
-    .panel-form-modern > form {
-        display: block;
-    }
-
+    /* Grille de champs du formulaire */
     .form-grid-2 {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 16px;
     }
 
-    @media (max-width: 680px) {
+    @media (max-width: 768px) {
         .form-grid-2 {
             grid-template-columns: 1fr;
         }
@@ -247,76 +182,68 @@
         box-shadow: 0 0 0 3px rgba(14, 124, 134, 0.15);
     }
 
-    /* Cadre Carte Google Maps */
+    /* Carte Google Maps & Satellite */
     .carte-cadre-container {
-        border: 1.5px solid var(--border);
-        border-radius: 12px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
         overflow: hidden;
-        margin: 18px 0;
+        margin: 20px 0;
         background: var(--champ-bg);
     }
 
     .carte-cadre-header {
         display: flex;
-        align-items: center;
         justify-content: space-between;
-        padding: 12px 16px;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 10px 16px;
+        background: var(--surface-2, rgba(0, 0, 0, 0.02));
         border-bottom: 1px solid var(--border);
-        background: var(--surface);
     }
 
     .carte-cadre-header h3 {
+        margin: 0;
         font-size: 13.5px;
         font-weight: 700;
-        margin: 0;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        color: var(--primary);
-    }
-
-    .carte-recherche-barre-loc {
-        display: flex;
-        gap: 8px;
-        align-items: center;
+        color: var(--text);
     }
 
     #carte-prestataire {
-        height: 320px;
+        height: 360px;
         width: 100%;
     }
 </style>
 
 <div class="page-ajout-container">
-
-    <!-- Section 1 : Recherche intelligente nationale (Auto-remplissage en un clic) -->
-    <section class="recherche-smart-card" aria-labelledby="titre-recherche-smart">
-        <div class="recherche-smart-header">
-            <h2 id="titre-recherche-smart">
-                {% icone "search" %} Recherche & Auto-remplissage d'un établissement au Sénégal
-            </h2>
-        </div>
-        <p class="subtitle" style="margin: 0 0 12px; font-size: 13px;">
-            Recherchez n'importe quel établissement (ex. : <em>Clinique Pasteur</em>, <em>Hôpital Dalal Jamm</em>, <em>Abass Ndao</em>, <em>Thiès</em>, <em>Touba</em>, <em>Saint-Louis</em>, <em>Ziguinchor</em>...). Un clic remplit automatiquement le nom, la ville, l'adresse et le pointeur GPS (la recherche trouve les structures mais ne les inscrit pas automatiquement tant que vous ne validez pas).
-        </p>
-
-        <div class="recherche-smart-ligne">
-            <span class="icone-input-search">{% icone "search" %}</span>
-            <input type="search" id="recherche-etablissement" class="champ-search-smart" placeholder="Tapez le nom d'un hôpital, d'une clinique ou d'une pharmacie..." aria-label="Rechercher un établissement au Sénégal">
-            <button type="button" id="bouton-chercher-etablissement" class="button primary btn-search-smart">
-                Rechercher
-            </button>
-        </div>
-        <div id="statut-etablissement" style="margin-top: 8px; font-size: 12.5px; color: var(--muted);" role="status" aria-live="polite"></div>
-        <ul id="resultats-etablissement" class="resultats-smart-liste"></ul>
-    </section>
-
-    <!-- Section 2 : Formulaire de conventionnement & enregistrement -->
-    <section class="panel-form panel-form-modern">
+    <section class="panel-form formulaire-prestataire-card">
         {% if form.non_field_errors %}
         <div class="erreurs-formulaire" role="alert" style="margin-bottom: 16px;">{{ form.non_field_errors }}</div>
         {% endif %}
 
+        <!-- 1. Recherche et auto-remplissage intégrée directement dans le formulaire -->
+        <div class="zone-recherche-integree">
+            <h2 class="recherche-titre-court">
+                Rechercher un établissement au Sénégal
+            </h2>
+            <div class="recherche-barre-ligne">
+                <input type="search"
+                       id="recherche-etablissement"
+                       class="champ-search-input"
+                       placeholder="Nom de l'hôpital, de la clinique ou de la pharmacie (ex. : Dalal Jamm, Clinique Pasteur, Thiès...)"
+                       aria-label="Rechercher un établissement">
+                <button type="button" id="bouton-chercher-etablissement" class="button primary btn-search-action">
+                    Rechercher
+                </button>
+            </div>
+            <p class="subtitle" style="margin: 6px 0 0; font-size: 12px; color: var(--muted);">
+                Trouve les structures au Sénégal et pré-remplit les coordonnées (la recherche trouve les structures mais ne les inscrit pas automatiquement tant que vous ne validez pas).
+            </p>
+            <div id="statut-etablissement" style="margin-top: 6px; font-size: 12.5px;" role="status" aria-live="polite"></div>
+            <ul id="resultats-etablissement" class="resultats-smart-liste"></ul>
+        </div>
+
+        <!-- 2. Formulaire principal -->
         <form method="post" id="form-prestataire">
             {% csrf_token %}
 
@@ -384,17 +311,17 @@
             <label id="titre-carte-prestataire" class="sr-only">Emplacement sur la carte</label>
             <div class="carte-cadre-container" role="group" aria-labelledby="titre-carte-prestataire">
                 <div class="carte-cadre-header">
-                    <h3>{% icone "map-pin" %} Emplacement géographique (Google Maps &amp; Satellite)</h3>
-                    <div class="carte-recherche-barre-loc">
+                    <h3>Emplacement géographique (Google Maps &amp; Satellite)</h3>
+                    <div>
                         <button type="button" id="bouton-recherche-lieu" class="button btn btn-sm">
                             Repositionner sur l'adresse
                         </button>
-                        <span id="statut-recherche-lieu" style="font-size: 12px; color: var(--muted);" role="status" aria-live="polite"></span>
+                        <span id="statut-recherche-lieu" style="font-size: 12px; color: var(--muted); margin-left: 8px;" role="status" aria-live="polite"></span>
                     </div>
                 </div>
                 <div id="carte-prestataire" role="group" aria-labelledby="titre-carte-prestataire"></div>
                 <div style="padding: 8px 16px; background: var(--surface); border-top: 1px solid var(--border); font-size: 12px; color: var(--muted);">
-                    💡 Vous pouvez cliquer directement sur la carte pour affiner au mètre près la position de l'établissement.
+                    Cliquez sur la carte ou déplacez le repère pour ajuster la position exacte de l'établissement.
                 </div>
             </div>
 
@@ -463,17 +390,41 @@
             carte.invalidateSize();
         }, 300);
 
-        var marqueur = (lat && lng) ? L.marker([lat, lng]).addTo(carte) : null;
+        var iconePoint = L.divIcon({
+            className: 'custom-map-pin',
+            html: '<div style="background:#0e7c86;color:#fff;width:20px;height:20px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>',
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+        });
+
+        var marqueur = (lat && lng) ? L.marker([lat, lng], {icon: iconePoint, draggable: true}).addTo(carte) : null;
+
+        function positionnerMarqueur(pLat, pLon) {
+            if (champLatitude) champLatitude.value = pLat.toFixed(6);
+            if (champLongitude) champLongitude.value = pLon.toFixed(6);
+            if (marqueur) {
+                marqueur.setLatLng([pLat, pLon]);
+            } else {
+                marqueur = L.marker([pLat, pLon], {icon: iconePoint, draggable: true}).addTo(carte);
+                marqueur.on('dragend', function (ev) {
+                    var p = ev.target.getLatLng();
+                    if (champLatitude) champLatitude.value = p.lat.toFixed(6);
+                    if (champLongitude) champLongitude.value = p.lng.toFixed(6);
+                });
+            }
+        }
+
+        if (marqueur) {
+            marqueur.on('dragend', function (ev) {
+                var p = ev.target.getLatLng();
+                if (champLatitude) champLatitude.value = p.lat.toFixed(6);
+                if (champLongitude) champLongitude.value = p.lng.toFixed(6);
+            });
+        }
 
         carte.on('click', function (evenement) {
             var position = evenement.latlng;
-            if (marqueur) {
-                marqueur.setLatLng(position);
-            } else {
-                marqueur = L.marker(position).addTo(carte);
-            }
-            if (champLatitude) champLatitude.value = position.lat.toFixed(6);
-            if (champLongitude) champLongitude.value = position.lng.toFixed(6);
+            positionnerMarqueur(position.lat, position.lng);
         });
 
         // Bouton replacer adresse
@@ -481,12 +432,13 @@
         var statutRechercheLieu = document.getElementById('statut-recherche-lieu');
 
         if (boutonRechercheLieu) {
-            boutonRechercheLieu.addEventListener('click', function () {
-                var adr = (champAdresse && champAdresse.value || '').trim();
-                var vil = (champVille && champVille.value || '').trim();
-                var query = [adr, vil].filter(Boolean).join(', ');
+            boutonRechercheLieu.addEventListener('click', function() {
+                var adresse = (champAdresse && champAdresse.value) ? champAdresse.value.trim() : '';
+                var ville = (champVille && champVille.value) ? champVille.value.trim() : '';
+                var query = [adresse, ville].filter(Boolean).join(', ');
+
                 if (!query) {
-                    statutRechercheLieu.textContent = "Indiquez une ville ou une adresse.";
+                    statutRechercheLieu.textContent = 'Veuillez renseigner une adresse ou une ville ci-dessus.';
                     return;
                 }
                 statutRechercheLieu.textContent = 'Localisation...';
@@ -498,16 +450,10 @@
                         if (res && res.trouve) {
                             var pos = [parseFloat(res.lat), parseFloat(res.lon)];
                             carte.flyTo(pos, 15, { duration: 1 });
-                            if (marqueur) {
-                                marqueur.setLatLng(pos);
-                            } else {
-                                marqueur = L.marker(pos).addTo(carte);
-                            }
-                            if (champLatitude) champLatitude.value = pos[0].toFixed(6);
-                            if (champLongitude) champLongitude.value = pos[1].toFixed(6);
-                            statutRechercheLieu.textContent = 'Point positionné sur ' + (res.nom || query) + '.';
+                            positionnerMarqueur(pos[0], pos[1]);
+                            statutRechercheLieu.textContent = 'Localisé : ' + (res.nom || query) + '.';
                         } else {
-                            statutRechercheLieu.textContent = 'Lieu non détecté automatiquement. Cliquez sur la carte pour le placer.';
+                            statutRechercheLieu.textContent = 'Lieu non détecté. Placez le repère sur la carte.';
                         }
                     })
                     .catch(function() {
@@ -535,25 +481,11 @@
             var pLat = parseFloat(etab.lat);
             var pLon = parseFloat(etab.lon);
             if (!isNaN(pLat) && !isNaN(pLon)) {
-                if (champLatitude) champLatitude.value = pLat.toFixed(6);
-                if (champLongitude) champLongitude.value = pLon.toFixed(6);
                 carte.flyTo([pLat, pLon], 16, { duration: 1.2 });
-                if (marqueur) {
-                    marqueur.setLatLng([pLat, pLon]);
-                } else {
-                    marqueur = L.marker([pLat, pLon]).addTo(carte);
-                }
+                positionnerMarqueur(pLat, pLon);
             }
 
-            statutEtab.innerHTML = '<span style="color:#047857;font-weight:600;">✓ Formulaire pré-rempli avec succès pour "' + etab.nom + '". Vérifiez puis enregistrez ci-dessous.</span>';
-            var formBloc = document.getElementById('form-prestataire');
-            if (formBloc) {
-                formBloc.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-        }
-
-        function getIconType(type) {
-            return '';
+            statutEtab.innerHTML = '<span style="color:#047857;font-weight:600;">✓ Formulaire pré-rempli pour "' + etab.nom + '".</span>';
         }
 
         function afficherResultats(resultats) {
@@ -561,9 +493,6 @@
             resultats.forEach(function (etab) {
                 var li = document.createElement('li');
                 li.className = 'resultat-smart-card';
-
-                var divInfo = document.createElement('div');
-                divInfo.className = 'resultat-smart-info';
 
                 var divText = document.createElement('div');
                 divText.className = 'resultat-smart-text';
@@ -586,8 +515,7 @@
                 pAdr.appendChild(spanText);
 
                 divText.appendChild(pAdr);
-                divInfo.appendChild(divText);
-                li.appendChild(divInfo);
+                li.appendChild(divText);
 
                 var btnUtiliser = document.createElement('button');
                 btnUtiliser.type = 'button';
@@ -602,49 +530,53 @@
             });
         }
 
-        function lancerRecherche() {
-            var q = (champRecherche.value || '').trim();
+        function chercherEtablissements() {
+            var val = (champRecherche && champRecherche.value) ? champRecherche.value.trim() : '';
             listeEtab.innerHTML = '';
-            if (q.length < 2) {
+            if (val.length < 2) {
                 statutEtab.textContent = 'Veuillez saisir au moins 2 caractères.';
                 return;
             }
             statutEtab.textContent = 'Recherche en cours...';
-            boutonChercher.disabled = true;
+            if (boutonChercher) boutonChercher.disabled = true;
 
-            fetch('{% url "recherche_lieu_prestataire" %}?q=' + encodeURIComponent(q))
+            fetch('{% url "recherche_lieu_prestataire" %}?q=' + encodeURIComponent(val))
                 .then(function(r) { return r.json(); })
                 .then(function(data) {
                     var items = (data && data.resultats) || [];
                     if (!items.length) {
-                        statutEtab.textContent = 'Aucun établissement trouvé. Vous pouvez remplir les champs manuellement ci-dessous.';
+                        statutEtab.textContent = 'Aucun établissement trouvé. Remplissez directement les champs ci-dessous.';
                         return;
                     }
-                    statutEtab.textContent = items.length + ' établissement(s) trouvé(s) au Sénégal. Cliquez sur "Sélectionner" pour remplir le formulaire.';
+                    statutEtab.textContent = items.length + ' établissement(s) trouvé(s) au Sénégal.';
                     afficherResultats(items);
                 })
                 .catch(function() {
-                    statutEtab.textContent = 'Recherche temporairement indisponible. Saisie manuelle possible.';
+                    statutEtab.textContent = 'Recherche temporairement indisponible.';
                 })
                 .finally(function() {
-                    boutonChercher.disabled = false;
+                    if (boutonChercher) boutonChercher.disabled = false;
                 });
         }
 
-        boutonChercher.addEventListener('click', lancerRecherche);
-        champRecherche.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                lancerRecherche();
-            }
-        });
+        if (boutonChercher) {
+            boutonChercher.addEventListener('click', chercherEtablissements);
+        }
+        if (champRecherche) {
+            champRecherche.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    chercherEtablissements();
+                }
+            });
+        }
 
-        // Détection paramètre d'URL
-        var params = new URLSearchParams(window.location.search);
-        var qInitial = params.get('q') || params.get('nom');
-        if (qInitial && !champNom.value) {
+        // Si q= est dans l'URL
+        var urlParams = new URLSearchParams(window.location.search);
+        var qInitial = urlParams.get('q') || urlParams.get('nom');
+        if (qInitial && champRecherche && !champNom.value) {
             champRecherche.value = qInitial;
-            lancerRecherche();
+            chercherEtablissements();
         }
     })();
 </script>
