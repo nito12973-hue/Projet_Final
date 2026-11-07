@@ -3,6 +3,7 @@ Prestataires (CRUD, géolocalisation Nominatim) et Plans de couverture (CRUD).
 """
 
 import json
+import os
 import re
 import threading
 import time
@@ -539,47 +540,78 @@ def _normaliser_recherche_texte(chaine: str) -> str:
     return re.sub(r"\s+", " ", re.sub(r"[^a-zA-Z0-9\s]", " ", texte_sans_accents)).strip().lower()
 
 
+def _charger_etablissements_senegal():
+    """Charge l'ensemble des établissements de santé répertoriés au Sénégal (base complète et enrichie)."""
+    global _REFERENTIEL_SANTE_SENEGAL
+    fichier_data = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)),
+        "data",
+        "etablissements_sante_senegal.json"
+    )
+    if os.path.exists(fichier_data):
+        try:
+            with open(fichier_data, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return _REFERENTIEL_SANTE_SENEGAL
+
+
+_ETABLISSEMENTS_SANTE_SENEGAL = None
+
+
 def _rechercher_referentiel_sante(terme_recherche: str):
-    """Recherche un établissement dans le référentiel national de santé sénégalais."""
+    """Recherche un établissement dans le référentiel national de santé sénégalais (14 régions du Sénégal)."""
+    global _ETABLISSEMENTS_SANTE_SENEGAL
     if not terme_recherche:
         return []
+    if _ETABLISSEMENTS_SANTE_SENEGAL is None:
+        _ETABLISSEMENTS_SANTE_SENEGAL = _charger_etablissements_senegal()
+
     terme_norm = _normaliser_recherche_texte(terme_recherche)
     mots_cles_cherche = [m for m in terme_norm.split() if m not in ("de", "du", "la", "le", "les", "des", "l", "d", "a", "au", "aux", "en", "senegal")]
     if not mots_cles_cherche:
         return []
 
     resultats = []
-    for etab in _REFERENTIEL_SANTE_SENEGAL:
-        nom_norm = _normaliser_recherche_texte(etab["nom"])
-        adresse_norm = _normaliser_recherche_texte(etab["adresse"] + " " + etab["ville"])
-        
+    for etab in _ETABLISSEMENTS_SANTE_SENEGAL:
+        nom_norm = _normaliser_recherche_texte(etab.get("nom", ""))
+        ville_norm = _normaliser_recherche_texte(etab.get("ville", ""))
+        adresse_norm = _normaliser_recherche_texte(etab.get("adresse", ""))
+        contexte_norm = f"{nom_norm} {adresse_norm} {ville_norm}"
+
         score = 0
-        # 1. Correspondance exacte ou partielle du nom
+        # 1. Correspondance exacte ou début de chaîne sur le nom
         if terme_norm in nom_norm:
-            score += 20
-        
+            score += 35
+        elif nom_norm in terme_norm:
+            score += 25
+
         # 2. Correspondance par mots clés dédiés
         for mc in etab.get("mots_cles", []):
             mc_norm = _normaliser_recherche_texte(mc)
             if mc_norm in terme_norm or terme_norm in mc_norm:
-                score += 15
+                score += 25
                 break
-        
-        # 3. Mots-clés de recherche distincts trouvés dans le nom ou l'adresse
+
+        # 3. Présence de tous les mots clés cherchés dans le nom
         mots_dans_nom = sum(1 for m in mots_cles_cherche if m in nom_norm)
-        mots_dans_adresse = sum(1 for m in mots_cles_cherche if m in adresse_norm)
-        
-        # Un établissement n'est retenu que s'il correspond spécifiquement au nom ou aux mots-clés
-        if mots_dans_nom > 0:
-            score += mots_dans_nom * 8
-        elif mots_dans_adresse > 0 and len(mots_cles_cherche) > 2:
-            score += mots_dans_adresse * 1
+        mots_dans_contexte = sum(1 for m in mots_cles_cherche if m in contexte_norm)
+
+        if mots_dans_nom == len(mots_cles_cherche):
+            score += 30
+        elif mots_dans_nom > 0:
+            score += mots_dans_nom * 10
+        elif mots_dans_contexte == len(mots_cles_cherche):
+            score += 18
+        elif mots_dans_contexte > 0 and len(mots_cles_cherche) > 1:
+            score += mots_dans_contexte * 5
 
         if score >= 15:
             resultats.append((score, etab))
 
     resultats.sort(key=lambda x: x[0], reverse=True)
-    return [etab for _, etab in resultats]
+    return [etab for _, etab in resultats[:12]]
 
 # On ne devine pas : ce qui n'est pas reconnu reste sans type, et
 # l'administrateur choisit lui-meme.
@@ -758,19 +790,19 @@ def recherche_lieu_prestataire(request):
             "resultats": resultats_ref,
         })
 
-    # 2. Deuxième tentative Nominatim en retirant les mots de bruit et les apostrophes
+    # 2. Deuxième tentative Nominatim : requête épurée (sans ", Senegal" qui bride la recherche, et en racine)
     mots = [
         m for m in _normaliser_recherche_texte(requete).split()
-        if m not in ("clinique", "hopital", "pharmacie", "cabinet", "senegal", "dakar", "thies", "centre", "sante")
+        if m not in ("senegal", "dakar", "thies")
     ]
     if mots:
         racine = " ".join(mots)
         donnees_fallback, _ = _appeler_nominatim("search", {
             "format": "json",
-            "limit": 5,
+            "limit": 6,
             "countrycodes": "sn",
             "addressdetails": 1,
-            "q": f"{racine}, Senegal",
+            "q": racine,
         })
         if donnees_fallback:
             resultats_fb = [_resultat_osm(lieu) for lieu in donnees_fallback]
