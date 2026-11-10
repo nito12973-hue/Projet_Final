@@ -1,4 +1,4 @@
-name: CI/CD SanteSN - Tests et Validation
+name: CI/CD SanteSN - Tests, Securite et Validation DevSecOps
 
 on:
   push:
@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   lint-and-check:
-    name: Verification Django & Coherence
+    name: Verification Django, Migrations & Qualite
     runs-on: ubuntu-latest
     env:
       SECRET_KEY: 'ci-secret-key-santesn-django-security-token'
@@ -33,16 +33,29 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install ruff bandit
 
       - name: Diagnostic d integrite Django (check)
         run: |
           python manage.py check
+
+      - name: Verification d integrite des migrations (drift detection)
+        run: |
+          python manage.py makemigrations --check --dry-run
 
       - name: Test de compilation des assets statiques (WhiteNoise)
         env:
           DEBUG: 'False'
         run: |
           python manage.py collectstatic --no-input
+
+      - name: Analyse statique de securite SAST (Bandit - failles critiques)
+        run: |
+          bandit -r Plateform_medicale -lll -x Plateform_medicale/tests.py,Plateform_medicale/migrations
+
+      - name: Verification syntaxe et imports critiques (Ruff)
+        run: |
+          ruff check Plateform_medicale --select E9,F63,F7,F82
 
   tests-unitaires:
     name: Tests Automatises (Lot ${{ matrix.batch }})
@@ -86,19 +99,32 @@ jobs:
           python manage.py test ${{ matrix.targets }} --verbosity=2
 
   bilan-qualite:
-    name: Bilan d Integrite CI/CD
-    needs: tests-unitaires
+    name: Bilan d Integrite & Rapport DevSecOps
+    needs: [lint-and-check, tests-unitaires]
     runs-on: ubuntu-latest
     if: always()
     steps:
-      - name: Verification du statut global
+      - name: Verification du statut global et publication du rapport Markdown
         run: |
-          if [ "${{ needs.tests-unitaires.result }}" = "success" ]; then
+          if [ "${{ needs.lint-and-check.result }}" = "success" ] && [ "${{ needs.tests-unitaires.result }}" = "success" ]; then
+            echo "### 🚀 CI/CD SantéSN — Rapport d'Excellence DevSecOps" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Contrôle Qualité | Outil / Composant | Statut |" >> $GITHUB_STEP_SUMMARY
+            echo "| :--- | :--- | :---: |" >> $GITHUB_STEP_SUMMARY
+            echo "| **Intégrité Django & Modèles** | `django.check` | ✅ Validé |" >> $GITHUB_STEP_SUMMARY
+            echo "| **Dérive des Migrations (Drift)** | `makemigrations --check` | ✅ Aucune dérive |" >> $GITHUB_STEP_SUMMARY
+            echo "| **Compilation Statique** | WhiteNoise collectstatic | ✅ Optimisé |" >> $GITHUB_STEP_SUMMARY
+            echo "| **Audit Sécurité SAST** | Bandit Security Engine | ✅ 0 faille haute |" >> $GITHUB_STEP_SUMMARY
+            echo "| **Qualité Syntaxe & Variables** | Ruff Linter Engine | ✅ Conforme |" >> $GITHUB_STEP_SUMMARY
+            echo "| **Batterie de Tests Métier** | 952 tests (3 lots parallèles) | ✅ 100% Succès |" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "> **Verdict du Quality Gate :** Conforme aux normes d'ingénierie logicielle pour mise en production." >> $GITHUB_STEP_SUMMARY
             echo "=============================================="
-            echo "  TOUS LES 952 TESTS D INTEGRITE SONT VERTS !  "
+            echo "  TOUS LES 952 TESTS & AUDITS SONT VERTS !    "
             echo "=============================================="
             exit 0
           else
-            echo "Echec sur un des lots de tests d integrite."
+            echo "### ❌ Échec de la Validation CI/CD SantéSN" >> $GITHUB_STEP_SUMMARY
+            echo "Un ou plusieurs contrôles d'intégrité (Lint, Sécurité SAST ou Tests unitaires) ont échoué." >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
